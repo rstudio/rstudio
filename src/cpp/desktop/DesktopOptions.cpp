@@ -222,6 +222,17 @@ void Options::setZoomLevel(double zoomLevel)
    settings_.setValue(QString::fromUtf8("view.zoomLevel"), zoomLevel);
 }
 
+bool Options::enableAccessibility() const
+{
+   QVariant accessibility = settings_.value(QString::fromUtf8("view.accessibility"), false);
+   return accessibility.toBool();
+}
+
+void Options::setEnableAccessibility(bool enable)
+{
+   settings_.setValue(QString::fromUtf8("view.accessibility"), enable);
+}
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {

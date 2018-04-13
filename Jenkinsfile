@@ -191,7 +191,10 @@ try {
                     stage('prepare ws/container'){
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
-                      container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: jenkins_user_build_args())
+                      withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                          def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                          container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: github_args + " " + jenkins_user_build_args())
+                      }
                     }
                     container.inside() {
                         stage('compile package') {

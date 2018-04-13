@@ -31,6 +31,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -152,6 +153,16 @@ var RMarkdownHighlightRules = function() {
       ["firstLine"]
    );
 
+   // Embed JavaScript highlighting rules
+   Utils.embedRules(
+       this,
+       JavaScriptHighlightRules,
+       "sql",
+       this.$reJavaScriptChunkStartString,
+       this.$reChunkEndString,
+       ["start", "listblock", "allowBlock"]
+   );
+
    this.$rules["yaml-start"].unshift({
       token: ["string"],
       regex: makeDateRegex()
@@ -178,15 +189,15 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
 
-   this.$reCppChunkStartString      = engineRegex("[Rr]cpp");
-   this.$reMarkdownChunkStartString = engineRegex("block");
-   this.$rePerlChunkStartString     = engineRegex("perl");
-   this.$rePythonChunkStartString   = engineRegex("python");
-   this.$reRubyChunkStartString     = engineRegex("ruby");
-   this.$reShChunkStartString       = engineRegex("(?:bash|sh)");
-   this.$reStanChunkStartString     = engineRegex("stan");
-   this.$reSqlChunkStartString      = engineRegex("sql");
-   
+   this.$reCppChunkStartString        = engineRegex("[Rr]cpp");
+   this.$reMarkdownChunkStartString   = engineRegex("block");
+   this.$rePerlChunkStartString       = engineRegex("perl");
+   this.$rePythonChunkStartString     = engineRegex("python");
+   this.$reRubyChunkStartString       = engineRegex("ruby");
+   this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
+   this.$reStanChunkStartString       = engineRegex("stan");
+   this.$reSqlChunkStartString        = engineRegex("sql");
+   this.$reJavaScriptChunkStartString = engineRegex("d3");
    
 }).call(RMarkdownHighlightRules.prototype);
 

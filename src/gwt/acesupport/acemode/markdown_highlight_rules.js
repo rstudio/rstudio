@@ -64,6 +64,7 @@ var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlig
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
@@ -188,6 +189,7 @@ var MarkdownHighlightRules = function() {
         github_embed("bash", "bashcode-"),
         github_embed("stan", "stancode-"),
         github_embed("sql", "sqlcode-"),
+        github_embed("d3", "jscode-"),
         
         { // Github style block
             token : "support.function",
@@ -499,6 +501,12 @@ var MarkdownHighlightRules = function() {
     }]);
 
     this.embedRules(SqlHighlightRules, "sqlcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(JavaScriptHighlightRules, "jscode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"

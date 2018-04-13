@@ -322,6 +322,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeSubsequentChunks());
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
+      dynamicCommands_.add(commands.previewJS());
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands.knitDocument());
@@ -380,6 +381,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.notebookClearAllOutput());
       dynamicCommands_.add(commands.notebookToggleExpansion());
       dynamicCommands_.add(commands.sendToTerminal());
+      dynamicCommands_.add(commands.renameSourceDoc());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -1243,6 +1245,25 @@ public class Source implements InsertSourceHandler,
             target.verifyPythonPrerequisites();
          }
       });
+   }
+   
+   @Handler
+   public void onNewD3Doc()
+   {
+      newSourceDocWithTemplate(
+         FileTypeRegistry.JS, 
+         "", 
+         "d3.js",
+         Position.create(5, 0),
+         new CommandWithArg<EditingTarget> () {
+           @Override
+           public void execute(EditingTarget target)
+           {
+              target.verifyD3Prerequisites(); 
+              target.setSourceOnSave(true);
+           }
+         }
+      );
    }
    
    

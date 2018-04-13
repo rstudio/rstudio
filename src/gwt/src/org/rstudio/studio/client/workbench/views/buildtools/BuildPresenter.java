@@ -73,7 +73,8 @@ public class BuildPresenter extends BasePresenter
       void showErrors(String basePath,
                       JsArray<SourceMarker> errors, 
                       boolean ensureVisible,
-                      int autoSelect);
+                      int autoSelect,
+                      boolean openErrors);
       void buildCompleted();
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
@@ -146,9 +147,10 @@ public class BuildPresenter extends BasePresenter
                              true,
                              uiPrefs_.navigateToBuildError().getValue() ?
                                  SourceMarkerList.AUTO_SELECT_FIRST_ERROR :
-                                 SourceMarkerList.AUTO_SELECT_NONE);
+                                 SourceMarkerList.AUTO_SELECT_NONE,
+                             event.openErrorList());
             
-            if (uiPrefs_.navigateToBuildError().getValue())
+            if (uiPrefs_.navigateToBuildError().getValue() && event.openErrorList())
             {
                SourceMarker error = SourceMarker.getFirstError(event.getErrors());
                if (error != null)
@@ -244,7 +246,8 @@ public class BuildPresenter extends BasePresenter
          view_.showErrors(buildState.getErrorsBaseDir(),
                           buildState.getErrors(), 
                           false,
-                          SourceMarkerList.AUTO_SELECT_NONE);
+                          SourceMarkerList.AUTO_SELECT_NONE,
+                          true);
       
       if (!buildState.isRunning())
          view_.buildCompleted();

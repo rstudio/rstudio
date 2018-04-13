@@ -249,7 +249,7 @@ public:
 private:
    Build()
       : isRunning_(false), terminationRequested_(false), restartR_(false),
-        usedDevtools_(false)
+        usedDevtools_(false), openErrorList_(true)
    {
    }
 
@@ -641,9 +641,11 @@ private:
 
       // add testthat and shinyteset result parsers
       if (type == kTestFile) {
+         openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.parent()));
       }
       else if (type == kTestPackage) {
+         openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
       }
 
@@ -1613,6 +1615,7 @@ private:
       json::Object jsonData;
       jsonData["base_dir"] = errorsBaseDir_;
       jsonData["errors"] = errors;
+      jsonData["open_error_list"] = openErrorList_;
 
       ClientEvent event(client_events::kBuildErrors, jsonData);
       module_context::enqueClientEvent(event);
@@ -1746,6 +1749,7 @@ private:
    boost::function<bool(const std::string&)> errorOutputFilterFunction_;
    bool restartR_;
    bool usedDevtools_;
+   bool openErrorList_;
 };
 
 boost::shared_ptr<Build> s_pBuild;

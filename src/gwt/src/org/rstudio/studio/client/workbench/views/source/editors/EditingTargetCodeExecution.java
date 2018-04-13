@@ -230,6 +230,14 @@ public class EditingTargetCodeExecution
                                              String functionWrapper,
                                              boolean onlyUseConsole)
    {
+      // allow console a chance to execute code if we aren't focused
+      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
+      {
+         events_.fireEvent(new ConsoleExecutePendingInputEvent(
+               commands_.executeCodeWithoutFocus().getId()));
+         return;
+      }
+
       executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
    }
    

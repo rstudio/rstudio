@@ -52,6 +52,7 @@
 * Fix empty column titles when viewing matrices without column names (#2086)
 * Fix error when pressing F1 on non-function autocomplete results (#2127)
 * Fix hang when autocompleting filenames in large directories (#2236)
+* Fix issue where '#' in YAML strings would be highlighted as comments (#2591)
 
 ### RStudio Server Pro
 

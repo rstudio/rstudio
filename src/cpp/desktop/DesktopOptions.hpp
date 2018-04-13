@@ -57,6 +57,9 @@ public:
    double zoomLevel() const;
    void setZoomLevel(double zoomLevel);
 
+   bool enableAccessibility() const;
+   void setEnableAccessibility(bool enable);
+
 #ifdef _WIN32
    // If "", then use automatic detection
    QString rBinDir() const;

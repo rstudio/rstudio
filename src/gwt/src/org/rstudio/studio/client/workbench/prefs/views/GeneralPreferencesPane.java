@@ -211,6 +211,17 @@ public class GeneralPreferencesPane extends PreferencesPane
             prefs_.wrapTabNavigation(),
             false /*defaultSpaced*/)));
       
+      if (Desktop.isDesktop())
+      {
+         enableAccessibility_ = new CheckBox("Enable accessibility (requires quit and restart)");
+         add(spaced(enableAccessibility_));
+         Desktop.getFrame().getEnableAccessibility(enabled -> 
+         {
+            desktopAccessibility_ = enabled;
+            enableAccessibility_.setValue(enabled);
+         });
+      }
+      
       // provide check for updates option in desktop mode when not
       // already globally disabled
       if (Desktop.isDesktop() && 
@@ -308,6 +319,13 @@ public class GeneralPreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
+
+      if (enableAccessibility_ != null &&
+          desktopAccessibility_ != enableAccessibility_.getValue())
+      {
+         // set accessibility property if changed
+         Desktop.getFrame().setEnableAccessibility(enableAccessibility_.getValue());
+      }
  
       if (saveWorkspace_.isEnabled())
       {
@@ -360,8 +378,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
-  
-   
    private RVersionSpec getDefaultRVersion()
    {
       if (rServerRVersion_ != null)
@@ -378,11 +394,14 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
+   private boolean desktopAccessibility_ = false;
+   
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
+   private CheckBox enableAccessibility_ = null;
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;

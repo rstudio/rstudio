@@ -70,7 +70,16 @@ public class TerminalSessionSocket
    
    public interface ConnectCallback
    {
+      /**
+       * Callback when connection has been made.
+       */
       void onConnected();
+   
+   
+      /**
+       * Callback when connection failed
+       * @param message additional info about the connect failure, may be null
+       */
       void onError(String message);
    }
    
@@ -158,20 +167,54 @@ public class TerminalSessionSocket
     * Constructor
     * @param session Session to callback with user input and server output.
     * @param xterm Terminal emulator that provides user input, and displays output.
+    * @param webSocketPingInterval (seconds) how often to send a keep-alive, or zero for none
+    * @param webSocketConnectTimeout (seconds) how long to wait for websocket connection before 
+    *                                switching to RPC, or zero for no timeout (in seconds)
     */
    public TerminalSessionSocket(Session session,
                                 XTermWidget xterm,
-                                int webSocketPingInterval)
+                                int webSocketPingInterval,
+                                int webSocketConnectTimeout)
    {
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
       webSocketPingInterval_ = webSocketPingInterval;
+      webSocketConnectTimeout_ = webSocketConnectTimeout;
 
       // Show delay between receiving a keystroke and sending it to the 
       // terminal emulator; for diagnostics on laggy typing.
       // Time between input/display shown in terminal diagnostics dialog.
       inputEchoTiming_ = new InputEchoTimeMonitor();
+   
+      // Keep WebSocket connections alive by sending and receiving a small message
+      keepAliveTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (socket_ != null)
+            {
+               socket_.send(TerminalSocketPacket.keepAlivePacket());
+            }
+            else
+            {
+               keepAliveTimer_.cancel();
+            }
+         }
+      };
+   
+      // Underlying WebSocket object (JavaScript) can take up to 2 minutes to timeout
+      // for certain issues with the server; shorten that via this timer
+      connectWebSocketTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            diagnosticError("Timeout connecting via WebSockets, switching to RPC");
+            switchToRPC();
+         }
+      };   
    }
 
    /**
@@ -185,6 +228,7 @@ public class TerminalSessionSocket
                        final ConnectCallback callback)
    {
       consoleProcess_ = consoleProcess;
+      connectCallback_ = callback;
       
       if (consoleProcess.getProcessInfo().getZombie())
       {
@@ -244,12 +288,15 @@ public class TerminalSessionSocket
             public void onClose(CloseEvent event)
             {
                diagnostic("WebSocket closed");
-               socket_ = null;
-               if (keepAliveTimer_ != null)
+               if (socket_ != null)
                {
+                  // if socket is already null then we're probably in the middle of switching to RPC
+                  // and don't want to kill the terminal in the middle of doing so
+                  socket_ = null;
                   keepAliveTimer_.cancel();
+                  connectWebSocketTimer_.cancel();
+                  session_.connectionDisconnected();
                }
-               session_.connectionDisconnected();
             }
 
             @Override
@@ -268,25 +315,11 @@ public class TerminalSessionSocket
             @Override
             public void onOpen()
             {
+               connectWebSocketTimer_.cancel();
                diagnostic("WebSocket connected");
                callback.onConnected();
                if (webSocketPingInterval_ > 0)
                {
-                  keepAliveTimer_ = new Timer()
-                  {
-                     @Override
-                     public void run()
-                     {
-                        if (socket_ != null)
-                        {
-                           socket_.send(TerminalSocketPacket.keepAlivePacket());
-                        }
-                        else
-                        {
-                           keepAliveTimer_.cancel();
-                        }
-                     }
-                  };
                   keepAliveTimer_.scheduleRepeating(webSocketPingInterval_ * 1000);
                }
             }
@@ -294,29 +327,16 @@ public class TerminalSessionSocket
             @Override
             public void onError()
             {
+               connectWebSocketTimer_.cancel();
                diagnosticError("WebSocket connect error, switching to RPC");
-               socket_ = null;
-               
-               // Unable to connect client to server via websocket; let server
-               // know we'll be using rpc, instead
-               consoleProcess_.useRpcMode(new ServerRequestCallback<Void>()
-               {
-                  @Override
-                  public void onResponseReceived(Void response)
-                  {
-                     diagnostic("Switched to RPC");
-                     callback.onConnected();
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     callback.onError("Unable to switch back to RPC mode");
-                  }
-               });
+               switchToRPC();
             }
          });
          
+         if (webSocketConnectTimeout_ > 0)
+         {
+            connectWebSocketTimer_.schedule(webSocketConnectTimeout_ * 1000);
+         }
          socket_.open();
          break;
          
@@ -326,6 +346,32 @@ public class TerminalSessionSocket
          break;
       }
    }
+   
+   private void switchToRPC()
+   {
+      socket_ = null;
+      keepAliveTimer_.cancel();
+      connectWebSocketTimer_.cancel();
+   
+      // Unable to connect client to server via websocket; let server
+      // know we'll be using rpc, instead
+      consoleProcess_.useRpcMode(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            diagnostic("Switched to RPC");
+            connectCallback_.onConnected();
+         }
+      
+         @Override
+         public void onError(ServerError error)
+         {
+            diagnostic("Failed to switch to RPC: " + error.getMessage());
+            connectCallback_.onError("Terminal failed to connect. Please try again.");
+         }
+      });
+   }      
    
    /**
     * Send user input to the server.
@@ -486,6 +532,7 @@ public class TerminalSessionSocket
    private final Session session_;
    private final XTermWidget xterm_;
    private ConsoleProcess consoleProcess_;
+   private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
    private InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
@@ -499,6 +546,8 @@ public class TerminalSessionSocket
    public static final Pattern PASSWORD_PATTERN =
          Pattern.create(PASSWORD_REGEX, "im");
    
-   private Timer keepAliveTimer_;
-   private int webSocketPingInterval_;
+   private final Timer keepAliveTimer_;
+   private final int webSocketPingInterval_;
+   private final Timer connectWebSocketTimer_;
+   private final int webSocketConnectTimeout_;
 }

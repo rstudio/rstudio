@@ -14,6 +14,7 @@
  */
 
 #include <QtGui>
+#include <QDebug>
 #include <QPushButton>
 
 #include <boost/bind.hpp>
@@ -48,6 +49,23 @@ using namespace rstudio::core;
 using namespace rstudio::desktop;
 
 namespace {
+
+void augmentCommandLineArguments(std::vector<char*>* arguments)
+{
+   std::string user = core::system::getenv("RSTUDIO_CHROMIUM_ARGUMENTS");
+   if (user.empty())
+      return;
+   
+   std::vector<std::string> pieces = core::algorithm::split(user, " ");
+   for (auto& piece : pieces)
+   {
+      // NOTE: we intentionally leak the memory here just so the command
+      // line arguments can persist through lifetime of application
+      char* argument = (char*) ::malloc(piece.size() + 1);
+      ::memcpy(argument, piece.c_str(), piece.size() + 1);
+      arguments->push_back(argument);
+   }
+}
 
 // attempt to remove stale lockfiles that might inhibit
 // RStudio startup (currently Windows only). returns
@@ -302,8 +320,11 @@ int main(int argc, char* argv[])
       // disable chromium renderer accessibility by default (it can cause
       // slowdown when used in conjunction with some applications; see e.g.
       // https://github.com/rstudio/rstudio/issues/1990)
-      if (core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
+      bool accessibility = desktop::options().enableAccessibility();
+
+      if (!accessibility && core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
       {
+         // only disable if (a) pref indicates we should, and (b) override env var is not set
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
@@ -363,6 +384,9 @@ int main(int argc, char* argv[])
          }
       }
 #endif
+      
+      // allow users to supply extra command-line arguments
+      augmentCommandLineArguments(&arguments);
 
       // re-assign command line arguments
       argc = (int) arguments.size();

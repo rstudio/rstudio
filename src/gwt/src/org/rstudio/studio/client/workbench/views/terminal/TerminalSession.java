@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -84,7 +85,10 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = new Value<>(info.getHasChildProcs());
       
       setTitle(info.getTitle());
-      socket_ = new TerminalSessionSocket(this, this, sessionInfo_.getWebSocketPingInterval());
+      socket_ = new TerminalSessionSocket(
+            this, this, 
+            sessionInfo_.getWebSocketPingInterval(),
+            sessionInfo_.getWebSocketConnectTimeout());
 
       setHeight("100%");
    }
@@ -93,12 +97,14 @@ public class TerminalSession extends XTermWidget
    private void initialize(WorkbenchServerOperations server,
                            EventBus events,
                            final Session session,
-                           UIPrefs uiPrefs)
+                           UIPrefs uiPrefs,
+                           GlobalDisplay globalDisplay)
    {
       server_ = server;
       eventBus_ = events; 
       uiPrefs_ = uiPrefs;
       sessionInfo_ = session.getSessionInfo();
+      globalDisplay_ = globalDisplay;
    } 
 
    /**
@@ -201,7 +207,6 @@ public class TerminalSession extends XTermWidget
                         callback.onFailure(error.getUserMessage());
                      }
                   });
-
                }
 
                @Override
@@ -209,6 +214,11 @@ public class TerminalSession extends XTermWidget
                {
                   disconnect(false);
                   callback.onFailure(errorMsg);
+                  if (!StringUtil.isNullOrEmpty(errorMsg))
+                  {
+                     globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                           "Terminal Failed to Connect", errorMsg);
+                  }
                }
             });
          }
@@ -860,4 +870,5 @@ public class TerminalSession extends XTermWidget
    private EventBus eventBus_;
    private UIPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
+   private GlobalDisplay globalDisplay_;
 }

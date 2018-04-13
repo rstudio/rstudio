@@ -300,17 +300,26 @@ Error handleChunkOutputRequest(const http::Request& request,
       return Success();
    }
 
+   bool isHtml = target.hasExtensionLowerCase(".htm") ||
+                 target.hasExtensionLowerCase(".html");
+
    if (parts[0] == kChunkLibDir ||
        options().programMode() == kSessionProgramModeServer)
    {
       // in server mode, or if a reference to the chunk library folder, we can
       // reuse the contents (let the browser cache the file)
-      pResponse->setCacheableFile(target, request, HtmlWidgetFilter());
+      if (isHtml)
+         pResponse->setCacheableFile(target, request, HtmlWidgetFilter());
+      else
+         pResponse->setCacheableFile(target, request);
    }
    else
    {
       // no cache necessary in desktop mode
-      pResponse->setFile(target, request, HtmlWidgetFilter());
+      if (isHtml)
+         pResponse->setFile(target, request, HtmlWidgetFilter());
+      else
+         pResponse->setFile(target, request);
    }
 
    if (options().programMode() != kSessionProgramModeServer)

@@ -143,22 +143,24 @@ public class CompilePanel extends Composite
    
    public void showErrors(String basePath, 
                           JsArray<SourceMarker> errors,
-                          int autoSelect)
+                          int autoSelect,
+                          boolean openErrors)
    {
-      showErrors(basePath, errors, autoSelect, false);
+      showErrors(basePath, errors, autoSelect, false, openErrors);
    }
    
    public void showErrors(String basePath, 
                           JsArray<SourceMarker> errors,
                           int autoSelect,
-                          boolean alwaysShowList)
+                          boolean alwaysShowList,
+                          boolean openErrors)
    {
       errorList_.showMarkers(targetFileName_, 
                              basePath, 
                              errors,
                              autoSelect);
 
-      if (alwaysShowList || SourceMarker.showErrorList(errors))
+      if (openErrors && (alwaysShowList || SourceMarker.showErrorList(errors)))
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);

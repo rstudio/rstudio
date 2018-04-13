@@ -156,6 +156,9 @@ Error SessionLauncher::launchFirstSession()
                          pMainWindow_,
                          SLOT(onLicenseLost(QString)));
 
+   pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
+                         pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
+
    // show the window (but don't if we are doing a --run-diagnostics)
    if (!options().runDiagnostics())
    {
@@ -343,6 +346,7 @@ void SessionLauncher::onLaunchError(QString message)
       QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                            desktop::activation().editionName(), message);
       errorMsg.addButton(QMessageBox::Close);
+      errorMsg.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
       errorMsg.exec();
    }
   qApp->exit(EXIT_FAILURE);

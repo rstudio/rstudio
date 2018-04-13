@@ -173,6 +173,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public void verifyPythonPrerequisites()
    {
    }
+   
+   @Override
+   public void verifyD3Prerequisites()
+   {
+   }
       
    @Override
    public Position search(String regex)
@@ -189,6 +194,11 @@ public class UrlContentEditingTarget implements EditingTarget
    @Override
    public void forceLineHighlighting()
    {
+   }
+   
+   @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {  
    }
 
    @Handler

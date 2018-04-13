@@ -69,6 +69,10 @@ RUN cd /tmp \
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
+# set github login from build argument if defined
+ARG GITHUB_LOGIN
+ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
@@ -90,3 +94,4 @@ ARG JENKINS_UID=999
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+

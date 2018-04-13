@@ -443,6 +443,7 @@ public class TextEditingTarget implements
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
                                                   docDisplay_);
+      jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
@@ -775,8 +776,16 @@ public class TextEditingTarget implements
                public void onDocTabDragStateChanged(
                      DocTabDragStateChangedEvent e)
                {
-                  docDisplay_.setDragEnabled(e.getState() == 
-                        DocTabDragStateChangedEvent.STATE_NONE);
+                  // enable text drag/drop only while we're not dragging tabs
+                  boolean enabled = e.getState() == 
+                        DocTabDragStateChangedEvent.STATE_NONE;
+                  
+                  // disable drag/drop if disabled in preferences
+                  if (enabled)
+                     enabled = prefs.enableTextDrag().getValue();
+                  
+                  // update editor surface
+                  docDisplay_.setDragEnabled(enabled);
                }
             });
       
@@ -1043,6 +1052,12 @@ public class TextEditingTarget implements
    public void forceLineHighlighting()
    {
       docDisplay_.setHighlightSelectedLine(true);
+   }
+   
+   @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {
+      view_.getSourceOnSave().setValue(sourceOnSave, true);
    }
    
    @Override
@@ -2031,7 +2046,16 @@ public class TextEditingTarget implements
 
    public HashSet<AppCommand> getSupportedCommands()
    {
-      return fileType_.getSupportedCommands(commands_);
+      // start with the set of commands supported by the file type
+      HashSet<AppCommand> commands = fileType_.getSupportedCommands(commands_);
+      
+      // if the file has a path, it can also be renamed
+      if (getPath() != null)
+      {
+         commands.add(commands_.renameSourceDoc());
+      }
+      
+      return commands;
    }
    
    @Override
@@ -2059,6 +2083,23 @@ public class TextEditingTarget implements
    public void verifyPythonPrerequisites()
    {
       // TODO: ensure 'reticulate' installed
+   }
+   
+   @Override
+   public void verifyD3Prerequisites()
+   {
+      verifyD3Prequisites(null);
+   }
+   
+   private void verifyD3Prequisites(final Command command) 
+   {
+      dependencyManager_.withR2D3("Previewing D3 scripts", new Command() {
+         @Override
+         public void execute() {
+            if (command != null)
+               command.execute();
+         }
+      });
    }
 
    public void focus()
@@ -4474,6 +4515,22 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onInsertChunkD3()
+   {
+      if (notebook_ != null) {
+         Scope setupScope = notebook_.getSetupChunkScope();
+
+         if (setupScope == null)
+         {
+            onInsertChunk("```{r setup}\nlibrary(r2d3)\n```\n\n```{d3 data=}\n\n```\n", 4, 12);
+         }
+         else {
+            onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
+         }
+      }
+   }
+
+   @Handler
    void onInsertSection()
    {
       globalDisplay_.promptForText(
@@ -4634,7 +4691,12 @@ public class TextEditingTarget implements
                         @Override
                         public void execute()
                         {
-                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                           // compute the language for this chunk
+                           String language = "R";
+                           if (DocumentMode.isPositionInPythonMode(docDisplay_, position))
+                              language = "Python";
+
+                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
                         }
                      });
             }
@@ -4793,7 +4855,13 @@ public class TextEditingTarget implements
             else if (!range.isEmpty())
             {
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+
+               // compute the language for this chunk
+               String language = "R";
+               if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+                  language = "Python";
+
+               events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
             docDisplay_.collapseSelection(true);
          }
@@ -4921,6 +4989,13 @@ public class TextEditingTarget implements
       }
       return code.toString();
    }
+   
+   @Handler
+   void onPreviewJS()
+   {
+      previewJS();
+   }
+   
 
    @Handler
    void onSourceActiveDocument()
@@ -5241,6 +5316,23 @@ public class TextEditingTarget implements
             events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
          }
       });
+   }
+   
+   void previewJS()
+   {
+      verifyD3Prequisites(new Command() {
+         @Override
+         public void execute()
+         {
+            saveThenExecute(null, new Command() {
+               @Override
+               public void execute()
+               {
+                  jsHelper_.previewJS(TextEditingTarget.this);
+               }
+            });
+         }
+      }); 
    }
    
    void renderRmd()
@@ -6052,6 +6144,11 @@ public class TextEditingTarget implements
                {
                   previewRd();
                }
+               else if (fileType_.isJS())
+               {
+                  if (extendedType_ == SourceDocument.XT_JS_PREVIEWABLE)
+                     previewJS();
+               }
                else if (fileType_.canPreviewFromR())
                {
                   previewFromR();
@@ -6507,6 +6604,11 @@ public class TextEditingTarget implements
                public void execute(String string)
                {
                   docDisplay.setSurroundSelectionPref(string);
+               }}));
+      releaseOnDismiss.add(prefs.enableTextDrag().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setDragEnabled(arg);
                }}));
       
    }
@@ -7001,6 +7103,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
+   private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;

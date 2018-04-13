@@ -33,7 +33,7 @@ RUN yum install -y \
     postgresql-devel \
     R \
     rpmdevtools \
-    rpmsign \
+    rpm-sign \
     sudo \
     wget \
     xml-commons-apis \
@@ -50,6 +50,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# set github login from build argument if defined
+ARG GITHUB_LOGIN
+ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common

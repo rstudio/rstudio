@@ -11,6 +11,7 @@ set PATH=%PATH%;%CD%\tools
 
 call:install rsconnect master --no-build-vignettes
 REM call:install rmarkdown master --no-build-vignettes
+call:install r2d3 master --no-build-vignettes
 
 GOTO:EOF
 
@@ -23,7 +24,11 @@ set PACKAGE_BUILD_OPTIONS=%3
 REM git clone if necessary
 set PACKAGE_DIR="%PACKAGE%"
 if not exist "%PACKAGE_DIR%" (
-   git clone "https://github.com/rstudio/%PACKAGE%.git"
+   if "%RSTUDIO_GITHUB_LOGIN%" == "" (
+      git clone "https://github.com/rstudio/%PACKAGE%.git"
+   ) else (
+      git clone "https://%RSTUDIO_GITHUB_LOGIN%@github.com/rstudio/%PACKAGE%.git"
+   )
 )
 
 REM clean and checkout target branch

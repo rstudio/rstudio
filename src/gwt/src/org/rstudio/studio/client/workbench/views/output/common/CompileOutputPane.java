@@ -116,7 +116,7 @@ public class CompileOutputPane extends WorkbenchPane
    @Override
    public void showErrors(JsArray<SourceMarker> errors)
    {
-      compilePanel_.showErrors(null, errors, SourceMarkerList.AUTO_SELECT_FIRST);
+      compilePanel_.showErrors(null, errors, SourceMarkerList.AUTO_SELECT_FIRST, true);
       
       if (SourceMarker.showErrorList(errors))
          ensureVisible(true);

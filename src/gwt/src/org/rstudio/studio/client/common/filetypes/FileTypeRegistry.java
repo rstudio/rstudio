@@ -133,7 +133,7 @@ public class FileTypeRegistry
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
                           true,
-                          false, false, false, false, false, false, false, false, false, false, false, false);
+                          true, false, false, false, false, false, false, false, false, false, false, false);
    
    public static final TextFileType JSON =
          new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",

@@ -135,7 +135,7 @@ if(APPLE)
    )
    set(CORE_INCLUDE_DIRS
       ${CORE_INCLUDE_DIRS}
-      ${OPENSSL_INCLUDE_DIRS}
+      ${OPENSSL_INCLUDE_DIR}
    )
 endif()
 

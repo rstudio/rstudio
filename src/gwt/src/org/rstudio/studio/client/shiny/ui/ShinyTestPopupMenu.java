@@ -15,10 +15,6 @@
 package org.rstudio.studio.client.shiny.ui;
 
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.inject.Inject;
@@ -28,10 +24,7 @@ public class ShinyTestPopupMenu extends ToolbarPopupMenu
    @Inject
    public ShinyTestPopupMenu(Commands commands)
    {
-      commands_ = commands;
       addItem(commands.shinyRecordTest().createMenuItem(false));
       addItem(commands.shinyRunAllTests().createMenuItem(false));
    }
-
-   private final Commands commands_;
 }

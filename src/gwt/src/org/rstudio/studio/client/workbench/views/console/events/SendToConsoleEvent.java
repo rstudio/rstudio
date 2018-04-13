@@ -48,6 +48,14 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
       this(code, execute, false);
    }
    
+   public SendToConsoleEvent(String code, String language, boolean execute)
+   {
+      this(code, language, execute, 
+            true,   /* raise */
+            false,  /* focus */
+            false); /* animate */
+   }
+   
    public SendToConsoleEvent(String code, boolean execute, boolean focus)
    {
       this(code, execute, true, focus, false);

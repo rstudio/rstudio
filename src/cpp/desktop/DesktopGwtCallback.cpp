@@ -87,8 +87,9 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
       if (clipboard->supportsSelection())
       {
          QObject::connect(
-                  clipboard, SIGNAL(selectionChanged()),
-                  this, SLOT(onClipboardSelectionChanged()));
+                  clipboard, &QClipboard::selectionChanged,
+                  this, &GwtCallback::onClipboardSelectionChanged,
+                  Qt::DirectConnection);
 
          // initialize the global selection
          const QMimeData* mimeData = clipboard->mimeData(QClipboard::Selection);
@@ -225,14 +226,16 @@ QString GwtCallback::getOpenFileName(const QString& caption,
                                      const QString& label,
                                      const QString& dir,
                                      const QString& filter,
-                                     bool canChooseDirectories)
+                                     bool canChooseDirectories,
+                                     bool focusOwner)
 {
    QString resolvedDir = resolveAliasedPath(dir);
 
+   QWidget* owner = focusOwner ? pOwner_->asWidget() : qApp->focusWidget();
    QFileDialog dialog(
-            pOwner_->asWidget(),
+            owner,
             caption,
-            resolveAliasedPath(dir),
+            resolvedDir,
             filter);
 
    QFileDialog::FileMode mode = (canChooseDirectories)
@@ -242,12 +245,13 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
    dialog.setResolveSymlinks(false);
+   dialog.setWindowModality(Qt::WindowModal);
 
    QString result;
    if (dialog.exec() == QDialog::Accepted)
       result = dialog.selectedFiles().value(0);
 
-   activateAndFocusOwner();
+   desktop::raiseAndActivateWindow(owner);
    return createAliasedPath(result);
 }
 
@@ -261,17 +265,18 @@ QString getSaveFileNameImpl(QWidget* pParent,
                             const QString& dir,
                             QFileDialog::Options options)
 {
-    // initialize dialog
-    QFileDialog dialog(pParent, caption, dir);
-    dialog.setOptions(options);
-    dialog.setLabelText(QFileDialog::Accept, label);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
+   // initialize dialog
+   QFileDialog dialog(pParent, caption, dir);
+   dialog.setOptions(options);
+   dialog.setLabelText(QFileDialog::Accept, label);
+   dialog.setAcceptMode(QFileDialog::AcceptSave);
+   dialog.setWindowModality(Qt::WindowModal);
 
-    // execute dialog and check for success
-    if (dialog.exec() == QDialog::Accepted)
-        return dialog.selectedFiles().value(0);
+   // execute dialog and check for success
+   if (dialog.exec() == QDialog::Accepted)
+      return dialog.selectedFiles().value(0);
 
-    return QString();
+   return QString();
 }
 
 } // end anonymous namespace
@@ -280,20 +285,22 @@ QString GwtCallback::getSaveFileName(const QString& caption,
                                      const QString& label,
                                      const QString& dir,
                                      const QString& defaultExtension,
-                                     bool forceDefaultExtension)
+                                     bool forceDefaultExtension,
+                                     bool focusOwner)
 {
    QString resolvedDir = resolveAliasedPath(dir);
 
    while (true)
    {
+      QWidget* owner = focusOwner ? pOwner_->asWidget() : qApp->focusWidget();
       QString result = getSaveFileNameImpl(
-                  pOwner_->asWidget(),
+                  owner,
                   caption,
                   label,
                   resolvedDir,
                   standardFileDialogOptions());
 
-      activateAndFocusOwner();
+      desktop::raiseAndActivateWindow(owner);
       if (result.isEmpty())
          return result;
 
@@ -330,47 +337,28 @@ QString GwtCallback::getSaveFileName(const QString& caption,
 
 QString GwtCallback::getExistingDirectory(const QString& caption,
                                           const QString& label,
-                                          const QString& dir)
+                                          const QString& dir,
+                                          bool focusOwner)
 {
-   QString result;
 
-   // TODO: can we remove this code below?
-#ifdef _WIN32
-   if (dir.isNull())
-   {
-      // Bug
-      wchar_t szDir[MAX_PATH];
-      BROWSEINFOW bi;
-      bi.hwndOwner = (HWND)(pOwner_->asWidget()->winId());
-      bi.pidlRoot = nullptr;
-      bi.pszDisplayName = szDir;
-      bi.lpszTitle = L"Select a folder:";
-      bi.ulFlags = BIF_RETURNONLYFSDIRS;
-      bi.lpfn = nullptr;
-      bi.lpfn = 0;
-      bi.iImage = -1;
-      LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
-      if (!pidl || !SHGetPathFromIDListW(pidl, szDir))
-         result = QString();
-      else
-         result = QString::fromWCharArray(szDir);
-      activateAndFocusOwner();
-      return createAliasedPath(result);
-   }
-#endif
 
+   QWidget* owner = focusOwner ? pOwner_->asWidget() : qApp->focusWidget();
    QFileDialog dialog(
-            pOwner_->asWidget(),
+            owner,
             caption,
             resolveAliasedPath(dir));
 
    dialog.setLabelText(QFileDialog::Accept, label);
    dialog.setFileMode(QFileDialog::Directory);
    dialog.setOption(QFileDialog::ShowDirsOnly, true);
+   dialog.setWindowModality(Qt::WindowModal);
+
+   QString result;
    if (dialog.exec() == QDialog::Accepted)
       result = dialog.selectedFiles().value(0);
 
-   activateAndFocusOwner();
+   desktop::raiseAndActivateWindow(owner);
+
    return createAliasedPath(result);
 }
 
@@ -816,6 +804,7 @@ int GwtCallback::showMessageBox(int type,
    msgBox.setIcon(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)));
    msgBox.setWindowFlags(Qt::Dialog | Qt::Sheet);
    msgBox.setWindowModality(Qt::WindowModal);
+   msgBox.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
    msgBox.setTextFormat(Qt::PlainText);
 
    QStringList buttonList = buttons.split(QChar::fromLatin1('|'));
@@ -1269,6 +1258,26 @@ void GwtCallback::zoomOut()
 void GwtCallback::zoomActualSize()
 {
    pOwner_->zoomActualSize();
+}
+
+void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
+{
+   int red   = rgbColor.at(0).toInt();
+   int green = rgbColor.at(1).toInt();
+   int blue  = rgbColor.at(2).toInt();
+   
+   QColor color = QColor::fromRgb(red, green, blue);
+   pOwner_->webPage()->setBackgroundColor(color);
+}
+
+bool GwtCallback::getEnableAccessibility()
+{
+   return options().enableAccessibility();
+}
+
+void GwtCallback::setEnableAccessibility(bool enable)
+{
+   options().setEnableAccessibility(enable);
 }
 
 void GwtCallback::showLicenseDialog()

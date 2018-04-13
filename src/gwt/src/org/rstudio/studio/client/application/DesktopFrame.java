@@ -19,6 +19,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
 
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.Command;
 
 /**
@@ -37,6 +38,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String dir,
                         String filter,
                         boolean canChooseDirectories,
+                        boolean focusOpener,
                         CommandWithArg<String> callback);
    
    void getSaveFileName(String caption,
@@ -44,11 +46,13 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String dir, 
                         String defaultExtension, 
                         boolean forceDefaultExtension,
+                        boolean focusOpener,
                         CommandWithArg<String> callback);
    
    void getExistingDirectory(String caption,
                              String label,
                              String dir,
+                             boolean focusOpener,
                              CommandWithArg<String> callback);
    
    void undo();
@@ -157,6 +161,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   
+   void setBackgroundColor(JsArrayInteger rgbColor);
+   
+   void getEnableAccessibility(CommandWithArg<Boolean> callback);
+   void setEnableAccessibility(boolean enable);
    
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);

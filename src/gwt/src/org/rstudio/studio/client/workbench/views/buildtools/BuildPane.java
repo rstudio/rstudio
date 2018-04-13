@@ -242,9 +242,10 @@ public class BuildPane extends WorkbenchPane
    public void showErrors(String basePath,
                           JsArray<SourceMarker> errors, 
                           boolean ensureVisible,
-                          int autoSelect)
+                          int autoSelect,
+                          boolean openErrors)
    {
-      compilePanel_.showErrors(basePath, errors, autoSelect);
+      compilePanel_.showErrors(basePath, errors, autoSelect, openErrors);
       
       if (ensureVisible && SourceMarker.showErrorList(errors))
          ensureVisible();

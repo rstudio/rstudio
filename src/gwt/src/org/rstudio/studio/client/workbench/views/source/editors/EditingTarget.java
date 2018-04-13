@@ -66,6 +66,7 @@ public interface EditingTarget extends IsWidget,
    
    void verifyCppPrerequisites();
    void verifyPythonPrerequisites();
+   void verifyD3Prerequisites();
 
    void focus();
    void onActivate();
@@ -84,6 +85,8 @@ public interface EditingTarget extends IsWidget,
    boolean isAtSourceRow(SourcePosition position);
    
    void forceLineHighlighting();
+   
+   void setSourceOnSave(boolean sourceOnSave);
    
    void setCursorPosition(Position position);
    void ensureCursorVisible();

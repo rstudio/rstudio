@@ -48,6 +48,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
             <cmd refid="newPythonDoc"/>
+            <cmd refid="newD3Doc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
@@ -237,6 +238,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <cmd refid="sendToTerminal"/>
          <separator/>
+         <cmd refid="previewJS"/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <separator/>
@@ -688,6 +690,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Execute">
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
+         <shortcut refid="previewJS" value="Cmd+Shift+Enter"/>;
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
@@ -845,9 +848,14 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newPythonDoc"
-        menuLabel="_Python File"
-        desc="Create a new Python file"
+        menuLabel="_Python Script"
+        desc="Create a new Python script"
         rebindable="false"/>
+        
+   <cmd id="newD3Doc"
+        menuLabel="_D3 Script"
+        desc="Create a new D3 script"
+        rebindable="false"/>     
         
    <cmd id="rcppHelp"
         desc="Help on using Rcpp"
@@ -883,7 +891,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newRDocumentationDoc"
-        menuLabel="R _Documentation"
+        menuLabel="R Doc_umentation"
         desc="Create a new Rd documentation file"
         rebindable="false"/>
         
@@ -1509,6 +1517,11 @@ well as menu structures (for main menu and popup menus).
         desc="Insert a new Bash chunk"
         context="editor"/>
 
+   <cmd id="insertChunkD3"
+        menuLabel="D3"
+        desc="Insert a new D3 chunk"
+        context="editor"/>
+
    <cmd id="insertChunkPython"
         menuLabel="Python"
         desc="Insert a new Python chunk"
@@ -1634,6 +1647,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Source _File..."
         desc="Source the contents of an R file"
         windowMode="main"/>
+      
+   <cmd id="previewJS"
+        buttonLabel="Preview"
+        menuLabel="Preview JS"
+        desc="Preview the active JavaScript document"/>   
         
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"

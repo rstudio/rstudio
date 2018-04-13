@@ -624,6 +624,11 @@ bool isPrimitiveEnvironment(SEXP object)
    return TYPEOF(object) == ENVSXP;
 }
 
+bool isNumeric(SEXP object)
+{
+   return Rf_isNumeric(object);
+}
+
 bool isEnvironment(SEXP object)
 {
    // detect primitive environments (fast path)

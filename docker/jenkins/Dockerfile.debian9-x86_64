@@ -54,6 +54,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# set github login from build argument if defined
+ARG GITHUB_LOGIN
+ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/

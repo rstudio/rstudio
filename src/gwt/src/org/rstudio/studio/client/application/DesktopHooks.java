@@ -226,7 +226,15 @@ public class DesktopHooks
       }
       globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message,
             (Operation) () -> commands_.forceQuitSession().execute());
-   } 
+   }
+   
+   void updateLicenseWarningBar(String licenseMessage)
+   {
+      if (StringUtil.isNullOrEmpty(licenseMessage))
+         globalDisplay_.hideWarningBar();
+      else
+         globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+   }
 
    private final Commands commands_;
    private final EventBus events_;

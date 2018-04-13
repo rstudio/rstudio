@@ -65,6 +65,7 @@ public class RStudioThemes
          }
             
          element.addClassName("rstudio-themes-" + themeName);
+         element.setId("rstudio_container");
       }
    }
 

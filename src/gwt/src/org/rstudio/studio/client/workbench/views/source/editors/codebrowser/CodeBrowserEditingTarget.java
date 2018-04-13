@@ -473,6 +473,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void verifyD3Prerequisites()
+   {
+   }
+   
+   @Override
    public void focus()
    {
       docDisplay_.focus();
@@ -597,6 +602,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void forceLineHighlighting()
    {
       docDisplay_.setHighlightSelectedLine(true);
+   }
+   
+   @Override
+   public void setSourceOnSave(boolean sourceOnSave)
+   {  
    }
    
    @Override

@@ -20,10 +20,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.UpdateTabPanelsEvent;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -75,7 +72,6 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    {
       super("Build", shim);
       session_ = session;
-      eventBus_ = eventBus;
       binder.bind(commands, shim);
       
       // stop build always starts out disabled
@@ -113,5 +109,4 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    }
 
    private Session session_;
-   private EventBus eventBus_;
 }

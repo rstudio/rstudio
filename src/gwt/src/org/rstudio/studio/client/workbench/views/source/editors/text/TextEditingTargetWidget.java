@@ -54,7 +54,6 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ImageMenuItem;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -63,7 +62,6 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -116,8 +114,7 @@ public class TextEditingTargetWidget
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
       handlerManager_ = new HandlerManager(this);
-      server_ = server;
-      
+
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
          {  
@@ -358,6 +355,7 @@ public class TextEditingTargetWidget
          insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
       }
 
+      insertChunksMenu.addItem(commands_.insertChunkD3().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkPython().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkRCPP().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
@@ -401,6 +399,9 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
 
+      previewButton_ = commands_.previewJS().createToolbarButton(false);
+      toolbar.addRightWidget(previewButton_);
+      
       createTestToolbarButtons(toolbar);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
@@ -613,6 +614,8 @@ public class TextEditingTargetWidget
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canSourceOnSave = fileType.canSourceOnSave();
+      if (canSourceOnSave && fileType.isJS()) 
+         canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
@@ -644,7 +647,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || canPreviewFromR)
+      if (fileType.isRd() || fileType.isJS() || canPreviewFromR)
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
@@ -652,6 +655,8 @@ public class TextEditingTargetWidget
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());   
      
+      previewButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
+      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
                                    !isPlainMarkdown && 
@@ -785,7 +790,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
-      if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
+      if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || editor_.getFileType().canPreviewFromR())
       {
          String preview = editor_.getFileType().getPreviewButtonText();
          srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
@@ -1374,7 +1379,6 @@ public class TextEditingTargetWidget
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private final ShinyTestPopupMenu shinyTestMenu_;
-   private final SourceServerOperations server_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
@@ -1395,6 +1399,7 @@ public class TextEditingTargetWidget
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
+   private ToolbarButton previewButton_;
    private ToolbarButton testButton_;
    private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;
