@@ -61,7 +61,6 @@ WindowTracker s_windowTracker;
 
 #ifdef Q_OS_LINUX
 QString s_globalMouseSelection;
-bool s_clipboardMonitoringEnabled;
 bool s_ignoreNextClipboardSelectionChange;
 #endif
 
@@ -76,12 +75,11 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
      pendingQuit_(PendingQuitNone)
 {
 #ifdef Q_OS_LINUX
-   // listen for clipboard selection change events (X11 only)
-   // TODO: expose user-facing UI for enabling / disabling
-   s_clipboardMonitoringEnabled =
-         core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty();
-
-   if (s_clipboardMonitoringEnabled)
+   // listen for clipboard selection change events (X11 only); allow override in options or 
+   // via environment variable. clipboard monitoring enables us to support middle-click paste on
+   // Linux, but it causes problems on some systems.
+   if (desktop::options().clipboardMonitoring() &&
+       core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty()
    {
       QClipboard* clipboard = QApplication::clipboard();
       if (clipboard->supportsSelection())
@@ -1278,6 +1276,16 @@ bool GwtCallback::getEnableAccessibility()
 void GwtCallback::setEnableAccessibility(bool enable)
 {
    options().setEnableAccessibility(enable);
+}
+
+bool GwtCallback::getClipboardMonitoring()
+{
+   return options().clipboardMonitoring();
+}
+
+void GwtCallback::setClipboardMonitoring(bool monitoring)
+{
+   options().setClipboardMonitoring(monitoring);
 }
 
 void GwtCallback::showLicenseDialog()

@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -46,6 +47,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class GeneralPreferencesPane extends PreferencesPane
@@ -64,7 +66,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       session_ = session;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
+      VerticalPanel basic = new VerticalPanel();
       
+      basic.add(headerLabel("R Sessions"));
       if (BrowseCap.isWindowsDesktop())
       {
          rVersion_ = new TextBoxWithButton(
@@ -95,13 +99,13 @@ public class GeneralPreferencesPane extends PreferencesPane
             rVersion_.setText(version);
          });
          spaced(rVersion_);
-         add(rVersion_);
+         basic.add(rVersion_);
       }
       if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
                                        versionsInfo.getAvailableRVersions());
-         add(tight(rServerRVersion_));
+         basic.add(tight(rServerRVersion_));
          
          rememberRVersionForProjects_ = 
                         new CheckBox("Restore last used R version for projects");
@@ -110,13 +114,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          Style style = rememberRVersionForProjects_.getElement().getStyle();
          style.setMarginTop(5, Unit.PX);
          style.setMarginBottom(12, Unit.PX);
-         add(rememberRVersionForProjects_);
+         basic.add(rememberRVersionForProjects_);
       }
 
       Label defaultLabel = new Label("Default working directory (when not in a project):");
       nudgeRight(defaultLabel);
-      add(tight(defaultLabel));
-      add(dirChooser_ = new DirectoryChooserTextBox(null, 
+      basic.add(tight(defaultLabel));
+      basic.add(dirChooser_ = new DirectoryChooserTextBox(null, 
                                                     null,
                                                     fileDialogs_, 
                                                     fsContext_));  
@@ -147,21 +151,26 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (session_.getSessionInfo().getShowUserHomePage())
          {
             spaced(showServerHomePage_);
-            add(showServerHomePage_);
+            basic.add(showServerHomePage_);
             lessSpaced(reuseSessionsForProjectLinks_);  
          }
          
          if (session_.getSessionInfo().getMultiSession())
-            add(reuseSessionsForProjectLinks_);
+            basic.add(reuseSessionsForProjectLinks_);
       }
       
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
-      add(restoreLastProject_);
+      basic.add(restoreLastProject_);
       
-      add(checkboxPref("Restore previously open source documents at startup", prefs_.restoreSourceDocuments()));
+      basic.add(checkboxPref("Restore previously open source documents at startup", prefs_.restoreSourceDocuments()));
         
-      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
+      rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
+      if (!Desktop.isDesktop())
+         basic.add(rProfileOnResume_);
+           
+      basic.add(spacedBefore(headerLabel("Workspace")));
+      basic.add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
       lessSpaced(loadRData_); 
       
       saveWorkspace_ = new SelectWidget(
@@ -172,66 +181,77 @@ public class GeneralPreferencesPane extends PreferencesPane
                   "Ask"
             });
       spaced(saveWorkspace_);
-      add(saveWorkspace_);
+      basic.add(saveWorkspace_);
       
+      basic.add(headerLabel("History"));
       alwaysSaveHistory_ = new CheckBox(
             "Always save history (even when not saving .RData)");
       lessSpaced(alwaysSaveHistory_);
-      add(alwaysSaveHistory_);
+      basic.add(alwaysSaveHistory_);
       
       removeHistoryDuplicates_ = new CheckBox(
                                  "Remove duplicate entries in history");
-      spaced(removeHistoryDuplicates_);
-      add(removeHistoryDuplicates_);
+      basic.add(removeHistoryDuplicates_);
 
-      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
-      lessSpaced(showLastDotValue_);
-      add(showLastDotValue_);
-      
-      rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
-      spaced(rProfileOnResume_);
-      if (!Desktop.isDesktop())
-         add(rProfileOnResume_);
-           
-      // The error handler features require source references; if this R
-      // version doesn't support them, don't show these options. 
-      if (session_.getSessionInfo().getHaveSrcrefAttribute())
-      {
-         add(checkboxPref(
-               "Use debug error handler only when my code contains errors", 
-               prefs_.handleErrorsInUserCodeOnly()));
-         add(spaced(checkboxPref(
-               "Automatically expand tracebacks in error inspector", 
-               prefs_.autoExpandErrorTracebacks(),
-               false /*defaultSpaced*/)));
-      }
-      
-      add(spaced(checkboxPref(
+      basic.add(spacedBefore(headerLabel("Other")));
+
+      basic.add(checkboxPref(
             "Wrap around when navigating to previous/next tab",
             prefs_.wrapTabNavigation(),
-            false /*defaultSpaced*/)));
-      
-      if (Desktop.isDesktop())
-      {
-         enableAccessibility_ = new CheckBox("Enable accessibility (requires quit and restart)");
-         add(spaced(enableAccessibility_));
-         Desktop.getFrame().getEnableAccessibility(enabled -> 
-         {
-            desktopAccessibility_ = enabled;
-            enableAccessibility_.setValue(enabled);
-         });
-      }
+            true /*defaultSpaced*/));
       
       // provide check for updates option in desktop mode when not
       // already globally disabled
       if (Desktop.isDesktop() && 
           !session.getSessionInfo().getDisableCheckForUpdates())
       {
-         add(spaced(checkboxPref("Automatically notify me of updates to RStudio",
-                          prefs_.checkForUpdates(),
-                          false /*defaultSpaced*/)));
+         basic.add(checkboxPref("Automatically notify me of updates to RStudio",
+                   prefs_.checkForUpdates(), true /*defaultSpaced*/));
       }
 
+      VerticalPanel advanced = new VerticalPanel();
+      
+      // The error handler features require source references; if this R
+      // version doesn't support them, don't show these options. 
+      if (session_.getSessionInfo().getHaveSrcrefAttribute())
+      {
+         advanced.add(headerLabel("Debugging"));
+         advanced.add(checkboxPref(
+               "Use debug error handler only when my code contains errors", 
+               prefs_.handleErrorsInUserCodeOnly()));
+         advanced.add(spaced(checkboxPref(
+               "Automatically expand tracebacks in error inspector", 
+               prefs_.autoExpandErrorTracebacks(),
+               false /*defaultSpaced*/)));
+      }
+      
+      if (Desktop.isDesktop())
+      {
+         advanced.add(headerLabel("OS Integration (quit required)"));
+         enableAccessibility_ = new CheckBox("Enable DOM accessibility");
+         advanced.add(spaced(enableAccessibility_));
+         Desktop.getFrame().getEnableAccessibility(enabled -> 
+         {
+            desktopAccessibility_ = enabled;
+            enableAccessibility_.setValue(enabled);
+         });
+         
+         if (BrowseCap.isLinuxDesktop())
+         {
+            clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
+            advanced.add(clipboardMonitoring_);
+            Desktop.getFrame().getClipboardMonitoring(monitoring ->
+            {
+               desktopMonitoring_ = monitoring;
+               clipboardMonitoring_.setValue(monitoring);
+            });
+         }
+      }
+      
+      advanced.add(headerLabel("Other"));
+      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
+      lessSpaced(showLastDotValue_);
+      advanced.add(showLastDotValue_);
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
@@ -242,6 +262,13 @@ public class GeneralPreferencesPane extends PreferencesPane
       rProfileOnResume_.setEnabled(false);
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
+      
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(basic, "Basic");
+      tabPanel.add(advanced, "Advanced");
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
    
    @Override
@@ -326,6 +353,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          // set accessibility property if changed
          Desktop.getFrame().setEnableAccessibility(enableAccessibility_.getValue());
       }
+      
+      if (clipboardMonitoring_ != null &&
+          desktopMonitoring_ != clipboardMonitoring_.getValue())
+      {
+         // set monitoring property if changed
+         Desktop.getFrame().setClipboardMonitoring(clipboardMonitoring_.getValue());
+      }
  
       if (saveWorkspace_.isEnabled())
       {
@@ -395,6 +429,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
    
    private boolean desktopAccessibility_ = false;
+   private boolean desktopMonitoring_ = false;
    
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
@@ -402,6 +437,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
+   private CheckBox clipboardMonitoring_ = null;
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
