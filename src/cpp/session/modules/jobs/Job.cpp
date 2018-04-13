@@ -322,7 +322,9 @@ json::Array Job::output(int position)
    Error error = outputFile.open_r(&pIfs);
    if (error)
    {
-      LOG_ERROR(error);
+      // path not found is expected if the job hasn't produced any output yet
+      if (!isPathNotFoundError(error))
+         LOG_ERROR(error);
       return json::Array();
    }
 
