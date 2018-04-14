@@ -19,8 +19,9 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
 
-#include <r/RSexp.hpp>
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -64,6 +65,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
 Error initialize()
 {
    using boost::bind;
+   using namespace module_context;
 
    ExecBlock initBlock;
    initBlock.addFunctions()
@@ -72,6 +74,8 @@ Error initialize()
       (bind(registerRpcMethod, "theme_apply", applyTheme))
       (bind(registerRpcMethod, "theme_remove", removeTheme))
       (bind(sourceModuleRFile, "SessionThemes.R"));
+
+   return initBlock.execute();
 }
 
 } // namespace themes
