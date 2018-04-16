@@ -1260,12 +1260,17 @@ void GwtCallback::zoomActualSize()
 
 void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
 {
+#if defined(NDEBUG) || !defined(_WIN32)
+   // don't set the background color in win32 debug builds because Chromium can crash on a fatal assert in
+   // debug builds when the background color is changed.
+   // https://bitbucket.org/chromiumembedded/cef/issues/2144
    int red   = rgbColor.at(0).toInt();
    int green = rgbColor.at(1).toInt();
    int blue  = rgbColor.at(2).toInt();
    
    QColor color = QColor::fromRgb(red, green, blue);
    pOwner_->webPage()->setBackgroundColor(color);
+#endif
 }
 
 bool GwtCallback::getEnableAccessibility()
