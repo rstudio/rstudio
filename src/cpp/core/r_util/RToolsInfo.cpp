@@ -149,10 +149,10 @@ RToolsInfo::RToolsInfo(const std::string& name,
       versionMax = "3.2.99";
       gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
    }
-   else if (name == "3.4")
+   else if (name == "3.4" || name == "3.5")
    {
       versionMin = "3.3.0";
-      versionMax = "3.4.99";
+      versionMax = "3.5.99";
 
       relativePathEntries.push_back("bin");
 
