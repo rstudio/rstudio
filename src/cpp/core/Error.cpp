@@ -115,6 +115,33 @@ void Error::addProperty(const std::string& name, int value)
    addProperty(name, safe_convert::numberToString(value));
 }
 
+void Error::addOrUpdateProperty(const std::string& name, const std::string& value)
+{
+   copyOnWrite() ;
+
+   for (ErrorProperties::iterator it = impl().properties.begin();
+        it != impl().properties.end(); ++it)
+   {
+      if (it->first == name)
+      {
+         it->second = value;
+         return;
+      }
+   }
+
+   addProperty(name, value);
+}
+
+void Error::addOrUpdateProperty(const std::string& name, const FilePath& value)
+{
+   addOrUpdateProperty(name, value.absolutePath());
+}
+
+void Error::addOrUpdateProperty(const std::string& name, int value)
+{
+   addOrUpdateProperty(name, safe_convert::numberToString(value));
+}
+
 #define kErrorExpected      "expected"
 #define kErrorExpectedValue "yes"
 

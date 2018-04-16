@@ -39,21 +39,33 @@ bool ChunkParser::parse(const char* buffer, size_t len, std::vector<std::string>
                // calculate the chunk size
                std::istringstream(chunkHeader_) >> std::hex >> chunkSize_;
                if (chunkSize_ == 0)
+               {
                   state_ = Complete;
+               }
                else
+               {
                   state_ = HeaderCRLF;
+               }
             }
             else if (curChar == '\n')
+            {
                state_ = Invalid;
+            }
             else
+            {
                chunkHeader_.append(1, curChar);
+            }
             break;
 
          case HeaderCRLF:
             if (curChar != '\n')
+            {
                state_ = Invalid;
+            }
             else
+            {
                state_ = Chunk;
+            }
             break;
 
          case Chunk:

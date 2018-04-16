@@ -103,9 +103,16 @@ struct ProcessInfo
 };
 
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
+
+// get process by process name, or all processes if process name is empty
+// optionally allows supressing of errors - recommended in most cases
+// as such errors are generally transient and benign
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,
+                        bool suppressErrors = false,
                         ProcessFilter filter = ProcessFilter());
+
+// get process info for the specific process specified by pid
 core::Error processInfo(pid_t pid, ProcessInfo* pInfo);
 
 bool isProcessRunning(pid_t pid);

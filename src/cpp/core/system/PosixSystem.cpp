@@ -1424,7 +1424,10 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, ProcessFilter filter)
+Error processInfo(const std::string& process,
+                  std::vector<ProcessInfo>* pInfo,
+                  bool suppressErrors,
+                  ProcessFilter filter)
 {
    // clear the existing process info
    pInfo->clear();
@@ -1451,7 +1454,14 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, P
          Error error = processInfo(safe_convert::stringTo<pid_t>(pDirent->d_name, -1), &info);
          if (error)
          {
-            LOG_ERROR(error);
+            // only log the error if we were not told otherwise
+            // in the vast majority of cases, these errors indicate
+            // transient process issues (like processes exiting) or
+            // not having access to privileged processes and are benign
+            // and not worthy of logging
+            if (!suppressErrors)
+               LOG_ERROR(error);
+
             continue;
          }
 
@@ -2122,8 +2132,9 @@ Error getChildProcesses(pid_t pid,
 
    // get all processes
    std::vector<ProcessInfo> processes;
-   Error error = processInfo("", &processes);
-   if (error) return error;
+   Error error = processInfo("", &processes, true);
+   if (error)
+      return error;
 
    // build a process tree of the processes
    ProcessTreeT tree;
