@@ -79,7 +79,7 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
    // via environment variable. clipboard monitoring enables us to support middle-click paste on
    // Linux, but it causes problems on some systems.
    if (desktop::options().clipboardMonitoring() &&
-       core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty()
+       core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty())
    {
       QClipboard* clipboard = QApplication::clipboard();
       if (clipboard->supportsSelection())
