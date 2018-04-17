@@ -224,3 +224,20 @@ test_that("rgb conversion handles invalid values correctly", {
       "supplied color has an invalid format: 0xaaaaaa. Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
       fixed = TRUE)
 })
+
+# Test mixColors ===================================================================================
+test_that("mixColors works correctly", {
+   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "rgb(106,38,158)")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "rgb(128,128,128)")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "rgb(125,125,125)")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "rgb(40,40,40)")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(28,230,57)", 1), "rgb(10,10,10)")
+})
+
+# Test getLuma =====================================================================================
+test_that("getLuma works correctly", {
+   expect_equal(.rs.getLuma("rgb(0,0,0)"), 0)
+   expect_equal(.rs.getLuma("#FFFFFF"), 1)
+   expect_lt(abs(.rs.getLuma("rgb(128, 128, 128)") - 0.5019608), 5e-7)
+   expect_lt(abs(.rs.getLuma("#569cD6") - 0.5700392), 5e-7)
+})

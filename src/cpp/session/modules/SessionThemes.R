@@ -15,7 +15,7 @@
 # Helper Functions
 # Converts a colour to an array of the RGB values of the colour.
 #
-# @param the colur to convert.
+# @param color    The color to convert.
 #
 # Returns the RGB color.
 .rs.addFunction("getRgbColor", function(color) {
@@ -95,8 +95,48 @@
    colorVec
 })
 
-# Converts a theme from a tmtheme to an Ace file. Portions of this function (and sub-functions)
-# are ported from https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js.
+# Mixes two colours together.
+#
+# @param color1   The first colour.
+# @param color2   The second colour.
+# @param alpha1   The alpha of the first colour.
+# @param alpha2   The alpha of the second colour.
+# 
+# Returns the mixed colour in string format.
+.rs.addFunction("mixColors", function(color1, color2, alpha1, alpha2 = NULL) {
+   c1rgb <- .rs.getRgbColor(color1)
+   c2rgb <- .rs.getRgbColor(color2)
+   
+   if (is.null(alpha2))
+   {
+      alpha2 = 1 - alpha1
+   }
+   
+   paste0(
+      "rgb(",
+      paste(
+         round(alpha1 * c1rgb[[1]] + alpha2 * c2rgb[[1]]),
+         round(alpha1 * c1rgb[[2]] + alpha2 * c2rgb[[2]]),
+         round(alpha1 * c1rgb[[3]] + alpha2 * c2rgb[[3]]),
+         sep = ","),
+      ")")
+})
+
+# Determines the luma of a colour. It's not quite clear what a "luma" is.
+# 
+# @param color    The colour for which to determine the luma.
+#
+# Returns the luma of the specified colour.
+.rs.addFunction("getLuma", function(color) {
+   # The numbers used in this calculation are taken from
+   # https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js#L191. It is not entirely clear
+   # why they were chosen, as there are no comments in the orginal.
+   rgb <- .rs.getRgbColor(color)
+   (0.21 * rgb[[1]] + 0.72 * rgb[[2]] + 0.07 * rgb[[3]]) / 255
+})
+
+
+# Converts a theme from a tmtheme to an Ace file.
 .rs.addFunction("convertTmTheme", function(lines) {
    # Syntax highlighting scopes
    scopes <- list()
