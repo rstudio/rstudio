@@ -26,7 +26,7 @@
 		top: 0;
 		left: 0;
 		width: 0;
-		background-color: #20E020;
+		background-color: #68C13C;
 	}
 	
 	.rstudio-themes-dark .progress
