@@ -133,7 +133,7 @@ json::Object Job::toJson() const
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
 
    // amend with computed elapsed time
-   if (started_ > recorded_ && started_ > completed_)
+   if (started_ >= recorded_ && started_ > completed_)
    {
       // job is started but not finished; emit the running time
       job[kJobElapsed] = static_cast<int64_t>(::time(0) - started_);

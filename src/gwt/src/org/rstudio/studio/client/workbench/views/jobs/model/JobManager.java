@@ -195,8 +195,6 @@ public class JobManager implements JobRefreshEvent.Handler,
       
       // compute total progress units and longest running job
       int progress = 0;
-      int elapsed = 0;
-      int idxElapsed = 0;
       for (int i = idxFirst; i <= idxLast; i++)
       {
          Job job = jobs.get(i);
@@ -214,25 +212,23 @@ public class JobManager implements JobRefreshEvent.Handler,
             // the job has its own progress units; scale them to 0 - 100
             progress += (int)(((double)job.progress / (double)job.max) * (double)100);
          }
-         
-         // compute elapsed time
-         if (elapsed == 0 || job.elapsed > elapsed)
-         {
-            elapsed = job.elapsed;
-            idxElapsed = i;
-         }
       }
       
-      // add to the elapsed time the time that has elapsed between the time the
-      // first job started and the time the longest running job started
-      elapsed += (jobs.get(idxElapsed).started - jobs.get(idxFirst).started);
+      // compute offset between client time and server time by sampling a
+      // running job. we'd generally expect start time to be the time we receive
+      // the job less the time elapsed since the start, any offset (which may be
+      // considerable due to time zones etc) is the delta between client and
+      // server time
+      Job sample = jobs.get(idxRunning);
+      int offset = sample.started - (sample.received - sample.elapsed);
+      int elapsed = sample.received - (jobs.get(idxFirst).started - offset);
       
       return new GlobalJobProgress(
             name,                         // title of progress
             progress,                     // number of units completed
             numJobs * 100,                // total number of units, 100 per job 
             elapsed,                      // time elapsed so far
-            jobs.get(idxLast).received    // received time
+            sample.received               // received time
       );
    }
 

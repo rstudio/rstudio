@@ -27,6 +27,32 @@ public class JobManagerTests extends GWTTestCase
    }
 
    /**
+    * Tests a single job
+    */
+   public void testSummarizeSingle()
+   {
+      JobState state = JobState.create();
+      Job job1 = new Job()
+      {{
+         id = "1";
+         name = "Job1";
+         started = 10;
+         elapsed = 20;
+         received = 30;
+         completed = 0;
+         progress = 5;
+         max = 10;
+         state = JobConstants.STATE_RUNNING;
+      }};
+      state.addJob(job1);
+      
+      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+
+      Assert.assertEquals(20, progress.elapsed());
+      Assert.assertEquals(30, progress.received());
+   }
+
+   /**
     * Tests two jobs running concurrently to be sure that the summary correctly
     * aggregates the information from both jobs.
     */
@@ -170,6 +196,7 @@ public class JobManagerTests extends GWTTestCase
       // start of the second job (5), plus the second job's elapsed time (40)
       Assert.assertEquals(45, progress.elapsed());
    }
+
    /**
     * Tests a complicated situation:
     * 
@@ -270,5 +297,51 @@ public class JobManagerTests extends GWTTestCase
 
       // B is 100% done, C is 50% done, D is 0% done
       Assert.assertEquals(50, progress.percent(), 0.01);
+   }
+   
+   /**
+    * Tests a staggered receive: one finished job was received in the past by
+    * the client, and another one is currently running.
+    */
+   public void testStaggeredReceive()
+   {
+      JobState state = JobState.create();
+
+      // Job A: completed
+      Job jobA = new Job()
+      {{
+         id = "A";
+         name = "JobA";
+         started = 10;
+         elapsed = 30;
+         received = 40;
+         completed = 40;
+         progress = 10;
+         max = 10;
+         state = JobConstants.STATE_SUCCEEDED;
+      }};
+      state.addJob(jobA);
+
+      // Job B: still running
+      Job jobB = new Job()
+      {{
+         id = "B";
+         name = "JobB";
+         started = 20;
+         elapsed = 30;
+         received = 50;
+         completed = 0;
+         progress = 5;
+         max = 10;
+         state = JobConstants.STATE_RUNNING;
+      }};
+      state.addJob(jobB);
+
+      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+
+      // Currently on tick 50; that means that elapsed time should be 40 (Job A
+      // was started at tick 10)
+      Assert.assertEquals(50, progress.received());
+      Assert.assertEquals(40, progress.elapsed());
    }
 }
