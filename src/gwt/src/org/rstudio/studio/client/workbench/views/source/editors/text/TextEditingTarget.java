@@ -814,12 +814,6 @@ public class TextEditingTarget implements
                   }
                }
             });
-
-      if (!initializedMessageListeners_)
-      {
-         initializedMessageListeners_ = true;
-         initializeMessageListeners();
-      }
    }
    
    static {
@@ -2195,8 +2189,6 @@ public class TextEditingTarget implements
                   docUpdateSentinel_.getPath() != null);
          }
       });
-
-      activeTextEditingTarget_ = this;
       
       // notify notebook of activation if necessary
       if (notebook_ != null)
@@ -2215,11 +2207,6 @@ public class TextEditingTarget implements
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
-
-      if (activeTextEditingTarget_ == this)
-      {
-         activeTextEditingTarget_ = null;
-      }
 
       // switching tabs is a navigation action
       try
@@ -7187,51 +7174,7 @@ public class TextEditingTarget implements
 
       abstract void doExtract(final JsArrayString response);
    }
-
-   private void openFileFromMessage(final String file,
-                                    final int line,
-                                    final int column)
-   {
-
-      FilePosition filePosition = FilePosition.create(line, column);
-      CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
-
-      fileTypeRegistry_.editFile(
-         FileSystemItem.createFile(navigationTarget.getFile()),
-         filePosition);
-   }
-
-   public static void onOpenFileFromMessage(final String file, int line, int column)
-   {
-      if (activeTextEditingTarget_ != null)
-      {
-         activeTextEditingTarget_.openFileFromMessage(file, line, column);
-      }
-   }
-
-   private native static void initializeMessageListeners() /*-{
-      var handler = $entry(function(e) {
-         if (typeof e.data != 'object')
-            return;
-         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
-            return;
-         if (e.data.message != "openfile")
-            return;
-         if (e.data.source != "r2d3")
-            return;
-            
-         @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::onOpenFileFromMessage(Ljava/lang/String;II)(
-            e.data.file,
-            parseInt(e.data.line),
-            parseInt(e.data.column)
-         );
-      });
-      $wnd.addEventListener("message", handler, true);
-   }-*/;
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
    private static final String PROPERTY_SCROLL_LINE = "scrollLine";
-
-   private static boolean initializedMessageListeners_;
-   private static TextEditingTarget activeTextEditingTarget_;
 }
