@@ -5,11 +5,29 @@
 	.list
 	{
 		width: 100%;
+		height: 100%;
 		padding: 10px;
 	}
+	
+	.empty
+	{
+		color: #909090;
+		text-align: center;
+	}
+	
+	.host
+	{
+		height: 100%;
+		width: 100%;
+	}
 	</ui:style>
-	<g:ScrollPanel>
-		<g:VerticalPanel styleName="{style.list}" ui:field="list_">
-		</g:VerticalPanel>
-	</g:ScrollPanel>
+	<g:HTMLPanel styleName="{style.host}">
+		<g:ScrollPanel styleName="{style.host}">
+			<g:VerticalPanel styleName="{style.list}" ui:field="list_">
+			</g:VerticalPanel>
+		</g:ScrollPanel>
+		<g:HTMLPanel ui:field="empty_" styleName="{style.host}">
+			<g:Label styleName="{style.empty}" text="No jobs are currently running"></g:Label>
+		</g:HTMLPanel>
+	</g:HTMLPanel>
 </ui:UiBinder> 

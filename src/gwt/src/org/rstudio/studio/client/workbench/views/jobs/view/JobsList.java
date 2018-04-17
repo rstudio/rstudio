@@ -23,6 +23,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -39,6 +40,8 @@ public class JobsList extends Composite
       jobs_ = new HashMap<String, JobItem>();
 
       initWidget(uiBinder.createAndBindUi(this));
+
+      updateVisibility();
    }
    
    public void addJob(Job job)
@@ -48,6 +51,7 @@ public class JobsList extends Composite
       JobItem item = new JobItem(job);
       jobs_.put(job.id, item);
       list_.insert(item, 0);
+      updateVisibility();
    }
    
    public void removeJob(Job job)
@@ -56,6 +60,7 @@ public class JobsList extends Composite
          return;
       list_.remove(jobs_.get(job.id));
       jobs_.remove(job.id);
+      updateVisibility();
    }
    
    public void updateJob(Job job)
@@ -69,6 +74,7 @@ public class JobsList extends Composite
    {
       list_.clear();
       jobs_.clear();
+      updateVisibility();
    }
    
    public void syncElapsedTime(int timestamp)
@@ -78,8 +84,15 @@ public class JobsList extends Composite
          item.syncTime(timestamp);
       }
    }
+   
+   private void updateVisibility()
+   {
+      list_.setVisible(jobs_.size() > 0);
+      empty_.setVisible(jobs_.size() == 0);
+   }
 
    @UiField VerticalPanel list_;
+   @UiField HTMLPanel empty_;
 
    private final Map<String, JobItem> jobs_;
 }

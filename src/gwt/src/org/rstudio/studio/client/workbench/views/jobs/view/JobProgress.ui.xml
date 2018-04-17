@@ -14,6 +14,7 @@
 	.host
 	{
 		width: 100%;
+		table-layout: fixed;
 	}
 	
 	.elapsed

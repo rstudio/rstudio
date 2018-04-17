@@ -122,7 +122,7 @@ public class JobItem extends Composite
       // if job is not running, we have nothing to do
       if (job_.state == JobConstants.STATE_IDLE)
       {
-         elapsed_.setText("");
+         elapsed_.setText("Waiting");
          return;
       }
       
