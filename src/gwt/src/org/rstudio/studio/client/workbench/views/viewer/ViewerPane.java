@@ -15,10 +15,13 @@ package org.rstudio.studio.client.workbench.views.viewer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -27,6 +30,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -44,13 +48,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
    public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events,
-         ViewerServerOperations server)
+         ViewerServerOperations server, FileTypeRegistry fileTypeRegistry)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
       server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
       ensureWidget();
    }
    
@@ -160,6 +165,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       else 
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
+      }
+
+      if (!initializedMessageListeners_)
+      {
+         activeViewerPane_ = this;
+         initializedMessageListeners_ = true;
+         initializeMessageListeners();
       }
    }
 
@@ -273,6 +285,47 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
 
+   private void openFileFromMessage(final String file,
+                                    final int line,
+                                    final int column)
+   {
+
+      FilePosition filePosition = FilePosition.create(line, column);
+      CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
+
+      fileTypeRegistry_.editFile(
+         FileSystemItem.createFile(navigationTarget.getFile()),
+         filePosition);
+   }
+
+   public static void onOpenFileFromMessage(final String file, int line, int column)
+   {
+      if (activeViewerPane_ != null)
+      {
+         activeViewerPane_.openFileFromMessage(file, line, column);
+      }
+   }
+
+   private native static void initializeMessageListeners() /*-{
+      var handler = $entry(function(e) {
+         if (typeof e.data != 'object')
+            return;
+         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
+            return;
+         if (e.data.message != "openfile")
+            return;
+         if (e.data.source != "r2d3")
+            return;
+            
+         @org.rstudio.studio.client.workbench.views.viewer.ViewerPane::onOpenFileFromMessage(Ljava/lang/String;II)(
+            e.data.file,
+            parseInt(e.data.line),
+            parseInt(e.data.column)
+         );
+      });
+      $wnd.addEventListener("message", handler, true);
+   }-*/;
+
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
    private RmdPreviewParams rmdPreviewParams_;
@@ -289,4 +342,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Widget exportButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
+
+   private static boolean initializedMessageListeners_;
+   private static ViewerPane activeViewerPane_;
+   private final FileTypeRegistry fileTypeRegistry_;
 }
