@@ -19,16 +19,13 @@
 #
 # Returns the RGB color.
 .rs.addFunction("getRgbColor", function(color) {
-   if (is.vector(color)) 
+   if (is.vector(color) && is.integer(color[1])) 
    {
-      if (length(color) == 3) 
-      {
-         color
-      }
-      else
+      if (length(color) != 3) 
       {
          stop(sprintf("expected 3 values for RGB color, not %d", length(color)), call. = FALSE)
       }
+      colorVec <- color
    }
    else if (substr(color, 0, 1) == "#") 
    {
@@ -42,7 +39,7 @@
       }
       else
       {
-         sapply(
+         colorVec <- sapply(
             c(substr(color, 2, 3), substr(color, 4, 5), substr(color, 6, 7)),
             function(s) { strtoi(paste0("0x", s)) },
             USE.NAMES = FALSE)
@@ -59,7 +56,7 @@
                color),
             call. = FALSE)
       }
-      strtoi(matches[2:4])
+      colorVec <- strtoi(matches[2:4])
    }
    else
    {
@@ -69,6 +66,33 @@
             color),
          call. = FALSE)
    }
+   
+   # Check for inconsistencies.
+   for (c in colorVec)
+   {
+      if (is.na(c))
+      {
+         stop(
+            sprintf(
+               "invalid color supplied: %s. One or more RGB values could not be converted to an integer",
+               color),
+            call. = FALSE)
+      }
+      if (c < 0)
+      {
+         stop(
+            sprintf("invalid color supplied: %s. RGB value cannot be negative", color),
+            call. = FALSE)
+      }
+      if (c > 255)
+      {
+         stop(
+            sprintf("invalid color supplied: %s. RGB value cannot be greater than 255", color),
+            call. = FALSE)
+      }
+   }
+   
+   colorVec
 })
 
 # Converts a theme from a tmtheme to an Ace file. Portions of this function (and sub-functions)
