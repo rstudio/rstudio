@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -218,7 +218,14 @@ public class PathBreadcrumbWidget
    private Widget addAnchor(final FileSystemItem item, boolean browseable)
    {
       boolean isHome = context_.isRoot(item);
-      String text = isHome ? "Home" : item.getName();
+      boolean isCloudRoot = context_.isCloudRoot(item);
+      String text;
+      if (isHome)
+         text = "Home";
+      else if (isCloudRoot)
+         text = "Cloud";
+      else
+         text = item.getName();
       Widget link = null;
        
       if (browseable || isHome)
@@ -242,6 +249,8 @@ public class PathBreadcrumbWidget
       link.setTitle(item.getPath());
       if (isHome)
          link.addStyleName(RES.styles().home());
+      else if (isCloudRoot)
+         link.addStyleName(RES.styles().cloudHome());
 
       pathPanel_.add(link);
       return link;

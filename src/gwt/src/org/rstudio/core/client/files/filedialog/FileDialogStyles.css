@@ -20,6 +20,7 @@
 
 @url DIRSEPARATOR dirseparator2x;
 @url HOME home2x;
+@url CLOUDHOME cloudHome2x;
 
 .contents, .filename {
    background-color: white;
@@ -155,6 +156,12 @@
 .breadcrumb table.path .home {
    padding-left: 28px;
    background: HOME 0 1px no-repeat;
+   background-size: 24px 18px;
+}
+
+.breadcrumb table.path .cloudHome {
+   padding-left: 28px;
+   background: CLOUDHOME 0 1px no-repeat;
    background-size: 24px 18px;
 }
 
