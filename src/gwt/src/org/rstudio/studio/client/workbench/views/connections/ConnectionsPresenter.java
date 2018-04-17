@@ -424,30 +424,31 @@ public class ConnectionsPresenter extends BasePresenter
          MessageDialog.QUESTION,
          "Remove Connection",
          "Are you sure you want to remove this connection from the connection history?",
-         new Operation() {
-            @Override
-            public void execute()
-            {
-               server_.removeConnection(
-                 removingConnection.getId(), 
-                 new VoidServerRequestCallback()
+         false /* includeCancel */,
+         () -> {
+            server_.removeConnection(
+              removingConnection.getId(), 
+              new VoidServerRequestCallback()
+              {
+                 @Override
+                 protected void onSuccess()
                  {
-                    @Override
-                    protected void onSuccess()
-                    {
-                        exploredConnection_ = removingConnection;
-                        disconnectConnection(false);
-                        showAllConnections(true);
-                    }
-                    @Override
-                    protected void onFailure()
-                    {
-                        exploredConnection_ = removingConnection;
-                    }
-                 }); 
-            }
+                     exploredConnection_ = removingConnection;
+                     disconnectConnection(false);
+                     showAllConnections(true);
+                 }
+                 @Override
+                 protected void onFailure()
+                 {
+                     exploredConnection_ = removingConnection;
+                 }
+              }); 
          },
-         true);
+         () -> {
+            // if user selects No, restore interleaving actions
+            exploredConnection_ = removingConnection;
+         },
+         true /* yes is default */);
    }
    
    @Handler
