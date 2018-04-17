@@ -225,9 +225,19 @@ protected:
 
    void handleError(const Error& error)
    {
+      // check to see if the socket was closed purposefully
+      // if so, we will ignore the error
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (closed_)
+            return;
+      }
+      END_LOCK_MUTEX
+
       // close the socket
       close();
 
+      // invoke error handler
       if (errorHandler_)
          errorHandler_(error);
    }
@@ -532,7 +542,9 @@ private:
       BOOST_FOREACH(const std::string& chunk, chunks)
       {
          if (chunkHandler_)
+         {
             chunkHandler_(response_, chunk);
+         }
          else
          {
             // no chunk handler supplied, so caller expects to receive all chunks

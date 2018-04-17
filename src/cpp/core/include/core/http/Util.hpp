@@ -169,6 +169,10 @@ std::string formatMessageAsHttpChunk(const std::string& message);
 // determines if the given string is a well-formed IP address
 bool isIpAddress(const std::string& addr);
 
+// determines if the given string is a network address by
+// querying the DNS system
+bool isNetworkAddress(const std::string& str);
+
 } // namespace util
 
 } // namespace http

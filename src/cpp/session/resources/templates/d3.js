@@ -3,7 +3,7 @@
 // r2d3: https://rstudio.github.io/r2d3
 //
 
-var barHeight = Math.floor(height / data.length);
+var barHeight = Math.ceil(height / data.length);
 
 svg.selectAll('rect')
   .data(data)

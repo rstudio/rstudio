@@ -197,6 +197,9 @@ public Q_SLOTS:
    bool getEnableAccessibility();
    void setEnableAccessibility(bool enable);
 
+   bool getClipboardMonitoring();
+   void setClipboardMonitoring(bool monitoring);
+
    void showLicenseDialog();
    QString getInitMessages();
    QString getLicenseStatusMessage();
