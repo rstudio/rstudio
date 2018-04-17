@@ -193,6 +193,15 @@ body {
    user-select: none;
 }
 
+/* in IE, it's necessary to explicitly allow the selection of text in iframes:
+ * otherwise, the iframes inherit the above CSS rule from the <body> tag */
+body.windows iframe {
+   -ms-user-select: text;
+   -moz-user-select: text;
+   -webkit-user-select: text;
+   user-select: text;
+}
+
 select {
    font-size: 12px;
 }
