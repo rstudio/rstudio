@@ -171,7 +171,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          activeViewerPane_ = this;
          initializedMessageListeners_ = true;
-         initializeMessageListeners();
+         initializeMessageListeners(getDomain());
       }
    }
 
@@ -306,7 +306,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
    }
 
-   private native static void initializeMessageListeners() /*-{
+   private native static void initializeMessageListeners(String domain) /*-{
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
@@ -324,7 +324,28 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          );
       });
       $wnd.addEventListener("message", handler, true);
+
+      if (window.parent.postMessage) {
+         var destination = window.location.origin;
+         window.parent.postMessage({
+           message: "canopenfile",
+           source: "rstudio",
+           domain: window.location.origin
+         }, domain);
+      }
    }-*/;
+
+   private String getDomain()
+   {
+      RegExp reg = RegExp.compile("https?://[^/]+/");
+      MatchResult result = reg.exec(unmodifiedUrl_);
+      if (result != null)
+      {
+         return result.getGroup(0);
+      }
+
+      return "";
+   }
 
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
