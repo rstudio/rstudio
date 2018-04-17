@@ -152,7 +152,10 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "3.4" || name == "3.5")
    {
       versionMin = "3.3.0";
-      versionMax = "3.5.99";
+      if (name == "3.4")
+         versionMax = "3.5.99";  // Rtools 3.4
+      else 
+         versionMax = "3.6.99";  // Rtools 3.5
 
       relativePathEntries.push_back("bin");
 
