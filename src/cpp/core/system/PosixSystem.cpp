@@ -1599,7 +1599,7 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, ProcessFilter filter)
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, bool suppressErrors, ProcessFilter filter)
 {
    // use ps to capture process info
    // output format
