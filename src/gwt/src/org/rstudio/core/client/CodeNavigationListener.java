@@ -65,7 +65,8 @@ public class CodeNavigationListener
    
    private void openFileFromMessage(final String file,
                                     final int line,
-                                    final int column)
+                                    final int column,
+                                    final boolean highlight)
    {
 
       FilePosition filePosition = FilePosition.create(line, column);
@@ -73,14 +74,15 @@ public class CodeNavigationListener
 
       fileTypeRegistry_.editFile(
          FileSystemItem.createFile(navigationTarget.getFile()),
-         filePosition);
+         filePosition,
+         highlight);
    }
 
-   public static void onOpenFileFromMessage(final String file, int line, int column)
+   public static void onOpenFileFromMessage(final String file, int line, int column, boolean highlight)
    {
       if (codeNavigationListener_ != null)
       {
-         codeNavigationListener_.openFileFromMessage(file, line, column);
+         codeNavigationListener_.openFileFromMessage(file, line, column, highlight);
       }
    }
    
@@ -96,10 +98,11 @@ public class CodeNavigationListener
          if (e.data.source != "r2d3")
             return;
             
-         @org.rstudio.core.client.CodeNavigationListener::onOpenFileFromMessage(Ljava/lang/String;II)(
+         @org.rstudio.core.client.CodeNavigationListener::onOpenFileFromMessage(Ljava/lang/String;IIZ)(
             e.data.file,
             parseInt(e.data.line),
-            parseInt(e.data.column)
+            parseInt(e.data.column),
+            e.data.highlight === true
          );
       });
       $wnd.addEventListener("message", handler, true);
