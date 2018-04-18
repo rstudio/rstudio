@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CodeNavigationListener;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.URIUtils;
@@ -99,7 +99,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
                                Provider<FileExport> pFileExport,
-                               CodeNavigationListener codeNavigationListener)
+                               HtmlMessageListener htmlMessageListener)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -108,7 +108,7 @@ public class HTMLPreviewPresenter implements IsWidget
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
-      codeNavigationListener_ = codeNavigationListener;
+      htmlMessageListener_ = htmlMessageListener;
       
       binder.bind(commands, this);  
       
@@ -202,9 +202,9 @@ public class HTMLPreviewPresenter implements IsWidget
          
                url = URIUtils.addQueryParam(url,
                                             "host",
-                                            codeNavigationListener_.getOriginDomain());
+                                            htmlMessageListener_.getOriginDomain());
                
-               codeNavigationListener_.setUrl(url);
+               htmlMessageListener_.setUrl(url);
 
                view_.showPreview(
                   url,
@@ -373,5 +373,5 @@ public class HTMLPreviewPresenter implements IsWidget
    private final HTMLPreviewServerOperations server_;
    private final Provider<FileExport> pFileExport_;
    
-   private CodeNavigationListener codeNavigationListener_;
+   private HtmlMessageListener htmlMessageListener_;
 }

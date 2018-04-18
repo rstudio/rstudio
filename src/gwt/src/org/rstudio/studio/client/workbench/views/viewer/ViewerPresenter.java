@@ -16,7 +16,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.CodeNavigationListener;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -95,7 +95,7 @@ public class ViewerPresenter extends BasePresenter
                           ViewerServerOperations server,
                           SourceShim sourceShim,
                           Provider<UIPrefs> pUIPrefs,
-                          CodeNavigationListener codeNavigationListener)
+                          HtmlMessageListener htmlMessageListener)
    {
       super(display);
       display_ = display;
@@ -109,7 +109,7 @@ public class ViewerPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
       pUIPrefs_ = pUIPrefs;
-      codeNavigationListener_ = codeNavigationListener;
+      htmlMessageListener_ = htmlMessageListener;
       
       binder.bind(commands, this);
       
@@ -151,7 +151,7 @@ public class ViewerPresenter extends BasePresenter
          
          if (event.getBringToFront()) {
             display_.bringToFront();
-            codeNavigationListener_.allowOpenOnLoad();
+            htmlMessageListener_.allowOpenOnLoad();
          }
       
          // respect height request
@@ -570,5 +570,5 @@ public class ViewerPresenter extends BasePresenter
    private WindowEx zoomWindow_ = null;
    private Size zoomWindowDefaultSize_ = null;
    
-   private CodeNavigationListener codeNavigationListener_;
+   private HtmlMessageListener htmlMessageListener_;
 }

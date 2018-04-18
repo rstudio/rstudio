@@ -16,7 +16,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CodeNavigationListener;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
@@ -52,14 +52,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      GlobalDisplay globalDisplay,
                      EventBus events,
                      ViewerServerOperations server,
-                     CodeNavigationListener codeNavigationListener)
+                     HtmlMessageListener htmlMessageListener)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
       server_ = server;
-      codeNavigationListener_ = codeNavigationListener;
+      htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
    }
    
@@ -160,7 +160,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
-      codeNavigationListener_.setUrl(url);
+      htmlMessageListener_.setUrl(url);
       navigate(url, false);
 
       rmdPreviewParams_ = null;
@@ -278,7 +278,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "host",
-                                            codeNavigationListener_.getOriginDomain());
+                                            htmlMessageListener_.getOriginDomain());
          
          frame_.setUrl(viewerUrl);
       }
@@ -322,5 +322,5 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private static boolean initializedMessageListeners_;
    private static ViewerPane activeViewerPane_;
    
-   private CodeNavigationListener codeNavigationListener_;
+   private HtmlMessageListener htmlMessageListener_;
 }
