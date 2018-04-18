@@ -66,4 +66,5 @@ public class ElementIds
    public final static String SHELL_WIDGET = "shell_widget";
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
    public final static String XTERM_WIDGET = "xterm_widget";
+   public final static String FILE_DIALOG_NAME_PROMPT = "file_dialog_name_prompt";
 }
