@@ -15,12 +15,12 @@
 
 #include <core/http/LocalStreamAsyncServer.hpp>
 #include <core/http/Cookie.hpp>
-#include <core/http/SecureCookie.hpp>
+#include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/json/Json.hpp>
-#include <core/SecureKeyFile.hpp>
-#include <core/SocketRpc.hpp>
+#include <server_core/SecureKeyFile.hpp>
+#include <server_core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <core/system/PosixUser.hpp>
