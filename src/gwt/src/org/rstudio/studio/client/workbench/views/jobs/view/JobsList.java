@@ -23,7 +23,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -87,12 +88,13 @@ public class JobsList extends Composite
    
    private void updateVisibility()
    {
-      list_.setVisible(jobs_.size() > 0);
+      scroll_.setVisible(jobs_.size() > 0);
       empty_.setVisible(jobs_.size() == 0);
    }
 
    @UiField VerticalPanel list_;
-   @UiField HTMLPanel empty_;
+   @UiField Label empty_;
+   @UiField ScrollPanel scroll_;
 
    private final Map<String, JobItem> jobs_;
 }

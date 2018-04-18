@@ -29,8 +29,6 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.compile.CompileOutput;
-import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
-import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
@@ -66,7 +64,7 @@ public class JobsPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       list_ = new JobsList();
-      output_ = new CompilePanel(new CompileOutputBufferWithHighlight());
+      output_ = new JobOutputPanel();
 
       panel_ = new SlidingLayoutPanel(list_, output_);
       panel_.addStyleName("ace_editor_theme");
@@ -213,7 +211,7 @@ public class JobsPane extends WorkbenchPane
    }
 
    // widgets
-   CompilePanel output_;
+   JobOutputPanel output_;
    JobsList list_;
    SlidingLayoutPanel panel_;
    Toolbar toolbar_;
