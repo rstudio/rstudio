@@ -335,7 +335,7 @@ test_that("parseDictElement works correctly", {
    
    recursiveDictEl <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "settings", parent = recursiveDictEl)
-   addChildren(recursiveDictEl, kids = list(simpleDictEl2))
+   XML::addChildren(recursiveDictEl, kids = list(simpleDictEl2))
    
    recursiveDictEl2 <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "name", parent = recursiveDictEl2)
@@ -349,7 +349,7 @@ test_that("parseDictElement works correctly", {
       "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit",
       parent = recursiveDictEl2)
    XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
-   addChildren(recursiveDictEl2, kids = list(simpleDictEl))
+   XML::addChildren(recursiveDictEl2, kids = list(simpleDictEl))
    
    # Setup expected objects for the test cases
    simpleExpect <- list()
