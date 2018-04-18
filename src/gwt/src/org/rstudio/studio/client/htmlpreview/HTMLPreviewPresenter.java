@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CodeNavigationListener;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.URIUtils;
@@ -29,7 +30,6 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.fileexport.FileExport;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -50,8 +50,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.regexp.shared.MatchResult;
-import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -101,7 +99,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
                                Provider<FileExport> pFileExport,
-                               FileTypeRegistry fileTypeRegistry)
+                               CodeNavigationListener codeNavigationListener)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -110,7 +108,7 @@ public class HTMLPreviewPresenter implements IsWidget
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
-      fileTypeRegistry_ = fileTypeRegistry;
+      codeNavigationListener_ = codeNavigationListener;
       
       binder.bind(commands, this);  
       
@@ -204,7 +202,9 @@ public class HTMLPreviewPresenter implements IsWidget
          
                url = URIUtils.addQueryParam(url,
                                             "host",
-                                            getDomainFromUrl(getOrigin()));
+                                            codeNavigationListener_.getOriginDomain());
+               
+               codeNavigationListener_.setUrl(url);
 
                view_.showPreview(
                   url,
@@ -237,31 +237,7 @@ public class HTMLPreviewPresenter implements IsWidget
             return savePreviewDir_;
          }
       };
-
-      if (!initializedMessageListeners_)
-      {
-         activeViewerPane_ = this;
-         initializedMessageListeners_ = true;
-         initializeMessageListeners();
-      }
    }
-
-   private static String getDomainFromUrl(String url)
-   {
-      RegExp reg = RegExp.compile("https?://[^/]+");
-      MatchResult result = reg.exec(url);
-      if (result != null)
-      {
-         return result.getGroup(0);
-      }
-
-      return "";
-   }
-   
-
-   private native static String getOrigin() /*-{
-     return $wnd.location.origin;
-   }-*/;
    
    public void onActivated(HTMLPreviewParams params)
    {
@@ -378,55 +354,6 @@ public class HTMLPreviewPresenter implements IsWidget
    {
       server_.terminatePreviewHTML(new VoidServerRequestCallback());
    }
-
-   public static String getCurrentDomain()
-   {
-      if (activeViewerPane_ == null) return "";
-
-      return getDomainFromUrl(activeViewerPane_.url_);
-   }
-
-   private void openFileFromMessage(final String file,
-                                    final int line,
-                                    final int column)
-   {
-
-      FilePosition filePosition = FilePosition.create(line, column);
-      CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
-
-      fileTypeRegistry_.editFile(
-         FileSystemItem.createFile(navigationTarget.getFile()),
-         filePosition);
-   }
-
-   public static void onOpenFileFromMessage(final String file, int line, int column)
-   {
-      if (activeViewerPane_ != null)
-      {
-         activeViewerPane_.openFileFromMessage(file, line, column);
-      }
-   }
-
-   private native static void initializeMessageListeners() /*-{
-      var handler = $entry(function(e) {
-         var domain = @org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter::getCurrentDomain()();
-         if (typeof e.data != 'object')
-            return;
-         if (e.origin != $wnd.location.origin && e.origin != domain)
-            return;
-         if (e.data.message != "openfile")
-            return;
-         if (e.data.source != "r2d3")
-            return;
-            
-         @org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter::onOpenFileFromMessage(Ljava/lang/String;II)(
-            e.data.file,
-            parseInt(e.data.line),
-            parseInt(e.data.column)
-         );
-      });
-      $wnd.addEventListener("message", handler, true);
-   }-*/;
    
    private final Display view_;
    private String url_;
@@ -445,8 +372,6 @@ public class HTMLPreviewPresenter implements IsWidget
    private final RemoteFileSystemContext fileSystemContext_;
    private final HTMLPreviewServerOperations server_;
    private final Provider<FileExport> pFileExport_;
-
-   private static boolean initializedMessageListeners_;
-   private static HTMLPreviewPresenter activeViewerPane_;
-   private final FileTypeRegistry fileTypeRegistry_;
+   
+   private CodeNavigationListener codeNavigationListener_;
 }
