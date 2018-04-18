@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.CodeNavigationListener;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
@@ -284,4 +285,5 @@ public interface RStudioGinjector extends Ginjector
    AddinsCommandManager getAddinsCommandManager();
    DependencyManager getDependencyManager();
    ShinyTestPopupMenu getShinyTestPopupMenu();
+   CodeNavigationListener getCodeNavigationListener();
 }
