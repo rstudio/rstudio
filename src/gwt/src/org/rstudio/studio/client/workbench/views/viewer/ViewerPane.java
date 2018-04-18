@@ -159,8 +159,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
-      String domain = getDomainFromUrl(url);
-      registerMessageListeners(frame_.getElement(), domain);
       navigate(url, false);
 
       rmdPreviewParams_ = null;
@@ -260,6 +258,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       publishButton_.setShowCaption(width > 500);
    }
+   
+   private native static String getOrigin() /*-{
+     return $wnd.location.origin;
+   }-*/;
 
    private void navigate(String url, boolean useRawURL)
    {
@@ -274,6 +276,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
                                                    "viewer_pane", 
                                                    "1");
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "capabilities",
+                                            String.valueOf(1 << Capabilities.OpenFile.ordinal()));
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "host",
+                                            getDomainFromUrl(getOrigin()));
+         
          frame_.setUrl(viewerUrl);
       }
       else
@@ -340,19 +351,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       $wnd.addEventListener("message", handler, true);
    }-*/;
 
-   private native static void registerMessageListeners(Element frame, String domain) /*-{
-      var thisDomain = domain;
-      frame.addEventListener("load", function() {
-         if (window.parent.postMessage) {
-            frame.contentWindow.postMessage({
-               message: "canopenfile",
-               source: "rstudio",
-               domain: window.location.origin
-            }, domain);
-         }
-      });
-   }-*/;
-
    private static String getDomainFromUrl(String url)
    {
       RegExp reg = RegExp.compile("https?://[^/]+");
@@ -363,6 +361,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
 
       return "";
+   }
+   
+   private enum Capabilities
+   {
+      OpenFile
    }
 
    private RStudioFrame frame_;
