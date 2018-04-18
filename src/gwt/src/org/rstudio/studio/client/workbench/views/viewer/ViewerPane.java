@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -156,7 +159,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
+      String domain = getDomainFromUrl(url);
+      registerMessageListeners(frame_.getElement(), domain);
       navigate(url, false);
+
       rmdPreviewParams_ = null;
       if (url == ABOUT_BLANK)
       {
@@ -171,7 +177,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          activeViewerPane_ = this;
          initializedMessageListeners_ = true;
-         initializeMessageListeners(getDomain());
+         initializeMessageListeners(domain);
       }
    }
 
@@ -310,7 +316,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
-         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
+         if (e.origin != $wnd.location.origin && e.origin != domain)
             return;
          if (e.data.message != "openfile")
             return;
@@ -324,21 +330,25 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          );
       });
       $wnd.addEventListener("message", handler, true);
-
-      if (window.parent.postMessage) {
-         var destination = window.location.origin;
-         window.parent.postMessage({
-           message: "canopenfile",
-           source: "rstudio",
-           domain: window.location.origin
-         }, domain);
-      }
    }-*/;
 
-   private String getDomain()
+   private native static void registerMessageListeners(Element frame, String domain) /*-{
+      var thisDomain = domain;
+      frame.addEventListener("load", function() {
+         if (window.parent.postMessage) {
+            frame.contentWindow.postMessage({
+               message: "canopenfile",
+               source: "rstudio",
+               domain: window.location.origin
+            }, domain);
+         }
+      });
+   }-*/;
+
+   private static String getDomainFromUrl(String url)
    {
-      RegExp reg = RegExp.compile("https?://[^/]+/");
-      MatchResult result = reg.exec(unmodifiedUrl_);
+      RegExp reg = RegExp.compile("https?://[^/]+");
+      MatchResult result = reg.exec(url);
       if (result != null)
       {
          return result.getGroup(0);
