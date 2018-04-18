@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -157,6 +160,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void navigate(String url)
    {
       navigate(url, false);
+
       rmdPreviewParams_ = null;
       if (url == ABOUT_BLANK)
       {
@@ -254,6 +258,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       publishButton_.setShowCaption(width > 500);
    }
+   
+   private native static String getOrigin() /*-{
+     return $wnd.location.origin;
+   }-*/;
 
    private void navigate(String url, boolean useRawURL)
    {
@@ -268,6 +276,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
                                                    "viewer_pane", 
                                                    "1");
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "capabilities",
+                                            String.valueOf(1 << Capabilities.OpenFile.ordinal()));
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "host",
+                                            getDomainFromUrl(getOrigin()));
+         
          frame_.setUrl(viewerUrl);
       }
       else
@@ -306,11 +323,19 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
    }
 
+   public static String getCurrentDomain()
+   {
+      if (activeViewerPane_ == null) return "";
+
+      return getDomainFromUrl(activeViewerPane_.unmodifiedUrl_);
+   }
+
    private native static void initializeMessageListeners() /*-{
       var handler = $entry(function(e) {
+         var domain = @org.rstudio.studio.client.workbench.views.viewer.ViewerPane::getCurrentDomain()();
          if (typeof e.data != 'object')
             return;
-         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
+         if (e.origin != $wnd.location.origin && e.origin != domain)
             return;
          if (e.data.message != "openfile")
             return;
@@ -325,6 +350,23 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
+
+   private static String getDomainFromUrl(String url)
+   {
+      RegExp reg = RegExp.compile("https?://[^/]+");
+      MatchResult result = reg.exec(url);
+      if (result != null)
+      {
+         return result.getGroup(0);
+      }
+
+      return "";
+   }
+   
+   private enum Capabilities
+   {
+      OpenFile
+   }
 
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
