@@ -135,9 +135,209 @@
    (0.21 * rgb[[1]] + 0.72 * rgb[[2]] + 0.07 * rgb[[3]]) / 255
 })
 
+# Parses a "key" element from a tmtheme document and raises appropriate error.
+#
+# @param element     The element to parse.
+#
+# Returns the text value of the element.
+.rs.addFunction("parseKeyElement", function(element) {
+   parseError <- "Unable to convert the tmtheme to an rstheme."
+   key <- XML::xmlValue(element)
+   if (key == "")
+   {
+      stop(
+         sprintf("%s The value of a \"key\" element may not be empty.", parseError),
+         call. = FALSE)
+   }
+   
+   key
+})
+
+# Parses a "string" element from a tmtheme document and raises appropriate errors.
+#
+# @param element     The element to parse.
+# @param keyName     The name of the key for this value.
+#
+# Returns the text value of the element.
+.rs.addFunction("parseStringElement", function(element, keyName)
+{
+   require("XML")
+   parseError <- "Unable to convert the tmtheme to an rstheme."
+   value <- XML::xmlValue(element)
+   
+   # The key can only be null if there was no <key> element immediately preceding the <string>
+   # element in the provided xml. If any <key> element was found (even a <key/>), the key name
+   # will at least be "".
+   if (is.null(keyName))
+   {
+      stop(
+         sprintf(
+            "%s Unable to find a key for the \"string\" element with value \"%s\".",
+            parseError,
+            value),
+         call. = FALSE)
+   }
+   
+   value
+})
+
+# Recursivley parses a dictionary element from a tmtheme document and raises the correct errors.
+#
+# @param dictElement    The element to parse.
+# @param keyName        The name of the dictionary.
+#
+# Returns a list with named values.
+.rs.addFunction("parseDictElement", function(dictElement, keyName) {
+   parseError <- "Unable to convert the tmtheme to an rstheme."
+   if (is.null(keyName))
+   {
+      stop(
+         sprintf("%s Unable to find a key for the current \"dict\" element.", parseError),
+         call. = FALSE)
+   }
+   if (XML::xmlSize(dictElement) < 1)
+   {
+      stop(
+         sprintf("%s \"dict\" element cannot be empty.", parseError),
+         call. = FALSE)
+   }
+   
+   values <- list()
+   key <- NULL
+   for (element in XML::xmlChildren(dictElement))
+   {
+      elName <- XML::xmlName(element)
+      if (elName == "key")
+      {
+         key <- .rs.parseKeyElement(element)
+      }
+      else if (elName == "string")
+      {
+         # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
+         # using the same key twice.
+         values[[key]] <- .rs.parseStringElement(element, key)
+         key <- NULL
+      }
+      else if (elName == "dict")
+      {
+         values[[key]] <- .rs.parseDictElement(element, keyName)
+      }
+      else
+      {
+         stop(
+            sprintf(
+               "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", or \"dict\".",
+               parseError,
+               elName),
+            call. = FALSE)
+      }
+   }
+   
+   values
+})
+
+# Recursively parses the list of settings from a tmtheme document.
+#
+#@param dictElements    The <dict> or list of <dict> elements that compose the settings.
+#
+# Returns a list() of named settings.
+.rs.addFunction("parseArrayElement", function(arrayElements) {
+   require("XML")
+   parseError <- "Unable to convert the tmtheme to an rstheme."
+   values <- list()
+   index < 1
+   for (element in arrayElements)
+   {
+      elName <- XML::xmlName(element)
+      if (elName != "dict")
+      {
+         stop(
+            sprintf("%s Expecting <dict> element; found <%s>.", parseError, elName),
+            call. = FALSE)
+      }
+      
+      # Intentionally empty key here
+      values[[index]] <- .rs.parseDictElement(element, "")
+   }
+   
+   values
+})
+
+# Parses a tmtheme document and stores the relevant values in a list with named values.
+#
+# @param file     The file to parse.
+# 
+# Returns a list with named values.
+.rs.addFunction("parseTmTheme", function(file) {
+   require("XML")
+   parseError <- "Unable to convert the tmtheme to an rstheme."
+   
+   tmThemeDoc <- XML::xmlRoot(
+      XML::xmlParse(
+         file, 
+         error = function(msg, code, domain, line, col, level, filename) {
+            stop(
+               sprintf(
+                  "%s An error occurred while parsing %s at line %d: %s",
+                  parseError,
+                  filename,
+                  line,
+                  msg),
+               call. = FALSE)
+   }))
+   
+   # Skip the plist (root) and first level of dict.
+   if (xml::xmlSize(tmThemeDoc) != 1)
+   {
+      stop(
+         sprintf(
+            "%s Expected 1 child of the root, found: %d",
+            parseError,
+            xmlSize(xmlDoc)),
+         call. = FALSE)
+   }
+   
+   theme <- list()
+   key <- NULL
+   for (element in XML::xmlChildren(tmThemeDoc[[1]]))
+   {
+      elName <- XML::xmlName(element)
+      if (elName == "key")
+      {
+         key <- .rs.parseKeyElement(element)
+      }
+      else if (elName == "string")
+      {
+         # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
+         # using the same key twice.
+         theme[[key]] <- .rs.parseStringElement(element, key)
+         key <- NULL
+      }
+      else if (elName == "array")
+      {
+         if (is.null(key))
+         {
+            stop(
+               sprintf("%s Unable to find a key for array value.", parseError, value),
+               call. = FALSE)
+         }
+         if (key != "settings")
+         {
+            stop(
+               sprintf(
+                  "%s Incorrect key for array element. Expected: \"settings\"; Actual: \"%s\".",
+                  parseError,
+                  key),
+               call. = FALSE)
+         }
+         
+         theme[[key]] <- .rs.parseSettings(xmlChildren(element))
+      }
+   }
+})
 
 # Converts a theme from a tmtheme to an Ace file.
-.rs.addFunction("convertTmTheme", function(lines) {
+.rs.addFunction("convertTmTheme", function(file) {
    # Syntax highlighting scopes
    scopes <- list()
    
@@ -331,20 +531,26 @@
 
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
 .rs.addApiFunction("convertTheme", function(file, add = TRUE, outputLocation = NULL, apply = FALSE) {
-   convertTheme(file, add, outputLocation, apply)
+   # Require XML package for parsing the tmtheme files.
+   if (!suppressWarnings(require("XML", quietly = TRUE)))
+   {
+      stop("Taking this action requires the XML library. Please run 'install.packages(\"XML\")' before continuing.")
+   }
+   
+   .rs.convertTheme(file, add, outputLocation, apply)
 })
 
 # Add a theme to RStudio.
 .rs.addApiFunction("addTheme", function(file, apply = FALSE) {
-   addTheme(file, apply)
+   .rs.addTheme(file, apply)
 })
 
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", function(name) {
-   applyTheme(name)
+   .rs.applyTheme(name)
 })
 
 # Remove a theme from RStudio.()
 .rs.addApiFunction("removeTheme", function(name) {
-   removeTheme(name)
+   .rs.removeTheme(name)
 })

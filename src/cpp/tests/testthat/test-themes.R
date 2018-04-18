@@ -238,6 +238,163 @@ test_that("mixColors works correctly", {
 test_that("getLuma works correctly", {
    expect_equal(.rs.getLuma("rgb(0,0,0)"), 0)
    expect_equal(.rs.getLuma("#FFFFFF"), 1)
-   expect_lt(abs(.rs.getLuma("rgb(128, 128, 128)") - 0.5019608), 5e-7)
-   expect_lt(abs(.rs.getLuma("#569cD6") - 0.5700392), 5e-7)
+   expect_equal(.rs.getLuma("rgb(128, 128, 128)"), 0.5019608, tolerance = 5e-7)
+   expect_equal(.rs.getLuma("#569cD6"), 0.5700392, tolerance = 5e-7)
+})
+
+# Test parseKeyElement =============================================================================
+test_that("parseKeyElement works correctly", {
+   library("XML")
+   
+   # Setup objects for the test cases
+   settingsNode <- XML::newXMLNode("key", "settings")
+   valueNode <- XML::newXMLNode("key", "VALUE")
+   emptyNode <- XML::newXMLNode("key", "")
+   noTextNode <- XML::newXMLNode("key")
+   
+   # Test cases
+   expect_equal(.rs.parseKeyElement(settingsNode), "settings")
+   expect_equal(.rs.parseKeyElement(valueNode), "VALUE")
+   expect_error(
+      .rs.parseKeyElement(emptyNode),
+      "Unable to convert the tmtheme to an rstheme. The value of a \"key\" element may not be empty.")
+   expect_error(
+      .rs.parseKeyElement(noTextNode),
+      "Unable to convert the tmtheme to an rstheme. The value of a \"key\" element may not be empty.")
+})
+
+# Test parseStringElement ==========================================================================
+test_that("parseStringElement works correctly", {
+   library("XML")
+   
+   # Setup objects for the test cases
+   nameNode <- XML::newXMLNode("string", "Tomorrow")
+   colorNode <- XML::newXMLNode("string", "#8e908c")
+   emptyNode <- XML::newXMLNode("string", "")
+   noTextNode <- XML::newXMLNode("string")
+   
+   # Test cases (no errors)
+   expect_equal(.rs.parseStringElement(nameNode, "name"), "Tomorrow")
+   expect_equal(.rs.parseStringElement(colorNode, "foreground"), "#8e908c")
+   expect_equal(.rs.parseStringElement(nameNode, ""), "Tomorrow")
+   expect_equal(.rs.parseStringElement(emptyNode, "scope"), "")
+   expect_equal(.rs.parseStringElement(emptyNode, "settings"), "")
+   
+   # Test cases (errors)
+   expect_error(
+      .rs.parseStringElement(colorNode, NULL),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"#8e908c\".")
+})
+
+# Test parseDictElement ============================================================================
+test_that("parseDictElement works correctly", {
+   library("XML")
+   
+   # Setup input objects for the test cases
+   simpleDictEl <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "fontStyle", parent = simpleDictEl)
+   XML::newXMLNode("string", parent = simpleDictEl)
+   XML::newXMLNode("key", "foreground", parent = simpleDictEl)
+   XML::newXMLNode("string", "#F5871F", parent = simpleDictEl)
+   
+   simpleDictEl2 <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "background", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#FFFFFF", parent = simpleDictEl2)
+   XML::newXMLNode("key", "caret", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#AEAFAD", parent = simpleDictEl2)
+   XML::newXMLNode("key", "foreground", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#4D4D4C", parent = simpleDictEl2)
+   XML::newXMLNode("key", "invisibles", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#D1D1D1", parent = simpleDictEl2)
+   XML::newXMLNode("key", "lineHighlight", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#EFEFEF", parent = simpleDictEl2)
+   XML::newXMLNode("key", "selection", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#D6D6D6", parent = simpleDictEl2)
+   
+   badDictEl <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "caret", parent = badDictEl)
+   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl)
+   XML::newXMLNode("string", "#FFFFFF", parent = badDictEl)
+   
+   badDictEl2 <- XML::newXMLNode("dict")
+   XML::newXMLNode("string", "#4D4D4C", parent = badDictEl2)
+   XML::newXMLNode("key", "caret", parent = badDictEl2)
+   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl2)
+   
+   badDictEl3 <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "caret", parent = badDictEl3)
+   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl3)
+   XML::newXMLNode("other", "#000000", parent = badDictEl3)
+   
+   badDictEl4 <- XML::newXMLNode("dict")
+   XML::newXMLNode("bad", "#1D1D1D", parent = badDictEl4)
+   XML::newXMLNode("key", "caret", parent = badDictEl4)
+   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl4)
+   
+   emptyDictEl <- XML::newXMLNode("dict")
+   
+   recursiveDictEl <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "settings", parent = recursiveDictEl)
+   addChildren(recursiveDictEl, kids = list(simpleDictEl2))
+   
+   recursiveDictEl2 <- XML::newXMLNode("dict")
+   XML::newXMLNode("key", "name", parent = recursiveDictEl2)
+   XML::newXMLNode(
+      "string",
+      "Number, Constant, Function Argument, Tag Attribute, Embedded",
+      parent = recursiveDictEl2)
+   XML::newXMLNode("key", "scope", parent = recursiveDictEl2)
+   XML::newXMLNode(
+      "string",
+      "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit",
+      parent = recursiveDictEl2)
+   XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
+   addChildren(recursiveDictEl2, kids = list(simpleDictEl))
+   
+   # Setup expected objects for the test cases
+   simpleExpect <- list()
+   simpleExpect[["fontStyle"]] <- ""
+   simpleExpect[["foreground"]] <- "#F5871F"
+   
+   simpleExpect2 <- list()
+   simpleExpect2[["background"]] <- "#FFFFFF"
+   simpleExpect2[["caret"]] <-"#AEAFAD"
+   simpleExpect2[["foreground"]] <- "#4D4D4C"
+   simpleExpect2[["invisibles"]] <- "#D1D1D1"
+   simpleExpect2[["lineHighlight"]] <-"#EFEFEF"
+   simpleExpect2[["selection"]] <- "#D6D6D6"
+   
+   recursiveExpect <- list()
+   recursiveExpect[["settings"]] <- simpleExpect2
+   
+   recursiveExpect2 <- list()
+   recursiveExpect2[["name"]] <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
+   recursiveExpect2[["scope"]] <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
+   recursiveExpect2[["settings"]] <- simpleExpect
+   
+   # Test Cases (no error)
+   expect_equal(.rs.parseDictElement(simpleDictEl, "settings"), simpleExpect)
+   expect_equal(.rs.parseDictElement(simpleDictEl2, "settings"), simpleExpect2)
+   expect_equal(.rs.parseDictElement(recursiveDictEl, ""), recursiveExpect)
+   expect_equal(.rs.parseDictElement(recursiveDictEl2, "someName"), recursiveExpect2)
+   
+   # Test Cases (errors)
+   expect_error(
+      .rs.parseDictElement(simpleDictEl, NULL),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the current \"dict\" element.")
+   expect_error(
+      .rs.parseDictElement(badDictEl, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"#FFFFFF\".")
+   expect_error(
+      .rs.parseDictElement(badDictEl2, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"#4D4D4C\".")
+   expect_error(
+      .rs.parseDictElement(badDictEl3, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", or \"dict\".")
+   expect_error(
+      .rs.parseDictElement(badDictEl4, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"bad\". Expected \"key\", \"string\", or \"dict\".")
+   expect_error(
+      .rs.parseDictElement(emptyDictEl, "settings"),
+      "Unable to convert the tmtheme to an rstheme. \"dict\" element cannot be empty.")
 })
