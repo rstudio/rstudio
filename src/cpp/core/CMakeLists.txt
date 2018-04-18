@@ -251,16 +251,6 @@ if (UNIX)
       system/PosixProcess.cpp
    )
 
-   if(RSTUDIO_SERVER)
-      set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         DistributedEvents.cpp
-         SecureKeyFile.cpp
-         SocketRpc.cpp
-         http/SecureCookie.cpp
-         system/Pam.cpp
-      )
-   endif()
-
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          system/file_monitor/MacFileMonitor.cpp
