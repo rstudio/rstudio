@@ -68,6 +68,7 @@ public class CodeNavigationListener
                                     final int column,
                                     final boolean highlight)
    {
+      if (highlight && !highlightAllowed_) return;
 
       FilePosition filePosition = FilePosition.create(line, column);
       CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
@@ -76,6 +77,8 @@ public class CodeNavigationListener
          FileSystemItem.createFile(navigationTarget.getFile()),
          filePosition,
          highlight);
+
+      highlightAllowed_ = false;
    }
 
    public static void onOpenFileFromMessage(final String file, int line, int column, boolean highlight)
@@ -113,7 +116,13 @@ public class CodeNavigationListener
       return getDomainFromUrl(getOrigin());
    }
    
+   public void allowOpenOnLoad()
+   {
+      highlightAllowed_ = true;
+   }
+   
    private final FileTypeRegistry fileTypeRegistry_;
    private static CodeNavigationListener codeNavigationListener_;
    private String url_;
+   private boolean highlightAllowed_;
 }
