@@ -177,7 +177,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          activeViewerPane_ = this;
          initializedMessageListeners_ = true;
-         initializeMessageListeners(domain);
+         initializeMessageListeners();
       }
    }
 
@@ -312,8 +312,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
    }
 
-   private native static void initializeMessageListeners(String domain) /*-{
+   public static String getCurrentDomain()
+   {
+      if (activeViewerPane_ == null) return "";
+
+      return getDomainFromUrl(activeViewerPane_.unmodifiedUrl_);
+   }
+
+   private native static void initializeMessageListeners() /*-{
       var handler = $entry(function(e) {
+         var domain = @org.rstudio.studio.client.workbench.views.viewer.ViewerPane::getCurrentDomain()();
          if (typeof e.data != 'object')
             return;
          if (e.origin != $wnd.location.origin && e.origin != domain)
