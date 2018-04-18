@@ -233,8 +233,12 @@ public class ViewerPresenter extends BasePresenter
             zoomWindow_ = input;
          }
       });
+
+      String displayUrl = display_.getUrl().replaceAll(
+         "capabilities=[^&]+",
+         "no");
       
-      globalDisplay_.openMinimalWindow(display_.getUrl(),
+      globalDisplay_.openMinimalWindow(displayUrl,
             false,
             windowSize.width,
             windowSize.height,
