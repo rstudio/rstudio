@@ -204,6 +204,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                             "host",
                                             htmlMessageListener_.getOriginDomain());
                
+               htmlMessageListener_.allowOpenOnLoad();
                htmlMessageListener_.setUrl(url);
 
                view_.showPreview(
