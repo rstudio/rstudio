@@ -110,7 +110,7 @@ public class JobManager implements JobRefreshEvent.Handler,
     * @return Progress of running jobs, or null if no progress.
     * 
     */
-   public static GlobalJobProgress summarizeProgress(JobState state)
+   public static LocalJobProgress summarizeProgress(JobState state)
    {
       boolean running = false;
       
@@ -223,7 +223,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       int offset = sample.started - (sample.received - sample.elapsed);
       int elapsed = sample.received - (jobs.get(idxFirst).started - offset);
       
-      return new GlobalJobProgress(
+      return new LocalJobProgress(
             name,                         // title of progress
             progress,                     // number of units completed
             numJobs * 100,                // total number of units, 100 per job 
@@ -236,7 +236,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void emitJobProgress()
    {
-      GlobalJobProgress progress = summarizeProgress(state_);
+      LocalJobProgress progress = summarizeProgress(state_);
       events_.fireEvent(new JobProgressEvent(progress));
    }
 

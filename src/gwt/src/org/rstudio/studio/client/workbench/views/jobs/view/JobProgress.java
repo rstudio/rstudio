@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
-import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,7 +44,7 @@ public class JobProgress extends Composite
    }
    
    @Override
-   public void showProgress(GlobalJobProgress progress)
+   public void showProgress(LocalJobProgress progress)
    {
       name_.setText(progress.name());
       progress_.setProgress(progress.units(), progress.max());
@@ -65,5 +65,5 @@ public class JobProgress extends Composite
    @UiField ProgressBar progress_;
    @UiField Label elapsed_;
    
-   private GlobalJobProgress jobProgress_;
+   private LocalJobProgress jobProgress_;
 }

@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +94,10 @@ public class JobsPane extends WorkbenchPane
 
          case JobConstants.JOB_UPDATED:
             list_.updateJob(job);
+            if (job.id == current_ && progress_ != null)
+            {
+               progress_.showProgress(new LocalJobProgress(job));
+            }
             break;
             
          default:
@@ -132,7 +137,7 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void showJobOutput(String id, JsArray<JobOutput> output)
    {
-      // cleear any existing output in the pane
+      // clear any existing output in the pane
       output_.clearOutput();
 
       // display all the output, but don't scroll as we go
@@ -194,7 +199,14 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void syncElapsedTime(int timestamp)
    {
+      // update list of running jobs
       list_.syncElapsedTime(timestamp);
+      
+      // update progress of current job if present
+      if (progress_ != null)
+      {
+         progress_.updateElapsed(timestamp);
+      }
    }
 
    // Private methods ---------------------------------------------------------
@@ -203,6 +215,15 @@ public class JobsPane extends WorkbenchPane
    {
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(allJobs_);
+      if (progress_ == null)
+      {
+         progress_ = new JobProgress();
+         if (current_ != null)
+         {
+            progress_.showProgress(new LocalJobProgress(list_.getJob(current_)));
+         }
+      }
+      toolbar_.addLeftWidget(progress_);
    }
    
    private void installMainToolbar()
@@ -216,6 +237,7 @@ public class JobsPane extends WorkbenchPane
    SlidingLayoutPanel panel_;
    Toolbar toolbar_;
    ToolbarButton allJobs_;
+   JobProgress progress_;
 
    // internal state
    String current_;

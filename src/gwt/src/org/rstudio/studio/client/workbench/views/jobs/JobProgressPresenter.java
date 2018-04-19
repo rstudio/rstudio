@@ -16,7 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
-import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -28,7 +28,7 @@ public class JobProgressPresenter implements JobElapsedTickEvent.Handler,
    public interface Display extends IsWidget
    {
       void updateElapsed(int timestamp);
-      void showProgress(GlobalJobProgress progress);
+      void showProgress(LocalJobProgress progress);
    }
    
    @Inject
@@ -51,7 +51,7 @@ public class JobProgressPresenter implements JobElapsedTickEvent.Handler,
       return display_.asWidget();
    }
 
-   public void showProgress(GlobalJobProgress progress)
+   public void showProgress(LocalJobProgress progress)
    {
       display_.showProgress(progress);
    }

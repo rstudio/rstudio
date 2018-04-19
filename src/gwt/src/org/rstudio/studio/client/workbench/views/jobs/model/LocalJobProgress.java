@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-public class GlobalJobProgress
+public class LocalJobProgress
 {
    /**
-    * An object that summarizes the progress of all the currently running jobs
+    * Summarize currently running jobs
     * 
     * @param name The name of the job(s) running
     * @param units The total number of progress units completed
@@ -25,7 +25,7 @@ public class GlobalJobProgress
     * @param elapsed The time that has elapsed on the server
     * @param received The time that the client last received an update
     */
-   public GlobalJobProgress(String name, int units, int max, 
+   public LocalJobProgress(String name, int units, int max, 
                             int elapsed, int received)
    {
       name_ = name;
@@ -33,6 +33,20 @@ public class GlobalJobProgress
       max_ = max;
       elapsed_ = elapsed;
       received_ = received;
+   }
+   
+   /**
+    * Summarize (copy) progress for a single job
+    * 
+    * @param job The job to summarize.
+    */
+   public LocalJobProgress(Job job)
+   {
+      name_ = job.name;
+      units_ = job.progress;
+      max_ = job.max;
+      elapsed_ = job.elapsed;
+      received_ = job.received;
    }
    
    public int units()

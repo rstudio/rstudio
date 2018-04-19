@@ -46,7 +46,7 @@ public class JobManagerTests extends GWTTestCase
       }};
       state.addJob(job1);
       
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
 
       Assert.assertEquals(20, progress.elapsed());
       Assert.assertEquals(30, progress.received());
@@ -85,7 +85,7 @@ public class JobManagerTests extends GWTTestCase
          state = JobConstants.STATE_RUNNING;
       }};
       state.addJob(job2);
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
       
       // total progress units = 20, total completed = 14
       Assert.assertEquals(70, progress.percent(), 0.01);
@@ -127,7 +127,7 @@ public class JobManagerTests extends GWTTestCase
          state = JobConstants.STATE_RUNNING;
       }};
       state.addJob(job2);
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
       
       // only the first job's progress should be considered
       Assert.assertEquals(20, progress.percent(), 0.01);
@@ -187,7 +187,7 @@ public class JobManagerTests extends GWTTestCase
          state = JobConstants.STATE_SUCCEEDED;
       }};
       state.addJob(job3);
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
       
       // Two completed jobs, one at 40% = 240 / 300 = 80%
       Assert.assertEquals(80, progress.percent(), 0.01);
@@ -289,7 +289,7 @@ public class JobManagerTests extends GWTTestCase
       }};
       state.addJob(jobE);
 
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
       
       // Elapsed time is from start of B (30) to start of D (40) plus D's
       // ongoing elapsed time (60)
@@ -337,7 +337,7 @@ public class JobManagerTests extends GWTTestCase
       }};
       state.addJob(jobB);
 
-      GlobalJobProgress progress = JobManager.summarizeProgress(state);
+      LocalJobProgress progress = JobManager.summarizeProgress(state);
 
       // Currently on tick 50; that means that elapsed time should be 40 (Job A
       // was started at tick 10)

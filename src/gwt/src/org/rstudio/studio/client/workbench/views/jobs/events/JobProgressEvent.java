@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,7 +32,7 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
       progress_ = null;
    }
    
-   public JobProgressEvent(GlobalJobProgress progress)
+   public JobProgressEvent(LocalJobProgress progress)
    {
       progress_ = progress;
    }
@@ -42,7 +42,7 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
       return progress_ != null;
    }
    
-   public GlobalJobProgress progress()
+   public LocalJobProgress progress()
    {
       return progress_;
    }
@@ -59,7 +59,7 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
       handler.onJobProgress(this);
    }
    
-   private final GlobalJobProgress progress_;
+   private final LocalJobProgress progress_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

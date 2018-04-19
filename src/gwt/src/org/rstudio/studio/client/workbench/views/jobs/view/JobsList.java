@@ -86,6 +86,13 @@ public class JobsList extends Composite
       }
    }
    
+   public Job getJob(String id)
+   {
+      if (jobs_.containsKey(id))
+         return jobs_.get(id).getJob();
+      return null;
+   }
+   
    private void updateVisibility()
    {
       scroll_.setVisible(jobs_.size() > 0);

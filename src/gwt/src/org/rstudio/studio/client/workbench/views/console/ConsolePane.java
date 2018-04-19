@@ -37,7 +37,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
-import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
@@ -225,7 +225,7 @@ public class ConsolePane extends WorkbenchPane
    }
    
    @Override
-   public void showProgress(GlobalJobProgress progress)
+   public void showProgress(LocalJobProgress progress)
    {
       // show progress if we're in progress mode
       if (progress_ != null)

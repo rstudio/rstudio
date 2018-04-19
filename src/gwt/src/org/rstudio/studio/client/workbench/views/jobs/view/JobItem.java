@@ -117,6 +117,11 @@ public class JobItem extends Composite
       syncTime((int)((new Date()).getTime() * 0.001));
    }
    
+   public Job getJob()
+   {
+      return job_;
+   }
+   
    public void syncTime(int timestamp)
    {
       // if job is not running, we have nothing to do

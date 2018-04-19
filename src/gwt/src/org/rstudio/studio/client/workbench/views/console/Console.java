@@ -37,7 +37,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
-import org.rstudio.studio.client.workbench.views.jobs.model.GlobalJobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
 public class Console
@@ -55,7 +55,7 @@ public class Console
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
-      void showProgress(GlobalJobProgress progress);
+      void showProgress(LocalJobProgress progress);
    }
    
    @Inject
