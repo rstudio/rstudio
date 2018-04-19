@@ -487,7 +487,7 @@ test_that("parseArrayElement works correctly", {
       "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.")
    expect_error(
       .rs.parseArrayElement(textArrayEl, "settings"),
-      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"text\".")
+      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.")
    expect_error(
       .rs.parseArrayElement(badArrayEl, "settings"),
       "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"bad\".")
@@ -606,4 +606,75 @@ test_that("parseTmTheme handles correct input", {
    
    # Test cases (no error)
    expect_equal(.rs.parseTmTheme(file.path(inputFileLocation, "Tomorrow.tmTheme")), expected)
+})
+
+test_that("parseTmTheme handles incorrect input", {
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "EmptyBody.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "EmptyDictEl.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. \"dict\" element cannot be empty.")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildAfter.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildBefore.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildMid.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"otherChild\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
+      sprintf(
+         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed1.tmTheme at line 14: error parsing attribute name\n", 
+         inputFileLocation))
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
+      sprintf(
+         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed2.tmTheme at line 223: Opening and ending tag mismatch: string line 223 and notstring\n", 
+         inputFileLocation))
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
+      sprintf(
+         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed3.tmTheme at line 9: StartTag: invalid element name\n", 
+         inputFileLocation))
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
+      sprintf(
+         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed4.tmTheme at line 2: StartTag: invalid element name\n", 
+         inputFileLocation))
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyEnd.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"sRGB\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyMid.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"keyword.operator, constant.other.color\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyStart.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"http://chriskempson.com\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueEnd.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"colorSpaceName\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueMid.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"settings\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueStart.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"comment\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "NoBody.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongArrayKey.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagEnd.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", \"array\", or \"dict\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagMid.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"something\". Expected \"key\", \"string\", \"array\", or \"dict\".")
+   expect_error(
+      .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagStart.tmTheme")),
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"a-tag\". Expected \"key\", \"string\", \"array\", or \"dict\".")
 })
