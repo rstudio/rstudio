@@ -266,7 +266,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
 # define core include dirs
-set(CORE_INCLUDE_DIRS ${CORE_SOURCE_DIR}/include)
+set(CORE_INCLUDE_DIRS
+    ${CORE_SOURCE_DIR}/include
+    ${SERVER_CORE_SOURCE_DIR}/include
+)
 
 # include addins
 if(RSTUDIO_ADDINS_PATH)
@@ -328,6 +331,7 @@ include_directories(
    include
    ${LIBR_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${SERVER_CORE_INCLUDE_DIRS}
    ${EXT_SOURCE_DIR}
    ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
@@ -391,6 +395,12 @@ target_link_libraries(rsession
    ${CMAKE_DL_LIBS}
    ${LIBR_LIBRARIES}
 )
+
+if (RSTUDIO_SERVER)
+   target_link_libraries(rsession
+      rstudio-server-core
+   )
+endif()
 
 # configure and install r-ldpaths script
 if(UNIX)

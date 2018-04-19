@@ -23,7 +23,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>
-#include <core/system/Pam.hpp>
+#include <server_core/system/Pam.hpp>
 
 using namespace rstudio;
 using namespace rstudio::core;

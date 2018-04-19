@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2018 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,35 +13,33 @@
 #
 #
 
-project (MONITOR)
+project (SERVER_CORE)
 
 # include files
-file(GLOB_RECURSE MONITOR_HEADER_FILES "*.h*")
+file(GLOB_RECURSE SERVER_CORE_HEADER_FILES "*.h*")
 
 # source files
-set (MONITOR_SOURCE_FILES
-   audit/ConsoleAction.cpp
-   events/Event.cpp
-   metrics/Metric.cpp
-   MonitorClient.cpp
-   MonitorClientOverlay.cpp
+set (SERVER_CORE_SOURCE_FILES
+   http/SecureCookie.cpp
+   SecureKeyFile.cpp
+   system/Pam.cpp
 )
 
+# define server core include dir
+set(SERVER_CORE_INCLUDE_DIRS ${SERVER_CORE_INCLUDE_DIRS} include)
 
-# include directories
+# additional include dirs
 include_directories(
-   include
+   ${SERVER_CORE_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${CORE_SOURCE_DIR}/include
-   ${SERVER_CORE_SOURCE_DIR}/include
 )
 
-# define library
-add_library(rstudio-monitor STATIC ${MONITOR_SOURCE_FILES}
-                                   ${MONITOR_HEADER_FILES})
+# define shared library
+add_library(rstudio-server-core STATIC ${SERVER_CORE_SOURCE_FILES} ${SERVER_CORE_HEADER_FILES})
 
 # link dependencies
-target_link_libraries(rstudio-monitor
+target_link_libraries(
+   rstudio-server-core
    rstudio-core
 )
-
