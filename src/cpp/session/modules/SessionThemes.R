@@ -135,6 +135,21 @@
    (0.21 * rgb[[1]] + 0.72 * rgb[[2]] + 0.07 * rgb[[3]]) / 255
 })
 
+# Counts the number of children of an XML element, not count "text".
+#
+# @param element     The element for which to count children.
+#
+# Returns the number of children of an element
+.rs.addFunction("countXmlChildren", function(element) {
+   count <- XML::xmlSize(element)
+   if (!is.null(XML::xmlChildren(element)$text))
+   {
+      count <- count - 1
+   }
+   
+   count
+})
+
 # Parses a "key" element from a tmtheme document and raises appropriate error.
 #
 # @param element     The element to parse.
@@ -194,7 +209,7 @@
          sprintf("%s Unable to find a key for the current \"dict\" element.", parseError),
          call. = FALSE)
    }
-   if (XML::xmlSize(dictElement) < 1)
+   if (.rs.countXmlChildren(dictElement) < 1)
    {
       stop(
          sprintf("%s \"dict\" element cannot be empty.", parseError),
@@ -208,6 +223,15 @@
       elName <- XML::xmlName(element)
       if (elName == "key")
       {
+         if (!is.null(key))
+         {
+            stop(
+               sprintf(
+                  "%s Unable to find a value for the key \"%s\".",
+                  parseError,
+                  key),
+               call. = FALSE)
+         }
          key <- .rs.parseKeyElement(element)
       }
       else if (elName == "string")
@@ -238,6 +262,16 @@
       }
    }
    
+   if (!is.null(key))
+   {
+      stop(
+         sprintf(
+            "%s Unable to find a value for the key \"%s\".",
+            parseError,
+            key),
+         call. = FALSE)
+   }
+   
    values
 })
 
@@ -249,7 +283,7 @@
 # Returns a list() of named settings.
 .rs.addFunction("parseArrayElement", function(arrayElement, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   if (XML::xmlSize(arrayElement) < 1)
+   if (.rs.countXmlChildren(arrayElement) < 1)
    {
       stop(
          sprintf("%s \"array\" element cannot be empty.", parseError),
@@ -312,19 +346,21 @@
                   line,
                   msg),
                call. = FALSE)
-   }))
-
-   # Skip the plist (root) and first level of dict.
-   if (XML::xmlSize(tmThemeDoc) != 1)
+         }))
+   
+   # Check for the right number of children
+   childrenCount <- .rs.countXmlChildren(tmThemeDoc)
+   if (childrenCount != 1)
    {
       stop(
          sprintf(
-            "%s Expected 1 child of the root, found: %d",
+            "%s Expected 1 non-text child of the root, found: %d",
             parseError,
-            XML::xmlSize(tmThemeDoc)),
+            childrenCount),
          call. = FALSE)
    }
-
+   
+   # Skip the plist (root) and first level of dict.
    # Intentionally empty key here
    .rs.parseDictElement(tmThemeDoc[[1]], "")
 })
@@ -472,9 +508,10 @@
 #
 # @param file     The rstheme file to add.
 # @param apply    Whether to immediately apply the newly added theme.
+# @param force    Whether to force the operation, even if an overwrite will occur.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", function(file, apply) {
+.rs.addFunction("addTheme", function(file, apply, force) {
    # TODO: add the theme and get the name.
    name <- ""
    
