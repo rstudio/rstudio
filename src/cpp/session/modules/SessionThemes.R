@@ -161,7 +161,6 @@
 # Returns the text value of the element.
 .rs.addFunction("parseStringElement", function(element, keyName)
 {
-   require("XML")
    parseError <- "Unable to convert the tmtheme to an rstheme."
    value <- XML::xmlValue(element)
    
@@ -220,13 +219,19 @@
       }
       else if (elName == "dict")
       {
-         values[[key]] <- .rs.parseDictElement(element, keyName)
+         values[[key]] <- .rs.parseDictElement(element, key)
+         key <- NULL
+      }
+      else if (elName == "array")
+      {
+         values[[key]] <- .rs.parseArrayElement(element, key)
+         key <- NULL
       }
       else
       {
          stop(
             sprintf(
-               "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", or \"dict\".",
+               "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
                parseError,
                elName),
             call. = FALSE)
@@ -238,26 +243,50 @@
 
 # Recursively parses the list of settings from a tmtheme document.
 #
-#@param dictElements    The <dict> or list of <dict> elements that compose the settings.
+# @param arrayElement      The <array> element to parse.
+# @param keyName           The name of the key for this array element.
 #
 # Returns a list() of named settings.
-.rs.addFunction("parseArrayElement", function(arrayElements) {
-   require("XML")
+.rs.addFunction("parseArrayElement", function(arrayElement, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
+   if (XML::xmlSize(arrayElement) < 1)
+   {
+      stop(
+         sprintf("%s \"array\" element cannot be empty.", parseError),
+         call. = FALSE)
+   }
+   
+   if (is.null(keyName))
+   {
+      stop(
+         sprintf("%s Unable to find a key for array value.", parseError),
+         call. = FALSE)
+   }
+   if (keyName != "settings")
+   {
+      stop(
+         sprintf(
+            "%s Incorrect key for array element. Expected: \"settings\"; Actual: \"%s\".",
+            parseError,
+            keyName),
+         call. = FALSE)
+   }
+   
    values <- list()
-   index < 1
-   for (element in arrayElements)
+   index <- 1
+   for (element in XML::xmlChildren(arrayElement))
    {
       elName <- XML::xmlName(element)
       if (elName != "dict")
       {
          stop(
-            sprintf("%s Expecting <dict> element; found <%s>.", parseError, elName),
+            sprintf("%s Expecting \"dict\" element; found \"%s\".", parseError, elName),
             call. = FALSE)
       }
       
       # Intentionally empty key here
       values[[index]] <- .rs.parseDictElement(element, "")
+      index <- index + 1
    }
    
    values
@@ -269,7 +298,6 @@
 # 
 # Returns a list with named values.
 .rs.addFunction("parseTmTheme", function(file) {
-   require("XML")
    parseError <- "Unable to convert the tmtheme to an rstheme."
    
    tmThemeDoc <- XML::xmlRoot(
@@ -285,55 +313,20 @@
                   msg),
                call. = FALSE)
    }))
-   
+
    # Skip the plist (root) and first level of dict.
-   if (xml::xmlSize(tmThemeDoc) != 1)
+   if (XML::xmlSize(tmThemeDoc) != 1)
    {
       stop(
          sprintf(
             "%s Expected 1 child of the root, found: %d",
             parseError,
-            xmlSize(xmlDoc)),
+            XML::xmlSize(tmThemeDoc)),
          call. = FALSE)
    }
-   
-   theme <- list()
-   key <- NULL
-   for (element in XML::xmlChildren(tmThemeDoc[[1]]))
-   {
-      elName <- XML::xmlName(element)
-      if (elName == "key")
-      {
-         key <- .rs.parseKeyElement(element)
-      }
-      else if (elName == "string")
-      {
-         # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
-         # using the same key twice.
-         theme[[key]] <- .rs.parseStringElement(element, key)
-         key <- NULL
-      }
-      else if (elName == "array")
-      {
-         if (is.null(key))
-         {
-            stop(
-               sprintf("%s Unable to find a key for array value.", parseError, value),
-               call. = FALSE)
-         }
-         if (key != "settings")
-         {
-            stop(
-               sprintf(
-                  "%s Incorrect key for array element. Expected: \"settings\"; Actual: \"%s\".",
-                  parseError,
-                  key),
-               call. = FALSE)
-         }
-         
-         theme[[key]] <- .rs.parseSettings(xmlChildren(element))
-      }
-   }
+
+   # Intentionally empty key here
+   .rs.parseDictElement(tmThemeDoc[[1]], "")
 })
 
 # Converts a theme from a tmtheme to an Ace file.

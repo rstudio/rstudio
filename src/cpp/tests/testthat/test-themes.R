@@ -15,17 +15,19 @@
 
 context("themes")
 
+inputFileLocation <- file.path(path.expand("~"), "GitRepos", "rstudio", "src", "cpp", "tests", "testthat", "tmthemes")
+
 # Test getRgbColor =================================================================================
 test_that("rgb coversion from hex format works", {
    # All lowercase
    expect_equal(.rs.getRgbColor("#ffffff"), c(255, 255, 255))
-   
+
    # All digits
    expect_equal(.rs.getRgbColor("#000000"), c(0, 0, 0))
-   
+
    # Uppercase & digits
    expect_equal(.rs.getRgbColor("#DD8EBD"), c(221, 142, 189))
-   
+
    # Mix case & digits
    expect_equal(.rs.getRgbColor("#569cD6"), c(86, 156, 214))
 })
@@ -40,7 +42,7 @@ test_that("rgb conversion from rgba string format works", {
    # 'a' value shouldn't impact outcome.
    expect_equal(.rs.getRgbColor("rgba(86, 156, 214, 10)"), c(86, 156, 214))
    expect_equal(.rs.getRgbColor("rgba(86,156,214,90)"), c(86, 156, 214))
-   
+
    expect_equal(.rs.getRgbColor("rgba(0, 0, 0, 55)"), c(0, 0, 0))
    expect_equal(.rs.getRgbColor("rgba(255, 255, 255, 72)"), c(255, 255, 255))
 })
@@ -115,7 +117,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       .rs.getRgbColor("rgba(-86, -156, -214, 39)"),
       "invalid color supplied: rgba(-86, -156, -214, 39). RGB value cannot be negative",
       fixed = TRUE)
-   
+
    # RGB value > 255
    expect_error(
       .rs.getRgbColor("rgba(300, 156, 214, 100)"),
@@ -137,7 +139,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       "invalid color supplied: rgba(300, 455, 1024, 60). RGB value cannot be greater than 255",
       fixed = TRUE
    )
-   
+
    # Negative & too large values
    expect_error(
       .rs.getRgbColor("rgba(-300, 455, 1024, 55)"),
@@ -149,7 +151,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       "invalid color supplied: rgba(300, -455, 1024, 55). RGB value cannot be greater than 255",
       fixed = TRUE
    )
-   
+
    # Non-integer RGB values
    expect_error(
       .rs.getRgbColor("rgb(30,10f,5)"),
@@ -159,7 +161,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       .rs.getRgbColor("rgb(2.1,10,5)"),
       "invalid color supplied: rgb(2.1,10,5). One or more RGB values could not be converted to an integer",
       fixed = TRUE)
-   
+
    # Non-integer RGBA values
    expect_error(
       .rs.getRgbColor("rgba(30,10f,5,67)"),
@@ -169,7 +171,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       .rs.getRgbColor("rgba(2.1,10,5,45)"),
       "invalid color supplied: rgba(2.1,10,5,45). One or more RGB values could not be converted to an integer",
       fixed = TRUE)
-   
+
    # Non-hex hex represntation values
    expect_error(
       .rs.getRgbColor("#afga01"),
@@ -191,7 +193,7 @@ test_that("rgb conversion handles invalid values correctly", {
       .rs.getRgbColor("#FfFfFf0"),
       "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: #FfFfFf0",
       fixed = TRUE)
-   
+
    # Too few values in rgb/rgba representation
    expect_error(
       .rs.getRgbColor("rgb(1, 10)"), 
@@ -209,7 +211,7 @@ test_that("rgb conversion handles invalid values correctly", {
       .rs.getRgbColor("rgba(255)"), 
       "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: rgba(255)",
       fixed = TRUE)
-   
+
    # Completely wrong format
    expect_error(
       .rs.getRgbColor("86, 154, 214"),
@@ -245,13 +247,13 @@ test_that("getLuma works correctly", {
 # Test parseKeyElement =============================================================================
 test_that("parseKeyElement works correctly", {
    library("XML")
-   
+
    # Setup objects for the test cases
    settingsNode <- XML::newXMLNode("key", "settings")
    valueNode <- XML::newXMLNode("key", "VALUE")
    emptyNode <- XML::newXMLNode("key", "")
    noTextNode <- XML::newXMLNode("key")
-   
+
    # Test cases
    expect_equal(.rs.parseKeyElement(settingsNode), "settings")
    expect_equal(.rs.parseKeyElement(valueNode), "VALUE")
@@ -266,20 +268,20 @@ test_that("parseKeyElement works correctly", {
 # Test parseStringElement ==========================================================================
 test_that("parseStringElement works correctly", {
    library("XML")
-   
+
    # Setup objects for the test cases
    nameNode <- XML::newXMLNode("string", "Tomorrow")
    colorNode <- XML::newXMLNode("string", "#8e908c")
    emptyNode <- XML::newXMLNode("string", "")
    noTextNode <- XML::newXMLNode("string")
-   
+
    # Test cases (no errors)
    expect_equal(.rs.parseStringElement(nameNode, "name"), "Tomorrow")
    expect_equal(.rs.parseStringElement(colorNode, "foreground"), "#8e908c")
    expect_equal(.rs.parseStringElement(nameNode, ""), "Tomorrow")
    expect_equal(.rs.parseStringElement(emptyNode, "scope"), "")
    expect_equal(.rs.parseStringElement(emptyNode, "settings"), "")
-   
+
    # Test cases (errors)
    expect_error(
       .rs.parseStringElement(colorNode, NULL),
@@ -289,14 +291,14 @@ test_that("parseStringElement works correctly", {
 # Test parseDictElement ============================================================================
 test_that("parseDictElement works correctly", {
    library("XML")
-   
+
    # Setup input objects for the test cases
    simpleDictEl <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "fontStyle", parent = simpleDictEl)
    XML::newXMLNode("string", parent = simpleDictEl)
    XML::newXMLNode("key", "foreground", parent = simpleDictEl)
    XML::newXMLNode("string", "#F5871F", parent = simpleDictEl)
-   
+
    simpleDictEl2 <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "background", parent = simpleDictEl2)
    XML::newXMLNode("string", "#FFFFFF", parent = simpleDictEl2)
@@ -310,33 +312,33 @@ test_that("parseDictElement works correctly", {
    XML::newXMLNode("string", "#EFEFEF", parent = simpleDictEl2)
    XML::newXMLNode("key", "selection", parent = simpleDictEl2)
    XML::newXMLNode("string", "#D6D6D6", parent = simpleDictEl2)
-   
+
    badDictEl <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "caret", parent = badDictEl)
    XML::newXMLNode("string", "#AEAFAD", parent = badDictEl)
    XML::newXMLNode("string", "#FFFFFF", parent = badDictEl)
-   
+
    badDictEl2 <- XML::newXMLNode("dict")
    XML::newXMLNode("string", "#4D4D4C", parent = badDictEl2)
    XML::newXMLNode("key", "caret", parent = badDictEl2)
    XML::newXMLNode("string", "#AEAFAD", parent = badDictEl2)
-   
+
    badDictEl3 <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "caret", parent = badDictEl3)
    XML::newXMLNode("string", "#AEAFAD", parent = badDictEl3)
    XML::newXMLNode("other", "#000000", parent = badDictEl3)
-   
+
    badDictEl4 <- XML::newXMLNode("dict")
    XML::newXMLNode("bad", "#1D1D1D", parent = badDictEl4)
    XML::newXMLNode("key", "caret", parent = badDictEl4)
    XML::newXMLNode("string", "#AEAFAD", parent = badDictEl4)
-   
+
    emptyDictEl <- XML::newXMLNode("dict")
-   
+
    recursiveDictEl <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "settings", parent = recursiveDictEl)
    XML::addChildren(recursiveDictEl, kids = list(simpleDictEl2))
-   
+
    recursiveDictEl2 <- XML::newXMLNode("dict")
    XML::newXMLNode("key", "name", parent = recursiveDictEl2)
    XML::newXMLNode(
@@ -350,12 +352,12 @@ test_that("parseDictElement works correctly", {
       parent = recursiveDictEl2)
    XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
    XML::addChildren(recursiveDictEl2, kids = list(simpleDictEl))
-   
+
    # Setup expected objects for the test cases
    simpleExpect <- list()
    simpleExpect[["fontStyle"]] <- ""
    simpleExpect[["foreground"]] <- "#F5871F"
-   
+
    simpleExpect2 <- list()
    simpleExpect2[["background"]] <- "#FFFFFF"
    simpleExpect2[["caret"]] <-"#AEAFAD"
@@ -363,21 +365,21 @@ test_that("parseDictElement works correctly", {
    simpleExpect2[["invisibles"]] <- "#D1D1D1"
    simpleExpect2[["lineHighlight"]] <-"#EFEFEF"
    simpleExpect2[["selection"]] <- "#D6D6D6"
-   
+
    recursiveExpect <- list()
    recursiveExpect[["settings"]] <- simpleExpect2
-   
+
    recursiveExpect2 <- list()
    recursiveExpect2[["name"]] <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
    recursiveExpect2[["scope"]] <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
    recursiveExpect2[["settings"]] <- simpleExpect
-   
+
    # Test Cases (no error)
    expect_equal(.rs.parseDictElement(simpleDictEl, "settings"), simpleExpect)
    expect_equal(.rs.parseDictElement(simpleDictEl2, "settings"), simpleExpect2)
    expect_equal(.rs.parseDictElement(recursiveDictEl, ""), recursiveExpect)
    expect_equal(.rs.parseDictElement(recursiveDictEl2, "someName"), recursiveExpect2)
-   
+
    # Test Cases (errors)
    expect_error(
       .rs.parseDictElement(simpleDictEl, NULL),
@@ -390,11 +392,218 @@ test_that("parseDictElement works correctly", {
       "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"#4D4D4C\".")
    expect_error(
       .rs.parseDictElement(badDictEl3, "settings"),
-      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", or \"dict\".")
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", \"array\", or \"dict\".")
    expect_error(
       .rs.parseDictElement(badDictEl4, "settings"),
-      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"bad\". Expected \"key\", \"string\", or \"dict\".")
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"bad\". Expected \"key\", \"string\", \"array\", or \"dict\".")
    expect_error(
       .rs.parseDictElement(emptyDictEl, "settings"),
       "Unable to convert the tmtheme to an rstheme. \"dict\" element cannot be empty.")
+})
+
+# Test parseArrayElement ===========================================================================
+test_that("parseArrayElement works correctly", {
+
+   # Setup test case input objects
+   arrayEl <- XML::newXMLNode("array")
+   emptyArrayEl <- XML::newXMLNode("array")
+   textArrayEl <- XML::newXMLNode("array", "some text")
+   badArrayEl <- XML::newXMLNode("array")
+   badArrayEl2 <- XML::newXMLNode("array")
+
+   # Setup standard expected array input
+   recursiveDictEl <- XML::newXMLNode("dict", parent = arrayEl)
+   XML::newXMLNode("key", "settings", parent = recursiveDictEl)
+
+   recursiveDictEl2 <- XML::newXMLNode("dict", parent = arrayEl)
+   XML::newXMLNode("key", "name", parent = recursiveDictEl2)
+   XML::newXMLNode(
+      "string",
+      "Number, Constant, Function Argument, Tag Attribute, Embedded",
+      parent = recursiveDictEl2)
+   XML::newXMLNode("key", "scope", parent = recursiveDictEl2)
+   XML::newXMLNode(
+      "string",
+      "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit",
+      parent = recursiveDictEl2)
+   XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
+
+   simpleDictEl <- XML::newXMLNode("dict", parent = recursiveDictEl2)
+   XML::newXMLNode("key", "fontStyle", parent = simpleDictEl)
+   XML::newXMLNode("string", parent = simpleDictEl)
+   XML::newXMLNode("key", "foreground", parent = simpleDictEl)
+   XML::newXMLNode("string", "#F5871F", parent = simpleDictEl)
+
+   simpleDictEl2 <- XML::newXMLNode("dict", parent = recursiveDictEl)
+   XML::newXMLNode("key", "background", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#FFFFFF", parent = simpleDictEl2)
+   XML::newXMLNode("key", "caret", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#AEAFAD", parent = simpleDictEl2)
+   XML::newXMLNode("key", "foreground", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#4D4D4C", parent = simpleDictEl2)
+   XML::newXMLNode("key", "invisibles", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#D1D1D1", parent = simpleDictEl2)
+   XML::newXMLNode("key", "lineHighlight", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#EFEFEF", parent = simpleDictEl2)
+   XML::newXMLNode("key", "selection", parent = simpleDictEl2)
+   XML::newXMLNode("string", "#D6D6D6", parent = simpleDictEl2)
+
+   # Setup error array input
+   XML::addChildren(badArrayEl, XML::xmlClone(simpleDictEl))
+   XML::newXMLNode("bad", parent = badArrayEl)
+
+   XML::newXMLNode("notGood", parent = badArrayEl2)
+   XML::addChildren(badArrayEl2, XML::xmlClone(simpleDictEl))
+
+   # Setup expected output
+   arrayExpected <- list()
+   arrayExpected[[1]] <- list()
+   arrayExpected[[1]][["settings"]] <- list()
+   arrayExpected[[1]][["settings"]][["background"]] <- "#FFFFFF"
+   arrayExpected[[1]][["settings"]][["caret"]] <- "#AEAFAD"
+   arrayExpected[[1]][["settings"]][["foreground"]] <- "#4D4D4C"
+   arrayExpected[[1]][["settings"]][["invisibles"]] <- "#D1D1D1"
+   arrayExpected[[1]][["settings"]][["lineHighlight"]] <- "#EFEFEF"
+   arrayExpected[[1]][["settings"]][["selection"]] <- "#D6D6D6"
+   arrayExpected[[2]] <- list()
+   arrayExpected[[2]][["name"]] <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
+   arrayExpected[[2]][["scope"]] <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
+   arrayExpected[[2]][["settings"]] <- list()
+   arrayExpected[[2]][["settings"]][["fontStyle"]] <- ""
+   arrayExpected[[2]][["settings"]][["foreground"]] <- "#F5871F"
+
+   # Test cases (no error)
+   expect_equal(.rs.parseArrayElement(arrayEl, "settings"), arrayExpected)
+
+   # Test cases (error)
+   expect_error(
+      .rs.parseArrayElement(arrayEl, NULL),
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for array value.")
+   expect_error(
+      .rs.parseArrayElement(arrayEl, "notSettings"),
+      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".")
+   expect_error(
+      .rs.parseArrayElement(emptyArrayEl, "settings"),
+      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.")
+   expect_error(
+      .rs.parseArrayElement(textArrayEl, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"text\".")
+   expect_error(
+      .rs.parseArrayElement(badArrayEl, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"bad\".")
+   expect_error(
+      .rs.parseArrayElement(badArrayEl2, "settings"),
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"notGood\".")
+})
+
+# Test parseTmTheme ================================================================================
+test_that("parseTmTheme handles correct input", {
+
+   # Setup expected output
+   expected <- list()
+   expected$comment <- "http://chriskempson.com"
+   expected$name <- "Tomorrow"
+   expected$settings <- list()
+
+   expected$settings[[1]] <- list()
+   expected$settings[[1]]$settings <- list(
+      "background" = "#FFFFFF",
+      "caret" ="#AEAFAD",
+      "foreground" = "#4D4D4C",
+      "invisibles" = "#D1D1D1",
+      "lineHighlight" = "#EFEFEF",
+      "selection" = "#D6D6D6")
+
+   expected$settings[[2]] <- list()
+   expected$settings[[2]]$name <- "Comment"
+   expected$settings[[2]]$scope <- "comment"
+   expected$settings[[2]]$settings <- list("foreground" = "#8E908C")
+
+   expected$settings[[3]] <- list()
+   expected$settings[[3]]$name <- "Foreground"
+   expected$settings[[3]]$scope <- "keyword.operator.class, constant.other, source.php.embedded.line"
+   expected$settings[[3]]$settings <- list()
+   expected$settings[[3]]$settings$fontStyle <- ""
+   expected$settings[[3]]$settings$foreground <- "#666969"
+
+   expected$settings[[4]] <- list()
+   expected$settings[[4]]$name <- "Variable, String Link, Regular Expression, Tag Name, GitGutter deleted"
+   expected$settings[[4]]$scope <- "variable, support.other.variable, string.other.link, string.regexp, entity.name.tag, entity.other.attribute-name, meta.tag, declaration.tag, markup.deleted.git_gutter"
+   expected$settings[[4]]$settings <- list("foreground" = "#C82829")
+
+   expected$settings[[5]] <- list()
+   expected$settings[[5]]$name <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
+   expected$settings[[5]]$scope <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
+   expected$settings[[5]]$settings <- list("fontStyle" = "", "foreground" = "#F5871F")
+   
+   expected$settings[[6]] <- list()
+   expected$settings[[6]]$name <- "Class, Support"
+   expected$settings[[6]]$scope <- "entity.name.class, entity.name.type.class, support.type, support.class"
+   expected$settings[[6]]$settings <- list("fontStyle" = "", "foreground" = "#C99E00")
+   
+   expected$settings[[7]] <- list()
+   expected$settings[[7]]$name <- "String, Symbols, Inherited Class, Markup Heading, GitGutter inserted"
+   expected$settings[[7]]$scope <- "string, constant.other.symbol, entity.other.inherited-class, entity.name.filename, markup.heading, markup.inserted.git_gutter"
+   expected$settings[[7]]$settings <- list("fontStyle" = "", "foreground" = "#718C00")
+   
+   expected$settings[[8]] <- list()
+   expected$settings[[8]]$name <- "Operator, Misc"
+   expected$settings[[8]]$scope <- "keyword.operator, constant.other.color"
+   expected$settings[[8]]$settings <- list("foreground" = "#3E999F")
+   
+   expected$settings[[9]] <- list()
+   expected$settings[[9]]$name <- "Function, Special Method, Block Level, GitGutter changed"
+   expected$settings[[9]]$scope <- "entity.name.function, meta.function-call, support.function, keyword.other.special-method, meta.block-level, markup.changed.git_gutter"
+   expected$settings[[9]]$settings <- list("fontStyle" = "", "foreground" = "#4271AE")
+   
+   expected$settings[[10]] <- list()
+   expected$settings[[10]]$name <- "Keyword, Storage"
+   expected$settings[[10]]$scope <- "keyword, storage, storage.type"
+   expected$settings[[10]]$settings <- list("fontStyle" = "", "foreground" = "#8959A8")
+   
+   expected$settings[[11]] <- list()
+   expected$settings[[11]]$name <- "Invalid"
+   expected$settings[[11]]$scope <- "invalid"
+   expected$settings[[11]]$settings <- list("background" = "#C82829", "fontStyle" = "", "foreground" = "#FFFFFF")
+   
+   expected$settings[[12]] <- list()
+   expected$settings[[12]]$name <- "Separator"
+   expected$settings[[12]]$scope <- "meta.separator"
+   expected$settings[[12]]$settings <- list("background" = "#4271AE", "foreground" = "#FFFFFF")
+   
+   expected$settings[[13]] <- list()
+   expected$settings[[13]]$name <- "Deprecated"
+   expected$settings[[13]]$scope <- "invalid.deprecated"
+   expected$settings[[13]]$settings <- list("background" = "#8959A8", "fontStyle" = "", "foreground" = "#FFFFFF")
+   
+   expected$settings[[14]] <- list()
+   expected$settings[[14]]$name <- "Diff foreground"
+   expected$settings[[14]]$scope <- "markup.inserted.diff, markup.deleted.diff, meta.diff.header.to-file, meta.diff.header.from-file"
+   expected$settings[[14]]$settings <- list("foreground" = "#FFFFFF")
+   
+   expected$settings[[15]] <- list()
+   expected$settings[[15]]$name <- "Diff insertion"
+   expected$settings[[15]]$scope <- "markup.inserted.diff, meta.diff.header.to-file"
+   expected$settings[[15]]$settings <- list("background" = "#718c00")
+   
+   expected$settings[[16]] <- list()
+   expected$settings[[16]]$name <- "Diff deletion"
+   expected$settings[[16]]$scope <- "markup.deleted.diff, meta.diff.header.from-file"
+   expected$settings[[16]]$settings <- list("background" = "#c82829")
+   
+   expected$settings[[17]] <- list()
+   expected$settings[[17]]$name <- "Diff header"
+   expected$settings[[17]]$scope <- "meta.diff.header.from-file, meta.diff.header.to-file"
+   expected$settings[[17]]$settings <- list("foreground" = "#FFFFFF", "background" = "#4271ae")
+   
+   expected$settings[[18]] <- list()
+   expected$settings[[18]]$name <- "Diff range"
+   expected$settings[[18]]$scope <- "meta.diff.range"
+   expected$settings[[18]]$settings <- list("fontStyle" = "italic", "foreground" = "#3e999f")
+   
+   expected$uuid <- "82CCD69C-F1B1-4529-B39E-780F91F07604"
+   expected$colorSpaceName <- "sRGB"
+   
+   # Test cases (no error)
+   expect_equal(.rs.parseTmTheme(file.path(inputFileLocation, "Tomorrow.tmTheme")), expected)
 })
