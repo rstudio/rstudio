@@ -29,7 +29,7 @@
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
-#include <core/http/SecureCookie.hpp>
+#include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
