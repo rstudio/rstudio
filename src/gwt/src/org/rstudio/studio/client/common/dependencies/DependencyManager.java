@@ -134,7 +134,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          userAction,
          new Dependency[] {
             Dependency.cranPackage("htmltools", "0.3.6"),
-            Dependency.cranPackage("htmlwidgets", "1.0", true),
+            Dependency.cranPackage("htmlwidgets", "1.2", true),
             Dependency.embeddedPackage("r2d3")
          },
          true,
