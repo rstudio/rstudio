@@ -37,8 +37,8 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
 
-#include <core/http/SecureCookie.hpp>
-#include <core/SecureKeyFile.hpp>
+#include <server_core/http/SecureCookie.hpp>
+#include <server_core/SecureKeyFile.hpp>
 
 namespace rstudio {
 namespace core {

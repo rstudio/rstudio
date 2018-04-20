@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
@@ -294,6 +295,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PackageProvidedExtensions.class).asEagerSingleton();
       bind(JavaScriptEventHistory.class).asEagerSingleton();
       bind(JobManager.class).asEagerSingleton();
+      bind(HtmlMessageListener.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

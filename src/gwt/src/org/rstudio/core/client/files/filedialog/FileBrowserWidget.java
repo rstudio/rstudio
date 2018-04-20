@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.FocusTransitionManager;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -194,6 +195,7 @@ public class FileBrowserWidget extends Composite
       if (initialFilename_ != null)
          filename_.setText(initialFilename_);
       filename_.setStylePrimaryName(styles.filename());
+      filename_.getElement().setId(ElementIds.FILE_DIALOG_NAME_PROMPT);
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
 

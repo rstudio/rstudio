@@ -12,9 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
@@ -30,7 +32,6 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -47,15 +48,18 @@ import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperat
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
-   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events,
-         ViewerServerOperations server, FileTypeRegistry fileTypeRegistry)
+   public ViewerPane(Commands commands,
+                     GlobalDisplay globalDisplay,
+                     EventBus events,
+                     ViewerServerOperations server,
+                     HtmlMessageListener htmlMessageListener)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
       server_ = server;
-      fileTypeRegistry_ = fileTypeRegistry;
+      htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
    }
    
@@ -156,7 +160,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
+      htmlMessageListener_.setUrl(url);
       navigate(url, false);
+
       rmdPreviewParams_ = null;
       if (url == ABOUT_BLANK)
       {
@@ -165,13 +171,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       else 
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
-      }
-
-      if (!initializedMessageListeners_)
-      {
-         activeViewerPane_ = this;
-         initializedMessageListeners_ = true;
-         initializeMessageListeners();
       }
    }
 
@@ -254,6 +253,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       publishButton_.setShowCaption(width > 500);
    }
+   
+   private native static String getOrigin() /*-{
+     return $wnd.location.origin;
+   }-*/;
 
    private void navigate(String url, boolean useRawURL)
    {
@@ -268,6 +271,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
                                                    "viewer_pane", 
                                                    "1");
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "capabilities",
+                                            String.valueOf(1 << Capabilities.OpenFile.ordinal()));
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "host",
+                                            htmlMessageListener_.getOriginDomain());
+         
          frame_.setUrl(viewerUrl);
       }
       else
@@ -284,47 +296,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
    }
-
-   private void openFileFromMessage(final String file,
-                                    final int line,
-                                    final int column)
+   
+   private enum Capabilities
    {
-
-      FilePosition filePosition = FilePosition.create(line, column);
-      CodeNavigationTarget navigationTarget = new CodeNavigationTarget(file, filePosition);
-
-      fileTypeRegistry_.editFile(
-         FileSystemItem.createFile(navigationTarget.getFile()),
-         filePosition);
+      OpenFile
    }
-
-   public static void onOpenFileFromMessage(final String file, int line, int column)
-   {
-      if (activeViewerPane_ != null)
-      {
-         activeViewerPane_.openFileFromMessage(file, line, column);
-      }
-   }
-
-   private native static void initializeMessageListeners() /*-{
-      var handler = $entry(function(e) {
-         if (typeof e.data != 'object')
-            return;
-         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
-            return;
-         if (e.data.message != "openfile")
-            return;
-         if (e.data.source != "r2d3")
-            return;
-            
-         @org.rstudio.studio.client.workbench.views.viewer.ViewerPane::onOpenFileFromMessage(Ljava/lang/String;II)(
-            e.data.file,
-            parseInt(e.data.line),
-            parseInt(e.data.column)
-         );
-      });
-      $wnd.addEventListener("message", handler, true);
-   }-*/;
 
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
@@ -345,5 +321,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private static boolean initializedMessageListeners_;
    private static ViewerPane activeViewerPane_;
-   private final FileTypeRegistry fileTypeRegistry_;
+   
+   private HtmlMessageListener htmlMessageListener_;
 }

@@ -546,7 +546,7 @@ public class FileTypeRegistry
    {
       FileSystemItem fsi = file.cast();
       FilePosition pos = position.cast();
-      editFile(fsi, pos);
+      editFile(fsi, pos, highlightLine);
    }
 
    private final native void exportEditFileCallback()/*-{

@@ -291,6 +291,11 @@ endif()
 # core library
 add_subdirectory(core)
 
+# server core library
+if (RSTUDIO_SERVER)
+   add_subdirectory(server_core)
+endif()
+
 # external libraries
 add_subdirectory(ext)
 
@@ -385,7 +390,6 @@ else()
 
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
-
          add_subdirectory(server)
          configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
          configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)

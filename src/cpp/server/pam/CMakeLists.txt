@@ -30,6 +30,7 @@ set(PAM_SOURCE_FILES
 include_directories(
    ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
+   ${SERVER_CORE_SOURCE_DIR}/include
    ${PAM_INCLUDE_DIR}
 )
 
@@ -47,6 +48,7 @@ endif()
 # set link dependencies
 target_link_libraries(rserver-pam
    rstudio-core
+   rstudio-server-core
    ${PAM_LIBRARIES}
 )
 
