@@ -316,6 +316,13 @@ Error setJobListening(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
+   // currently no jobs can survive a suspend, so let the client know they're all finished
+   for (auto& job: s_jobs)
+   {
+      job.second->cleanup();
+      notifyClient(JobRemoved, job.second);
+   }
+   s_jobs.clear();
 }
 
 void onResume(const Settings& settings)
@@ -331,6 +338,16 @@ void onClientInit()
    for (auto& job: s_jobs)
    {
       job.second->setListening(false);
+   }
+}
+
+void onShutdown(bool terminatedNormally)
+{
+   // clean up all jobs on shutdown; in the future we'll support jobs which outlive the session but
+   // for now any remaining jobs need to be cleaned up
+   for (auto& job: s_jobs)
+   {
+      job.second->cleanup();
    }
 }
 
@@ -355,6 +372,7 @@ core::Error initialize()
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
    module_context::events().onClientInit.connect(onClientInit);
+   module_context::events().onShutdown.connect(onShutdown);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
