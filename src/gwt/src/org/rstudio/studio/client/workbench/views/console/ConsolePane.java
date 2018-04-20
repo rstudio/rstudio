@@ -23,8 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -205,6 +203,8 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void leaveMode(ConsoleMode mode)
    {
+      ConsoleMode prevMode = mode();
+
       // the mode may not be at the top of the stack, and at most one mode of
       // each type may be in the stack, so it's safe to just remove all
       // instances of the mode from the queue
@@ -212,6 +212,16 @@ public class ConsolePane extends WorkbenchPane
       {
          return t == mode;
       });
+      
+      ConsoleMode newMode = mode();
+      
+      // this should not happen, but safely ignore it if it does
+      if (prevMode == newMode)
+         return;
+      
+      // clear progress event when exiting job mode
+      if (prevMode == ConsoleMode.Job)
+         lastProgress_ = null;
       
       // show the new topmost mode in the stack
       syncSecondaryToolbar();
@@ -231,6 +241,7 @@ public class ConsolePane extends WorkbenchPane
       // show progress if we're in progress mode
       if (progress_ != null)
          progress_.showProgress(progress);
+      lastProgress_ = progress;
    }
    
    private void syncSecondaryToolbar()
@@ -288,14 +299,15 @@ public class ConsolePane extends WorkbenchPane
       progress_ = progressProvider_.get();
       secondaryToolbar_.addLeftWidget(progress_.asWidget());
       secondaryToolbar_.setLeftWidgetWidth(progress_.asWidget(), "100%");
-      
-      // TODO: this leaves the secondary toolbar stuck at 100%; we need to clear
-      // it when returning to one of the other toolbar modes
+
+      if (lastProgress_ != null)
+         showProgress(lastProgress_);
    }
 
    private Provider<Shell> consoleProvider_ ;
    private Provider<JobProgressPresenter> progressProvider_;
    JobProgressPresenter progress_;
+   LocalJobProgress lastProgress_;
    private final Commands commands_;
    private Shell shell_;
    private Session session_;
