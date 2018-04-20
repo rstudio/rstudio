@@ -225,10 +225,10 @@ public class JobsPane extends WorkbenchPane
       if (progress_ == null)
       {
          progress_ = new JobProgress();
-         if (current_ != null)
-         {
-            progress_.showProgress(new LocalJobProgress(list_.getJob(current_)));
-         }
+      }
+      if (current_ != null)
+      {
+         progress_.showProgress(new LocalJobProgress(list_.getJob(current_)));
       }
       toolbar_.addLeftWidget(progress_);
    }
