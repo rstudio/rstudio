@@ -639,6 +639,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("enable_text_drag", true);
    }
+   
+   public PrefValue<Boolean> showHiddenFiles()
+   {
+      return bool("show_hidden_files", false);
+   }
 
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;

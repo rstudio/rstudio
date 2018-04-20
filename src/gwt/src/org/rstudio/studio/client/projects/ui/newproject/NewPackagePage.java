@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -197,7 +197,10 @@ public class NewPackagePage extends NewDirectoryPage
             }
             
             // check if this directory is empty
-            server_.listFiles(item, false, new ServerRequestCallback<DirectoryListing>()
+            server_.listFiles(item, 
+                  false, // monitor
+                  false, // show hidden
+                  new ServerRequestCallback<DirectoryListing>()
             {
                @Override
                public void onResponseReceived(DirectoryListing listing)

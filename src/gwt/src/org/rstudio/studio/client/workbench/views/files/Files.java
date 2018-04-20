@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
@@ -138,6 +139,7 @@ public class Files
                 Provider<FilesCopy> pFilesCopy,
                 Provider<FilesUpload> pFilesUpload,
                 Provider<FileExport> pFileExport,
+                Provider<UIPrefs> pPrefs,
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext,
@@ -158,6 +160,7 @@ public class Files
       pFilesCopy_ = pFilesCopy;
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
+      pPrefs_ = pPrefs;
       dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -269,8 +272,14 @@ public class Files
                return null;
          }
       };
+      
+      // register handler for show hidden file state change
+      pPrefs_.get().showHiddenFiles().addValueChangeHandler(show ->
+      {
+         // refresh when pref value changes to show/hide hidden files
+         onRefreshFiles();
+      });
    }
-   
    
 
    public Display getDisplay()
@@ -760,8 +769,11 @@ public class Files
          public void requestData(
                ServerRequestCallback<DirectoryListing> requestCallback)
          {
-            // pass true to enable monitoring for all calls to list_files
-            server_.listFiles(currentPath_, true, requestCallback);
+            
+            server_.listFiles(currentPath_, 
+                  true, // pass true to enable monitoring for all calls to list_files
+                  pPrefs_.get().showHiddenFiles().getValue(), // respect user pref for showing hidden
+                  requestCallback);
          }
       };
 
@@ -779,6 +791,7 @@ public class Files
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
    private final Provider<FileExport> pFileExport_;
+   private final Provider<UIPrefs> pPrefs_;
    private static final String MODULE_FILES = "files-pane";
    private static final String KEY_PATH = "path";
    private static final String KEY_SORT_ORDER = "sortOrder";

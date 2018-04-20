@@ -1,7 +1,7 @@
 /*
  * SessionFiles.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -108,7 +108,7 @@ void onResume(const Settings& settings)
 
       // start monitoriing
       json::Array jsonFiles;
-      s_filesListingMonitor.start(resolvedPath, &jsonFiles);
+      s_filesListingMonitor.start(resolvedPath, false, &jsonFiles);
    }
 
    quotas::checkQuotaStatus();
@@ -197,7 +197,8 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    // get args
    std::string path;
    bool monitor;
-   Error error = json::readParams(request.params, &path, &monitor);
+   bool includeHidden;
+   Error error = json::readParams(request.params, &path, &monitor, &includeHidden);
    if (error)
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
@@ -214,20 +215,20 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
       // install a monitor only if we aren't already covered by the project monitor
       if (!session::projects::projectContext().isMonitoringDirectory(targetPath))
       {
-         error = s_filesListingMonitor.start(targetPath, &jsonFiles);
+         error = s_filesListingMonitor.start(targetPath, includeHidden, &jsonFiles);
          if (error)
             return error;
       }
       else
       {
-         error = FilesListingMonitor::listFiles(targetPath, &jsonFiles);
+         error = FilesListingMonitor::listFiles(targetPath, includeHidden, &jsonFiles);
          if (error)
             return error;
       }
    }
    else
    {
-      error = FilesListingMonitor::listFiles(targetPath, &jsonFiles);
+      error = FilesListingMonitor::listFiles(targetPath, includeHidden, &jsonFiles);
       if (error)
          return error;
    }

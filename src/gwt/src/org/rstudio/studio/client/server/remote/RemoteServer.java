@@ -1314,11 +1314,13 @@ public class RemoteServer implements Server
    public void listFiles(
                   FileSystemItem directory,
                   boolean monitor,
+                  boolean showHidden,
                   ServerRequestCallback<DirectoryListing> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(directory.getPath()));
       paramArray.set(1, JSONBoolean.getInstance(monitor));
+      paramArray.set(2, JSONBoolean.getInstance(showHidden));
       
       sendRequest(RPC_SCOPE, 
                   LIST_FILES, 

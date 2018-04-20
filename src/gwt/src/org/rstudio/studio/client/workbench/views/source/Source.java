@@ -4029,7 +4029,8 @@ public class Source implements InsertSourceHandler,
       
       server_.listFiles(
             activeDir,
-            false,
+            false,  // monitor result
+            false,  // show hidden
             new ServerRequestCallback<DirectoryListing>()
             {
                @Override

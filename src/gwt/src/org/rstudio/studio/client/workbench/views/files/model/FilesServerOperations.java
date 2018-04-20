@@ -38,6 +38,7 @@ public interface FilesServerOperations
    // get a file listing
    void listFiles(FileSystemItem directory,
                   boolean monitor,
+                  boolean showHidden,
                   ServerRequestCallback<DirectoryListing> requestCallback);
 
    void listAllFiles(String path,

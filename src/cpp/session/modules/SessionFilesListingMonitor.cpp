@@ -1,7 +1,7 @@
 /*
  * SessionFilesListingMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,14 +41,24 @@ namespace session {
 namespace modules { 
 namespace files {
 
-Error FilesListingMonitor::start(const FilePath& filePath, json::Array* pJsonFiles)
+// filter for listing files which shows all files (hidden or not)
+bool acceptAllFiles(const FileInfo&)
+{
+   return true;
+}
+
+Error FilesListingMonitor::start(const FilePath& filePath, bool includeHidden, 
+      json::Array* pJsonFiles)
 {
    // always stop existing
    stop();
 
+   // save include hidden setting
+   includeHidden_ = includeHidden;
+
    // scan the directory (populates pJsonFiles out parameter)
    std::vector<FilePath> files;
-   Error error = listFiles(filePath, &files, pJsonFiles);
+   Error error = listFiles(filePath, &files, includeHidden, pJsonFiles);
    if (error)
       return error;
 
@@ -70,7 +80,9 @@ Error FilesListingMonitor::start(const FilePath& filePath, json::Array* pJsonFil
    cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
    core::system::file_monitor::registerMonitor(filePath,
                                                false,
-                                               module_context::fileListingFilter,
+                                               includeHidden ? 
+                                                  acceptAllFiles : 
+                                                  module_context::fileListingFilter,
                                                cb);
 
    return Success();
@@ -148,7 +160,9 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
                                          prevFiles.end(),
                                          currFiles.begin(),
                                          currFiles.end(),
-                                         module_context::fileListingFilter,
+                                         includeHidden_ ?
+                                            acceptAllFiles :
+                                            module_context::fileListingFilter,
                                          &events);
 
    // enque any events we discovered
@@ -171,11 +185,12 @@ void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle hand
 
 Error FilesListingMonitor::listFiles(const FilePath& rootPath,
                                      std::vector<FilePath>* pFiles,
+                                     bool includeHidden,
                                      json::Array* pJsonFiles)
 {
    // enumerate the files
    pFiles->clear();
-   core::Error error = rootPath.children(pFiles) ;
+   core::Error error = rootPath.children(pFiles);
    if (error)
       return error;
 
@@ -191,7 +206,8 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
    {
       // files which may have been deleted after the listing or which
       // are not end-user visible
-      if (filePath.exists() && module_context::fileListingFilter(core::FileInfo(filePath)))
+      if (filePath.exists() && 
+            (includeHidden || module_context::fileListingFilter(core::FileInfo(filePath))))
       {
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
          pCtx->decorateFile(filePath, &fileObject);
