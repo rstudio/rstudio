@@ -89,6 +89,13 @@ public class JobsPane extends WorkbenchPane
             break;
 
          case JobConstants.JOB_REMOVED:
+            // if this is the job we're currently tracking, do so no longer
+            if (job.id == current_)
+            {
+               hideJobOutput(job.id);
+            }
+            
+            // clean up 
             list_.removeJob(job);
             break;
 
