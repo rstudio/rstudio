@@ -21,6 +21,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -40,6 +42,7 @@ public class HtmlMessageListener
       htmlMessageListener_ = this;
       fileTypeRegistry_ = fileTypeRegistry;
       pUIPrefs_ = pUIPrefs;
+      themeSources_ = new ArrayList<JavaScriptObject>();
       
       initializeMessageListeners();
 
@@ -54,7 +57,9 @@ public class HtmlMessageListener
                String bakground = RStudioThemes.getBackground(editorTheme);
                String foreground = RStudioThemes.getForeground(editorTheme);
 
-               postThemeMessage(themeSource_, themeOrigin_, bakground, foreground);
+               for (JavaScriptObject themeSource : themeSources_) {
+                  postThemeMessage(themeSource, themeOrigin_, bakground, foreground);
+               }
             }
          }
       });
@@ -117,13 +122,15 @@ public class HtmlMessageListener
    private void registerThemeOriginImpl(JavaScriptObject source, String origin)
    {
       themeOrigin_ = origin;
-      themeSource_ = source;
+      themeSources_.add(source);
 
       String editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-      String bakground = RStudioThemes.getBackground(editorTheme);
-      String foreground = RStudioThemes.getForeground(editorTheme);
+      if (!StringUtil.isNullOrEmpty(editorTheme)) {
+         String bakground = RStudioThemes.getBackground(editorTheme);
+         String foreground = RStudioThemes.getForeground(editorTheme);
 
-      postThemeMessage(themeSource_, themeOrigin_, bakground, foreground);
+         postThemeMessage(source, themeOrigin_, bakground, foreground);
+      }
    }
 
    private static void registerThemeOrigin(JavaScriptObject source, String origin)
@@ -184,5 +191,5 @@ public class HtmlMessageListener
    private String background_;
    private String foreground_;
    private String themeOrigin_;
-   private JavaScriptObject themeSource_;
+   private ArrayList<JavaScriptObject> themeSources_;
 }
