@@ -212,6 +212,21 @@ public class StringUtilTests extends GWTTestCase
       assertFalse(StringUtil.equals(null_2, two_2));
    } 
    
+   public void testConciseElapsedTime()
+   {
+      String seconds = StringUtil.conciseElaspedTime(35);
+      assertEquals("0:35", seconds);
+
+      String minutes = StringUtil.conciseElaspedTime(66);
+      assertEquals("1:06", minutes);
+
+      String hours = StringUtil.conciseElaspedTime(3606);
+      assertEquals("1:00:06", hours);
+      
+      String days = StringUtil.conciseElaspedTime(180061);
+      assertEquals("2:02:01:01", days);
+   }
+   
    // -----------------------------------------------------------------------
 
    // TODO: Tests for remaining public StringUtil methods

@@ -109,10 +109,12 @@ public class StringUtil
       String elapsed = (seconds > 9 ? "" : "0") + seconds;
       if (hours < 1)
          return minutes + ":" + elapsed;
-      elapsed = ((minutes > 9) ? "" : "0") + ":" + elapsed;
+      minutes = minutes % 60;
+      elapsed = ((minutes > 9) ? "" : "0") + minutes + ":" + elapsed;
       if (days < 1)
          return hours + ":" + elapsed;
-      return days + ":" + ((hours > 9) ? "" : "0") + elapsed;
+      hours = hours % 24;
+      return days + ":" + ((hours > 9) ? "" : "0") + hours + ":" + elapsed;
    }
 
    // Return current time as a timestamp (yyyy/m/d hh:mm:ss)
