@@ -34,6 +34,7 @@
    if (missing(job))
       stop("Must specify job ID to remove.")
    .Call("rs_removeJob", job)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("setJobProgress", function(job, units) {
@@ -42,6 +43,7 @@
    if (missing(units))
       stop("Must specify number of progress units to set.")
    .Call("rs_setJobProgress", job, units)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("addJobProgress", function(job, units) {
@@ -50,6 +52,7 @@
    if (missing(units))
       stop("Must specify number of progress units to add")
    .Call("rs_addJobProgress", job, units)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("setJobStatus", function(job, status) {
@@ -58,6 +61,7 @@
    if (missing(status))
       stop("Must specify job status to update.")
    .Call("rs_setJobStatus", job, status)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("setJobState", function(job, state = c("idle", "running", "succeeded",
@@ -66,9 +70,11 @@
       stop("Must specify job ID to change state for.")
    state <- match.arg(state)
    .Call("rs_setJobState", job, state)
+   invisible(NULL)
 })
 
 .rs.addApiFunction("addJobOutput", function(job, output, error = FALSE) {
    .Call("rs_addJobOutput", job, output, error)
+   invisible(NULL)
 })
 
