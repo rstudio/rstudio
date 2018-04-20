@@ -25,6 +25,7 @@ import com.google.inject.Provider;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Stack;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
@@ -66,7 +67,7 @@ public class ConsolePane extends WorkbenchPane
       
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
-      mode_ = new LinkedList<ConsoleMode>();
+      mode_ = new Stack<ConsoleMode>();
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -302,6 +303,6 @@ public class ConsolePane extends WorkbenchPane
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
    private Image profilerInterruptButton_;
-   private Queue<ConsoleMode> mode_;
+   private Stack<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
 }
