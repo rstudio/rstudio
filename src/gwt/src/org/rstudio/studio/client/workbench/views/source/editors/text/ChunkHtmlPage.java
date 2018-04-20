@@ -51,7 +51,7 @@ public class ChunkHtmlPage extends ChunkOutputPage
          url += "&";
       else
          url += "?";
-      url += "viewer_pane=1";
+      url += "viewer_pane=1&capabilities=1";
 
       frame_ = new ChunkOutputFrame();
       
