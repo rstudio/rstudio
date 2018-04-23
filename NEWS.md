@@ -22,7 +22,7 @@
 * testthat output in the *Build* pane with navigable issue list
 * Integration with [shinytest](https://github.com/rstudio/shinytest) to record and run Shiny app tests
 
-## PowerPoint
+### PowerPoint
 
 * Create PowerPoint presentations with R Markdown
 
@@ -36,6 +36,7 @@
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
+* Upgrade embedded Pandoc to 2.1.3 (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
@@ -64,13 +65,16 @@
 * Fix selection in Files pane when files are modified while checked (#1715)
 * Fix incorrect truncation of some R object descriptions in Environment pane (#1703)
 * Fix duplicate prompts in each window when using RStudio API `showPrompt` (#1706)
+* Fix proxy timeouts with the websocket used for the Terminal, via keepalive messages (#1860)
 * Fix `file.edit` failures with Chinese filenames on Windows (#1868)
 * Fix errors when importing non-ASCII filenames in base Import Dataset (#1910)
 * Fix `rserver` crash that can occur when proxying websockets to Shiny apps (#2061)
+* Fix hang on some Linux systems caused by X11 clipboard monitoring w/ option to disable monitoring (#2068)
 * Fix empty column titles when viewing matrices without column names (#2086)
 * Fix error when pressing F1 on non-function autocomplete results (#2127)
 * Fix hang when autocompleting filenames in large directories (#2236)
 * Fix inability to copy content from Viewer pane and data viewer in IE11 (#2351)
+* Fix errant addition of `msys-ssh` to path on non-Windows platforms (#2352)
 * Fix buggy behavior with \r when ANSI colors are present (#2387)
 * Fix external process slowness (git, etc.) when open file limit `RLIMIT_NOFILE` is high (#2470)
 * Fix issue caused by resolving symlinks when choosing Git path (#2476)
@@ -78,6 +82,7 @@
 * Fix issue where '#' in YAML strings would be highlighted as comments (#2591)
 * Fix over-eager loading of `yaml` package when IDE starts up (#2602)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
+* Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
 
 ### RStudio Server Pro
 
