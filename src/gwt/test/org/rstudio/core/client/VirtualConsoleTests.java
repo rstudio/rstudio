@@ -41,7 +41,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String simple = VirtualConsole.consolify("foo");
       Assert.assertEquals("foo", simple);
    }
-   
+
    public void testEmbeddedBackspace()
    {
       String backspace = VirtualConsole.consolify("bool\bk");
@@ -791,14 +791,94 @@ public class VirtualConsoleTests extends GWTTestCase
                 red + "456" + reset + "x \r" +
                 red + "789");
       
-      Debug.logToConsole("InnerHtml=[" + ele.getInnerHTML() + "]");
-      Debug.logToConsole("String=[" + vc.toString() + "]");
-      
-      String expected = 
+      String expected =
             "<span class=\"" + AnsiCode.clazzForColor(AnsiCode.ForeColorNum.RED) +
             "\">789</span><span>x </span>"; 
       
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("789x ", vc.toString());
    }
-}
+
+
+   public void testCRNoColorsIssue2665Part1()
+   {
+      // https://github.com/rstudio/rstudio/issues/2665
+      // this checks the output without colors involved
+      // cat("✔ xxx", "yyy", "xxx")
+      // cat("\r")
+      // cat("✔xxx", "yyy", "zzz")
+      // cat("\n")
+
+      // test writing over a previously written line (via \r) with
+      // no colors involved, the second line shorter than the first,
+      // ending with a \n
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("✔ xxx yyy xxx");
+      vc.submit("\r");
+      vc.submit("✔xxx yyy zzz");
+      vc.submit("\n");
+
+      String expected = "<span>✔xxx yyy zzzx\n</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("✔xxx yyy zzzx\n", vc.toString());
+   }
+
+   public void testCRNoColorsIssue2665Part2()
+   {
+      // https://github.com/rstudio/rstudio/issues/2665
+      // this checks the output without colors involved
+      // cat("✔ xxx", "yyy", "xxx")
+      // cat("\r")
+      // cat("✔ xxx", "yyy", "zzz")
+      // cat("\n")
+
+      // test writing over a previously written line (via \r) with
+      // no colors involved, and the second line the same length as
+      // the first, ending with a \n
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("✔ xxx yyy xxx");
+      vc.submit("\r");
+      vc.submit("✔ xxx yyy zzz");
+      vc.submit("\n");
+
+      String expected = "<span>✔ xxx yyy zzz\n</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("✔ xxx yyy zzz\n", vc.toString());
+   }
+
+   public void testCRColorsIssue2665Part1()
+   {
+      // https://github.com/rstudio/rstudio/issues/2665
+      // cat("✔ xxx", crayon::blue("yyy"), "xxx")
+      // cat("\r")
+      // cat("✔xxx", crayon::red("yyy"), "zzz")
+      // cat("\n")
+
+      // test writing over a previously written line (via \r) with
+      // colors involved, and the second line shorter than the first line,
+      // ending with \n
+      String red = AnsiCode.CSI + AnsiCode.ForeColorNum.RED + AnsiCode.SGR;
+      String redCode = "\"" + AnsiCode.clazzForColor(AnsiCode.ForeColorNum.RED) + "\"";
+      String blue = AnsiCode.CSI + AnsiCode.ForeColorNum.BLUE + AnsiCode.SGR;
+      String blueCode = "\"" + AnsiCode.clazzForColor(AnsiCode.ForeColorNum.BLUE) + "\"";
+      String reset = AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR;
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("✔ xxx " + blue + "yyy" + reset + " xxx");
+      vc.submit("\r");
+      vc.submit("✔xxx " + red + "yyy" + reset + " zzz");
+      vc.submit("\n");
+
+      String expected =
+            "<span>✔xxx </span>" +
+            "<span class=" + redCode + ">yyy</span>" +
+            "<span class=" + blueCode + "></span>" +
+            "<span></span><span> zzzx\n</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("✔xxx yyy zzzx\n", vc.toString());
+   }
+
+ }
