@@ -179,6 +179,7 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
@@ -5355,6 +5356,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void setJobListening(String id, boolean listening,
+                               ServerRequestCallback<JsArray<JobOutput>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      params.set(1, JSONBoolean.getInstance(listening));
+      sendRequest(RPC_SCOPE, "set_job_listening", params, callback);
+   }
+
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE,

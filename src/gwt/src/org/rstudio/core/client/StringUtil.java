@@ -91,6 +91,31 @@ public class StringUtil
       else 
          return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
    }
+   
+   /**
+    * Concisely formats an elapsed time. Displays minutes and seconds by 
+    * default; if hours or days are present, they will be displayed, too,
+    * and subsequent units will be left-padded to two digits.
+    * 
+    * @param seconds Number of seconds that have elapsed
+    * @return String with formatted time
+    */
+   public static String conciseElaspedTime(int seconds)
+   {
+      int minutes = seconds / 60;
+      int hours = minutes / 60;
+      int days = hours / 24;
+      seconds = seconds % 60;
+      String elapsed = (seconds > 9 ? "" : "0") + seconds;
+      if (hours < 1)
+         return minutes + ":" + elapsed;
+      minutes = minutes % 60;
+      elapsed = ((minutes > 9) ? "" : "0") + minutes + ":" + elapsed;
+      if (days < 1)
+         return hours + ":" + elapsed;
+      hours = hours % 24;
+      return days + ":" + ((hours > 9) ? "" : "0") + hours + ":" + elapsed;
+   }
 
    // Return current time as a timestamp (yyyy/m/d hh:mm:ss)
    public static native String getTimestamp() /*-{

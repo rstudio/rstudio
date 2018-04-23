@@ -37,11 +37,32 @@ public class JsObject extends JavaScriptObject
       return typeof(this[key]);
    }-*/;
 
+   /***
+    * Gets a JavaScriptObject type from the object.
+    * 
+    * @param key The name of the key.
+    * @return The JavaScriptObject for the given key.
+    */
    public final native <T extends JavaScriptObject> T getObject(String key) /*-{
       return this[key];
    }-*/;
 
+   /***
+    * Gets any element from the object, as any type. Useful primarily for
+    * casting elements to JsType objects, which do not have a base type.
+    * 
+    * @param key The name of the key.
+    * @return The element for the given key.
+    */
+   public final native <T> T getElement(String key) /*-{
+      return this[key];
+   }-*/;
+
    public final native void setObject(String key, JavaScriptObject value) /*-{
+      this[key] = value;
+   }-*/;
+
+   public final native <T> void setElement(String key, T value) /*-{
       this[key] = value;
    }-*/;
 

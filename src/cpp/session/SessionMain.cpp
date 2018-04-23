@@ -153,6 +153,7 @@
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
+#include "modules/jobs/SessionJobs.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
@@ -512,6 +513,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::ask_secret::initialize)
       (modules::reticulate::initialize)
       (modules::tests::initialize)
+      (modules::jobs::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -176,6 +176,9 @@ class ClientEvent extends JavaScriptObject
    public static final String TestsStarted = "tests_started";
    public static final String TestsOutput = "tests_output";
    public static final String TestsCompleted = "tests_completed";
+   public static final String JobUpdated = "job_updated";
+   public static final String JobRefresh = "job_refresh";
+   public static final String JobOutput = "job_output";
 
    protected ClientEvent()
    {

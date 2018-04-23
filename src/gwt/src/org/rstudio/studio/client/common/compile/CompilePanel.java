@@ -136,6 +136,11 @@ public class CompilePanel extends Composite
       outputDisplay_.writeOutput(output);
    }
    
+   public void clearOutput()
+   {
+      outputDisplay_.clear();
+   }
+   
    public void showErrors(String basePath, 
                           JsArray<SourceMarker> errors,
                           int autoSelect,

@@ -186,6 +186,9 @@ extern const int kAskSecret;
 extern const int kTestsStarted;
 extern const int kTestsOutput;
 extern const int kTestsCompleted;
+extern const int kJobUpdated;
+extern const int kJobRefresh;
+extern const int kJobOutput;
 }
    
 class ClientEvent

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedExtensions;
@@ -473,6 +474,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native JsArray<ConnectionId> getActiveConnections() /*-{
       return this.active_connections;
+   }-*/;
+   
+   public final native JobState getJobState() /*-{
+      return this.job_state;
    }-*/;
    
    public final native boolean getShowHelpHome() /*-{

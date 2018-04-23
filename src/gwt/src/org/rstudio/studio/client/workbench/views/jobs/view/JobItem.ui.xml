@@ -1,0 +1,92 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
+	<ui:style>
+
+	.item
+	{
+		padding: 5px;
+		width: 100%;
+		table-layout: fixed;
+	}
+	
+	.metadata
+	{
+		width: 100%;
+		margin-bottom: 5px;
+		table-layout: fixed;
+	}
+	
+	.name
+	{
+		font-weight: bold;	
+	}
+	
+	.progressHost
+	{
+		width: 100%;	
+		margin-bottom: 3px;
+	}
+
+	.elapsed
+	{
+		opacity: 0.8;	
+		margin-left: 3px;
+		margin-top: -2px;
+	}
+	
+	.state
+	{
+		width: 20px;
+		height: 18px;
+		border: 0px;
+	}
+	
+	.outer
+	{
+		width: 100%;
+	}
+	
+	.select
+	{
+		cursor: pointer;
+	}
+	
+	.name, .status
+	{
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	</ui:style>
+	<g:FocusPanel>
+		<g:HorizontalPanel styleName="{style.outer}">
+			<g:cell width="95%">
+				<g:VerticalPanel styleName="{style.item}">
+					<g:HorizontalPanel styleName="{style.metadata}">
+						<g:cell horizontalAlignment="ALIGN_LEFT" width="80%">
+							<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
+						</g:cell>
+						<g:cell horizontalAlignment="ALIGN_RIGHT" width="20%">
+							<g:Label ui:field="status_" styleName="{style.status}"></g:Label>
+						</g:cell>
+					</g:HorizontalPanel>
+					<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
+					</rw:ProgressBar>
+					<g:HorizontalPanel>
+						<g:cell verticalAlignment="ALIGN_MIDDLE">
+							<g:Image styleName="{style.state}" ui:field="state_"></g:Image>
+						</g:cell>
+						<g:cell verticalAlignment="ALIGN_MIDDLE">
+							<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+						</g:cell>
+					</g:HorizontalPanel>
+				</g:VerticalPanel>
+			</g:cell>
+			<g:cell width="5%" verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_RIGHT">
+				<g:Image styleName="{style.select}" ui:field="select_"></g:Image>
+			</g:cell>
+		</g:HorizontalPanel>
+	</g:FocusPanel>
+</ui:UiBinder> 
