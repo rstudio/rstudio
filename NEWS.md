@@ -11,6 +11,21 @@
 * Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
 * Install `keyring` directly from dialog prompt
 
+### D3 Integration
+
+* Author D3 visualizations in RStudio and preview in the Viewer pane
+* Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
+
+### Testing
+
+* *Run Tests* command in [testthat](https://github.com/r-lib/testthat) R scripts for direct running
+* testthat output in the *Build* pane with navigable issue list
+* Integration with [shinytest](https://github.com/rstudio/shinytest) to record and run Shiny app tests
+
+## PowerPoint
+
+* Create PowerPoint presentations with R Markdown
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
@@ -20,6 +35,7 @@
 * Add ability to search for displayed database objects in Connections tab (#1549)
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
+* Add option to show hidden files in the Files pane (#1769)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
@@ -30,6 +46,8 @@
 * Click on promises in the Environment pane now calls `force` on the promise
 * Add Rename command to File menu for quick rename of current file (#2199)
 * Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
+* Improved support for custom `knitr` engines in R Notebooks (#2401)
+* Add option to disable drag-and-drop for text in the editor (#2428)
 
 ### Bug Fixes
 
@@ -52,7 +70,14 @@
 * Fix empty column titles when viewing matrices without column names (#2086)
 * Fix error when pressing F1 on non-function autocomplete results (#2127)
 * Fix hang when autocompleting filenames in large directories (#2236)
+* Fix inability to copy content from Viewer pane and data viewer in IE11 (#2351)
+* Fix buggy behavior with \r when ANSI colors are present (#2387)
+* Fix external process slowness (git, etc.) when open file limit `RLIMIT_NOFILE` is high (#2470)
+* Fix issue caused by resolving symlinks when choosing Git path (#2476)
+* Fix display of consecutive spaces in the Data Viewer (#2499)
 * Fix issue where '#' in YAML strings would be highlighted as comments (#2591)
+* Fix over-eager loading of `yaml` package when IDE starts up (#2602)
+* Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 
 ### RStudio Server Pro
 
