@@ -374,6 +374,7 @@ core::Error initialize()
    module_context::events().onClientInit.connect(onClientInit);
    module_context::events().onShutdown.connect(onShutdown);
 
+   using boost::bind;
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(module_context::registerRpcMethod, "get_jobs", getJobs))
