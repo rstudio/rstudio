@@ -58,7 +58,7 @@ void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebEnginePage(new WebProfile, parent),
+      QWebEnginePage(new WebProfile(baseUrl, parent)),
       baseUrl_(baseUrl),
       allowExternalNav_(allowExternalNavigate)
 {
