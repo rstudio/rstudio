@@ -60,6 +60,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -537,11 +538,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
             return;
          }
 
-         // Don't drive focus to the input unless there is no selection.
-         // Otherwise it would interfere with the ability to select stuff
-         // from the output buffer for copying to the clipboard.
-         if (!DomUtils.selectionExists() && isInputOnscreen())
-            input_.setFocus(true) ;
+         // Some clicks can result in selection (e.g. double clicks). We don't
+         // want to grab focus for those clicks, but we don't know yet if this
+         // click can generate a selection. Wait 400ms (unfortunately it's not
+         // possible to get the OS double-click timeout) for a selection to
+         // appear; if it doesn't then drive focus to the input box.
+         if (inputFocus_.isRunning())
+            inputFocus_.cancel();
+         inputFocus_.schedule(400);
       }
 
       public void onKeyDown(KeyDownEvent event)
@@ -587,6 +591,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
 
       private AceEditor input_;
+      private Timer inputFocus_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            // Don't drive focus to the input unless there is no selection.
+            // Otherwise it would interfere with the ability to select stuff
+            // from the output buffer for copying to the clipboard.
+            if (!DomUtils.selectionExists() && isInputOnscreen())
+               input_.setFocus(true);
+         }
+      };
    }
 
    private boolean isInputOnscreen()
