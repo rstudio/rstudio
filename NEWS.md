@@ -11,7 +11,7 @@
 * Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
 * Install `keyring` directly from dialog prompt
 
-### D3 Integration
+### D3
 
 * Author D3 visualizations in RStudio and preview in the Viewer pane
 * Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
@@ -92,4 +92,6 @@
 * Added ability to suspend sessions from user home page.
 * Added hmac signature verification for proxy auth mode with new auth-proxy-require-hmac option in rserver.conf.
 
+### RStudio Pro Drivers
 
+* Discover, install and uninstall RStudio Pro Drivers from the New Connection wizard.
