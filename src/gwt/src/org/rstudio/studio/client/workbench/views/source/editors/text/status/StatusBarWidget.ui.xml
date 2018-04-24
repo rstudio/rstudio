@@ -9,6 +9,7 @@
       @url SEPARATOR statusBarSeparator;
       @external gwt-Label;
       @external rstudio-themes-flat, rstudio-themes-dark;
+      @external windows;
 
       @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -35,6 +36,9 @@
       .statusBar .gwt-Label {
          position: relative;
          top: 1px;
+      }
+      body.windows .statusBar .gwt-Label {
+         top: 0px;
       }
       .statusBar img {
          position: relative;

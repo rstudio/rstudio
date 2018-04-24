@@ -5,6 +5,7 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external editor_dark, ace_editor_theme;
+@external windows
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
@@ -91,6 +92,11 @@
    margin-top: 2px;
 }
 
+body.windows .gwt-CheckBox-FilesSelectAll {
+   margin-left: 4px;
+   margin-top: 3px;
+}
+
 .gwt-DialogBox .breadcrumbFrame {
    width: 500px;
    margin-top: 6px;
@@ -142,6 +148,12 @@
 .rstudio-themes-flat .breadcrumb table.path span {
    padding-top: 4px;
 }
+
+body.windows .breadcrumb table.path a,
+body.windows .breadcrumb table.path span {
+   padding-top: 2px;
+}
+
 
 .breadcrumb table.path a
 {
