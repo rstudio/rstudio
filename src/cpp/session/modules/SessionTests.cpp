@@ -47,11 +47,35 @@ namespace tests {
 
 namespace {
 
+bool isOnlySpaceBefore(const std::string& contents, size_t pos)
+{
+    while (pos > 0)
+    {
+        pos--;
+        if (!isspace(contents.at(pos)))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 TestsFileType getTestType(const std::string& contents)
 {
    size_t pos = contents.find("test_that(", 0);
    if (pos != std::string::npos && (pos == 0 || isspace(contents.at(pos - 1))))
       return TestsTestThat;
+
+   pos = contents.find("context(\"", 0);
+   if (pos != std::string::npos && (pos == 0 || isOnlySpaceBefore(contents, pos)))
+   {
+      pos = contents.find("test_", 0);
+      if (pos != std::string::npos && (pos == 0 || isspace(contents.at(pos - 1))))
+      {
+         return TestsTestThat;
+      }
+   }
 
    pos = contents.find("app <- ShinyDriver$new(", 0);
    if (pos == 0)
