@@ -6926,18 +6926,25 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
-                  new SimpleRequestCallback<Boolean>() {
+               save(new Command()
+               {
                   @Override
-                  public void onResponseReceived(Boolean response)
+                  public void execute()
                   {
+                     server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                        new SimpleRequestCallback<Boolean>() {
+                        @Override
+                        public void onResponseReceived(Boolean response)
+                        {
 
-                  }
+                        }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     super.onError(error);
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           super.onError(error);
+                        }
+                     });
                   }
                });
             }
@@ -6957,18 +6964,25 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
-                  new SimpleRequestCallback<Boolean>() {
+               save(new Command()
+               {
                   @Override
-                  public void onResponseReceived(Boolean response)
+                  public void execute()
                   {
+                     server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                        new SimpleRequestCallback<Boolean>() {
+                        @Override
+                        public void onResponseReceived(Boolean response)
+                        {
 
-                  }
+                        }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     super.onError(error);
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           super.onError(error);
+                        }
+                     });
                   }
                });
             }
