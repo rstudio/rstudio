@@ -174,11 +174,16 @@ Error startup()
 
 Error initialize()
 {
-   // currently only shared projects perform session RPCs
-   if (getServerBoolOption(kServerProjectSharing) &&
-       !getServerPathOption(kSharedStoragePath).empty())
+   bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
+   bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
+   bool spawnerSessionsEnabled = getServerBoolOption(kSpawnerSessionsEnabled);
+
+   // currently only shared projects and spawner sessions perform session RPCs
+   if (hasSharedStorage &&
+      (projectSharingEnabled || spawnerSessionsEnabled))
+
    {
-      if (getServerBoolOption(kSpawnerSessionsEnabled))
+      if (spawnerSessionsEnabled)
       {
          // if we're using spawner sessions, we need to handle RPCs
          // from within the regular http server since sessions will be
@@ -212,9 +217,10 @@ Error initialize()
       // inject the shared secret into the session
       sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
    }
-   else
+
+   if (!hasSharedStorage || !projectSharingEnabled)
    {
-      // add filter to disable project sharing
+      // disable project sharing
       sessionManager().addSessionLaunchProfileFilter(disableSharingFilter);
    }
 
