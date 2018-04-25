@@ -421,7 +421,7 @@ public class RSConnectPublishButton extends Composite
          // save this information)
          String host = previous.getServer();
          if (!StringUtil.isNullOrEmpty(previous.getHostUrl()))
-            host = StringUtil.getHostFromUrl(previous.getHostUrl());
+            host = StringUtil.getAuthorityFromUrl(previous.getHostUrl());
 
          display_.showMessage(GlobalDisplay.MSG_WARNING, 
                host + " Not Registered", 

@@ -523,14 +523,14 @@ public class StringUtil
    }
    
    /**
-    * Given a URL, attempt to infer and return the hostname from the URL. The URL is always 
-    * presumed to have a hostname (if it doesn't, the first component of the path will be treated
-    * as the host name
+    * Given a URL, attempt to infer and return the authority (host name and
+    * port) from the URL. The URL is always presumed to have a hostname (if it
+    * doesn't, the first component of the path will be treated as the host name
     * 
     * @param url URL to parse
-    * @return Host name and port, as a string.
+    * @return The authority (host name and port), as a string.
     */
-   public static String getHostFromUrl(String url)
+   public static String getAuthorityFromUrl(String url)
    {
       // no work to do
       if (url.indexOf('/') == -1)
@@ -546,6 +546,25 @@ public class StringUtil
       if (parts.length < slashes)
          return url;
       return parts[slashes];
+   }
+   
+   /**
+    * Given a URL, attempt to return the host portion (not including the port).
+    * 
+    * @param url URL to parse.
+    * @return The host, as a string.
+    */
+   public static String getHostFromUrl(String url)
+   {
+      String authority = getAuthorityFromUrl(url);
+      
+      // no port
+      int idx = authority.indexOf(":");
+      if (idx == -1)
+         return authority;
+      
+      // port, return only the portion preceding the port
+      return authority.substring(0, idx);
    }
     
    public static String ensureSurroundedWith(String string, char chr)

@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -262,7 +263,23 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
-      
+
+      // in desktop mode we need to be careful about loading URLs which are
+      // non-local; before changing the URL, set the iframe to be sandboxed
+      // based on whether we're working with a local URL (note that prior to
+      // RStudio 1.2 local URLs were forbidden entirely)
+      if (Desktop.isDesktop())
+      {
+         if (URIUtils.isLocalUrl(url))
+         {
+            frame_.getElement().removeAttribute("sandbox");
+         }
+         else
+         {
+            frame_.getElement().setAttribute("sandbox", "allow-scripts");
+         }
+      }
+
       // append the viewer_pane query parameter
       if ((unmodifiedUrl_ != null) && 
           !unmodifiedUrl_.equals(ABOUT_BLANK) &&

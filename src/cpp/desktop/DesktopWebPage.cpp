@@ -273,8 +273,9 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    {
       return true;
    }
-   // allow local viewer urls to be handled internally by Qt
-   else if (isLocal && !viewerUrl_.isEmpty() &&
+   // allow viewer urls to be handled internally by Qt. note that the client is responsible for 
+   // ensuring that non-local viewer urls are appropriately sandboxed.
+   else if (!viewerUrl_.isEmpty() &&
             url.toString().startsWith(viewerUrl_))
    {
       return true;

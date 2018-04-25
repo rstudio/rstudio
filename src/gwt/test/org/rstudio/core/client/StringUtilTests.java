@@ -154,16 +154,28 @@ public class StringUtilTests extends GWTTestCase
       assertEquals(0, StringUtil.newlineCount(input));
    }
 
-   public void testGetHostFromUrl()
+   public void testGetAuthorityFromUrl()
    {
       String url = "http://rstudio.com/products";
-      assertEquals("rstudio.com", StringUtil.getHostFromUrl(url));
+      assertEquals("rstudio.com", StringUtil.getAuthorityFromUrl(url));
       
       url = "https://google.com";
-      assertEquals("google.com", StringUtil.getHostFromUrl(url));
+      assertEquals("google.com", StringUtil.getAuthorityFromUrl(url));
       
       url = "8.8.8.8:443/notfound.html";
-      assertEquals("8.8.8.8:443", StringUtil.getHostFromUrl(url));
+      assertEquals("8.8.8.8:443", StringUtil.getAuthorityFromUrl(url));
+   }
+   
+   public void testGetHostFromUrl()
+   {
+      String url = "8.8.8.8:443/notfound.html";
+      assertEquals("8.8.8.8", StringUtil.getHostFromUrl(url));
+      
+      url = "https://localhost:443/";
+      assertEquals("localhost", StringUtil.getHostFromUrl(url));
+
+      url = "https://bakersfield/";
+      assertEquals("bakersfield", StringUtil.getHostFromUrl(url));
    }
    
    public void testStringEquals()
