@@ -21,6 +21,8 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -29,6 +31,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
@@ -48,42 +51,26 @@ public class DataOutputPresenter extends BusyPresenter
               BuildErrorsEvent.Handler,
               RestartStatusEvent.Handler
 {
+   public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
+   {
+      void ensureVisible(boolean activate);
+   }
+   
    @Inject
-   public DataOutputPresenter(CompileOutputPaneFactory outputFactory,
-                              BuildServerOperations server,
+   public DataOutputPresenter(BuildServerOperations server,
                               GlobalDisplay globalDisplay,
                               PaneManager paneManager,
                               Commands commands,
-                              EventBus events)
+                              EventBus events,
+                              Display view)
    {
-      super(outputFactory.create("Data", 
-                                 "View data output"));
-      view_ = (CompileOutputPaneDisplay) getView();
-      view_.setHasLogs(false);
+      super(view);
+      view_ = (DataOutputPane) view;
+      
       server_ = server;
       paneManager_ = paneManager;
 
-      view_.stopButton().addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            terminateTests();
-         }
-      });
       
-      view_.errorList().addSelectionCommitHandler(
-                              new SelectionCommitHandler<CodeNavigationTarget>() {
-
-         @Override
-         public void onSelectionCommit(
-                              SelectionCommitEvent<CodeNavigationTarget> event)
-         {
-            CodeNavigationTarget target = event.getSelectedItem();
-            FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
-            RStudioGinjector.INSTANCE.getFileTypeRegistry()
-               .editFile(fsi, target.getPosition());
-         }
-      });
       globalDisplay_ = globalDisplay;
    }
    
@@ -112,7 +99,7 @@ public class DataOutputPresenter extends BusyPresenter
       if (!isEnabled()) return;
       
       view_.ensureVisible(true);
-      view_.compileStarted(event.getSubType());
+      //view_.compileStarted(event.getSubType());
       setIsBusy(true);
    }
 
@@ -121,25 +108,19 @@ public class DataOutputPresenter extends BusyPresenter
    {
       if (!isEnabled()) return;
       
-      view_.showOutput(event.getOutput(), true);
+      
    }
    
    @Override
    public void onBuildCompleted(BuildCompletedEvent event)
    {
       if (!isEnabled()) return;
-      
-      view_.compileCompleted();
-      setIsBusy(false);
-      view_.ensureVisible(true);
    }
    
    @Override
    public void onBuildErrors(BuildErrorsEvent event)
    {
       if (!isEnabled()) return;
-      
-      view_.showErrors(event.getErrors());
    }
 
    @Override
@@ -151,7 +132,6 @@ public class DataOutputPresenter extends BusyPresenter
           !isBusy())
          return;
 
-      view_.compileCompleted();
       setIsBusy(false);
    }
    
@@ -173,7 +153,7 @@ public class DataOutputPresenter extends BusyPresenter
    }
    
    private final BuildServerOperations server_;
-   private final CompileOutputPaneDisplay view_;
+   private final DataOutputPane view_;
    private final GlobalDisplay globalDisplay_;
    private final PaneManager paneManager_;
 }

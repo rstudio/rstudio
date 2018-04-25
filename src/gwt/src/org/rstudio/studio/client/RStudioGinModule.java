@@ -186,6 +186,8 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputTab;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPane;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPresenter;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
@@ -339,6 +341,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
       bind(JobsPresenter.Display.class).to(JobsPane.class);
       bind(JobProgressPresenter.Display.class).to(JobProgress.class);
+      bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);

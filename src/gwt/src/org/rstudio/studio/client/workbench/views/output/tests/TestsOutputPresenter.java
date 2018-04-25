@@ -145,14 +145,6 @@ public class TestsOutputPresenter extends BusyPresenter
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      if (!isEnabled()) return;
-      
-      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
-          !isBusy())
-         return;
-
-      view_.compileCompleted();
-      setIsBusy(false);
    }
    
    private void terminateTests()

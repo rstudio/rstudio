@@ -38,10 +38,6 @@ public class DataOutputTab
    public abstract static class Shim extends
                 DelayLoadTabShim<DataOutputPresenter, DataOutputTab>
       implements BuildStartedEvent.Handler,
-                 BuildOutputEvent.Handler,
-                 BuildCompletedEvent.Handler,
-                 BuildErrorsEvent.Handler,
-                 RestartStatusEvent.Handler,
                  ProvidesBusy
    {
       abstract void initialize();
@@ -57,10 +53,6 @@ public class DataOutputTab
       shim_ = shim;
 
       events.addHandler(BuildStartedEvent.TYPE, shim);
-      events.addHandler(BuildOutputEvent.TYPE, shim);
-      events.addHandler(BuildCompletedEvent.TYPE, shim);
-      events.addHandler(BuildErrorsEvent.TYPE, shim);
-      events.addHandler(RestartStatusEvent.TYPE, shim);
    }
 
    @Override
