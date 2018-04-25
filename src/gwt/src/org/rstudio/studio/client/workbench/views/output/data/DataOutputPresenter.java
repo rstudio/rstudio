@@ -43,9 +43,11 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedE
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
+import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputStartedEvent;
 
 public class DataOutputPresenter extends BusyPresenter
-   implements BuildStartedEvent.Handler,
+   implements DataOutputStartedEvent.Handler,
+              BuildStartedEvent.Handler,
               BuildOutputEvent.Handler,
               BuildCompletedEvent.Handler,
               BuildErrorsEvent.Handler,
@@ -94,12 +96,22 @@ public class DataOutputPresenter extends BusyPresenter
    }
 
    @Override
+   public void onDataOutputStarted(DataOutputStartedEvent event)
+   {  
+      if (!isEnabled()) return;
+      
+      view_.ensureVisible(true);
+
+      setIsBusy(true);
+   }
+
+   @Override
    public void onBuildStarted(BuildStartedEvent event)
    {  
       if (!isEnabled()) return;
       
       view_.ensureVisible(true);
-      //view_.compileStarted(event.getSubType());
+
       setIsBusy(true);
    }
 
@@ -107,8 +119,6 @@ public class DataOutputPresenter extends BusyPresenter
    public void onBuildOutput(BuildOutputEvent event)
    {
       if (!isEnabled()) return;
-      
-      
    }
    
    @Override
