@@ -36,6 +36,7 @@ public:
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
+   QUrl baseUrl();
 
    void activateSatelliteWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);

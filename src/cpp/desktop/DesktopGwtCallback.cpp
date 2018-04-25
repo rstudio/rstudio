@@ -641,7 +641,10 @@ void GwtCallback::openMinimalWindow(QString name,
       bool isViewerZoomWindow =
           (name == QString::fromUtf8("_rstudio_viewer_zoom"));
 
-      browser = new BrowserWindow(false, !isViewerZoomWindow, name);
+      // create the new browser window; pass along our own base URL so that the new window's
+      // WebProfile knows how to apply the appropriate headers
+      browser = new BrowserWindow(false, !isViewerZoomWindow, name, 
+            pMainWindow_->webView()->baseUrl());
       
       browser->setAttribute(Qt::WA_DeleteOnClose, true);
       browser->setAttribute(Qt::WA_QuitOnClose, true);

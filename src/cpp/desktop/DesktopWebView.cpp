@@ -56,6 +56,11 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
    pWebPage_->setBaseUrl(baseUrl_);
 }
 
+QUrl WebView::baseUrl()
+{
+   return baseUrl_;
+}
+
 void WebView::activateSatelliteWindow(QString name)
 {
    pWebPage_->activateWindow(name);
