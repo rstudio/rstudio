@@ -75,6 +75,13 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
 {
+   const WebProfile* pProfile = dynamic_cast<const WebProfile*>(profile());
+   if (pProfile != nullptr)
+   {
+      // if we're using our own WebProfile implementation, update its base URL
+      const_cast<WebProfile*>(pProfile)->setBaseUrl(baseUrl);
+   }
+
    baseUrl_ = baseUrl;
 }
 
