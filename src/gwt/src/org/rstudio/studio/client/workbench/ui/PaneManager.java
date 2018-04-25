@@ -227,6 +227,7 @@ public class PaneManager
                       @Named("Terminal") final WorkbenchTab terminalTab,
                       @Named("Tests") final WorkbenchTab testsTab,
                       @Named("Jobs") final WorkbenchTab jobsTab,
+                      @Named("Data Output") final WorkbenchTab dataTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader)
@@ -258,6 +259,7 @@ public class PaneManager
       jobsTab_ = jobsTab;
       optionsLoader_ = optionsLoader;
       testsTab_ = testsTab;
+      dataTab_ = dataTab;
       
       binder.bind(commands, this);
       
@@ -983,7 +985,8 @@ public class PaneManager
             terminalTab_,
             eventBus_,
             goToWorkingDirButton,
-            testsTab_);
+            testsTab_,
+            dataTab_);
       
       consoleTabPanel_.addLayoutStyles(frame.getElement());
       
@@ -1240,6 +1243,7 @@ public class PaneManager
    private final WorkbenchTab terminalTab_;
    private final WorkbenchTab testsTab_;
    private final WorkbenchTab jobsTab_;
+   private final WorkbenchTab dataTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;

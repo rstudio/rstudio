@@ -149,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -359,6 +360,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Terminal", TerminalTab.class);
       bindTab("Tests", TestsOutputTab.class);
       bindTab("Jobs", JobsTab.class);
+      bindTab("Data Output", DataOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

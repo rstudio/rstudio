@@ -1,5 +1,5 @@
 /*
- * TestsOutputPresenter.java
+ * DataOutputPresenter.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.tests;
+package org.rstudio.studio.client.workbench.views.output.data;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -41,7 +41,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
-public class TestsOutputPresenter extends BusyPresenter
+public class DataOutputPresenter extends BusyPresenter
    implements BuildStartedEvent.Handler,
               BuildOutputEvent.Handler,
               BuildCompletedEvent.Handler,
@@ -49,15 +49,15 @@ public class TestsOutputPresenter extends BusyPresenter
               RestartStatusEvent.Handler
 {
    @Inject
-   public TestsOutputPresenter(CompileOutputPaneFactory outputFactory,
-                               BuildServerOperations server,
-                               GlobalDisplay globalDisplay,
-                               PaneManager paneManager,
-                               Commands commands,
-                               EventBus events)
+   public DataOutputPresenter(CompileOutputPaneFactory outputFactory,
+                              BuildServerOperations server,
+                              GlobalDisplay globalDisplay,
+                              PaneManager paneManager,
+                              Commands commands,
+                              EventBus events)
    {
-      super(outputFactory.create("Tests", 
-                                 "View test results"));
+      super(outputFactory.create("Data", 
+                                 "View data output"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
