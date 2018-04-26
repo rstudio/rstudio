@@ -132,12 +132,19 @@ SEXP rs_isNullExternalPointer(SEXP objectSEXP)
    return create(isNullExternalPointer(objectSEXP), &protect);
 }
 
+SEXP rs_rResourcesPath()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(session::options().rResourcesPath().absolutePath(), &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
    RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
+   RS_REGISTER_CALL_METHOD(rs_rResourcesPath, 0);
    
    using boost::bind;
    using namespace module_context;

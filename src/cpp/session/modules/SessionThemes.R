@@ -18,7 +18,7 @@
 # @param color    The color to convert.
 #
 # Returns the RGB color.
-.rs.addFunction("getRgbColor", function(color) {
+.rs.addFunction("getRgbColor", getRgbColor <- function(color) {
    if (is.vector(color) && is.integer(color[1])) 
    {
       if (length(color) != 3) 
@@ -41,7 +41,7 @@
       {
          colorVec <- sapply(
             c(substr(color, 2, 3), substr(color, 4, 5), substr(color, 6, 7)),
-            function(s) { strtoi(paste0("0x", s)) },
+            hexStrToI <- function(str) { strtoi(str, 16L) },
             USE.NAMES = FALSE)
       }
    }
@@ -103,7 +103,7 @@
 # @param alpha2   The alpha of the second colour.
 # 
 # Returns the mixed colour in string format.
-.rs.addFunction("mixColors", function(color1, color2, alpha1, alpha2 = NULL) {
+.rs.addFunction("mixColors", mixColors <- function(color1, color2, alpha1, alpha2 = NULL) {
    c1rgb <- .rs.getRgbColor(color1)
    c2rgb <- .rs.getRgbColor(color2)
    
@@ -127,7 +127,7 @@
 # @param color    The colour for which to determine the luma.
 #
 # Returns the luma of the specified colour.
-.rs.addFunction("getLuma", function(color) {
+.rs.addFunction("getLuma", getLuma <- function(color) {
    # The numbers used in this calculation are taken from
    # https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js#L191. It is not entirely clear
    # why they were chosen, as there are no comments in the orginal.
@@ -135,12 +135,374 @@
    (0.21 * rgb[[1]] + 0.72 * rgb[[2]] + 0.07 * rgb[[3]]) / 255
 })
 
+# Parses a color.
+# 
+# @param color    The color to parse.
+#
+# Returns the parsed color.
+.rs.addFunction("parseColor", parseColor <- function(color) {
+   colorLen <- nchar(color)
+   if (colorLen < 1)
+   {
+      return(NULL)
+   }
+   
+   if (colorLen == 4)
+   {
+      color <- gsub("([a-fA-F0-9])", "\\1\\1", color)
+   }
+   if (!grepl("^#[a-fA-F0-9]{6}$", color))
+   {
+      if (!grepl("^#[a-fA-F0-9]{8}$", color))
+      {
+         stop(paste0("Unable to parse color: ", color), call. = FALSE)
+      }
+      
+      aVal <- format(
+         round(strtoi(substr(color, 8, 9), base = 16L) / 255, digits = 2),
+         nsmall = 2)
+      color <- paste0(
+         "rgba(",
+         paste(
+            c(.rs.getRgbColor(substr(color, 1, 7)), aVal),
+            collapse = ", "),
+         ")")
+   }
+   
+   color
+})
+
+# Parses a font style and converts it to CSS.
+#
+# @param styles      The style(s) to convert.
+#
+# Returns the converted font style.
+.rs.addFunction("parseStyles", parseStyles <- function(styles) {
+   cssLines <- character(0)
+   fontStyle <- if (is.null(styles$fontStyle)) "" else styles$fontStyle
+   
+   if (grepl("underline", fontStyle))
+   {
+      # Not the most efficient, but this shouldn't be an overly common operation.
+      cssLines <- c(cssLines, "text-decoration:underline;")
+   }
+   if (grepl("italic", fontStyle))
+   {
+      cssLines <- c(cssLines, "font-style:italic;")
+   }
+   
+   if (!is.null(styles$foreground))
+   {
+      cssLines <- c(cssLines, paste0("color:", .rs.parseColor(styles$foreground), ";"))
+   }
+   if (!is.null(styles$background))
+   {
+      cssLines <- c(cssLines, paste0("background-color:", .rs.parseColor(styles$background), ";"))
+   }
+   
+   paste0(cssLines, collapse = "")
+})
+
+# Extracts the style information from a parsed tmTheme object.
+#
+# @param theme             The parsed tmTheme object.
+# @param supportScopes     tmTheme scopes that are supported by ace and a mapping to their ace
+#                          value.
+# 
+# Returns a list which contains the styles and unsupportedScopes in named elements.
+.rs.addFunction("extractStyles", extractStyles <- function(theme, supportedScopes) {
+   # Fallback Scopes
+   fallbackScopes <- list(
+      "keyword" = "meta",
+      "support.type" = "storage.type",
+      "variable" = "entity.name.function")
+   
+   # Default Global Values
+   defaultGlobals <- list(
+      "printMargin" = "#e8e8e8",
+      "background" = "#ffffff",
+      "foreground" = "#000000",
+      "gutter" = "#f0f0f0",
+      "selection" = "rgb(181, 213, 255)",
+      "step" = "rgb(198, 219, 174)",
+      "bracket" = "rgb(192, 192, 192)",
+      "active_line" = "rgba(0, 0, 0, 0.07)",
+      "cursor" = "#000000",
+      "invisible" = "rgb(191, 191, 191)",
+      "fold" = "#6b72e6")
+   
+   globalSettings <- theme$settings[[1]]$settings
+   
+   # Get the global colors
+   invisColor <- .rs.parseColor(globalSettings$invisibles)
+   if (is.null(invisColor)) invisColor <- defaultGlobals$invisibles
+   
+   styles <- list(
+      "printMargin" = defaultGlobals$printMargin,
+      "background" = .rs.parseColor(globalSettings$background),
+      "foreground" = .rs.parseColor(globalSettings$foreground),
+      "gutter" = defaultGlobals$gutter,
+      "selection" = .rs.parseColor(globalSettings$selection),
+      "step" = defaultGlobals$step,
+      "bracket" = invisColor,
+      "active_line" = .rs.parseColor(globalSettings$lineHighlight),
+      "cursor" = .rs.parseColor(globalSettings$caret),
+      "invisible" = paste0("color:", invisColor, ";"))
+   
+   if (is.null(styles$background)) styles$background <- defaultGlobals$background
+   if (is.null(styles$foreground)) styles$foreground <- defaultGlobals$foreground
+   if (is.null(styles$selection)) styles$selection <- defaultGlobals$selection
+   if (is.null(styles$active_line)) styles$active_line <- defaultGlobals$active_line
+   if (is.null(styles$cursor)) styles$cursor <- defaultGlobals$cursor
+   
+   # Get the specified scopes
+   unsupportedScopes <- list()
+   supportedScopeNames <- names(supportedScopes)
+   for (element in theme$settings)
+   {
+      if (!is.null(element$scope) && !is.null(element$settings))
+      {
+         # Split on commas and strip whitespace.
+         scopes <- strsplit(gsub("^\\s*|\\s*$", "", element$scope), "\\s*,\\s*")[[1]]
+         for (scope in scopes)
+         {
+            style <- .rs.parseStyles(element$settings)
+            if (scope %in% supportedScopeNames)
+            {
+               styles[[ supportedScopes[[scope]] ]] <- style
+            }
+            else if (!is.null(style))
+            {
+               if (!(scope %in% names(unsupportedScopes)))
+               {
+                  unsupportedScopes[[scope]] <- 0
+               }
+               else 
+               {
+                  unsupportedScopes[[scope]] <- unsupportedScopes[[scope]] + 1
+               }
+            }
+         }
+      }
+   }
+   
+   fScopeNames <- names(fallbackScopes)
+   for (i in 1:length(fallbackScopes))
+   {
+      name <- fScopeNames[i]
+      scope <- fallbackScopes[[i]]
+      if (is.null(styles[[name]]))
+      {
+         styles[[name]] <- styles[[scope]]
+      }
+   }
+   
+   if (is.null(styles$fold))
+   {
+      foldSource <- styles$entity.name.function
+      if (is.null(foldSource)) foldSource <- styles$keyword
+      
+      if (!is.null(foldSource))
+      {
+         styles$fold <- regmatches(foldSource, regexec("\\:([^;]+)", foldSource))[[1]][2]
+      }
+      else
+      {
+         styles$fold <- defaultGlobals$fold
+      }
+   }
+   
+   styles$gutterBg = styles$background
+   styles$gutterFg = .rs.mixColors(styles$foreground, styles$background, 0.5)
+   
+   if (is.null(styles$selected_word_highlight))
+   {
+      styles$selected_word_highlight <- paste0("border: 1px solid ", styles$selection, ";")
+   }
+   
+   styles$isDark = tolower(as.character(.rs.getLuma(styles$background) <  0.5))
+   
+   list("styles" = styles, "unsupportedScopes" = unsupportedScopes)
+})
+
+# Converts a theme from a tmTheme to an Ace css theme.
+#
+# @param tmTheme     The parsed tmTheme object.
+# 
+# Returns Ace css theme as a string.
+.rs.addFunction("convertTmTheme", convertTmTheme <- function(tmTheme) {
+   # Helper functions 
+   
+   # Fills a template value with the given replacements.
+   #
+   # @param template          The template to fill.
+   # @param replacements      The replacements to fill the template with.
+   #
+   # Returns a string of the filled template.
+   fillTemplate <- function(template, replacements) {
+      repeat
+      {
+         matches <- regmatches(template, regexec("%(.+?)%", template))[[1]]
+         if (length(matches) != 2)
+         {
+            break
+         }
+         
+         replacement <- replacements[[matches[2]]]
+         if (is.null(replacement)) replacement <- ""
+         template <- sub(matches[1], replacement, template)
+      }
+      
+      template
+   }
+   
+   # Hyphenates a title or camel case string, separating words and replacing "_" with "-".
+   # 
+   # @param string      The string to convert to lower case with hyphens.
+   #
+   # Returns the converted string.
+   hyphenate <- function(string) {
+      tolower(sub("^-", "", gsub("-*_-*", "-", gsub("([^\\d][A-Z])", "-\\1", string))))
+   }
+   
+   # Quotes a string and adds extra escapes to escape characters.
+   #
+   # @param string      The string to quoted.
+   #
+   # Returns the processed string
+   quoteStr <- function(string) {
+      paste0(
+         "\"",
+         gsub("\n", "\\n", gsub("\"", "\\\"", gsub("\\", "\\\\", string))),
+         "\"")
+   }
+   
+   # Syntax highlighting scopes
+   supportedScopes <- list()
+   
+   # Keywords
+   supportedScopes[["keyword"]] <- "keyword"
+   supportedScopes[["keyword.operator"]] <- "keyword.operator"
+   supportedScopes[["keyword.other.unit"]] <- "keyword.other.unit"
+   
+   # Constants
+   supportedScopes[["constant"]] <- "constant"
+   supportedScopes[["constant.language"]] <- "constant.language"
+   supportedScopes[["constant.library"]] <- "constant.library"
+   supportedScopes[["constant.numeric"]] <- "constant.numeric"
+   supportedScopes[["constant.character"]] <- "constant.character"
+   supportedScopes[["constant.character.escape"]] <- "constant.character.escape"
+   supportedScopes[["constant.character.entity"]] <- "constant.character.entity"
+   
+   # Supports
+   supportedScopes[["support"]] <- "support"
+   supportedScopes[["support.function"]] <- "support.function"
+   supportedScopes[["support.function.dom"]] <- "support.function.dom"
+   supportedScopes[["support.function.firebug"]] <- "support.firebug"
+   supportedScopes[["support.function.constant"]] <- "support.function.constant"
+   supportedScopes[["support.constant"]] <- "support.constant"
+   supportedScopes[["support.constant.property-value"]] <- "support.constant.property-value"
+   supportedScopes[["support.class"]] <- "support.class"
+   supportedScopes[["support.type"]] <- "support.type"
+   supportedScopes[["support.other"]] <- "support.other"
+   
+   # Functions
+   supportedScopes[["function"]] <- "function"
+   supportedScopes[["function.buildin"]] <- "function.buildin"
+   
+   # Storages
+   supportedScopes[["storage"]] <- "storage"
+   supportedScopes[["storage.type"]] <- "storage.type"
+   
+   # Invalids
+   supportedScopes[["invalid"]] <- "invalid"
+   supportedScopes[["invalid.illegal"]] <- "invalid.illegal"
+   supportedScopes[["invalid.deprecated"]] <- "invalid.deprecated"
+   
+   # Strings
+   supportedScopes[["string"]] <- "string"
+   supportedScopes[["string.regexp"]] <- "string.regexp"
+   
+   # Comments
+   supportedScopes[["comment"]] <- "comment"
+   supportedScopes[["comment.documentation"]] <- "comment.doc"
+   supportedScopes[["comment.documentation.tag"]] <- "comment.doc.tag"
+   
+   # Variables
+   supportedScopes[["variable"]] <- "variable"
+   supportedScopes[["variable.language"]] <- "variable.language"
+   supportedScopes[["variable.parameter"]] <- "variable.parameter"
+   
+   # Meta
+   supportedScopes[["meta"]] <- "meta"
+   supportedScopes[["meta.tag.sgml.doctype"]] <- "xml-pe"
+   supportedScopes[["meta.tag"]] <- "meta.tag"
+   supportedScopes[["meta.selector"]] <- "meta.selector"
+   
+   # Entities
+   supportedScopes[["entity.other.attribute-name"]] <- "entity.other.attribute-name"
+   supportedScopes[["entity.name.function"]] <- "entity.name.function"
+   supportedScopes[["entity.name"]] <- "entity.name"
+   supportedScopes[["entity.name.tag"]] <- "entity.name.tag"
+   
+   # Markup
+   supportedScopes[["markup.heading"]] <- "markup.heading"
+   supportedScopes[["markup.heading.1"]] <- "markup.heading.1"
+   supportedScopes[["markup.heading.2"]] <- "markup.heading.2"
+   supportedScopes[["markup.heading.3"]] <- "markup.heading.3"
+   supportedScopes[["markup.heading.4"]] <- "markup.heading.4"
+   supportedScopes[["markup.heading.5"]] <- "markup.heading.5"
+   supportedScopes[["markup.heading.6"]] <- "markup.heading.6"
+   supportedScopes[["markup.list"]] <- "markup.list"
+   
+   # Collaborators
+   supportedScopes[["collab.user1"]] <- "collab.user1"
+   
+   # Read the tempalte files
+   conn <- file(
+      description = file.path(.Call("rs_rResourcesPath"), "templates", "ace_theme_template.css"),
+      open = "rt")
+   cssTemplate <- paste0(readLines(conn), collapse ="\n")
+   close(conn)
+   
+   # Extract style
+   name <- tmTheme$name
+   if (is.null(name)) name <- ""
+   styleRes <- .rs.extractStyles(tmTheme, supportedScopes)
+   styles <- styleRes$styles
+   unsupportedScopes <- styleRes$unsupportedScopes
+   
+   # Fill template
+   styles$cssClass = paste0("ace-", hyphenate(name))
+   styles$uuid <- tmTheme$uuid
+   css <- fillTemplate(cssTemplate, styles)
+   css <- gsub("[^\\{\\}]+\\{\\s*\\}", "", css)
+   
+   for (scope in supportedScopes)
+   {
+      if (!is.null(styles$scope))
+      {
+         css = paste0(
+            "\n\n",
+            css,
+            ".",
+            styles$cssClass,
+            " ",
+            gsub("^|\\.", ".ace_", scope),
+            " {\n  ",
+            gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
+            "}")
+      }
+   }
+   
+   css
+})
 # Counts the number of children of an XML element, not count "text".
 #
 # @param element     The element for which to count children.
 #
 # Returns the number of children of an element
-.rs.addFunction("countXmlChildren", function(element) {
+.rs.addFunction("countXmlChildren", countXmlChildren <- function(element) {
    count <- XML::xmlSize(element)
    if (!is.null(XML::xmlChildren(element)$text))
    {
@@ -155,7 +517,7 @@
 # @param element     The element to parse.
 #
 # Returns the text value of the element.
-.rs.addFunction("parseKeyElement", function(element) {
+.rs.addFunction("parseKeyElement", parseKeyElement <- function(element) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    key <- XML::xmlValue(element)
    if (key == "")
@@ -174,8 +536,7 @@
 # @param keyName     The name of the key for this value.
 #
 # Returns the text value of the element.
-.rs.addFunction("parseStringElement", function(element, keyName)
-{
+.rs.addFunction("parseStringElement", parseStringElement <- function(element, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    value <- XML::xmlValue(element)
    
@@ -201,7 +562,7 @@
 # @param keyName        The name of the dictionary.
 #
 # Returns a list with named values.
-.rs.addFunction("parseDictElement", function(dictElement, keyName) {
+.rs.addFunction("parseDictElement", parseDictElement <- function(dictElement, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    if (is.null(keyName))
    {
@@ -209,67 +570,64 @@
          sprintf("%s Unable to find a key for the current \"dict\" element.", parseError),
          call. = FALSE)
    }
-   if (.rs.countXmlChildren(dictElement) < 1)
-   {
-      stop(
-         sprintf("%s \"dict\" element cannot be empty.", parseError),
-         call. = FALSE)
-   }
    
    values <- list()
-   key <- NULL
-   for (element in XML::xmlChildren(dictElement))
+   if (.rs.countXmlChildren(dictElement) >= 1)
    {
-      elName <- XML::xmlName(element)
-      if (elName == "key")
+      key <- NULL
+      for (element in XML::xmlChildren(dictElement))
       {
-         if (!is.null(key))
+         elName <- XML::xmlName(element)
+         if (elName == "key")
+         {
+            if (!is.null(key))
+            {
+               stop(
+                  sprintf(
+                     "%s Unable to find a value for the key \"%s\".",
+                     parseError,
+                     key),
+                  call. = FALSE)
+            }
+            key <- .rs.parseKeyElement(element)
+         }
+         else if (elName == "string")
+         {
+            # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
+            # using the same key twice.
+            values[[key]] <- .rs.parseStringElement(element, key)
+            key <- NULL
+         }
+         else if (elName == "dict")
+         {
+            values[[key]] <- .rs.parseDictElement(element, key)
+            key <- NULL
+         }
+         else if (elName == "array")
+         {
+            values[[key]] <- .rs.parseArrayElement(element, key)
+            key <- NULL
+         }
+         else
          {
             stop(
                sprintf(
-                  "%s Unable to find a value for the key \"%s\".",
+                  "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
                   parseError,
-                  key),
+                  elName),
                call. = FALSE)
          }
-         key <- .rs.parseKeyElement(element)
       }
-      else if (elName == "string")
-      {
-         # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
-         # using the same key twice.
-         values[[key]] <- .rs.parseStringElement(element, key)
-         key <- NULL
-      }
-      else if (elName == "dict")
-      {
-         values[[key]] <- .rs.parseDictElement(element, key)
-         key <- NULL
-      }
-      else if (elName == "array")
-      {
-         values[[key]] <- .rs.parseArrayElement(element, key)
-         key <- NULL
-      }
-      else
+      
+      if (!is.null(key))
       {
          stop(
             sprintf(
-               "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
+               "%s Unable to find a value for the key \"%s\".",
                parseError,
-               elName),
+               key),
             call. = FALSE)
       }
-   }
-   
-   if (!is.null(key))
-   {
-      stop(
-         sprintf(
-            "%s Unable to find a value for the key \"%s\".",
-            parseError,
-            key),
-         call. = FALSE)
    }
    
    values
@@ -281,7 +639,7 @@
 # @param keyName           The name of the key for this array element.
 #
 # Returns a list() of named settings.
-.rs.addFunction("parseArrayElement", function(arrayElement, keyName) {
+.rs.addFunction("parseArrayElement", parseArrayElement <- function(arrayElement, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    if (.rs.countXmlChildren(arrayElement) < 1)
    {
@@ -331,7 +689,7 @@
 # @param file     The file to parse.
 # 
 # Returns a list with named values.
-.rs.addFunction("parseTmTheme", function(file) {
+.rs.addFunction("parseTmTheme", parseTmTheme <- function(file) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    
    tmThemeDoc <- XML::xmlRoot(
@@ -360,116 +718,27 @@
          call. = FALSE)
    }
    
-   # Skip the plist (root) and first level of dict.
+   # Check the structure at the root is correct before continuing.
+   if (XML::xmlName(tmThemeDoc[[1]]) != "dict")
+   {
+      stop(
+         sprintf(
+            "%s Expecting \"dict\" element; found \"%s\".",
+            parseError, XML::xmlName(tmThemeDoc[[1]])),
+         call. = FALSE)
+   }
+   if (.rs.countXmlChildren(tmThemeDoc[[1]]) < 1)
+   {
+      stop(
+         sprintf(
+            "%s \"dict\" element cannot be empty.",
+            parseError),
+         call. = FALSE)
+   }
+   
+   # Skip the plist (root), first child is a <dict>.
    # Intentionally empty key here
    .rs.parseDictElement(tmThemeDoc[[1]], "")
-})
-
-# Converts a theme from a tmtheme to an Ace file.
-.rs.addFunction("convertTmTheme", function(file) {
-   # Syntax highlighting scopes
-   scopes <- list()
-   
-   # Keywords
-   scopes[["keyword"]] <- "keyword"
-   scopes[["keyword.operator"]] <- "keyword.operator"
-   scopes[["keyword.other.unit"]] <- "keyword.other.unit"
-   
-   # Constants
-   scopes[["constant"]] <- "constant"
-   scopes[["constant.language"]] <- "constant.language"
-   scopes[["constant.library"]] <- "constant.library"
-   scopes[["constant.numeric"]] <- "constant.numeric"
-   scopes[["constant.character"]] <- "constant.character"
-   scopes[["constant.character.escape"]] <- "constant.character.escape"
-   scopes[["constant.character.entity"]] <- "constant.character.entity"
-   
-   # Supports
-   scopes[["support"]] <- "support"
-   scopes[["support.function"]] <- "support.function"
-   scopes[["support.function.dom"]] <- "support.function.dom"
-   scopes[["support.function.firebug"]] <- "support.firebug"
-   scopes[["support.function.constant"]] <- "support.function.constant"
-   scopes[["support.constant"]] <- "support.constant"
-   scopes[["support.constant.property-value"]] <- "support.constant.property-value"
-   scopes[["support.class"]] <- "support.class"
-   scopes[["support.type"]] <- "support.type"
-   scopes[["support.other"]] <- "support.other"
-   
-   # Functions
-   scopes[["function"]] <- "function"
-   scopes[["function.buildin"]] <- "function.buildin"
-   
-   # Storages
-   scopes[["storage"]] <- "storage"
-   scopes[["storage.type"]] <- "storage.type"
-   
-   # Invalids
-   scopes[["invalid"]] <- "invalid"
-   scopes[["invalid.illegal"]] <- "invalid.illegal"
-   scopes[["invalid.deprecated"]] <- "invalid.deprecated"
-   
-   # Strings
-   scopes[["string"]] <- "string"
-   scopes[["string.regexp"]] <- "string.regexp"
-   
-   # Comments
-   scopes[["comment"]] <- "comment"
-   scopes[["comment.documentation"]] <- "comment.doc"
-   scopes[["comment.documentation.tag"]] <- "comment.doc.tag"
-   
-   # Variables
-   scopes[["variable"]] <- "variable"
-   scopes[["variable.language"]] <- "variable.language"
-   scopes[["variable.parameter"]] <- "variable.parameter"
-   
-   # Meta
-   scopes[["meta"]] <- "meta"
-   scopes[["meta.tag.sgml.doctype"]] <- "xml-pe"
-   scopes[["meta.tag"]] <- "meta.tag"
-   scopes[["meta.selector"]] <- "meta.selector"
-   
-   # Entities
-   scopes[["entity.other.attribute-name"]] <- "entity.other.attribute-name"
-   scopes[["entity.name.function"]] <- "entity.name.function"
-   scopes[["entity.name"]] <- "entity.name"
-   scopes[["entity.name.tag"]] <- "entity.name.tag"
-   
-   # Markup
-   scopes[["markup.heading"]] <- "markup.heading"
-   scopes[["markup.heading.1"]] <- "markup.heading.1"
-   scopes[["markup.heading.2"]] <- "markup.heading.2"
-   scopes[["markup.heading.3"]] <- "markup.heading.3"
-   scopes[["markup.heading.4"]] <- "markup.heading.4"
-   scopes[["markup.heading.5"]] <- "markup.heading.5"
-   scopes[["markup.heading.6"]] <- "markup.heading.6"
-   scopes[["markup.list"]] <- "markup.list"
-   
-   # Collaborators
-   scopes[["collab.user1"]] <- "collab.user1"
-   
-   # Fallback Scopes
-   fallbackScopes <- list()
-   fallbackScopes[["keyword"]] <- "meta"
-   fallbackScopes[["support.type"]] <- "storage.type"
-   fallbackScopes[["variable"]] <- "entity.name.function"
-   
-   # Default global colours
-   defaultGlobals <- list()
-   defaultGlobals[["printMargin"]] <- "#e8e8e8"
-   defaultGlobals[["background"]] <- "#ffffff"
-   defaultGlobals[["foreground"]] <- "#000000"
-   defaultGlobals[["gutter"]] <- "#f0f0f0"
-   defaultGlobals[["selection"]] <- "rgb(181, 213, 255)"
-   defaultGlobals[["step"]] <- "rgb(198, 219, 174)"
-   defaultGlobals[["bracket"]] <- "rgb(192, 192, 192)"
-   defaultGlobals[["active_line"]] <- "rgba(0, 0, 0, 0.07)"
-   defaultGlobals[["cursor"]] <- "#000000"
-   defaultGlobals[["invisible"]] <- "rgb(191, 191, 191)"
-   defaultGlobals[["fold"]] <- "#6b72e6"
-   
-   # TODO: return value.
-   invisible(NULL)
 })
 
 # Worker functions
@@ -480,22 +749,24 @@
 # @param add               Whether to add the converted custom theme to RStudio.
 # @param outputLocation    Where to place a local copy of the converted theme.
 # @param apply             Whether to immediately apply the new custom theme.
+# @param force             Whether to force the operation when it may involve an overwrite.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("convertTheme", function (file, add, outputLocation, apply) {
-   # TODO: validate input 
-   # TODO: convert from tmtheme to CSS & extract name
-   name <- ""
+.rs.addFunction("convertTheme", convertTheme <- function(file, add, outputLocation, apply, force) {
+   tmTheme <- .rs.parseTmTheme(file)
+   name <- tmTheme$name
+   fileName <- basename(file)
+   fileName <- paste0(regmatches(fileName, regexpr("[^\\.]*", fileName)), ".rstheme")
    
-   # TODO: convert from CSS to rstheme
+   aceTheme <- .rs.convertTmTheme(tmTheme)
    
    if (add)
    {
-      .rs.addTheme(name, apply)
+      .rs.addTheme(name, apply, force)
    }
    else if (apply)
    {
-      # TODO: error
+      stop("Invalid input: unable to apply a theme which has not been added.")
    }
    
    if (!is.null(outputLocation))
@@ -508,10 +779,10 @@
 #
 # @param file     The rstheme file to add.
 # @param apply    Whether to immediately apply the newly added theme.
-# @param force    Whether to force the operation, even if an overwrite will occur.
+# @param force    Whether to force the operation when it may involve an overwrite.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", function(file, apply, force) {
+.rs.addFunction("addTheme", addTheme <- function(file, apply, force, buffer = NULL, name = NULL) {
    # TODO: add the theme and get the name.
    name <- ""
    
@@ -524,7 +795,7 @@
 # Applies a theme to RStudio.
 #
 # @param name     The name of the theme to apply.
-.rs.addFunction("applyTheme", function(name) {
+.rs.addFunction("applyTheme", applyTheme <- function(name) {
    themeList <- .Call("rs_getThemes")
    
    if (!(tolower(name) %in% tolower(themeList)))
@@ -539,7 +810,7 @@
 # set to the default theme.
 #
 # @param The name of the theme to remove.
-.rs.addFunction("removeTheme", function(name) {
+.rs.addFunction("removeTheme", removeTheme <- function(name) {
    themeLists <- .Call("rs_getThemes")
    currentTheme <- .rs.api.getThemeInfo()$editor
    
@@ -560,27 +831,27 @@
 # API Functions
 
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
-.rs.addApiFunction("convertTheme", function(file, add = TRUE, outputLocation = NULL, apply = FALSE) {
+.rs.addApiFunction("convertTheme", api.convertTheme <- function(file, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE) {
    # Require XML package for parsing the tmtheme files.
    if (!suppressWarnings(require("XML", quietly = TRUE)))
    {
       stop("Taking this action requires the XML library. Please run 'install.packages(\"XML\")' before continuing.")
    }
    
-   .rs.convertTheme(file, add, outputLocation, apply)
+   .rs.convertTheme(file, add, outputLocation, apply, force)
 })
 
 # Add a theme to RStudio.
-.rs.addApiFunction("addTheme", function(file, apply = FALSE) {
-   .rs.addTheme(file, apply)
+.rs.addApiFunction("addTheme", api.addTheme <- function(file, apply = FALSE, force = FALSE) {
+   .rs.addTheme(file, apply, force)
 })
 
 # Apply a theme to RStudio.
-.rs.addApiFunction("applyTheme", function(name) {
-   .rs.applyTheme(name)
+.rs.addApiFunction("applyTheme", api.applyTheme <-  function(name) {
+   .rs.applyTheme(name, force)
 })
 
 # Remove a theme from RStudio.()
-.rs.addApiFunction("removeTheme", function(name) {
+.rs.addApiFunction("removeTheme", api.removeTheme <- function(name) {
    .rs.removeTheme(name)
 })
