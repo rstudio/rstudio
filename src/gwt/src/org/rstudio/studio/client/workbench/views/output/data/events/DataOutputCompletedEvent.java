@@ -1,5 +1,5 @@
 /*
- * DataOutputStartedEvent.java
+ * DataOutputCompletedEvent.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.output.data.events;
 
+import org.rstudio.studio.client.workbench.views.output.data.model.DataOutputResult;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class DataOutputStartedEvent extends GwtEvent<DataOutputStartedEvent.Handler>
+public class DataOutputCompletedEvent extends GwtEvent<DataOutputCompletedEvent.Handler>
 {  
    public static class Data extends JavaScriptObject
    { 
@@ -29,11 +31,12 @@ public class DataOutputStartedEvent extends GwtEvent<DataOutputStartedEvent.Hand
 
    public interface Handler extends EventHandler
    {
-      void onDataOutputStarted(DataOutputStartedEvent event);
+      void onDataOutputCompleted(DataOutputCompletedEvent event);
    }
 
-   public DataOutputStartedEvent()
+   public DataOutputCompletedEvent(DataOutputResult data)
    {
+      data_ = data;
    }
   
    @Override
@@ -45,8 +48,10 @@ public class DataOutputStartedEvent extends GwtEvent<DataOutputStartedEvent.Hand
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onDataOutputStarted(this);
+      handler.onDataOutputCompleted(this);
    }
+
+   private final DataOutputResult data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

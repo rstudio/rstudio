@@ -44,3 +44,10 @@
       columns = columns
    )
 })
+
+.rs.addFunction("previewSqlQuery", function(connection, statement)
+{
+   .rs.enqueClientEvent("data_output_started", list())
+
+   .rs.enqueClientEvent("data_output_completed", list())
+})

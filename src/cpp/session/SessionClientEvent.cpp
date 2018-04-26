@@ -188,6 +188,8 @@ const int kTestsCompleted = 169;
 const int kJobUpdated = 170;
 const int kJobRefresh = 171;
 const int kJobOutput = 172;
+const int kDataOutputStarted = 173;
+const int kDataOutputCompleted = 174;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -519,6 +521,10 @@ std::string ClientEvent::typeName() const
          return "job_refresh";
       case client_events::kJobOutput:
          return "job_output";
+      case client_events::kDataOutputStarted:
+         return "data_output_started";
+      case client_events::kDataOutputCompleted:
+         return "data_output_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

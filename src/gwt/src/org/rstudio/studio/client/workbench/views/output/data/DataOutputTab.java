@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
+import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputStartedEvent;
 
 public class DataOutputTab 
    extends DelayLoadWorkbenchTab<DataOutputPresenter> 
@@ -38,6 +40,8 @@ public class DataOutputTab
    public abstract static class Shim extends
                 DelayLoadTabShim<DataOutputPresenter, DataOutputTab>
       implements BuildStartedEvent.Handler,
+                 DataOutputStartedEvent.Handler,
+                 DataOutputCompletedEvent.Handler,
                  ProvidesBusy
    {
       abstract void initialize();
@@ -46,13 +50,15 @@ public class DataOutputTab
 
    @Inject
    public DataOutputTab(Shim shim,
-                         EventBus events,
-                         final Session session)
+                        EventBus events,
+                        final Session session)
    {
       super("Data", shim);
       shim_ = shim;
 
       events.addHandler(BuildStartedEvent.TYPE, shim);
+      events.addHandler(DataOutputStartedEvent.TYPE, shim);
+      events.addHandler(DataOutputCompletedEvent.TYPE, shim);
    }
 
    @Override
