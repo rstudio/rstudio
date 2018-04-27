@@ -39,15 +39,17 @@
    }
 
 
-   list(
+   preview <- list(
       data = unname(data),
       columns = columns
    )
+
+   .rs.enqueClientEvent("data_output_completed", preview)
 })
 
 .rs.addFunction("previewSqlQuery", function(connection, statement)
 {
    .rs.enqueClientEvent("data_output_started", list())
 
-   .rs.enqueClientEvent("data_output_completed", list())
+   .rs.previewDataFrame(iris)
 })

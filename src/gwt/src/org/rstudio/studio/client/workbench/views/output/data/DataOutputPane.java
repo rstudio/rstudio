@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
 public class DataOutputPane extends WorkbenchPane
       implements DataOutputPresenter.Display
@@ -78,8 +80,25 @@ public class DataOutputPane extends WorkbenchPane
    {
    }
 
-   public void outputCompleted()
+   public void outputCompleted(final DataOutputCompletedEvent response)
    {
+      new Timer() {
+         @Override
+         public void run()
+         {
+            if (!gridViewer_.isReady())
+            {
+               this.schedule(200);
+            }
+            else
+            {
+               gridViewer_.setOption("nullsAsNAs", "true");
+               gridViewer_.setOption("ordering", "false");
+               gridViewer_.setOption("rowNumbers", "false");
+               gridViewer_.setData(response.getData());
+            }
+         }
+      }.schedule(10);
    }
    
    GridViewerFrame gridViewer_;

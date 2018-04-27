@@ -86,7 +86,7 @@ public class DataOutputPresenter extends BusyPresenter
    {
       if (isBusy())
       {
-         terminateTests();
+         terminateDataOutput();
       }
 
       onConfirmed.execute();
@@ -113,6 +113,8 @@ public class DataOutputPresenter extends BusyPresenter
       if (!isEnabled()) return;
 
       setIsBusy(false);
+
+      view_.outputCompleted(event);
    }
 
    @Override
@@ -155,18 +157,18 @@ public class DataOutputPresenter extends BusyPresenter
       setIsBusy(false);
    }
    
-   private void terminateTests()
+   private void terminateDataOutput()
    {
       server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
-                                                       "Terminating Tests..."){
+                                                       "Terminating Data Preview..."){
          @Override
          protected void onSuccess(Boolean response)
          {
             if (!response)
             {
                globalDisplay_.showErrorMessage(
-                  "Error Terminating Tests",
-                  "Unable to terminate tests. Please try again.");
+                  "Error Terminating Data Preview",
+                  "Unable to terminate data preview. Please try again.");
             }
          }
       });  

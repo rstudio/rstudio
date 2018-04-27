@@ -38,6 +38,11 @@ public class DataOutputCompletedEvent extends GwtEvent<DataOutputCompletedEvent.
    {
       data_ = data;
    }
+
+   public JavaScriptObject getData()
+   {
+      return data_;
+   }
   
    @Override
    public Type<Handler> getAssociatedType()

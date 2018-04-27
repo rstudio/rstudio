@@ -62,6 +62,16 @@ public class GridViewerFrame extends RStudioFrame
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       return getActiveColumn(gridViewerFrameWindow);
    }
+
+   public boolean isReady()
+   {
+      WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
+      return canSetOptions(gridViewerFrameWindow);
+   }
+
+   private native boolean canSetOptions(WindowEx frameContentWindow) /*-{
+      return typeof(frameContentWindow) !== " undefined";
+   }-*/;
    
    private final native void setDataNative(
       WindowEx frameContentWindow,
