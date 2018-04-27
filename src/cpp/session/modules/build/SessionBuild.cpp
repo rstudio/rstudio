@@ -131,7 +131,8 @@ bool isPackageHeaderFile(const FilePath& filePath)
    if (projects::projectContext().hasProject() &&
        (projects::projectContext().config().buildType ==
                                               r_util::kBuildTypePackage) &&
-       boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h"))
+       (boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h") ||
+        filePath.extensionLowerCase() == ".stan"))
    {
       FilePath pkgPath = projects::projectContext().buildTargetPath();
       std::string pkgRelative = filePath.relativePath(pkgPath);
