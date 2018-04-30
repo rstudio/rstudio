@@ -31,8 +31,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "ViewerHistory.hpp"
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -45,7 +43,7 @@ namespace {
 #define kJSPreviewable "js-previewable"
 #define kSqlPreviewable "sql-previewable"
 
-std::string onDetectJSSourceType(
+std::string onDetectSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeJS))
@@ -75,13 +73,12 @@ std::string onDetectJSSourceType(
 
 Error initialize()
 {
-   // install event handlers
    using namespace module_context;
-   events().onClientInit.connect(onClientInit);
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
-
    module_context::events().onDetectSourceExtendedType
-                                        .connect(onDetectJSSourceType);
+                                        .connect(onDetectSourceType);
+
+   ExecBlock initBlock ;
+   return initBlock.execute();
 }
 
 

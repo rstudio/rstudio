@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_VIEWER_HPP
-#define SESSION_VIEWER_HPP
+#ifndef SESSION_PREVIEW_HPP
+#define SESSION_PREVIEW_HPP
 
 namespace rstudio {
 namespace core {
@@ -34,4 +34,4 @@ core::Error initialize();
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_VIEWER_HPP
+#endif // SESSION_PREVIEW_HPP

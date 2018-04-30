@@ -191,6 +191,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRequestHandler.cpp
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
+   modules/preview/SessionPreview.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
