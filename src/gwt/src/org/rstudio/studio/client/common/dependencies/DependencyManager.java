@@ -801,7 +801,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "DBI",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("dbi", "0.8")
+            Dependency.cranPackage("DBI", "0.8")
          },
          true,
          new CommandWithArg<Boolean>()
