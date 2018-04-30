@@ -5347,7 +5347,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            save(new Command() {
+            saveThenExecute(null, new Command() {
                @Override
                public void execute()
                {
@@ -5364,7 +5364,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            save(new Command() {
+            saveThenExecute(null, new Command() {
                @Override
                public void execute()
                {
