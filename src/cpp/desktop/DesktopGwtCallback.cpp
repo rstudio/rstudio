@@ -564,13 +564,13 @@ void GwtCallback::showWordDoc(QString path)
 #endif
 }
 
-#endif
-
 void GwtCallback::showPptPresentation(QString path)
 {
    // TODO (jmcphers): as with Word, connect more robustly with the application
    showFile(path);
 }
+
+#endif
 
 void GwtCallback::showPDF(QString path, int pdfPage)
 {
