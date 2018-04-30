@@ -1,7 +1,7 @@
 /*
  * DesktopWordViewer.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,96 +26,13 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include "DesktopComUtils.hpp"
 #include "DesktopWordViewer.hpp"
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
-namespace {
-
-// Convenience to convert an HRSULT to our own error type and bail out on
-// failure.
-#define VERIFY_HRESULT(x) hr = (x); \
-      if (FAILED(hr)) { \
-         errorHR = Error( \
-            boost::system::error_code(hr, boost::system::generic_category()), \
-            ERROR_LOCATION); \
-         goto LErrExit; \
-      }
-
-// Invoke a method or property by name on the given IDispatch interface.
-// Adapted from the standard automation AutoWrap helper function
-// (see http://support.microsoft.com/kb/238393)
-HRESULT invokeDispatch (int dispatchType, VARIANT *pvResult,
-                        IDispatch *pDisp, const std::wstring& strName,
-                        int cArgs...)
-{
-   va_list marker;
-   va_start(marker, cArgs);
-
-   DISPPARAMS dp = { nullptr, nullptr, 0, 0 };
-   DISPID dispidNamed = DISPID_PROPERTYPUT;
-   DISPID dispID;
-   HRESULT hr;
-
-   LPOLESTR wstrName = const_cast<WCHAR*>(strName.c_str());
-   hr = pDisp->GetIDsOfNames(IID_NULL, &wstrName, 1, LOCALE_USER_DEFAULT,
-                             &dispID);
-   if (FAILED(hr))
-      return hr;
-
-   // Create the argument list
-   boost::scoped_array<VARIANT> spArgs(new VARIANT[cArgs + 1]);
-   for (int i = 0; i < cArgs; i++)
-   {
-      spArgs[i] = va_arg(marker, VARIANT);
-   }
-
-   dp.cArgs = cArgs;
-   dp.rgvarg = spArgs.get();
-
-   // Handle special case: for property put, we need to use named args
-   if (dispatchType & DISPATCH_PROPERTYPUT)
-   {
-      dp.cNamedArgs = 1;
-      dp.rgdispidNamedArgs = &dispidNamed;
-   }
-
-   hr = pDisp->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, dispatchType,
-                      &dp, pvResult, nullptr, nullptr);
-   va_end(marker);
-   return hr;
-}
-
-// Given an IDispatch pointer and a name, return an IDispatch pointer to the
-// object property with the given name
-HRESULT getIDispatchProp(IDispatch* idispIn, const std::wstring& strName,
-                         IDispatch** pidispOut)
-{
-   VARIANT result;
-   VariantInit(&result);
-   HRESULT hr = invokeDispatch(DISPATCH_PROPERTYGET, &result,
-                               idispIn, strName, 0);
-   if (FAILED(hr))
-      return hr;
-   *pidispOut = result.pdispVal;
-   return hr;
-}
-
-HRESULT getIntProp(IDispatch* idisp, const std::wstring& strName, int* pOut)
-{
-   VARIANT result;
-   VariantInit(&result);
-   HRESULT hr = invokeDispatch(DISPATCH_PROPERTYGET, &result,
-                               idisp, strName, 0);
-   if (FAILED(hr))
-      return hr;
-   *pOut = result.intVal;
-   return hr;
-}
-
-} // anonymous namespace
 
 WordViewer::WordViewer():
    idispWord_(nullptr),

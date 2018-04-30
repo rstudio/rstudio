@@ -188,6 +188,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 set(DESKTOP_SOURCE_FILES
   DesktopActivationOverlay.cpp
   DesktopBrowserWindow.cpp
+  DesktopComUtils.cpp
   DesktopDownloadItemHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
