@@ -99,7 +99,7 @@ public class TextEditingTargetSqlHelper
    }
    
    private static final Pattern sqlPreviewPattern_ = 
-         Pattern.create("^//\\s*!preview\\s+(\\w+) (.*)$");
+         Pattern.create("^//\\s*!preview\\s+(\\w+)(.*)$");
    
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;

@@ -1,3 +1,3 @@
-// !preview dbi
+// !preview DBI
 
 SELECT 1;
