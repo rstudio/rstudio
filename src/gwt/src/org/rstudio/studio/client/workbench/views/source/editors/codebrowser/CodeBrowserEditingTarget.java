@@ -476,6 +476,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void verifyD3Prerequisites()
    {
    }
+
+   @Override
+   public void verifySqlPrerequisites()
+   {
+   }
    
    @Override
    public void focus()

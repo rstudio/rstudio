@@ -94,6 +94,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewRPresentationDoc();
       @Handler
+      public abstract void onNewSqlDoc();
+      @Handler
       public abstract void onOpenSourceDoc();
       @Handler
       public abstract void onCloseSourceDoc();

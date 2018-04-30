@@ -399,9 +399,12 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
 
-      previewButton_ = commands_.previewJS().createToolbarButton(false);
-      toolbar.addRightWidget(previewButton_);
+      previewJsButton_ = commands_.previewJS().createToolbarButton(false);
+      toolbar.addRightWidget(previewJsButton_);
       
+      previewSqlButton_ = commands_.previewSql().createToolbarButton(false);
+      toolbar.addRightWidget(previewSqlButton_);
+
       createTestToolbarButtons(toolbar);
       
       uiPrefs_.sourceWithEcho().addValueChangeHandler(
@@ -655,8 +658,9 @@ public class TextEditingTargetWidget
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());   
      
-      previewButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
-      
+      previewJsButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
+      previewSqlButton_.setVisible(fileType.isSql() && extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
+
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
                                    !isPlainMarkdown && 
@@ -1399,7 +1403,8 @@ public class TextEditingTargetWidget
    private ToolbarButton runButton_;
    private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
-   private ToolbarButton previewButton_;
+   private ToolbarButton previewJsButton_;
+   private ToolbarButton previewSqlButton_;
    private ToolbarButton testButton_;
    private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;
