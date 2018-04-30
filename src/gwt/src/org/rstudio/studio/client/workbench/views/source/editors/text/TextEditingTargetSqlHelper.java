@@ -72,7 +72,7 @@ public class TextEditingTargetSqlHelper
          }
          else if (line.startsWith("//"))
          {
-            Match match = jsPreviewPattern_.match(line, 0);
+            Match match = sqlPreviewPattern_.match(line, 0);
             if (match != null)
             {
                if (match.hasGroup(1) && match.hasGroup(2))
@@ -98,7 +98,7 @@ public class TextEditingTargetSqlHelper
       public final String args;
    }
    
-   private static final Pattern jsPreviewPattern_ = 
+   private static final Pattern sqlPreviewPattern_ = 
          Pattern.create("^//\\s*!preview\\s+(\\w+) (.*)$");
    
    private EventBus eventBus_; 

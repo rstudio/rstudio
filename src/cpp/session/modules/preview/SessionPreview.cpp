@@ -58,7 +58,7 @@ std::string onDetectSourceType(
 
    if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeSQL))
    {
-      static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+ .*$");
+      static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+.*$");
       std::string contents = pDoc->contents();
       if (regex_utils::search(contents.begin(), contents.end(), rePreviewComment))
       {
