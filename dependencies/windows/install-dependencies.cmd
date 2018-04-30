@@ -159,7 +159,7 @@ if not exist "mathjax-26" (
 )
 
 if not exist pandoc\%PANDOC_VERSION% (
-  wget %WGET_ARGS% "%BASEURL%/pandoc/%PANDOC_VERSION%/%PANDOC_FILE%"
+  wget %WGET_ARGS% "%BASEURL%pandoc/%PANDOC_VERSION%/%PANDOC_FILE%"
   echo Unzipping %PANDOC_FILE%
   unzip %UNZIP_ARGS% "%PANDOC_FILE%"
   mkdir pandoc\%PANDOC_VERSION%
