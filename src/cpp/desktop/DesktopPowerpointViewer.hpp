@@ -15,11 +15,6 @@
 #ifndef DESKTOP_PRESENTATION_VIEWER_HPP
 #define DESKTOP_PRESENTATION_VIEWER_HPP
 
-#include <QString>
-
-#include <boost/utility.hpp>
-#include <core/Error.hpp>
-
 #include "DesktopOfficeViewer.hpp"
 
 struct IDispatch;
@@ -31,12 +26,16 @@ class PowerpointViewer : public OfficeViewer
 {
 public:
    PowerpointViewer();
-   core::Error showPresentation(QString& path);
-   core::Error closeLastPresentation();
+
+   core::Error savePosition(IDispatch* source) override;
+   core::Error restorePosition(IDispatch* target) const override;
+   void resetPosition() override;
+   bool hasPosition() const override;
 
 private:
+   core::Error getDocumentWindow(IDispatch* source, IDispatch** window) const;
+
    int slideIndex_;
-   QString docPath_;
 };
 
 } // namespace desktop

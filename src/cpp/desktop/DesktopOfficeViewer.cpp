@@ -21,6 +21,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
@@ -34,9 +35,11 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
-OfficeViewer::OfficeViewer(const std::wstring& progId):
+OfficeViewer::OfficeViewer(const std::wstring& progId,
+                           const std::wstring& collection):
    idisp_(nullptr),
-   progId_(progId)
+   progId_(progId),
+   collection_(collection)
 {
 }
 
@@ -116,11 +119,179 @@ LErrExit:
    return errorHR;
 }
 
+Error OfficeViewer::openFile(const std::wstring& path, IDispatch** pidispOut)
+{
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   IDispatch *idispItems = nullptr;
+   VERIFY_HRESULT(getIDispatchProp(idispApp(), collection_.c_str(), &idispItems));
+
+   const WCHAR *strOpen = L"Open";
+   DISPID dispidOpen;
+
+   BSTR bstrFileName = SysAllocString(path.c_str());
+
+   // COM requires that arguments are specified in reverse order
+   DISPID argPos[2] = { 2, 0 };
+   VARIANT args[2];
+   VARIANT result;
+   DISPPARAMS dparams;
+
+   // ReadOnly argument
+   args[0].vt = VT_BOOL;
+   args[0].boolVal = true;
+
+   // FileName argument
+   args[1].vt = VT_BSTR;
+   args[1].bstrVal = bstrFileName;
+
+   VariantInit(&result);
+   dparams.rgvarg = args;
+   dparams.rgdispidNamedArgs = argPos;
+   dparams.cArgs = 2;
+   dparams.cNamedArgs = 2;
+   VERIFY_HRESULT(idispItems->GetIDsOfNames(
+                     IID_NULL, const_cast<WCHAR**>(&strOpen),  1,
+                     LOCALE_USER_DEFAULT, &dispidOpen));
+   VERIFY_HRESULT(idispItems->Invoke(
+                     dispidOpen, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                     DISPATCH_METHOD, &dparams, &result, nullptr, nullptr));
+   if (pidispOut)
+      *pidispOut = result.pdispVal;
+
+LErrExit:
+
+   // Release resources
+   SysFreeString(bstrFileName);
+   return errorHR;
+}
+
 IDispatch* OfficeViewer::idispApp()
 {
    return idisp_;
 }
 
+// Given a path, searches for the item in the collection that
+// has the path given. The out parameter is set to that item's IDispatch
+// pointer, or NULL if no item with the path could be found.
+Error OfficeViewer::getItemFromPath(const std::wstring& path, IDispatch** pidispOut)
+{
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   IDispatch* idispItems = nullptr;
+   IDispatch* idispDoc = nullptr;
+   VARIANT varDocIdx;
+   VARIANT varResult;
+   int docCount = 0;
+
+   *pidispOut = nullptr;
+
+   VERIFY_HRESULT(getIDispatchProp(idispApp(), collection_.c_str(), &idispItems));
+   VERIFY_HRESULT(getIntProp(idispItems, L"Count", &docCount));
+
+   varDocIdx.vt = VT_INT;
+   for (int i = 1; i <= docCount; i++)
+   {
+      VariantInit(&varResult);
+      varDocIdx.intVal = i;
+      VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispItems,
+                                    L"Item", 1, varDocIdx));
+      idispDoc = varResult.pdispVal;
+      VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYGET, &varResult, idispDoc,
+                                    L"FullName", 0));
+      if (path == varResult.bstrVal)
+      {
+         *pidispOut = idispDoc;
+         break;
+      }
+   }
+
+LErrExit:
+   return errorHR;
+}
+
+std::wstring OfficeViewer::path()
+{
+   return path_;
+}
+
+void OfficeViewer::setPath(const std::wstring& path)
+{
+    path_ = path;
+}
+
+Error OfficeViewer::closeLastViewedItem()
+{
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   if (idispApp() == nullptr)
+      return Success();
+
+   // Find the open item corresponding to the one we last rendered. If we find
+   // it, close it; if we can't find it, do nothing.
+   IDispatch* idispItem = nullptr;
+   errorHR = getItemFromPath(path(), &idispItem);
+   if (errorHR)
+      return errorHR;
+   if (idispItem == nullptr)
+      return Success();
+
+   errorHR = savePosition(idispItem);
+   if (errorHR)
+      LOG_ERROR(errorHR);
+
+   // Close the item
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispItem, L"Close", 0));
+
+LErrExit:
+   return errorHR;
+}
+
+Error OfficeViewer::showItem(const std::wstring& item)
+{
+   HRESULT hr = S_OK;
+   std::wstring itemPath = item;
+
+   Error errorHR = ensureInterface();
+   if (errorHR)
+       return errorHR;
+
+   // Make the application visible
+   errorHR = showApp();
+   if (errorHR)
+      return errorHR;
+
+   IDispatch* idispDoc;
+
+   // Open the document
+   std::replace(itemPath.begin(), itemPath.end(), '/', '\\');
+   errorHR = openFile(itemPath, &idispDoc);
+   if (errorHR)
+      return errorHR;
+   if (path() == itemPath)
+   {
+      // Reopening the last-opened doc: apply the position if we have one
+      // cached
+      if (hasPosition())
+         restorePosition(idispDoc);
+   }
+   else
+   {
+      // Opening a different doc: forget scroll position and save the doc name
+      resetPosition();
+      setPath(itemPath);
+   }
+
+   // Bring Word to the foreground
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispApp(),
+                                 L"Activate", 0));
+
+LErrExit:
+   return errorHR;
+}
 } // namespace rstudio
 } // namespace desktop
 

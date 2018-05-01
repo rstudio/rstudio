@@ -15,11 +15,7 @@
 #ifndef DESKTOPWORDVIEWER_HPP
 #define DESKTOPWORDVIEWER_HPP
 
-#include <QString>
-
 #include "DesktopOfficeViewer.hpp"
-
-struct IDispatch;
 
 namespace rstudio {
 namespace desktop {
@@ -28,19 +24,15 @@ class WordViewer : public OfficeViewer
 {
 public:
    WordViewer();
-   core::Error showDocument(QString& path);
-   core::Error closeLastViewedDocument();
+
+   core::Error savePosition(IDispatch* source) override;
+   core::Error restorePosition(IDispatch* target) const override;
+   void resetPosition() override;
+   bool hasPosition() const override;
 
 private:
-   core::Error openDocument(QString& path, IDispatch* idispDocs,
-                            IDispatch** pidispDoc);
-   core::Error showWord();
-   core::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
-   core::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
-   core::Error getDocumentByPath(QString& path, IDispatch** pidispDoc);
    int docScrollX_;
    int docScrollY_;
-   QString docPath_;
 };
 
 } // namespace desktop

@@ -551,7 +551,7 @@ void GwtCallback::showWordDoc(QString path)
 #ifdef Q_OS_WIN32
 
    path = resolveAliasedPath(path);
-   Error error = wordViewer_.showDocument(path);
+   Error error = wordViewer_.showItem(path.toStdWString());
    if (error)
    {
       LOG_ERROR(error);
@@ -569,7 +569,7 @@ void GwtCallback::showPptPresentation(QString path)
 #ifdef Q_OS_WIN32
 
    path = resolveAliasedPath(path);
-   Error error = pptViewer_.showPresentation(path);
+   Error error = pptViewer_.showItem(path.toStdWString());
    if (error)
    {
       LOG_ERROR(error);
@@ -592,7 +592,7 @@ void GwtCallback::showPDF(QString path, int pdfPage)
 void GwtCallback::prepareShowWordDoc()
 {
 #ifdef Q_OS_WIN32
-   Error error = wordViewer_.closeLastViewedDocument();
+   Error error = wordViewer_.closeLastViewedItem();
    if (error)
    {
       LOG_ERROR(error);
@@ -603,7 +603,7 @@ void GwtCallback::prepareShowWordDoc()
 void GwtCallback::prepareShowPptPresentation()
 {
 #ifdef Q_OS_WIN32
-   Error error = pptViewer_.closeLastPresentation();
+   Error error = pptViewer_.closeLastViewedItem();
    if (error)
    {
       LOG_ERROR(error);

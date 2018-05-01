@@ -19,12 +19,8 @@
 #include <winuser.h>
 #include <oleauto.h>
 
-#include <boost/utility.hpp>
-#include <boost/scoped_array.hpp>
-
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
-#include <core/system/Environment.hpp>
 
 #include "DesktopComUtils.hpp"
 #include "DesktopPowerpointViewer.hpp"
@@ -35,19 +31,83 @@ namespace rstudio {
 namespace desktop {
 
 PowerpointViewer::PowerpointViewer():
-    OfficeViewer(L"Powerpoint.Application"),
+    OfficeViewer(L"Powerpoint.Application", L"Presentations"),
     slideIndex_(0)
 {
 }
 
-Error PowerpointViewer::showPresentation(QString& path)
+Error PowerpointViewer::getDocumentWindow(IDispatch* source, IDispatch** window) const
 {
-   return Success();
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   // Get the first document window for the presentation
+   IDispatch* idispWindows = nullptr;
+   VARIANT varResult;
+   VERIFY_HRESULT(getIDispatchProp(source, L"Windows", &idispWindows));
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispWindows, L"Item", 1, 1));
+   *window = varResult.pdispVal;
+
+LErrExit:
+   return errorHR;
 }
 
-Error PowerpointViewer::closeLastPresentation()
+Error PowerpointViewer::savePosition(IDispatch* source)
 {
-   return Success();
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   IDispatch* idispPres      = nullptr;
+   IDispatch* idispSelection = nullptr;
+   IDispatch* idispRange     = nullptr;
+
+   // Get the window containing the document interface
+   errorHR = getDocumentWindow(source, &idispPres);
+   if (errorHR)
+      return errorHR;
+
+   // Get the selection (the slides the user has selected)
+   VERIFY_HRESULT(getIDispatchProp(idispPres, L"Selection", &idispSelection));
+   VERIFY_HRESULT(getIDispatchProp(idispSelection, L"SlideRange", &idispRange));
+
+   // Find the slide number the user's working on
+   VERIFY_HRESULT(getIntProp(idispRange, L"SlideNumber", &slideIndex_));
+
+LErrExit:
+   return errorHR;
+}
+
+Error PowerpointViewer::restorePosition(IDispatch* target) const
+{
+   Error errorHR = Success();
+   HRESULT hr = S_OK;
+
+   IDispatch* idispPres = nullptr;
+   IDispatch* idispView = nullptr;
+
+   // Get the window containing the document interface
+   errorHR = getDocumentWindow(target, &idispPres);
+   if (errorHR)
+      return errorHR;
+
+   // Get the slide view
+   VERIFY_HRESULT(getIDispatchProp(idispPres, L"View", &idispView));
+
+   // Go to the slide in question
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispView,
+                                 L"GotoSlide", 1, slideIndex_));
+LErrExit:
+   return errorHR;
+}
+
+void PowerpointViewer::resetPosition()
+{
+   slideIndex_ = 0;
+}
+
+bool PowerpointViewer::hasPosition() const
+{
+   return slideIndex_ > 0;
 }
 
 } // namespace desktop

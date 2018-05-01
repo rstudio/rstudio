@@ -26,18 +26,41 @@ struct IDispatch;
 namespace rstudio {
 namespace desktop {
 
+// OfficeViewer represents a viewer for Microsoft Office file formats. It is
+// used as the base class for the Word document viewer (WordViewer) and the
+// Powerpoint presentation viewer (PowerpointViewer).
 class OfficeViewer : boost::noncopyable
 {
 public:
-   OfficeViewer(const std::wstring& progId);
+   OfficeViewer(const std::wstring& progId, const std::wstring& collection);
    ~OfficeViewer();
+
+   // Public interface
+   core::Error showItem(const std::wstring& path);
+   core::Error closeLastViewedItem();
+
+   // Pure virtual functions for implementation by individual formats
+   virtual core::Error savePosition(IDispatch* source) = 0;
+   virtual core::Error restorePosition(IDispatch* target) const = 0;
+   virtual void resetPosition() = 0;
+   virtual bool hasPosition() const = 0;
+
+protected:
    core::Error ensureInterface();
    core::Error showApp();
    IDispatch* idispApp();
 
+   core::Error openFile(const std::wstring& path, IDispatch** pidispOut);
+   core::Error getItemFromPath(const std::wstring& path, IDispatch** pidispOut);
+
+   std::wstring path();
+   void setPath(const std::wstring& path);
+
 private:
-   IDispatch* idisp_;
-   std::wstring progId_;
+   IDispatch* idisp_;         // Pointer to running application
+   std::wstring progId_;      // ID of the viewer application
+   std::wstring collection_;  // Name of collection to search for items
+   std::wstring path_;        // Path of currently open item
 };
 
 } // namespace desktop
