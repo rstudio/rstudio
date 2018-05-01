@@ -47,10 +47,20 @@
    .rs.enqueClientEvent("data_output_completed", preview)
 })
 
-.rs.addFunction("previewSql", function(script, conn, ...)
+.rs.addFunction("previewSql", function(conn, statement, ...)
 {
-   code <- paste(readLines(script), collapse = "\n")
-   data <- DBI::dbGetQuery(conn, statement = code, ...)
+   script <- NULL
+   if (file.exists(statement)) {
+      script <- statement
+      statement <- paste(readLines(script), collapse = "\n")
+   }
+
+   data <- DBI::dbGetQuery(conn, statement = statement, ...)
 
    .rs.previewDataFrame(data, script)
+})
+
+.rs.addGlobalFunction("previewSql", function(conn, statement, ...)
+{
+   .rs.previewSql(conn, statement, ...)
 })

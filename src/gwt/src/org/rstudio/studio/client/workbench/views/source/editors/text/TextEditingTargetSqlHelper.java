@@ -47,7 +47,7 @@ public class TextEditingTargetSqlHelper
       SqlPreview sqlPreview = parseSqlPreview();
       if (sqlPreview != null && sqlPreview.fn.equals("dbGetQuery"))
       {
-         String command = ".rs.previewSql(\"" + editingTarget.getPath() + "\"," +
+         String command = "previewSql(statement = \"" + editingTarget.getPath() + "\"," +
             sqlPreview.args +
             ")";
 
