@@ -45,12 +45,25 @@
    )
 
    .rs.enqueClientEvent("data_output_completed", preview)
+
+   invisible(NULL)
 })
 
 .rs.addFunction("previewSql", function(script, conn, ...)
 {
    code <- paste(readLines(script), collapse = "\n")
-   data <- DBI::dbGetQuery(conn, statement = code, ...)
 
-   .rs.previewDataFrame(data, script)
+   statements <- unlist(strsplit(code, ";(\n||\r)"))
+
+   result <- NULL
+   for (idx in seq_along(statements)) {
+      if (identical(idx, length(statements))) {
+         result <- DBI::dbGetQuery(conn, statement = statements[[idx]], ...)
+      }
+      else {
+         result <- DBI::dbExecute(conn, statement = statements[[idx]], ...)
+      }
+   } 
+
+   .rs.previewDataFrame(result, script)
 })
