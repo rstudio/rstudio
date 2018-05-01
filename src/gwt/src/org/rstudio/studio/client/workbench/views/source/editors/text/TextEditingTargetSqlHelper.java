@@ -47,10 +47,9 @@ public class TextEditingTargetSqlHelper
       SqlPreview sqlPreview = parseSqlPreview();
       if (sqlPreview != null && sqlPreview.fn.equals("dbGetQuery"))
       {
-         String command = ".rs.previewDataFrame(DBI::dbGetQuery(" +
-            "statement=\"" + sqlPreview.code + "\"," +
+         String command = ".rs.previewSql(\"" + editingTarget.getPath() + "\"," +
             sqlPreview.args +
-            "))";
+            ")";
 
          eventBus_.fireEvent(new SendToConsoleEvent(command, true));
       }

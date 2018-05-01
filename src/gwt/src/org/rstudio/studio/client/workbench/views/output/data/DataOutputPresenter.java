@@ -76,7 +76,6 @@ public class DataOutputPresenter extends BasePresenter
    public void onDataOutputCompleted(DataOutputCompletedEvent event)
    {
       view_.ensureVisible(true);
-      view_.setDataFile(event.getTitle());
 
       view_.outputCompleted(event);
    }

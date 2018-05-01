@@ -40,9 +40,20 @@
 
    preview <- list(
       data = unname(data),
-      columns = columns,
-      title = .rs.scalar("path-to-file.sql")
+      columns = columns
    )
+
+   .rs.enqueClientEvent("data_output_completed", preview)
+})
+
+.rs.addFunction("previewSql", function(script, conn, ...)
+{
+   code <- paste(readLines(script), collapse = "\n")
+   data <- DBI::dbGetQuery(conn, statement = code, ...)
+
+   result <- .rs.previewDataFrame(data)
+
+   result$title <- script
 
    .rs.enqueClientEvent("data_output_completed", preview)
 })

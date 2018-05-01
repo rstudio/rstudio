@@ -22,15 +22,6 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class DataOutputCompletedEvent extends GwtEvent<DataOutputCompletedEvent.Handler>
 {  
-   public static class Data extends JavaScriptObject
-   { 
-      protected Data()
-      {
-      }
-
-      public native final String getTitle() /*-{ return this.title; }-*/;
-   }
-
    public interface Handler extends EventHandler
    {
       void onDataOutputCompleted(DataOutputCompletedEvent event);

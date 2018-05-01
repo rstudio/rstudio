@@ -94,6 +94,8 @@ public class DataOutputPane extends WorkbenchPane
 
    public void outputCompleted(final DataOutputCompletedEvent response)
    {
+      setDataFile(response.getTitle());
+
       new Timer() {
          @Override
          public void run()
@@ -110,7 +112,7 @@ public class DataOutputPane extends WorkbenchPane
                gridViewer_.setData(response.getData());
             }
          }
-      }.schedule(10);
+      }.schedule(100);
    }
    
    GridViewerFrame gridViewer_;
