@@ -1,3 +1,3 @@
--- !preview dbGetQuery conn=dbConnect(RSQLite::SQLite())
+-- !preview dbGetQuery conn=DBI::dbConnect(RSQLite::SQLite())
 
-SELECT * from sqlite_stat1
+SELECT 1

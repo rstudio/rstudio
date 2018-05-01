@@ -19,10 +19,8 @@ package org.rstudio.studio.client.workbench.views.output.data;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -31,18 +29,13 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
-import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputStartedEvent;
 
 public class DataOutputTab 
    extends DelayLoadWorkbenchTab<DataOutputPresenter> 
-   implements ProvidesBusy
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<DataOutputPresenter, DataOutputTab>
-      implements BuildStartedEvent.Handler,
-                 DataOutputStartedEvent.Handler,
-                 DataOutputCompletedEvent.Handler,
-                 ProvidesBusy
+      implements DataOutputCompletedEvent.Handler
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -56,8 +49,6 @@ public class DataOutputTab
       super("Data", shim);
       shim_ = shim;
 
-      events.addHandler(BuildStartedEvent.TYPE, shim);
-      events.addHandler(DataOutputStartedEvent.TYPE, shim);
       events.addHandler(DataOutputCompletedEvent.TYPE, shim);
    }
 
@@ -71,12 +62,6 @@ public class DataOutputTab
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
-   }
-   
-   @Override
-   public void addBusyHandler(BusyHandler handler)
-   {
-      shim_.addBusyHandler(handler);
    }
    
    private Shim shim_;

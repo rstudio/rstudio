@@ -35,25 +35,12 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
+import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
-import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
-import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
-import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputStartedEvent;
 
-public class DataOutputPresenter extends BusyPresenter
-   implements DataOutputStartedEvent.Handler,
-              DataOutputCompletedEvent.Handler,
-              BuildStartedEvent.Handler,
-              BuildOutputEvent.Handler,
-              BuildCompletedEvent.Handler,
-              BuildErrorsEvent.Handler,
-              RestartStatusEvent.Handler
+public class DataOutputPresenter extends BasePresenter
+   implements DataOutputCompletedEvent.Handler
 {
    public interface Display extends WorkbenchView, HasEnsureHiddenHandlers
    {
@@ -61,8 +48,7 @@ public class DataOutputPresenter extends BusyPresenter
    }
    
    @Inject
-   public DataOutputPresenter(BuildServerOperations server,
-                              GlobalDisplay globalDisplay,
+   public DataOutputPresenter(GlobalDisplay globalDisplay,
                               PaneManager paneManager,
                               Commands commands,
                               EventBus events,
@@ -71,7 +57,6 @@ public class DataOutputPresenter extends BusyPresenter
       super(view);
       view_ = (DataOutputPane) view;
       
-      server_ = server;
       paneManager_ = paneManager;
 
       
@@ -84,11 +69,6 @@ public class DataOutputPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (isBusy())
-      {
-         terminateDataOutput();
-      }
-
       onConfirmed.execute();
    }
    
@@ -98,83 +78,15 @@ public class DataOutputPresenter extends BusyPresenter
    }
 
    @Override
-   public void onDataOutputStarted(DataOutputStartedEvent event)
-   {  
-      if (!isEnabled()) return;
-      
-      view_.ensureVisible(true);
-
-      setIsBusy(true);
-   }
-
-   @Override
    public void onDataOutputCompleted(DataOutputCompletedEvent event)
    {  
       if (!isEnabled()) return;
-
-      setIsBusy(false);
-
-      view_.outputCompleted(event);
-   }
-
-   @Override
-   public void onBuildStarted(BuildStartedEvent event)
-   {  
-      if (!isEnabled()) return;
       
       view_.ensureVisible(true);
 
-      setIsBusy(true);
-   }
-
-   @Override
-   public void onBuildOutput(BuildOutputEvent event)
-   {
-      if (!isEnabled()) return;
+      view_.outputCompleted(event);
    }
    
-   @Override
-   public void onBuildCompleted(BuildCompletedEvent event)
-   {
-      if (!isEnabled()) return;
-   }
-   
-   @Override
-   public void onBuildErrors(BuildErrorsEvent event)
-   {
-      if (!isEnabled()) return;
-   }
-
-   @Override
-   public void onRestartStatus(RestartStatusEvent event)
-   {
-      if (!isEnabled()) return;
-      
-      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
-          !isBusy())
-         return;
-
-      setIsBusy(false);
-   }
-   
-   private void terminateDataOutput()
-   {
-      server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
-                                                       "Terminating Data Preview..."){
-         @Override
-         protected void onSuccess(Boolean response)
-         {
-            if (!response)
-            {
-               globalDisplay_.showErrorMessage(
-                  "Error Terminating Data Preview",
-                  "Unable to terminate data preview. Please try again.");
-            }
-         }
-      });  
-   }
-   
-   private final BuildServerOperations server_;
    private final DataOutputPane view_;
    private final GlobalDisplay globalDisplay_;
    private final PaneManager paneManager_;

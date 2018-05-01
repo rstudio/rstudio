@@ -234,8 +234,6 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRemoveTerminal;
       else if (name == "show_page_viewer")
          type = session::client_events::kShowPageViewerEvent;
-      else if (name == "data_output_started")
-         type = session::client_events::kDataOutputStarted;
       else if (name == "data_output_completed")
          type = session::client_events::kDataOutputCompleted;
 
