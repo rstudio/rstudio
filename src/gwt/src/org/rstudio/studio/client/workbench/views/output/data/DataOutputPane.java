@@ -31,12 +31,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.common.compile.CompileOutput;
-import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
-import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
-import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 

@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("previewDataFrame", function(data)
+.rs.addFunction("previewDataFrame", function(data, script)
 {
    max <- 100
 
@@ -40,7 +40,8 @@
 
    preview <- list(
       data = unname(data),
-      columns = columns
+      columns = columns,
+      title = if (is.character(script)) .rs.scalar(script) else NULL
    )
 
    .rs.enqueClientEvent("data_output_completed", preview)
@@ -51,9 +52,5 @@
    code <- paste(readLines(script), collapse = "\n")
    data <- DBI::dbGetQuery(conn, statement = code, ...)
 
-   result <- .rs.previewDataFrame(data)
-
-   result$title <- script
-
-   .rs.enqueClientEvent("data_output_completed", preview)
+   .rs.previewDataFrame(data, script)
 })

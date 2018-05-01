@@ -1361,7 +1361,7 @@ public class Source implements InsertSourceHandler,
          FileTypeRegistry.SQL, 
          "", 
          "query.sql",
-         Position.create(3, 0),
+         Position.create(2, 0),
          new CommandWithArg<EditingTarget> () {
            @Override
            public void execute(EditingTarget target)
