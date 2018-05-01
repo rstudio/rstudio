@@ -46,7 +46,7 @@ public class DataOutputTab
                         EventBus events,
                         final Session session)
    {
-      super("Data", shim);
+      super("SQL Results", shim);
       shim_ = shim;
 
       events.addHandler(DataOutputCompletedEvent.TYPE, shim);
