@@ -35,23 +35,10 @@ namespace rstudio {
 namespace desktop {
 
 WordViewer::WordViewer():
-   idispWord_(nullptr),
+   OfficeViewer(L"Word.Application"),
    docScrollX_(0),
    docScrollY_(0)
 {
-}
-
-WordViewer::~WordViewer()
-{
-   try
-   {
-      if (idispWord_)
-         idispWord_->Release();
-   }
-   catch (...)
-   {
-      // Ignore exceptions during teardown
-   }
 }
 
 Error WordViewer::showDocument(QString& path)
@@ -59,54 +46,18 @@ Error WordViewer::showDocument(QString& path)
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   // Allow Word to become the foreground window. CoAllowSetForegroundWindow
-   // would be preferable here, since we'd be able to restrict activation to
-   // only the process we started, but it is not exposed by MinGW headers.
-   // Note that AllowSetForegroundWindow already limits activation to processes
-   // initiated by the foreground process, and self-expires on user input.
-   AllowSetForegroundWindow(ASFW_ANY);
-
-   // If we have an active IDispatch pointer to Word, check to see whether
-   // it has been closed
-   if (idispWord_ != nullptr)
-   {
-      // Test the interface by looking up a known DISPID
-      const WCHAR* wstrQuit = L"Quit";
-      DISPID dispid;
-      hr = idispWord_->GetIDsOfNames(IID_NULL, const_cast<WCHAR**>(&wstrQuit),
-                                     1, LOCALE_USER_DEFAULT, &dispid);
-
-      // If the lookup fails, release this IDispatch pointer--it's stale.
-      // We'll CoCreate a new instance of Word below.
-      if (FAILED(hr) &&
-          SCODE_CODE(hr) == RPC_S_SERVER_UNAVAILABLE)
-      {
-         idispWord_->Release();
-         idispWord_ = nullptr;
-      }
-   }
-
-   // Get an IDispatch for the Word Application root object
-   if (idispWord_ == nullptr)
-   {
-      CLSID clsid;
-      LPCOLESTR progId = L"Word.Application";
-      CoInitialize(nullptr);
-      VERIFY_HRESULT(CLSIDFromProgID(progId, &clsid));
-      VERIFY_HRESULT(CoCreateInstance(clsid, nullptr, CLSCTX_LOCAL_SERVER,
-                                      IID_IDispatch,
-                                      reinterpret_cast<void**>(&idispWord_)));
-      idispWord_->AddRef();
-   }
+   errorHR = ensureInterface();
+   if (errorHR)
+       return errorHR;
 
    // Make Word visible
-   errorHR = showWord();
+   errorHR = showApp();
    if (errorHR)
       return errorHR;
 
    IDispatch* idispDocs;
    IDispatch* idispDoc;
-   VERIFY_HRESULT(getIDispatchProp(idispWord_, L"Documents", &idispDocs));
+   VERIFY_HRESULT(getIDispatchProp(idispApp(), L"Documents", &idispDocs));
 
    // Open the documenet
    path = path.replace(QChar(L'/'), QChar(L'\\'));
@@ -129,23 +80,9 @@ Error WordViewer::showDocument(QString& path)
    }
 
    // Bring Word to the foreground
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispWord_,
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispApp(),
                                  L"Activate", 0));
 
-LErrExit:
-   return errorHR;
-}
-
-Error WordViewer::showWord()
-{
-   Error errorHR = Success();
-   HRESULT hr = S_OK;
-
-   VARIANT visible;
-   visible.vt = VT_BOOL;
-   visible.boolVal = true;
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, nullptr, idispWord_,
-                                 L"Visible", 1, visible));
 LErrExit:
    return errorHR;
 }
@@ -202,7 +139,7 @@ Error WordViewer::closeLastViewedDocument()
    Error errorHR = Success();
    HRESULT hr = S_OK;
 
-   if (idispWord_ == nullptr)
+   if (idispApp() == nullptr)
       return Success();
 
    // Find the open document corresponding to the one we last rendered. If we
@@ -276,7 +213,7 @@ Error WordViewer::getDocumentByPath(QString& path, IDispatch** pidispDoc)
 
    *pidispDoc = nullptr;
 
-   VERIFY_HRESULT(getIDispatchProp(idispWord_, L"Documents", &idispDocs));
+   VERIFY_HRESULT(getIDispatchProp(idispApp(), L"Documents", &idispDocs));
    VERIFY_HRESULT(getIntProp(idispDocs, L"Count", &docCount));
 
    varDocIdx.vt = VT_INT;

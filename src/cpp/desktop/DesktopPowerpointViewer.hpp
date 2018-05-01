@@ -1,5 +1,5 @@
 /*
- * DesktopWordViewer.hpp
+ * DesktopPowerpointViewer.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,10 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef DESKTOPWORDVIEWER_HPP
-#define DESKTOPWORDVIEWER_HPP
+#ifndef DESKTOP_PRESENTATION_VIEWER_HPP
+#define DESKTOP_PRESENTATION_VIEWER_HPP
 
 #include <QString>
+
+#include <boost/utility.hpp>
+#include <core/Error.hpp>
 
 #include "DesktopOfficeViewer.hpp"
 
@@ -24,26 +27,19 @@ struct IDispatch;
 namespace rstudio {
 namespace desktop {
 
-class WordViewer : public OfficeViewer
+class PowerpointViewer : public OfficeViewer
 {
 public:
-   WordViewer();
-   core::Error showDocument(QString& path);
-   core::Error closeLastViewedDocument();
+   PowerpointViewer();
+   core::Error showPresentation(QString& path);
+   core::Error closeLastPresentation();
 
 private:
-   core::Error openDocument(QString& path, IDispatch* idispDocs,
-                            IDispatch** pidispDoc);
-   core::Error showWord();
-   core::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
-   core::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
-   core::Error getDocumentByPath(QString& path, IDispatch** pidispDoc);
-   int docScrollX_;
-   int docScrollY_;
+   int slideIndex_;
    QString docPath_;
 };
 
 } // namespace desktop
 } // namespace rstudio
 
-#endif // DESKTOPWORDVIEWER_HPP
+#endif // DESKTOP_PRESENTATION_VIEWER_HPP

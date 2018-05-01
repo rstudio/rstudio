@@ -25,16 +25,6 @@
 namespace rstudio {
 namespace desktop {
 
-// Convenience to convert an HRSULT to our own error type and bail out on
-// failure.
-#define VERIFY_HRESULT(x) hr = (x); \
-      if (FAILED(hr)) { \
-         errorHR = Error( \
-            boost::system::error_code(hr, boost::system::generic_category()), \
-            ERROR_LOCATION); \
-         goto LErrExit; \
-      }
-
 // Invoke a method or property by name on the given IDispatch interface.
 // Adapted from the standard automation AutoWrap helper function
 // (see http://support.microsoft.com/kb/238393)
