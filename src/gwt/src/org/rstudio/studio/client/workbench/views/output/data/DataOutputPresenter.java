@@ -71,18 +71,12 @@ public class DataOutputPresenter extends BasePresenter
    {
       onConfirmed.execute();
    }
-   
-   private boolean isEnabled()
-   {
-      return paneManager_.getTab(Tab.Build).isSuppressed();
-   }
 
    @Override
    public void onDataOutputCompleted(DataOutputCompletedEvent event)
-   {  
-      if (!isEnabled()) return;
-      
+   {
       view_.ensureVisible(true);
+      view_.setDataFile(event.getTitle());
 
       view_.outputCompleted(event);
    }

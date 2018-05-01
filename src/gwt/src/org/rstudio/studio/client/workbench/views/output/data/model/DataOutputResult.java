@@ -22,4 +22,6 @@ public class DataOutputResult extends JavaScriptObject
    protected DataOutputResult() 
    {
    }
+
+   public native final String getTitle() /*-{ return this.title; }-*/;
 }

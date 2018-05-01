@@ -38,10 +38,10 @@
       data[[i]] <- .rs.formatDataColumn(data[[i]], 1, rows)
    }
 
-
    preview <- list(
       data = unname(data),
-      columns = columns
+      columns = columns,
+      title = .rs.scalar("path-to-file.sql")
    )
 
    .rs.enqueClientEvent("data_output_completed", preview)

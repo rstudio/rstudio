@@ -27,6 +27,8 @@ public class DataOutputCompletedEvent extends GwtEvent<DataOutputCompletedEvent.
       protected Data()
       {
       }
+
+      public native final String getTitle() /*-{ return this.title; }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -42,6 +44,11 @@ public class DataOutputCompletedEvent extends GwtEvent<DataOutputCompletedEvent.
    public JavaScriptObject getData()
    {
       return data_;
+   }
+
+   public String getTitle()
+   {
+      return data_.getTitle();
    }
   
    @Override

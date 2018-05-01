@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
@@ -59,7 +61,17 @@ public class DataOutputPane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
+
+      dataOutputFile_ = new Label();
+      dataOutputFile_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar.addLeftWidget(dataOutputFile_);
+
       return toolbar;
+   }
+
+   public void setDataFile(String dataFile)
+   {
+      dataOutputFile_.setText(dataFile);
    }
 
    @Override
@@ -102,4 +114,5 @@ public class DataOutputPane extends WorkbenchPane
    }
    
    GridViewerFrame gridViewer_;
+   Label dataOutputFile_;
 }
