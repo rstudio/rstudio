@@ -45,24 +45,26 @@ public class TextEditingTargetSqlHelper
    public void previewSql(EditingTarget editingTarget)
    {
       SqlPreview sqlPreview = parseSqlPreview();
-      if (sqlPreview != null && sqlPreview.pkg.equals("dbGetQuery"))
+      if (sqlPreview != null && sqlPreview.fn.equals("dbGetQuery"))
       {
-         server_.getMinimalSourcePath(
-            editingTarget.getPath(), 
-            new SimpleRequestCallback<String>() {
-               @Override
-               public void onResponseReceived(String path)
-               {
-                  String command = ".rs.previewSqlQuery()";
-                  eventBus_.fireEvent(new SendToConsoleEvent(command, true));
-               }
-            });
+         String command = ".rs.previewSqlQuery(DBI::dbGetQuery(" +
+            "statement=\"" + sqlPreview.code + "\"," +
+            sqlPreview.args +
+            "))";
+
+         eventBus_.fireEvent(new SendToConsoleEvent(command, true));
       }
    }
    
    private SqlPreview parseSqlPreview()
    {
+      String code = "";
+      String fn = "";
+      String args = "";
+      Boolean hasPreview = false;
+
       Iterable<String> lines = StringUtil.getLineIterator(docDisplay_.getCode());
+
       for (String line : lines)
       {
          line = line.trim();
@@ -70,32 +72,44 @@ public class TextEditingTargetSqlHelper
          {
             continue;
          }
-         else if (line.startsWith("--"))
+         else if (!hasPreview && line.startsWith("--"))
          {
             Match match = sqlPreviewPattern_.match(line, 0);
             if (match != null)
             {
-               if (match.hasGroup(1) && match.hasGroup(2))
-                  return new SqlPreview(match.getGroup(1), match.getGroup(2));               
+               if (match.hasGroup(1) && match.hasGroup(2)) {
+                  hasPreview = true;
+                  fn = match.getGroup(1);
+                  args = match.getGroup(2);
+               }
             }
-            
          }   
+         else
+         {
+            code += line + " ";
+         }
       }
       
-      return null;
+      if (hasPreview) {
+         return new SqlPreview(fn, args, code);
+      } else {
+         return null;
+      }
    }
    
    
    private class SqlPreview 
    {
-      public SqlPreview(String pkg, String args)
+      public SqlPreview(String fn, String args, String code)
       {
-         this.pkg = pkg;
+         this.fn = fn;
          this.args = args;
+         this.code = code;
       }
       
-      public final String pkg;
+      public final String fn;
       public final String args;
+      public final String code;
    }
    
    private static final Pattern sqlPreviewPattern_ = 
