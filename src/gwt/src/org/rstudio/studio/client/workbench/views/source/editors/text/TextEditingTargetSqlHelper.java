@@ -45,7 +45,7 @@ public class TextEditingTargetSqlHelper
    public void previewSql(EditingTarget editingTarget)
    {
       SqlPreview sqlPreview = parseSqlPreview();
-      if (sqlPreview != null && sqlPreview.pkg.equals("DBI"))
+      if (sqlPreview != null && sqlPreview.pkg.equals("dbGetQuery"))
       {
          server_.getMinimalSourcePath(
             editingTarget.getPath(), 
@@ -70,7 +70,7 @@ public class TextEditingTargetSqlHelper
          {
             continue;
          }
-         else if (line.startsWith("//"))
+         else if (line.startsWith("--"))
          {
             Match match = sqlPreviewPattern_.match(line, 0);
             if (match != null)
@@ -99,7 +99,7 @@ public class TextEditingTargetSqlHelper
    }
    
    private static final Pattern sqlPreviewPattern_ = 
-         Pattern.create("^//\\s*!preview\\s+(\\w+)(.*)$");
+         Pattern.create("^--\\s*!preview\\s+(\\w+)(.*)$");
    
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
