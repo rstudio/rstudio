@@ -10,7 +10,7 @@ RUN set -x \
     && apt-get update -y
 
 # install necessary packages
-RUN apt-get install -y \
+RUN apt-get update -y && apt-get install -y \
     ant \
     libboost-all-dev \
     bzip2 \
