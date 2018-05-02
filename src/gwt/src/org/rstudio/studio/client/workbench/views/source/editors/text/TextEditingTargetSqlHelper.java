@@ -45,7 +45,7 @@ public class TextEditingTargetSqlHelper
    public void previewSql(EditingTarget editingTarget)
    {
       SqlPreview sqlPreview = parseSqlPreview();
-      if (sqlPreview != null && sqlPreview.fn.equals("dbGetQuery"))
+      if (sqlPreview != null)
       {
          String command = "previewSql(statement = \"" + editingTarget.getPath() + "\"," +
             sqlPreview.args +
@@ -58,7 +58,6 @@ public class TextEditingTargetSqlHelper
    private SqlPreview parseSqlPreview()
    {
       String code = "";
-      String fn = "";
       String args = "";
       Boolean hasPreview = false;
 
@@ -76,10 +75,9 @@ public class TextEditingTargetSqlHelper
             Match match = sqlPreviewPattern_.match(line, 0);
             if (match != null)
             {
-               if (match.hasGroup(1) && match.hasGroup(2)) {
+               if (match.hasGroup(1)) {
                   hasPreview = true;
-                  fn = match.getGroup(1);
-                  args = match.getGroup(2);
+                  args = match.getGroup(1);
                }
             }
          }   
@@ -90,7 +88,7 @@ public class TextEditingTargetSqlHelper
       }
       
       if (hasPreview) {
-         return new SqlPreview(fn, args, code);
+         return new SqlPreview(args, code);
       } else {
          return null;
       }
@@ -99,20 +97,18 @@ public class TextEditingTargetSqlHelper
    
    private class SqlPreview 
    {
-      public SqlPreview(String fn, String args, String code)
+      public SqlPreview(String args, String code)
       {
-         this.fn = fn;
          this.args = args;
          this.code = code;
       }
       
-      public final String fn;
       public final String args;
       public final String code;
    }
    
    private static final Pattern sqlPreviewPattern_ = 
-         Pattern.create("^--\\s*!preview\\s+(\\w+)(.*)$");
+         Pattern.create("^--\\s*!preview\\s+(.*)$");
    
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
