@@ -300,9 +300,9 @@
    if (is.null(styles$fold))
    {
       foldSource <- styles$entity.name.function
-      if (is.null(foldSource)) foldSource <- styles$keyword
+      if (is.null(foldSource) || (foldSource == "")) foldSource <- styles$keyword
       
-      if (!is.null(foldSource))
+      if (!is.null(foldSource) && (foldSource != ""))
       {
          styles$fold <- regmatches(foldSource, regexec("\\:([^;]+)", foldSource))[[1]][2]
       }
@@ -362,7 +362,19 @@
    #
    # Returns the converted string.
    hyphenate <- function(string) {
-      tolower(sub("^-", "", gsub("-*_-*", "-", gsub("([^\\d][A-Z])", "-\\1", string))))
+      tolower(
+            gsub("-+", "-", # Get rid of duplicate hyphens
+               sub(
+                  "^-", "", # Get rid of leading hyphen
+                  gsub(
+                     "_",
+                     "-", # Replace _ with hyphen
+                     gsub(
+                        "([^0-9A-Z])([A-Z])", # Insert hyphen before capital letters which are not immediately preceded by a digit or another capital letter
+                        "\\1-\\2",
+                        gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and antyhing encased in parantheses
+                             gsub("&","-and-", # Replace & with And
+                                 gsub("\\s", "-", string)))))))) # Replace whitespace with hyphen
    }
    
    # Quotes a string and adds extra escapes to escape characters.
@@ -393,6 +405,7 @@
    supportedScopes[["constant.character"]] <- "constant.character"
    supportedScopes[["constant.character.escape"]] <- "constant.character.escape"
    supportedScopes[["constant.character.entity"]] <- "constant.character.entity"
+   supportedScopes[["constant.other"]] <- "constant.other"
    
    # Supports
    supportedScopes[["support"]] <- "support"
@@ -480,12 +493,11 @@
    
    for (scope in supportedScopes)
    {
-      if (!is.null(styles$scope))
+      if (!is.null(styles[[scope]]))
       {
          css = paste0(
-            "\n\n",
             css,
-            ".",
+            "\n\n.",
             styles$cssClass,
             " ",
             gsub("^|\\.", ".ace_", scope),
@@ -578,44 +590,47 @@
       for (element in XML::xmlChildren(dictElement))
       {
          elName <- XML::xmlName(element)
-         if (elName == "key")
+         if (elName != "comment")
          {
-            if (!is.null(key))
+            if (elName == "key")
+            {
+               if (!is.null(key))
+               {
+                  stop(
+                     sprintf(
+                        "%s Unable to find a value for the key \"%s\".",
+                        parseError,
+                        key),
+                     call. = FALSE)
+               }
+               key <- .rs.parseKeyElement(element)
+            }
+            else if (elName == "string")
+            {
+               # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
+               # using the same key twice.
+               values[[key]] <- .rs.parseStringElement(element, key)
+               key <- NULL
+            }
+            else if (elName == "dict")
+            {
+               values[[key]] <- .rs.parseDictElement(element, key)
+               key <- NULL
+            }
+            else if (elName == "array")
+            {
+               values[[key]] <- .rs.parseArrayElement(element, key)
+               key <- NULL
+            }
+            else
             {
                stop(
                   sprintf(
-                     "%s Unable to find a value for the key \"%s\".",
+                     "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
                      parseError,
-                     key),
+                     elName),
                   call. = FALSE)
             }
-            key <- .rs.parseKeyElement(element)
-         }
-         else if (elName == "string")
-         {
-            # Add the key-value pair to the theme object and reset the key to NULL to avoid erroneously
-            # using the same key twice.
-            values[[key]] <- .rs.parseStringElement(element, key)
-            key <- NULL
-         }
-         else if (elName == "dict")
-         {
-            values[[key]] <- .rs.parseDictElement(element, key)
-            key <- NULL
-         }
-         else if (elName == "array")
-         {
-            values[[key]] <- .rs.parseArrayElement(element, key)
-            key <- NULL
-         }
-         else
-         {
-            stop(
-               sprintf(
-                  "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
-                  parseError,
-                  elName),
-               call. = FALSE)
          }
       }
       
@@ -669,16 +684,19 @@
    for (element in XML::xmlChildren(arrayElement))
    {
       elName <- XML::xmlName(element)
-      if (elName != "dict")
+      if (elName != "comment")
       {
-         stop(
-            sprintf("%s Expecting \"dict\" element; found \"%s\".", parseError, elName),
-            call. = FALSE)
+         if (elName != "dict")
+         {
+            stop(
+               sprintf("%s Expecting \"dict\" element; found \"%s\".", parseError, elName),
+               call. = FALSE)
+         }
+         
+         # Intentionally empty key here
+         values[[index]] <- .rs.parseDictElement(element, "")
+         index <- index + 1
       }
-      
-      # Intentionally empty key here
-      values[[index]] <- .rs.parseDictElement(element, "")
-      index <- index + 1
    }
    
    values
@@ -704,7 +722,8 @@
                   line,
                   msg),
                call. = FALSE)
-         }))
+         }),
+      encoding = "UTF-8")
    
    # Check for the right number of children
    childrenCount <- .rs.countXmlChildren(tmThemeDoc)
