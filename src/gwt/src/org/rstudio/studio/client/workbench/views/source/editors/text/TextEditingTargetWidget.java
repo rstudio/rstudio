@@ -650,7 +650,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || fileType.isJS() || canPreviewFromR)
+      if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql() )
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
