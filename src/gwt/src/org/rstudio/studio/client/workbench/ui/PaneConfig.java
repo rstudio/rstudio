@@ -56,10 +56,9 @@ public class PaneConfig extends JavaScriptObject
       tabSet1.push("History");
       tabSet1.push("Connections");
       tabSet1.push("Build");
+      tabSet1.push("Jobs");
       tabSet1.push("VCS");
       tabSet1.push("Presentation");
-      tabSet1.push("Jobs");
-    
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
