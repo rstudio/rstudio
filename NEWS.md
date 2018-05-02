@@ -16,6 +16,10 @@
 * Author D3 visualizations in RStudio and preview in the Viewer pane
 * Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
 
+### SQL
+
+* Author SQL queries in RStudio and preview in the SQL Results pane
+
 ### Testing
 
 * *Run Tests* command in [testthat](https://github.com/r-lib/testthat) R scripts for direct running
