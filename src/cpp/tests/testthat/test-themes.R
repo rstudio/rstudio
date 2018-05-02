@@ -17,6 +17,170 @@ context("themes")
 
 inputFileLocation <- file.path(path.expand("~"), "GitRepos", "rstudio", "src", "cpp", "tests", "testthat", "themes")
 
+# Helpers ==========================================================================================
+parseCss <- function(cssLines)
+{
+   css <- list()
+   
+   currKey = NULL
+   for (line in cssLines)
+   {
+      orgLine <- line
+      if (!is.null(currKey))
+      {
+         isLastDescForKey <- FALSE
+         if (grepl("\\}", line))
+         {
+            isLastDescForKey <- TRUE
+            line <- sub("^([^\\}]*)\\}\\s*$", "\\1", line)
+            if (grepl("\\}", line))
+            {
+               warning(sprintf("Maformed CSS: %s", orgLine))
+            }
+         }
+         
+         if (grepl(":", line))
+         {
+            descValues <- strsplit(line, "\\s*;\\s*")[[1]]
+            for (value in descValues)
+            {
+               if (value != "")
+               {
+                  desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", line), "\\s*:\\s*")[[1]]
+                  if (length(desc) != 2)
+                  {
+                     warning(sprintf("Malformed CSS: %s", orgLine))
+                  }
+                  else
+                  {
+                     css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
+                  }
+               }
+            }
+         }
+         else if (grepl("^\\s*$", orgLine))
+         {
+            warning(sprintf("Malformd CSS: %s", orgLine))
+         }
+         
+         if (isLastDescForKey)
+         {
+            currKey <- NULL
+         }
+      }
+      else if (grepl("\\.[^\\{]+\\{$", line))
+      {
+         currKey = regmatches(line, regexec("^\\s*([^\\{]+?)\\s*\\{\\s*$", line))[[1]][2]
+         css[[currKey]] <- list()
+      }
+   }
+   
+   css
+}
+
+compareCss <- function(actual, expected, parent = NULL)
+{
+   equal <- TRUE
+   msgStart <- "\nCSS"
+   if (!is.null(parent)) msgStart <- paste0("\nElement \"", parent, "\" ")
+   
+   if (!all(actual %in% expected) || !all(expected %in% actual))
+   {
+      # Check length
+      acLen <- length(actual)
+      exLen <- length(expected)
+      msg <- sprintf("elements than exepected. Actual: %d, Expected: %d", acLen, exLen)
+      if (acLen < exLen)
+      {
+         cat(msgStart, "has fewer", msg, "\n")
+         equal <- FALSE
+      }
+      else if (acLen > exLen)
+      {
+         cat(msgStart, "has more", msg, "\n")
+         equal <- FALSE
+      }
+      
+      acNames <- names(actual)
+      exNames <- names(expected)
+      if (!all(acNames %in% exNames) || !all(exNames %in% acNames))
+      {
+         extraNames <- c()
+         missingNames <- c()
+         # Check that all the names are included
+         for (name in acNames)
+         {
+            if (!(name %in% exNames))
+            {
+               extraNames <- c(extraNames, name)
+            }
+         }
+         for (name in exNames)
+         {
+            if(!(name %in% acNames))
+            {
+               missingNames <- c(missingNames, name)
+            }
+         }
+         
+         extraMsg <- sprintf(
+            "had %d unexepected elements with names: \n   \"%s\"",
+            length(extraNames),
+            paste0(extraNames, collapse = "\",\n   \""))
+         missingMsg <- sprintf(
+            "was missing %d elements with names: \"%s\"",
+            length(missingNames),
+            paste0(missingNames, collapse = "\",\n   \""))
+
+         if (length(extraNames) > 0)
+         {
+            cat(msgStart, extraMsg, "\n")
+         }
+         if (length(missingNames) > 0)
+         {
+            cat(msgStart, missingMsg, "\n")
+         }
+      }
+      
+      # Handle the CSS contents
+      for (name in acNames)
+      {
+         if (name %in% exNames)
+         {
+            acVal <- actual[[name]]
+            exVal <- expected[[name]]
+            if (is.list(acVal) && is.list(exVal))
+            {
+               equal <- equal && compareCss(acVal, exVal, name)
+            }
+            else if (is.list(acVal) || is.list(exVal))
+            {
+               msg <- sprintf("value type (%s) does not match expected (%s)", typeof(acVal), typeof(exVal))
+               cat(msgStart, msg, "\n")
+               equal <- FALSE
+            }
+            else if (acVal != exVal)
+            {
+               match <- "^(#[a-fA-F\\d]{6}|rgb\\(\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*\\))$"
+               if (grepl(match, acVal) && grepl(match, exVal))
+               {
+                  acRgb <- .rs.getRgbColor(acVal)
+                  exRgb <- .rs.getRgbColor(exVal)
+                  if (!all.equal(acRgb, exRgb))
+                  {
+                     msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
+                     cat(msgStart, msg, "\n")
+                     equal <- FALSE
+                  }
+               }
+            }
+         }
+      }
+   }
+   
+   equal
+}
+
 # Test getRgbColor =================================================================================
 test_that("rgb coversion from hex format works", {
    # All lowercase
@@ -557,7 +721,10 @@ test_that("extractStyles works correctly", {
 })
 
 # Test convertTmTheme ==============================================================================
-test_that("convertTmTheme works correctly", {
+test_that("convertTmTheme works correctly without parseTmTheme", {
+   # Library used for comparing css
+   library("highlight")
+   
    # Setup objects for test cases
    tomorrowTmTheme <- list()
    tomorrowTmTheme$comment <- "http://chriskempson.com"
@@ -663,8 +830,484 @@ test_that("convertTmTheme works correctly", {
    tomorrowTmTheme$uuid <- "82CCD69C-F1B1-4529-B39E-780F91F07604"
    tomorrowTmTheme$colorSpaceName <- "sRGB"
    
+   tomorrowCssAct <- parseCss(strsplit(.rs.convertTmTheme(tomorrowTmTheme), "\n")[[1]])
+   
    # expected results
-   tomorrowCss <- .rs.convertTmTheme(tomorrowTmTheme)
+   conn <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
+   tomorrowCssEx <- parseCss(readLines(conn))
+   close(conn)
+   
+   expect_true(compareCss(tomorrowCssAct, tomorrowCssEx))
+})
+
+test_that("convertTmTheme works correctly with parseTmTheme", {
+   # Actual results
+   active4dCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Active4D.tmTheme"))),
+         "\n")[[1]])
+   allHallowsEveCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "All Hallows Eve.tmTheme"))),
+         "\n")[[1]])
+   amyCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Amy.tmTheme"))),
+         "\n")[[1]])
+   blackboardCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Blackboard.tmTheme"))),
+         "\n")[[1]])
+   brillianceBlackCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Brilliance Black.tmTheme"))),
+         "\n")[[1]])
+   brillianceDullCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Brilliance Dull.tmTheme"))),
+         "\n")[[1]])
+   chromeDevToolsCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Chrome DevTools.tmTheme"))),
+         "\n")[[1]])
+   cloudsMidnightCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Clouds Midnight.tmTheme"))),
+         "\n")[[1]])
+   cloudsCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Clouds.tmTheme"))),
+         "\n")[[1]])
+   cobaltCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Cobalt.tmTheme"))),
+         "\n")[[1]])
+   dawnCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Dawn.tmTheme"))),
+         "\n")[[1]])
+   dreamweaverCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Dreamweaver.tmTheme"))),
+         "\n")[[1]])
+   eiffelCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Eiffel.tmTheme"))),
+         "\n")[[1]])
+   espressoLibreCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Espresso Libre.tmTheme"))),
+         "\n")[[1]])
+   gitHubCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "GitHub.tmTheme"))),
+         "\n")[[1]])
+   idleCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "IDLE.tmTheme"))),
+         "\n")[[1]])
+   katzenmilchCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Katzenmilch.tmTheme"))),
+         "\n")[[1]])
+   kuroirThemeCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Kuroir Theme.tmTheme"))),
+         "\n")[[1]])
+   lazyCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "LAZY.tmTheme"))),
+         "\n")[[1]])
+   magicWBCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "MagicWB (Amiga).tmTheme"))),
+         "\n")[[1]])
+   merbivoreSoftCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Merbivore Soft.tmTheme"))),
+         "\n")[[1]])
+   merbivoreCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Merbivore.tmTheme"))),
+         "\n")[[1]])
+   monokaiCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Monokai.tmTheme"))),
+         "\n")[[1]])
+   pastelsOnDarkCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Pastels on Dark.tmTheme"))),
+         "\n")[[1]])
+   slushAndPoppiesCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Slush and Poppies.tmTheme"))),
+         "\n")[[1]])
+   solarizedDarkCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Solarized-dark.tmTheme"))),
+         "\n")[[1]])
+   solarizedLightCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Solarized-light.tmTheme"))),
+         "\n")[[1]])
+   sunburstCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Sunburst.tmTheme"))),
+         "\n")[[1]])
+   textmateCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Textmate (Mac Classic).tmTheme"))),
+         "\n")[[1]])
+   tomorrowNightBlueCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Tomorrow-Night-Blue.tmTheme"))),
+         "\n")[[1]])
+   tomorrowNightBrightCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Tomorrow-Night-Bright.tmTheme"))),
+         "\n")[[1]])
+   tomorrowNightEightiesCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Tomorrow-Night-Eighties.tmTheme"))),
+         "\n")[[1]])
+   tomorrowNightCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Tomorrow-Night.tmTheme"))),
+         "\n")[[1]])
+   tomorrowCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Tomorrow.tmTheme"))),
+         "\n")[[1]])
+   twilightCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Twilight.tmTheme"))),
+         "\n")[[1]])
+   vibrantInkCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Vibrant Ink.tmTheme"))),
+         "\n")[[1]])
+   xcodeDefaultCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Xcode_default.tmTheme"))),
+         "\n")[[1]])
+   zenburnesqueCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "Zenburnesque.tmTheme"))),
+         "\n")[[1]])
+   iPlasticCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "iPlastic.tmTheme"))),
+         "\n")[[1]])
+   idleFingersCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "idleFingers.tmTheme"))),
+         "\n")[[1]])
+   krThemeCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "krTheme.tmTheme"))),
+         "\n")[[1]])
+   monoindustrialCss <- parseCss(
+      strsplit(
+         .rs.convertTmTheme(
+            .rs.parseTmTheme(
+               file.path(
+                  inputFileLocation,
+                  "tmThemes",
+                  "monoindustrial.tmTheme"))),
+         "\n")[[1]])
+
+   # Expected results
+   active4dCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "active4d.css"))))
+   allHallowsEveCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "all_hallows_eve.css"))))
+   amyCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "amy.css"))))
+   blackboardCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "blackboard.css"))))
+   brillianceBlackCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "brilliance_black.css"))))
+   brillianceDullCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "brilliance_dull.css"))))
+   chromeDevToolsCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "chrome.css"))))
+   cloudsMidnightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "clouds_midnight.css"))))
+   cloudsCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "clouds.css"))))
+   cobaltCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "cobalt.css"))))
+   dawnCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "dawn.css"))))
+   dreamweaverCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "dreamweaver.css"))))
+   eiffelCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "eiffel.css"))))
+   espressoLibreCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "espresso_libre.css"))))
+   gitHubCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "github.css"))))
+   idleCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "idle.css"))))
+   katzenmilchCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "katzenmilch.css"))))
+   kuroirThemeCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "kuroir_theme.css"))))
+   lazyCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "lazy.css"))))
+   magicWBCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "magic_wb.css"))))
+   merbivoreSoftCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "merbivore_soft.css"))))
+   merbivoreCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "merbivore.css"))))
+   monokaiCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "monokai.css"))))
+   pastelsOnDarkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "pastel_on_dark.css"))))
+   slushAndPoppiesCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "slush_and_poppies.css"))))
+   solarizedDarkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "solarized_dark.css"))))
+   solarizedLightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "solarized_light.css"))))
+   sunburstCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "sunburst.css"))))
+   textmateCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "textmate.css"))))
+   tomorrowNightBlueCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_blue.css"))))
+   tomorrowNightBrightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_bright.css"))))
+   tomorrowNightEightiesCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_eighties.css"))))
+   tomorrowNightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night.css"))))
+   tomorrowCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow.css"))))
+   twilightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "twilight.css"))))
+   vibrantInkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "vibrant_ink.css"))))
+   xcodeDefaultCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "xcode.css"))))
+   zenburnesqueCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "zenburnesque.css"))))
+   iPlasticCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "iplastice.css"))))
+   idleFingersCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "idle_fingers.css"))))
+   krThemeCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "kr_theme.css"))))
+   monoindustrialCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "mono_industrial.css"))))
+   
+   # Tests
+   expect_true(compareCss(active4dCss, active4dCssEx))
+   expect_true(compareCss(allHallowsEveCss, allHallowsEveCssEx))
+   expect_true(compareCss(amyCss, amyCssEx))
+   expect_true(compareCss(blackboardCss, blackboardCssEx))
+   expect_true(compareCss(brillianceBlackCss, brillianceBlackCssEx))
+   expect_true(compareCss(brillianceDullCss, brillianceDullCssEx))
+   expect_true(compareCss(chromeDevToolsCss, chromeDevToolsCssEx))
+   expect_true(compareCss(cloudsMidnightCss, cloudsMidnightCssEx))
+   expect_true(compareCss(cloudsCss, cloudsCssEx))
+   expect_true(compareCss(cobaltCss, cobaltCssEx))
+   expect_true(compareCss(dawnCss, dawnCssEx))
+   expect_true(compareCss(dreamweaverCss, dreamweaverCssEx))
+   expect_true(compareCss(eiffelCss, eiffelCssEx))
+   expect_true(compareCss(espressoLibreCss, espressoLibreCssEx))
+   expect_true(compareCss(gitHubCss, gitHubCssEx))
+   expect_true(compareCss(idleCss, idleCssEx))
+   expect_true(compareCss(katzenmilchCss, katzenmilchCssEx))
+   expect_true(compareCss(kuroirThemeCss, kuroirThemeCssEx))
+   expect_true(compareCss(lazyCss, lazyCssEx))
+   expect_true(compareCss(magicWBCss, magicWBCssEx))
+   expect_true(compareCss(merbivoreSoftCss, merbivoreSoftCssEx))
+   expect_true(compareCss(merbivoreCss, merbivoreCssEx))
+   expect_true(compareCss(monokaiCss, monokaiCssEx))
+   expect_true(compareCss(pastelsOnDarkCss, pastelsOnDarkCssEx))
+   expect_true(compareCss(slushAndPoppiesCss, slushAndPoppiesCssEx))
+   expect_true(compareCss(solarizedDarkCss, solarizedDarkCssEx))
+   expect_true(compareCss(solarizedLightCss, solarizedLightCssEx))
+   expect_true(compareCss(sunburstCss, sunburstCssEx))
+   expect_true(compareCss(textmateCss, textmateCssEx))
+   expect_true(compareCss(tomorrowNightBlueCss, tomorrowNightBlueCssEx))
+   expect_true(compareCss(tomorrowNightBrightCss, tomorrowNightBrightCssEx))
+   expect_true(compareCss(tomorrowNightEightiesCss, tomorrowNightEightiesCssEx))
+   expect_true(compareCss(tomorrowNightCss, tomorrowNightCssEx))
+   expect_true(compareCss(tomorrowCss, tomorrowCssEx))
+   expect_true(compareCss(twilightCss, twilightCssEx))
+   expect_true(compareCss(vibrantInkCss, vibrantInkCssEx))
+   expect_true(compareCss(xcodeDefaultCss, xcodeDefaultCssEx))
+   expect_true(compareCss(zenburnesqueCss, zenburnesqueCssEx))
+   expect_true(compareCss(iPlasticCss, iPlasticCssEx))
+   expect_true(compareCss(idleFingersCss, idleFingersCssEx))
+   expect_true(compareCss(krThemeCss, krThemeCssEx))
+   expect_true(compareCss(monoindustrialCss, monoindustrialCssEx))
 })
 
 # Test countXmlChildren ============================================================================
