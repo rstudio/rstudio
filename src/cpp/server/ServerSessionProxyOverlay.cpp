@@ -40,7 +40,6 @@ bool proxyRequest(
 
 bool proxyLocalhostRequest(
       http::Request& request,
-      const std::string& username,
       const std::string& port,
       const r_util::SessionContext& context,
       boost::shared_ptr<http::AsyncConnection> ptrConnection,

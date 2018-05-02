@@ -71,8 +71,18 @@ Error ConsoleProcessSocket::ensureServerRunning()
       s_didSeedRand = true;
    }
 
-   // no user-specified port; pick a random port
-   port = 3000 + (rand() % 5000);
+   std::string portStr = session::options().terminalPort();
+   if (portStr.empty())
+   {
+      // no user-specified port; pick a random port
+      port = 3000 + (rand() % 5000);
+   }
+   else
+   {
+      // use user-specified port, but fallback to random if
+      // the port specified is invalid
+      port = safe_convert::stringTo(portStr, 3000 + (rand() % 5000));
+   }
 
    try
    {

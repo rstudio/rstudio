@@ -1,1 +1,6 @@
-.git/objects/pack/*
+# ignore everything except items that are specifically denoted
+*
+!dependencies/*
+!docker/jenkins
+!docker/docker-compile.sh
+!package/linux/install-dependencies

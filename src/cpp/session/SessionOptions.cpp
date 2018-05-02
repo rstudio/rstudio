@@ -230,6 +230,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("default-rsconnect-server",
        value<std::string>(&defaultRSConnectServer_)->default_value(""),
        "default RStudio Connect server URL")
+      (kTerminalPortOption,
+       value<std::string>(&terminalPort_)->default_value(""),
+       "port to bind the terminal server to")
       (kWebSocketPingInterval,
        value<int>(&webSocketPingSeconds_)->default_value(10),
        "WebSocket keep-alive ping interval (seconds)")

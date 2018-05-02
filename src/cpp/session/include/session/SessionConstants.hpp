@@ -64,6 +64,7 @@
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
+#define kTerminalPortOption               "terminal-port"
 
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"

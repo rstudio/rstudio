@@ -21,6 +21,7 @@ file(GLOB_RECURSE SERVER_CORE_HEADER_FILES "*.h*")
 # source files
 set (SERVER_CORE_SOURCE_FILES
    http/SecureCookie.cpp
+   RVersionsScanner.cpp
    SecureKeyFile.cpp
    system/Pam.cpp
 )
@@ -42,4 +43,5 @@ add_library(rstudio-server-core STATIC ${SERVER_CORE_SOURCE_FILES} ${SERVER_CORE
 target_link_libraries(
    rstudio-server-core
    rstudio-core
+   ${SERVER_CORE_SYSTEM_LIBRARIES}
 )

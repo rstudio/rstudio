@@ -418,11 +418,6 @@ int main(int argc, char * const argv[])
             setUMask(core::system::OthersNoWriteMask);
       }
 
-      // wait until now to output options warnings (we need to wait for our
-      // first call to logging functions until after daemonization)
-      if (!optionsWarnings.empty())
-         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
-
       // increase the number of open files allowed (need more files
       // so we can supports lots of concurrent connectins)
       if (core::system::realUserIsRoot())

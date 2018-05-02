@@ -81,7 +81,6 @@ bool proxyRequest(int requestType,
                   const http::ConnectionRetryProfile &connectionRetryProfile);
 
 bool proxyLocalhostRequest(http::Request& request,
-                           const std::string& username,
                            const std::string& port,
                            const r_util::SessionContext& context,
                            boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -804,7 +803,7 @@ void proxyLocalhostRequest(
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
    // see if the request should be handled by the overlay
-   if (overlay::proxyLocalhostRequest(request, username, port, context, ptrConnection, onResponse, onError))
+   if (overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
    {
       // request handled by the overlay
       return;

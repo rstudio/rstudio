@@ -1574,7 +1574,6 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
-
       // reflect stderr logging
       core::system::setLogToStderr(options.logStderr());
 

@@ -64,8 +64,13 @@ else
     echo "Found image $IMAGEID for $REPO:$IMAGE."
 fi
 
+# get build arg env vars, if any
+if [ ! -z "${DOCKER_GITHUB_LOGIN}" ]; then
+   BUILD_ARGS="--build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
+fi
+
 # rebuild the image if necessary
-docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" .
+docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" $BUILD_ARGS .
 
 # infer the package extension from the image name
 if [ "${IMAGE:0:6}" = "centos" ]; then

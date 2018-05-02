@@ -34,6 +34,7 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
+   ExponentialBackoff.cpp
    Error.cpp
    Exec.cpp
    FileInfo.cpp

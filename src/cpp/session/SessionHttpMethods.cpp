@@ -382,8 +382,10 @@ bool verifyRequestSignature(const core::http::Request& request)
    }
 
    // ensure the user matches the session process owner
+   // we only do this if we are not running as root (possible in container sessions)
    std::string runningUser = core::system::username();
-   if (username != runningUser)
+   if (username != runningUser &&
+       !core::system::effectiveUserIsRoot())
    {
       LOG_ERROR_MESSAGE("Request from invalid user " + username +
                         " for session " + options().sessionContext().scope.id() +
