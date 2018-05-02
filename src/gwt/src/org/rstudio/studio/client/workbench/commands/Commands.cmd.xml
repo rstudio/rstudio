@@ -899,7 +899,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="newSqlDoc"
-        menuLabel="S_ql Script"
+        menuLabel="S_QL Script"
         desc="Create a new SQL script"
         rebindable="false"/>   
         
