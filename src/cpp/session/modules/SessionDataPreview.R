@@ -15,32 +15,16 @@
 
 .rs.addFunction("previewDataFrame", function(data, script)
 {
-   max <- 100
-
-   columns <- list()
-   if (ncol(data)) {
-      columns <- .rs.describeCols(data, max)
-      if (ncol(data) > max) {
-         columns <- head(columns, max)
-         data <- data[, max]
-      }
-   }
-      
-   cnames <- names(data)
-   rows <- nrow(data)
-
-   if (rows > max) {
-      data <- head(data, max)
-      rows <- nrow(data)
-   }
-
-   for(i in seq_along(data)) {
-      data[[i]] <- .rs.formatDataColumn(data[[i]], 1, rows)
-   }
+   preparedData <- .rs.prepareViewerData(
+      data,
+      maxFactors = 100,
+      maxCols = 100,
+      maxRows = 100
+   )
 
    preview <- list(
-      data = unname(data),
-      columns = columns,
+      data = preparedData$data,
+      columns = preparedData$columns,
       title = if (is.character(script)) .rs.scalar(script) else NULL
    )
 

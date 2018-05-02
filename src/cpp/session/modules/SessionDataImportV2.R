@@ -660,6 +660,34 @@
    })
 })
 
+.rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
+   columns <- list()
+   if (ncol(data)) {
+      columns <- .rs.describeCols(data, maxFactors)
+      if (ncol(data) > maxCols) {
+         columns <- head(columns, maxCols)
+         data <- data[, maxCols]
+      }
+   }
+   
+   cnames <- names(data)
+   size <- nrow(data)
+
+   if (!identical(maxRows, NULL) && size > maxRows) {
+      data <- head(data, maxRows)
+      size <- nrow(data)
+   }
+
+   for(i in seq_along(data)) {
+      data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
+   }
+
+   list(
+      data = unname(data),
+      columns = columns
+   )
+})
+
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
    dataImportOptions$importLocation <- .rs.pathRelativeToWorkingDir(dataImportOptions$importLocation)
@@ -764,33 +792,19 @@
          eval(parse(text=importInfo$previewCode))
       )
 
-      columns <- list()
-      if (ncol(data)) {
-         columns <- .rs.describeCols(data, maxFactors)
-         if (ncol(data) > maxCols) {
-            columns <- head(columns, maxCols)
-            data <- data[, maxCols]
-         }
-      }
-      
       parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
-      cnames <- names(data)
-      size <- nrow(data)
-
-      if (!identical(dataImportOptions$maxRows, NULL) && size > dataImportOptions$maxRows) {
-         data <- head(data, dataImportOptions$maxRows)
-         size <- nrow(data)
-      }
-
-      for(i in seq_along(data)) {
-         data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
-      }
+      preparedData <- .rs.prepareViewerData(
+         data,
+         maxFactors = maxFactors,
+         maxCols = maxCols,
+         maxRows = dataImportOptions$maxRows
+      )
 
       options <- optionsInfoFromOptions[[dataImportOptions$mode]]()
 
-      return(list(data = unname(data),
-                  columns = columns,
+      return(list(data = preparedData$data,
+                  columns = preparedData$columns,
                   options = options,
                   parsingErrors = parsingErrors,
                   localFiles = importInfo$localFiles))
