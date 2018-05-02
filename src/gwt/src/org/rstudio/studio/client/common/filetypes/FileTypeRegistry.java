@@ -147,7 +147,7 @@ public class FileTypeRegistry
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
-                          new ImageResource2x(ICONS.iconSql2x()), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconSql2x()), false, true, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType SH = new ScriptFileType(

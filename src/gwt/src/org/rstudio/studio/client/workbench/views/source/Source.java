@@ -323,6 +323,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeCurrentChunk());
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.previewJS());
+      dynamicCommands_.add(commands.previewSql());
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands.knitDocument());
@@ -1351,6 +1352,25 @@ public class Source implements InsertSourceHandler,
                   new SourceFilesOpener(createdFiles).run();
                }
             });
+   }
+
+   @Handler
+   public void onNewSqlDoc()
+   {
+      newSourceDocWithTemplate(
+         FileTypeRegistry.SQL, 
+         "", 
+         "query.sql",
+         Position.create(2, 0),
+         new CommandWithArg<EditingTarget> () {
+           @Override
+           public void execute(EditingTarget target)
+           {
+              target.verifySqlPrerequisites(); 
+              target.setSourceOnSave(true);
+           }
+         }
+      );
    }
    
    // open a list of source files then focus the first one within the list

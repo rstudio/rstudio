@@ -220,6 +220,11 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    @Override
+   public void verifySqlPrerequisites()
+   {
+   }
+
+   @Override
    public Position search(String regex)
    {
       return null;

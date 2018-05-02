@@ -746,3 +746,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("askForSecret", function(name, title, prompt) {
    .rs.askForSecret(name, title, prompt)
 })
+
+.rs.addApiFunction("previewSql", function(conn, statement, ...) {
+   .rs.previewSql(conn, statement, ...)
+})

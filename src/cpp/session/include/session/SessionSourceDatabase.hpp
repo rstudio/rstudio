@@ -177,7 +177,8 @@ public:
    static const char * const SourceDocumentTypeRHTML;
    static const char * const SourceDocumentTypeCpp;
    static const char * const SourceDocumentTypeJS;
-   
+   static const char * const SourceDocumentTypeSQL;
+
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,

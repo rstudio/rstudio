@@ -240,6 +240,7 @@ Error initialize()
       (data::viewer::initialize)
       (bind(sourceModuleRFile, "SessionDataImport.R"))
       (bind(sourceModuleRFile, "SessionDataImportV2.R"))
+      (bind(sourceModuleRFile, "SessionDataPreview.R"))
       (bind(registerAsyncRpcMethod, "preview_data_import_async", getPreviewDataImportAsync))
       (bind(registerRpcMethod, "preview_data_import_async_abort", abortPreviewDataImportAsync));
 

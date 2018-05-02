@@ -149,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -185,6 +186,8 @@ import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputTab;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPane;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPresenter;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
@@ -338,6 +341,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
       bind(JobsPresenter.Display.class).to(JobsPane.class);
       bind(JobProgressPresenter.Display.class).to(JobProgress.class);
+      bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
@@ -359,6 +363,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Terminal", TerminalTab.class);
       bindTab("Tests", TestsOutputTab.class);
       bindTab("Jobs", JobsTab.class);
+      bindTab("Data Output", DataOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

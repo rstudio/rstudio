@@ -156,6 +156,7 @@
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/preview/SessionPreview.hpp"
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
@@ -475,6 +476,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::data::initialize)
       (modules::help::initialize)
       (modules::presentation::initialize)
+      (modules::preview::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::profiler::initialize)

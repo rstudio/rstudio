@@ -224,6 +224,11 @@ public class TextFileType extends EditableFileType
    {
       return FileTypeRegistry.RPRESENTATION.getTypeId().equals(getTypeId());
    }
+
+   public boolean isSql()
+   {
+      return FileTypeRegistry.SQL.getTypeId().equals(getTypeId());
+   }
    
    public boolean requiresKnit()
    {
@@ -308,6 +313,11 @@ public class TextFileType extends EditableFileType
       if (isJS())
       {
          results.add(commands.previewJS());
+      }
+
+      if (isSql())
+      {
+         results.add(commands.previewSql());
       }
       
       if ((canExecuteCode() && !isScript()) || isC())
