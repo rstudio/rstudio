@@ -1,0 +1,85 @@
+.ace-all-hallows-eve .ace_gutter {
+  background: #000000;
+  color: rgb(128,128,128)
+}
+
+.ace-all-hallows-eve .ace_print-margin {
+  width: 1px;
+  background: #e8e8e8
+}
+
+.ace-all-hallows-eve {
+  background-color: #000000;
+  color: #FFFFFF
+}
+
+.ace-all-hallows-eve .ace_cursor {
+  color: #FFFFFF
+}
+
+.ace-all-hallows-eve .ace_marker-layer .ace_selection {
+  background: rgba(115, 89, 126, 0.88)
+}
+
+.ace-all-hallows-eve.ace_multiselect .ace_selection.ace_start {
+  box-shadow: 0 0 3px 0px #000000;
+  border-radius: 2px
+}
+
+.ace-all-hallows-eve .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174)
+}
+
+.ace-all-hallows-eve .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #404040
+}
+
+.ace-all-hallows-eve .ace_marker-layer .ace_active-line {
+  background: #333300
+}
+
+.ace-all-hallows-eve .ace_gutter-active-line {
+  background-color: #333300
+}
+
+.ace-all-hallows-eve .ace_marker-layer .ace_selected-word {
+  border: 1px solid rgba(115, 89, 126, 0.88)
+}
+
+.ace-all-hallows-eve .ace_fold {
+  background-color: #CC7833;
+  border-color: #FFFFFF
+}
+
+.ace-all-hallows-eve .ace_keyword {
+  color: #CC7833
+}
+
+.ace-all-hallows-eve .ace_constant {
+  color: #3387CC
+}
+
+.ace-all-hallows-eve .ace_support.ace_function {
+  color: #C83730
+}
+
+.ace-all-hallows-eve .ace_string {
+  color: #66CC33
+}
+
+.ace-all-hallows-eve .ace_string.ace_regexp {
+  color: #CCCC33
+}
+
+.ace-all-hallows-eve .ace_comment {
+  color: #9933CC
+}
+
+.ace-all-hallows-eve .ace_variable.ace_parameter {
+  font-style: italic
+}
+
+.ace-all-hallows-eve .ace_entity.ace_name.ace_tag {
+  text-decoration: underline
+}

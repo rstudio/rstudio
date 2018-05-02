@@ -1,0 +1,143 @@
+.ace-brilliance-dull .ace_gutter {
+  background: rgba(5, 5, 5, 0.98);
+  color: rgb(105,105,105)
+}
+
+.ace-brilliance-dull .ace_print-margin {
+  width: 1px;
+  background: #e8e8e8
+}
+
+.ace-brilliance-dull {
+  background-color: rgba(5, 5, 5, 0.98);
+  color: #CDCDCD
+}
+
+.ace-brilliance-dull .ace_cursor {
+  color: #7979B7
+}
+
+.ace-brilliance-dull .ace_marker-layer .ace_selection {
+  background: rgba(46, 46, 230, 0.30)
+}
+
+.ace-brilliance-dull.ace_multiselect .ace_selection.ace_start {
+  box-shadow: 0 0 3px 0px rgba(5, 5, 5, 0.98);
+  border-radius: 2px
+}
+
+.ace-brilliance-dull .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174)
+}
+
+.ace-brilliance-dull .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid rgba(205, 205, 205, 0.10)
+}
+
+.ace-brilliance-dull .ace_marker-layer .ace_active-line {
+  background: rgba(0, 0, 128, 0.10)
+}
+
+.ace-brilliance-dull .ace_gutter-active-line {
+  background-color: rgba(0, 0, 128, 0.10)
+}
+
+.ace-brilliance-dull .ace_marker-layer .ace_selected-word {
+  border: 1px solid rgba(46, 46, 230, 0.30)
+}
+
+.ace-brilliance-dull .ace_fold {
+  background-color: #A75980;
+  border-color: #CDCDCD
+}
+
+.ace-brilliance-dull .ace_keyword {
+  color: #A459A5
+}
+
+.ace-brilliance-dull .ace_keyword.ace_operator {
+  color: #7979B7
+}
+
+.ace-brilliance-dull .ace_keyword.ace_other.ace_unit {
+  color: #59A559
+}
+
+.ace-brilliance-dull .ace_constant.ace_language {
+  color: #59A559
+}
+
+.ace-brilliance-dull .ace_constant.ace_numeric {
+  color: #95A658
+}
+
+.ace-brilliance-dull .ace_constant.ace_character {
+  color: #80A659
+}
+
+.ace-brilliance-dull .ace_constant.ace_other {
+  color: #57A57D
+}
+
+.ace-brilliance-dull .ace_support.ace_constant {
+  color: #56A5A4
+}
+
+.ace-brilliance-dull .ace_support.ace_class {
+  color: #A7595A;
+  background-color: rgba(128, 0, 4, 0.20)
+}
+
+.ace-brilliance-dull .ace_support.ace_type {
+  color: #A7595A;
+  background-color: rgba(128, 0, 4, 0.20)
+}
+
+.ace-brilliance-dull .ace_invalid {
+  color: #211211;
+  background-color: #A7595A
+}
+
+.ace-brilliance-dull .ace_string.ace_regexp {
+  color: #A6A458;
+  background-color: rgba(67, 128, 0, 0.20)
+}
+
+.ace-brilliance-dull .ace_comment {
+  color: #333333
+}
+
+.ace-brilliance-dull .ace_variable {
+  color: #A75980
+}
+
+.ace-brilliance-dull .ace_variable.ace_language {
+  color: #5E6B6B
+}
+
+.ace-brilliance-dull .ace_meta.ace_tag {
+  color: #333333
+}
+
+.ace-brilliance-dull .ace_meta.ace_selector {
+  color: #666666;
+  background-color: rgba(0, 0, 0, 0.50)
+}
+
+.ace-brilliance-dull .ace_entity.ace_other.ace_attribute-name {
+  color: rgba(255, 255, 255, 0.20)
+}
+
+.ace-brilliance-dull .ace_entity.ace_name.ace_function {
+  color: #A75980
+}
+
+.ace-brilliance-dull .ace_entity.ace_name.ace_tag {
+  color: rgba(255, 255, 255, 0.30)
+}
+
+.ace-brilliance-dull .ace_markup.ace_heading {
+  color: #666666;
+  background-color: rgba(51, 51, 51, 0.50)
+}
