@@ -1,3 +1,3 @@
--- !preview dbGetQuery conn=DBI::dbConnect(RSQLite::SQLite())
+-- !preview conn=DBI::dbConnect(RSQLite::SQLite())
 
 SELECT 1

@@ -619,6 +619,8 @@ public class TextEditingTargetWidget
       boolean canSourceOnSave = fileType.canSourceOnSave();
       if (canSourceOnSave && fileType.isJS()) 
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
+      if (canSourceOnSave && fileType.isSql()) 
+         canSourceOnSave = (extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
@@ -650,7 +652,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || fileType.isJS() || canPreviewFromR)
+      if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql() )
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
@@ -794,7 +796,8 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
-      if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || editor_.getFileType().canPreviewFromR())
+      if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || 
+          editor_.getFileType().isSql() ||editor_.getFileType().canPreviewFromR())
       {
          String preview = editor_.getFileType().getPreviewButtonText();
          srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
