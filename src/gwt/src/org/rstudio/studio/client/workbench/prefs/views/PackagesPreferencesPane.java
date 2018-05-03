@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -41,6 +42,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
@@ -61,10 +63,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       server_ = server;
 
-      VerticalPanel install = new VerticalPanel();
+      VerticalPanel management = new VerticalPanel();
       VerticalPanel development = new VerticalPanel();
     
-      install.add(headerLabel("Package management"));
+      management.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "Primary repo:",
@@ -105,11 +107,18 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
          lessSpaced(cranMirrorTextBox_);
-         install.add(cranMirrorTextBox_);
+         management.add(cranMirrorTextBox_);
       }
-      
+
+      Label secondaryReposLabel = new Label("Secondary repos:");
+      management.add(spacedBefore(secondaryReposLabel));
+
+      secondaryReposWidget_ = new SecondaryReposWidget();
+      management.add(secondaryReposWidget_);
+
       CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
-            uiPrefs.packagesPaneEnabled());
+         uiPrefs.packagesPaneEnabled());
+
       chkEnablePackages.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -117,9 +126,10 @@ public class PackagesPreferencesPane extends PreferencesPane
             reloadRequired_ = true;
          }
       });
+
       if (!session.getSessionInfo().getDisablePackages())
       {
-         install.add(chkEnablePackages);
+         management.add(spacedBefore(chkEnablePackages));
       }
       
       useSecurePackageDownload_ = new CheckBox(
@@ -127,7 +137,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
                         useSecurePackageDownload_, "secure_download");
       lessSpaced(secureDownloadPanel);
-      install.add(secureDownloadPanel);
+      management.add(secureDownloadPanel);
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
@@ -136,7 +146,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       {     
          lessSpaced(chkEnablePackages);
          spaced(useInternet2_);
-         install.add(useInternet2_);
+         management.add(useInternet2_);
       }
       else
       {
@@ -186,7 +196,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(install, "Management");
+      tabPanel.add(management, "Management");
       tabPanel.add(development, "Development");
       tabPanel.selectTab(0);
       add(tabPanel);
@@ -325,4 +335,5 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox useNewlineInMakefiles_;
    private boolean reloadRequired_ = false;
    private String cranMirrorStored_;
+   private SecondaryReposWidget secondaryReposWidget_;
 }
