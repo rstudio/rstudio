@@ -109,6 +109,11 @@
   background-color: rgba(0, 128, 124, 0.20)
 }
 
+.ace-brilliance-black .ace_xml-pe {
+  color: #CCCCCC;
+  background-color: #333333
+}
+
 .ace-brilliance-black .ace_meta.ace_tag {
   color: #333333
 }

@@ -116,6 +116,11 @@
   color: #5E6B6B
 }
 
+.ace-brilliance-dull .ace_xml-pe {
+  color: #CDCDCD;
+  background-color: #333333
+}
+
 .ace-brilliance-dull .ace_meta.ace_tag {
   color: #333333
 }

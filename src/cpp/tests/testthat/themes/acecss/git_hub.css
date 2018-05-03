@@ -98,6 +98,11 @@
   color: #999988
 }
 
+.ace-git-hub .ace_comment.ace_doc {
+  font-style: bold italic;
+  color: #999999
+}
+
 .ace-git-hub .ace_variable {
   color: #990000
 }
