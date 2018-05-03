@@ -263,7 +263,7 @@
       if (!is.null(element$scope) && !is.null(element$settings))
       {
          # Split on commas and strip whitespace.
-         scopes <- strsplit(gsub("^\\s*|\\s*$", "", element$scope), "\\s*,\\s*")[[1]]
+         scopes <- strsplit(gsub("^\\s*|\\s*$", "", element$scope), "\\s*(,|\\|\\s)\\s*")[[1]]
          for (scope in scopes)
          {
             style <- .rs.parseStyles(element$settings)
@@ -489,7 +489,6 @@
    styles$cssClass = paste0("ace-", hyphenate(name))
    styles$uuid <- tmTheme$uuid
    css <- fillTemplate(cssTemplate, styles)
-   css <- gsub("[^\\{\\}]+\\{\\s*\\}", "", css)
    
    for (scope in supportedScopes)
    {
@@ -507,7 +506,7 @@
       }
    }
    
-   css
+   gsub("[^\\{\\}]+\\{\\s*\\}", "", css, perl = TRUE)
 })
 # Counts the number of children of an XML element, not count "text".
 #
