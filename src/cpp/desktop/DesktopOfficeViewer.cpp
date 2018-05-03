@@ -19,8 +19,6 @@
 #include <winuser.h>
 #include <oleauto.h>
 
-#include <boost/utility.hpp>
-#include <boost/scoped_array.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Error.hpp>
@@ -36,10 +34,12 @@ namespace rstudio {
 namespace desktop {
 
 OfficeViewer::OfficeViewer(const std::wstring& progId,
-                           const std::wstring& collection):
+                           const std::wstring& collection,
+                           int readOnlyPos):
    idisp_(nullptr),
    progId_(progId),
-   collection_(collection)
+   collection_(collection),
+   readOnlyPos_(readOnlyPos)
 {
 }
 
@@ -81,7 +81,7 @@ Error OfficeViewer::ensureInterface()
       }
    }
 
-   // Get an IDispatch for the Word Application root object
+   // Get an IDispatch for the application's root object
    if (idisp_ == nullptr)
    {
       CLSID clsid;
@@ -133,7 +133,7 @@ Error OfficeViewer::openFile(const std::wstring& path, IDispatch** pidispOut)
    BSTR bstrFileName = SysAllocString(path.c_str());
 
    // COM requires that arguments are specified in reverse order
-   DISPID argPos[2] = { 2, 0 };
+   DISPID argPos[2] = { readOnlyPos_, 0 };
    VARIANT args[2];
    VARIANT result;
    DISPPARAMS dparams;
@@ -188,20 +188,26 @@ Error OfficeViewer::getItemFromPath(const std::wstring& path, IDispatch** pidisp
 
    *pidispOut = nullptr;
 
+   // Count the number of items in the collection
    VERIFY_HRESULT(getIDispatchProp(idispApp(), collection_.c_str(), &idispItems));
    VERIFY_HRESULT(getIntProp(idispItems, L"Count", &docCount));
 
-   varDocIdx.vt = VT_INT;
+   VariantInit(&varDocIdx);
+   varDocIdx.vt = VT_I4;
    for (int i = 1; i <= docCount; i++)
    {
       VariantInit(&varResult);
       varDocIdx.intVal = i;
+
+      // Retrieve the next item
       VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispItems,
                                     L"Item", 1, varDocIdx));
       idispDoc = varResult.pdispVal;
+
+      // Find its FullName (i.e. its path on disk)
       VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYGET, &varResult, idispDoc,
                                     L"FullName", 0));
-      if (path == varResult.bstrVal)
+      if (path.compare(varResult.bstrVal) == 0)
       {
          *pidispOut = idispDoc;
          break;
@@ -285,7 +291,7 @@ Error OfficeViewer::showItem(const std::wstring& item)
       setPath(itemPath);
    }
 
-   // Bring Word to the foreground
+   // Bring the application to the foreground
    VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispApp(),
                                  L"Activate", 0));
 

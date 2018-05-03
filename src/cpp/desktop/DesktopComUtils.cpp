@@ -50,7 +50,8 @@ HRESULT invokeDispatch (int dispatchType, VARIANT *pvResult,
    boost::scoped_array<VARIANT> spArgs(new VARIANT[cArgs + 1]);
    for (int i = 0; i < cArgs; i++)
    {
-      spArgs[i] = va_arg(marker, VARIANT);
+      VARIANT varArg = va_arg(marker, VARIANT);
+      spArgs[i] = varArg;
    }
 
    dp.cArgs = cArgs;
@@ -63,8 +64,9 @@ HRESULT invokeDispatch (int dispatchType, VARIANT *pvResult,
       dp.rgdispidNamedArgs = &dispidNamed;
    }
 
+   EXCEPINFO excep;
    hr = pDisp->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, dispatchType,
-                      &dp, pvResult, nullptr, nullptr);
+                      &dp, pvResult, &excep, nullptr);
    va_end(marker);
    return hr;
 }

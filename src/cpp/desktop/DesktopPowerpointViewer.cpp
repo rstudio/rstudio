@@ -31,7 +31,8 @@ namespace rstudio {
 namespace desktop {
 
 PowerpointViewer::PowerpointViewer():
-    OfficeViewer(L"Powerpoint.Application", L"Presentations"),
+    OfficeViewer(L"Powerpoint.Application", L"Presentations",
+                 1 /* position of read-only flag in Open method */),
     slideIndex_(0)
 {
 }
@@ -44,8 +45,11 @@ Error PowerpointViewer::getDocumentWindow(IDispatch* source, IDispatch** window)
    // Get the first document window for the presentation
    IDispatch* idispWindows = nullptr;
    VARIANT varResult;
+   VARIANT varItem;
+   varItem.vt = VT_INT;
+   varItem.intVal = 1;
    VERIFY_HRESULT(getIDispatchProp(source, L"Windows", &idispWindows));
-   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispWindows, L"Item", 1, 1));
+   VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, &varResult, idispWindows, L"Item", 1, varItem));
    *window = varResult.pdispVal;
 
 LErrExit:
@@ -94,8 +98,12 @@ Error PowerpointViewer::restorePosition(IDispatch* target) const
    VERIFY_HRESULT(getIDispatchProp(idispPres, L"View", &idispView));
 
    // Go to the slide in question
+   VARIANT varSlide;
+   varSlide.vt = VT_INT;
+   varSlide.intVal = slideIndex_;
    VERIFY_HRESULT(invokeDispatch(DISPATCH_METHOD, nullptr, idispView,
-                                 L"GotoSlide", 1, slideIndex_));
+                                 L"GotoSlide", 1, varSlide));
+
 LErrExit:
    return errorHR;
 }

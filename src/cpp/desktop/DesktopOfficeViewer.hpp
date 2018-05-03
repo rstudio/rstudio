@@ -32,7 +32,8 @@ namespace desktop {
 class OfficeViewer : boost::noncopyable
 {
 public:
-   OfficeViewer(const std::wstring& progId, const std::wstring& collection);
+   OfficeViewer(const std::wstring& progId, const std::wstring& collection,
+                int readOnlyPos);
    ~OfficeViewer();
 
    // Public interface
@@ -61,6 +62,7 @@ private:
    std::wstring progId_;      // ID of the viewer application
    std::wstring collection_;  // Name of collection to search for items
    std::wstring path_;        // Path of currently open item
+   int readOnlyPos_;          // Position of read-only flag in open call
 };
 
 } // namespace desktop

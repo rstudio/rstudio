@@ -19,12 +19,8 @@
 #include <winuser.h>
 #include <oleauto.h>
 
-#include <boost/utility.hpp>
-#include <boost/scoped_array.hpp>
-
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
-#include <core/system/Environment.hpp>
 
 #include "DesktopComUtils.hpp"
 #include "DesktopWordViewer.hpp"
@@ -35,7 +31,8 @@ namespace rstudio {
 namespace desktop {
 
 WordViewer::WordViewer():
-   OfficeViewer(L"Word.Application", L"Documents"),
+   OfficeViewer(L"Word.Application", L"Documents",
+                2 /* position of read-only flag in Open method */),
    docScrollX_(0),
    docScrollY_(0)
 {
@@ -72,13 +69,14 @@ Error WordViewer::restorePosition(IDispatch* idispDoc) const
    varPos.intVal = docScrollY_;
    VERIFY_HRESULT(invokeDispatch(DISPATCH_PROPERTYPUT, nullptr, idispWindow,
                                  L"VerticalPercentScrolled", 1, varPos));
+
 LErrExit:
    return errorHR;
 }
 
 bool WordViewer::hasPosition() const
 {
-   return docScrollX_ > 0 && docScrollY_ > 0;
+   return docScrollX_ > 0 || docScrollY_ > 0;
 }
 
 void WordViewer::resetPosition()
