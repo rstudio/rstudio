@@ -67,7 +67,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       install.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "CRAN mirror:",
+            "Primary repo:",
             "",
             "Change...",
             null,
@@ -81,6 +81,16 @@ public class PackagesPreferencesPane extends PreferencesPane
                      {
                         cranMirror_ = cranMirror;
                         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                        
+                        if (cranMirror_.getHost().equals("Custom"))
+                        {
+                           cranMirrorTextBox_.setText(cranMirror_.getURL());
+                        }
+                        else
+                        {
+                           cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                        }
+
                         cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
                      }     
                   });

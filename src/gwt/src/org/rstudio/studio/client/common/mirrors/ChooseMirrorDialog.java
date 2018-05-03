@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -23,17 +24,22 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<T>
@@ -58,7 +64,17 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
    @Override
    protected T collectInput()
    {
-      if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
+      if (!StringUtil.isNullOrEmpty(customTextBox_.getText()))
+      {
+         CRANMirror cranMirror = CRANMirror.empty();
+         cranMirror.setURL(customTextBox_.getText());
+
+         cranMirror.setHost("Custom");
+         cranMirror.setName("Custom");
+
+         return (T) cranMirror;
+      }
+      else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
          return mirrors_.get(listBox_.getSelectedIndex());
       }
@@ -86,9 +102,24 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
    @Override
    protected Widget createMainWidget()
    {
+      VerticalPanel root = new VerticalPanel();
+
+      Label customLabel = new Label("Custom:");
+      root.add(customLabel);
+
+      customTextBox_ = new TextBox();
+      customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
+      root.add(customTextBox_);
+
+      Label mirrorsLabel = new Label("CRAN Mirrors:");
+      mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      root.add(mirrorsLabel);
+
       // create progress container
       final SimplePanelWithProgress panel = new SimplePanelWithProgress(
                                           ProgressImages.createLargeGray());
+      root.add(panel);
+
       panel.setStylePrimaryName(RESOURCES.styles().mainWidget());
          
       // show progress (with delay)
@@ -133,8 +164,7 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
             panel.setWidget(listBox_);
             
             // set caption
-            String protocolQualifer = !haveInsecureMirror ? " HTTPS" : "";
-            setText("Choose" + protocolQualifer + " CRAN Mirror");
+            setText("Choose Primary Repo");
           
             // update ok button on changed
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
@@ -148,7 +178,7 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height
-            final int kDefaultPanelHeight = 285;
+            final int kDefaultPanelHeight = 265;
             if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
                panel.setHeight(listBox_.getOffsetHeight() + "px");
             
@@ -164,12 +194,13 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
          }
       });
       
-      return panel;
+      return root;
    }
    
    static interface Styles extends CssResource
    {
       String mainWidget();
+      String customRepo();
    }
   
    static interface Resources extends ClientBundle
@@ -188,5 +219,6 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
    private final Source<T> mirrorSource_;
    private ArrayList<T> mirrors_ = null;
    private ListBox listBox_ = null;
+   private TextBox customTextBox_ = null;
 
 }
