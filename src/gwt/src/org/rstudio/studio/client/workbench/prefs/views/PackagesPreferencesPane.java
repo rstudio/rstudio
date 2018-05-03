@@ -24,10 +24,12 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -52,8 +54,11 @@ public class PackagesPreferencesPane extends PreferencesPane
    {
       res_ = res;
       globalDisplay_ = globalDisplay;
+
+      VerticalPanel install = new VerticalPanel();
+      VerticalPanel development = new VerticalPanel();
     
-      add(headerLabel("Package management"));
+      install.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
@@ -79,7 +84,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
          lessSpaced(cranMirrorTextBox_);
-         add(cranMirrorTextBox_);
+         install.add(cranMirrorTextBox_);
       }
       
       CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
@@ -93,7 +98,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       });
       if (!session.getSessionInfo().getDisablePackages())
       {
-         add(chkEnablePackages);
+         install.add(chkEnablePackages);
       }
       
       useSecurePackageDownload_ = new CheckBox(
@@ -101,7 +106,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
                         useSecurePackageDownload_, "secure_download");
       lessSpaced(secureDownloadPanel);
-      add(secureDownloadPanel);
+      install.add(secureDownloadPanel);
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
@@ -110,7 +115,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       {     
          lessSpaced(chkEnablePackages);
          spaced(useInternet2_);
-         add(useInternet2_);
+         install.add(useInternet2_);
       }
       else
       {
@@ -118,37 +123,37 @@ public class PackagesPreferencesPane extends PreferencesPane
          useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
       
-      add(headerLabel("Package development"));
+      development.add(headerLabel("Package development"));
       
       useDevtools_ = new CheckBox("Use devtools package functions if available");
       lessSpaced(useDevtools_);
-      add(useDevtools_);
+      development.add(useDevtools_);
       
-      add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
-      add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
+      development.add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
+      development.add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
       
       hideObjectFiles_ = new CheckBox("Hide object files in package src directory");
       lessSpaced(hideObjectFiles_);
-      add(hideObjectFiles_);
+      development.add(hideObjectFiles_);
       
       cleanupAfterCheckSuccess_ = new CheckBox("Cleanup output after successful R CMD check");
       lessSpaced(cleanupAfterCheckSuccess_);
-      add(cleanupAfterCheckSuccess_);
+      development.add(cleanupAfterCheckSuccess_);
       
       viewDirAfterCheckFailure_ = new CheckBox("View Rcheck directory after failed R CMD check");
       lessSpaced(viewDirAfterCheckFailure_);
-      add(viewDirAfterCheckFailure_);
+      development.add(viewDirAfterCheckFailure_);
       
-      add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
+      development.add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
       
       useNewlineInMakefiles_ = new CheckBox("Always use LF line-endings in Unix Makefiles");
       lessSpaced(useNewlineInMakefiles_);
-      add(useNewlineInMakefiles_);
+      development.add(useNewlineInMakefiles_);
       
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
       nudgeRight(packagesHelpLink); 
-      add(packagesHelpLink);
+      development.add(packagesHelpLink);
       
       cranMirrorTextBox_.setEnabled(false);
       useInternet2_.setEnabled(false);
@@ -157,6 +162,13 @@ public class PackagesPreferencesPane extends PreferencesPane
       hideObjectFiles_.setEnabled(false);
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(install, "Install");
+      tabPanel.add(development, "Development");
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
 
 
