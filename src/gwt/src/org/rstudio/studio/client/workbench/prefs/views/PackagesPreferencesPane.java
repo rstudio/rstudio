@@ -153,6 +153,8 @@ public class PackagesPreferencesPane extends PreferencesPane
          spaced(useSecurePackageDownload_);
          useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
+
+      management.add(spacedBefore(new HelpLink("Managing Packages", "managing_packages")));
       
       development.add(headerLabel("Package development"));
       
