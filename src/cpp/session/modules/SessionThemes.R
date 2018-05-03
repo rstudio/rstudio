@@ -291,7 +291,7 @@
    {
       name <- fScopeNames[i]
       scope <- fallbackScopes[[i]]
-      if (is.null(styles[[name]]))
+      if (is.null(styles[[name]]) || (styles[[name]] == ""))
       {
          styles[[name]] <- styles[[scope]]
       }
