@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -36,8 +37,11 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -50,10 +54,12 @@ public class PackagesPreferencesPane extends PreferencesPane
                                   GlobalDisplay globalDisplay,
                                   UIPrefs uiPrefs,
                                   Session session,
-                                  final DefaultCRANMirror defaultCRANMirror)
+                                  final DefaultCRANMirror defaultCRANMirror,
+                                  MirrorsServerOperations server)
    {
       res_ = res;
       globalDisplay_ = globalDisplay;
+      server_ = server;
 
       VerticalPanel install = new VerticalPanel();
       VerticalPanel development = new VerticalPanel();
@@ -75,12 +81,14 @@ public class PackagesPreferencesPane extends PreferencesPane
                      {
                         cranMirror_ = cranMirror;
                         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                        cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
                      }     
                   });
                  
                }
             },
             false);
+
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
@@ -174,8 +182,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       add(tabPanel);
    }
 
-
-
    @Override
    public ImageResource getIcon()
    {
@@ -204,7 +210,17 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
          cranMirror_ = packagesPrefs.getCRANMirror();
-         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+
+         if (cranMirror_.getHost().equals("Custom"))
+         {
+            cranMirrorTextBox_.setText(cranMirror_.getURL());
+         }
+         else
+         {
+            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+         }
+         
+         cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
       }
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
@@ -243,6 +259,29 @@ public class PackagesPreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean reload = super.onApply(rPrefs);
+
+      String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
+      if (!mirrotTextValue.equals(cranMirrorStored_) && 
+           mirrotTextValue.startsWith("http")) {
+
+         cranMirror_ = CRANMirror.empty();
+         cranMirror_.setURL(mirrotTextValue);
+
+         cranMirror_.setHost("Custom");
+         cranMirror_.setName("Custom");
+
+         updatedCranMirror_ = false;
+
+         server_.setCRANMirror(
+            cranMirror_,
+            new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
+                @Override
+                public void onResponseReceived(Void response)
+                {
+                }
+            }
+         );
+      }
      
       // set packages prefs
       PackagesPrefs packagesPrefs = PackagesPrefs.create(
@@ -262,9 +301,10 @@ public class PackagesPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    private final GlobalDisplay globalDisplay_;
-   
+   private final MirrorsServerOperations server_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private Boolean updatedCranMirror_ = false;
    private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;
@@ -274,4 +314,5 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox useSecurePackageDownload_;
    private CheckBox useNewlineInMakefiles_;
    private boolean reloadRequired_ = false;
+   private String cranMirrorStored_;
 }

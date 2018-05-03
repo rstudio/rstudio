@@ -162,7 +162,7 @@ public class TextBoxWithButton extends Composite
       themedButton_.setEnabled(enabled);
    }
    
-   protected TextBox getTextBox()
+   public TextBox getTextBox()
    {
       return textBox_;
    }

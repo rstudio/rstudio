@@ -41,20 +41,32 @@ public class CRANMirror extends JavaScriptObject
       return this.name;
    }-*/;
 
+   public final native void setName(String name) /*-{
+      this.name = name;
+   }-*/;
+
    public final native String getHost() /*-{
       return this.host;
+   }-*/;
+
+   public final native void setHost(String host) /*-{
+      this.host = host;
    }-*/;
 
    public final native String getURL() /*-{
       return this.url;
    }-*/;
-   
+
+   public final native void setURL(String url) /*-{
+      this.url = url;
+   }-*/;
+
    public final native String getCountry() /*-{
       return this.country;
    }-*/;
 
    public final String getDisplay()
    {
-      return getName()  +" - " + getHost();
+      return getName() + " - " + getHost();
    }
 }
