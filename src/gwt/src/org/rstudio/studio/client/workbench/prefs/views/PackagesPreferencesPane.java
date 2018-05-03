@@ -62,7 +62,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
+            "",
             "Change...",
+            null,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)
@@ -77,7 +79,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                   });
                  
                }
-            });
+            },
+            false);
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
