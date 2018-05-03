@@ -168,7 +168,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(install, "Install");
+      tabPanel.add(install, "Management");
       tabPanel.add(development, "Development");
       tabPanel.selectTab(0);
       add(tabPanel);
