@@ -37,6 +37,10 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.StyleElement;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -164,6 +168,42 @@ public class NewConnectionShinyHost extends Composite
       return container;
    }
 
+   private void appendStyleOnLoad(final RStudioFrame frame)
+   {
+      appendStyle(frame);
+      
+      frame.addLoadHandler(new LoadHandler()
+      {      
+         @Override
+         public void onLoad(LoadEvent arg0)
+         {
+            appendStyle(frame);
+         }
+      });
+   }
+
+   private void appendStyle(RStudioFrame frame)
+   {
+      Document document = frame.getWindow().getDocument();
+      
+      String customStyle = "\n" +
+      "body {\n" +
+      "  background: none;\n" +
+      "  font-family : \"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif;\n" +
+      "  font-size : 12px;\n" +
+      "  -ms-user-select : none;\n" +
+      "  -moz-user-select : none;\n" +
+      "  -webkit-user-select : none;\n" +
+      "  user-select : none;\n" +
+      "  margin: 0;\n" +
+      "  margin-top: 7px;\n" +
+      "}\n";
+      
+      StyleElement style = document.createStyleElement();
+      style.setInnerHTML(customStyle);
+      document.getHead().appendChild(style);
+   }
+
    public ConnectionOptions collectInput()
    {
       // collect the result
@@ -184,6 +224,7 @@ public class NewConnectionShinyHost extends Composite
          Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url));
 
       frame_.setUrl(StringUtil.makeAbsoluteUrl(url));
+      appendStyleOnLoad(frame_);
    }
    
    @Override
