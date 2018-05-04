@@ -51,6 +51,7 @@ import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
+import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
@@ -253,6 +254,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewConnectionInstallOdbcHost newConnectionInstallOdbcHost);
    void injectMembers(NewConnectionPreInstallOdbcHost NewConnectionPreInstallOdbcHost);
    void injectMembers(SecondaryReposWidget widget);
+   void injectMembers(SecondaryReposDialog widget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

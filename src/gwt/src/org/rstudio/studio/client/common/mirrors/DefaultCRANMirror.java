@@ -40,15 +40,15 @@ public class DefaultCRANMirror
    
    public void choose(OperationWithInput<CRANMirror> onChosen)
    {
-      new ChooseMirrorDialog<CRANMirror>(globalDisplay_, 
-                                         mirrorDS_, 
-                                         onChosen).showModal();
+      new ChooseMirrorDialog(globalDisplay_, 
+                             mirrorDS_, 
+                             onChosen).showModal();
    }
    
    public void configure(final Command onConfigured)
    {
       // show dialog
-      new ChooseMirrorDialog<CRANMirror>(
+      new ChooseMirrorDialog(
          globalDisplay_,  
          mirrorDS_,
          new OperationWithInput<CRANMirror>() {
@@ -73,8 +73,8 @@ public class DefaultCRANMirror
    
    private final GlobalDisplay globalDisplay_;
    
-   private final ChooseMirrorDialog.Source<CRANMirror> mirrorDS_ = 
-      new ChooseMirrorDialog.Source<CRANMirror>() {
+   private final ChooseMirrorDialog.Source mirrorDS_ = 
+      new ChooseMirrorDialog.Source() {
          
          @Override
          public String getLabel(CRANMirror mirror)

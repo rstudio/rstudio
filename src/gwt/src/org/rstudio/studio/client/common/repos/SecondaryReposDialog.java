@@ -1,7 +1,7 @@
 /*
- * ChooseMirrorDialog.java
+ * SecondaryReposDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.mirrors;
+package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
@@ -25,48 +25,51 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
-import org.rstudio.studio.client.server.ServerDataSource;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
+import com.google.inject.Inject;
+
+public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 {
-   public interface Source 
-                    extends ServerDataSource<JsArray<CRANMirror>>
+   public SecondaryReposDialog()
    {
-      String getLabel(CRANMirror mirror);
-      String getURL(CRANMirror mirror);
-   }
-   
-   public ChooseMirrorDialog(GlobalDisplay globalDisplay,
-                             Source mirrorSource,
-                             OperationWithInput<CRANMirror> inputOperation)
-   {
-      super("Retrieving list of CRAN mirrors...", inputOperation);
-      globalDisplay_ = globalDisplay;
-      mirrorSource_ = mirrorSource;
+      super("Retrieving list of secondary repos...", new OperationWithInput<CRANMirror>() {
+         @Override
+         public void execute(CRANMirror input)
+         {
+         }
+      });
+      
       enableOkButton(false);
    }
 
    @Override
    protected CRANMirror collectInput()
    {
-      if (!StringUtil.isNullOrEmpty(customTextBox_.getText()))
+      if (!StringUtil.isNullOrEmpty(nameTextBox_.getText()) &&
+          !StringUtil.isNullOrEmpty(urlTextBox_.getText()))
       {
          CRANMirror cranMirror = CRANMirror.empty();
-         cranMirror.setURL(customTextBox_.getText());
+
+         cranMirror.setName(nameTextBox_.getText());
+         cranMirror.setURL(urlTextBox_.getText());
 
          cranMirror.setHost("Custom");
          cranMirror.setName("Custom");
@@ -75,12 +78,20 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       }
       else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
-         return mirrors_.get(listBox_.getSelectedIndex());
+         return repos_.get(listBox_.getSelectedIndex());
       }
       else
       {
          return null;
       }
+   }
+
+   @Inject
+   void initialize(GlobalDisplay globalDisplay,
+                   SecondaryReposServerOperations server)
+   {
+      globalDisplay_ = globalDisplay;
+      secondaryReposServer_ = server;
    }
 
    @Override
@@ -89,7 +100,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       if (input == null)
       {
          globalDisplay_.showErrorMessage("Error", 
-                                         "Please select a CRAN Mirror");
+                                         "Please select or input a CRAN repo");
          return false;
       }
       else
@@ -103,20 +114,30 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    {
       VerticalPanel root = new VerticalPanel();
 
-      Label customLabel = new Label("Custom:");
-      root.add(customLabel);
+      HorizontalPanel customPanel = new HorizontalPanel();
+      root.add(customPanel);
 
-      customTextBox_ = new TextBox();
-      customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
-      root.add(customTextBox_);
+      VerticalPanel namePanel = new VerticalPanel();
+      Label nameLabel = new Label("Name:");
+      namePanel.add(nameLabel);
+      nameTextBox_ = new TextBox();
+      namePanel.add(nameTextBox_);
+      customPanel.add(namePanel);
 
-      Label mirrorsLabel = new Label("CRAN Mirrors:");
-      mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      root.add(mirrorsLabel);
+      VerticalPanel urlPanel = new VerticalPanel();
+      Label urlLabel = new Label("Url:");
+      urlPanel.add(urlLabel);
+      nameTextBox_ = new TextBox();
+      urlPanel.add(urlTextBox_);
+      customPanel.add(urlPanel);
 
-      // create progress container
+
+      Label reposLabel = new Label("Available repos:");
+      reposLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      root.add(reposLabel);
+
       final SimplePanelWithProgress panel = new SimplePanelWithProgress(
-                                          ProgressImages.createLargeGray());
+         ProgressImages.createLargeGray());
       root.add(panel);
 
       panel.setStylePrimaryName(RESOURCES.styles().mainWidget());
@@ -125,47 +146,38 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       panel.showProgress(200);
       
       // query data source for packages
-      mirrorSource_.requestData(new SimpleRequestCallback<JsArray<CRANMirror>>() {
+      secondaryReposServer_.getSecondaryRepos(new SimpleRequestCallback<JsArray<CRANMirror>>() {
 
          @Override 
-         public void onResponseReceived(JsArray<CRANMirror> mirrors)
+         public void onResponseReceived(JsArray<CRANMirror> repos)
          {   
             // keep internal list of mirrors 
-            boolean haveInsecureMirror = false;
-            mirrors_ = new ArrayList<CRANMirror>(mirrors.length());
+            repos_ = new ArrayList<CRANMirror>(repos.length());
             
             // create list box and select default item
             listBox_ = new ListBox();
             listBox_.setMultipleSelect(false);
             listBox_.setVisibleItemCount(18); // all
             listBox_.setWidth("100%");
-            if (mirrors.length() > 0)
+            if (repos.length() > 0)
             {
-               for(int i=0; i<mirrors.length(); i++)
+               for(int i=0; i<repos.length(); i++)
                {
-                  CRANMirror mirror = mirrors.get(i);
-                  if (mirrorSource_.getLabel(mirror).startsWith("0-Cloud"))
-                     continue;
-                  mirrors_.add(mirror);
-                  String item = mirrorSource_.getLabel(mirror);
-                  String value = mirrorSource_.getURL(mirror);
-                  if (!value.startsWith("https"))
-                     haveInsecureMirror = true;
+                  CRANMirror repo = repos.get(i);
 
-                  listBox_.addItem(item, value);
+                  repos_.add(repo);
+
+                  listBox_.addItem(repo.getName(), repo.getURL());
                }
                
                listBox_.setSelectedIndex(0);
                enableOkButton(true);
             }
             
-            // set it into the panel
             panel.setWidget(listBox_);
             
-            // set caption
-            setText("Choose Primary Repo");
+            setText("Add Secondary Repo");
           
-            // update ok button on changed
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
                @Override
                public void onDoubleClick(DoubleClickEvent event)
@@ -174,14 +186,10 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                }
             });
             
-            
-            // if the list box is larger than the space we initially allocated
-            // then increase the panel height
             final int kDefaultPanelHeight = 265;
             if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
                panel.setHeight(listBox_.getOffsetHeight() + "px");
             
-            // set focus   
             FocusHelper.setFocusDeferred(listBox_);
          }
          
@@ -199,12 +207,11 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    static interface Styles extends CssResource
    {
       String mainWidget();
-      String customRepo();
    }
   
    static interface Resources extends ClientBundle
    {
-      @Source("ChooseMirrorDialog.css")
+      @Source("SecondaryReposDialog.css")
       Styles styles();
    }
    
@@ -214,10 +221,10 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       RESOURCES.styles().ensureInjected();
    }
    
-   private final GlobalDisplay globalDisplay_ ;
-   private final Source mirrorSource_;
-   private ArrayList<CRANMirror> mirrors_ = null;
+   private SecondaryReposServerOperations secondaryReposServer_ = null;
+   private GlobalDisplay globalDisplay_ = null;
+   private ArrayList<CRANMirror> repos_ = null;
    private ListBox listBox_ = null;
-   private TextBox customTextBox_ = null;
-
+   private TextBox nameTextBox_ = null;
+   private TextBox urlTextBox_ = null;
 }

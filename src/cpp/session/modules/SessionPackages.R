@@ -1159,3 +1159,21 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # delegate to 'setInternet2'
    utils::setInternet2(value)
 })
+
+.rs.addJsonRpcHandler("get_secondary_repos", function() {
+
+  list(
+    list(
+      name  = "Test1",
+      url = .rs.scalar("http://test1.com/"),
+      host = "Custom",
+      country = ""
+    ),
+    list(
+      name  = "Test2",
+      url = .rs.scalar("http://test2.com/"),
+      host = "Custom",
+      country = ""
+    )
+  )
+})

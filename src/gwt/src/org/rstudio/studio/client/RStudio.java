@@ -53,6 +53,7 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
+import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerListResources;
@@ -361,6 +362,7 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetDialog.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
+      SecondaryReposDialog.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

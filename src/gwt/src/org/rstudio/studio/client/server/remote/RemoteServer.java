@@ -5394,6 +5394,18 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void getSecondaryRepos(ServerRequestCallback<JsArray<CRANMirror>> callback)
+   {
+      JSONArray params = new JSONArray();
+
+      sendRequest(RPC_SCOPE,
+                  GET_SECONDARY_REPOS,
+                  params,
+                  true,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private String userHomePath_;
@@ -5825,4 +5837,6 @@ public class RemoteServer implements Server
    private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
    private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
    private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
+
+   private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
 }
