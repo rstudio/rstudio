@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -180,6 +180,7 @@ class ClientEvent extends JavaScriptObject
    public static final String JobRefresh = "job_refresh";
    public static final String JobOutput = "job_output";
    public static final String DataOutputCompleted = "data_output_completed";
+   public static final String PlumberViewer = "plumber_viewer";
 
    protected ClientEvent()
    {

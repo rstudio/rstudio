@@ -53,6 +53,7 @@ import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
 import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerHandler;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.projects.ProjectOpener;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -117,6 +118,7 @@ public class Workbench implements BusyHandler,
                     HTMLPreview htmlPreview,                    // force gin to create
                     ProfilerPresenter prof,                     // force gin to create
                     ShinyApplication sApp,                      // force gin to create
+                    PlumberAPI sAPI,                            // force gin to create
                     DependencyManager dm,                       // force gin to create
                     ApplicationVisibility av,                   // force gin to create
                     RmdOutput rmdOutput,                        // force gin to create    

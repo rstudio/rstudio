@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,6 +64,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
+import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
@@ -289,6 +290,12 @@ public class RStudio implements EntryPoint
       {
          ChunkSatellite satellite = new ChunkSatellite(view);
          satellite.go(RootLayoutPanel.get(), 
+               dismissProgressAnimation_);
+      }
+      else if (PlumberAPISatellite.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getPlumberAPISatellite().go(
+               RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
       else

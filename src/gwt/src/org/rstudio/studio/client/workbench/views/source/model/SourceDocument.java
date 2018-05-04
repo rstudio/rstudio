@@ -1,7 +1,7 @@
 /*
  * SourceDocument.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,4 +185,7 @@ public class SourceDocument extends JavaScriptObject
    public final static String XT_TEST_SHINYTEST = "test-shinytest";
    public final static String XT_JS_PREVIEWABLE = "js-previewable";
    public final static String XT_SQL_PREVIEWABLE = "sql-previewable";
+   public final static String XT_PLUMBER_PREFIX = "plumber-";
+   public final static String XT_PLUMBER_FILE = "plumber-file";
+   public final static String XT_PLUMBER_ENTRYPOINT = "plumber-entrypoint";
 }

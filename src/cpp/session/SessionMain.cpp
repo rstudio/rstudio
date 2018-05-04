@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -133,6 +133,7 @@
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
+#include "modules/SessionPlumberViewer.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionRCompletions.hpp"
@@ -155,6 +156,7 @@
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
+#include "modules/plumber/SessionPlumber.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/preview/SessionPreview.hpp"
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
@@ -486,6 +488,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
+      (modules::plumber::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
@@ -498,6 +501,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::updates::initialize)
       (modules::about::initialize)
       (modules::shiny_viewer::initialize)
+      (modules::plumber_viewer::initialize)
       (modules::rsconnect::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)

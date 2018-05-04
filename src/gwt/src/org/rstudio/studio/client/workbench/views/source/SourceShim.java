@@ -1,7 +1,7 @@
 /*
  * SourceShim.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,6 +93,8 @@ public class SourceShim extends Composite
       public abstract void onNewRDocumentationDoc();
       @Handler
       public abstract void onNewRPresentationDoc();
+      @Handler
+      public abstract void onNewRPlumberDoc();
       @Handler
       public abstract void onNewSqlDoc();
       @Handler

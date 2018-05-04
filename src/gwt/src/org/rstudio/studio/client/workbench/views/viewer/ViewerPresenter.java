@@ -37,6 +37,9 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
+import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -65,7 +68,8 @@ public class ViewerPresenter extends BasePresenter
                              implements ViewerNavigateEvent.Handler, 
                                         ViewerPreviewRmdEvent.Handler,
                                         ViewerClearedEvent.Handler,
-                                        ShinyApplicationStatusEvent.Handler
+                                        ShinyApplicationStatusEvent.Handler,
+                                        PlumberAPIStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
@@ -75,6 +79,7 @@ public class ViewerPresenter extends BasePresenter
       void setExportEnabled(boolean exportEnabled);
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
+      void previewPlumber(PlumberAPIParams params);
       String getUrl();
       String getTitle();
       void popout();
@@ -131,6 +136,7 @@ public class ViewerPresenter extends BasePresenter
       });
       
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, this);
+      eventBus.addHandler(PlumberAPIStatusEvent.TYPE, this);
       initializeEvents();
    }
    
@@ -201,6 +207,21 @@ public class ViewerPresenter extends BasePresenter
             Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
          display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
+      }
+   }
+
+   @Override
+   public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
+   {
+      if (event.getParams().getViewerType() == PlumberViewerType.PLUMBER_VIEWER_PANE &&
+          event.getParams().getState() == PlumberAPIParams.STATE_STARTED)
+      {
+         manageCommands(true);
+         display_.bringToFront();
+         if (Desktop.isDesktop())
+            Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
+         display_.previewPlumber(event.getParams());
+         runningPlumberAPIParams_ = event.getParams();
       }
    }
 
@@ -449,6 +470,14 @@ public class ViewerPresenter extends BasePresenter
       }
       runningShinyAppParams_ = null;
       
+      // Ditto for Plumber
+      if (runningPlumberAPIParams_ != null)
+      {
+         runningPlumberAPIParams_.setState(PlumberAPIParams.STATE_STOPPED);
+         events_.fireEvent(new PlumberAPIStatusEvent(runningPlumberAPIParams_));
+      }
+      runningPlumberAPIParams_ = null;
+
       events_.fireEvent(new ViewerClearedEvent(true));
       
       // if this was a static widget then clear the current widget
@@ -565,6 +594,7 @@ public class ViewerPresenter extends BasePresenter
    private FileSystemItem saveAsWebPageDefaultPath_ = null;
    
    private ShinyApplicationParams runningShinyAppParams_;
+   private PlumberAPIParams runningPlumberAPIParams_;
    private RmdPreviewParams rmdPreviewParams_;
    
    private WindowEx zoomWindow_ = null;

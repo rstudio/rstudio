@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1373,6 +1373,22 @@ public class Source implements InsertSourceHandler,
       );
    }
    
+   private void doNewRPlumberAPI(NewPlumberAPI.Result result)
+   {
+      server_.createPlumberAPI(
+            result.getAPIName(),
+            result.getAPIDir(),
+            new SimpleRequestCallback<JsArrayString>("Error Creating Plumber API", true)
+            {
+               @Override
+               public void onResponseReceived(JsArrayString createdFiles)
+               {
+                  // Open and focus files that we created
+                  new SourceFilesOpener(createdFiles).run();
+               }
+            });
+   }
+    
    // open a list of source files then focus the first one within the list
    private class SourceFilesOpener extends SerializedCommandQueue
    {
@@ -2628,6 +2644,30 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   @Handler
+   public void onNewRPlumberDoc()
+   {
+      dependencyManager_.withRPlumber("Creating R Plumber API", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            NewPlumberAPI widget = new NewPlumberAPI(
+                  "New Plumber API",
+                  new OperationWithInput<NewPlumberAPI.Result>()
+                  {
+                     @Override
+                     public void execute(NewPlumberAPI.Result input)
+                     {
+                        doNewRPlumberAPI(input);
+                     }
+                  });
+         
+            widget.showModal();
+
+         }
+      });
+   }
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
@@ -2638,8 +2678,6 @@ public class Source implements InsertSourceHandler,
                      event.getNavigationMethod(),
                      false);
    }
-   
-   
    
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
    {
@@ -3803,14 +3841,30 @@ public class Source implements InsertSourceHandler,
               activeEditor_.getExtendedFileType()
                  .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
              (activeEditor_.getExtendedFileType() == 
-                 SourceDocument.XT_RMARKDOWN));
+                 SourceDocument.XT_RMARKDOWN) ||
+             (activeEditor_.getExtendedFileType() != null &&
+              activeEditor_.getExtendedFileType().
+                 startsWith(SourceDocument.XT_PLUMBER_PREFIX)));
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
-         commands_.rsconnectDeploy().setLabel(
-               activeEditor_.getExtendedFileType() != null &&
-               activeEditor_.getExtendedFileType() 
-                    .startsWith(SourceDocument.XT_SHINY_PREFIX) ?
-               "Publish Application..." : "Publish Document...");
+      {
+         String deployLabel = null;
+         if (activeEditor_.getExtendedFileType() != null)
+         {
+            if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX))
+            {
+               deployLabel = "Publish Application...";
+            }
+            else if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_PLUMBER_PREFIX))
+            {
+               deployLabel = "Publish Plumber API..."; 
+            }
+         }
+         if (deployLabel == null)
+            deployLabel = "Publish Document...";
+   
+         commands_.rsconnectDeploy().setLabel(deployLabel);
+      }
       commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
    

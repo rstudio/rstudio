@@ -1,7 +1,7 @@
 /*
  * UIPrefsAccessor.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
+import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -531,6 +532,11 @@ public class UIPrefsAccessor extends Prefs
       return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
    }
 
+   public PrefValue<Integer> plumberViewerType()
+   {
+      return integer("plumber_viewer_type", PlumberViewerType.PLUMBER_VIEWER_WINDOW);
+   }
+   
    public PrefValue<String> documentAuthor()
    {
       return string("document_author", "");
