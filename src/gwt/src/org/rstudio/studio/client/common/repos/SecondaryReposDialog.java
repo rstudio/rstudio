@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
@@ -48,14 +49,13 @@ import com.google.inject.Inject;
 
 public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 {
-   public SecondaryReposDialog()
+   public SecondaryReposDialog(OperationWithInput<CRANMirror> operation,
+                               ArrayList<String> excluded)
    {
-      super("Retrieving list of secondary repos...", new OperationWithInput<CRANMirror>() {
-         @Override
-         public void execute(CRANMirror input)
-         {
-         }
-      });
+      super("Retrieving list of secondary repos...", operation);
+      
+      excluded_ = excluded;
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
       enableOkButton(false);
    }
@@ -72,7 +72,6 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          cranMirror.setURL(urlTextBox_.getText());
 
          cranMirror.setHost("Custom");
-         cranMirror.setName("Custom");
 
          return cranMirror;
       }
@@ -103,10 +102,16 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                          "Please select or input a CRAN repo");
          return false;
       }
-      else
+      
+      
+      if (excluded_.contains(input.getName()))
       {
-         return true;
+         globalDisplay_.showErrorMessage("Error", 
+               "The repo " + input.getName() + " is already included");
+         return false;
       }
+      
+      return true;
    }
 
    @Override
@@ -159,7 +164,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             // create list box and select default item
             listBox_ = new ListBox();
             listBox_.setMultipleSelect(false);
-            listBox_.setVisibleItemCount(18); // all
+            listBox_.setVisibleItemCount(10);
             listBox_.setWidth("100%");
             if (repos.length() > 0)
             {
@@ -232,4 +237,5 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    private ListBox listBox_ = null;
    private TextBox nameTextBox_ = null;
    private TextBox urlTextBox_ = null;
+   private ArrayList<String> excluded_;
 }

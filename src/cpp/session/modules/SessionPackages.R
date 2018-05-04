@@ -1164,16 +1164,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
   list(
     list(
-      name  = "Test1",
+      name  = .rs.scalar("Test1"),
       url = .rs.scalar("http://test1.com/"),
-      host = "Custom",
-      country = ""
+      host = .rs.scalar("Custom"),
+      country = .rs.scalar("")
     ),
     list(
-      name  = "Test2",
+      name  = .rs.scalar("Test2"),
       url = .rs.scalar("http://test2.com/"),
-      host = "Custom",
-      country = ""
+      host = .rs.scalar("Custom"),
+      country = .rs.scalar("")
     )
   )
 })

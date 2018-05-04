@@ -14,16 +14,20 @@
  */
 package org.rstudio.studio.client.common.repos;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -47,6 +51,8 @@ public class SecondaryReposWidget extends Composite
    public SecondaryReposWidget()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      repos_ = new ArrayList<CRANMirror>();
       
       VerticalPanel panel = new VerticalPanel();
       
@@ -84,25 +90,36 @@ public class SecondaryReposWidget extends Composite
    }
 
    @Inject
-   void initialize(GlobalDisplay globalDisplay,
-                   SecondaryReposDialog secondaryReposDialog)
+   void initialize(GlobalDisplay globalDisplay)
    {
       globalDisplay_ = globalDisplay;
-      secondaryReposDialog_ = secondaryReposDialog;
    }
    
-   public void setRepos(JsArrayString repos)
+   public void updateRepos()
    {
       listBox_.clear();
-      for (int i = 0; i < repos.length(); i++)
-         listBox_.addItem(repos.get(i));
+      for (int i = 0; i < repos_.size(); i++)
+         listBox_.addItem(repos_.get(i).getName());
    }
    
    private ClickHandler addButtonClicked_ = new ClickHandler() {
       @Override
       public void onClick(ClickEvent event)
       {
-         secondaryReposDialog_.showModal();
+         ArrayList<String> excluded = new ArrayList<String>();
+         for (int i = 0; i < repos_.size(); i++)
+            excluded.add(repos_.get(i).getName());
+         
+         SecondaryReposDialog secondaryReposDialog = new SecondaryReposDialog(new OperationWithInput<CRANMirror>() {
+            @Override
+            public void execute(CRANMirror input)
+            {
+               repos_.add(input);
+               updateRepos();
+            }
+         }, excluded);
+         
+         secondaryReposDialog.showModal();
       }
    };
    
@@ -111,7 +128,7 @@ public class SecondaryReposWidget extends Composite
       public void onClick(ClickEvent event)
       {
          // get selected index
-         int index = listBox_.getSelectedIndex();
+         final int index = listBox_.getSelectedIndex();
          if (index != -1)
          {
             final String repo = listBox_.getValue(index);
@@ -123,6 +140,8 @@ public class SecondaryReposWidget extends Composite
                   @Override
                   public void execute()
                   {
+                     repos_.remove(index);
+                     updateRepos();
                   }
                },
                false);
@@ -135,13 +154,31 @@ public class SecondaryReposWidget extends Composite
       @Override
       public void onClick(ClickEvent event)
       {
+         final int index = listBox_.getSelectedIndex();
+         if (index > 0)
+         {
+            CRANMirror swap = repos_.get(index - 1);
+            repos_.set(index - 1, repos_.get(index));
+            repos_.set(index, swap);
+            updateRepos();
+            listBox_.setSelectedIndex(index - 1);
+         }
       }
    };
 
    private ClickHandler downButtonClicked_ = new ClickHandler() {
       @Override
       public void onClick(ClickEvent event)
-      { 
+      {
+         final int index = listBox_.getSelectedIndex();
+         if (index < repos_.size() - 1)
+         {
+            CRANMirror swap = repos_.get(index);
+            repos_.set(index, repos_.get(index + 1));
+            repos_.set(index + 1, swap);
+            updateRepos();
+            listBox_.setSelectedIndex(index + 1);
+         }
       }
    };
    
@@ -155,7 +192,7 @@ public class SecondaryReposWidget extends Composite
    
    private final ListBox listBox_;
    private GlobalDisplay globalDisplay_;
-   private SecondaryReposDialog secondaryReposDialog_;
+   private ArrayList<CRANMirror> repos_;
    
    static interface Styles extends CssResource
    {
