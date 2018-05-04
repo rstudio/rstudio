@@ -71,6 +71,13 @@ void setSuspendedFromTimeout(bool suspended)
    
 bool suspendSession(bool force, int status)
 {
+   if (!options().timeoutSuspend())
+   {
+      // do not suspend - simply quit the session
+      rstudio::r::session::quit(false, status); // does not return
+      return false;
+   }
+
    // need to make sure the global environment is loaded before we
    // attemmpt to save it!
    r::session::ensureDeserialized();
