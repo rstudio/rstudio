@@ -115,9 +115,11 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       VerticalPanel root = new VerticalPanel();
 
       HorizontalPanel customPanel = new HorizontalPanel();
+      customPanel.setStylePrimaryName(RESOURCES.styles().customPanel());
       root.add(customPanel);
 
       VerticalPanel namePanel = new VerticalPanel();
+      namePanel.setStylePrimaryName(RESOURCES.styles().namePanel());
       Label nameLabel = new Label("Name:");
       namePanel.add(nameLabel);
       nameTextBox_ = new TextBox();
@@ -127,10 +129,10 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       VerticalPanel urlPanel = new VerticalPanel();
       Label urlLabel = new Label("Url:");
       urlPanel.add(urlLabel);
-      nameTextBox_ = new TextBox();
+      urlTextBox_ = new TextBox();
+      urlTextBox_.setStylePrimaryName(RESOURCES.styles().urlTextBox());
       urlPanel.add(urlTextBox_);
       customPanel.add(urlPanel);
-
 
       Label reposLabel = new Label("Available repos:");
       reposLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -207,6 +209,9 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    static interface Styles extends CssResource
    {
       String mainWidget();
+      String customPanel();
+      String namePanel();
+      String urlTextBox();
    }
   
    static interface Resources extends ClientBundle

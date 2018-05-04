@@ -84,8 +84,11 @@ public class SecondaryReposWidget extends Composite
    }
 
    @Inject
-   void initialize(GlobalDisplay globalDisplay)
+   void initialize(GlobalDisplay globalDisplay,
+                   SecondaryReposDialog secondaryReposDialog)
    {
+      globalDisplay_ = globalDisplay;
+      secondaryReposDialog_ = secondaryReposDialog;
    }
    
    public void setRepos(JsArrayString repos)
@@ -99,6 +102,7 @@ public class SecondaryReposWidget extends Composite
       @Override
       public void onClick(ClickEvent event)
       {
+         secondaryReposDialog_.showModal();
       }
    };
    
@@ -151,6 +155,7 @@ public class SecondaryReposWidget extends Composite
    
    private final ListBox listBox_;
    private GlobalDisplay globalDisplay_;
+   private SecondaryReposDialog secondaryReposDialog_;
    
    static interface Styles extends CssResource
    {
