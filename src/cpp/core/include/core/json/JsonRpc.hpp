@@ -1080,7 +1080,9 @@ core::Error getOptionalParam(const json::Object& json, const std::string& param,
    {
       if (!json::isType<T>(it->second))
       {
-         return core::Error(errc::ParamTypeMismatch, ERROR_LOCATION);
+         core::Error error = core::Error(errc::ParamTypeMismatch, ERROR_LOCATION);
+         error.addProperty("description", "Invalid type for optional param " + param);
+         return error;
       }
 
       *outParam = (it->second).get_value<T>();

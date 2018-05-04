@@ -20,6 +20,8 @@
 #include <core/Thread.hpp>
 #include <core/r_util/REnvironment.hpp>
 
+#include <server_core/RVersionsScanner.hpp>
+
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
@@ -31,32 +33,32 @@ namespace r_environment {
   
 namespace {
 
-// system R version detected during intialization
-core::r_util::RVersion s_systemVersion;
-
-// fallback version to use if no R environment is detected
-core::r_util::RVersion s_fallbackVersion;
-
 // R version detected during initialization (either the system
 // R version or the provided fallback)
 core::r_util::RVersion s_rVersion;
 
+boost::shared_ptr<RVersionsScanner> s_scanner;
 
-}
+} // anonymous namespace
 
 bool initialize(std::string* pErrMsg)
 {
-   // attempt to detect system R version
-   bool detected = detectSystemRVersion(&s_rVersion, pErrMsg);
+   s_scanner.reset(
+            new RVersionsScanner(true,
+                                 options().rsessionWhichR(),
+                                 options().rldpathPath(),
+                                 options().rsessionLdLibraryPath()));
 
-   // if we didn't detect then use fallback if possible
-   if (!detected && hasFallbackVersion())
+   // if we already have a cached version (such as multi version setting it)
+   // then simply return success
+   if (!s_rVersion.empty())
    {
-      s_rVersion = s_fallbackVersion;
-      detected = true;
+      return true;
    }
 
-   // return status
+   // otherwise, we have no cached version (no multi version)
+   // detect it ourselves
+   bool detected = s_scanner->detectSystemRVersion(&s_rVersion, pErrMsg);
    return detected;
 }
 
@@ -77,81 +79,16 @@ core::r_util::RVersion rVersion()
    return r_util::RVersion();
 }
 
-bool hasFallbackVersion()
+void setRVersion(const r_util::RVersion& version)
 {
-   return !s_fallbackVersion.empty();
-}
-
-void setFallbackVersion(const core::r_util::RVersion& version)
-{
-   s_fallbackVersion = version;
-}
-
-bool detectSystemRVersion(core::r_util::RVersion* pVersion,
-                          std::string* pErrMsg)
-{
-   // return cached version if we have it
-   if (!s_systemVersion.empty())
-   {
-      *pVersion = s_systemVersion;
-      return true;
-   }
-
-   // check for which R override
-   FilePath rWhichRPath;
-   std::string whichROverride = server::options().rsessionWhichR();
-   if (!whichROverride.empty())
-      rWhichRPath = FilePath(whichROverride);
-
-   // if it's a directory then see if we can find the script
-   if (rWhichRPath.isDirectory())
-   {
-      FilePath rScriptPath = rWhichRPath.childPath("bin/R");
-      if (rScriptPath.exists())
-         rWhichRPath = rScriptPath;
-   }
-
-   // attempt to detect R version
-   bool result = detectRVersion(rWhichRPath, pVersion, pErrMsg);
-
-   // if we detected it then cache it
-   if (result)
-      s_systemVersion = *pVersion;
-
-   // return result
-   return result;
-}
-
-void overrideSystemRVersion(const core::r_util::RVersion& version)
-{
-   s_systemVersion = version;
+   s_rVersion = version;
 }
 
 bool detectRVersion(const core::FilePath& rScriptPath,
                     core::r_util::RVersion* pVersion,
                     std::string* pErrMsg)
 {
-   // determine rLdPaths script location
-   FilePath rLdScriptPath(server::options().rldpathPath());
-   std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
-
-   std::string rDetectedScriptPath;
-   std::string rVersion;
-   core::r_util::EnvironmentVars environment;
-   bool result = r_util::detectREnvironment(
-                                     rScriptPath,
-                                     rLdScriptPath,
-                                     ldLibraryPath,
-                                     &rDetectedScriptPath,
-                                     &rVersion,
-                                     &environment,
-                                     pErrMsg);
-   if (result)
-   {
-      *pVersion = core::r_util::RVersion(rVersion, environment);
-   }
-
-   return result;
+   return s_scanner->detectRVersion(rScriptPath, pVersion, pErrMsg);
 }
 
 } // namespace r_environment

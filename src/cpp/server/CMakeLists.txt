@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,10 @@ set(SERVER_SOURCE_FILES
 )
 
 # define core include dirs
-set(CORE_INCLUDE_DIRS ${CORE_SOURCE_DIR}/include)
+set(CORE_INCLUDE_DIRS
+    ${CORE_SOURCE_DIR}/include
+    ${SERVER_CORE_SOURCE_DIR}/include
+)
 
 # include addins
 if(RSTUDIO_ADDINS_PATH)
@@ -163,6 +166,7 @@ endif()
 # set link dependencies
 target_link_libraries(rserver
    rstudio-core
+   rstudio-server-core
    rstudio-monitor
    ${SERVER_SYSTEM_LIBRARIES}
 )

@@ -67,6 +67,7 @@ public interface EditingTarget extends IsWidget,
    void verifyCppPrerequisites();
    void verifyPythonPrerequisites();
    void verifyD3Prerequisites();
+   void verifySqlPrerequisites();
 
    void focus();
    void onActivate();

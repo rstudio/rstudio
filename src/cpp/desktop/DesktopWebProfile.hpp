@@ -1,7 +1,7 @@
 /*
- * DesktopWebPage.hpp
+ * DesktopWebProfile.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 #define RSTUDIO_DESKTOP_WEB_PROFILE_HPP
 
 #include <QWebEngineProfile>
+#include <QWebEngineUrlRequestInterceptor>
 
 namespace rstudio {
 namespace desktop {
@@ -26,7 +27,12 @@ class WebProfile : public QWebEngineProfile
    Q_OBJECT
 
 public:
-   explicit WebProfile(QObject* parent = nullptr);
+   explicit WebProfile(const QUrl& baseUrl, QObject* parent = nullptr);
+   void setBaseUrl(const QUrl& baseUrl);
+
+private:
+   QScopedPointer<QWebEngineUrlRequestInterceptor> interceptor_;
+   std::string sharedSecret_;
 };
 
 } // end namespace desktop

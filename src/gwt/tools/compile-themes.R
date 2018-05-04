@@ -1005,7 +1005,7 @@ for (file in themeFiles) {
          content,
          paste(
             ".ace_editor, ",
-            "rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, ",
+            ".rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, ",
             ".rstudio-themes-flat.ace_editor_theme, ", 
             ".rstudio-themes-flat .ace_editor_theme {",
             sep = ""

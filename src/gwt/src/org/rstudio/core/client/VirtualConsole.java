@@ -82,7 +82,7 @@ public class VirtualConsole
    {
       prefs_ = prefs;
    }
-   
+
    public void clear()
    {
       formfeed();
@@ -127,6 +127,35 @@ public class VirtualConsole
    private void clearPartialAnsiCode()
    {
       partialAnsiCode_ = null;
+   }
+
+   /**
+    * Debugging aid
+    * @param entry
+    * @return diagnostic string summarizing the Entry
+    */
+   private String debugDumpClassEntry(Entry<Integer, ClassRange> entry)
+   {
+      if (entry == null)
+         return("[null]");
+      else
+         return("[" + entry.getKey() + "]=" + entry.getValue().debugDump());
+   }
+
+   /**
+    * Debugging aid
+    */
+   private void debugDumpClassMap(String name, Map<Integer, ClassRange> map)
+   {
+      Debug.logToConsole("Dumping " + name);
+      if (map == null)
+         Debug.logToConsole("null");
+      else
+         for (Map.Entry<Integer, ClassRange> entry : map.entrySet())
+         {
+            Debug.logToConsole(name + debugDumpClassEntry(entry));
+         }
+      Debug.logToConsole("Done dumping " + name);
    }
    
    @Override
@@ -218,7 +247,7 @@ public class VirtualConsole
          view = class_.tailMap(right.getKey(), true);
       else if (left != null && right == null)
          view = class_.headMap(left.getKey(), true);
-      
+
       // if no overlapping ranges exist, we can just create a new one
       if (view == null)
       {
@@ -231,9 +260,11 @@ public class VirtualConsole
       // accumulators for actions to take after we finish iterating over the
       // overlapping ranges (we don't do this in place to avoid invalidating
       // iterators)
-      Set<Integer> deletions = new TreeSet<Integer>();
-      List<ClassRange> insertions = new ArrayList<ClassRange>();
-      Map<Integer, Integer> moves = new TreeMap<Integer, Integer>();
+      Set<Integer> deletions = new TreeSet<>();
+      List<ClassRange> insertions = new ArrayList<>();
+      Map<Integer, Integer> moves = new TreeMap<>();
+
+      boolean haveInsertedRange = false;
 
       for (Entry<Integer, ClassRange> entry: view.entrySet())
       {
@@ -256,6 +287,7 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimRight(delta);
                insertions.add(range);
+               haveInsertedRange = true;
                if (parent_ != null)
                   parent_.insertAfter(range.element, overlap.element);
             }
@@ -268,24 +300,29 @@ public class VirtualConsole
             {
                // extend the original range
                overlap.appendLeft(range.text(), delta);
+
+               // If we previously inserted the new range (i.e. overlapped a prior
+               // range that had a different clazz) then undo that and use the one
+               // we found with the same clazz.
                range.clearText();
+               if (haveInsertedRange)
+               {
+                  insertions.remove(range);
+                  haveInsertedRange = false;
+               }
+
                moves.put(l, start);
             }
             else
             {
                // reduce the original range and add ours
-               boolean needTrimmed = overlap.length > delta;
                overlap.trimLeft(delta);
-               
+
                insertions.add(range);
 
-               // If our new range is shorter than the existing one, need to 
-               // re-add the shortened range at its new start position 
-               // otherwise our new range stomps it and prevents any more 
-               // operations on it
-               if (needTrimmed)
-                  insertions.add(overlap);
-               
+               // move the shortened range to its new start position
+               moves.put(l, overlap.start);
+
                if (parent_ != null)
                   parent_.insertBefore(range.element, overlap.element);
               
@@ -337,14 +374,14 @@ public class VirtualConsole
       {
          class_.remove(key);
       }
-      
+
       for (Integer key: moves.keySet())
       {
          ClassRange moved = class_.get(key);
          class_.remove(key);
          class_.put(moves.get(key), moved);
       }
-      
+
       for (ClassRange val: insertions)
       {
          class_.put(val.start, val);
@@ -601,7 +638,7 @@ public class VirtualConsole
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
-         start -= delta;
+         start -= (content.length() - delta);
          element.setInnerText(content + 
                element.getInnerText().substring(delta));
       }
@@ -630,6 +667,12 @@ public class VirtualConsole
       public void clearText()
       {
          element.setInnerText("");
+      }
+
+      public String debugDump()
+      {
+         return "start=" + start + ", length=" + length + ", clazz=[" + clazz +
+               "], text=[" + text() + "]";
       }
 
       public String clazz;

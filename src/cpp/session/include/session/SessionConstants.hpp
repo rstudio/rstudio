@@ -31,6 +31,7 @@
 #define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
 #define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
 #define kRStudioSigningKey                "RSTUDIO_SIGNING_KEY"
+#define kRStudioMessageSignature          "X-RS-Message-Signature"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
@@ -63,6 +64,7 @@
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
+#define kTerminalPortOption               "terminal-port"
 
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"

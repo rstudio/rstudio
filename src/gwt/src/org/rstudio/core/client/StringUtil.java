@@ -91,6 +91,31 @@ public class StringUtil
       else 
          return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
    }
+   
+   /**
+    * Concisely formats an elapsed time. Displays minutes and seconds by 
+    * default; if hours or days are present, they will be displayed, too,
+    * and subsequent units will be left-padded to two digits.
+    * 
+    * @param seconds Number of seconds that have elapsed
+    * @return String with formatted time
+    */
+   public static String conciseElaspedTime(int seconds)
+   {
+      int minutes = seconds / 60;
+      int hours = minutes / 60;
+      int days = hours / 24;
+      seconds = seconds % 60;
+      String elapsed = (seconds > 9 ? "" : "0") + seconds;
+      if (hours < 1)
+         return minutes + ":" + elapsed;
+      minutes = minutes % 60;
+      elapsed = ((minutes > 9) ? "" : "0") + minutes + ":" + elapsed;
+      if (days < 1)
+         return hours + ":" + elapsed;
+      hours = hours % 24;
+      return days + ":" + ((hours > 9) ? "" : "0") + hours + ":" + elapsed;
+   }
 
    // Return current time as a timestamp (yyyy/m/d hh:mm:ss)
    public static native String getTimestamp() /*-{
@@ -498,14 +523,14 @@ public class StringUtil
    }
    
    /**
-    * Given a URL, attempt to infer and return the hostname from the URL. The URL is always 
-    * presumed to have a hostname (if it doesn't, the first component of the path will be treated
-    * as the host name
+    * Given a URL, attempt to infer and return the authority (host name and
+    * port) from the URL. The URL is always presumed to have a hostname (if it
+    * doesn't, the first component of the path will be treated as the host name
     * 
     * @param url URL to parse
-    * @return Host name and port, as a string.
+    * @return The authority (host name and port), as a string.
     */
-   public static String getHostFromUrl(String url)
+   public static String getAuthorityFromUrl(String url)
    {
       // no work to do
       if (url.indexOf('/') == -1)
@@ -521,6 +546,25 @@ public class StringUtil
       if (parts.length < slashes)
          return url;
       return parts[slashes];
+   }
+   
+   /**
+    * Given a URL, attempt to return the host portion (not including the port).
+    * 
+    * @param url URL to parse.
+    * @return The host, as a string.
+    */
+   public static String getHostFromUrl(String url)
+   {
+      String authority = getAuthorityFromUrl(url);
+      
+      // no port
+      int idx = authority.indexOf(":");
+      if (idx == -1)
+         return authority;
+      
+      // port, return only the portion preceding the port
+      return authority.substring(0, idx);
    }
     
    public static String ensureSurroundedWith(String string, char chr)

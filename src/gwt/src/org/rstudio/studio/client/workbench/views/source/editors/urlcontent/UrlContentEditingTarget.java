@@ -178,6 +178,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public void verifyD3Prerequisites()
    {
    }
+
+   @Override
+   public void verifySqlPrerequisites()
+   {
+   }
       
    @Override
    public Position search(String regex)

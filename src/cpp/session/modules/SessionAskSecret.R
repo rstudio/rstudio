@@ -14,7 +14,11 @@
 #
 
 .rs.addFunction("getSecretService", function() {
-   "RStudio Keyring Secrets"
+   # Workaround for https://github.com/r-lib/keyring/issues/48
+   if (identical(.Platform$OS.type, "windows"))
+      "RStudio_Keyring_Secrets"
+   else
+      "RStudio Keyring Secrets"
 })
 
 .rs.addFunction("askForSecret", function(name, title = name, prompt = paste(name, ":", sep = ""))

@@ -75,6 +75,10 @@ public:
    void addProperty(const std::string& name, const std::string& value); 
    void addProperty(const std::string& name, const FilePath& value); 
    void addProperty(const std::string& name, int value);
+
+   void addOrUpdateProperty(const std::string& name, const std::string& value);
+   void addOrUpdateProperty(const std::string& name, const FilePath& value);
+   void addOrUpdateProperty(const std::string& name, int value);
    
    void setExpected();
    bool expected() const;

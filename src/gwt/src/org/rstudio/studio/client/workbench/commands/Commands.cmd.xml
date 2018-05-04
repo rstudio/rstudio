@@ -49,6 +49,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newCppDoc"/>
             <cmd refid="newPythonDoc"/>
             <cmd refid="newD3Doc"/>
+            <cmd refid="newSqlDoc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
@@ -239,6 +240,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sendToTerminal"/>
          <separator/>
          <cmd refid="previewJS"/>
+         <cmd refid="previewSql"/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <separator/>
@@ -691,6 +693,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
          <shortcut refid="previewJS" value="Cmd+Shift+Enter"/>;
+         <shortcut refid="previewSql" value="Cmd+Shift+Enter"/>;
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
@@ -894,6 +897,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="R Doc_umentation"
         desc="Create a new Rd documentation file"
         rebindable="false"/>
+
+   <cmd id="newSqlDoc"
+        menuLabel="S_QL Script"
+        desc="Create a new SQL script"
+        rebindable="false"/>   
         
    <cmd id="openSourceDoc"
         label="Open File..."
@@ -1517,6 +1525,11 @@ well as menu structures (for main menu and popup menus).
         desc="Insert a new Bash chunk"
         context="editor"/>
 
+   <cmd id="insertChunkD3"
+        menuLabel="D3"
+        desc="Insert a new D3 chunk"
+        context="editor"/>
+
    <cmd id="insertChunkPython"
         menuLabel="Python"
         desc="Insert a new Python chunk"
@@ -1647,7 +1660,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Preview"
         menuLabel="Preview JS"
         desc="Preview the active JavaScript document"/>   
-        
+    
+   <cmd id="previewSql"
+        buttonLabel="Preview"
+        menuLabel="Preview SQL"
+        desc="Preview the active SQL document"/>   
+
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
         menuLabel="_Source"

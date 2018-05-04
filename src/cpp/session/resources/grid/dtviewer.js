@@ -135,8 +135,9 @@ var escapeHtml = function(html) {
     "<":  "&lt;",
     ">":  "&gt;",
     "&":  "&amp;",
-    "\"": "&quot;" };
-  return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
+    "\"": "&quot;",
+    " ":  "&nbsp;" };
+  return html.replace(/[&<> ]/g, function(ch) { return replacements[ch]; });
 };
 
 var highlightSearchMatch = function(data, search, pos) {

@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -101,7 +102,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SnippetServerOperations,
                                                    AddinsServerOperations,
                                                    DataImportServerOperations,
-                                                   ConnectionsServerOperations
+                                                   ConnectionsServerOperations,
+                                                   JobsServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

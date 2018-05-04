@@ -1,7 +1,7 @@
 /*
  * RStudioUnitTestSuite.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
 
@@ -40,6 +41,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
         suite.addTestSuite(AnsiCodeTests.class);
         suite.addTestSuite(TerminalLocalEchoTests.class);
         suite.addTestSuite(TerminalSessionSocketTests.class);
+        suite.addTestSuite(JobManagerTests.class);
         return suite;
     }
 }

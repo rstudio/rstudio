@@ -174,6 +174,31 @@ public class Toolbar extends Composite
       return widget;
    }
    
+   /**
+    * Manually size the given widget in the left toolbar. Gives the cell contain
+    * the widget the given size, then tells the widget to fill its cell.
+    * 
+    * @param w The widget to size
+    * @param width The widget's desired width
+    */
+   public void setLeftWidgetWidth(Widget w, String width)
+   {
+      leftToolbarPanel_.setCellWidth(w, width);
+      leftToolbarPanel_.setWidth("100%");
+   }
+   
+   /**
+    * Clear the size of a manually sized widget in the left toolbar (undoes the
+    * effect of a previous call to setLeftWidgetWidth)
+    * 
+    * @param w The widget to size
+    */
+   public void clearLeftWidgetWidth(Widget w)
+   {
+      leftToolbarPanel_.setCellWidth(w, "");
+      leftToolbarPanel_.setWidth("");
+   }
+   
    public interface MenuSource
    {
       ToolbarPopupMenu getMenu();
@@ -246,8 +271,12 @@ public class Toolbar extends Composite
    public void removeAllWidgets()
    {
       removeLeftWidgets();
+
+      // clear any manually specified width on the left toolbar
+      leftToolbarPanel_.setWidth("");
+
       removeRightWidgets();
-   }   
+   }
 
    public int getHeight()
    {

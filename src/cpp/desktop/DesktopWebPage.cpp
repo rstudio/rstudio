@@ -58,7 +58,7 @@ void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 } // anonymous namespace
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-      QWebEnginePage(new WebProfile, parent),
+      QWebEnginePage(new WebProfile(baseUrl), parent),
       baseUrl_(baseUrl),
       allowExternalNav_(allowExternalNavigate)
 {
@@ -75,6 +75,13 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
 {
+   const WebProfile* pProfile = dynamic_cast<const WebProfile*>(profile());
+   if (pProfile != nullptr)
+   {
+      // if we're using our own WebProfile implementation, update its base URL
+      const_cast<WebProfile*>(pProfile)->setBaseUrl(baseUrl);
+   }
+
    baseUrl_ = baseUrl;
 }
 
@@ -266,8 +273,9 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    {
       return true;
    }
-   // allow local viewer urls to be handled internally by Qt
-   else if (isLocal && !viewerUrl_.isEmpty() &&
+   // allow viewer urls to be handled internally by Qt. note that the client is responsible for 
+   // ensuring that non-local viewer urls are appropriately sandboxed.
+   else if (!viewerUrl_.isEmpty() &&
             url.toString().startsWith(viewerUrl_))
    {
       return true;

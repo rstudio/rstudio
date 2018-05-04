@@ -80,7 +80,7 @@ public class DeploymentMenuItem extends CheckableMenuItem
       if (!StringUtil.isNullOrEmpty(subtitle))
          subtitle += "@";
       if (record.getHostUrl() != null)
-         subtitle += StringUtil.getHostFromUrl(record.getHostUrl());
+         subtitle += StringUtil.getAuthorityFromUrl(record.getHostUrl());
       else
          subtitle += record.getServer();
       

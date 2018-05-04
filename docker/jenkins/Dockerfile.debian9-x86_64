@@ -3,14 +3,14 @@ FROM debian:stretch
 # update apt repository to cloudfront's mirror
 RUN set -x \
     && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
-    && sed -i "s/security.debian.org/cloudfront.debian.net\/debian-security/" /etc/apt/sources.list
+    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list
 
 # update system
 RUN set -x \
     && apt-get update -y
 
 # install necessary packages
-RUN apt-get install -y \
+RUN apt-get update -y && apt-get install -y \
     ant \
     libboost-all-dev \
     bzip2 \

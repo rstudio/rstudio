@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
@@ -118,6 +119,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorId
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
@@ -178,6 +180,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(TextEditingTargetCppHelper cppHelper);
    void injectMembers(TextEditingTargetJSHelper jsHelper);
+   void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
@@ -284,4 +287,5 @@ public interface RStudioGinjector extends Ginjector
    AddinsCommandManager getAddinsCommandManager();
    DependencyManager getDependencyManager();
    ShinyTestPopupMenu getShinyTestPopupMenu();
+   HtmlMessageListener getHtmlMessageListener();
 }

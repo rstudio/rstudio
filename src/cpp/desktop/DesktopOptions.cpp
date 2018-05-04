@@ -222,6 +222,28 @@ void Options::setZoomLevel(double zoomLevel)
    settings_.setValue(QString::fromUtf8("view.zoomLevel"), zoomLevel);
 }
 
+bool Options::enableAccessibility() const
+{
+   QVariant accessibility = settings_.value(QString::fromUtf8("view.accessibility"), false);
+   return accessibility.toBool();
+}
+
+void Options::setEnableAccessibility(bool enable)
+{
+   settings_.setValue(QString::fromUtf8("view.accessibility"), enable);
+}
+
+bool Options::clipboardMonitoring() const
+{
+   QVariant monitoring = settings_.value(QString::fromUtf8("clipboard.monitoring"), true);
+   return monitoring.toBool();
+}
+
+void Options::setClipboardMonitoring(bool monitoring)
+{
+   settings_.setValue(QString::fromUtf8("clipboard.monitoring"), monitoring);
+}
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {

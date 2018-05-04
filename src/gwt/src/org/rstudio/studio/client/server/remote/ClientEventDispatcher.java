@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -138,6 +138,13 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
+import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
+import org.rstudio.studio.client.workbench.views.output.data.model.DataOutputResult;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.events.LintEvent;
@@ -968,6 +975,26 @@ public class ClientEventDispatcher
          {
             TestsResult result = event.getData();
             eventBus_.fireEvent(new TestsCompletedEvent(result));
+         }
+         else if (type == ClientEvent.JobUpdated)
+         {
+            JobUpdate data = event.getData();
+            eventBus_.fireEvent(new JobUpdatedEvent(data));
+         }
+         else if (type == ClientEvent.JobRefresh)
+         {
+            JobState data = event.getData();
+            eventBus_.fireEvent(new JobRefreshEvent(data));
+         }
+         else if (type == ClientEvent.JobOutput)
+         {
+            JobOutputEvent.Data output = event.getData();
+            eventBus_.fireEvent(new JobOutputEvent(output));
+         }
+         else if (type == ClientEvent.DataOutputCompleted)
+         {
+            DataOutputResult result = event.getData();
+            eventBus_.fireEvent(new DataOutputCompletedEvent(result));
          }
          else
          {

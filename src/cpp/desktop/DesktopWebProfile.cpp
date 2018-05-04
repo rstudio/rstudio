@@ -29,31 +29,47 @@ class Interceptor : public QWebEngineUrlRequestInterceptor
 public:
    explicit Interceptor(
          QObject* parent,
+         const QUrl& baseUrl,
          const std::string& sharedSecret)
       : QWebEngineUrlRequestInterceptor(parent),
-        sharedSecret_(sharedSecret)
+        sharedSecret_(sharedSecret),
+        baseUrl_(baseUrl)
    {
    }
 
    void interceptRequest(QWebEngineUrlRequestInfo& info) override
    {
-      // TODO: do we want to set the shared secret on all requests?
-      info.setHttpHeader(
-               QByteArrayLiteral("X-Shared-Secret"),
-               QByteArray::fromStdString(sharedSecret_));
+      if (info.requestUrl().authority() == baseUrl_.authority())
+      {
+         // The shared secret helps the session authenticate that the request actually came from the
+         // desktop frame and not from some other application. To reduce the odds of the shared
+         // secret leaking out by tagging along on other HTTP requests (which are not destined for
+         // the R session), we only set the header when communicating with the authority established
+         // for the R session. 
+         info.setHttpHeader(
+                  QByteArrayLiteral("X-Shared-Secret"),
+                  QByteArray::fromStdString(sharedSecret_));
+      }
    }
 
 private:
    std::string sharedSecret_;
+   QUrl baseUrl_;
 };
 
 } // end anonymous namespace
 
-WebProfile::WebProfile(QObject* parent)
+WebProfile::WebProfile(const QUrl& baseUrl, QObject* parent)
    : QWebEngineProfile(parent)
 {
-   std::string sharedSecret = core::system::getenv("RS_SHARED_SECRET");
-   setRequestInterceptor(new Interceptor(this, sharedSecret));
+   sharedSecret_ = core::system::getenv("RS_SHARED_SECRET");
+   setBaseUrl(baseUrl);
+}
+
+void WebProfile::setBaseUrl(const QUrl& baseUrl)
+{
+   interceptor_.reset(new Interceptor(this, baseUrl, sharedSecret_));
+   setRequestInterceptor(interceptor_.data());
 }
 
 } // end namespace desktop

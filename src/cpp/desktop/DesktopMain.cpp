@@ -320,8 +320,11 @@ int main(int argc, char* argv[])
       // disable chromium renderer accessibility by default (it can cause
       // slowdown when used in conjunction with some applications; see e.g.
       // https://github.com/rstudio/rstudio/issues/1990)
-      if (core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
+      bool accessibility = desktop::options().enableAccessibility();
+
+      if (!accessibility && core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
       {
+         // only disable if (a) pref indicates we should, and (b) override env var is not set
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }

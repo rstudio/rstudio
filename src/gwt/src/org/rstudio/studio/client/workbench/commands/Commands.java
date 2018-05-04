@@ -41,6 +41,7 @@ public abstract class
    public abstract AppCommand newRHTMLDoc();
    public abstract AppCommand newRDocumentationDoc();
    public abstract AppCommand newRPresentationDoc();
+   public abstract AppCommand newSqlDoc();
    public abstract AppCommand openSourceDoc();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();
@@ -54,6 +55,7 @@ public abstract class
    public abstract AppCommand executeAllCode();
    public abstract AppCommand sourceFile();
    public abstract AppCommand previewJS();
+   public abstract AppCommand previewSql();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
    public abstract AppCommand executeCode();
@@ -70,6 +72,7 @@ public abstract class
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertChunkR();
    public abstract AppCommand insertChunkBash();
+   public abstract AppCommand insertChunkD3();
    public abstract AppCommand insertChunkPython();
    public abstract AppCommand insertChunkRCPP();
    public abstract AppCommand insertChunkStan(); 

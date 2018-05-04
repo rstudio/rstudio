@@ -1,7 +1,7 @@
 /*
  * PaneManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,7 +86,7 @@ public class PaneManager
    
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Build, Connections,
-      Presentation, Environment, Viewer, Source, Console
+      Presentation, Environment, Viewer, Source, Console, Jobs
    }
    
    class SelectedTabStateValue extends IntStateValue
@@ -226,6 +226,8 @@ public class PaneManager
                       @Named("Deploy") final WorkbenchTab deployContentTab,
                       @Named("Terminal") final WorkbenchTab terminalTab,
                       @Named("Tests") final WorkbenchTab testsTab,
+                      @Named("Jobs") final WorkbenchTab jobsTab,
+                      @Named("Data Output") final WorkbenchTab dataTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader)
@@ -254,8 +256,10 @@ public class PaneManager
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       terminalTab_ = terminalTab;
+      jobsTab_ = jobsTab;
       optionsLoader_ = optionsLoader;
       testsTab_ = testsTab;
+      dataTab_ = dataTab;
       
       binder.bind(commands, this);
       
@@ -852,6 +856,8 @@ public class PaneManager
             return viewerTab_;
          case Connections:
             return connectionsTab_;
+         case Jobs:
+            return jobsTab_;
          case Source:
          case Console:
             // not 'real' tabs so should be an error to ask for their tabs
@@ -865,7 +871,7 @@ public class PaneManager
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, buildTab_, presentationTab_,
                                   environmentTab_, viewerTab_,
-                                  connectionsTab_};
+                                  connectionsTab_, jobsTab_ };
    }
 
    public void activateTab(Tab tab)
@@ -979,7 +985,8 @@ public class PaneManager
             terminalTab_,
             eventBus_,
             goToWorkingDirButton,
-            testsTab_);
+            testsTab_,
+            dataTab_);
       
       consoleTabPanel_.addLayoutStyles(frame.getElement());
       
@@ -1123,6 +1130,8 @@ public class PaneManager
          return Tab.Source;
       if (name.equalsIgnoreCase("console"))
          return Tab.Console;
+      if (name.equalsIgnoreCase("jobs"))
+         return Tab.Jobs;
       
       return null;
    }
@@ -1233,6 +1242,8 @@ public class PaneManager
    private final MarkersOutputTab markersTab_;
    private final WorkbenchTab terminalTab_;
    private final WorkbenchTab testsTab_;
+   private final WorkbenchTab jobsTab_;
+   private final WorkbenchTab dataTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;

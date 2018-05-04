@@ -638,7 +638,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   },
   error = function(e) {})
 
-  .rs.scalarListFromList(opts)
+  .rs.scalarListFromList(opts, expressions = TRUE)
 })
 
 .rs.addFunction("extractChunkInnerCode", function(code)

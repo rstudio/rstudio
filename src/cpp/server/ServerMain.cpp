@@ -29,7 +29,7 @@
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
-#include <core/http/SecureCookie.hpp>
+#include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
@@ -417,11 +417,6 @@ int main(int argc, char * const argv[])
          if (options.serverSetUmask())
             setUMask(core::system::OthersNoWriteMask);
       }
-
-      // wait until now to output options warnings (we need to wait for our
-      // first call to logging functions until after daemonization)
-      if (!optionsWarnings.empty())
-         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       // increase the number of open files allowed (need more files
       // so we can supports lots of concurrent connectins)

@@ -150,7 +150,7 @@ public class BuildPresenter extends BasePresenter
                                  SourceMarkerList.AUTO_SELECT_NONE,
                              event.openErrorList());
             
-            if (uiPrefs_.navigateToBuildError().getValue())
+            if (uiPrefs_.navigateToBuildError().getValue() && event.openErrorList())
             {
                SourceMarker error = SourceMarker.getFirstError(event.getErrors());
                if (error != null)

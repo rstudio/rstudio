@@ -16,6 +16,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -93,7 +94,8 @@ public class ViewerPresenter extends BasePresenter
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          Provider<UIPrefs> pUIPrefs)
+                          Provider<UIPrefs> pUIPrefs,
+                          HtmlMessageListener htmlMessageListener)
    {
       super(display);
       display_ = display;
@@ -107,6 +109,7 @@ public class ViewerPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
       pUIPrefs_ = pUIPrefs;
+      htmlMessageListener_ = htmlMessageListener;
       
       binder.bind(commands, this);
       
@@ -146,8 +149,10 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true, event);
          
-         if (event.getBringToFront())
+         if (event.getBringToFront()) {
             display_.bringToFront();
+            htmlMessageListener_.allowOpenOnLoad();
+         }
       
          // respect height request
          int ensureHeight = event.getHeight();
@@ -155,7 +160,7 @@ public class ViewerPresenter extends BasePresenter
             display_.maximize();
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
-         
+            
          navigate(event.getURL());
          
          if (event.isHTMLWidget())
@@ -233,8 +238,12 @@ public class ViewerPresenter extends BasePresenter
             zoomWindow_ = input;
          }
       });
+
+      String displayUrl = display_.getUrl().replaceAll(
+         "capabilities=[^&]+",
+         "no");
       
-      globalDisplay_.openMinimalWindow(display_.getUrl(),
+      globalDisplay_.openMinimalWindow(displayUrl,
             false,
             windowSize.width,
             windowSize.height,
@@ -560,4 +569,6 @@ public class ViewerPresenter extends BasePresenter
    
    private WindowEx zoomWindow_ = null;
    private Size zoomWindowDefaultSize_ = null;
+   
+   private HtmlMessageListener htmlMessageListener_;
 }

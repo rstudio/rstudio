@@ -444,6 +444,7 @@ public class TextEditingTarget implements
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
                                                   docDisplay_);
       jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
+      sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
@@ -2094,6 +2095,23 @@ public class TextEditingTarget implements
    private void verifyD3Prequisites(final Command command) 
    {
       dependencyManager_.withR2D3("Previewing D3 scripts", new Command() {
+         @Override
+         public void execute() {
+            if (command != null)
+               command.execute();
+         }
+      });
+   }
+
+   @Override
+   public void verifySqlPrerequisites()
+   {
+      verifySqlPrequisites(null);
+   }
+   
+   private void verifySqlPrequisites(final Command command) 
+   {
+      dependencyManager_.withDBI("Previewing SQL scripts", new Command() {
          @Override
          public void execute() {
             if (command != null)
@@ -4515,6 +4533,22 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onInsertChunkD3()
+   {
+      if (notebook_ != null) {
+         Scope setupScope = notebook_.getSetupChunkScope();
+
+         if (setupScope == null)
+         {
+            onInsertChunk("```{r setup}\nlibrary(r2d3)\n```\n\n```{d3 data=}\n\n```\n", 4, 12);
+         }
+         else {
+            onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
+         }
+      }
+   }
+
+   @Handler
    void onInsertSection()
    {
       globalDisplay_.promptForText(
@@ -4675,7 +4709,12 @@ public class TextEditingTarget implements
                         @Override
                         public void execute()
                         {
-                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                           // compute the language for this chunk
+                           String language = "R";
+                           if (DocumentMode.isPositionInPythonMode(docDisplay_, position))
+                              language = "Python";
+
+                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
                         }
                      });
             }
@@ -4834,7 +4873,13 @@ public class TextEditingTarget implements
             else if (!range.isEmpty())
             {
                String code = scopeHelper_.getSweaveChunkText(chunk);
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+
+               // compute the language for this chunk
+               String language = "R";
+               if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+                  language = "Python";
+
+               events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
             docDisplay_.collapseSelection(true);
          }
@@ -4969,6 +5014,11 @@ public class TextEditingTarget implements
       previewJS();
    }
    
+   @Handler
+   void onPreviewSql()
+   {
+      previewSql();
+   }
 
    @Handler
    void onSourceActiveDocument()
@@ -5302,6 +5352,23 @@ public class TextEditingTarget implements
                public void execute()
                {
                   jsHelper_.previewJS(TextEditingTarget.this);
+               }
+            });
+         }
+      }); 
+   }
+
+   void previewSql()
+   {
+      verifySqlPrequisites(new Command() {
+         @Override
+         public void execute()
+         {
+            saveThenExecute(null, new Command() {
+               @Override
+               public void execute()
+               {
+                  sqlHelper_.previewSql(TextEditingTarget.this);
                }
             });
          }
@@ -6122,6 +6189,11 @@ public class TextEditingTarget implements
                   if (extendedType_ == SourceDocument.XT_JS_PREVIEWABLE)
                      previewJS();
                }
+               else if (fileType_.isSql())
+               {
+                  if (extendedType_ == SourceDocument.XT_SQL_PREVIEWABLE)
+                     previewSql();
+               }
                else if (fileType_.canPreviewFromR())
                {
                   previewFromR();
@@ -6899,18 +6971,25 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
-                  new SimpleRequestCallback<Boolean>() {
+               save(new Command()
+               {
                   @Override
-                  public void onResponseReceived(Boolean response)
+                  public void execute()
                   {
+                     server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                        new SimpleRequestCallback<Boolean>() {
+                        @Override
+                        public void onResponseReceived(Boolean response)
+                        {
 
-                  }
+                        }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     super.onError(error);
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           super.onError(error);
+                        }
+                     });
                   }
                });
             }
@@ -6930,18 +7009,25 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
-                  new SimpleRequestCallback<Boolean>() {
+               save(new Command()
+               {
                   @Override
-                  public void onResponseReceived(Boolean response)
+                  public void execute()
                   {
+                     server_.startBuild(buildCommand, docUpdateSentinel_.getPath(),
+                        new SimpleRequestCallback<Boolean>() {
+                        @Override
+                        public void onResponseReceived(Boolean response)
+                        {
 
-                  }
+                        }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     super.onError(error);
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           super.onError(error);
+                        }
+                     });
                   }
                });
             }
@@ -7077,6 +7163,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetJSHelper jsHelper_;
+   private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;

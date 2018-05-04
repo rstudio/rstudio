@@ -1,7 +1,7 @@
 /*
  * SecureKeyFile.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
 
-#include <core/SecureKeyFile.hpp>
+#include <server_core/SecureKeyFile.hpp>
 
 namespace rstudio {
 namespace core {

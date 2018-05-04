@@ -1,7 +1,7 @@
 /*
  * FileDialogResources.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,13 +32,19 @@ public interface FileDialogResources extends ClientBundle
 
    @Source("home_2x.png")
    DataResource home2x();
-   
+
+   @Source("cloudHome_2x.png")
+   DataResource cloudHome2x();
+
    @Source("project_2x.png")
    DataResource project2x();
    
    @Source("home_2x.png")
    ImageResource homeImage2x();
-   
+
+   @Source("cloudHome_2x.png")
+   ImageResource cloudHomeImage2x();
+
    @Source("project_2x.png")
    ImageResource projectImage2x();
 

@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
@@ -148,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -173,10 +175,19 @@ import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
+import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.JobsTab;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobProgress;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPane;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOutputTab;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPane;
+import org.rstudio.studio.client.workbench.views.output.data.DataOutputPresenter;
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
@@ -286,6 +297,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ProjectTemplateRegistryProvider.class).in(Singleton.class);
       bind(PackageProvidedExtensions.class).asEagerSingleton();
       bind(JavaScriptEventHistory.class).asEagerSingleton();
+      bind(JobManager.class).asEagerSingleton();
+      bind(HtmlMessageListener.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -326,6 +339,9 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
       bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
+      bind(JobsPresenter.Display.class).to(JobsPane.class);
+      bind(JobProgressPresenter.Display.class).to(JobProgress.class);
+      bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
@@ -346,6 +362,8 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Markers", MarkersOutputTab.class);
       bindTab("Terminal", TerminalTab.class);
       bindTab("Tests", TestsOutputTab.class);
+      bindTab("Jobs", JobsTab.class);
+      bindTab("Data Output", DataOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            
@@ -415,6 +433,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AddinsServerOperations.class).to(RemoteServer.class);
       bind(ProjectTemplateServerOperations.class).to(RemoteServer.class);
       bind(ObjectExplorerServerOperations.class).to(RemoteServer.class);
+      bind(JobsServerOperations.class).to(RemoteServer.class);
       bind(DesktopInfo.class).asEagerSingleton();
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;

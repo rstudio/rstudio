@@ -193,6 +193,15 @@ body {
    user-select: none;
 }
 
+/* in IE, it's necessary to explicitly allow the selection of text in iframes:
+ * otherwise, the iframes inherit the above CSS rule from the <body> tag */
+body.windows iframe {
+   -ms-user-select: text;
+   -moz-user-select: text;
+   -webkit-user-select: text;
+   user-select: text;
+}
+
 select {
    font-size: 12px;
 }
@@ -1233,6 +1242,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+body.windows .toolbar {
+   margin-top: 1px;
+}
+
 /**
  * Safari does not render empty table cells with 0 padding correctly --
  * strangely, they still take up space, and affect the sizing of other
@@ -1484,6 +1497,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .webGlobalToolbar {
    margin-top: -3px;
    background: none;
+}
+
+body.windows table.webGlobalToolbar {
+   margin-top: -3px;
 }
 
 .webGlobalToolbarWrapper {

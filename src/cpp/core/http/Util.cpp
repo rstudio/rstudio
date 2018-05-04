@@ -506,6 +506,19 @@ bool isIpAddress(const std::string& str)
    return !err;
 }
 
+bool isNetworkAddress(const std::string& str)
+{
+   boost::asio::io_service io_service;
+
+   // query DNS for this address
+   boost::asio::ip::tcp::resolver resolver(io_service);
+   boost::asio::ip::tcp::resolver::query query(str, "");
+
+   boost::system::error_code ec;
+   boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, ec);
+   return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
+}
+
 
 } // namespace util
 

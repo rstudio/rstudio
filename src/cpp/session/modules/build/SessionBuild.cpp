@@ -131,7 +131,8 @@ bool isPackageHeaderFile(const FilePath& filePath)
    if (projects::projectContext().hasProject() &&
        (projects::projectContext().config().buildType ==
                                               r_util::kBuildTypePackage) &&
-       boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h"))
+       (boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h") ||
+        filePath.extensionLowerCase() == ".stan"))
    {
       FilePath pkgPath = projects::projectContext().buildTargetPath();
       std::string pkgRelative = filePath.relativePath(pkgPath);
@@ -361,7 +362,18 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      if (type != kTestFile)
+      if (type == kTestFile)
+      {
+          // try to read package from /tests/testthat/filename.R,
+          // but ignore errors if not within a package
+          FilePath maybePackage = FilePath::resolveAliasedPath(
+             packagePath.parent().parent().parent().absolutePath(),
+             core::system::userHomePath()
+          );
+
+          pkgInfo_.read(maybePackage);
+      }
+      else
       {
          // validate that this is a package
          if (!packagePath.childPath("DESCRIPTION").exists())
@@ -390,14 +402,6 @@ private:
                terminateWithError("reading package DESCRIPTION", error);
             }
             
-            return;
-         }
-
-         // get package info
-         error = pkgInfo_.read(packagePath);
-         if (error)
-         {
-            terminateWithError("Reading package DESCRIPTION", error);
             return;
          }
 

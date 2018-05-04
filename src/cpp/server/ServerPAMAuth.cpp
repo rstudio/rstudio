@@ -1,6 +1,7 @@
 /*
  * ServerPAMAuth.cpp
  *
+ * Copyright (C) 2009-18 by RStudio, Inc.
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -27,7 +28,7 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
-#include <core/http/SecureCookie.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -236,7 +237,7 @@ void signIn(const http::Request& request,
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
    variables["publicKeyUrl"] = applicationURL(request, kPublicKey);
-
+   
    // setup template variables
    std::string error = request.queryParamValue(kErrorParam);
    variables[kErrorMessage] = errorMessage(static_cast<ErrorType>(

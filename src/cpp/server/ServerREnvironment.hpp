@@ -39,15 +39,11 @@ void setFallbackVersion(const core::r_util::RVersion& version);
 bool initialize(std::string* pErrMsg);
 
 core::r_util::RVersion rVersion();
-
-bool detectSystemRVersion(core::r_util::RVersion* pVersion,
-                          std::string* pErrMsg);
+void setRVersion(const core::r_util::RVersion& version);
 
 bool detectRVersion(const core::FilePath& rScriptPath,
                     core::r_util::RVersion* pVersion,
                     std::string* pErrMsg);
-
-void overrideSystemRVersion(const core::r_util::RVersion& version);
 
 } // namespace r_environment
 } // namespace server

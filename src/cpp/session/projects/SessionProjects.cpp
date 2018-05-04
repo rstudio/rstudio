@@ -168,7 +168,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
 
    FilePath resultPath = r_util::projectFromDirectory(projectFilePath);
    *pResult = module_context::createAliasedPath(resultPath);
-   return true;
+   return resultPath.exists();
 }
 
 // Find an existing .Rproj in a folder, return its full path. Returns empty

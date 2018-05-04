@@ -56,8 +56,8 @@ public class TestsOutputPresenter extends BusyPresenter
                                Commands commands,
                                EventBus events)
    {
-      super(outputFactory.create("R Markdown", 
-                                 "View the R Markdown render log"));
+      super(outputFactory.create("Tests", 
+                                 "View test results"));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
@@ -145,14 +145,6 @@ public class TestsOutputPresenter extends BusyPresenter
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      if (!isEnabled()) return;
-      
-      if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED ||
-          !isBusy())
-         return;
-
-      view_.compileCompleted();
-      setIsBusy(false);
    }
    
    private void terminateTests()

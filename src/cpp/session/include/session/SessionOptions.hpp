@@ -329,6 +329,11 @@ public:
       return allowOverlay() || allowShell_;
    }
 
+   std::string terminalPort() const
+   {
+      return terminalPort_;
+   }
+
    bool allowTerminalWebsockets() const
    {
       return allowOverlay() || allowTerminalWebsockets_;
@@ -613,6 +618,7 @@ private:
    bool verifySignatures_;
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
+   std::string terminalPort_;
 
    // r
    std::string coreRSourcePath_;

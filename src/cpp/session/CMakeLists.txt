@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -177,6 +177,8 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentMonitor.cpp
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
+   modules/jobs/SessionJobs.cpp
+   modules/jobs/Job.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
    modules/presentation/SessionPresentation.cpp
@@ -190,6 +192,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRequestHandler.cpp
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
+   modules/preview/SessionPreview.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
@@ -267,7 +270,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
 # define core include dirs
-set(CORE_INCLUDE_DIRS ${CORE_SOURCE_DIR}/include)
+set(CORE_INCLUDE_DIRS
+    ${CORE_SOURCE_DIR}/include
+    ${SERVER_CORE_SOURCE_DIR}/include
+)
 
 # include addins
 if(RSTUDIO_ADDINS_PATH)
@@ -329,6 +335,7 @@ include_directories(
    include
    ${LIBR_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${SERVER_CORE_INCLUDE_DIRS}
    ${EXT_SOURCE_DIR}
    ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
@@ -392,6 +399,12 @@ target_link_libraries(rsession
    ${CMAKE_DL_LIBS}
    ${LIBR_LIBRARIES}
 )
+
+if (RSTUDIO_SERVER)
+   target_link_libraries(rsession
+      rstudio-server-core
+   )
+endif()
 
 # configure and install r-ldpaths script
 if(UNIX)
@@ -462,7 +475,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.1.3")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE

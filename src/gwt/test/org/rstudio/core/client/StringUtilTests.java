@@ -154,16 +154,28 @@ public class StringUtilTests extends GWTTestCase
       assertEquals(0, StringUtil.newlineCount(input));
    }
 
-   public void testGetHostFromUrl()
+   public void testGetAuthorityFromUrl()
    {
       String url = "http://rstudio.com/products";
-      assertEquals("rstudio.com", StringUtil.getHostFromUrl(url));
+      assertEquals("rstudio.com", StringUtil.getAuthorityFromUrl(url));
       
       url = "https://google.com";
-      assertEquals("google.com", StringUtil.getHostFromUrl(url));
+      assertEquals("google.com", StringUtil.getAuthorityFromUrl(url));
       
       url = "8.8.8.8:443/notfound.html";
-      assertEquals("8.8.8.8:443", StringUtil.getHostFromUrl(url));
+      assertEquals("8.8.8.8:443", StringUtil.getAuthorityFromUrl(url));
+   }
+   
+   public void testGetHostFromUrl()
+   {
+      String url = "8.8.8.8:443/notfound.html";
+      assertEquals("8.8.8.8", StringUtil.getHostFromUrl(url));
+      
+      url = "https://localhost:443/";
+      assertEquals("localhost", StringUtil.getHostFromUrl(url));
+
+      url = "https://bakersfield/";
+      assertEquals("bakersfield", StringUtil.getHostFromUrl(url));
    }
    
    public void testStringEquals()
@@ -211,6 +223,21 @@ public class StringUtilTests extends GWTTestCase
       assertFalse(StringUtil.equals(null_2, one_2));
       assertFalse(StringUtil.equals(null_2, two_2));
    } 
+   
+   public void testConciseElapsedTime()
+   {
+      String seconds = StringUtil.conciseElaspedTime(35);
+      assertEquals("0:35", seconds);
+
+      String minutes = StringUtil.conciseElaspedTime(66);
+      assertEquals("1:06", minutes);
+
+      String hours = StringUtil.conciseElaspedTime(3606);
+      assertEquals("1:00:06", hours);
+      
+      String days = StringUtil.conciseElaspedTime(180061);
+      assertEquals("2:02:01:01", days);
+   }
    
    // -----------------------------------------------------------------------
 

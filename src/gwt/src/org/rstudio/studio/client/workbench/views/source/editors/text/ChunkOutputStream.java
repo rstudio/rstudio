@@ -199,7 +199,7 @@ public class ChunkOutputStream extends FlowPanel
          url += "?";
 
       if (knitrFigure) {
-         url += "viewer_pane=1";
+         url += "viewer_pane=1&capabilities=1";
       }
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();

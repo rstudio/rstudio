@@ -20,8 +20,7 @@ set -e
 source rstudio-tools
 
 # variables that control download + installation process
-PANDOC_VERSION="2.1.3"
-PANDOC_CITEPROC_VERSION="0.14.2"
+PANDOC_VERSION="2.2"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 
@@ -42,16 +41,14 @@ case "${PLATFORM}" in
 "Darwin-64")
   SUBDIR="macos"
   FILES=(
-    "pandoc-${PANDOC_VERSION}.zip"
-    "pandoc-citeproc-${PANDOC_CITEPROC_VERSION}.zip"
+    "pandoc-${PANDOC_VERSION}-macOS.zip"
   )
   ;;
 
 "Linux-64")
-  SUBDIR="linux-64"
+  SUBDIR="linux"
   FILES=(
-    "pandoc.gz"
-    "pandoc-citeproc.gz"
+    "pandoc-${PANDOC_VERSION}-linux.tar.gz"
   )
   ;;
 
@@ -62,24 +59,25 @@ case "${PLATFORM}" in
 
 esac
 
-# enter sub-directory
-mkdir -p "${SUBDIR}"
-pushd "${SUBDIR}"
-
 # download and extract files
 for FILE in "${FILES[@]}"; do
-  echo "Downloading ${FILE} from ${PANDOC_URL_BASE}/${SUBDIR}/${FILE}"
-  download "${PANDOC_URL_BASE}/${SUBDIR}/${FILE}" "${FILE}"
+  echo "Downloading ${FILE} from ${PANDOC_URL_BASE}/${FILE}"
+  download "${PANDOC_URL_BASE}/${FILE}" "${FILE}"
   extract "${FILE}"
   rm -f "${FILE}"
 done
 
+# enter binaries dir
+pushd "pandoc-${PANDOC_VERSION}/bin"
+
 # copy pandoc binaries to parent folder
-cp pandoc* ..
+cp pandoc* ../..
+
+# leave binaries dir
 popd
 
 # remove transient download folder
-rm -rf "${SUBDIR}"
+rm -rf "pandoc-${PANDOC_VERSION}"
 
 # make pandoc executable
 chmod 755 pandoc*

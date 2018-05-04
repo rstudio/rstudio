@@ -12,18 +12,24 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.HtmlMessageListener;
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -43,14 +49,18 @@ import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperat
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
-   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events,
-         ViewerServerOperations server)
+   public ViewerPane(Commands commands,
+                     GlobalDisplay globalDisplay,
+                     EventBus events,
+                     ViewerServerOperations server,
+                     HtmlMessageListener htmlMessageListener)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
       server_ = server;
+      htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
    }
    
@@ -151,7 +161,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
+      htmlMessageListener_.setUrl(url);
       navigate(url, false);
+
       rmdPreviewParams_ = null;
       if (url == ABOUT_BLANK)
       {
@@ -242,12 +254,32 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       publishButton_.setShowCaption(width > 500);
    }
+   
+   private native static String getOrigin() /*-{
+     return $wnd.location.origin;
+   }-*/;
 
    private void navigate(String url, boolean useRawURL)
    {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
-      
+
+      // in desktop mode we need to be careful about loading URLs which are
+      // non-local; before changing the URL, set the iframe to be sandboxed
+      // based on whether we're working with a local URL (note that prior to
+      // RStudio 1.2 local URLs were forbidden entirely)
+      if (Desktop.isDesktop())
+      {
+         if (URIUtils.isLocalUrl(url))
+         {
+            frame_.getElement().removeAttribute("sandbox");
+         }
+         else
+         {
+            frame_.getElement().setAttribute("sandbox", "allow-scripts");
+         }
+      }
+
       // append the viewer_pane query parameter
       if ((unmodifiedUrl_ != null) && 
           !unmodifiedUrl_.equals(ABOUT_BLANK) &&
@@ -256,6 +288,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
                                                    "viewer_pane", 
                                                    "1");
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "capabilities",
+                                            String.valueOf(1 << Capabilities.OpenFile.ordinal()));
+         
+         viewerUrl = URIUtils.addQueryParam(viewerUrl,
+                                            "host",
+                                            htmlMessageListener_.getOriginDomain());
+         
          frame_.setUrl(viewerUrl);
       }
       else
@@ -271,6 +312,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
       
       events_.fireEvent(new ViewerNavigatedEvent(url, frame_));
+   }
+   
+   private enum Capabilities
+   {
+      OpenFile
    }
 
    private RStudioFrame frame_;
@@ -289,4 +335,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Widget exportButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
+
+   private static boolean initializedMessageListeners_;
+   private static ViewerPane activeViewerPane_;
+   
+   private HtmlMessageListener htmlMessageListener_;
 }

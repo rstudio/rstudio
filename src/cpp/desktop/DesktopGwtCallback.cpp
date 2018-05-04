@@ -61,7 +61,6 @@ WindowTracker s_windowTracker;
 
 #ifdef Q_OS_LINUX
 QString s_globalMouseSelection;
-bool s_clipboardMonitoringEnabled;
 bool s_ignoreNextClipboardSelectionChange;
 #endif
 
@@ -76,12 +75,11 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
      pendingQuit_(PendingQuitNone)
 {
 #ifdef Q_OS_LINUX
-   // listen for clipboard selection change events (X11 only)
-   // TODO: expose user-facing UI for enabling / disabling
-   s_clipboardMonitoringEnabled =
-         core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty();
-
-   if (s_clipboardMonitoringEnabled)
+   // listen for clipboard selection change events (X11 only); allow override in options or 
+   // via environment variable. clipboard monitoring enables us to support middle-click paste on
+   // Linux, but it causes problems on some systems.
+   if (desktop::options().clipboardMonitoring() &&
+       core::system::getenv("RSTUDIO_NO_CLIPBOARD_MONITORING").empty())
    {
       QClipboard* clipboard = QApplication::clipboard();
       if (clipboard->supportsSelection())
@@ -643,7 +641,10 @@ void GwtCallback::openMinimalWindow(QString name,
       bool isViewerZoomWindow =
           (name == QString::fromUtf8("_rstudio_viewer_zoom"));
 
-      browser = new BrowserWindow(false, !isViewerZoomWindow, name);
+      // create the new browser window; pass along our own base URL so that the new window's
+      // WebProfile knows how to apply the appropriate headers
+      browser = new BrowserWindow(false, !isViewerZoomWindow, name, 
+            pMainWindow_->webView()->baseUrl());
       
       browser->setAttribute(Qt::WA_DeleteOnClose, true);
       browser->setAttribute(Qt::WA_QuitOnClose, true);
@@ -1262,12 +1263,37 @@ void GwtCallback::zoomActualSize()
 
 void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
 {
+#if defined(NDEBUG) || !defined(_WIN32)
+   // don't set the background color in win32 debug builds because Chromium can crash on a fatal assert in
+   // debug builds when the background color is changed.
+   // https://bitbucket.org/chromiumembedded/cef/issues/2144
    int red   = rgbColor.at(0).toInt();
    int green = rgbColor.at(1).toInt();
    int blue  = rgbColor.at(2).toInt();
    
    QColor color = QColor::fromRgb(red, green, blue);
    pOwner_->webPage()->setBackgroundColor(color);
+#endif
+}
+
+bool GwtCallback::getEnableAccessibility()
+{
+   return options().enableAccessibility();
+}
+
+void GwtCallback::setEnableAccessibility(bool enable)
+{
+   options().setEnableAccessibility(enable);
+}
+
+bool GwtCallback::getClipboardMonitoring()
+{
+   return options().clipboardMonitoring();
+}
+
+void GwtCallback::setClipboardMonitoring(bool monitoring)
+{
+   options().setClipboardMonitoring(monitoring);
 }
 
 void GwtCallback::showLicenseDialog()

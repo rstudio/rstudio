@@ -1,7 +1,7 @@
 /*
  * URIUtils.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,5 +40,11 @@ public class URIUtils
      
       // add the anchor back on
       return base + anchor;
+   }
+   
+   public static boolean isLocalUrl(String url)
+   {
+      String host = StringUtil.getHostFromUrl(url);
+      return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1");
    }
 }

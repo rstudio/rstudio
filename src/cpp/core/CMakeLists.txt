@@ -34,6 +34,7 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigUtils.cpp
    DateTime.cpp
+   ExponentialBackoff.cpp
    Error.cpp
    Exec.cpp
    FileInfo.cpp
@@ -250,16 +251,6 @@ if (UNIX)
       system/PosixChildProcess.cpp
       system/PosixProcess.cpp
    )
-
-   if(RSTUDIO_SERVER)
-      set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-         DistributedEvents.cpp
-         SecureKeyFile.cpp
-         SocketRpc.cpp
-         http/SecureCookie.cpp
-         system/Pam.cpp
-      )
-   endif()
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}

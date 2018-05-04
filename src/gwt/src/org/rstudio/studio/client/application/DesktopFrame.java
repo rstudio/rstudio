@@ -164,6 +164,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setBackgroundColor(JsArrayInteger rgbColor);
    
+   void getEnableAccessibility(CommandWithArg<Boolean> callback);
+   void setEnableAccessibility(boolean enable);
+   
+   void getClipboardMonitoring(CommandWithArg<Boolean> callback);
+   void setClipboardMonitoring(boolean monitoring);
+   
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);
    void getLicenseStatusMessage(CommandWithArg<String> callback);

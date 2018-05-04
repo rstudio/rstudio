@@ -1,7 +1,7 @@
 /*
  * SessionFilesListingMonitor.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,8 @@ class FilesListingMonitor : boost::noncopyable
 {
 public:
    // kickoff monitoring
-   core::Error start(const core::FilePath& filePath, core::json::Array* pJsonFiles);
+   core::Error start(const core::FilePath& filePath, 
+         bool includeHidden, core::json::Array* pJsonFiles);
 
    void stop();
 
@@ -61,10 +62,11 @@ public:
    // convenience method which is also called by listFiles for requests that
    // don't specify monitoring (e.g. file dialog listing)
    static core::Error listFiles(const core::FilePath& rootPath,
+                                bool includeHidden,
                                 core::json::Array* pJsonFiles)
    {
       std::vector<core::FilePath> files;
-      return listFiles(rootPath, &files, pJsonFiles);
+      return listFiles(rootPath, &files, includeHidden, pJsonFiles);
    }
 
 private:
@@ -79,10 +81,12 @@ private:
    // helpers
    static core::Error listFiles(const core::FilePath& rootPath,
                                 std::vector<core::FilePath>* pFiles,
+                                bool includeHidden, 
                                 core::json::Array* pJsonFiles);
 
 private:
    core::FilePath currentPath_;
+   bool includeHidden_;
    core::system::file_monitor::Handle currentHandle_;
 };
 
