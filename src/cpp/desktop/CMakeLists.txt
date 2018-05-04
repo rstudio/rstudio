@@ -154,7 +154,10 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopProgressActivator.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopComUtils.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOfficeViewer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopWordViewer.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPowerpointViewer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
   ${CMAKE_CURRENT_SOURCE_DIR}/DockTileView.hpp
 )
@@ -188,6 +191,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 set(DESKTOP_SOURCE_FILES
   DesktopActivationOverlay.cpp
   DesktopBrowserWindow.cpp
+  DesktopComUtils.cpp
   DesktopDownloadItemHelper.cpp
   DesktopGwtCallback.cpp
   DesktopGwtWindow.cpp
@@ -216,8 +220,11 @@ set(DESKTOP_SOURCE_FILES
 if(WIN32)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopChooseRHome.cpp
-    DesktopWin32ApplicationLaunch.cpp
+    DesktopComUtils.cpp
+    DesktopOfficeViewer.cpp
+    DesktopPowerpointViewer.cpp
     DesktopRVersion.cpp
+    DesktopWin32ApplicationLaunch.cpp
     DesktopWin32DetectRHome.cpp
     DesktopWin32ProgressActivator.cpp
     DesktopWordViewer.cpp

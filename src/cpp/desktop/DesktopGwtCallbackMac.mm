@@ -1,7 +1,7 @@
 /*
- * GwtCallbacks.mm
+ * DesktopGwtCallbackMac.mm
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,26 @@ tell application "Microsoft Word"
 end tell
 )EOF";
 
+static const char* const s_openPptPresFormatString = 1 + R"EOF(
+tell application "Microsoft PowerPoint"
+	activate
+	set reopened to false
+	repeat with i from 1 to (count of presentations)
+		set docPath to full name of presentation i
+		if POSIX path of docPath is equal to "%@" then
+			set s to slide number of slide range of selection of document window 1 of presentation i
+			close presentation i
+			open POSIX file "%@" with read only
+			set reopened to true
+			set v to view of active window
+			go to slide v number s
+			exit repeat
+		end if
+	end repeat
+	if not reopened then open POSIX file "%@" with read only
+end tell
+
+)EOF";
 enum MessageType
 {
    MSG_POPUP_BLOCKED = 0,
@@ -114,6 +134,46 @@ QString runFileDialog(NSSavePanel* panel)
    }
    
    return QString::fromNSString(createAliasedPath(path));
+}
+
+bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
+{
+   bool opened = false;
+   
+   // create the structure describing the doc to open
+   path = resolveAliasedPath(path);
+   
+   // figure out if appropriate opener is installed
+   if ([[NSWorkspace sharedWorkspace] fullPathForApplication:appName]!= nil)
+   {
+      NSString* openDocScript = [NSString stringWithFormat: formatString, path, path, path];
+      NSAppleScript* openDoc = [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
+      
+      if ([openDoc executeAndReturnError: nil] != nil)
+      {
+         opened = true;
+      }
+   }
+   
+   if (!opened)
+   {
+      // the AppleScript failed (or Word wasn't found), so try an alternate
+      // method of opening the document.
+      CFURLRef urls[1];
+      urls[0] = (CFURLRef)[NSURL fileURLWithPath: path];
+      CFArrayRef docArr =
+      CFArrayCreate(kCFAllocatorDefault, (const void**)&urls, 1,
+                    &kCFTypeArrayCallBacks);
+      
+      // ask the OS to open the doc for us in an appropriate viewer
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      if (status != noErr)
+      {
+         return false;
+      }
+   }
+
+   return true;
 }
 
 RS_END_NAMESPACE()
@@ -291,42 +351,23 @@ void GwtCallback::showWordDoc(QString qPath)
 {
    if (qPath.isEmpty())
       return;
-   
    NSString* path = qPath.toNSString();
-   bool opened = false;
-   
-   // create the structure describing the doc to open
-   path = resolveAliasedPath(path);
-   
-   // figure out if word is installed
-   if ([[NSWorkspace sharedWorkspace] fullPathForApplication:@"Microsoft Word"]!= nil)
+   if (!showOfficeDoc(path, @"Microsoft Word", 
+         [NSString stringWithUTF8String: s_openWordDocumentFormatString]))
    {
-      NSString* openDocFormat = [NSString stringWithUTF8String: s_openWordDocumentFormatString];
-      NSString* openDocScript = [NSString stringWithFormat: openDocFormat, path, path];
-      NSAppleScript* openDoc = [[[NSAppleScript alloc] initWithSource: openDocScript] autorelease];
-      
-      if ([openDoc executeAndReturnError: nil] != nil)
-      {
-         opened = true;
-      }
-   }
-   
-   if (!opened)
+      showFile(qPath);
+   };
+}
+
+void GwtCallback::showPptPresentation(QString qPath)
+{
+   if (qPath.isEmpty())
+      return;
+   NSString* path = qPath.toNSString();
+   if (!showOfficeDoc(path, [NSString stringWithUTF8String: "Microsoft PowerPoint"], 
+         [NSString stringWithUTF8String: s_openPptPresFormatString]))
    {
-      // the AppleScript failed (or Word wasn't found), so try an alternate
-      // method of opening the document.
-      CFURLRef urls[1];
-      urls[0] = (CFURLRef)[NSURL fileURLWithPath: path];
-      CFArrayRef docArr =
-      CFArrayCreate(kCFAllocatorDefault, (const void**)&urls, 1,
-                    &kCFTypeArrayCallBacks);
-      
-      // ask the OS to open the doc for us in an appropriate viewer
-      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
-      if (status != noErr)
-      {
-         showFile(qPath);
-      }
+      showFile(qPath);
    }
 }
 
