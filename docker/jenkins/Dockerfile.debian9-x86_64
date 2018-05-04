@@ -22,7 +22,6 @@ RUN apt-get update -y && apt-get install -y \
     gcc \
     git \
     gnupg1 \
-    gstreamer1.0-plugins-base \
     openjdk-8-jdk  \
     libacl1-dev \
     libcap-dev \
