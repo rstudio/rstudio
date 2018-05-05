@@ -499,13 +499,37 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    .rs.registerReplaceHook(name, package, unsupported)
 })
 
-.rs.addFunction( "setCRANRepos", function(reposUrl)
+.rs.addFunction( "isCRANReposList", function(repos) {
+  startsWith(repos, "CRAN|")
+})
+
+.rs.addFunction( "parseCRANReposList", function(repos) {
+  parts <- strsplit(repos, "\\|")[[1]]
+  indexes <- seq_len(length(parts) / 2)
+
+  r <- list()
+  for (i in indexes)
+    r[[parts[[2 * i - 1]]]] <- parts[[2 * i]]
+
+  r
+})
+
+.rs.addFunction( "setCRANRepos", function(repos)
 {
   local({
-      r <- getOption("repos");
+      if (.rs.isCRANReposList(repos))
+      {
+        r <- .rs.parseCRANReposList(repos)
+      }
+      else
+      {
+        r <- getOption("repos");
+        r["CRAN"] <- repos;
+      }
+
       # attribute indicating the repos was set from rstudio prefs
       attr(r, "RStudio") <- TRUE
-      r["CRAN"] <- reposUrl;
+
       options(repos=r)
     })
 })

@@ -28,6 +28,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -243,6 +245,8 @@ public class PackagesPreferencesPane extends PreferencesPane
          }
          
          cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
+         
+         secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
@@ -283,16 +287,24 @@ public class PackagesPreferencesPane extends PreferencesPane
       boolean reload = super.onApply(rPrefs);
 
       String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
-      if (!mirrotTextValue.equals(cranMirrorStored_) && 
-           mirrotTextValue.startsWith("http")) {
+      boolean cranRepoChangedToUrl = !mirrotTextValue.equals(cranMirrorStored_) && 
+                                      mirrotTextValue.startsWith("http");
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
 
-         cranMirror_ = CRANMirror.empty();
-         cranMirror_.setURL(mirrotTextValue);
+      if (cranRepoChangedToUrl || secondaryRepos.size() > 0) {
 
-         cranMirror_.setHost("Custom");
-         cranMirror_.setName("Custom");
+         if (cranRepoChangedToUrl)
+         {
+            cranMirror_ = CRANMirror.empty();
+            cranMirror_.setURL(mirrotTextValue);
 
-         updatedCranMirror_ = false;
+            cranMirror_.setHost("Custom");
+            cranMirror_.setName("Custom");
+         }
+         
+         ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
+         if (repos.size() > 0)
+            cranMirror_.setSecondaryRepos(repos);
 
          server_.setCRANMirror(
             cranMirror_,
@@ -326,7 +338,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final MirrorsServerOperations server_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
-   private Boolean updatedCranMirror_ = false;
    private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;

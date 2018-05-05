@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.common.mirrors.model;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 
@@ -53,13 +57,69 @@ public class CRANMirror extends JavaScriptObject
       this.host = host;
    }-*/;
 
-   public final native String getURL() /*-{
+   private final native String getRawURL() /*-{
       return this.url;
    }-*/;
 
-   public final native void setURL(String url) /*-{
+   private final native void setRawURL(String url) /*-{
       this.url = url;
    }-*/;
+
+   public final String getURL()
+   {
+      String rawUrl = getRawURL();
+
+      if (rawUrl.startsWith("CRAN|"))
+         return rawUrl.split("\\|")[1];
+      else
+         return rawUrl;
+   }
+
+   public final void setURL(String url)
+   {
+      if (getRawURL().startsWith("CRAN|"))
+         setSecondaryRepos(url, getSecondaryRepos());
+      else
+         setRawURL(url);
+   }
+
+   private final void setSecondaryRepos(String cran, ArrayList<CRANMirror> repos)
+   {
+      ArrayList<String> entries = new ArrayList<String>();
+      entries.add("CRAN|" + cran);
+
+      for (CRANMirror repo : repos)
+         entries.add(repo.getName() + "|" + repo.getURL());
+      
+      setRawURL(StringUtil.join(entries, "|"));
+   }
+
+   public final void setSecondaryRepos(ArrayList<CRANMirror> repos)
+   {
+      setSecondaryRepos(getURL(), repos);
+   }
+
+   public final ArrayList<CRANMirror> getSecondaryRepos()
+   {
+      ArrayList<CRANMirror> repos = new ArrayList<CRANMirror>();
+
+      if (getRawURL().startsWith("CRAN|"))
+      {
+         String[] entries = getRawURL().split("\\|");
+         if (entries.length > 0)
+         {
+            for (int i = 1; i < entries.length / 2; i++)
+            {
+               CRANMirror repo = CRANMirror.empty();
+               repo.setName(entries[2 * i]);
+               repo.setURL(entries[2 * i + 1]);
+               repos.add(repo);
+            }
+         }
+      }
+      
+      return repos;
+   }
 
    public final native String getCountry() /*-{
       return this.country;
