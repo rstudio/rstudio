@@ -95,11 +95,22 @@ public class SecondaryReposWidget extends Composite
       globalDisplay_ = globalDisplay;
    }
    
-   public void updateRepos()
+   private void updateRepos()
    {
       listBox_.clear();
       for (int i = 0; i < repos_.size(); i++)
          listBox_.addItem(repos_.get(i).getName());
+   }
+   
+   public ArrayList<CRANMirror> getRepos()
+   {
+      return repos_;
+   }
+   
+   public void setRepos(ArrayList<CRANMirror> repos)
+   {
+      repos_ = repos;
+      updateRepos();
    }
    
    private ClickHandler addButtonClicked_ = new ClickHandler() {
