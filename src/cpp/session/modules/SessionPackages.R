@@ -1160,20 +1160,45 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    utils::setInternet2(value)
 })
 
-.rs.addJsonRpcHandler("get_secondary_repos", function() {
+.rs.addFunction("getSecondaryRepos", function() {
+   conf <- ""
+   
+   rCranReposUrl <- NULL
+   if (!identical(rCranReposUrl, NULL)) {
+      conf <- tempfile(extension = "conf")
+      try({
+         download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/javascript'")
+      }, catch = function(e) {
+      })
+   }
 
-  list(
-    list(
-      name  = .rs.scalar("Test1"),
-      url = .rs.scalar("http://test1.com/"),
-      host = .rs.scalar("Custom"),
-      country = .rs.scalar("")
-    ),
-    list(
-      name  = .rs.scalar("Test2"),
-      url = .rs.scalar("http://test2.com/"),
-      host = .rs.scalar("Custom"),
-      country = .rs.scalar("")
-    )
-  )
+   repos <- list()
+   if (file.exists(conf)) {
+      lines <- readLines(conf)
+
+      for (line in lines) {
+         part <- strsplit(line, "=")[[1]]
+         if (identical(length(part), 2L)) {
+            repo <- list(
+               name  = .rs.scalar(trimws(part[[1]])),
+               url = .rs.scalar(trimws(part[[2]])),
+               host = .rs.scalar("Custom"),
+               country = .rs.scalar("")
+            )
+
+            if (identical(tolower(as.character(repo$name)), "cran")) {
+               repo$name <- "CRAN"
+               repos <- append(list(repo), repos, 1)
+            } else {
+               repos[[length(repos) + 1]] <- repo
+            }
+         }
+      }
+   }
+
+   repos
+})
+
+.rs.addJsonRpcHandler("get_secondary_repos", function() {
+   .rs.getSecondaryRepos()
 })
