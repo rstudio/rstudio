@@ -147,6 +147,8 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   bool timeoutSuspend() const { return timeoutSuspend_; }
+
    int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
 
    bool createProfile() const { return createProfile_; }
@@ -598,6 +600,7 @@ private:
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
+   bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;
    bool createProfile_;
    bool createPublicFolder_;

@@ -205,6 +205,11 @@ public:
       return std::string(rsessionConfigFile_.c_str()); 
    }
 
+   int rsessionProxyMaxWaitSeconds()
+   {
+      return rsessionProxyMaxWaitSeconds_;
+   }
+
    std::string monitorSharedSecret() const
    {
       return std::string(monitorSharedSecret_.c_str());
@@ -284,6 +289,7 @@ private:
    std::string rldpathPath_;
    std::string rsessionConfigFile_;
    std::string rsessionLdLibraryPath_;
+   int rsessionProxyMaxWaitSeconds_;
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
    std::map<std::string,std::string> overlayOptions_;

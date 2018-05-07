@@ -255,6 +255,9 @@ ProgramStatus Options::read(int argc,
       ("rsession-config-file",
          value<std::string>(&rsessionConfigFile_)->default_value(""),
          "path to rsession config file")
+      ("rsession-proxy-max-wait-secs",
+        value<int>(&rsessionProxyMaxWaitSeconds_)->default_value(10),
+         "max time to wait when proxying requests to rsession")
       ("rsession-memory-limit-mb",
          value<int>(&dep.memoryLimitMb)->default_value(dep.memoryLimitMb),
          "rsession memory limit (mb) - DEPRECATED")

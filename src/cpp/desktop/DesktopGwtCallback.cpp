@@ -551,7 +551,7 @@ void GwtCallback::showWordDoc(QString path)
 #ifdef Q_OS_WIN32
 
    path = resolveAliasedPath(path);
-   Error error = wordViewer_.showDocument(path);
+   Error error = wordViewer_.showItem(path.toStdWString());
    if (error)
    {
       LOG_ERROR(error);
@@ -564,13 +564,24 @@ void GwtCallback::showWordDoc(QString path)
 #endif
 }
 
-#endif
-
 void GwtCallback::showPptPresentation(QString path)
 {
-   // TODO (jmcphers): as with Word, connect more robustly with the application
+#ifdef Q_OS_WIN32
+
+   path = resolveAliasedPath(path);
+   Error error = pptViewer_.showItem(path.toStdWString());
+   if (error)
+   {
+      LOG_ERROR(error);
+      showFile(path);
+   }
+#else
+   // Invoke default viewer on other platforms
    showFile(path);
+#endif
 }
+
+#endif
 
 void GwtCallback::showPDF(QString path, int pdfPage)
 {
@@ -581,7 +592,7 @@ void GwtCallback::showPDF(QString path, int pdfPage)
 void GwtCallback::prepareShowWordDoc()
 {
 #ifdef Q_OS_WIN32
-   Error error = wordViewer_.closeLastViewedDocument();
+   Error error = wordViewer_.closeLastViewedItem();
    if (error)
    {
       LOG_ERROR(error);
@@ -591,7 +602,13 @@ void GwtCallback::prepareShowWordDoc()
 
 void GwtCallback::prepareShowPptPresentation()
 {
-   // TODO (jmcphers): as with Word, we will close the document if it's currently open on Windows.
+#ifdef Q_OS_WIN32
+   Error error = pptViewer_.closeLastViewedItem();
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+#endif
 }
 
 QString GwtCallback::getRVersion()

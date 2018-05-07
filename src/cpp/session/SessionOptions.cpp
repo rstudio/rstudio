@@ -188,6 +188,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      (kTimeoutSuspendSessionOption,
+         value<bool>(&timeoutSuspend_)->default_value(true),
+         "whether to suspend on session timeout")
       (kDisconnectedTimeoutSessionOption,
          value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
          "session disconnected timeout (minutes)" )

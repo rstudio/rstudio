@@ -1,5 +1,5 @@
 /*
- * DesktopWordViewer.hpp
+ * DesktopPowerpointViewer.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,18 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#ifndef DESKTOPWORDVIEWER_HPP
-#define DESKTOPWORDVIEWER_HPP
+#ifndef DESKTOP_PRESENTATION_VIEWER_HPP
+#define DESKTOP_PRESENTATION_VIEWER_HPP
 
 #include "DesktopOfficeViewer.hpp"
+
+struct IDispatch;
 
 namespace rstudio {
 namespace desktop {
 
-class WordViewer : public OfficeViewer
+class PowerpointViewer : public OfficeViewer
 {
 public:
-   WordViewer();
+   PowerpointViewer();
 
    core::Error savePosition(IDispatch* source) override;
    core::Error restorePosition(IDispatch* target) const override;
@@ -31,11 +33,12 @@ public:
    bool hasPosition() const override;
 
 private:
-   int docScrollX_;
-   int docScrollY_;
+   core::Error getDocumentWindow(IDispatch* source, IDispatch** window) const;
+
+   int slideIndex_;
 };
 
 } // namespace desktop
 } // namespace rstudio
 
-#endif // DESKTOPWORDVIEWER_HPP
+#endif // DESKTOP_PRESENTATION_VIEWER_HPP
