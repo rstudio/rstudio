@@ -58,6 +58,7 @@
 #define kRunScriptSessionOption           "run-script"
 
 #define kTimeoutSessionOption             "session-timeout-minutes"
+#define kTimeoutSuspendSessionOption      "session-timeout-suspend"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
 
 #define kVerifySignaturesSessionOption    "verify-signatures"
