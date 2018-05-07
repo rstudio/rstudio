@@ -174,7 +174,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
    if (isSatellite)
    {
       // create and size
-      pWindow = new SatelliteWindow(pMainWindow, name);
+      pWindow = new SatelliteWindow(pMainWindow, name, this);
       pWindow->resize(width, height);
 
       if (x >= 0 && y >= 0)
@@ -275,8 +275,8 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    }
    // allow viewer urls to be handled internally by Qt. note that the client is responsible for 
    // ensuring that non-local viewer urls are appropriately sandboxed.
-   else if (!viewerUrl_.isEmpty() &&
-            url.toString().startsWith(viewerUrl_))
+   else if (!viewerUrl().isEmpty() &&
+            url.toString().startsWith(viewerUrl()))
    {
       return true;
    }
@@ -332,6 +332,21 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
                 url.authority() + QString::fromUtf8("/");
 }
 
+QString WebPage::viewerUrl()
+{
+   if (viewerUrl_.isEmpty())
+   {
+      // if we don't know the viewer URL ourselves but we're a child window, ask our parent
+      BrowserWindow *parent = dynamic_cast<BrowserWindow*>(view()->window());
+      if (parent != nullptr && parent->opener() != nullptr)
+      {
+         return parent->opener()->viewerUrl();
+      }
+   }
+
+   // return our own viewer URL
+   return viewerUrl_;
+}
 
 void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 {

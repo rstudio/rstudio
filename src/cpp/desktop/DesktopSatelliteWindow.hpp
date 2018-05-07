@@ -18,8 +18,8 @@
 
 #include <QMainWindow>
 #include "DesktopGwtWindow.hpp"
-
 #include "DesktopGwtCallback.hpp"
+#include "DesktopWebPage.hpp"
 
 #define SOURCE_WINDOW_PREFIX "_rstudio_satellite_source_window_"
 
@@ -39,7 +39,7 @@ class SatelliteWindow : public GwtWindow
 {
     Q_OBJECT
 public:
-    SatelliteWindow(MainWindow* pMainWindow, QString name);
+    SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage* opener);
 
 Q_SIGNALS:
 
