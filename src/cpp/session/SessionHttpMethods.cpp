@@ -490,6 +490,17 @@ bool waitForMethod(const std::string& method,
             // note that we timed out
             suspend::setSuspendedFromTimeout(true);
 
+            if (!options().timeoutSuspend())
+            {
+               // configuration dictates that we should quit the
+               // session instead of suspending when timeout occurs
+               //
+               // the conditions for the quit must be the same as those
+               // for a regular suspend
+               rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
+               return false;
+            }
+
             // attempt to suspend (does not return if it succeeds)
             if (!suspend::suspendSession(false))
             {
