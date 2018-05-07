@@ -89,7 +89,12 @@ public class CRANMirror extends JavaScriptObject
       entries.add("CRAN|" + cran);
 
       for (CRANMirror repo : repos)
-         entries.add(repo.getName() + "|" + repo.getURL());
+      {
+         if (!repo.getName().toLowerCase().equals("CRAN"))
+         {
+            entries.add(repo.getName() + "|" + repo.getURL());
+         }
+      }
       
       setRawURL(StringUtil.join(entries, "|"));
    }
