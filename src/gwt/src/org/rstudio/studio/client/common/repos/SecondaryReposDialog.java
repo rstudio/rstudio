@@ -56,8 +56,6 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       
       excluded_ = excluded;
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      enableOkButton(false);
    }
 
    @Override
