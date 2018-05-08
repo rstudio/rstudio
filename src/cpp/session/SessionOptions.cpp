@@ -732,7 +732,7 @@ std::string Options::parseReposConfig(FilePath reposFile)
             ss << "|";
          }
 
-         ss << it->first << "|" << it->second.get_value<std::string>() << "'";
+         ss << it->first << "|" << it->second.get_value<std::string>();
       }
 
       return ss.str();
