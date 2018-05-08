@@ -209,6 +209,11 @@ public:
       return rCRANMultipleRepos_;
    }
 
+   std::string rCRANReposUrl() const
+   {
+      return std::string(rCRANReposUrl_.c_str());
+   }
+
    int rCompatibleGraphicsEngineVersion() const
    {
       return rCompatibleGraphicsEngineVersion_;
@@ -635,6 +640,7 @@ private:
    std::string rLibsUser_;
    std::string rCRANRepos_;
    std::string rCRANMultipleRepos_;
+   std::string rCRANReposUrl_;
    bool autoReloadSource_ ;
    int rCompatibleGraphicsEngineVersion_;
    std::string rResourcesPath_;

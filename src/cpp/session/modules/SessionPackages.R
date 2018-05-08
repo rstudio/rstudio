@@ -1172,49 +1172,94 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    utils::setInternet2(value)
 })
 
-.rs.addFunction("getSecondaryRepos", function() {
-   conf <- ""
-   
-   rCranReposUrl <- NULL
-   if (!identical(rCranReposUrl, NULL)) {
-      conf <- tempfile(extension = "conf")
-      try({
-         download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/javascript'")
-      }, catch = function(e) {
-      })
+.rs.addFunction("parseSecondaryReposIni", function(conf) {
+   lines <- readLines(conf)
+   repos <- list()
+
+   for (line in lines) {
+     part <- strsplit(line, "=")[[1]]
+     if (identical(length(part), 2L)) {
+        repo <- list(
+           name  = .rs.scalar(trimws(part[[1]])),
+           url = .rs.scalar(trimws(part[[2]])),
+           host = .rs.scalar("Custom"),
+           country = .rs.scalar("")
+        )
+
+        if (identical(tolower(as.character(repo$name)), "cran")) {
+           repo$name <- "CRAN"
+           repos <- append(list(repo), repos, 1)
+        } else {
+           repos[[length(repos) + 1]] <- repo
+        }
+     }
    }
 
+   repos
+})
+
+.rs.addFunction("parseSecondaryReposJson", function(conf) {
+   lines <- readLines(conf)
    repos <- list()
-   if (file.exists(conf)) {
-      lines <- readLines(conf)
 
-      for (line in lines) {
-         part <- strsplit(line, "=")[[1]]
-         if (identical(length(part), 2L)) {
-            repo <- list(
-               name  = .rs.scalar(trimws(part[[1]])),
-               url = .rs.scalar(trimws(part[[2]])),
-               host = .rs.scalar("Custom"),
-               country = .rs.scalar("")
-            )
+   entries <- .rs.fromJSON(paste(lines, collpse = "\n"))
 
-            if (identical(tolower(as.character(repo$name)), "cran")) {
-               repo$name <- "CRAN"
-               repos <- append(list(repo), repos, 1)
-            } else {
-               repos[[length(repos) + 1]] <- repo
-            }
-         }
+   for (entry in entries) {
+      url <- if (is.null(entry$url)) "" else url
+      
+      repo <- list(
+         name  = .rs.scalar(entry$name),
+         url = .rs.scalar(url),
+         host = .rs.scalar("Custom"),
+         country = .rs.scalar("")
+      )
+
+      if (identical(tolower(as.character(repo$name)), "cran")) {
+         repo$name <- "CRAN"
+         repos <- append(list(repo), repos, 1)
+      } else {
+         repos[[length(repos) + 1]] <- repo
       }
    }
 
    repos
 })
 
-.rs.addJsonRpcHandler("get_secondary_repos", function() {
-   .rs.getSecondaryRepos()
+.rs.addFunction("getSecondaryRepos", function() {
+   conf <- ""
+
+   parser <- list(
+      ini = .rs.parseSecondaryReposIni,
+      json = .rs.parseSecondaryReposJson,
+      none = function(conf) NULL
+   )
+   parserType <- "none"
+   
+   rCranReposUrl <- .Call("rs_getCranReposUrl")
+   if (nchar(rCranReposUrl) > 0) {
+      conf <- tempfile(fileext = ".conf")
+      
+      tryCatch({
+         download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/javascript'")
+         parserType <- "json"
+      }, catch = function(e) {
+         ""
+      })
+
+      if (!file.exists(conf)) {
+         tryCatch({
+            download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/ini'")
+            parserType <- "ini"
+         }, catch = function(e) {
+            ""
+         })
+      }
+   }
+
+   
+   parser[[parserType]](conf)
 })
 
-.rs.addJsonRpcHandler("browse_package_source", function(packageName) {
-  .rs.enqueClientEvent("browse_url", "https://www.google.com")
+.rs.addJsonRpcHandler("get_secondary_repos", function() {
+   .rs.getSecondaryRepos()
 })

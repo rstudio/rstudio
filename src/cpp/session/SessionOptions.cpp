@@ -313,6 +313,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("r-cran-repos",
          value<std::string>(&rCRANRepos_)->default_value(""),
          "Default CRAN repository")
+      ("r-cran-repos-url",
+         value<std::string>(&rCRANReposUrl_)->default_value(""),
+         "Default CRAN repository")
       ("r-auto-reload-source",
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
