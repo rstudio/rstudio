@@ -1223,38 +1223,20 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addFunction("getSecondaryRepos", function() {
-   conf <- ""
-
-   parser <- list(
-      ini = .rs.parseSecondaryReposIni,
-      json = .rs.parseSecondaryReposJson,
-      none = function(conf) list()
-   )
-   parserType <- "none"
+   repos <- list()
    
    rCranReposUrl <- .Call("rs_getCranReposUrl")
    if (nchar(rCranReposUrl) > 0) {
       conf <- tempfile(fileext = ".conf")
       
-      tryCatch({
-         download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/javascript'")
-         parserType <- "json"
-      }, catch = function(e) {
-         ""
-      })
-
-      if (!file.exists(conf)) {
-         tryCatch({
-            download.file(rCranReposUrl, conf, extra = "-H 'Accept: text/ini'")
-            parserType <- "ini"
-         }, catch = function(e) {
-            ""
-         })
+      download.file(rCranReposUrl, conf, method = "curl", extra = "-H 'Accept: text/ini'")
+      repos <- .rs.parseSecondaryReposIni(conf)
+      if (length(repos) == 0) {
+         repos <- .rs.parseSecondaryReposJson(conf)
       }
    }
-
    
-   parser[[parserType]](conf)
+   repos
 })
 
 .rs.addJsonRpcHandler("get_secondary_repos", function() {
