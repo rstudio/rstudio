@@ -661,7 +661,7 @@ void GwtCallback::openMinimalWindow(QString name,
       // create the new browser window; pass along our own base URL so that the new window's
       // WebProfile knows how to apply the appropriate headers
       browser = new BrowserWindow(false, !isViewerZoomWindow, name, 
-            pMainWindow_->webView()->baseUrl());
+            pMainWindow_->webView()->baseUrl(), nullptr, pMainWindow_->webPage());
       
       browser->setAttribute(Qt::WA_DeleteOnClose, true);
       browser->setAttribute(Qt::WA_QuitOnClose, true);

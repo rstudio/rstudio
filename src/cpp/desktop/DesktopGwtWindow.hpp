@@ -17,6 +17,7 @@
 #define DESKTOP_GWT_WINDOW_HPP
 
 #include "DesktopBrowserWindow.hpp"
+#include "DesktopWebPage.hpp"
 
 namespace rstudio {
 namespace desktop {
@@ -29,7 +30,8 @@ public:
                       bool adjustTitle,
                       QString name,
                       QUrl baseUrl = QUrl(),
-                      QWidget *parent = nullptr);
+                      QWidget *parent = nullptr,
+                      WebPage* opener = nullptr);
 
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 
