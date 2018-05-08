@@ -1816,8 +1816,10 @@ int main (int argc, char * const argv[])
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
-      // CRAN repos: global server option trumps user setting
-      if (!options.rCRANRepos().empty())
+      // CRAN repos: repos file trumps global server option which trumps user setting
+      if (!options.rCRANMultipleRepos().empty())
+         rOptions.rCRANRepos = options.rCRANMultipleRepos();
+      else if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
       else
          rOptions.rCRANRepos = userSettings().cranMirror().url;

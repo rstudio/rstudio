@@ -18,6 +18,9 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/SafeConvert.hpp>
@@ -684,8 +687,64 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // in standalone mode
    signingKey_ = core::system::getenv(kRStudioSigningKey);
 
+   // load cran options from repos.conf
+   FilePath reposFile("/etc/rstudio/repos.conf");
+   rCRANMultipleRepos_ = parseReposConfig(reposFile);
+
    // return status
    return status;
+}
+
+std::string Options::parseReposConfig(FilePath reposFile)
+{
+    using namespace boost::property_tree;
+
+    if (!reposFile.exists())
+      return "";
+
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(reposFile).open_r(&pIfs);
+   if (error)
+   {
+      core::program_options::reportError("Unable to open repos file: " + reposFile.absolutePath(),
+                  ERROR_LOCATION);
+
+      return "";
+   }
+
+   try
+   {
+      ptree pt;
+      ini_parser::read_ini(reposFile.absolutePath(), pt);
+
+      if (!pt.get_child_optional("CRAN"))
+      {
+         LOG_ERROR_MESSAGE("Repos file " + reposFile.absolutePath() + " is missing CRAN entry.");
+         return "";
+      }
+
+      std::stringstream ss;
+
+      for (ptree::iterator it = pt.begin(); it != pt.end(); it++)
+      {
+         if (it != pt.begin())
+         {
+            ss << "|";
+         }
+
+         ss << it->first << "|" << it->second.get_value<std::string>() << "'";
+      }
+
+      return ss.str();
+   }
+   catch(const std::exception& e)
+   {
+      core::program_options::reportError(
+        "Error reading " + reposFile.absolutePath() + ": " + std::string(e.what()),
+        ERROR_LOCATION);
+
+      return "";
+   }
 }
 
 bool Options::getBoolOverlayOption(const std::string& name)
