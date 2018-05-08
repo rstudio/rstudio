@@ -1173,25 +1173,22 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addFunction("parseSecondaryReposIni", function(conf) {
-   lines <- readLines(conf)
+   entries <- .rs.readIniFile(conf)
    repos <- list()
 
-   for (line in lines) {
-     part <- strsplit(line, "=")[[1]]
-     if (identical(length(part), 2L)) {
-        repo <- list(
-           name  = .rs.scalar(trimws(part[[1]])),
-           url = .rs.scalar(trimws(part[[2]])),
-           host = .rs.scalar("Custom"),
-           country = .rs.scalar("")
-        )
+   for (entryName in names(entries)) {
+     repo <- list(
+        name  = .rs.scalar(trimws(entryName)),
+        url = .rs.scalar(trimws(entries[[entryName]])),
+        host = .rs.scalar("Custom"),
+        country = .rs.scalar("")
+     )
 
-        if (identical(tolower(as.character(repo$name)), "cran")) {
-           repo$name <- .rs.scalar("CRAN")
-           repos <- append(list(repo), repos, 1)
-        } else {
-           repos[[length(repos) + 1]] <- repo
-        }
+     if (identical(tolower(as.character(repo$name)), "cran")) {
+        repo$name <- .rs.scalar("CRAN")
+        repos <- append(list(repo), repos, 1)
+     } else {
+        repos[[length(repos) + 1]] <- repo
      }
    }
 

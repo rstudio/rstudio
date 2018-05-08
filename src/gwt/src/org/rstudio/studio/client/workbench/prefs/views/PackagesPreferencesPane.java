@@ -71,7 +71,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       management.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "Primary repo:",
+            "Primary CRAN repo:",
             "",
             "Change...",
             null,

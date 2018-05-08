@@ -500,7 +500,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 })
 
 .rs.addFunction( "isCRANReposList", function(repos) {
-  startsWith(repos, "CRAN|")
+  .rs.startsWith(repos, "CRAN|")
 })
 
 .rs.addFunction( "parseCRANReposList", function(repos) {
