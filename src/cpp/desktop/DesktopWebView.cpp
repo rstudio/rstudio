@@ -180,6 +180,12 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          break;
       }
    }
+   else if (data.linkUrl().isValid())
+   {
+      menu->addAction(webPage()->action(QWebEnginePage::OpenLinkInNewWindow));
+      menu->addAction(webPage()->action(QWebEnginePage::CopyLinkToClipboard));
+      menu->addAction(webPage()->action(QWebEnginePage::DownloadLinkToDisk));
+   }
    else
    {
       // always show cut / copy / paste, but only enable cut / copy if there
