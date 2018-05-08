@@ -301,6 +301,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    pkgs.version <- sapply(seq_along(pkgs.name), function(i){
      .rs.packageVersion(pkgs.name[[i]], pkgs.library[[i]], instPkgs)
    })
+
+   pkgs.browse <- sapply(seq_along(pkgs.name), function(i){
+     repo <- getOption("repos")[[1]]
+     if (!identical(repo, NULL)) {
+       slash <- if (identical(tail(strsplit(repo, "")[[1]], n = 1), "/")) "" else "/"
+       .rs.scalar(paste(repo, slash, "package=", pkgs.name[[i]], sep = ""))
+     } 
+     else {
+       NULL
+     }
+   })
    
    # alias library paths for the client
    pkgs.library <- .rs.createAliasedPath(pkgs.library)
@@ -313,7 +324,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                          url=pkgs.url,
                          loaded=pkgs.loaded,
                          check.rows = TRUE,
-                         stringsAsFactors = FALSE)
+                         stringsAsFactors = FALSE,
+                         browse=pkgs.browse)
 
    # sort and return
    packages[order(packages$name),]
@@ -1201,4 +1213,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("get_secondary_repos", function() {
    .rs.getSecondaryRepos()
+})
+
+.rs.addJsonRpcHandler("browse_package_source", function(packageName) {
+  .rs.enqueClientEvent("browse_url", "https://www.google.com")
 })
