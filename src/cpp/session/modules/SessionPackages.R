@@ -1253,6 +1253,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    repos
 })
 
-.rs.addJsonRpcHandler("get_secondary_repos", function() {
-   .rs.getSecondaryRepos()
+.rs.addJsonRpcHandler("get_secondary_repos", function(cran) {
+   .rs.getSecondaryRepos(cran)
 })

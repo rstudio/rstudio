@@ -22,5 +22,6 @@ import com.google.gwt.core.client.JsArray;
 public interface SecondaryReposServerOperations
 {
    void getSecondaryRepos(
-         ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
+         ServerRequestCallback<JsArray<CRANMirror>> requestCallback,
+         String cranRepoUrl);
 }

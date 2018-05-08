@@ -65,6 +65,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       server_ = server;
 
+      secondaryReposWidget_ = new SecondaryReposWidget();
+
       VerticalPanel management = new VerticalPanel();
       VerticalPanel development = new VerticalPanel();
     
@@ -96,6 +98,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                         }
 
                         cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
+
+                        secondaryReposWidget_.setCranRepoUrl(cranMirror_.getURL());
                      }     
                   });
                  
@@ -110,8 +114,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       Label secondaryReposLabel = new Label("Secondary repos:");
       secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
       secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
-
-      secondaryReposWidget_ = new SecondaryReposWidget();
 
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
@@ -238,6 +240,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
          cranMirror_ = packagesPrefs.getCRANMirror();
+         secondaryReposWidget_.setCranRepoUrl(cranMirror_.getURL());
 
          if (cranMirror_.getHost().equals("Custom"))
          {

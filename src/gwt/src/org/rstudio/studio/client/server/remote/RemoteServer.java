@@ -5395,9 +5395,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getSecondaryRepos(ServerRequestCallback<JsArray<CRANMirror>> callback)
+   public void getSecondaryRepos(ServerRequestCallback<JsArray<CRANMirror>> callback,
+                                 String cranRepoUrl)
    {
       JSONArray params = new JSONArray();
+      params.set(0, new JSONString(cranRepoUrl));
 
       sendRequest(RPC_SCOPE,
                   GET_SECONDARY_REPOS,
