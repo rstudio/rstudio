@@ -384,7 +384,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getBrowseUrl());        
             }  
           },
-          "Browse package");
+          "Browse package in CRAN repo");
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
