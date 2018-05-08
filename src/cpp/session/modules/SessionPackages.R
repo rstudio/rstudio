@@ -273,6 +273,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .rs.initDefaultUserLibrary()
 })
 
+.rs.addFunction("lastCharacterIs", function(value, ending) {
+   identical(tail(strsplit(value, "")[[1]], n = 1), ending)
+})
+
 .rs.addFunction("listInstalledPackages", function()
 {
    # calculate unique libpaths
@@ -305,7 +309,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    pkgs.browse <- sapply(seq_along(pkgs.name), function(i){
      repo <- getOption("repos")[[1]]
      if (!identical(repo, NULL)) {
-       slash <- if (identical(tail(strsplit(repo, "")[[1]], n = 1), "/")) "" else "/"
+       slash <- if (.rs.lastCharacterIs(repo, "/")) "" else "/"
        .rs.scalar(paste(repo, slash, "package=", pkgs.name[[i]], sep = ""))
      } 
      else {
@@ -1222,10 +1226,20 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    repos
 })
 
-.rs.addFunction("getSecondaryRepos", function() {
+.rs.addFunction("getSecondaryRepos", function(cran = getOption("repos")[[1]]) {
    repos <- list()
    
    rCranReposUrl <- .Call("rs_getCranReposUrl")
+   if (identical(rCranReposUrl, NULL) || nchar(.Call("rs_getCranReposUrl")) == 0) {
+      slash <- if (.rs.lastCharacterIs(cran, "/")) "" else "/"
+      rCranReposUrl <- paste(slash, "../../__api__/repos", sep = "")
+   }
+
+   if (.rs.startsWith(rCranReposUrl, "..") ||
+       .rs.startsWith(rCranReposUrl, "/..")) {
+      rCranReposUrl <- paste(cran, rCranReposUrl, sep = "")
+   }
+
    if (nchar(rCranReposUrl) > 0) {
       conf <- tempfile(fileext = ".conf")
       
@@ -1235,7 +1249,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          repos <- .rs.parseSecondaryReposJson(conf)
       }
    }
-   
+
    repos
 })
 
