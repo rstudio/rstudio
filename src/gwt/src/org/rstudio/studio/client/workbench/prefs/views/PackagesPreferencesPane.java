@@ -106,17 +106,18 @@ public class PackagesPreferencesPane extends PreferencesPane
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
+
+      Label secondaryReposLabel = new Label("Secondary repos:");
+      secondaryReposWidget_ = new SecondaryReposWidget();
+
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
          lessSpaced(cranMirrorTextBox_);
          management.add(cranMirrorTextBox_);
+
+         management.add(spacedBefore(secondaryReposLabel));
+         management.add(secondaryReposWidget_);
       }
-
-      Label secondaryReposLabel = new Label("Secondary repos:");
-      management.add(spacedBefore(secondaryReposLabel));
-
-      secondaryReposWidget_ = new SecondaryReposWidget();
-      management.add(secondaryReposWidget_);
 
       CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
          uiPrefs.packagesPaneEnabled());
