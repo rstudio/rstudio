@@ -90,7 +90,7 @@ public class CRANMirror extends JavaScriptObject
 
       for (CRANMirror repo : repos)
       {
-         if (!repo.getName().toLowerCase().equals("CRAN"))
+         if (!repo.getName().toLowerCase().equals("cran"))
          {
             entries.add(repo.getName() + "|" + repo.getURL());
          }
@@ -118,7 +118,11 @@ public class CRANMirror extends JavaScriptObject
                CRANMirror repo = CRANMirror.empty();
                repo.setName(entries[2 * i]);
                repo.setURL(entries[2 * i + 1]);
-               repos.add(repo);
+
+               if (!repo.getName().toLowerCase().equals("cran"))
+               {
+                  repos.add(repo);
+               }
             }
          }
       }

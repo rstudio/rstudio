@@ -172,9 +172,12 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                {
                   CRANMirror repo = repos.get(i);
 
-                  repos_.add(repo);
-
-                  listBox_.addItem(repo.getName(), repo.getURL());
+                  if (!StringUtil.isNullOrEmpty(repo.getName()) &&
+                      !repo.getName().toLowerCase().equals("cran"))
+                  {
+                     repos_.add(repo);
+                     listBox_.addItem(repo.getName(), repo.getURL());
+                  }
                }
                
                listBox_.setSelectedIndex(0);

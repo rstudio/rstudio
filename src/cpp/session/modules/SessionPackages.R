@@ -1187,7 +1187,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
         )
 
         if (identical(tolower(as.character(repo$name)), "cran")) {
-           repo$name <- "CRAN"
+           repo$name <- .rs.scalar("CRAN")
            repos <- append(list(repo), repos, 1)
         } else {
            repos[[length(repos) + 1]] <- repo
@@ -1206,7 +1206,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    for (entry in entries) {
       url <- if (is.null(entry$url)) "" else url
-      
+
       repo <- list(
          name  = .rs.scalar(entry$name),
          url = .rs.scalar(url),
@@ -1215,7 +1215,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       )
 
       if (identical(tolower(as.character(repo$name)), "cran")) {
-         repo$name <- "CRAN"
+         repo$name <- .rs.scalar("CRAN")
          repos <- append(list(repo), repos, 1)
       } else {
          repos[[length(repos) + 1]] <- repo
@@ -1231,7 +1231,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    parser <- list(
       ini = .rs.parseSecondaryReposIni,
       json = .rs.parseSecondaryReposJson,
-      none = function(conf) NULL
+      none = function(conf) list()
    )
    parserType <- "none"
    
