@@ -108,6 +108,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setText("");
 
       Label secondaryReposLabel = new Label("Secondary repos:");
+      secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
+
       secondaryReposWidget_ = new SecondaryReposWidget();
 
       if (session.getSessionInfo().getAllowCRANReposEdit())

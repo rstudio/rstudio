@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -36,10 +37,12 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -55,32 +58,37 @@ public class SecondaryReposWidget extends Composite
       repos_ = new ArrayList<CRANMirror>();
       
       VerticalPanel panel = new VerticalPanel();
+      panel.addStyleName(RES.styles().panel());
       
       HorizontalPanel horizontal = new HorizontalPanel();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
-      listBox_.getElement().<SelectElement>cast().setSize(6);
+      listBox_.getElement().<SelectElement>cast().setSize(2);
+      listBox_.getElement().getStyle().setHeight(25, Unit.PX);
       horizontal.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
 
-      SmallButton buttonAdd = createButton("Add...");
-      buttonAdd.addClickHandler(addButtonClicked_);
-      buttonPanel.add(buttonAdd);
+      buttonAdd_ = createButton("Add...");
+      buttonAdd_.addClickHandler(addButtonClicked_);
+      buttonPanel.add(buttonAdd_);
 
-      SmallButton buttonRemove = createButton("Remove...");
-      buttonRemove.addClickHandler(removeButtonClicked_);
-      buttonPanel.add(buttonRemove);
+      buttonRemove_ = createButton("Remove...");
+      buttonRemove_.addClickHandler(removeButtonClicked_);
+      buttonRemove_.setVisible(false);
+      buttonPanel.add(buttonRemove_);
 
-      SmallButton buttonUp = createButton("Up");
-      buttonUp.addClickHandler(upButtonClicked_);
-      buttonPanel.add(buttonUp);
+      buttonUp_ = createButton("Up");
+      buttonUp_.addClickHandler(upButtonClicked_);
+      buttonUp_.setVisible(false);
+      buttonPanel.add(buttonUp_);
 
-      SmallButton buttonDown = createButton("Down");
-      buttonDown.addClickHandler(downButtonClicked_);
-      buttonPanel.add(buttonDown);
+      buttonDown_ = createButton("Down");
+      buttonDown_.addClickHandler(downButtonClicked_);
+      buttonDown_.setVisible(false);
+      buttonPanel.add(buttonDown_);
 
       horizontal.add(buttonPanel);
       
@@ -100,6 +108,22 @@ public class SecondaryReposWidget extends Composite
       listBox_.clear();
       for (int i = 0; i < repos_.size(); i++)
          listBox_.addItem(repos_.get(i).getName());
+
+      boolean visible = repos_.size() > 0;
+      
+      buttonRemove_.setVisible(visible);
+      buttonUp_.setVisible(visible);
+      buttonDown_.setVisible(visible);
+      
+      listBox_.getElement().<SelectElement>cast().setSize(visible ? 7 : 2);
+      if (visible)
+      {
+         listBox_.getElement().getStyle().setProperty("height", "");
+      }
+      else
+      {
+         listBox_.getElement().getStyle().setHeight(25, Unit.PX);
+      }
    }
    
    public ArrayList<CRANMirror> getRepos()
@@ -193,23 +217,28 @@ public class SecondaryReposWidget extends Composite
       }
    };
    
-   private SmallButton createButton(String caption)
+   private ThemedButton createButton(String caption)
    {
-      SmallButton button = new SmallButton(caption);
+      ThemedButton button = new ThemedButton(caption);
       button.addStyleName(RES.styles().button());
-      button.fillWidth();
       return button;
    }
    
    private final ListBox listBox_;
    private GlobalDisplay globalDisplay_;
    private ArrayList<CRANMirror> repos_;
+
+   private ThemedButton buttonAdd_;
+   private ThemedButton buttonRemove_;
+   private ThemedButton buttonUp_;
+   private ThemedButton buttonDown_;
    
    static interface Styles extends CssResource
    {
       String listBox();
       String button();
       String buttonPanel();
+      String panel();
    }
   
    static interface Resources extends ClientBundle
