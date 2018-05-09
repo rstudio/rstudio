@@ -70,6 +70,7 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
@@ -445,6 +446,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ObjectExplorerServerOperations.class).to(RemoteServer.class);
       bind(JobsServerOperations.class).to(RemoteServer.class);
       bind(DesktopInfo.class).asEagerSingleton();
+      bind(SecondaryReposServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

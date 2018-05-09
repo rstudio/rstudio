@@ -368,6 +368,14 @@ SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
       return R_NilValue;
 }
 
+SEXP rs_getCranReposUrl()
+{
+   r::sexp::Protect protect;
+   std::string rCRANReposUrl = session::options().rCRANReposUrl();
+
+   return r::sexp::create(rCRANReposUrl, &protect);
+}
+
 
 Error availablePackages(const core::json::JsonRpcRequest&,
                         core::json::JsonRpcResponse* pResponse)
@@ -585,6 +593,11 @@ Error initialize()
             "rs_downloadAvailablePackages",
             (DL_FUNC) rs_downloadAvailablePackages,
             1);
+
+   r::routines::registerCallMethod(
+            "rs_getCranReposUrl",
+            (DL_FUNC) rs_getCranReposUrl,
+            0);
    
    using boost::bind;
    using namespace module_context;

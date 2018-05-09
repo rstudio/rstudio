@@ -70,6 +70,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -5455,6 +5456,20 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void getSecondaryRepos(ServerRequestCallback<SecondaryReposResult> callback,
+                                 String cranRepoUrl)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(cranRepoUrl));
+
+      sendRequest(RPC_SCOPE,
+                  GET_SECONDARY_REPOS,
+                  params,
+                  true,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private String userHomePath_;
@@ -5892,4 +5907,6 @@ public class RemoteServer implements Server
    private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
    private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
    private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
+
+   private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
 }

@@ -28,9 +28,11 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -77,12 +79,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    public PackagesPane(Commands commands, 
                        Session session,
                        GlobalDisplay display,
-                       EventBus events)
+                       EventBus events,
+                       DefaultCRANMirror defaultCRANMirror)
    {
       super("Packages");
       commands_ = commands;
       session_ = session;
       display_ = display;
+      defaultCRANMirror_ = defaultCRANMirror;
+      
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -368,6 +373,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                return object;
             }
       };
+
+      ImageButtonColumn<PackageInfo> browseColumn = 
+        new ImageButtonColumn<PackageInfo>(
+          new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
+          new OperationWithInput<PackageInfo>() {
+            @Override
+            public void execute(PackageInfo packageInfo)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getBrowseUrl());        
+            }  
+          },
+          "Browse package in CRAN repo");
       
       ImageButtonColumn<PackageInfo> removeColumn = 
         new ImageButtonColumn<PackageInfo>(
@@ -442,9 +459,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
       }
      
+      // browse column is common
+      packagesTable_.addColumn(browseColumn, new TextHeader(""));
+      packagesTable_.setColumnWidth(browseColumn, 20, Unit.PX);
+
       // remove column is common
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
-      packagesTable_.setColumnWidth(removeColumn, 35, Unit.PX);
+      packagesTable_.setColumnWidth(removeColumn, 20, Unit.PX);
 
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
@@ -609,4 +630,5 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
+   private final DefaultCRANMirror defaultCRANMirror_;
 }

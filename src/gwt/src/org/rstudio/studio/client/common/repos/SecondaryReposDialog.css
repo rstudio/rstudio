@@ -1,0 +1,16 @@
+.mainWidget {
+   width: 420px;
+   height: 165px;
+}
+
+.customPanel {
+   width: 420px;
+}
+
+.namePanel {
+   width: 160px;
+}
+
+.urlTextBox {
+   width: 250px;
+}

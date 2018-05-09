@@ -1,5 +1,5 @@
 /*
- * PackagesHelpLink.java
+ * SecondaryReposResult.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,15 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common.repos.model;
 
-package org.rstudio.studio.client.common;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 
-import org.rstudio.studio.client.common.HelpLink;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-public class PackagesHelpLink extends HelpLink
+
+public class SecondaryReposResult extends JavaScriptObject
 {
-   public PackagesHelpLink()
+   protected SecondaryReposResult()
    {
-      super("Developing Packages", "building_packages");
    }
+   
+   public final native JsArray<CRANMirror> getRepos() /*-{
+      return this.repos;
+   }-*/;
+
+   public final native String getError() /*-{
+      return this.error;
+   }-*/;
 }
