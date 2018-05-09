@@ -1227,7 +1227,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addFunction("getSecondaryRepos", function(cran = getOption("repos")[[1]]) {
-   repos <- list()
+   result <- list()
    
    rCranReposUrl <- .Call("rs_getCranReposUrl")
    if (identical(rCranReposUrl, NULL) || nchar(.Call("rs_getCranReposUrl")) == 0) {
@@ -1243,14 +1243,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (nchar(rCranReposUrl) > 0) {
       conf <- tempfile(fileext = ".conf")
       
-      download.file(rCranReposUrl, conf, method = "curl", extra = "-H 'Accept: text/ini'")
-      repos <- .rs.parseSecondaryReposIni(conf)
-      if (length(repos) == 0) {
-         repos <- .rs.parseSecondaryReposJson(conf)
-      }
+      result <- tryCatch({
+         download.file(rCranReposUrl, conf, method = "curl", extra = "-H 'Accept: text/ini'")
+         result$repos <- .rs.parseSecondaryReposIni(conf)
+         if (length(result$repos) == 0) {
+            result$repos <- .rs.parseSecondaryReposJson(conf)
+         }
+
+         result
+      }, error = function(e) {
+         list(
+            error = .rs.scalar(
+               paste(
+                  "Failed to process repos list from ",
+                  rCranReposUrl, ". ", e$message, ".", sep = ""
+               )
+            )
+         )
+      })
    }
 
-   repos
+   result
 })
 
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran) {

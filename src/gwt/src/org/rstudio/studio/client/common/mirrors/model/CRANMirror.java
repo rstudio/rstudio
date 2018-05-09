@@ -65,6 +65,10 @@ public class CRANMirror extends JavaScriptObject
       this.url = url;
    }-*/;
 
+   private final native String getError() /*-{
+      this.error = error;
+   }-*/;
+
    public final String getURL()
    {
       String rawUrl = getRawURL();

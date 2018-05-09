@@ -1,5 +1,5 @@
 /*
- * SecondaryReposServerOperations.java
+ * SecondaryReposResult.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -15,13 +15,22 @@
 package org.rstudio.studio.client.common.repos.model;
 
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public interface SecondaryReposServerOperations
+
+public class SecondaryReposResult extends JavaScriptObject
 {
-   void getSecondaryRepos(
-         ServerRequestCallback<SecondaryReposResult> requestCallback,
-         String cranRepoUrl);
+   protected SecondaryReposResult()
+   {
+   }
+   
+   public final native JsArray<CRANMirror> getRepos() /*-{
+      return this.repos;
+   }-*/;
+
+   public final native String getError() /*-{
+      return this.error;
+   }-*/;
 }

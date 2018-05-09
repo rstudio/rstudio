@@ -69,6 +69,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -5395,7 +5396,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getSecondaryRepos(ServerRequestCallback<JsArray<CRANMirror>> callback,
+   public void getSecondaryRepos(ServerRequestCallback<SecondaryReposResult> callback,
                                  String cranRepoUrl)
    {
       JSONArray params = new JSONArray();

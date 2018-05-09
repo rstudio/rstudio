@@ -106,6 +106,18 @@ public class PackagesPreferencesPane extends PreferencesPane
                }
             },
             false);
+      
+      cranMirrorTextBox_.getTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if (!event.getValue().equals(cranMirror_.getDisplay()))
+            {
+               secondaryReposWidget_.setCranRepoUrl(event.getValue());
+            }
+         }
+      });
 
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);

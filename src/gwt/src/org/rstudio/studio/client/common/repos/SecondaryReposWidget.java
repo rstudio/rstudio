@@ -64,8 +64,7 @@ public class SecondaryReposWidget extends Composite
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
-      listBox_.getElement().<SelectElement>cast().setSize(2);
-      listBox_.getElement().getStyle().setHeight(25, Unit.PX);
+      listBox_.getElement().<SelectElement>cast().setSize(6);
       horizontal.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
@@ -77,17 +76,14 @@ public class SecondaryReposWidget extends Composite
 
       buttonRemove_ = createButton("Remove...");
       buttonRemove_.addClickHandler(removeButtonClicked_);
-      buttonRemove_.setVisible(false);
       buttonPanel.add(buttonRemove_);
 
       buttonUp_ = createButton("Up");
       buttonUp_.addClickHandler(upButtonClicked_);
-      buttonUp_.setVisible(false);
       buttonPanel.add(buttonUp_);
 
       buttonDown_ = createButton("Down");
       buttonDown_.addClickHandler(downButtonClicked_);
-      buttonDown_.setVisible(false);
       buttonPanel.add(buttonDown_);
 
       horizontal.add(buttonPanel);
@@ -108,22 +104,6 @@ public class SecondaryReposWidget extends Composite
       listBox_.clear();
       for (int i = 0; i < repos_.size(); i++)
          listBox_.addItem(repos_.get(i).getName());
-
-      boolean visible = repos_.size() > 0;
-      
-      buttonRemove_.setVisible(visible);
-      buttonUp_.setVisible(visible);
-      buttonDown_.setVisible(visible);
-      
-      listBox_.getElement().<SelectElement>cast().setSize(visible ? 7 : 2);
-      if (visible)
-      {
-         listBox_.getElement().getStyle().setProperty("height", "");
-      }
-      else
-      {
-         listBox_.getElement().getStyle().setHeight(25, Unit.PX);
-      }
    }
    
    public ArrayList<CRANMirror> getRepos()
@@ -222,10 +202,11 @@ public class SecondaryReposWidget extends Composite
       }
    };
    
-   private ThemedButton createButton(String caption)
+   private SmallButton createButton(String caption)
    {
-      ThemedButton button = new ThemedButton(caption);
+      SmallButton button = new SmallButton(caption);
       button.addStyleName(RES.styles().button());
+      button.fillWidth();
       return button;
    }
    
@@ -234,10 +215,10 @@ public class SecondaryReposWidget extends Composite
    private ArrayList<CRANMirror> repos_;
    private String cranRepoUrl_;
 
-   private ThemedButton buttonAdd_;
-   private ThemedButton buttonRemove_;
-   private ThemedButton buttonUp_;
-   private ThemedButton buttonDown_;
+   private SmallButton buttonAdd_;
+   private SmallButton buttonRemove_;
+   private SmallButton buttonUp_;
+   private SmallButton buttonDown_;
    
    static interface Styles extends CssResource
    {

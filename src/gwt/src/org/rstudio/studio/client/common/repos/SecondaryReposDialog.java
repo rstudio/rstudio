@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
@@ -140,25 +142,34 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       urlPanel.add(urlTextBox_);
       customPanel.add(urlPanel);
 
-      Label reposLabel = new Label("Available repos:");
-      reposLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      root.add(reposLabel);
+      reposLabel_ = new Label("Available repos:");
+      reposLabel_.getElement().getStyle().setMarginTop(8, Unit.PX);
+      root.add(reposLabel_);
 
-      final SimplePanelWithProgress panel = new SimplePanelWithProgress(
+      panel_ = new SimplePanelWithProgress(
          ProgressImages.createLargeGray());
-      root.add(panel);
+      root.add(panel_);
 
-      panel.setStylePrimaryName(RESOURCES.styles().mainWidget());
+      panel_.setStylePrimaryName(RESOURCES.styles().mainWidget());
          
       // show progress (with delay)
-      panel.showProgress(200);
+      panel_.showProgress(200);
+      showPanel(false);
       
       // query data source for packages
-      secondaryReposServer_.getSecondaryRepos(new SimpleRequestCallback<JsArray<CRANMirror>>() {
+      secondaryReposServer_.getSecondaryRepos(new SimpleRequestCallback<SecondaryReposResult>() {
 
          @Override 
-         public void onResponseReceived(JsArray<CRANMirror> repos)
+         public void onResponseReceived(SecondaryReposResult result)
          {   
+            if (!StringUtil.isNullOrEmpty(result.getError()))
+            {
+               globalDisplay_.showErrorMessage("Error", result.getError());
+               setText("Add Secondary Repo");
+               return;
+            }
+
+            JsArray<CRANMirror> repos = result.getRepos();
             // keep internal list of mirrors 
             repos_ = new ArrayList<CRANMirror>(repos.length());
             
@@ -182,10 +193,11 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                }
                
                listBox_.setSelectedIndex(0);
-               enableOkButton(true);
             }
+
+            showPanel(listBox_.getItemCount() > 0);
             
-            panel.setWidget(listBox_);
+            panel_.setWidget(listBox_);
             
             setText("Add Secondary Repo");
           
@@ -199,7 +211,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             
             final int kDefaultPanelHeight = 265;
             if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
-               panel.setHeight(listBox_.getOffsetHeight() + "px");
+               panel_.setHeight(listBox_.getOffsetHeight() + "px");
             
             FocusHelper.setFocusDeferred(listBox_);
          }
@@ -213,6 +225,12 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       }, cranRepoUrl_);
       
       return root;
+   }
+
+   private void showPanel(boolean show)
+   {
+      reposLabel_.setVisible(show);
+      panel_.setVisible(show);
    }
    
    static interface Styles extends CssResource
@@ -243,4 +261,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    private TextBox urlTextBox_ = null;
    private ArrayList<String> excluded_;
    private String cranRepoUrl_;
+
+   private Label reposLabel_;
+   private SimplePanelWithProgress panel_;
 }
