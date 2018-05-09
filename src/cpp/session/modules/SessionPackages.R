@@ -1281,5 +1281,5 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom) {
-   .rs.getSecondaryRepos(cran)
+   .rs.getSecondaryRepos(cran, custom)
 })
