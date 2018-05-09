@@ -99,7 +99,10 @@ public class PackagesPreferencesPane extends PreferencesPane
 
                         cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
 
-                        secondaryReposWidget_.setCranRepoUrl(cranMirror_.getURL());
+                        secondaryReposWidget_.setCranRepoUrl(
+                           cranMirror_.getURL(),
+                           cranMirror_.getHost().equals("Custom")
+                        );
                      }     
                   });
                  
@@ -114,7 +117,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          {
             if (!event.getValue().equals(cranMirror_.getDisplay()))
             {
-               secondaryReposWidget_.setCranRepoUrl(event.getValue());
+               secondaryReposWidget_.setCranRepoUrl(event.getValue(), true);
             }
          }
       });
@@ -252,7 +255,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
          cranMirror_ = packagesPrefs.getCRANMirror();
-         secondaryReposWidget_.setCranRepoUrl(cranMirror_.getURL());
+         secondaryReposWidget_.setCranRepoUrl(
+            cranMirror_.getURL(),
+            cranMirror_.getHost().equals("Custom")
+         );
 
          if (cranMirror_.getHost().equals("Custom"))
          {

@@ -23,5 +23,6 @@ public interface SecondaryReposServerOperations
 {
    void getSecondaryRepos(
          ServerRequestCallback<SecondaryReposResult> requestCallback,
-         String cranRepoUrl);
+         String cranRepoUrl,
+         boolean cranIsCustom);
 }
