@@ -300,4 +300,7 @@ public interface ThemeResources extends ClientBundle
    
    @Source("refreshWorkspaceUnmonitored_2x.png")
    ImageResource refreshWorkspaceUnmonitored2x();
+   
+   @Source("browsePackage_2x.png")
+   ImageResource browsePackage2x();
 }

@@ -35,6 +35,7 @@
 namespace rstudio {
 namespace core {
    class ProgramStatus;
+   class FilePath;
 }
 }
 
@@ -203,6 +204,16 @@ public:
    std::string rCRANRepos() const
    {
       return std::string(rCRANRepos_.c_str());
+   }
+
+   std::string rCRANMultipleRepos() const
+   {
+      return rCRANMultipleRepos_;
+   }
+
+   std::string rCRANReposUrl() const
+   {
+      return std::string(rCRANReposUrl_.c_str());
    }
 
    int rCompatibleGraphicsEngineVersion() const
@@ -567,6 +578,7 @@ private:
    bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
+   std::string parseReposConfig(core::FilePath reposFile);
 
 private:
    // tests
@@ -630,6 +642,8 @@ private:
    std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
    std::string rCRANRepos_;
+   std::string rCRANMultipleRepos_;
+   std::string rCRANReposUrl_;
    bool autoReloadSource_ ;
    int rCompatibleGraphicsEngineVersion_;
    std::string rResourcesPath_;

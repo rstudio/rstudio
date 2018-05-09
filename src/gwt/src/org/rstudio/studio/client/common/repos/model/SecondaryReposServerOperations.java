@@ -1,5 +1,5 @@
 /*
- * PackagesHelpLink.java
+ * SecondaryReposServerOperations.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,15 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common.repos.model;
 
-package org.rstudio.studio.client.common;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import org.rstudio.studio.client.common.HelpLink;
+import com.google.gwt.core.client.JsArray;
 
-public class PackagesHelpLink extends HelpLink
+public interface SecondaryReposServerOperations
 {
-   public PackagesHelpLink()
-   {
-      super("Developing Packages", "building_packages");
-   }
+   void getSecondaryRepos(
+         ServerRequestCallback<SecondaryReposResult> requestCallback,
+         String cranRepoUrl);
 }
