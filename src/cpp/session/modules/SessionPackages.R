@@ -1251,7 +1251,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       conf <- tempfile(fileext = ".conf")
       
       result <- tryCatch({
-         download.file(rCranReposUrl, conf, method = "curl", extra = "-H 'Accept: text/ini'")
+         download.file(
+            rCranReposUrl,
+            conf,
+            method = "curl",
+            extra = "-H 'Accept: text/ini'",
+            quiet = TRUE
+         )
+         
          result$repos <- .rs.parseSecondaryReposIni(conf)
          if (length(result$repos) == 0) {
             result$repos <- .rs.parseSecondaryReposJson(conf)
