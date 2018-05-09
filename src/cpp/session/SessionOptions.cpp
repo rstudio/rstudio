@@ -316,9 +316,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("r-cran-repos",
          value<std::string>(&rCRANRepos_)->default_value(""),
          "Default CRAN repository")
+      ("r-cran-repos-file",
+         value<std::string>(&rCRANReposFile_)->default_value("/etc/rstudio/repos.conf"),
+         "Path to configuration file with default CRAN repositories")
       ("r-cran-repos-url",
          value<std::string>(&rCRANReposUrl_)->default_value(""),
-         "Default CRAN repository")
+         "URL to configuration file with optional CRAN repositories")
       ("r-auto-reload-source",
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
@@ -694,7 +697,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    signingKey_ = core::system::getenv(kRStudioSigningKey);
 
    // load cran options from repos.conf
-   FilePath reposFile("/etc/rstudio/repos.conf");
+   FilePath reposFile(rCRANReposFile());
    rCRANMultipleRepos_ = parseReposConfig(reposFile);
 
    // return status
