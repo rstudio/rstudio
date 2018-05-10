@@ -105,6 +105,7 @@ compareCss <- function(actual, expected, parent = NULL)
       exNames <- names(expected)
       if (!all(acNames %in% exNames) || !all(exNames %in% acNames))
       {
+         equal <- FALSE
          extraNames <- c()
          missingNames <- c()
          # Check that all the names are included
@@ -722,8 +723,7 @@ test_that("extractStyles works correctly", {
 
 # Test convertTmTheme ==============================================================================
 test_that("convertTmTheme works correctly without parseTmTheme", {
-   # Library used for comparing css
-   library("highlight")
+   library("xml2")
    
    # Setup objects for test cases
    tomorrowTmTheme <- list()
@@ -841,6 +841,8 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
 })
 
 test_that("convertTmTheme works correctly with parseTmTheme", {
+   library("xml2")
+   
    # Actual results
    active4dCss <- parseCss(
       strsplit(
@@ -1310,43 +1312,15 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
    expect_true(compareCss(monoindustrialCss, monoindustrialCssEx))
 })
 
-# Test countXmlChildren ============================================================================
-test_that("countXmlChildren works correctly", {
-   # Set up objects for the test case
-   emptyNode <- XML::newXMLNode("empty")
-   textNode <- XML::newXMLNode("string", "value")
-   oneChild <- XML::newXMLNode("one", .children = list(XML::newXMLNode("child")))
-   oneChildAndText <- XML::newXMLNode("one", "value", .children = list(XML::newXMLNode("child")))
-   nineChildren <- XML::newXMLNode(
-      "nine",
-      .children = list(
-         XML::newXMLNode("child1"),
-         XML::newXMLNode("child2"),
-         XML::newXMLNode("child3"),
-         XML::newXMLNode("child4"),
-         XML::newXMLNode("child5"),
-         XML::newXMLNode("child6"),
-         XML::newXMLNode("child7"),
-         XML::newXMLNode("child8"),
-         XML::newXMLNode("child9")))
-
-   # Test cases
-   expect_equal(.rs.countXmlChildren(emptyNode), 0)
-   expect_equal(.rs.countXmlChildren(textNode), 0)
-   expect_equal(.rs.countXmlChildren(oneChild), 1)
-   expect_equal(.rs.countXmlChildren(oneChildAndText), 1)
-   expect_equal(.rs.countXmlChildren(nineChildren), 9)
-})
-
 # Test parseKeyElement =============================================================================
 test_that("parseKeyElement works correctly", {
-   library("XML")
+   library("xml2")
 
    # Setup objects for the test cases
-   settingsNode <- XML::newXMLNode("key", "settings")
-   valueNode <- XML::newXMLNode("key", "VALUE")
-   emptyNode <- XML::newXMLNode("key", "")
-   noTextNode <- XML::newXMLNode("key")
+   settingsNode <- xml2::read_xml("<key>settings</key>")
+   valueNode <- xml2::read_xml("<key>VALUE</key>")
+   emptyNode <- xml2::read_xml("<key></key>")
+   noTextNode <- xml2::read_xml("<key/>")
 
    # Test cases
    expect_equal(.rs.parseKeyElement(settingsNode), "settings")
@@ -1361,13 +1335,13 @@ test_that("parseKeyElement works correctly", {
 
 # Test parseStringElement ==========================================================================
 test_that("parseStringElement works correctly", {
-   library("XML")
+   library("xml2")
 
    # Setup objects for the test cases
-   nameNode <- XML::newXMLNode("string", "Tomorrow")
-   colorNode <- XML::newXMLNode("string", "#8e908c")
-   emptyNode <- XML::newXMLNode("string", "")
-   noTextNode <- XML::newXMLNode("string")
+   nameNode <- xml2::read_xml("<string>Tomorrow</string>")
+   colorNode <- xml2::read_xml("<string>#8e908c</string>")
+   emptyNode <- xml2::read_xml("<string></string>")
+   noTextNode <- xml2::read_xml("<string/>")
 
    # Test cases (no errors)
    expect_equal(.rs.parseStringElement(nameNode, "name"), "Tomorrow")
@@ -1384,68 +1358,96 @@ test_that("parseStringElement works correctly", {
 
 # Test parseDictElement ============================================================================
 test_that("parseDictElement works correctly", {
-   library("XML")
+   library("xml2")
 
    # Setup input objects for the test cases
-   simpleDictEl <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "fontStyle", parent = simpleDictEl)
-   XML::newXMLNode("string", parent = simpleDictEl)
-   XML::newXMLNode("key", "foreground", parent = simpleDictEl)
-   XML::newXMLNode("string", "#F5871F", parent = simpleDictEl)
+   simpleDictEl <- xml2::read_xml(
+      "<dict>
+         <key>fontStyle</key>
+         <string/>
+         <key>foreground</key>
+         <string>#F5871F</string>
+      </dict>")
 
-   simpleDictEl2 <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "background", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#FFFFFF", parent = simpleDictEl2)
-   XML::newXMLNode("key", "caret", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#AEAFAD", parent = simpleDictEl2)
-   XML::newXMLNode("key", "foreground", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#4D4D4C", parent = simpleDictEl2)
-   XML::newXMLNode("key", "invisibles", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#D1D1D1", parent = simpleDictEl2)
-   XML::newXMLNode("key", "lineHighlight", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#EFEFEF", parent = simpleDictEl2)
-   XML::newXMLNode("key", "selection", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#D6D6D6", parent = simpleDictEl2)
+   simpleDictEl2 <- xml2::read_xml(
+      "<dict>
+         <key>background</key>
+         <string>#FFFFFF</string>
+         <key>caret</key>
+         <string>#AEAFAD</string>
+         <key>foreground</key>
+         <string>#4D4D4C</string>
+         <key>invisibles</key>
+         <string>#D1D1D1</string>
+         <key>lineHighlight</key>
+         <string>#EFEFEF</string>
+         <key>selection</key>
+         <string>#D6D6D6</string>
+      </dict>")
 
-   badDictEl <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "caret", parent = badDictEl)
-   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl)
-   XML::newXMLNode("string", "#FFFFFF", parent = badDictEl)
+   badDictEl <- xml2::read_xml(
+      "<dict>
+         <key>caret</key>
+         <string>#AEAFAD</string>
+         <string>#FFFFFF</string>
+      </dict>")
 
-   badDictEl2 <- XML::newXMLNode("dict")
-   XML::newXMLNode("string", "#4D4D4C", parent = badDictEl2)
-   XML::newXMLNode("key", "caret", parent = badDictEl2)
-   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl2)
+   badDictEl2 <- xml2::read_xml(
+      "<dict>
+         <string>#4D4D4C</string>
+         <key>caret</key>
+         <string>#AEAFAD</string>
+      </dict>")
 
-   badDictEl3 <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "caret", parent = badDictEl3)
-   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl3)
-   XML::newXMLNode("other", "#000000", parent = badDictEl3)
+   badDictEl3 <- xml2::read_xml(
+      "<dict>
+         <key>caret</key>
+         <string>#AEAFAD</string>
+         <other>#000000</other>
+      </dict>")
 
-   badDictEl4 <- XML::newXMLNode("dict")
-   XML::newXMLNode("bad", "#1D1D1D", parent = badDictEl4)
-   XML::newXMLNode("key", "caret", parent = badDictEl4)
-   XML::newXMLNode("string", "#AEAFAD", parent = badDictEl4)
+   badDictEl4 <- xml2::read_xml(
+      "<dict>
+         <bad>#1D1D1D</bad>
+         <key>caret</key>
+         <string>#AEAFAD</string>
+      </dict>")
 
-   emptyDictEl <- XML::newXMLNode("dict")
+   emptyDictEl <- xml2::read_xml("<dict/>")
 
-   recursiveDictEl <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "settings", parent = recursiveDictEl)
-   XML::addChildren(recursiveDictEl, kids = list(simpleDictEl2))
+   recursiveDictEl <- xml2::read_xml(
+      "<dict>
+         <key>settings</key>
+         <dict>
+            <key>background</key>
+            <string>#FFFFFF</string>
+            <key>caret</key>
+            <string>#AEAFAD</string>
+            <key>foreground</key>
+            <string>#4D4D4C</string>
+            <key>invisibles</key>
+            <string>#D1D1D1</string>
+            <key>lineHighlight</key>
+            <string>#EFEFEF</string>
+            <key>selection</key>
+            <string>#D6D6D6</string>
+         </dict>
+      </dict>")
 
-   recursiveDictEl2 <- XML::newXMLNode("dict")
-   XML::newXMLNode("key", "name", parent = recursiveDictEl2)
-   XML::newXMLNode(
-      "string",
-      "Number, Constant, Function Argument, Tag Attribute, Embedded",
-      parent = recursiveDictEl2)
-   XML::newXMLNode("key", "scope", parent = recursiveDictEl2)
-   XML::newXMLNode(
-      "string",
-      "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit",
-      parent = recursiveDictEl2)
-   XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
-   XML::addChildren(recursiveDictEl2, kids = list(simpleDictEl))
+   recursiveDictEl2 <- xml2::read_xml(
+      "<dict>
+         <key>name</key> 
+         <string>Number, Constant, Function Argument, Tag Attribute, Embedded</string>
+         <key>scope</key>
+         <string>constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit</string>
+         <key>settings</key>
+         <dict>
+            <key>fontStyle</key>
+            <string/>
+            <key>foreground</key>
+            <string>#F5871F</string>
+         </dict>
+      </dict>")
 
    # Setup expected objects for the test cases
    simpleExpect <- list()
@@ -1500,57 +1502,65 @@ test_that("parseDictElement works correctly", {
 
 # Test parseArrayElement ===========================================================================
 test_that("parseArrayElement works correctly", {
-
+   library("xml2")
+   
    # Setup test case input objects
-   arrayEl <- XML::newXMLNode("array")
-   emptyArrayEl <- XML::newXMLNode("array")
-   textArrayEl <- XML::newXMLNode("array", "some text")
-   badArrayEl <- XML::newXMLNode("array")
-   badArrayEl2 <- XML::newXMLNode("array")
-
-   # Setup standard expected array input
-   recursiveDictEl <- XML::newXMLNode("dict", parent = arrayEl)
-   XML::newXMLNode("key", "settings", parent = recursiveDictEl)
-
-   recursiveDictEl2 <- XML::newXMLNode("dict", parent = arrayEl)
-   XML::newXMLNode("key", "name", parent = recursiveDictEl2)
-   XML::newXMLNode(
-      "string",
-      "Number, Constant, Function Argument, Tag Attribute, Embedded",
-      parent = recursiveDictEl2)
-   XML::newXMLNode("key", "scope", parent = recursiveDictEl2)
-   XML::newXMLNode(
-      "string",
-      "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit",
-      parent = recursiveDictEl2)
-   XML::newXMLNode("key", "settings", parent = recursiveDictEl2)
-
-   simpleDictEl <- XML::newXMLNode("dict", parent = recursiveDictEl2)
-   XML::newXMLNode("key", "fontStyle", parent = simpleDictEl)
-   XML::newXMLNode("string", parent = simpleDictEl)
-   XML::newXMLNode("key", "foreground", parent = simpleDictEl)
-   XML::newXMLNode("string", "#F5871F", parent = simpleDictEl)
-
-   simpleDictEl2 <- XML::newXMLNode("dict", parent = recursiveDictEl)
-   XML::newXMLNode("key", "background", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#FFFFFF", parent = simpleDictEl2)
-   XML::newXMLNode("key", "caret", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#AEAFAD", parent = simpleDictEl2)
-   XML::newXMLNode("key", "foreground", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#4D4D4C", parent = simpleDictEl2)
-   XML::newXMLNode("key", "invisibles", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#D1D1D1", parent = simpleDictEl2)
-   XML::newXMLNode("key", "lineHighlight", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#EFEFEF", parent = simpleDictEl2)
-   XML::newXMLNode("key", "selection", parent = simpleDictEl2)
-   XML::newXMLNode("string", "#D6D6D6", parent = simpleDictEl2)
-
-   # Setup error array input
-   XML::addChildren(badArrayEl, XML::xmlClone(simpleDictEl))
-   XML::newXMLNode("bad", parent = badArrayEl)
-
-   XML::newXMLNode("notGood", parent = badArrayEl2)
-   XML::addChildren(badArrayEl2, XML::xmlClone(simpleDictEl))
+   emptyArrayEl <- xml2::read_xml("<array/>")
+   textArrayEl <- xml2::read_xml("<array>some text</array>")
+   badArrayEl <- xml2::read_xml(
+      "<array>
+         <dict>
+            <key>fontStyle</key>
+            <string/>
+            <key>foreground</key>
+            <string>#F5871F</string>
+         </dict>
+         <bad/>
+      </array>")
+   badArrayEl2 <- xml2::read_xml(
+      "<array>
+         <notGood/>
+         <dict>
+            <key>fontStyle</key>
+            <string/>
+            <key>foreground</key>
+            <string>#F5871F</string>
+         </dict>
+      </array>")
+   
+   arrayEl <- xml2::read_xml(
+      "<array>
+         <dict>
+            <key>settings</key>
+            <dict>
+               <key>background</key>
+               <string>#FFFFFF</string>
+               <key>caret</key>
+               <string>#AEAFAD</string>
+               <key>foreground</key>
+               <string>#4D4D4C</string>
+               <key>invisibles</key>
+               <string>#D1D1D1</string>
+               <key>lineHighlight</key>
+               <string>#EFEFEF</string>
+               <key>selection</key>
+               <string>#D6D6D6</string>
+            </dict>
+         </dict>
+         <dict>
+            <key>name</key>
+            <string>Number, Constant, Function Argument, Tag Attribute, Embedded</string>
+            <key>scope</key>
+            <string>constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit</string>
+            <key>settings</key>
+            <dict>
+               <key>fontStyle</key>
+               <string/>
+               <key>foreground</key>
+               <string>#F5871F</string>
+            </dict>
+         </dict>
+      </array>")
 
    # Setup expected output
    arrayExpected <- list()
@@ -1575,27 +1585,34 @@ test_that("parseArrayElement works correctly", {
    # Test cases (error)
    expect_error(
       .rs.parseArrayElement(arrayEl, NULL),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a key for array value.")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for array value.",
+      fixed = TRUE)
    expect_error(
       .rs.parseArrayElement(arrayEl, "notSettings"),
-      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".")
+      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseArrayElement(emptyArrayEl, "settings"),
-      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.")
+      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.",
+      fixed = TRUE)
    expect_error(
       .rs.parseArrayElement(textArrayEl, "settings"),
-      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.")
+      "Unable to convert the tmtheme to an rstheme. \"array\" element cannot be empty.",
+      fixed = TRUE)
    expect_error(
       .rs.parseArrayElement(badArrayEl, "settings"),
-      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"bad\".")
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"bad\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseArrayElement(badArrayEl2, "settings"),
-      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"notGood\".")
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"notGood\".",
+      fixed = TRUE)
 })
 
 # Test parseTmTheme ================================================================================
 test_that("parseTmTheme handles correct input", {
-
+   library("xml2")
+   
    # Setup expected output
    expected <- list()
    expected$comment <- "http://chriskempson.com"
@@ -1706,72 +1723,94 @@ test_that("parseTmTheme handles correct input", {
 })
 
 test_that("parseTmTheme handles incorrect input", {
+   library("xml2")
+   
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "EmptyBody.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0")
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "EmptyDictEl.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. \"dict\" element cannot be empty.")
+      "Unable to convert the tmtheme to an rstheme. \"dict\" element cannot be empty.",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildAfter.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2")
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildBefore.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2")
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 2",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "ExtraChildMid.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"otherChild\".")
+      "Unable to convert the tmtheme to an rstheme. Expecting \"dict\" element; found \"otherChild\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
       sprintf(
-         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed1.tmTheme at line 14: error parsing attribute name\n", 
-         inputFileLocation))
+         "error parsing attribute name [68]", 
+         inputFileLocation),
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
       sprintf(
-         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed2.tmTheme at line 223: Opening and ending tag mismatch: string line 223 and notstring\n", 
-         inputFileLocation))
+         "Opening and ending tag mismatch: string line 223 and notstring [76]", 
+         inputFileLocation),
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
       sprintf(
-         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed3.tmTheme at line 9: StartTag: invalid element name\n", 
-         inputFileLocation))
+         "StartTag: invalid element name [68]", 
+         inputFileLocation),
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
       sprintf(
-         "Unable to convert the tmtheme to an rstheme. An error occurred while parsing %s/errorthemes/Malformed4.tmTheme at line 2: StartTag: invalid element name\n", 
-         inputFileLocation))
+         "StartTag: invalid element name [68]", 
+         inputFileLocation),
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyEnd.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"sRGB\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"sRGB\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyMid.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"keyword.operator, constant.other.color\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"keyword.operator, constant.other.color\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyStart.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"http://chriskempson.com\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a key for the \"string\" element with value \"http://chriskempson.com\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueEnd.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"colorSpaceName\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"colorSpaceName\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueMid.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"settings\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"settings\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingValueStart.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"comment\".")
+      "Unable to convert the tmtheme to an rstheme. Unable to find a value for the key \"comment\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "NoBody.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0")
+      "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongArrayKey.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".")
+      "Unable to convert the tmtheme to an rstheme. Incorrect key for array element. Expected: \"settings\"; Actual: \"notSettings\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagEnd.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", \"array\", or \"dict\".")
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"other\". Expected \"key\", \"string\", \"array\", or \"dict\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagMid.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"something\". Expected \"key\", \"string\", \"array\", or \"dict\".")
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"something\". Expected \"key\", \"string\", \"array\", or \"dict\".",
+      fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagStart.tmTheme")),
-      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"a-tag\". Expected \"key\", \"string\", \"array\", or \"dict\".")
+      "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"a-tag\". Expected \"key\", \"string\", \"array\", or \"dict\".",
+      fixed = TRUE)
 })

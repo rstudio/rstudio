@@ -12,7 +12,8 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
-# Helper Functions
+# ACE/tools/tmThemes.js Functions ==================================================================
+
 # Converts a colour to an array of the RGB values of the colour.
 #
 # @param color    The color to convert.
@@ -23,7 +24,10 @@
    {
       if (length(color) != 3) 
       {
-         stop(sprintf("expected 3 values for RGB color, not %d", length(color)), call. = FALSE)
+         stop(
+            "expected 3 values for RGB color, not ",
+            length(color),
+            call. = FALSE)
       }
       colorVec <- color
    }
@@ -32,9 +36,8 @@
       if (nchar(color) != 7)
       {
          stop(
-            sprintf(
-               "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: %s",
-               color),
+            "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: ",
+            color,
             call. = FALSE)
       }
       else
@@ -51,9 +54,8 @@
       if (length(matches) != 4)
       {
          stop(
-            sprintf(
-               "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: %s",
-               color),
+            "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: ",
+            color,
             call. = FALSE)
       }
       colorVec <- strtoi(matches[2:4])
@@ -61,9 +63,9 @@
    else
    {
       stop(
-         sprintf(
-            "supplied color has an invalid format: %s. Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
-            color),
+         "supplied color has an invalid format: ",
+         color,
+         ". Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
          call. = FALSE)
    }
    
@@ -508,20 +510,8 @@
    
    gsub("[^\\{\\}]+\\{\\s*\\}", "", css, perl = TRUE)
 })
-# Counts the number of children of an XML element, not count "text".
-#
-# @param element     The element for which to count children.
-#
-# Returns the number of children of an element
-.rs.addFunction("countXmlChildren", countXmlChildren <- function(element) {
-   count <- XML::xmlSize(element)
-   if (!is.null(XML::xmlChildren(element)$text))
-   {
-      count <- count - 1
-   }
-   
-   count
-})
+
+# TmTheme XML Parsing functions ====================================================================
 
 # Parses a "key" element from a tmtheme document and raises appropriate error.
 #
@@ -530,7 +520,7 @@
 # Returns the text value of the element.
 .rs.addFunction("parseKeyElement", parseKeyElement <- function(element) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   key <- XML::xmlValue(element)
+   key <- toString(xml2::xml_contents(element))
    if (key == "")
    {
       stop(
@@ -549,7 +539,7 @@
 # Returns the text value of the element.
 .rs.addFunction("parseStringElement", parseStringElement <- function(element, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   value <- XML::xmlValue(element)
+   value <- xml2::xml_contents(element)
    
    # The key can only be null if there was no <key> element immediately preceding the <string>
    # element in the provided xml. If any <key> element was found (even a <key/>), the key name
@@ -564,7 +554,7 @@
          call. = FALSE)
    }
    
-   value
+   toString(value)
 })
 
 # Recursivley parses a dictionary element from a tmtheme document and raises the correct errors.
@@ -583,12 +573,12 @@
    }
    
    values <- list()
-   if (.rs.countXmlChildren(dictElement) >= 1)
+   if (xml2::xml_length(dictElement) >= 1)
    {
       key <- NULL
-      for (element in XML::xmlChildren(dictElement))
+      for (element in xml2::xml_children(dictElement))
       {
-         elName <- XML::xmlName(element)
+         elName <- xml2::xml_name(element)
          if (elName != "comment")
          {
             if (elName == "key")
@@ -655,7 +645,7 @@
 # Returns a list() of named settings.
 .rs.addFunction("parseArrayElement", parseArrayElement <- function(arrayElement, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   if (.rs.countXmlChildren(arrayElement) < 1)
+   if (xml2::xml_length(arrayElement) < 1)
    {
       stop(
          sprintf("%s \"array\" element cannot be empty.", parseError),
@@ -680,9 +670,9 @@
    
    values <- list()
    index <- 1
-   for (element in XML::xmlChildren(arrayElement))
+   for (element in xml2::xml_children(arrayElement))
    {
-      elName <- XML::xmlName(element)
+      elName <- xml2::xml_name(element)
       if (elName != "comment")
       {
          if (elName != "dict")
@@ -703,29 +693,32 @@
 
 # Parses a tmtheme document and stores the relevant values in a list with named values.
 #
-# @param file     The file to parse.
+# @param filePath     The path of the file to parse.
 # 
 # Returns a list with named values.
-.rs.addFunction("parseTmTheme", parseTmTheme <- function(file) {
+.rs.addFunction("parseTmTheme", parseTmTheme <- function(filePath) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
    
-   tmThemeDoc <- XML::xmlRoot(
-      XML::xmlParse(
-         file, 
-         error = function(msg, code, domain, line, col, level, filename) {
-            stop(
-               sprintf(
-                  "%s An error occurred while parsing %s at line %d: %s",
-                  parseError,
-                  filename,
-                  line,
-                  msg),
-               call. = FALSE)
-         }),
-      encoding = "UTF-8")
+   xmlFile <- file(filePath)
+   xmlStr <- paste0(readLines(xmlFile), collapse = "\n")
+   close(xmlFile)
+   
+   tmThemeDoc <- xml2::xml_root(xml2::read_xml(
+      xmlStr, 
+      error = function(msg, code, domain, line, col, level, filename) {
+         stop(
+            sprintf(
+               "%s An error occurred while parsing %s at line %d: %s",
+               parseError,
+               filename,
+               line,
+               msg),
+            call. = FALSE)
+      },
+      encoding = "UTF-8"))
    
    # Check for the right number of children
-   childrenCount <- .rs.countXmlChildren(tmThemeDoc)
+   childrenCount <- xml2::xml_length(tmThemeDoc)
    if (childrenCount != 1)
    {
       stop(
@@ -737,15 +730,16 @@
    }
    
    # Check the structure at the root is correct before continuing.
-   if (XML::xmlName(tmThemeDoc[[1]]) != "dict")
+   if (xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)) != "dict")
    {
       stop(
          sprintf(
             "%s Expecting \"dict\" element; found \"%s\".",
-            parseError, XML::xmlName(tmThemeDoc[[1]])),
+            parseError,
+            xml2::xml_name(xml2::xml_child(tmThemeDoc, 1))),
          call. = FALSE)
    }
-   if (.rs.countXmlChildren(tmThemeDoc[[1]]) < 1)
+   if (xml2::xml_length(xml2::xml_child(tmThemeDoc, 1)) < 1)
    {
       stop(
          sprintf(
@@ -759,7 +753,17 @@
    .rs.parseDictElement(tmThemeDoc[[1]], "")
 })
 
-# Worker functions
+# compile-themes Functions =========================================================================
+
+# Converts an ace theme to an RStudio theme.
+# 
+# @param aceCss      The ace CSS to convert.
+# @param name        The name 
+.rs.addFunction("convertAceTheme", convertAceTheme <- function(aceCss, name, isDark) {
+   
+})
+
+# Worker Functions =================================================================================
 
 # Converts a tmtheme file into an rstheme file.
 # 
@@ -851,9 +855,9 @@
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
 .rs.addApiFunction("convertTheme", api.convertTheme <- function(file, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE) {
    # Require XML package for parsing the tmtheme files.
-   if (!suppressWarnings(require("XML", quietly = TRUE)))
+   if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
-      stop("Taking this action requires the XML library. Please run 'install.packages(\"XML\")' before continuing.")
+      stop("Taking this action requires the xml2 library. Please run 'install.packages(\"xml2\")' before continuing.")
    }
    
    .rs.convertTheme(file, add, outputLocation, apply, force)
