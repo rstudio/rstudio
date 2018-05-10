@@ -45,10 +45,10 @@ boost_modules <- c(
    "algorithm", "asio", "array", "bind", "chrono", "circular_buffer",
    "context", "crc", "date_time", "filesystem", "foreach", "format",
    "function", "interprocess", "iostreams", "lambda", "lexical_cast",
-   "optional", "program_options", "random", "range", "ref", "regex",
-   "scope_exit", "signals", "smart_ptr", "spirit", "string_algo",
-   "system", "test", "thread", "tokenizer", "type_traits", "typeof",
-   "unordered", "utility", "variant"
+   "optional", "program_options", "property_tree", "random", "range",
+   "ref", "regex", "scope_exit", "signals", "smart_ptr", "spirit",
+   "string_algo", "system", "test", "thread", "tokenizer", "type_traits",
+   "typeof", "unordered", "utility", "variant"
 )
 
 # construct paths of interest
