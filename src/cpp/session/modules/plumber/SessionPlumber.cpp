@@ -42,22 +42,6 @@ namespace plumber {
 
 namespace {
 
-void onPackageLoaded(const std::string& pkgname)
-{
-   // we need an up to date version of Plumber in order to run APIs directly
-   // via the IDE
-   if (pkgname == "plumber")
-   {
-      if (!module_context::isPackageVersionInstalled("plumber", "0.4"))
-      {
-         module_context::consoleWriteError("\nWARNING: To run Plumber "
-           "APIs with RStudio you need to install the "
-           "latest version of the Plumber package from CRAN (version 0.4 "
-           "or higher is required).\n\n");
-      }
-   }
-}
-
 PlumberFileType getPlumberFileType(const FilePath& filePath, const std::string& contents)
 {
    // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect
@@ -218,8 +202,6 @@ Error initialize()
    using namespace module_context;
    using boost::bind;
    
-   events().onPackageLoaded.connect(onPackageLoaded);
-
    events().onDetectSourceExtendedType.connect(onDetectPlumberSourceType);
    
    ExecBlock initBlock;
