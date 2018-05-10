@@ -5397,10 +5397,12 @@ public class RemoteServer implements Server
 
    @Override
    public void getSecondaryRepos(ServerRequestCallback<SecondaryReposResult> callback,
-                                 String cranRepoUrl)
+                                 String cranRepoUrl,
+                                 boolean cranIsCustom)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(cranRepoUrl));
+      params.set(1, JSONBoolean.getInstance(cranIsCustom));
 
       sendRequest(RPC_SCOPE,
                   GET_SECONDARY_REPOS,

@@ -1226,13 +1226,20 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    repos
 })
 
-.rs.addFunction("getSecondaryRepos", function(cran = getOption("repos")[[1]]) {
-   result <- list()
+.rs.addFunction("getSecondaryRepos", function(cran = getOption("repos")[[1]], custom = TRUE) {
+   result <- list(
+      repos = list()
+   )
    
    rCranReposUrl <- .Call("rs_getCranReposUrl")
-   if (identical(rCranReposUrl, NULL) || nchar(.Call("rs_getCranReposUrl")) == 0) {
+   isDefault <- identical(rCranReposUrl, NULL) || nchar(rCranReposUrl) == 0
+
+   if (isDefault) {
       slash <- if (.rs.lastCharacterIs(cran, "/")) "" else "/"
       rCranReposUrl <- paste(slash, "../../__api__/repos", sep = "")
+   }
+   else {
+      custom <- TRUE
    }
 
    if (.rs.startsWith(rCranReposUrl, "..") ||
@@ -1240,11 +1247,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       rCranReposUrl <- paste(cran, rCranReposUrl, sep = "")
    }
 
-   if (nchar(rCranReposUrl) > 0) {
+   if (custom) {
       conf <- tempfile(fileext = ".conf")
       
       result <- tryCatch({
-         download.file(rCranReposUrl, conf, method = "curl", extra = "-H 'Accept: text/ini'")
+         download.file(
+            rCranReposUrl,
+            conf,
+            method = "curl",
+            extra = "-H 'Accept: text/ini'",
+            quiet = TRUE
+         )
+         
          result$repos <- .rs.parseSecondaryReposIni(conf)
          if (length(result$repos) == 0) {
             result$repos <- .rs.parseSecondaryReposJson(conf)
@@ -1266,6 +1280,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    result
 })
 
-.rs.addJsonRpcHandler("get_secondary_repos", function(cran) {
-   .rs.getSecondaryRepos(cran)
+.rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom) {
+   .rs.getSecondaryRepos(cran, custom)
 })

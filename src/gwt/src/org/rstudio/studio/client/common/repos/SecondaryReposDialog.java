@@ -53,12 +53,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 {
    public SecondaryReposDialog(OperationWithInput<CRANMirror> operation,
                                ArrayList<String> excluded,
-                               String cranRepoUrl)
+                               String cranRepoUrl,
+                               boolean cranIsCustom)
    {
       super("Retrieving list of secondary repos...", operation);
       
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;
+      cranIsCustom_ = cranIsCustom;
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -222,7 +224,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             closeDialog();
             super.onError(error);
          }
-      }, cranRepoUrl_);
+      }, cranRepoUrl_, cranIsCustom_);
       
       return root;
    }
@@ -261,6 +263,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    private TextBox urlTextBox_ = null;
    private ArrayList<String> excluded_;
    private String cranRepoUrl_;
+   private boolean cranIsCustom_;
 
    private Label reposLabel_;
    private SimplePanelWithProgress panel_;
