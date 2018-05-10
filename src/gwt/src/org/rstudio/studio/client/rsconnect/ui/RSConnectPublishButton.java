@@ -715,6 +715,14 @@ public class RSConnectPublishButton extends Composite
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
+      // If publishing to Connect is disabled, then we can't publish APIs
+      if ((contentType_ == RSConnect.CONTENT_TYPE_API_FILE ||
+            contentType_ == RSConnect.CONTENT_TYPE_API_ENTRYPOINT) &&
+          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      {
+         return false;
+      }
+         
       if (manuallyHidden_)
          return false;
       
