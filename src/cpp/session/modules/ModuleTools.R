@@ -361,6 +361,9 @@
 # create an environment to hold original versions of S3 functions we have overridden
 assign(".rs.S3Originals", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 
+# create an environment to hold current S3 overrides
+assign(".rs.S3Overrides", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
+
 if (getRversion() < "3.5") {
    # prior to R 3.5, we can override S3 methods just by installing the override function into the
    # tools:rstudio namespace, which is on the search path
@@ -372,6 +375,10 @@ if (getRversion() < "3.5") {
       if (exists(name, envir = .rs.toolsEnv(), inherits = FALSE)) {
          rm(list = name, envir = .rs.toolsEnv(), inherits = FALSE)
       }
+   })
+
+   .rs.addFunction("reattachS3Overrides", function() {
+      # S3 methods on the search path maintain precedence
    })
 } else {
    # after R 3.5, S3 methods are not discovered on the search path, so we resort to injecting our
@@ -391,6 +398,10 @@ if (getRversion() < "3.5") {
       # ... and inject our own entry
       assign(name, method, envir = table)
 
+      # make a copy in our override table so we can restore when overwritten by e.g. an attached
+      # package
+      assign(name, method, envir = .rs.S3Overrides)
+
       invisible(NULL)
    })
 
@@ -402,7 +413,7 @@ if (getRversion() < "3.5") {
          return(invisible(NULL))
       
       # see if the copy that exists in the methods table is one that we put there.
-      if (!isTRUE(attr(get(name, envir = table), ".rs.S3Override")))
+      if (!isTRUE(attr(get(name, envir = table), ".rs.S3Override", exact = TRUE)))
       {
          # it isn't, so don't touch it. we do this so that changes to the S3 dispatch table that
          # have occurred since the call to .rs.addS3Override are persisted
@@ -421,6 +432,27 @@ if (getRversion() < "3.5") {
          rm(list = name, envir = table)
       }
 
+      # remove from our override table if present
+      if (exists(name, envir = .rs.S3Overrides))
+         rm(list = name, envir = .rs.S3Overrides)
+
       invisible(NULL)
+   })
+
+   # recovers from changes made to the S3 method dispatch table during e.g. package load
+   .rs.addFunction("reattachS3Overrides", function() {
+      # get a list of all of the methods that are currently overridden
+      names <- ls(envir = .rs.S3Overrides)
+      table <- .BaseNamespaceEnv[[".__S3MethodsTable__."]]
+      for (name in names) {
+         if (exists(name, envir = table)) {
+            # retrieve reference to method
+            method = get(name, envir = table)
+
+            # if we didn't put the method there, we've been replaced; reattach our own method. 
+            if (!isTRUE(attr(get(name, envir = table), ".rs.S3Override", exact = TRUE)))
+               .rs.addS3Override(name, get(name, envir = .rs.S3Overrides))
+         }
+      }
    })
 }
