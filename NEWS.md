@@ -30,6 +30,13 @@
 
 * Create PowerPoint presentations with R Markdown
 
+### Package Management
+
+* Specify a primary CRAN URL and secondary CRAN repos from the package preferences pane.
+* Link to a package's primary CRAN page from the packages pane.
+* Configure CRAN repos with a repos.conf configuration file and the r-cran-repos-file option.
+* Suggest additional secondary CRAN repos with the r-cran-repos-url option.
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
