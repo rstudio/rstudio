@@ -66,7 +66,7 @@ public class PlumberAPIPanel extends SatelliteFramePanel<RStudioFrame>
       toolbar.addLeftWidget(refreshButton_);
       
       publishButton_ = new RSConnectPublishButton(
-            RSConnectPublishButton.HOST_SHINY_APP,
+            RSConnectPublishButton.HOST_PLUMBER_API,
             RSConnect.CONTENT_TYPE_NONE, true, null);
       toolbar.addRightWidget(publishButton_);
    }

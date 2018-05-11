@@ -844,6 +844,7 @@ public class RSConnectPublishButton extends Composite
    public final static String HOST_SHINY_APP = "shiny_app";
    public final static String HOST_HTML_PREVIEW = "html_preview";
    public final static String HOST_VIEWER = "viewer";
+   public final static String HOST_PLUMBER_API = "plumber_api";
    
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
