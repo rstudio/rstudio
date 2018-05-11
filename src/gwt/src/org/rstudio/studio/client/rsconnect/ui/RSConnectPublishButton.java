@@ -236,8 +236,7 @@ public class RSConnectPublishButton extends Composite
       String ext = params.getPath() == null ? "" :
             FileSystemItem.getExtensionFromPath(params.getPath()).toLowerCase();
       setContentPath(params.getPath(), "");
-      // TODO (gary) Plumber; do we need to know API_ENTRYPOINT vs. API_FILE here?
-      setContentType(RSConnect.CONTENT_TYPE_API_FILE);
+      setContentType(RSConnect.CONTENT_TYPE_PLUMBER_API);
    }
     
    public void setHtmlPreview(HTMLPreviewResult params)
@@ -304,8 +303,7 @@ public class RSConnectPublishButton extends Composite
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
              contentType == RSConnect.CONTENT_TYPE_APP ||
              contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
-             contentType == RSConnect.CONTENT_TYPE_API_FILE ||
-             contentType == RSConnect.CONTENT_TYPE_API_ENTRYPOINT ||
+             contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
              contentType == RSConnect.CONTENT_TYPE_WEBSITE)
             populateDeployments(true);
          
@@ -506,8 +504,7 @@ public class RSConnectPublishButton extends Composite
             events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                   docPreview_, RSConnect.CONTENT_TYPE_WEBSITE, previous));
           break;
-      case RSConnect.CONTENT_TYPE_API_FILE:
-      case RSConnect.CONTENT_TYPE_API_ENTRYPOINT:
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
          events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
          break;
       default: 
@@ -716,8 +713,7 @@ public class RSConnectPublishButton extends Composite
          return false;
 
       // If publishing to Connect is disabled, then we can't publish APIs
-      if ((contentType_ == RSConnect.CONTENT_TYPE_API_FILE ||
-            contentType_ == RSConnect.CONTENT_TYPE_API_ENTRYPOINT) &&
+      if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
           !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
       {
          return false;
@@ -783,8 +779,7 @@ public class RSConnectPublishButton extends Composite
       // CONTENT_TYPE_APP_SINGLE and their own deployment records; APIs are always deployed
       // via parent path)
       if ((contentType_ == RSConnect.CONTENT_TYPE_APP || 
-            contentType_ == RSConnect.CONTENT_TYPE_API_FILE ||
-            contentType_ == RSConnect.CONTENT_TYPE_API_ENTRYPOINT) &&
+            contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API) &&
           StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) 
          parent = true;
       

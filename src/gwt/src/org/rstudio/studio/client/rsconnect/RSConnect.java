@@ -243,8 +243,7 @@ public class RSConnect implements SessionInitHandler,
                });
             }
             break;
-            case CONTENT_TYPE_API_FILE:
-            case CONTENT_TYPE_API_ENTRYPOINT:
+            case CONTENT_TYPE_PLUMBER_API:
                publishAsCode(event, null, false);
                break;
          }
@@ -370,8 +369,7 @@ public class RSConnect implements SessionInitHandler,
       {
          publishAsCode(event, null, true);
       }
-      else if (input.getContentType() == CONTENT_TYPE_API_FILE ||
-               input.getContentType() == CONTENT_TYPE_API_ENTRYPOINT)
+      else if (input.getContentType() == CONTENT_TYPE_PLUMBER_API)
       {
          if (!input.isConnectUIEnabled())
          {
@@ -387,8 +385,7 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event, String websiteDir, boolean isShiny)
    {
-      boolean isAPI = event.getContentType() == CONTENT_TYPE_API_FILE ||
-                      event.getContentType() == CONTENT_TYPE_API_ENTRYPOINT;
+      boolean isAPI = event.getContentType() == CONTENT_TYPE_PLUMBER_API;
       
       RSConnectPublishSource source = null;
       if (event.getContentType() == CONTENT_TYPE_APP ||
@@ -742,8 +739,7 @@ public class RSConnect implements SessionInitHandler,
          return "Presentation";
       case RSConnect.CONTENT_TYPE_WEBSITE:
          return "Website";
-      case RSConnect.CONTENT_TYPE_API_FILE:
-      case RSConnect.CONTENT_TYPE_API_ENTRYPOINT:
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
          return "API";
       }
       return "Content";
@@ -1139,11 +1135,8 @@ public class RSConnect implements SessionInitHandler,
    // A page in an R Markdown website
    public final static int CONTENT_TYPE_WEBSITE        = 7;
    
-   // Plumber API via plumber.R file
-   public final static int CONTENT_TYPE_API_FILE       = 8;
-   
-   // Plumber API via endpoint.R file
-   public final static int CONTENT_TYPE_API_ENTRYPOINT = 9;
+   // Plumber API
+   public final static int CONTENT_TYPE_PLUMBER_API    = 8;
    
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";

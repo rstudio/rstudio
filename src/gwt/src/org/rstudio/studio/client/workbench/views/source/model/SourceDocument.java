@@ -185,7 +185,5 @@ public class SourceDocument extends JavaScriptObject
    public final static String XT_TEST_SHINYTEST = "test-shinytest";
    public final static String XT_JS_PREVIEWABLE = "js-previewable";
    public final static String XT_SQL_PREVIEWABLE = "sql-previewable";
-   public final static String XT_PLUMBER_PREFIX = "plumber-";
-   public final static String XT_PLUMBER_FILE = "plumber-file";
-   public final static String XT_PLUMBER_ENTRYPOINT = "plumber-entrypoint";
+   public final static String XT_PLUMBER_API = "plumber-api";
 }

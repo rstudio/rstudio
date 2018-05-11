@@ -158,10 +158,25 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   modules::plumber::PlumberFileType plumberType = modules::plumber::plumberTypeFromExtendedType(extendedType);
-
    FilePath plumberPath = module_context::resolveAliasedPath(targetPath);
-   if (plumberType == modules::plumber::PlumberFileType::PlumberEntrypoint)
+   
+   // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect;
+   // won't necessarily have any annotations
+   bool hasEntrypointFile = false;
+   if (plumberPath.stem() == "entrypoint")
+   {
+      hasEntrypointFile = true;
+   }
+   else
+   {
+      // if the folder contains entrypoint.R, use it, even if not the currently loaded file
+      FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.parent();
+      FilePath entryPointPath = searchFolder.complete("entrypoint.R");
+      if (entryPointPath.exists() && !entryPointPath.isDirectory())
+         hasEntrypointFile = true;
+   }
+   
+   if (hasEntrypointFile)
    {
       // entrypoint.R mode operates on the folder
       if (!plumberPath.isDirectory())
@@ -200,13 +215,13 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    if (!isPlumberAttached)
       runCmd = "plumber::";
    
-   if (plumberType == modules::plumber::PlumberFileType::PlumberFile)
+   if (!hasEntrypointFile)
    {
       runCmd.append(R"RCODE(plumb(file=')RCODE");
       runCmd.append(plumberRunPath);
       runCmd.append(R"RCODE(')$run())RCODE");
    } 
-   else if (plumberType == modules::plumber::PlumberFileType::PlumberEntrypoint)
+   else
    {
       runCmd.append(R"RCODE(plumb(dir=')RCODE");
       runCmd.append(plumberRunPath);

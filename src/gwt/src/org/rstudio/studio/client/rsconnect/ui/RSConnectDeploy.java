@@ -1037,8 +1037,7 @@ public class RSConnectDeploy extends Composite
          if (contentType_ == RSConnect.CONTENT_TYPE_APP || 
              contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
              contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT ||
-             contentType_ == RSConnect.CONTENT_TYPE_API_FILE ||
-             contentType_ == RSConnect.CONTENT_TYPE_API_ENTRYPOINT)
+             contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
          {
             // set the app name to the filename
             String appTitle = 
@@ -1063,9 +1062,7 @@ public class RSConnectDeploy extends Composite
       }
       
       ImageResource illustration = null;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP || 
-            contentType_ == RSConnect.CONTENT_TYPE_API_FILE ||
-            contentType_ == RSConnect.CONTENT_TYPE_API_ENTRYPOINT)
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP || contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
          illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());

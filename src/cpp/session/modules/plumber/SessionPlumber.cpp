@@ -30,8 +30,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#define kPlumberTypeDocument "plumber-file"
-#define kPlumberTypeEntrypoint "plumber-entrypoint"
+#define kPlumberApiType "plumber-api"
 
 using namespace rstudio::core;
 
@@ -44,10 +43,11 @@ namespace {
 
 PlumberFileType getPlumberFileType(const FilePath& filePath, const std::string& contents)
 {
-   // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect
+   // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect;
+   // won't necessarily have any annotations
    if (filePath.stem() == "entrypoint")
    {
-      return PlumberFileType::PlumberEntrypoint; 
+      return PlumberFileType::PlumberApi;
    }
    
    // If there's an annotation for a plumber filter, API endpoint, or asset, we declare
@@ -56,7 +56,7 @@ PlumberFileType getPlumberFileType(const FilePath& filePath, const std::string& 
    static const boost::regex rePlumberAnnotation(
          R"(^#['\*]\s*@(get|put|post|filter|assets|use|delete|head|options|patch)\s)");
    return regex_utils::search(contents, rePlumberAnnotation) ? 
-          PlumberFileType::PlumberFile : PlumberFileType::PlumberNone;
+          PlumberFileType::PlumberApi : PlumberFileType::PlumberNone;
 }
 
 std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -69,10 +69,8 @@ std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceD
       {
          case PlumberFileType::PlumberNone:
             return std::string();
-         case PlumberFileType::PlumberFile:
-            return kPlumberTypeDocument;
-         case PlumberFileType::PlumberEntrypoint:
-            return kPlumberTypeEntrypoint;
+         case PlumberFileType::PlumberApi:
+            return kPlumberApiType;
       }
    }
    return std::string();
@@ -181,11 +179,10 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
 
 PlumberFileType plumberTypeFromExtendedType(const std::string& extendedType)
 {
-   if (extendedType == kPlumberTypeDocument)
-      return PlumberFileType::PlumberFile;
-   else if (extendedType == kPlumberTypeEntrypoint)
-      return PlumberFileType::PlumberEntrypoint;
-   return PlumberFileType::PlumberNone;
+   if (extendedType == kPlumberApiType)
+      return PlumberFileType::PlumberApi;
+   else
+      return PlumberFileType::PlumberNone;
 }
 
 Error initialize()

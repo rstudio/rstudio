@@ -32,8 +32,7 @@ namespace plumber {
 enum class PlumberFileType
 {
    PlumberNone,
-   PlumberFile,
-   PlumberEntrypoint
+   PlumberApi
 };
 
 PlumberFileType plumberTypeFromExtendedType(const std::string& extendedType);

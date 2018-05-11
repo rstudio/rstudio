@@ -3838,13 +3838,9 @@ public class Source implements InsertSourceHandler,
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() != null &&
-              activeEditor_.getExtendedFileType()
-                 .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
-             (activeEditor_.getExtendedFileType() == 
-                 SourceDocument.XT_RMARKDOWN) ||
-             (activeEditor_.getExtendedFileType() != null &&
-              activeEditor_.getExtendedFileType().
-                 startsWith(SourceDocument.XT_PLUMBER_PREFIX)));
+              activeEditor_.getExtendedFileType() .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
+              activeEditor_.getExtendedFileType() == SourceDocument.XT_RMARKDOWN ||
+              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API);
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
       {
@@ -3855,7 +3851,7 @@ public class Source implements InsertSourceHandler,
             {
                deployLabel = "Publish Application...";
             }
-            else if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_PLUMBER_PREFIX))
+            else if (activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API)
             {
                deployLabel = "Publish Plumber API..."; 
             }

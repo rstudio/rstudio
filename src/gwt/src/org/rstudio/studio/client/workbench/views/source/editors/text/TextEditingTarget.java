@@ -5097,7 +5097,7 @@ public class TextEditingTarget implements
             runShinyApp();
             return;
          }
-         else if (extendedType_.startsWith(SourceDocument.XT_PLUMBER_PREFIX))
+         else if (extendedType_ == SourceDocument.XT_PLUMBER_API)
          {
             // If the document being sourced in a Plumber file, run the API instead.
             runPlumberAPI();

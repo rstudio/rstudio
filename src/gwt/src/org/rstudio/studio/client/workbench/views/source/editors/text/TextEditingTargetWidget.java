@@ -758,7 +758,7 @@ public class TextEditingTargetWidget
 
    private boolean isPlumberFile()
    {
-      return extendedType_ != null && extendedType_.startsWith(SourceDocument.XT_PLUMBER_PREFIX);      
+      return extendedType_ != null && extendedType_ == SourceDocument.XT_PLUMBER_API;
    }
 
    private boolean isTestFile()
@@ -1198,15 +1198,10 @@ public class TextEditingTargetWidget
                   false // not static
                   );
          }
-         else if (type == SourceDocument.XT_PLUMBER_FILE)
+         else if (type == SourceDocument.XT_PLUMBER_API)
          {
             publishButton_.setContentPath(publishPath, "");
-            publishButton_.setContentType(RSConnect.CONTENT_TYPE_API_FILE);
-         }
-         else if (type == SourceDocument.XT_PLUMBER_ENTRYPOINT)
-         {
-            publishButton_.setContentPath(publishPath, "");
-            publishButton_.setContentType(RSConnect.CONTENT_TYPE_API_ENTRYPOINT);
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_PLUMBER_API);
          }
          else 
          {
