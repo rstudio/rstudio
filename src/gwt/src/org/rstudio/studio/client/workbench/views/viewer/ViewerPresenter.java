@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -69,7 +70,8 @@ public class ViewerPresenter extends BasePresenter
                                         ViewerPreviewRmdEvent.Handler,
                                         ViewerClearedEvent.Handler,
                                         ShinyApplicationStatusEvent.Handler,
-                                        PlumberAPIStatusEvent.Handler
+                                        PlumberAPIStatusEvent.Handler,
+                                        InterruptStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
@@ -137,6 +139,7 @@ public class ViewerPresenter extends BasePresenter
       
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus.addHandler(PlumberAPIStatusEvent.TYPE, this);
+      eventBus.addHandler(InterruptStatusEvent.TYPE, this);
       initializeEvents();
    }
    
@@ -224,7 +227,20 @@ public class ViewerPresenter extends BasePresenter
          runningPlumberAPIParams_ = event.getParams();
       }
    }
-
+   
+   @Override
+   public void onInterruptStatus(InterruptStatusEvent event)
+   {
+      if (runningPlumberAPIParams_ != null)
+      {
+         // Clear Plumber API from viewer pane when API stopped
+         if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
+            return;
+   
+         onViewerClear();
+      }
+   }
+ 
    @Handler
    public void onViewerPopout() { display_.popout(); }
    @Handler
