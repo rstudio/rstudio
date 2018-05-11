@@ -133,6 +133,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       Label nameLabel = new Label("Name:");
       namePanel.add(nameLabel);
       nameTextBox_ = new TextBox();
+      nameTextBox_.setStylePrimaryName(RESOURCES.styles().nameTextBox());
       namePanel.add(nameTextBox_);
       customPanel.add(namePanel);
 
@@ -241,6 +242,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       String customPanel();
       String namePanel();
       String urlTextBox();
+      String nameTextBox();
    }
   
    static interface Resources extends ClientBundle
