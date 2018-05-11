@@ -78,15 +78,6 @@ std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceD
    return std::string();
 }
 
-Error getPlumberCapabilities(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
-{
-   json::Object capsJson;
-   capsJson["installed"] = module_context::isPackageInstalled("plumber");
-   pResponse->setResult(capsJson);
-
-   return Success();
-}
-
 FilePath plumberTemplatePath(const std::string& name)
 {
    return session::options().rResourcesPath().childPath("templates/plumber/" + name);
@@ -206,7 +197,6 @@ Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_plumber_capabilities", getPlumberCapabilities))
       (bind(registerRpcMethod, "create_plumber_api", createPlumberAPI));
 
    return initBlock.execute();

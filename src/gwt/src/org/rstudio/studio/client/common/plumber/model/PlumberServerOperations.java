@@ -21,8 +21,6 @@ import org.rstudio.studio.client.server.Void;
 
 public interface PlumberServerOperations
 {
-   void getPlumberCapabilities(ServerRequestCallback<PlumberCapabilities> requestCallback);
-
    void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback);
    
    void setPlumberViewerType(

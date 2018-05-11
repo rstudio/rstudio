@@ -2226,13 +2226,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_shiny_capabilities", requestCallback);
    }
    
-   @Override
-   public void getPlumberCapabilities(
-         ServerRequestCallback<PlumberCapabilities> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "get_plumber_capabilities", requestCallback);
-   }
-
    public void getRecentHistory(
          long maxItems,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
