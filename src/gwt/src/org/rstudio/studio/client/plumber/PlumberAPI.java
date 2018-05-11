@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
@@ -56,7 +57,8 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
                                    DebugModeChangedEvent.Handler,
                                    RestartStatusEvent.Handler, 
                                    WindowClosedEvent.Handler,
-                                   LaunchPlumberAPIEvent.Handler
+                                   LaunchPlumberAPIEvent.Handler,
+                                   InterruptStatusEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, PlumberAPI> {}
@@ -89,6 +91,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       eventBus_.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus_.addHandler(RestartStatusEvent.TYPE, this);
       eventBus_.addHandler(WindowClosedEvent.TYPE, this);
+      eventBus_.addHandler(InterruptStatusEvent.TYPE, this);
 
       binder.bind(commands, this);
       exportPlumberAPIClosedCallback();
@@ -210,6 +213,16 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       setPlumberViewerType(PlumberViewerType.PLUMBER_VIEWER_BROWSER);
    }
    
+   @Override
+   public void onInterruptStatus(InterruptStatusEvent event)
+   {
+      // If API is stopped via Console, ensure Satellite is closed
+      if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+      {
+            satelliteManager_.closeSatelliteWindow(PlumberAPISatellite.NAME);
+      }
+   }
+    
    private void launchPlumberAPI(final String filePath, final String extendedType)
    {
       String fileDir = filePath.substring(0, filePath.lastIndexOf("/"));
