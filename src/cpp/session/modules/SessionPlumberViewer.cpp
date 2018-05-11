@@ -42,22 +42,10 @@ namespace plumber_viewer {
 
 namespace {
 
-// track a pending Plumber path launch
-FilePath s_pendingPlumberPath;
-
 void enqueueStartEvent(const std::string& url, const std::string& path,
                        int viewerType, int options)
 {
    FilePath plumberPath(path);
-   if (module_context::safeCurrentPath() == plumberPath &&
-       !s_pendingPlumberPath.empty())
-   {
-      // when Plumber starts an app from a anonymous expr (e.g. plumberApp(foo)),
-      // it reports the working directory as the app's "path". We sometimes
-      // know which file on disk this app corresponds to, so inject that now.
-      plumberPath = s_pendingPlumberPath;
-   }
-   s_pendingPlumberPath = FilePath();
 
    // enque the event
    json::Object dataJson;
@@ -246,31 +234,6 @@ Error initPlumberViewerPref(boost::shared_ptr<int> pPlumberViewerType)
    return Success();
 }
  
-void onConsoleInput(const std::string& input)
-{
-   boost::smatch match;
-
-   // capture source commands -- note that this doesn't handle quotes in file
-   // names or attempt to balance quote styles, evaluate expressions, etc.
-   // (it will primarily detect the output of getPlumberRunCmd but we also want
-   // to catch most user-entered source() expressions)
-   if (regex_utils::search(input, match,
-                 boost::regex("source\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)")))
-   {
-      // source commands can result in the execution of Plumber API objects, 
-      // which Plumber doesn't map back to the original file; keep track of 
-      // executions so we can do the mapping ourselves (see comments in 
-      // enqueueStartEvent)
-      s_pendingPlumberPath = FilePath(
-            module_context::resolveAliasedPath(match[1]));
-   }
-   else
-   {
-      // not a source command
-      s_pendingPlumberPath = FilePath();
-   }
-}
-
 } // anonymous namespace
 
 Error initialize()
@@ -287,7 +250,6 @@ Error initialize()
    methodDefViewer.numArgs = 3;
    r::routines::addCallMethod(methodDefViewer);
 
-   events().onConsoleInput.connect(onConsoleInput);
    userSettings().onChanged.connect(bind(onUserSettingsChanged,
                                          pPlumberViewerType));
 
