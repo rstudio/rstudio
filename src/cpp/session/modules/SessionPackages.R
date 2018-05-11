@@ -50,6 +50,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                      .rs.pathPackage(pkgname, quiet=TRUE)),
                               loaded=status)
          .rs.enqueClientEvent("package_status_changed", packageStatus)
+         if (isTRUE(status)) 
+         {
+            # when a package is attached, it can register S3 methods which replace overrides we've
+            # attached manually; take this opportunity to reattach them.
+            .rs.reattachS3Overrides()
+         }
       }
    
    notifyPackageLoaded <- function(pkgname, ...)
