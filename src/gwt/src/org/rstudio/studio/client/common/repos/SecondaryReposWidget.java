@@ -65,7 +65,6 @@ public class SecondaryReposWidget extends Composite
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(6);
-      listBox_.setHeight("90px");
       horizontal.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
