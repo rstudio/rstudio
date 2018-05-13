@@ -224,7 +224,7 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
 
 Error initPlumberViewerPref(boost::shared_ptr<int> pPlumberViewerType)
 {
-   SEXP plumberBrowser = r::options::getOption("plumber.launch.browser");
+   SEXP plumberBrowser = r::options::getOption("plumber.swagger.url");
    *pPlumberViewerType = userSettings().plumberViewerType();
    if (plumberBrowser == R_NilValue)
    {
@@ -250,8 +250,7 @@ Error initialize()
    methodDefViewer.numArgs = 3;
    r::routines::addCallMethod(methodDefViewer);
 
-   userSettings().onChanged.connect(bind(onUserSettingsChanged,
-                                         pPlumberViewerType));
+   userSettings().onChanged.connect(bind(onUserSettingsChanged, pPlumberViewerType));
 
    ExecBlock initBlock;
    initBlock.addFunctions()
