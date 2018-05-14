@@ -1248,7 +1248,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    if (.rs.startsWith(rCranReposUrl, "..") ||
        .rs.startsWith(rCranReposUrl, "/..")) {
-      rCranReposUrl <- paste(cran, rCranReposUrl, sep = "")
+      rCranReposUrl <- .rs.completeUrl(cran, rCranReposUrl)
    }
 
    if (custom) {
