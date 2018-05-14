@@ -250,6 +250,7 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(headerLabel("General"));
       savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
+      savePanel.add(checkboxPref("Restore last cursor position when opening file", prefs_.restoreSourceDocumentCursorPosition()));
 
       Label serializationLabel = headerLabel("Serialization");
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
