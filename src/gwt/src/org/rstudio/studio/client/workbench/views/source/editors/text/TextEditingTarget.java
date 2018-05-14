@@ -1627,7 +1627,8 @@ public class TextEditingTarget implements
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            timer_.schedule(1000);
+            if (prefs_.restoreSourceDocumentCursorPosition().getValue())
+               timer_.schedule(1000);
          }
       });
       
@@ -1636,6 +1637,9 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
+            if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
+               return;
+            
             String cursorPosition = docUpdateSentinel_.getProperty(
                   PROPERTY_CURSOR_POSITION,
                   "");

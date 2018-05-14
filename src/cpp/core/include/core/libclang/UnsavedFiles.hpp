@@ -40,7 +40,7 @@ public:
    void remove(const std::string& filename);
    void removeAll();
 
-   CXUnsavedFile* unsavedFilesArray() { return &(files_[0]); }
+   CXUnsavedFile* unsavedFilesArray() { return files_.data(); }
    unsigned numUnsavedFiles() { return static_cast<unsigned>(files_.size()); }
 
 private:
