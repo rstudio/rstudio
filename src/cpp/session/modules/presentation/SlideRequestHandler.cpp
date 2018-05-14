@@ -1122,7 +1122,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    // return not found if presentation isn't active
    if (!presentation::state::isActive())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -1200,7 +1200,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (!filePath.exists())
       {
-         pResponse->setNotFoundError(request.uri());
+         pResponse->setNotFoundError(request);
          return;
       }
 
@@ -1229,7 +1229,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // make sure the directory exists
       if (!s_presentationHelpDir.exists())
       {
-         pResponse->setNotFoundError(s_presentationHelpDir.absolutePath());
+         pResponse->setNotFoundError(s_presentationHelpDir.absolutePath(), request);
          return;
       }
 

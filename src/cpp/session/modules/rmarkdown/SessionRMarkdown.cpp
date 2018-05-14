@@ -996,7 +996,7 @@ void handleRmdOutputRequest(const http::Request& request,
    size_t pos = path.find('/', 1);
    if (pos == std::string::npos)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -1008,7 +1008,7 @@ void handleRmdOutputRequest(const http::Request& request,
    }
    catch (boost::bad_lexical_cast const&)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return ;
    }
 
@@ -1017,7 +1017,7 @@ void handleRmdOutputRequest(const http::Request& request,
    FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
    if (!outputFilePath.exists())
    {
-      pResponse->setNotFoundError(outputFile);
+      pResponse->setNotFoundError(outputFile, request);
       return;
    }
 

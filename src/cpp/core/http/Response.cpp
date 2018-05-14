@@ -277,8 +277,24 @@ void Response::setError(int statusCode, const std::string& message)
    setBodyUnencoded(string_utils::htmlEscape(message));
 }
 
-void Response::setNotFoundError(const std::string& uri)
+void Response::setNotFoundError(const http::Request& request)
 {
+   if (notFoundHandler_)
+   {
+      notFoundHandler_(request, this);
+      return;
+   }
+   else
+      setError(http::status::NotFound, request.uri() + " not found");
+}
+
+void Response::setNotFoundError(const std::string& uri,
+                                const http::Request& request)
+{
+   // the file this is missing is derived from details in the request,
+   // and is not simply the request uri itself
+   // as this is a special and rare case, do not attempt to handle it with the
+   // not found handler, and simply note which uri was not found
    setError(http::status::NotFound, uri + " not found");
 }
    

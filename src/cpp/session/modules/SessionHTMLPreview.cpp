@@ -929,7 +929,7 @@ void handlePreviewRequest(const http::Request& request,
    // if there isn't a current preview this is an error
    if (!s_pCurrentPreview_)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 

@@ -1,0 +1,165 @@
+body
+{
+    background-color: #e5e6ea;
+    font-family: "Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif;
+    font-size: 12px;
+}
+
+h2
+{
+    font-size: 1.7em;
+}
+
+h3
+{
+    font-size: 1.1em;
+    text-transform: uppercase;
+}
+
+h4
+{
+    border-bottom: 1px solid #989898;
+    margin-top: 0px;
+    padding-bottom: 5px;
+    font-size: 1.1em;
+}
+
+/* do nothing section for modal title
+   the previous h4 section was causing an
+   errant line due to border-bottom */
+h4.modal-title
+{
+    border-bottom: 0px;
+}
+
+a
+{
+    color: #055ece;
+}
+
+body .container 
+{
+   min-width: 750px;
+}
+
+.content-box
+{
+    border: 1px solid #c6c7ca;
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-bottom: 50px;
+    background: linear-gradient(to bottom, #eff0f3 30px, #ffffff 0%);
+    clear: both;
+    min-height: 250px;
+}
+
+.content-box h3
+{
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+
+.content-box table
+{
+    color: #7a7a7a;
+    width: 95%;
+    margin: 15px;
+}
+
+.content-box table th
+{
+    font-weight: normal;
+    padding-left: 10px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #cacaca;
+    white-space: nowrap;
+}
+
+.content-box table td
+{
+    padding-right: 5px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    padding-left: 10px;
+    border-bottom: 1px solid #cacaca;
+    vertical-align: top;
+}
+
+.content-box table td:first-child
+{
+    width: 20px;
+    padding-left: 0px;
+    border-bottom: none;
+}
+
+.content-box table td:nth-child(2)
+{
+    padding-left: 0px;
+}
+
+.content-box table th:first-child
+{
+    color: #000000;
+    font-size: 1.1em;
+    padding-left: 0px;
+}
+
+.content-box table tr
+{
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* 
+ * RStudio Server header
+ */
+
+.header-image
+{
+    float: left; 
+    margin-top: -25px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.logo-image
+{
+    float: left; 
+    margin-top: -15px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+/* 
+ * RStudio Server banner
+ */
+
+.header-box
+{
+    border: 1px solid #c6c7ca;
+    border-radius: 10px;
+    margin-top: 40px;
+    background-color: #eff0f3;
+}
+
+.header-box h2
+{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #6e7fa1;
+}
+
+.username
+{
+    float: right;
+    font-size: 1.1em;
+    margin: 10px;
+    margin-top: 13px;
+}
+
+.username input
+{
+    vertical-align: top;
+    margin-top: -1px;
+}
