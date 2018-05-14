@@ -266,6 +266,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("strip_trailing_whitespace", false);
    }
    
+   public PrefValue<Boolean> restoreSourceDocumentCursorPosition()
+   {
+      return bool("restore_source_document_cursor_position", true);
+   }
+   
    public PrefValue<Boolean> reindentOnPaste()
    {
       return bool("reindent_on_paste", true);
