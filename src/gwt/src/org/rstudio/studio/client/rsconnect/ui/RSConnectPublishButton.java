@@ -84,6 +84,7 @@ public class RSConnectPublishButton extends Composite
    public RSConnectPublishButton(String host, int contentType, boolean showCaption,
          AppCommand boundCommand)
    {
+      host_ = host;
       contentType_ = contentType;
       showCaption_ = showCaption;
       boundCommand_ = boundCommand;
@@ -718,7 +719,13 @@ public class RSConnectPublishButton extends Composite
       {
          return false;
       }
-         
+      
+      // Only show publishing button in editor for Plumber APIs
+      if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API && !StringUtil.equals(host_, HOST_EDITOR))
+      {
+         return false;
+      }
+      
       if (manuallyHidden_)
          return false;
       
@@ -874,6 +881,6 @@ public class RSConnectPublishButton extends Composite
    private Command onPublishInvoked_;
 
    private RSConnectDeploymentRecord defaultRec_;
-   
+   private final String host_;   
    private static boolean anyRmdRenderPending_ = false;
 }
