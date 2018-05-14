@@ -26,6 +26,7 @@
 
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/http/Response.hpp>
 
 namespace rstudio {
 namespace core {
@@ -74,6 +75,8 @@ public:
    virtual void stop() = 0;
    
    virtual void waitUntilStopped() = 0;
+
+   virtual void setNotFoundHandler(const NotFoundHandler& handler) = 0;
 
 };
 

@@ -642,7 +642,7 @@ void handleGraphicsRequest(const http::Request& request,
    {
       std::string errmsg = "invalid graphics uri: " + uri;
       LOG_ERROR_MESSAGE(errmsg);
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return ;
    }
    std::string filename = uri.substr(lastSlashPos+1);
@@ -676,7 +676,7 @@ void handleGraphicsRequest(const http::Request& request,
       else
       {
          // not found error
-         pResponse->setNotFoundError(request.uri());
+         pResponse->setNotFoundError(request);
       }
    }
 }

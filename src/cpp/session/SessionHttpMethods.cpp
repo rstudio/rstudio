@@ -819,7 +819,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    else
    {
       core::http::Response response;
-      response.setNotFoundError(request.uri());
+      response.setNotFoundError(request);
       ptrConnection->sendResponse(response);
    }
 }
