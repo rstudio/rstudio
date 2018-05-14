@@ -216,6 +216,7 @@
    # Fallback Scopes
    fallbackScopes <- list(
       "keyword" = "meta",
+      "keyword.operator" = "keyword",
       "support.type" = "storage.type",
       "variable" = "entity.name.function")
    
@@ -246,7 +247,7 @@
       "gutter" = defaultGlobals$gutter,
       "selection" = .rs.parseColor(globalSettings$selection),
       "step" = defaultGlobals$step,
-      "bracket" = invisColor,
+      "bracket" =  invisColor,
       "active_line" = .rs.parseColor(globalSettings$lineHighlight),
       "cursor" = .rs.parseColor(globalSettings$caret),
       "invisible" = paste0("color:", invisColor, ";"))
@@ -295,7 +296,15 @@
       scope <- fallbackScopes[[i]]
       if (is.null(styles[[name]]) || (styles[[name]] == ""))
       {
-         styles[[name]] <- styles[[scope]]
+         if (is.null(styles[[scope]]) || (styles[[scope]] == ""))
+         {
+            # All fallback elements are foreground for now.
+            styles[[name]] <- paste0("color:", styles$foreground, ";")
+         }
+         else 
+         {
+            styles[[name]] <- styles[[scope]]
+         }
       }
    }
    
@@ -480,13 +489,13 @@
    cssTemplate <- paste0(readLines(conn), collapse ="\n")
    close(conn)
    
-   # Extract style
+   # Extract styles
    name <- tmTheme$name
    if (is.null(name)) name <- ""
    styleRes <- .rs.extractStyles(tmTheme, supportedScopes)
    styles <- styleRes$styles
    unsupportedScopes <- styleRes$unsupportedScopes
-   
+
    # Fill template
    styles$cssClass = paste0("ace-", hyphenate(name))
    styles$uuid <- tmTheme$uuid
@@ -508,7 +517,9 @@
       }
    }
    
-   gsub("[^\\{\\}]+\\{\\s*\\}", "", css, perl = TRUE)
+   list(
+      "theme" = strsplit(gsub("[^\\{\\}]+\\{\\s*\\}", "", css, perl = TRUE), "\n")[[1]],
+      "isDark" = as.logical(styles$isDark))
 })
 
 # TmTheme XML Parsing functions ====================================================================
@@ -759,8 +770,20 @@
 # 
 # @param aceCss      The ace CSS to convert.
 # @param name        The name 
-.rs.addFunction("convertAceTheme", convertAceTheme <- function(aceCss, name, isDark) {
+.rs.addFunction("convertAceTheme", convertAceTheme <- function(name, aceCss, isDark) {
+   source(file.path(.Call("rs_rResourcesPath"), "themes", "compile-themes.R"))
    
+   rsTheme <- .rs.compile_theme(aceCss, isDark)
+   if (length(rsTheme) == 0)
+   {
+      stop(
+         "Unable to convert \"",
+         name,
+         "\" to RStudio theme. Please see above for warnings.",
+         .call = FALSE)
+   }
+   
+   c(paste0("/* rs-theme-name: ", name, " */"), rsTheme)
 })
 
 # Worker Functions =================================================================================
@@ -774,39 +797,101 @@
 # @param force             Whether to force the operation when it may involve an overwrite.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("convertTheme", convertTheme <- function(file, add, outputLocation, apply, force) {
+.rs.addFunction("convertTheme", convertTheme <- function(file, add, outputLocation, apply, force, globally) {
    tmTheme <- .rs.parseTmTheme(file)
    name <- tmTheme$name
    fileName <- basename(file)
    fileName <- paste0(regmatches(fileName, regexpr("[^\\.]*", fileName)), ".rstheme")
    
    aceTheme <- .rs.convertTmTheme(tmTheme)
+   rsTheme <- .rs.convertAceTheme(aceTheme$theme, aceTheme$isDark)
    
+   isTemp <- is.null(outputLocation)
+   location <- if (is.null(outputLocation)) tempfile(pattern = fileName)
+               else file.path(outputLocation, fileName)
+   
+   cat(rsTheme$theme, location)
+
    if (add)
    {
-      .rs.addTheme(name, apply, force)
+      .rs.addTheme(location, apply, force, globally)
    }
    else if (apply)
    {
       stop("Invalid input: unable to apply a theme which has not been added.")
    }
    
-   if (!is.null(outputLocation))
-   {
-      # TODO: copy to outputLocation
-   }
+   invisible(NULL)
 })
 
 # Adds a custom rstheme to RStudio.
 #
-# @param file     The rstheme file to add.
-# @param apply    Whether to immediately apply the newly added theme.
-# @param force    Whether to force the operation when it may involve an overwrite.
+# @param themePath   The full or relative path of the rstheme file to add.
+# @param apply       Whether to immediately apply the newly added theme.
+# @param force       Whether to force the operation when it may involve an overwrite.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", addTheme <- function(file, apply, force, buffer = NULL, name = NULL) {
-   # TODO: add the theme and get the name.
-   name <- ""
+.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, buffer = NULL, name = NULL) {
+   # Get the name of the file without extension.
+   fileName <- regmatches(
+      basename(themePath),
+      regexec(
+         "^([^\\.]*)(?:\\.[^\\.]*)?",
+         basename(themePath),
+         perl = TRUE))[[1]][2]
+   
+   # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
+   # the name of the file.
+   conn <- file(themePath)
+   themeLines <- readLines(conn)
+
+   name <- sub(
+      "^\\s*(.+?)\\s*$",
+      "\\1",
+      regmatches(
+         themeLines,
+         regexec(
+            "rs-themeName:\\s*([^\\*]*)",
+            nameLine,
+            perl = TRUE))[[1]][2],
+      perl = TRUE)
+   
+   # If there's no name in the file, use the name of the file.
+   if (is.na(name)) name <- fileName
+   
+   if (is.na(name))
+   {
+      stop(
+         "Unable to find a name for the new theme. Please check that the file \"",
+         themePath,
+         "\" is valid.")
+   }
+   
+   # Copy the file to the correct location.
+   outputDir <- file.path("~", ".R", "rstudio", "themes")
+   if (!dir.exists(outputDir))
+   {
+      if (!dir.create(outputDir, showWarnings = FALSE, recursive = TRUE))
+      {
+         stop("Unable to create the theme file. Please check file system permissions.")
+      }
+   }
+   
+   if (!file.copy(
+      themePath,
+      file.path(outputDir, paste0(fileName, ".rstheme")),
+      overwrite = force))
+   {
+      msg <- "Unable to create the theme file. Please check file system permissions"
+      if (!force)
+      {
+         msg <- paste0(msg, " or try again with `force = TRUE`")
+      }
+      
+      stop(paste0(msg, "."))
+   }
+   
+   # TODO add theme to list.
    
    if (apply)
    {
@@ -817,12 +902,10 @@
 # Applies a theme to RStudio.
 #
 # @param name     The name of the theme to apply.
-.rs.addFunction("applyTheme", applyTheme <- function(name) {
-   themeList <- .Call("rs_getThemes")
-   
-   if (!(tolower(name) %in% tolower(themeList)))
+.rs.addFunction("applyTheme", applyTheme <- function(name, themeList) {
+   if (is.null(themeList[[name]]))
    {
-      # TODO: error
+      stop("The specified theme \"", name, "\" does not exist.")
    }
    
    .rs.api.writePreference("theme", name);
@@ -832,45 +915,53 @@
 # set to the default theme.
 #
 # @param The name of the theme to remove.
-.rs.addFunction("removeTheme", removeTheme <- function(name) {
-   themeLists <- .Call("rs_getThemes")
+.rs.addFunction("removeTheme", removeTheme <- function(name, themeList, force) {
    currentTheme <- .rs.api.getThemeInfo()$editor
    
-   if (!grepl(name, themeLists, ignore.case = TRUE))
+   if (is.null(themeList[[name]]))
    {
-      # TODO: error
+      stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   if (grepl(name, currentTheme, ignore.case = TRUE))
+   if (grepl(paste0("^", name, "$"), currentTheme, ignore.case = TRUE))
    {
-      applyTheme("TextMate");
+      .rs.applyTheme("TextMate")
    }
-   
-   # TODO: remove theme file
+
+   if (!file.remove(themeList[[name]]$fileName))
+   {
+      if (file.exists(theme[[name]]$fileName))
+      {
+         stop(
+            "Unable to remove the speicified theme \"",
+            name,
+            "\". Please check your file system permissions.")
+      }
+   }
 })
 
 
 # API Functions
 
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
-.rs.addApiFunction("convertTheme", api.convertTheme <- function(file, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE) {
+.rs.addApiFunction("convertTheme", api.convertTheme <- function(file, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
    # Require XML package for parsing the tmtheme files.
    if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
       stop("Taking this action requires the xml2 library. Please run 'install.packages(\"xml2\")' before continuing.")
    }
    
-   .rs.convertTheme(file, add, outputLocation, apply, force)
+   .rs.convertTheme(file, add, outputLocation, apply, force, globally)
 })
 
 # Add a theme to RStudio.
-.rs.addApiFunction("addTheme", api.addTheme <- function(file, apply = FALSE, force = FALSE) {
-   .rs.addTheme(file, apply, force)
+.rs.addApiFunction("addTheme", api.addTheme <- function(file, apply = FALSE, force = FALSE, globally = FALSE) {
+   .rs.addTheme(file, apply, force, globally)
 })
 
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", api.applyTheme <-  function(name) {
-   .rs.applyTheme(name, force)
+   .rs.applyTheme(name)
 })
 
 # Remove a theme from RStudio.()
