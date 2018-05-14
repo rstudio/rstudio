@@ -1014,3 +1014,9 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction("isDesktop", function() {
    identical(.Call("rs_rstudioProgramMode"), "desktop")
 })
+
+# complete url with path
+.rs.addFunction("completeUrl", function(url, path)
+{
+  .Call("rs_completeUrl", url, path)
+})
