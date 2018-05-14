@@ -51,6 +51,7 @@ import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.plumber.model.PlumberServerOperations;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
@@ -78,6 +79,11 @@ import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
+import org.rstudio.studio.client.plumber.PlumberAPI;
+import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
+import org.rstudio.studio.client.plumber.ui.PlumberAPIPanel;
+import org.rstudio.studio.client.plumber.ui.PlumberAPIView;
+import org.rstudio.studio.client.plumber.ui.PlumberAPIWindow;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
@@ -277,7 +283,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
       bind(HTMLPreview.class).in(Singleton.class);      
-      bind(ShinyApplication.class).in(Singleton.class);      
+      bind(ShinyApplication.class).in(Singleton.class);
+      bind(PlumberAPI.class).in(Singleton.class);
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
@@ -310,6 +317,7 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
+      bind(PlumberAPIView.class).to(PlumberAPIWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       
@@ -379,6 +387,7 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
+      bind(PlumberAPIPresenter.Display.class).to(PlumberAPIPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
       
       bind(GlobalDisplay.class)
@@ -413,6 +422,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(ShinyServerOperations.class).to(RemoteServer.class);
+      bind(PlumberServerOperations.class).to(RemoteServer.class);
       bind(RSConnectServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);

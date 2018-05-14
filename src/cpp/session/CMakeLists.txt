@@ -134,6 +134,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPackrat.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
+   modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
    modules/SessionRAddins.cpp
@@ -180,6 +181,7 @@ set (SESSION_SOURCE_FILES
    modules/jobs/Job.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
+   modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp

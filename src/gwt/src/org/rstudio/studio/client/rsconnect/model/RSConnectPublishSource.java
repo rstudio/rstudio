@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishSource.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,16 +23,16 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class RSConnectPublishSource
 {
-   // invoked when publishing Shiny applications
-   public RSConnectPublishSource(String sourceDir, String sourceFile)
+   // invoked when publishing Shiny applications or Plumber APIs
+   public RSConnectPublishSource(String sourceDir, String sourceFile, boolean isAPI)
    {
       sourceFile_ = sourceDir;
       deployFile_ = sourceFile;
       isSelfContained_ = false;
       description_ = null;
       deployDir_ = sourceDir;
-      contentCategory_ = null;
-      isShiny_ = true;
+      contentCategory_ = isAPI ? RSConnect.CONTENT_CATEGORY_API : null;
+      isShiny_ = !isAPI;
       websiteDir_ = null;
       isStatic_ = false;
       isSingleFileShiny_ = sourceDir != sourceFile;

@@ -61,6 +61,8 @@ import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.packages.events.PackageExtensionIndexingCompletedEvent;
+import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
@@ -995,6 +997,11 @@ public class ClientEventDispatcher
          {
             DataOutputResult result = event.getData();
             eventBus_.fireEvent(new DataOutputCompletedEvent(result));
+         }
+         else if (type == ClientEvent.PlumberViewer)
+         {
+            PlumberAPIParams data = event.getData();
+            eventBus_.fireEvent(new PlumberAPIStatusEvent(data, true));
          }
          else
          {

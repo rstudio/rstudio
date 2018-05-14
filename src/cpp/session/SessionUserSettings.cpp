@@ -35,6 +35,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionShinyViewer.hpp"
+#include "modules/SessionPlumberViewer.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -380,6 +381,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
 
+   int plumberViewerType = readPref<int>(prefs, "plumber_viewer_type", modules::plumber_viewer::PLUMBER_VIEWER_WINDOW);
+   pPlumberViewerType_.reset(new int(plumberViewerType));
+
    bool enableRSConnectUI = readPref<bool>(prefs, "enable_rstudio_connect", false);
    pEnableRSConnectUI_.reset(new bool(enableRSConnectUI));
 
@@ -483,6 +487,11 @@ bool UserSettings::handleErrorsInUserCodeOnly() const
 int UserSettings::shinyViewerType() const
 {
    return readUiPref<int>(pShinyViewerType_);
+}
+
+int UserSettings::plumberViewerType() const
+{
+   return readUiPref<int>(pPlumberViewerType_);
 }
 
 bool UserSettings::enableRSConnectUI() const

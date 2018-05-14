@@ -1,7 +1,7 @@
 /*
  * RSConnect.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -243,6 +243,9 @@ public class RSConnect implements SessionInitHandler,
                });
             }
             break;
+            case CONTENT_TYPE_PLUMBER_API:
+               publishAsCode(event, null, false);
+               break;
          }
       }
       else 
@@ -366,30 +369,46 @@ public class RSConnect implements SessionInitHandler,
       {
          publishAsCode(event, null, true);
       }
+      else if (input.getContentType() == CONTENT_TYPE_PLUMBER_API)
+      {
+         if (!input.isConnectUIEnabled())
+         {
+            display_.showErrorMessage("API Not Publishable",
+                     "Publishing to RStudio Connect is disabled in the Publishing options.");
+         }
+         else
+         {
+            publishAsCode(event, null, false);
+         }
+      }
    }
    
-   private void publishAsCode(RSConnectActionEvent event, String websiteDir,
-         boolean isShiny)
+   private void publishAsCode(RSConnectActionEvent event, String websiteDir, boolean isShiny)
    {
+      boolean isAPI = event.getContentType() == CONTENT_TYPE_PLUMBER_API;
+      
       RSConnectPublishSource source = null;
       if (event.getContentType() == CONTENT_TYPE_APP ||
-          event.getContentType() == CONTENT_TYPE_APP_SINGLE)
+          event.getContentType() == CONTENT_TYPE_APP_SINGLE ||
+          isAPI)
       {
          if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
          {
             FileSystemItem rFile = FileSystemItem.createFile(event.getPath());
-            // use the directory for the deployment record when publishing 
-            // directory-based apps; use the file itself when publishing 
+            // use the directory for the deployment record when publishing APIs or
+            // directory-based apps; use the file itself when publishing
             // single-file apps
             source = new RSConnectPublishSource(rFile.getParentPathString(),
-                  event.getContentType() == CONTENT_TYPE_APP ? 
-                        rFile.getParentPathString() :
-                        rFile.getName());
+                  event.getContentType() == CONTENT_TYPE_APP_SINGLE ?
+                        rFile.getName() :
+                        rFile.getParentPathString(),
+                        isAPI);
          }
          else
          {
             source = new RSConnectPublishSource(event.getPath(),
-                  event.getPath());
+                  event.getPath(),
+                  isAPI);
          }
       }
       else
@@ -720,6 +739,8 @@ public class RSConnect implements SessionInitHandler,
          return "Presentation";
       case RSConnect.CONTENT_TYPE_WEBSITE:
          return "Website";
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
+         return "API";
       }
       return "Content";
    }
@@ -1091,29 +1112,33 @@ public class RSConnect implements SessionInitHandler,
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    
    // No/unknown content type 
-   public final static int CONTENT_TYPE_NONE       = 0;
+   public final static int CONTENT_TYPE_NONE           = 0;
    
    // A single HTML file representing a plot
-   public final static int CONTENT_TYPE_PLOT       = 1;
+   public final static int CONTENT_TYPE_PLOT           = 1;
    
    // A document (.Rmd, .md, etc.), 
-   public final static int CONTENT_TYPE_DOCUMENT   = 2;
+   public final static int CONTENT_TYPE_DOCUMENT       = 2;
    
    // A Shiny application
-   public final static int CONTENT_TYPE_APP        = 3;
+   public final static int CONTENT_TYPE_APP            = 3;
    
    // A single-file Shiny application
-   public final static int CONTENT_TYPE_APP_SINGLE = 4;
+   public final static int CONTENT_TYPE_APP_SINGLE     = 4;
    
    // Standalone HTML (from HTML widgets/viewer pane, etc.)
-   public final static int CONTENT_TYPE_HTML       = 5;
+   public final static int CONTENT_TYPE_HTML           = 5;
    
    // A .Rpres presentation
-   public final static int CONTENT_TYPE_PRES       = 6;
+   public final static int CONTENT_TYPE_PRES           = 6;
    
    // A page in an R Markdown website
-   public final static int CONTENT_TYPE_WEBSITE    = 7;
+   public final static int CONTENT_TYPE_WEBSITE        = 7;
+   
+   // Plumber API
+   public final static int CONTENT_TYPE_PLUMBER_API    = 8;
    
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";
+   public final static String CONTENT_CATEGORY_API = "api";
 }
