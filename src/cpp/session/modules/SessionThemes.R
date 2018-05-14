@@ -520,7 +520,7 @@
 # Returns the text value of the element.
 .rs.addFunction("parseKeyElement", parseKeyElement <- function(element) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   key <- toString(xml2::xml_contents(element))
+   key <- xml2::xml_text(element)
    if (key == "")
    {
       stop(
@@ -539,7 +539,7 @@
 # Returns the text value of the element.
 .rs.addFunction("parseStringElement", parseStringElement <- function(element, keyName) {
    parseError <- "Unable to convert the tmtheme to an rstheme."
-   value <- xml2::xml_contents(element)
+   value <- xml2::xml_text(element)
    
    # The key can only be null if there was no <key> element immediately preceding the <string>
    # element in the provided xml. If any <key> element was found (even a <key/>), the key name
@@ -554,7 +554,7 @@
          call. = FALSE)
    }
    
-   toString(value)
+   value
 })
 
 # Recursivley parses a dictionary element from a tmtheme document and raises the correct errors.
@@ -750,7 +750,7 @@
    
    # Skip the plist (root), first child is a <dict>.
    # Intentionally empty key here
-   .rs.parseDictElement(tmThemeDoc[[1]], "")
+   .rs.parseDictElement(xml2::xml_child(tmThemeDoc, 1), "")
 })
 
 # compile-themes Functions =========================================================================

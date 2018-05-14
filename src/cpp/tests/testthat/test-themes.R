@@ -1224,48 +1224,173 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
          "\n")[[1]])
 
    # Expected results
-   active4dCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "active4d.css"))))
-   allHallowsEveCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "all_hallows_eve.css"))))
-   amyCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "amy.css"))))
-   blackboardCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "blackboard.css"))))
-   brillianceBlackCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "brilliance_black.css"))))
-   brillianceDullCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "brilliance_dull.css"))))
-   chromeDevToolsCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "chrome.css"))))
-   cloudsMidnightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "clouds_midnight.css"))))
-   cloudsCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "clouds.css"))))
-   cobaltCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "cobalt.css"))))
-   dawnCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "dawn.css"))))
-   dreamweaverCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "dreamweaver.css"))))
-   eiffelCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "eiffel.css"))))
-   espressoLibreCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "espresso_libre.css"))))
-   gitHubCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "git_hub.css"))))
-   idleCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "idle.css"))))
-   katzenmilchCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "katzenmilch.css"))))
-   kuroirThemeCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "kuroir_theme.css"))))
-   lazyCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "lazy.css"))))
-   magicWBCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "magic_wb_amiga.css"))))
-   merbivoreSoftCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "merbivore_soft.css"))))
-   merbivoreCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "merbivore.css"))))
-   monokaiCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "monokai.css"))))
-   pastelsOnDarkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "pastels_on_dark.css"))))
-   slushAndPoppiesCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "slush_and_poppies.css"))))
-   solarizedDarkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "solarized_dark.css"))))
-   solarizedLightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "solarized_light.css"))))
-   sunburstCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "sunburst.css"))))
-   textmateCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "textmate.css"))))
-   tomorrowNightBlueCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_blue.css"))))
-   tomorrowNightBrightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_bright.css"))))
-   tomorrowNightEightiesCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night_eighties.css"))))
-   tomorrowNightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow_night.css"))))
-   tomorrowCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "tomorrow.css"))))
-   twilightCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "twilight.css"))))
-   vibrantInkCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "vibrant_ink.css"))))
-   xcodeDefaultCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "xcode_default.css"))))
-   zenburnesqueCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "zenburnesque.css"))))
-   iPlasticCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "i_plastic.css"))))
-   idleFingersCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "idle_fingers.css"))))
-   krThemeCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "kr_theme.css"))))
-   monoindustrialCssEx <- parseCss(readLines(file(file.path(inputFileLocation, "acecss", "mono_industrial.css"))))
+   f <- file(file.path(inputFileLocation, "acecss", "active4d.css"))
+   active4dCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "all_hallows_eve.css"))
+   allHallowsEveCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "amy.css"))
+   amyCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "blackboard.css"))
+   blackboardCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "brilliance_black.css"))
+   brillianceBlackCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "brilliance_dull.css"))
+   brillianceDullCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "chrome.css"))
+   chromeDevToolsCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "clouds_midnight.css"))
+   cloudsMidnightCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "clouds.css"))
+   cloudsCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "cobalt.css"))
+   cobaltCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "dawn.css"))
+   dawnCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "dreamweaver.css"))
+   dreamweaverCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "eiffel.css"))
+   eiffelCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "espresso_libre.css"))
+   espressoLibreCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "git_hub.css"))
+   gitHubCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "idle.css"))
+   idleCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "katzenmilch.css"))
+   katzenmilchCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "kuroir_theme.css"))
+   kuroirThemeCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "lazy.css"))
+   lazyCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "magic_wb_amiga.css"))
+   magicWBCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "merbivore_soft.css"))
+   merbivoreSoftCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "merbivore.css"))
+   merbivoreCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "monokai.css"))
+   monokaiCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "pastels_on_dark.css"))
+   pastelsOnDarkCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "slush_and_poppies.css"))
+   slushAndPoppiesCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "solarized_dark.css"))
+   solarizedDarkCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "solarized_light.css"))
+   solarizedLightCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "sunburst.css"))
+   sunburstCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "textmate.css"))
+   textmateCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_blue.css"))
+   tomorrowNightBlueCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_bright.css"))
+   tomorrowNightBrightCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_eighties.css"))
+   tomorrowNightEightiesCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night.css"))
+   tomorrowNightCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
+   tomorrowCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "twilight.css"))
+   twilightCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "vibrant_ink.css"))
+   vibrantInkCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "xcode_default.css"))
+   xcodeDefaultCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "zenburnesque.css"))
+   zenburnesqueCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "i_plastic.css"))
+   iPlasticCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "idle_fingers.css"))
+   idleFingersCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "kr_theme.css"))
+   krThemeCssEx <- parseCss(readLines(f))
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "acecss", "mono_industrial.css"))
+   monoindustrialCssEx <- parseCss(readLines(f))
+   close(f)
    
    # Tests
    expect_true(compareCss(active4dCss, active4dCssEx))
