@@ -15,8 +15,6 @@
 
 #include "DesktopWebProfile.hpp"
 
-#include <QWebEngineUrlRequestInterceptor>
-
 #include <core/system/Environment.hpp>
 
 namespace rstudio {
@@ -28,10 +26,11 @@ class Interceptor : public QWebEngineUrlRequestInterceptor
 {
 public:
    explicit Interceptor(
-         QObject* parent,
+         WebProfile* profile,
          const QUrl& baseUrl,
          const std::string& sharedSecret)
-      : QWebEngineUrlRequestInterceptor(parent),
+      : QWebEngineUrlRequestInterceptor(profile),
+        profile_(profile),
         sharedSecret_(sharedSecret),
         baseUrl_(baseUrl)
    {
@@ -39,6 +38,8 @@ public:
 
    void interceptRequest(QWebEngineUrlRequestInfo& info) override
    {
+      profile_->setResourceType(info.resourceType());
+      
       if (info.requestUrl().authority() == baseUrl_.authority())
       {
          // The shared secret helps the session authenticate that the request actually came from the
@@ -53,6 +54,7 @@ public:
    }
 
 private:
+   WebProfile* profile_;
    std::string sharedSecret_;
    QUrl baseUrl_;
 };
