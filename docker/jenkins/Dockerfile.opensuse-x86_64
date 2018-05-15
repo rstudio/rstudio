@@ -13,6 +13,10 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gcc-c++ \
     git \
     java-1_8_0-openjdk  \
+    libacl-devel \
+    libattr-devel \
+    libcap-devel \
+    libuser-devel \
     libuuid-devel \
     libXcursor-devel \
     libXrandr-devel \
