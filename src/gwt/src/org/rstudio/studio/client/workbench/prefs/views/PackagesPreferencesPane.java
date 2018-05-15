@@ -108,7 +108,7 @@ public class PackagesPreferencesPane extends PreferencesPane
                  
                }
             },
-            false);
+            true);
       
       cranMirrorTextBox_.getTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
       {

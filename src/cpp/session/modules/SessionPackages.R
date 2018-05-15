@@ -1287,3 +1287,24 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom) {
    .rs.getSecondaryRepos(cran, custom)
 })
+
+.rs.addFunction("appendSlashIfNeeded", function(url) {
+   slash <- if (.rs.lastCharacterIs(url, "/")) "" else "/"
+   paste(url, slash, sep = "")
+})
+
+.rs.addJsonRpcHandler("validate_cran_repo", function(url) {
+   packagesFile <- tempfile(fileext = ".gz")
+   
+   tryCatch({
+      download.file(
+         .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz"),
+         packagesFile,
+         quiet = TRUE
+      )
+
+      .rs.scalar(TRUE)
+   }, error = function(e) {
+      .rs.scalar(FALSE)
+   })
+})

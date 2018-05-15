@@ -16,17 +16,22 @@ package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -52,12 +57,14 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    
    public ChooseMirrorDialog(GlobalDisplay globalDisplay,
                              Source mirrorSource,
-                             OperationWithInput<CRANMirror> inputOperation)
+                             OperationWithInput<CRANMirror> inputOperation,
+                             MirrorsServerOperations mirrorOperations)
    {
       super("Retrieving list of CRAN mirrors...", inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
-      enableOkButton(false);
+      mirrorOperations_ = mirrorOperations;
+      progressIndicator_ = addProgressIndicator(false);
    }
 
    @Override
@@ -83,8 +90,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       }
    }
 
-   @Override
-   protected boolean validate(CRANMirror input)
+   private boolean validateSync(CRANMirror input)
    {
       if (input == null)
       {
@@ -95,6 +101,57 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       else
       {
          return true;
+      }
+   }
+
+   @Override
+   protected void validateAsync(CRANMirror input, 
+         OperationWithInput<Boolean> onValidated)
+   {
+      if (!validateSync(input))
+      {
+         onValidated.execute(false);
+         return;
+      }
+      
+      if (input.getHost().equals("Custom"))
+      {
+         progressIndicator_.onProgress("Validating CRAN repo...");
+         
+         mirrorOperations_.validateCranRepo(
+            new ServerRequestCallback<Boolean>()
+            {
+               public void onResponseReceived(Boolean validated)
+               {
+                  progressIndicator_.onCompleted();
+                  
+                  if (!validated)
+                  {
+                     progressIndicator_.onError("The given URL does not appear to be a valid CRAN repo");
+                     onValidated.execute(false);
+                  }
+                  else
+                  {
+                     onValidated.execute(true);
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  progressIndicator_.onCompleted();
+                  
+                  Debug.logError(error);
+                  progressIndicator_.onError(error.getMessage());
+   
+                  onValidated.execute(false);
+               }
+            },
+            input.getURL());
+      }
+      else
+      {
+         onValidated.execute(true);
       }
    }
 
@@ -156,7 +213,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                }
                
                listBox_.setSelectedIndex(0);
-               enableOkButton(true);
             }
             
             // set it into the panel
@@ -180,9 +236,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
             final int kDefaultPanelHeight = 265;
             if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
                panel.setHeight(listBox_.getOffsetHeight() + "px");
-            
-            // set focus   
-            FocusHelper.setFocusDeferred(listBox_);
          }
          
          @Override
@@ -219,5 +272,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    private ArrayList<CRANMirror> mirrors_ = null;
    private ListBox listBox_ = null;
    private TextBox customTextBox_ = null;
-
+   private final MirrorsServerOperations mirrorOperations_;
+   private final ProgressIndicator progressIndicator_;
 }

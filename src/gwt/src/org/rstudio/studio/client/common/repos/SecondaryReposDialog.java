@@ -21,15 +21,18 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.GWT;
@@ -57,10 +60,12 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                boolean cranIsCustom)
    {
       super("Retrieving list of secondary repos...", operation);
-      
+
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;
       cranIsCustom_ = cranIsCustom;
+
+      progressIndicator_ = addProgressIndicator(false);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -82,7 +87,9 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       }
       else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
-         return repos_.get(listBox_.getSelectedIndex());
+         CRANMirror cranMirror = repos_.get(listBox_.getSelectedIndex());
+         cranMirror.setHost("Secondary");
+         return cranMirror;
       }
       else
       {
@@ -92,14 +99,15 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
    @Inject
    void initialize(GlobalDisplay globalDisplay,
-                   SecondaryReposServerOperations server)
+                   SecondaryReposServerOperations server,
+                   MirrorsServerOperations mirrorOperations)
    {
       globalDisplay_ = globalDisplay;
       secondaryReposServer_ = server;
+      mirrorOperations_ = mirrorOperations;
    }
 
-   @Override
-   protected boolean validate(CRANMirror input)
+   protected boolean validateSync(CRANMirror input)
    {
       if (input == null)
       {
@@ -107,16 +115,65 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                          "Please select or input a CRAN repo");
          return false;
       }
-      
-      
+
       if (excluded_.contains(input.getName()))
       {
-         globalDisplay_.showErrorMessage("Error", 
+         globalDisplay_.showErrorMessage("Error",
                "The repo " + input.getName() + " is already included");
          return false;
       }
-      
+
       return true;
+   }
+
+   @Override
+   protected void validateAsync(CRANMirror input,
+                                OperationWithInput<Boolean> onValidated)
+   {
+      if (!validateSync(input))
+      {
+         onValidated.execute(false);
+         return;
+      }
+
+      if (input.getHost().equals("Custom"))
+      {
+         progressIndicator_.onProgress("Validating CRAN repo...");
+
+         mirrorOperations_.validateCranRepo(new ServerRequestCallback<Boolean>()
+         {
+            public void onResponseReceived(Boolean validated)
+            {
+               progressIndicator_.onCompleted();
+
+               if (!validated)
+               {
+                  progressIndicator_.onError(
+                        "The given URL does not appear to be a valid CRAN repo");
+                  onValidated.execute(false);
+               }
+               else
+               {
+                  onValidated.execute(true);
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               progressIndicator_.onCompleted();
+
+               Debug.logError(error);
+               progressIndicator_.onError(error.getMessage());
+
+               onValidated.execute(false);
+            }
+         }, input.getURL());
+      }
+      else
+      {
+         onValidated.execute(true);
+      }
    }
 
    @Override
@@ -149,33 +206,34 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       reposLabel_.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(reposLabel_);
 
-      panel_ = new SimplePanelWithProgress(
-         ProgressImages.createLargeGray());
+      panel_ = new SimplePanelWithProgress(ProgressImages.createLargeGray());
       root.add(panel_);
 
       panel_.setStylePrimaryName(RESOURCES.styles().mainWidget());
-         
+
       // show progress (with delay)
       panel_.showProgress(200);
       showPanel(false);
-      
-      // query data source for packages
-      secondaryReposServer_.getSecondaryRepos(new SimpleRequestCallback<SecondaryReposResult>() {
 
-         @Override 
+      // query data source for packages
+      secondaryReposServer_.getSecondaryRepos(new SimpleRequestCallback<SecondaryReposResult>()
+      {
+
+         @Override
          public void onResponseReceived(SecondaryReposResult result)
-         {   
+         {
             if (!StringUtil.isNullOrEmpty(result.getError()))
             {
-               globalDisplay_.showErrorMessage("Error", result.getError());
+               globalDisplay_.showErrorMessage("Error",
+                     result.getError());
                setText("Add Secondary Repo");
                return;
             }
 
             JsArray<CRANMirror> repos = result.getRepos();
-            // keep internal list of mirrors 
+            // keep internal list of mirrors
             repos_ = new ArrayList<CRANMirror>(repos.length());
-            
+
             // create list box and select default item
             listBox_ = new ListBox();
             listBox_.setMultipleSelect(false);
@@ -187,15 +245,20 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                {
                   CRANMirror repo = repos.get(i);
                   
-                  String mainRepoUrl = repo.getURL();
-                  if (mainRepoUrl.length() > 0 &&
-                     repo.getURL().charAt(mainRepoUrl.length() - 1) != '/') {
-                     mainRepoUrl = mainRepoUrl + "/";
+                  String repoUrl = repo.getURL();
+                  if (repoUrl.length() > 0 &&
+                      cranRepoUrl_.length() > 0) {
+                      char mainEnd = cranRepoUrl_.charAt(cranRepoUrl_.length() - 1);
+                      char repoEnd = repo.getURL().charAt(repoUrl.length() - 1);
+                      if (mainEnd == '/' && repoEnd != '/')
+                         repoUrl = repoUrl + "/";
+                      else if (mainEnd != '/' && repoEnd == '/')
+                         repoUrl = repoUrl.substring(0, repoUrl.length() - 1);
                   }
-
+                  
                   if (!StringUtil.isNullOrEmpty(repo.getName()) &&
                       !repo.getName().toLowerCase().equals("cran") &&
-                      !mainRepoUrl.equals(cranRepoUrl_))
+                      !repoUrl.equals(cranRepoUrl_))
                   {
                      repos_.add(repo);
                      listBox_.addItem(repo.getName(), repo.getURL());
@@ -210,19 +273,19 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             panel_.setWidget(listBox_);
             
             setText("Add Secondary Repo");
-          
+
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
                @Override
                public void onDoubleClick(DoubleClickEvent event)
                {
-                  clickOkButton();              
+                  clickOkButton();
                }
             });
             
             final int kDefaultPanelHeight = 265;
             if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
                panel_.setHeight(listBox_.getOffsetHeight() + "px");
-            
+
             FocusHelper.setFocusDeferred(listBox_);
          }
          
@@ -233,7 +296,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             super.onError(error);
          }
       }, cranRepoUrl_, cranIsCustom_);
-      
+
       return root;
    }
 
@@ -251,14 +314,15 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       String urlTextBox();
       String nameTextBox();
    }
-  
+
    static interface Resources extends ClientBundle
    {
       @Source("SecondaryReposDialog.css")
       Styles styles();
    }
    
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   static Resources RESOURCES = (Resources) GWT.create(Resources.class);
+   
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
@@ -276,4 +340,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
    private Label reposLabel_;
    private SimplePanelWithProgress panel_;
+
+   private MirrorsServerOperations mirrorOperations_;
+   private ProgressIndicator progressIndicator_;
 }
