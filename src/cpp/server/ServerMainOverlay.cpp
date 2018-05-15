@@ -31,6 +31,11 @@ Error startup()
    return Success();
 }
 
+Error reloadConfiguration()
+{
+   return Success();
+}
+
 void shutdown()
 {
 }
