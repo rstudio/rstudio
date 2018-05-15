@@ -2577,6 +2577,8 @@ public class Source implements InsertSourceHandler,
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
          docType = FileTypeRegistry.R;
+      else if (event.getType() == NewDocumentWithCodeEvent.SQL)
+         docType = FileTypeRegistry.SQL;
       else
          docType = FileTypeRegistry.RMARKDOWN;
       

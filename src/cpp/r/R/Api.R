@@ -496,6 +496,13 @@
    .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
 })
 
+.rs.addApiFunction("documentNew", function(type, code) {
+   .rs.enqueClientEvent("new_document_with_code", list(
+      type = .rs.scalar(type),
+      code = .rs.scalar(code)
+   ))
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE

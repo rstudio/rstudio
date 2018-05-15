@@ -2,7 +2,7 @@
 /*
  * NewDocumentWithCodeEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,18 +17,43 @@ package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class NewDocumentWithCodeEvent 
    extends GwtEvent<NewDocumentWithCodeEvent.Handler>
 {
+   public final static String SQL = "sql";
    public final static String R_SCRIPT = "r_script";
    public final static String R_NOTEBOOK = "r_notebook";
    
    public interface Handler extends EventHandler
    {
       void onNewDocumentWithCode(NewDocumentWithCodeEvent e);
+   }
+
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() 
+      {
+      }
+      
+      public final native String type() /*-{
+         return this.type;
+      }-*/;
+
+      public final native String code() /*-{
+         return this.code;
+      }-*/;
+   }
+
+   public NewDocumentWithCodeEvent(Data data)
+   {
+      type_ = data.type();
+      code_ = data.code();
+      cursorPosition_ = SourcePosition.create(0, 0);
+      execute_ = false;
    }
    
    public NewDocumentWithCodeEvent(String type,
