@@ -245,15 +245,20 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                {
                   CRANMirror repo = repos.get(i);
                   
-                  String mainRepoUrl = repo.getURL();
-                  if (mainRepoUrl.length() > 0 &&
-                     repo.getURL().charAt(mainRepoUrl.length() - 1) != '/') {
-                     mainRepoUrl = mainRepoUrl + "/";
+                  String repoUrl = repo.getURL();
+                  if (repoUrl.length() > 0 &&
+                      cranRepoUrl_.length() > 0) {
+                      char mainEnd = cranRepoUrl_.charAt(cranRepoUrl_.length() - 1);
+                      char repoEnd = repo.getURL().charAt(repoUrl.length() - 1);
+                      if (mainEnd == '/' && repoEnd != '/')
+                         repoUrl = repoUrl + "/";
+                      else if (mainEnd != '/' && repoEnd == '/')
+                         repoUrl = repoUrl.substring(0, repoUrl.length() - 1);
                   }
                   
                   if (!StringUtil.isNullOrEmpty(repo.getName()) &&
                       !repo.getName().toLowerCase().equals("cran") &&
-                      !mainRepoUrl.equals(cranRepoUrl_))
+                      !repoUrl.equals(cranRepoUrl_))
                   {
                      repos_.add(repo);
                      listBox_.addItem(repo.getName(), repo.getURL());
