@@ -293,10 +293,6 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    {
       return true;
    }
-   else if (isSubFrame)
-   {
-      return true;
-   }
    else
    {
       bool navigated = false;
@@ -312,7 +308,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       {
          return true;
       }
-      else
+      else if (!isSubFrame)
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
