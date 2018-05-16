@@ -5368,13 +5368,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, new Command() {
-               @Override
-               public void execute()
-               {
-                  sqlHelper_.previewSql(TextEditingTarget.this);
-               }
-            });
+            sqlHelper_.previewSql(TextEditingTarget.this);
          }
       }); 
    }
