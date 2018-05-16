@@ -44,7 +44,10 @@
    # remove comments since some drivers might not support them
    statement <- gsub("--[^\n]*\n+", "", statement)
 
-   data <- DBI::dbGetQuery(conn, statement = statement, ...)
+   # fetch at most 100 records as a preview
+   rs <- DBI::dbSendQuery(conn, statement = statement, ...)
+   data <- DBI::dbFetch(rs, n = 100)
+   DBI::dbClearResult(rs)
 
    .rs.previewDataFrame(data, script)
 })
