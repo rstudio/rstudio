@@ -2607,6 +2607,10 @@ public class Source implements InsertSourceHandler,
                         commands_.executeToCurrentLine().execute();
                         commands_.activateSource().execute();
                      }
+                     else if (docType.equals(FileTypeRegistry.SQL))
+                     {
+                        commands_.previewSql().execute();
+                     }
                      else
                      {
                         commands_.executePreviousChunks().execute();

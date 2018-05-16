@@ -46,14 +46,26 @@ public class NewDocumentWithCodeEvent
       public final native String code() /*-{
          return this.code;
       }-*/;
+
+      public final native int row() /*-{
+         return this.row;
+      }-*/;
+
+      public final native int column() /*-{
+         return this.column;
+      }-*/;
+
+      public final native boolean execute() /*-{
+         return this.execute;
+      }-*/;
    }
 
    public NewDocumentWithCodeEvent(Data data)
    {
       type_ = data.type();
       code_ = data.code();
-      cursorPosition_ = SourcePosition.create(0, 0);
-      execute_ = false;
+      cursorPosition_ = SourcePosition.create(data.row(), data.column());
+      execute_ = data.execute();
    }
    
    public NewDocumentWithCodeEvent(String type,
