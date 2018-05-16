@@ -157,7 +157,11 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    QMenu* menu = new QMenu(this);
    const auto& data = webPage()->contextMenuData();
    
-   if (data.selectedText().isEmpty())
+   bool canNavigateHistory =
+         webPage()->history()->canGoBack() ||
+         webPage()->history()->canGoForward();
+   
+   if (data.selectedText().isEmpty() && canNavigateHistory)
    {
       auto* back = menu->addAction(tr("&Back"), [&]() {
          webPage()->history()->back();
