@@ -497,6 +497,13 @@
 })
 
 .rs.addApiFunction("documentNew", function(type, code, row = 0, column= 0, execute = FALSE) {
+   type <- switch(
+      type,
+      rmarkdown = "r_markdown",
+      sql = "sql",
+      "r_script"
+   )
+
    .rs.enqueClientEvent("new_document_with_code", list(
       type = .rs.scalar(type),
       code = .rs.scalar(code),
