@@ -504,6 +504,8 @@
       column = .rs.scalar(column),
       execute = .rs.scalar(execute)
    ))
+
+   invisible(NULL)
 })
 
 .rs.addApiFunction("getConsoleHasColor", function(name) {
