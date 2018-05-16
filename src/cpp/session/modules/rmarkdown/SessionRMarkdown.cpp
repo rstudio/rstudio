@@ -13,6 +13,8 @@
  *
  */
 
+#include "session-config.h"
+
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
@@ -414,6 +416,9 @@ private:
          environment.push_back(std::make_pair("RMARKDOWN_PREVIEW_DIR", tempDir));
       else
          LOG_ERROR(error);
+
+      // pass along the RSTUDIO_VERSION
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", RSTUDIO_VERSION));
 
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
