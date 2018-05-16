@@ -2587,12 +2587,12 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            newDoc(docType,  
-                  new ResultCallback<EditingTarget, ServerError>() {
+            newDoc(docType,
+                   event.getCode(),
+                   new ResultCallback<EditingTarget, ServerError>() {
                public void onSuccess(EditingTarget arg)
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
-                  editingTarget.insertCode(event.getCode(), false);
                   
                   if (event.getCursorPosition() != null)
                   {
