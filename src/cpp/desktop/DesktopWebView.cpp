@@ -23,6 +23,7 @@
 
 #include <QWebEngineContextMenuData>
 #include <QWebEngineSettings>
+#include <QWebEngineHistory>
 
 #include <core/system/Environment.hpp>
 
@@ -155,7 +156,22 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
    QMenu* menu = new QMenu(this);
    const auto& data = webPage()->contextMenuData();
- 
+   
+   if (data.selectedText().isEmpty())
+   {
+      auto* back = menu->addAction(tr("&Back"), [&]() {
+         webPage()->history()->back();
+      });
+      back->setEnabled(webPage()->history()->canGoBack());
+
+      auto* forward = menu->addAction(tr("&Forward"), [&]() {
+         webPage()->history()->forward();
+      });
+      forward->setEnabled(webPage()->history()->canGoForward());
+      
+      menu->addSeparator();
+   }
+   
    if (data.mediaUrl().isValid())
    {
       switch (data.mediaType())

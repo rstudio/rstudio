@@ -42,7 +42,8 @@ public class DefaultCRANMirror
    {
       new ChooseMirrorDialog(globalDisplay_, 
                              mirrorDS_, 
-                             onChosen).showModal();
+                             onChosen,
+                             server_).showModal();
    }
    
    public void configure(final Command onConfigured)
@@ -66,7 +67,8 @@ public class DefaultCRANMirror
                       }
                   });             
              }
-           }).showModal();
+           },
+         server_).showModal();
    }
    
    private final MirrorsServerOperations server_;

@@ -17,6 +17,7 @@
 #define RSTUDIO_DESKTOP_WEB_PROFILE_HPP
 
 #include <QWebEngineProfile>
+#include <QWebEngineUrlRequestInfo>
 #include <QWebEngineUrlRequestInterceptor>
 
 namespace rstudio {
@@ -29,9 +30,13 @@ class WebProfile : public QWebEngineProfile
 public:
    explicit WebProfile(const QUrl& baseUrl, QObject* parent = nullptr);
    void setBaseUrl(const QUrl& baseUrl);
+   
+   void setResourceType(QWebEngineUrlRequestInfo::ResourceType resourceType) { resourceType_ = resourceType; }
+   QWebEngineUrlRequestInfo::ResourceType resourceType() { return resourceType_; }
 
 private:
    QScopedPointer<QWebEngineUrlRequestInterceptor> interceptor_;
+   QWebEngineUrlRequestInfo::ResourceType resourceType_;
    std::string sharedSecret_;
 };
 

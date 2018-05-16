@@ -5465,6 +5465,20 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void validateCranRepo(ServerRequestCallback<Boolean> callback,
+                                String cranRepoUrl)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(cranRepoUrl));
+
+      sendRequest(RPC_SCOPE,
+                  VALIDATE_CRAN_REPO,
+                  params,
+                  true,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private String userHomePath_;
@@ -5904,4 +5918,5 @@ public class RemoteServer implements Server
    private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
+   private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
 }

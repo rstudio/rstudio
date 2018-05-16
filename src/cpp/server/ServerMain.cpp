@@ -72,6 +72,7 @@ namespace overlay {
 
 Error initialize();
 Error startup();
+Error reloadConfiguration();
 void shutdown();
 
 } // namespace overlay
@@ -251,6 +252,10 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
+void reloadConfiguration()
+{
+   overlay::reloadConfiguration();
+}
 
 // bogus SIGCHLD handler (never called)
 void handleSIGCHLD(int)
@@ -279,6 +284,8 @@ Error waitForSignals()
    sigaddset(&wait_mask, SIGINT);
    sigaddset(&wait_mask, SIGQUIT);
    sigaddset(&wait_mask, SIGTERM);
+   sigaddset(&wait_mask, SIGHUP);
+
    result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
@@ -324,6 +331,12 @@ Error waitForSignals()
 
          // re-raise the signal
          ::kill(::getpid(), sig);
+      }
+
+      // SIGHUP
+      else if (sig == SIGHUP)
+      {
+         reloadConfiguration();
       }
 
       // Unexpected signal
