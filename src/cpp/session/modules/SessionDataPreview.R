@@ -41,6 +41,9 @@
       statement <- paste(readLines(script), collapse = "\n")
    }
 
+   # remove comments since some drivers might not support them
+   statement <- gsub("--[^\n]*\n+", "", statement)
+
    data <- DBI::dbGetQuery(conn, statement = statement, ...)
 
    .rs.previewDataFrame(data, script)
