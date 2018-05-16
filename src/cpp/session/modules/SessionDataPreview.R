@@ -29,6 +29,8 @@
    )
 
    .rs.enqueClientEvent("data_output_completed", preview)
+
+   invisible(NULL)
 })
 
 .rs.addFunction("previewSql", function(conn, statement, ...)
