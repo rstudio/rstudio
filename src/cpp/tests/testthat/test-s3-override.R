@@ -62,8 +62,9 @@ test_that("s3 overrides persist after package loads", {
    table <- .BaseNamespaceEnv[[".__S3MethodsTable__."]]
    assign("range.test_pkg", after, envir = table)
 
-   # confirm that we're now using the "package" version
-   expect_equal(after(foo), range(foo))
+   # confirm that we're now using the "package" version (this will only happen in R >= 3.5)
+   if (getRversion() >= "3.5")
+      expect_equal(after(foo), range(foo))
 
    # reattach override and confirm the "before" version is restored
    .rs.reattachS3Overrides()

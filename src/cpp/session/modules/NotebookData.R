@@ -123,17 +123,12 @@
     print(as.data.frame(head(x, n)))
   })
 
-  assign(
-    "print.knitr_kable",
-    function(x, ...) {
-      print(
-        knitr::asis_output(x)
-      )
-
-      invisible(x)
-    },
-    envir = as.environment("tools:rstudio")
-  )
+  .rs.addS3Override("print.knitr_kable", function(x, ...) {
+    print(
+      knitr::asis_output(x)
+    )
+    invisible(x)
+  })
 })
 
 .rs.addFunction("releaseDataCapture", function()
@@ -151,10 +146,7 @@
   lapply(names(overrides), function(override) {
     .rs.removeS3Override(override)
   })
-  rm(list = "print.knitr_kable",
-     envir = as.environment("tools:rstudio"),
-     inherits = FALSE
-  )   
+  .rs.removeS3Override("print.knitr_kable")
 })
 
 .rs.addFunction("readDataCapture", function(path)

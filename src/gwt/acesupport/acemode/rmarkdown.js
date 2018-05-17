@@ -36,6 +36,8 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
 var CFoldMode = require("ace/mode/folding/cstyle").FoldMode;
 
+var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
+
 var Utils = require("mode/utils");
 var unicode = require("ace/unicode");
 
