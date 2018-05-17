@@ -4323,12 +4323,10 @@ public class RemoteServer implements Server
 
    @Override
    public void getPlumberRunCmd(String plumberFile, 
-                                String extendedType,
                                 ServerRequestCallback<PlumberRunCmd> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(plumberFile));
-      params.set(1, new JSONString(extendedType));
       sendRequest(RPC_SCOPE,
             GET_PLUMBER_RUN_CMD,
             params,

@@ -5226,7 +5226,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            events_.fireEvent(new LaunchPlumberAPIEvent(getPath(), getExtendedFileType()));
+            events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
          }
       }, "Run Plumber API");
    }

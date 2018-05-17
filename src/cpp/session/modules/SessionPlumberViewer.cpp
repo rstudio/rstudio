@@ -123,8 +123,8 @@ void onUserSettingsChanged(boost::shared_ptr<int> pPlumberViewerType)
 Error getPlumberRunCmd(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   std::string targetPath, extendedType;
-   Error error = json::readParams(request.params, &targetPath, &extendedType);
+   std::string targetPath;
+   Error error = json::readParams(request.params, &targetPath);
    if (error)
       return error;
 

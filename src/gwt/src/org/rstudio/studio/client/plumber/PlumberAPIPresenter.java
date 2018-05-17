@@ -14,16 +14,14 @@
  */
 package org.rstudio.studio.client.plumber;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -52,17 +50,11 @@ public class PlumberAPIPresenter implements
                               GlobalDisplay globalDisplay,
                               Binder binder,
                               final Commands commands,
-                              EventBus eventBus,
-                              Satellite satellite,
-                              Session session,
-                              UIPrefs prefs)
+                              Satellite satellite)
    {
       view_ = view;
       satellite_ = satellite;
-      events_ = eventBus;
       globalDisplay_ = globalDisplay;
-      session_ = session;
-      prefs_ = prefs;
       
       binder.bind(commands, this);  
       
@@ -78,12 +70,11 @@ public class PlumberAPIPresenter implements
    @Override
    public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
    {
-      if (event.getParams().getState() == PlumberAPIParams.STATE_RELOADING)
+      if (StringUtil.equals(event.getParams().getState(), PlumberAPIParams.STATE_RELOADING))
       {
          view_.reloadApp();
       }
    }
-   
 
    @Handler
    public void onReloadPlumberAPI()
@@ -124,9 +115,7 @@ public class PlumberAPIPresenter implements
       PlumberAPIParams params = PlumberAPIParams.create(
             params_.getPath(), 
             params_.getUrl(), 
-            appStopped_ ?
-               PlumberAPIParams.STATE_STOPPED :
-               PlumberAPIParams.STATE_STOPPING);
+            PlumberAPIParams.STATE_STOPPING);
       notifyPlumberAPIClosed(params);
    }
    
@@ -145,12 +134,6 @@ public class PlumberAPIPresenter implements
 
    private final Display view_;
    private final Satellite satellite_;
-   private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
-   private final Session session_;
-   private final UIPrefs prefs_;
-   
    private PlumberAPIParams params_;
-   private boolean appStopped_ = false;
-   private boolean popoutToBrowser_ = false;
 }

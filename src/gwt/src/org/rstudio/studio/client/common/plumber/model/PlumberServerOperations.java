@@ -25,6 +25,5 @@ public interface PlumberServerOperations
    
    void getPlumberRunCmd(
                String plumberFile,
-               String extendedType,
                ServerRequestCallback<PlumberRunCmd> requestCallback);
 }

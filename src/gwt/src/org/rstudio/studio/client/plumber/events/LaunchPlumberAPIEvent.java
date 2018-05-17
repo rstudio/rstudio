@@ -36,20 +36,14 @@ public class LaunchPlumberAPIEvent
    {
    }
    
-   public LaunchPlumberAPIEvent(String path, String extendedType)
+   public LaunchPlumberAPIEvent(String path)
    {
       path_ = path;
-      extendedType_ = extendedType;
    }
    
    public String getPath()
    {
       return path_;
-   }
-   
-   public String getExtendedType()
-   {
-      return extendedType_;
    }
    
    @Override
@@ -65,5 +59,4 @@ public class LaunchPlumberAPIEvent
    }
    
    private String path_;
-   private String extendedType_;
 }
