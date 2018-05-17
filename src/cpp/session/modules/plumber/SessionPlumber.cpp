@@ -41,20 +41,13 @@ namespace plumber {
 
 namespace {
 
-PlumberFileType getPlumberFileType(const FilePath& filePath, const std::string& contents)
+PlumberFileType getPlumberFileType(const std::string& contents)
 {
-   // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect;
-   // won't necessarily have any annotations
-   if (filePath.stem() == "entrypoint")
-   {
-      return PlumberFileType::PlumberApi;
-   }
-   
    // If there's an annotation for a plumber filter, API endpoint, or asset, we declare
    // this to be a plumber file. We don't care about details or fully checking syntax, just enough
    // to enable plumber-specific functionality.
    static const boost::regex rePlumberAnnotation(
-         R"(^#['\*]\s*@(get|put|post|filter|assets|use|delete|head|options|patch)\s)");
+         R"(^#\*\s*@(get|put|post|filter|assets|use|delete|head|options|patch)\s)");
    return regex_utils::search(contents, rePlumberAnnotation) ? 
           PlumberFileType::PlumberApi : PlumberFileType::PlumberNone;
 }
@@ -63,8 +56,7 @@ std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceD
 {
    if (!pDoc->path().empty() && pDoc->isRFile())
    {
-      FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      PlumberFileType type = getPlumberFileType(filePath, pDoc->contents());
+      PlumberFileType type = getPlumberFileType(pDoc->contents());
       switch(type)
       {
          case PlumberFileType::PlumberNone:

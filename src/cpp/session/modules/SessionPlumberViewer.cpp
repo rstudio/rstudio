@@ -148,22 +148,23 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
 
    FilePath plumberPath = module_context::resolveAliasedPath(targetPath);
    
-   // filename "entrypoint.R" has special meaning when running locally or publishing to rsConnect;
-   // won't necessarily have any annotations
+   // Existence of "entrypoint.R" requires a different form of Plumber run command
    bool hasEntrypointFile = false;
-   if (plumberPath.stem() == "entrypoint")
+   FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.parent();
+   std::vector<FilePath> children;
+   error = searchFolder.children(&children);
+   if (error)
+      return error;
+
+   for (const auto& child : children)
    {
-      hasEntrypointFile = true;
-   }
-   else
-   {
-      // if the folder contains entrypoint.R, use it, even if not the currently loaded file
-      FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.parent();
-      FilePath entryPointPath = searchFolder.complete("entrypoint.R");
-      if (entryPointPath.exists() && !entryPointPath.isDirectory())
+      if (!child.isDirectory() && string_utils::toLower(child.filename()) == "entrypoint.r")
+      {
          hasEntrypointFile = true;
+         break;
+      }
    }
-   
+
    if (hasEntrypointFile)
    {
       // entrypoint.R mode operates on the folder
