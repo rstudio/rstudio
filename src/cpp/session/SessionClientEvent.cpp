@@ -189,7 +189,8 @@ const int kJobUpdated = 170;
 const int kJobRefresh = 171;
 const int kJobOutput = 172;
 const int kDataOutputCompleted = 173;
-const int kPlumberViewer = 174;
+const int kNewDocumentWithCode = 174;
+const int kPlumberViewer = 175;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -523,6 +524,8 @@ std::string ClientEvent::typeName() const
          return "job_output";
       case client_events::kDataOutputCompleted:
          return "data_output_completed";
+      case client_events::kNewDocumentWithCode:
+         return "new_document_with_code";
       case client_events::kPlumberViewer:
          return "plumber_viewer";
       default:
