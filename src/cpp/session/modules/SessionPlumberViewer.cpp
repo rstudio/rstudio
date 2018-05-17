@@ -177,29 +177,8 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
             plumberPath);
 
    // check to see if Plumber is attached to the search path
-   bool isPlumberAttached = false;
-   SEXP namespaces = R_NilValue;
-   r::sexp::Protect protect;
-   error = r::exec::RFunction("search").call(&namespaces, &protect);
-   if (error)
-   {
-      // not fatal; we'll just presume Plumber is not on the path
-      LOG_ERROR(error);
-   }
-   else
-   {
-      int len = r::sexp::length(namespaces);
-      for (int i = 0; i < len; i++)
-      {
-         std::string ns = r::sexp::safeAsString(STRING_ELT(namespaces, i), "");
-         if (ns == "package:plumber") 
-         {
-            isPlumberAttached = true;
-            break;
-         }
-      }
-   }
-
+   bool isPlumberAttached = r::util::isPackageAttached("plumber");
+   
    std::string runCmd;
    if (!isPlumberAttached)
       runCmd = "plumber::";
