@@ -156,7 +156,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Plumber",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("plumber", "0.4.5")
+            Dependency.embeddedPackage("plumber")
          },
          true,
          new CommandWithArg<Boolean>()
