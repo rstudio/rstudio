@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -191,6 +191,7 @@ extern const int kJobRefresh;
 extern const int kJobOutput;
 extern const int kDataOutputCompleted;
 extern const int kNewDocumentWithCode;
+extern const int kPlumberViewer;
 }
    
 class ClientEvent

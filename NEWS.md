@@ -37,6 +37,12 @@
 * Configure CRAN repos with a repos.conf configuration file and the `r-cran-repos-file` option.
 * Suggest additional secondary CRAN repos with the `r-cran-repos-url` option.
 
+### Plumber
+
+* Create [Plumber APIs](https://www.rplumber.io/) in RStudio
+* Execute Plumber APIs within RStudio to view Swagger documentation and make test calls to the APIs
+* Publish Plumber APIs to [RStudio Connect](https://www.rstudio.com/products/connect/)
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)

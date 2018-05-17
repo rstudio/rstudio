@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishButton.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -83,6 +84,7 @@ public class RSConnectPublishButton extends Composite
    public RSConnectPublishButton(String host, int contentType, boolean showCaption,
          AppCommand boundCommand)
    {
+      host_ = host;
       contentType_ = contentType;
       showCaption_ = showCaption;
       boundCommand_ = boundCommand;
@@ -230,6 +232,14 @@ public class RSConnectPublishButton extends Composite
                         RSConnect.CONTENT_TYPE_APP);
    }
    
+   public void setPlumberPreview(PlumberAPIParams params)
+   {
+      String ext = params.getPath() == null ? "" :
+            FileSystemItem.getExtensionFromPath(params.getPath()).toLowerCase();
+      setContentPath(params.getPath(), "");
+      setContentType(RSConnect.CONTENT_TYPE_PLUMBER_API);
+   }
+    
    public void setHtmlPreview(HTMLPreviewResult params)
    {
       if (params.getSucceeded())
@@ -294,6 +304,7 @@ public class RSConnectPublishButton extends Composite
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
              contentType == RSConnect.CONTENT_TYPE_APP ||
              contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
+             contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
              contentType == RSConnect.CONTENT_TYPE_WEBSITE)
             populateDeployments(true);
          
@@ -494,6 +505,9 @@ public class RSConnectPublishButton extends Composite
             events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                   docPreview_, RSConnect.CONTENT_TYPE_WEBSITE, previous));
           break;
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
+         events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
+         break;
       default: 
          // should never happen 
          display_.showErrorMessage("Can't Publish " + 
@@ -699,6 +713,19 @@ public class RSConnectPublishButton extends Composite
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
+      // If publishing to Connect is disabled, then we can't publish APIs
+      if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
+          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      {
+         return false;
+      }
+      
+      // Only show publishing button in editor for Plumber APIs
+      if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API && !StringUtil.equals(host_, HOST_EDITOR))
+      {
+         return false;
+      }
+      
       if (manuallyHidden_)
          return false;
       
@@ -754,10 +781,12 @@ public class RSConnectPublishButton extends Composite
       String contentPath = contentPath_;
       boolean parent = false;
 
-      // if this is a Shiny application and an .R file is being invoked, check
+      // if this is a Shiny application or API and an .R file is being invoked, check
       // for deployments of its parent path (single-file apps have
-      // CONTENT_TYPE_APP_SINGLE and their own deployment records)
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP &&
+      // CONTENT_TYPE_APP_SINGLE and their own deployment records; APIs are always deployed
+      // via parent path)
+      if ((contentType_ == RSConnect.CONTENT_TYPE_APP || 
+            contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API) &&
           StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) 
          parent = true;
       
@@ -822,6 +851,7 @@ public class RSConnectPublishButton extends Composite
    public final static String HOST_SHINY_APP = "shiny_app";
    public final static String HOST_HTML_PREVIEW = "html_preview";
    public final static String HOST_VIEWER = "viewer";
+   public final static String HOST_PLUMBER_API = "plumber_api";
    
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
@@ -851,6 +881,6 @@ public class RSConnectPublishButton extends Composite
    private Command onPublishInvoked_;
 
    private RSConnectDeploymentRecord defaultRec_;
-   
+   private final String host_;   
    private static boolean anyRmdRenderPending_ = false;
 }

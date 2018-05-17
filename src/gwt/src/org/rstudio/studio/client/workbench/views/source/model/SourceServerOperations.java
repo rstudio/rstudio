@@ -248,4 +248,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                             ServerRequestCallback<Void> requestCallback);
    
    public void adaptToLanguage(String language, ServerRequestCallback<Void> requestCallback);
+
+   public void createPlumberAPI(String apiName,
+                                String apiDir,
+                                ServerRequestCallback<JsArrayString> requestCallback);
 }

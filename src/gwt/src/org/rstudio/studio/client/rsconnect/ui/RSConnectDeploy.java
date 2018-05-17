@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1031,12 +1031,13 @@ public class RSConnectDeploy extends Composite
       }
       
       // if the app name textbox isn't populated, derive from the filename
-      // (for apps and documents--other content types use temporary filenames)
+      // (for apps, APIs, and documents--other content types use temporary filenames)
       if (appName_.getTitle().isEmpty())
       {
          if (contentType_ == RSConnect.CONTENT_TYPE_APP || 
              contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
-             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT ||
+             contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
          {
             // set the app name to the filename
             String appTitle = 
@@ -1061,7 +1062,7 @@ public class RSConnectDeploy extends Composite
       }
       
       ImageResource illustration = null;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP || contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API)
          illustration = new ImageResource2x(RESOURCES.publishShinyIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());

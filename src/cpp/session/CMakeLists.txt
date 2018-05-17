@@ -40,6 +40,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/r2d3")
   message(FATAL_ERROR "r2d3 package not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/plumber")
+  message(FATAL_ERROR "plumber package not found (re-run install-dependencies script to install)")
+endif()
 
 # verify libclang is installed
 if(WIN32)
@@ -134,6 +137,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPackrat.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
+   modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
    modules/SessionRAddins.cpp
@@ -180,6 +184,7 @@ set (SESSION_SOURCE_FILES
    modules/jobs/Job.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
+   modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
@@ -486,13 +491,18 @@ if (NOT RSTUDIO_SESSION_WIN64)
    #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install rsconnect package
-   file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
-   install(FILES ${RSCONNECT_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+   #file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
+   #install(FILES ${RSCONNECT_PACKAGE}
+   #        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
            
    # install r2d3 package
    file(GLOB R2D3_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/r2d3*.tar.gz")
    install(FILES ${R2D3_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install plumber package
+   file(GLOB PLUMBER_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/plumber*.tar.gz")
+   install(FILES ${PLUMBER_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js

@@ -149,6 +149,27 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         }
       );
    }
+   
+   public void withRPlumber(String userAction, final Command command)
+   {
+      withDependencies(
+        "Plumber",
+         userAction,
+         new Dependency[] {
+            Dependency.embeddedPackage("plumber")
+         },
+         true,
+         new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+      );
+   }
 
    public void withPackrat(String userAction, final Command command)
    {

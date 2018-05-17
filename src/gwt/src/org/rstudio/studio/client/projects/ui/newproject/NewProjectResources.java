@@ -69,6 +69,12 @@ public interface NewProjectResources extends ClientBundle
    @Source("svnIconLarge_2x.png")
    ImageResource svnIconLarge2x();
    
+   @Source("plumberAppIcon_2x.png")
+   ImageResource plumberAppIcon2x();
+
+   @Source("plumberAppIconLarge_2x.png")
+   ImageResource plumberAppIconLarge2x();
+   
    static interface Styles extends CssResource
    {
       String wizardWidget();

@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -190,6 +191,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.invalidateSeparators();
    };
    
+   @Override
+   public void previewPlumber(PlumberAPIParams params) 
+   {
+      navigate(params.getUrl(), true);
+      publishButton_.setManuallyHidden(false);
+      publishButton_.setPlumberPreview(params);
+      toolbar_.invalidateSeparators();
+   };
+    
    @Override
    public void setExportEnabled(boolean exportEnabled)
    {

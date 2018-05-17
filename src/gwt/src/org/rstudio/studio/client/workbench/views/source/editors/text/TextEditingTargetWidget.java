@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,6 +57,8 @@ import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -113,6 +115,7 @@ public class TextEditingTargetWidget
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
+      plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
 
       findReplace_ = new TextEditingTargetFindReplace(
@@ -462,6 +465,10 @@ public class TextEditingTargetWidget
       }
       shinyLaunchButton_.setVisible(false);
 
+      plumberLaunchButton_ = new ToolbarButton(plumberViewerMenu_, true);
+      toolbar.addRightWidget(plumberLaunchButton_);
+      plumberLaunchButton_.setVisible(false);
+
       if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
@@ -633,9 +640,9 @@ public class TextEditingTargetWidget
          commands_.executeCodeWithoutFocus().setEnabled(false);
       }
       
-      // don't show the run buttons for cpp files, or R files in Shiny/Tests
+      // don't show the run buttons for cpp files, or R files in Shiny/Tests/Plumber
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp && 
-            !(isShinyFile() || isTestFile()) && !(isScript && !terminalAllowed));
+            !(isShinyFile() || isTestFile() || isPlumberFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
@@ -680,7 +687,7 @@ public class TextEditingTargetWidget
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
      
-      if (isShinyFile() || isTestFile())
+      if (isShinyFile() || isTestFile() || isPlumberFile())
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
@@ -694,24 +701,33 @@ public class TextEditingTargetWidget
       if (isShinyFile())
       {
          shinyLaunchButton_.setVisible(true);
+         plumberLaunchButton_.setVisible(false);
          setSourceButtonFromShinyState();
       }
       else if (isTestThatFile())
       {
          shinyLaunchButton_.setVisible(false);
+         plumberLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
          testButton_.setVisible(true);
       }
       else if (isShinyTestFile())
       {
          shinyLaunchButton_.setVisible(false);
+         plumberLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
          testButton_.setVisible(true);
          compareTestButton_.setVisible(true);
       }
+      else if (isPlumberFile())
+      {
+         plumberLaunchButton_.setVisible(true);
+         setSourceButtonFromPlumberState();
+      }
       else
       {
          shinyLaunchButton_.setVisible(false);
+         plumberLaunchButton_.setVisible(false);
          setSourceButtonFromScriptState(fileType, 
                                         canPreviewFromR,
                                         fileType.getPreviewButtonText());
@@ -735,6 +751,11 @@ public class TextEditingTargetWidget
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
+   }
+
+   private boolean isPlumberFile()
+   {
+      return extendedType_ != null && extendedType_ == SourceDocument.XT_PLUMBER_API;
    }
 
    private boolean isTestFile()
@@ -953,6 +974,15 @@ public class TextEditingTargetWidget
       setSourceButtonFromShinyState();
    }
    
+   // Called by the owning TextEditingTarget to notify the widget that the 
+   // Plumber API associated with this widget has changed state.
+   @Override
+   public void onPlumberAPIStateChanged(String state)
+   {
+      plumberAPIState_ = state;
+      setSourceButtonFromPlumberState();
+   }
+    
    @Override
    public void setFormatOptions(TextFileType fileType,
                                 boolean showRmdFormatMenu,
@@ -1165,6 +1195,11 @@ public class TextEditingTargetWidget
                   false // not static
                   );
          }
+         else if (type == SourceDocument.XT_PLUMBER_API)
+         {
+            publishButton_.setContentPath(publishPath, "");
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_PLUMBER_API);
+         }
          else 
          {
             publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
@@ -1257,6 +1292,30 @@ public class TextEditingTargetWidget
             sourceCommandDesc = "Run the Shiny application";
             sourceButton_.setLeftImage(
                   commands_.debugContinue().getImageResource());
+         }
+      }
+
+      sourceButton_.setTitle(sourceCommandDesc);
+      sourceButton_.setText(sourceCommandText_);
+   }
+
+   public void setSourceButtonFromPlumberState()
+   {
+      sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
+      String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
+      if (isPlumberFile())
+      {
+         if (plumberAPIState_ == PlumberAPIParams.STATE_STARTED) 
+         {
+            sourceCommandText_ = "Reload API";
+            sourceCommandDesc = "Save changes and reload the Plumber API";
+            sourceButton_.setLeftImage(commands_.reloadPlumberAPI().getImageResource());
+         }
+         else if (plumberAPIState_ == PlumberAPIParams.STATE_STOPPED)
+         {
+            sourceCommandText_ = "Run API";
+            sourceCommandDesc = "Run the Plumber API";
+            sourceButton_.setLeftImage(commands_.debugContinue().getImageResource());
          }
       }
 
@@ -1383,6 +1442,7 @@ public class TextEditingTargetWidget
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private final ShinyTestPopupMenu shinyTestMenu_;
+   private final PlumberViewerTypePopupMenu plumberViewerMenu_;
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
@@ -1411,6 +1471,7 @@ public class TextEditingTargetWidget
    private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;
    private ToolbarButton shinyLaunchButton_;
+   private ToolbarButton plumberLaunchButton_;
    private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
@@ -1428,6 +1489,7 @@ public class TextEditingTargetWidget
    private Label srcOnSaveLabel_;
 
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
+   private String plumberAPIState_ = PlumberAPIParams.STATE_STOPPED;
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
