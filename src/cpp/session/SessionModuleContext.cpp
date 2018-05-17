@@ -236,6 +236,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kShowPageViewerEvent;
       else if (name == "data_output_completed")
          type = session::client_events::kDataOutputCompleted;
+      else if (name == "new_document_with_code")
+         type = session::client_events::kNewDocumentWithCode;
 
       if (type != -1)
       {

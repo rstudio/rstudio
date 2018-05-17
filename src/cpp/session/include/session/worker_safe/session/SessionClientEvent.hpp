@@ -190,6 +190,7 @@ extern const int kJobUpdated;
 extern const int kJobRefresh;
 extern const int kJobOutput;
 extern const int kDataOutputCompleted;
+extern const int kNewDocumentWithCode;
 }
    
 class ClientEvent

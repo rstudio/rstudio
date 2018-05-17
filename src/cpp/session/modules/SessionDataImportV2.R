@@ -678,8 +678,10 @@
       size <- nrow(data)
    }
 
-   for(i in seq_along(data)) {
-      data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
+   if (nrow(data) > 0) {
+      for(i in seq_along(data)) {
+         data[[i]] <- .rs.formatDataColumn(data[[i]], 1, size)
+      }
    }
 
    list(

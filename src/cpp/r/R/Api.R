@@ -496,6 +496,25 @@
    .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
 })
 
+.rs.addApiFunction("documentNew", function(type, code, row = 0, column= 0, execute = FALSE) {
+   type <- switch(
+      type,
+      rmarkdown = "r_markdown",
+      sql = "sql",
+      "r_script"
+   )
+
+   .rs.enqueClientEvent("new_document_with_code", list(
+      type = .rs.scalar(type),
+      code = .rs.scalar(code),
+      row = .rs.scalar(row),
+      column = .rs.scalar(column),
+      execute = .rs.scalar(execute)
+   ))
+
+   invisible(NULL)
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE
