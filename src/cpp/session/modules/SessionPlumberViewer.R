@@ -51,7 +51,3 @@
    list(viewerType = .rs.scalar(.rs.getPlumberViewerType()))
 })
 
-.rs.addJsonRpcHandler("stop_plumber_app", function()
-{
-   plumber::stopApp()
-})

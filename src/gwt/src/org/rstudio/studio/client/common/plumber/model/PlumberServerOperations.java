@@ -27,7 +27,4 @@ public interface PlumberServerOperations
                String plumberFile,
                String extendedType,
                ServerRequestCallback<PlumberRunCmd> requestCallback);
-
-   void stopPlumberApp(
-               ServerRequestCallback<Void> requestCallback);
 }
