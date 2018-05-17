@@ -32,8 +32,7 @@ import com.google.inject.Inject;
 
 public class PlumberAPIPresenter implements 
       IsWidget, 
-      PlumberAPIStatusEvent.Handler, 
-      PlumberDisconnectNotifier.PlumberDisconnectSource
+      PlumberAPIStatusEvent.Handler 
 {
    public interface Binder 
           extends CommandBinder<Commands, PlumberAPIPresenter>
@@ -50,19 +49,18 @@ public class PlumberAPIPresenter implements
    
    @Inject
    public PlumberAPIPresenter(Display view,
-                               GlobalDisplay globalDisplay,
-                               Binder binder,
-                               final Commands commands,
-                               EventBus eventBus,
-                               Satellite satellite,
-                               Session session,
-                               UIPrefs prefs)
+                              GlobalDisplay globalDisplay,
+                              Binder binder,
+                              final Commands commands,
+                              EventBus eventBus,
+                              Satellite satellite,
+                              Session session,
+                              UIPrefs prefs)
    {
       view_ = view;
       satellite_ = satellite;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
-      disconnect_ = new PlumberDisconnectNotifier(this);
       session_ = session;
       prefs_ = prefs;
       
@@ -86,19 +84,6 @@ public class PlumberAPIPresenter implements
       }
    }
    
-   @Override
-   public String getPlumberUrl()
-   {
-      return view_.getAbsoluteUrl();
-   }
-
-   @Override
-   public void onPlumberDisconnect()
-   {
-      appStopped_ = true;
-      notifyPlumberAPIDisconnected(params_);
-      closePlumberAPI();
-   }
 
    @Handler
    public void onReloadPlumberAPI()
@@ -162,7 +147,6 @@ public class PlumberAPIPresenter implements
    private final Satellite satellite_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
-   private final PlumberDisconnectNotifier disconnect_;
    private final Session session_;
    private final UIPrefs prefs_;
    
