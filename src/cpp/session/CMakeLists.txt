@@ -491,9 +491,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install rsconnect package
-   file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
-   install(FILES ${RSCONNECT_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+   #file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
+   #install(FILES ${RSCONNECT_PACKAGE}
+   #        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
            
    # install r2d3 package
    file(GLOB R2D3_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/r2d3*.tar.gz")
