@@ -138,7 +138,7 @@ try {
     timestamps {
         def containers = [
           [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'centos6',  arch: 'x86_64', flavor: 'server',  variant: 'SLES'],
+          [os: 'opensuse', arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'centos7',  arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'trusty',   arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'trusty',   arch: 'amd64',  flavor: 'desktop', variant: ''],
