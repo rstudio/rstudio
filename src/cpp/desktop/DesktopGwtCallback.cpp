@@ -1190,7 +1190,7 @@ void GwtCallback::openTerminal(QString terminalPath,
 #elif defined(Q_OS_LINUX)
 
    // start the auto-detected terminal (or user-specified override)
-   if (!terminalPath.length() == 0)
+   if (terminalPath.length() != 0)
    {
       QStringList args;
       QProcess::startDetached(terminalPath,
