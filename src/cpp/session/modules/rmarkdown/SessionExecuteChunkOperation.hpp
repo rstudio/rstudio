@@ -77,8 +77,7 @@ std::string scriptPathForShellCommand(
 
 #ifndef _WIN32
    return defaultPath();
-#endif
-
+#else
    if (engine == "bash")
    {
       std::string bashPath = "bash.exe";
@@ -103,15 +102,17 @@ std::string scriptPathForShellCommand(
          return defaultPath();
       }
 
-      return
+      std::string path =
             string_utils::trimWhitespace(result.stdOut) +
             "/" +
             scriptPath.filename();
+      return string_utils::utf8ToSystem(path);
    }
    else
    {
       return defaultPath();
    }
+#endif
 }
 
 } // end anonymous namespace
