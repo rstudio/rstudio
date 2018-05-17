@@ -19,7 +19,7 @@
       data,
       maxFactors = 100,
       maxCols = 100,
-      maxRows = 100
+      maxRows = 1000
    )
 
    preview <- list(
@@ -46,7 +46,7 @@
 
    # fetch at most 100 records as a preview
    rs <- DBI::dbSendQuery(conn, statement = statement, ...)
-   data <- DBI::dbFetch(rs, n = 100)
+   data <- DBI::dbFetch(rs, n = 1000)
    DBI::dbClearResult(rs)
 
    .rs.previewDataFrame(data, script)
