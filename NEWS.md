@@ -34,8 +34,8 @@
 
 * Specify a primary CRAN URL and secondary CRAN repos from the package preferences pane.
 * Link to a package's primary CRAN page from the packages pane.
-* Configure CRAN repos with a repos.conf configuration file and the r-cran-repos-file option.
-* Suggest additional secondary CRAN repos with the r-cran-repos-url option.
+* Configure CRAN repos with a repos.conf configuration file and the `r-cran-repos-file` option.
+* Suggest additional secondary CRAN repos with the `r-cran-repos-url` option.
 
 ### Plumber
 
@@ -65,7 +65,9 @@
 * Add Rename command to File menu for quick rename of current file (#2199)
 * Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
 * Improved support for custom `knitr` engines in R Notebooks (#2401)
+* Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
+* Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
 
 ### Bug Fixes
 
@@ -108,6 +110,7 @@
 * Added support for auth-pam-sessions-use-password option in a load balanced setup.
 * Added ability to suspend sessions from user home page.
 * Added hmac signature verification for proxy auth mode with new auth-proxy-require-hmac option in rserver.conf.
+* Add nodes to RStudio Server Pro load-balanced clusters without service interruptions.
 
 ### RStudio Pro Drivers
 
