@@ -37,9 +37,10 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+namespace {
+
 core::shell_utils::ShellCommand shellCommandForEngine(
       const std::string& engine,
-      const core::FilePath& scriptPath,
       const std::map<std::string, std::string>& options)
 {
    using namespace core;
@@ -60,11 +61,60 @@ core::shell_utils::ShellCommand shellCommandForEngine(
    if (options.count("engine.opts"))
       command << EscapeFilesOnly << options.at("engine.opts") << EscapeAll;
    
-   // pass path to file
-   command << utf8ToSystem(scriptPath.absolutePathNative());
-   
    return command;
 }
+
+std::string scriptPathForShellCommand(
+      const core::FilePath& scriptPath,
+      const std::string& engine,
+      const std::map<std::string, std::string>& chunkOptions)
+{
+   using namespace core;
+
+   auto defaultPath = [&]() {
+       return string_utils::utf8ToSystem(scriptPath.absolutePathNative());
+   };
+
+#ifndef _WIN32
+   return defaultPath();
+#endif
+
+   if (engine == "bash")
+   {
+      std::string bashPath = "bash.exe";
+      if (chunkOptions.count("engine.path"))
+      {
+         FilePath resolvedPath =
+               module_context::resolveAliasedPath(chunkOptions.at("engine.path"));
+         bashPath = resolvedPath.absolutePathNative();
+      }
+
+      system::ProcessOptions options;
+      options.workingDir = scriptPath.parent();
+
+      system::ProcessResult result;
+      Error error = system::runCommand(
+               bashPath + " --norc --noprofile -c pwd",
+               options,
+               &result);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return defaultPath();
+      }
+
+      return
+            string_utils::trimWhitespace(result.stdOut) +
+            "/" +
+            scriptPath.filename();
+   }
+   else
+   {
+      return defaultPath();
+   }
+}
+
+} // end anonymous namespace
 
 class ExecuteChunkOperation : boost::noncopyable,
                               public boost::enable_shared_from_this<ExecuteChunkOperation>
@@ -286,9 +336,17 @@ core::Error runChunk(const std::string& docId,
       LOG_ERROR(error);
       return error;
    }
-   
+
    // get command
-   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath, chunkOptions);
+   ShellCommand command = notebook::shellCommandForEngine(engine, chunkOptions);
+
+   // augment with script path
+   std::string shellScriptPath = scriptPathForShellCommand(
+            scriptPath,
+            engine,
+            chunkOptions);
+
+   command << shellScriptPath;
 
    // create process
    boost::shared_ptr<ExecuteChunkOperation> operation =
