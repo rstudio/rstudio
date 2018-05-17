@@ -23,10 +23,6 @@ public interface PlumberServerOperations
 {
    void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback);
    
-   void setPlumberViewerType(
-               int viewerType, 
-               ServerRequestCallback<Void> requestCallback);
-   
    void getPlumberRunCmd(
                String plumberFile,
                String extendedType,

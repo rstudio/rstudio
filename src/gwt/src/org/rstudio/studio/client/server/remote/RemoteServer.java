@@ -4322,18 +4322,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setPlumberViewerType(int viewerType,
-         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(viewerType));
-      sendRequest(RPC_SCOPE,
-            SET_PLUMBER_VIEWER_TYPE,
-            params,
-            requestCallback);
-   }
- 
-   @Override
    public void getPlumberRunCmd(String plumberFile, 
                                 String extendedType,
                                 ServerRequestCallback<PlumberRunCmd> requestCallback)
@@ -5827,7 +5815,6 @@ public class RemoteServer implements Server
    private static final String CREATE_PLUMBER_API = "create_plumber_api";
    private static final String GET_PLUMBER_VIEWER_TYPE = "get_plumber_viewer_type";
    private static final String GET_PLUMBER_RUN_CMD = "get_plumber_run_cmd";
-   private static final String SET_PLUMBER_VIEWER_TYPE = "set_plumber_viewer_type";
    
    private static final String GET_RSCONNECT_ACCOUNT_LIST = "get_rsconnect_account_list";
    private static final String REMOVE_RSCONNECT_ACCOUNT = "remove_rsconnect_account";

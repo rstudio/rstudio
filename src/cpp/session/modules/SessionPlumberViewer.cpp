@@ -120,24 +120,6 @@ void onUserSettingsChanged(boost::shared_ptr<int> pPlumberViewerType)
    }
 }
 
-Error setPlumberViewer(boost::shared_ptr<int> pPlumberViewerType,
-                       const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse*)
-{
-   int viewerType = 0;
-   Error error = json::readParams(request.params, &viewerType);
-   if (error)
-      return error;
-
-   if (viewerType != *pPlumberViewerType)
-   {
-      setPlumberViewerType(viewerType);
-      *pPlumberViewerType = viewerType;
-   }
-
-   return Success();
-}
-
 Error getPlumberRunCmd(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -222,7 +204,6 @@ Error initialize()
    using namespace module_context;
 
    boost::shared_ptr<int> pPlumberViewerType = boost::make_shared<int>(PLUMBER_VIEWER_NONE);
-   json::JsonRpcFunction setPlumberViewerTypeRpc = boost::bind(setPlumberViewer, pPlumberViewerType, _1, _2);
 
    R_CallMethodDef methodDefViewer;
    methodDefViewer.name = "rs_plumberviewer";
@@ -236,7 +217,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPlumberViewer.R"))
       (bind(registerRpcMethod, "get_plumber_run_cmd", getPlumberRunCmd))
-      (bind(registerRpcMethod, "set_plumber_viewer_type", setPlumberViewerTypeRpc))
       (bind(initPlumberViewerPref, pPlumberViewerType));
 
    return initBlock.execute();
