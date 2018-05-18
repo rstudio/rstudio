@@ -265,13 +265,6 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
    bool isLocal = host == "localhost" || host == "127.0.0.1";
-   
-   bool isSubFrame = false;
-   WebProfile* webProfile = dynamic_cast<WebProfile*>(profile());
-   if (webProfile)
-   {
-      isSubFrame = webProfile->resourceType() == QWebEngineUrlRequestInfo::ResourceTypeSubFrame;
-   }
 
    if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme() &&
@@ -308,7 +301,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       {
          return true;
       }
-      else if (!isSubFrame)
+      else
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
