@@ -20,14 +20,9 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
-import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
 public class DataOutputTab 

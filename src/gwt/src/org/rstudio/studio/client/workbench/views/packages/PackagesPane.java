@@ -79,14 +79,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    public PackagesPane(Commands commands, 
                        Session session,
                        GlobalDisplay display,
-                       EventBus events,
-                       DefaultCRANMirror defaultCRANMirror)
+                       EventBus events)
    {
       super("Packages");
       commands_ = commands;
       session_ = session;
       display_ = display;
-      defaultCRANMirror_ = defaultCRANMirror;
       
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
@@ -630,5 +628,4 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
-   private final DefaultCRANMirror defaultCRANMirror_;
 }

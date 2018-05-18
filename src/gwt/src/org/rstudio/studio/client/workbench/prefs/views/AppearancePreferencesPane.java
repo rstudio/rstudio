@@ -30,7 +30,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;

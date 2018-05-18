@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.output.data.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
 public class DataOutputResult extends JavaScriptObject
 {
