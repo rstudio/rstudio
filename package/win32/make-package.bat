@@ -37,6 +37,11 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
 
+REM Ensure Windows toolkit is on the PATH (for rc.exe)
+set "WINDOWS_TOOLKIT=C:\Program Files (x86)\Windows Kits\8.1\bin\x86"
+set "OLDPATH=%PATH%"
+set "PATH=%PATH%;%WINDOWS_TOOLKIT%"
+
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
 cmake -G"Visual Studio 14 2015" ^
@@ -46,6 +51,8 @@ cmake -G"Visual Studio 14 2015" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
+
+set "PATH=%OLDPATH%"
 
 REM perform 64-bit build and install it into the 32-bit tree
 REM (but only do this if we are on win64)
