@@ -111,7 +111,10 @@ Error tryLoad(const core::FilePath& libraryPath)
             libraryPath.absolutePath(),
             (void**)&hMod);
    if (error)
+   {
+      LOG_ERROR(error);
       return error;
+   }
 
    LOAD_WINPTY_SYMBOL(error_code);
    LOAD_WINPTY_SYMBOL(error_msg);

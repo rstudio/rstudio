@@ -104,10 +104,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // detect running in x64 directory and tweak resource path
 #ifdef _WIN32
-   bool is64 = false;
    if (resourcePath_.complete("x64").exists())
    {
-      is64 = true;
       resourcePath_ = resourcePath_.parent();
    }
 #endif
@@ -579,17 +577,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    std::string completion;
    if (pty.isWithin(resourcePath_))
    {
-      if (is64)
-         completion = "x64/winpty.dll";
-      else
-         completion = "winpty.dll";
+#ifdef _WIN64
+      completion = "x64/winpty.dll";
+#else
+      completion = "winpty.dll";
+#endif
    }
    else
    {
-      if (is64)
-         completion = "64/bin/winpty.dll";
-      else
-         completion = "32/bin/winpty.dll";
+#ifdef _WIN64
+      completion = "64/bin/winpty.dll";
+#else
+      completion = "32/bin/winpty.dll";
+#endif
    }
    winptyPath_ = pty.complete(completion).absolutePath();
 #endif
