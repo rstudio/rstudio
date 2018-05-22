@@ -11,7 +11,6 @@ set PATH=%PATH%;%CD%\tools
 
 REM call:install rsconnect master rstudio --no-build-vignettes
 REM call:install rmarkdown master rstudio --no-build-vignettes
-call:install r2d3 master rstudio --no-build-vignettes
 call:install plumber master trestletech --no-build-vignettes
 GOTO:EOF
 
