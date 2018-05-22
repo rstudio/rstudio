@@ -596,10 +596,17 @@ PidType currentProcessId()
    return ::GetCurrentProcessId();
 }
 
-Error executablePath(const char * argv0,
+Error executablePath(const char *argv0,
                      FilePath* pExecutablePath)
 {
-   *pExecutablePath = FilePath(_pgmptr);
+   wchar_t exePath[MAX_PATH];
+   if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH))
+   {
+      auto lastErr = ::GetLastError();
+      return systemError(lastErr, ERROR_LOCATION);
+   }
+   std::wstring wzPath(exePath);
+   *pExecutablePath = FilePath(wzPath);
    return Success();
 }
 
