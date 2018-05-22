@@ -15,13 +15,21 @@
 		}
 		
 		.productVersion {
+			font-size: 10pt;
 			margin-bottom: 5px;
+		}
+
+		.buildInfo {
+			margin-top: 10px;
+		}
+
+		.buildInfo, .userAgent {
+			text-align: center;
+			font-size: 8pt;
+			margin-bottom: 3px;
 		}
 		
 		.userAgent {
-			text-align: center;
-			font-size: 8pt;
-			margin-top: 10px;
 			margin-bottom: 15px;
 		}
 		
@@ -79,6 +87,9 @@
 				</g:HTMLPanel>
 			</g:HTMLPanel>
 	   </g:HTMLPanel>
+		<g:HTMLPanel styleName="{style.buildInfo}">
+			<g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
+		</g:HTMLPanel>
 		<g:HTMLPanel styleName="{style.userAgent}">
 			<g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
 		</g:HTMLPanel>

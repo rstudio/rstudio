@@ -23,5 +23,7 @@ public class ProductInfo
    protected ProductInfo() {}
    
    public String version;
+   public String commit;
+   public String build;
    public String notice;
 }
