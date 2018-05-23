@@ -73,10 +73,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
          title = windowParams.getTitle();
       }
       if (title == null)
-         title = "";
-      else
-         title += " - ";
-      title += "RStudio Source Editor";
+         title = SourceWindowManager.SOURCE_WINDOW_TITLE_SUFFIX;
       Window.setTitle(title);
       
       // set up the source window

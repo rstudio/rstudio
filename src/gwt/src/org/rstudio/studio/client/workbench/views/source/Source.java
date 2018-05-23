@@ -3381,7 +3381,22 @@ public class Source implements InsertSourceHandler,
       // adding a tab may enable commands that are only available when 
       // multiple documents are open; if this is the second document, go check
       if (editors_.size() == 2)
+      {
          manageMultiTabCommands();
+
+         // if this is a source window, its window title may be specific to the
+         // first tab; change it
+         if (!SourceWindowManager.isMainSourceWindow())
+         {
+            Window.setTitle(windowManager_.createWindowTitle(null));
+         }
+      }
+      
+      // if there's just one editor in this source editor, update the window title
+      if (editors_.size() == 1 && !SourceWindowManager.isMainSourceWindow())
+      {
+         Window.setTitle(windowManager_.createWindowTitle(doc.getPath()));
+      }
       
       // if the target had an editing session active, attempt to resume it
       if (doc.getCollabParams() != null)

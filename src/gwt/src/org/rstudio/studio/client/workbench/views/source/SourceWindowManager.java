@@ -1,7 +1,7 @@
 /*
  * SourceWindowManager.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -564,6 +565,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
+   public String createWindowTitle(String base)
+   {
+      String title = base == null ? "" : base;
+      if (title.length() > 0)
+         title += " - ";
+      title += pWorkbenchContext_.get().createWindowTitle();
+      title += " - " + SOURCE_WINDOW_TITLE_SUFFIX;
+      return title;
+   }
+   
    private <T extends EventHandler>
    void fireEventToLastFocusedWindow(CrossWindowEvent<T> event)
    {
@@ -888,11 +899,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (ordinal == null)
          ordinal = ++maxOrdinal_;
       
+      
+      // add doc name to this window if we have it
+      String windowTitle = "";
+      SourceDocument doc = getDoc(docId);
+      if (doc != null && doc.getPath() != null)
+      {
+         windowTitle = FilePathUtils.friendlyFileName(doc.getPath());
+      }
+
       pSatelliteManager_.get().openSatellite(
             SourceSatellite.NAME_PREFIX + windowId, 
             SourceWindowParams.create(
                   ordinal,
-                  pWorkbenchContext_.get().createWindowTitle(),
+                  createWindowTitle(windowTitle),
                   pWorkbenchContext_.get().getCurrentWorkingDir().getPath(),
                   docId, sourcePosition), 
             size, false, position);
@@ -1286,6 +1306,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
+   private SourceDocument getDoc(String id)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < sourceDocs_.length(); i++)
+      {
+         if (docs.get(i).getId() == id)
+            return docs.get(i);
+      }
+      return null;
+   }
+   
    private WindowEx getLastFocusedSourceWindow()
    {
       String lastFocusedSourceWindow =
@@ -1363,4 +1394,5 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private boolean mainWindowFocused_ = true;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
+   public final static String SOURCE_WINDOW_TITLE_SUFFIX = "RStudio Source Editor";
 }
