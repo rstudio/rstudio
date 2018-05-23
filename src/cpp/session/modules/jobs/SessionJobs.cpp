@@ -26,14 +26,8 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "Job.hpp"
+#include "JobsApi.hpp"
 #include "SessionJobs.hpp"
-
-enum JobUpdateType
-{
-   JobAdded   = 0,
-   JobUpdated = 1,
-   JobRemoved = 2
-};
 
 using namespace rstudio::core;
 
@@ -44,40 +38,6 @@ namespace jobs {
 
 namespace {
 
-// map of job ID to jobs
-std::map<std::string, boost::shared_ptr<Job> > s_jobs;
-
-// notify client that job has been updated
-void notifyClient(JobUpdateType update, boost::shared_ptr<Job> pJob)
-{
-   json::Object data;
-   data["type"] = static_cast<int>(update);
-   data["job"]  = pJob->toJson();
-   module_context::enqueClientEvent(
-         ClientEvent(client_events::kJobUpdated, data));
-}
-
-void removeJob(boost::shared_ptr<Job> pJob)
-{
-   notifyClient(JobRemoved, pJob);
-   pJob->cleanup();
-   s_jobs.erase(s_jobs.find(pJob->id()));
-}
-
-void processUpdate(boost::shared_ptr<Job> pJob)
-{
-   if (pJob->complete() && pJob->autoRemove())
-   {
-      // if this job is now complete, and the job wants to be removed when complete, remove it 
-      removeJob(pJob);
-   }
-   else
-   {
-      // otherwise, notify the client of the changes in the job
-      notifyClient(JobUpdated, pJob);
-   }
-}
-
 bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 {
    std::string id = r::sexp::safeAsString(jobSEXP, "");
@@ -86,14 +46,12 @@ bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
       r::exec::error("A job ID must be specified.");
       return false;
    }
-   auto it = s_jobs.find(id);
-   if (it == s_jobs.end())
+   if (lookupJob(id, pJob))
    {
-      r::exec::error("Job ID '" + id + "' does not exist.");
-      return false;
+      return true;
    }
-   *pJob = it->second;
-   return true;
+   r::exec::error("Job ID '" + id + "' does not exist.");
+   return false;
 }
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
@@ -107,22 +65,9 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    int progress       = r::sexp::asInteger(progressUnitsSEXP);
    JobState state     = r::sexp::asLogical(runningSEXP) ? JobRunning : JobIdle;
    bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
-   
-   // find an unused job id
-   std::string id;
-   do
-   {
-      id = core::system::generateShortenedUuid();
-   }
-   while(s_jobs.find(id) != s_jobs.end());
-
-   // create the job!
-   boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
-         id, name, status, group, 0 /* completed units */, progress, state, autoRemove); 
-
-   // cache job and notify client
-   s_jobs[id] = pJob;
-   notifyClient(JobAdded, pJob);
+      
+   // add the job
+   std::string id = addJob(name, status, group, progress, state, autoRemove);
 
    // return job id
    r::sexp::Protect protect;
@@ -161,8 +106,7 @@ SEXP rs_setJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
    }
 
    // add progress
-   pJob->setProgress(units);
-   processUpdate(pJob);
+   setJobProgress(pJob, units);
 
    return R_NilValue;
 }
@@ -193,8 +137,7 @@ SEXP rs_addJobProgress(SEXP jobSEXP, SEXP unitsSEXP)
    {
       total = pJob->max();
    }
-   pJob->setProgress(total);
-   processUpdate(pJob);
+   setJobProgress(pJob, total);
 
    return R_NilValue;
 }
@@ -205,8 +148,7 @@ SEXP rs_setJobStatus(SEXP jobSEXP, SEXP statusSEXP)
    if (!lookupJob(jobSEXP, &pJob))
       return R_NilValue;
 
-   pJob->setStatus(r::sexp::safeAsString(statusSEXP));
-   processUpdate(pJob);
+   setJobStatus(pJob, r::sexp::safeAsString(statusSEXP));
 
    return R_NilValue;
 }
@@ -224,9 +166,8 @@ SEXP rs_setJobState(SEXP jobSEXP, SEXP stateSEXP)
       r::exec::error("The state '" + state + "' is not a valid job state.");
       return R_NilValue;
    }
-
-   pJob->setState(jobState);
-   processUpdate(pJob);
+   
+   setJobState(pJob, jobState);
 
    return R_NilValue;
 }
@@ -243,19 +184,6 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    pJob->addOutput(output, error);
 
    return R_NilValue;
-}
-
-json::Object jobsAsJson()
-{
-   json::Object jobs;
-
-   // convert all jobs to json
-   for (auto& job: s_jobs)
-   {
-      jobs[job.first] = job.second->toJson();
-   }
-
-   return jobs;
 }
 
 Error getJobs(const json::JsonRpcRequest& request,
@@ -277,12 +205,12 @@ Error jobOutput(const json::JsonRpcRequest& request,
       return error;
 
    // look up in cache
-   auto it = s_jobs.find(id);
-   if (it == s_jobs.end())
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(id, &pJob))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
    // show output
-   pResponse->setResult(it->second->output(position));
+   pResponse->setResult(pJob->output(position));
 
    return Success();
 }
@@ -298,18 +226,18 @@ Error setJobListening(const json::JsonRpcRequest& request,
       return error;
 
    // look up in cache
-   auto it = s_jobs.find(id);
-   if (it == s_jobs.end())
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(id, &pJob))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
    // if listening started, return the output so far
    if (listening)
    {
-      pResponse->setResult(it->second->output(0));
+      pResponse->setResult(pJob->output(0));
    }
 
    // begin/end listening
-   it->second->setListening(listening);
+   pJob->setListening(listening);
 
    return Success();
 }
@@ -317,12 +245,7 @@ Error setJobListening(const json::JsonRpcRequest& request,
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
    // currently no jobs can survive a suspend, so let the client know they're all finished
-   for (auto& job: s_jobs)
-   {
-      job.second->cleanup();
-      notifyClient(JobRemoved, job.second);
-   }
-   s_jobs.clear();
+   removeAllJobs();
 }
 
 void onResume(const Settings& settings)
@@ -335,20 +258,12 @@ void onClientInit()
 {
    // when a new client connects, we should stop emitting streaming output from any job currently
    // doing so since the old client is no longer listening
-   for (auto& job: s_jobs)
-   {
-      job.second->setListening(false);
-   }
+   endAllJobStreaming();
 }
 
 void onShutdown(bool terminatedNormally)
 {
-   // clean up all jobs on shutdown; in the future we'll support jobs which outlive the session but
-   // for now any remaining jobs need to be cleaned up
-   for (auto& job: s_jobs)
-   {
-      job.second->cleanup();
-   }
+   removeAllJobs();
 }
 
 } // anonymous namespace

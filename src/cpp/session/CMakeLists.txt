@@ -182,6 +182,7 @@ set (SESSION_SOURCE_FILES
    modules/environment/SessionEnvironment.cpp
    modules/jobs/SessionJobs.cpp
    modules/jobs/Job.cpp
+   modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
