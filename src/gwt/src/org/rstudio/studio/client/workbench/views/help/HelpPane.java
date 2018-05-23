@@ -63,6 +63,7 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -349,8 +350,13 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.helpForward().createToolbarButton());
       toolbar.addLeftWidget(commands_.helpHome().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.printHelp().createToolbarButton());
-      toolbar.addLeftSeparator();
+      if (!Desktop.isDesktop())
+      {
+         // QtWebEngine doesn't currently support window.print(); see:
+         // https://bugreports.qt.io/browse/QTBUG-53745
+         toolbar.addLeftWidget(commands_.printHelp().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
       toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
         
       toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
