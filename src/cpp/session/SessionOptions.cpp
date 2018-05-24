@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -695,6 +696,16 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // signing key - used for verifying incoming RPC requests
    // in standalone mode
    signingKey_ = core::system::getenv(kRStudioSigningKey);
+
+   // generate our own signing key to be used when posting back to ourselves
+   // this key is kept secret within this process and any child processes,
+   // and only allows communication from this rsession process and its children
+   error = core::system::crypto::generateRsaKeyPair(&sessionRsaPublicKey_, &sessionRsaPrivateKey_);
+   if (error)
+      LOG_ERROR(error);
+
+   core::system::setenv(kRSessionRsaPublicKey, sessionRsaPublicKey_);
+   core::system::setenv(kRSessionRsaPrivateKey, sessionRsaPrivateKey_);
 
    // load cran options from repos.conf
    FilePath reposFile(rCRANReposFile());

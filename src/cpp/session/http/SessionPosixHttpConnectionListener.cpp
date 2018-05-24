@@ -23,7 +23,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionLocalStreams.hpp>
+#include <server_core/sessions/SessionLocalStreams.hpp>
 
 #include "SessionTcpIpHttpConnectionListener.hpp"
 #include "SessionLocalStreamHttpConnectionListener.hpp"
@@ -119,7 +119,7 @@ void initializeHttpConnectionListener()
          // create listener based on options
          r_util::SessionContext context = options.sessionContext();
          std::string streamFile = r_util::sessionContextFile(context);
-         FilePath localStreamPath = local_streams::streamPath(streamFile);
+         FilePath localStreamPath = server_core::sessions::local_streams::streamPath(streamFile);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
                                           core::system::EveryoneReadWriteMode,

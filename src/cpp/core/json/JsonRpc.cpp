@@ -369,6 +369,12 @@ std::string JsonRpcErrorCategory::message( int ev ) const
       case errc::InvalidSession:
          return "Invalid session";
 
+      case errc::MaxSessionsReached:
+         return "The maximum amount of concurrent sessions for this license has been reached";
+
+      case errc::MaxUsersReached:
+         return "The maximum amount of concurrent users for this license has been reached";
+
       default:
          BOOST_ASSERT(false);
          return "Unknown error type" ;

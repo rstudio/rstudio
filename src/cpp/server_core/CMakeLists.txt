@@ -23,6 +23,7 @@ set (SERVER_CORE_SOURCE_FILES
    http/SecureCookie.cpp
    RVersionsScanner.cpp
    SecureKeyFile.cpp
+   sessions/SessionSignature.cpp
    system/Pam.cpp
 )
 

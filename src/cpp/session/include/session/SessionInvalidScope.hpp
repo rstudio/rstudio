@@ -28,7 +28,7 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
-#include <session/SessionLocalStreams.hpp>
+#include <server_core/sessions/SessionLocalStreams.hpp>
 
 namespace rstudio {
 namespace session {
@@ -38,7 +38,7 @@ namespace {
 inline core::FilePath invalidSessionContextFile(
                                 const core::r_util::SessionContext& context)
 {
-   return session::local_streams::streamPath(
+   return server_core::sessions::local_streams::streamPath(
         core::r_util::sessionContextFile(context) +".invalid");
 }
 

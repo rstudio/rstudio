@@ -51,7 +51,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionConstants.hpp>
-#include <session/SessionLocalStreams.hpp>
+#include <server_core/sessions/SessionLocalStreams.hpp>
 #include <session/SessionInvalidScope.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -113,7 +113,7 @@ Error launchSessionRecovery(
    }
 
    // recreate streams dir if necessary
-   Error error = session::local_streams::ensureStreamsDir();
+   Error error = server_core::sessions::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
@@ -575,7 +575,7 @@ void proxyRequest(
 
    // determine path to user stream
    std::string streamFile = r_util::sessionContextFile(context);
-   FilePath streamPath = session::local_streams::streamPath(streamFile);
+   FilePath streamPath = server_core::sessions::local_streams::streamPath(streamFile);
 
    // determine the uid for the username (for validation)
    UidType uid;
@@ -658,7 +658,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 
 Error initialize()
 { 
-   return session::local_streams::ensureStreamsDir();
+   return server_core::sessions::local_streams::ensureStreamsDir();
 }
 
 Error runVerifyInstallationSession()

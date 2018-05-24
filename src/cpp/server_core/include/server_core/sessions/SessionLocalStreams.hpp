@@ -1,7 +1,7 @@
 /*
  * SessionLocalStreams.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_SESSION_LOCAL_STREAMS_HPP
-#define SESSION_SESSION_LOCAL_STREAMS_HPP
+#ifndef SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
+#define SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
 
 #include <string>
 
@@ -27,7 +27,8 @@
 #define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
 
 namespace rstudio {
-namespace session {
+namespace server_core {
+namespace sessions {
 namespace local_streams {
 
 inline core::Error ensureStreamsDir()
@@ -45,9 +46,10 @@ inline core::FilePath streamPath(const std::string& file)
    return path;
 }
 
-} // namepspace local_streams
-} // namespace session
+} // namespace local_streams
+} // namepspace sessions
+} // namespace server_core
 } // namespace rstudio
 
-#endif // SESSION_SESSION_LOCAL_STREAMS_HPP
+#endif // SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
 

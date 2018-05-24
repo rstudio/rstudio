@@ -45,6 +45,12 @@ target_link_libraries(rpostback
    rstudio-core
 )
 
+if (RSTUDIO_SERVER)
+    target_link_libraries(rpostback
+       rstudio-server-core
+    )
+endif()
+
 # configure postback scripts for development mode
 set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
 file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
