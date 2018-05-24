@@ -81,6 +81,23 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
       size.setHeight(size.height()-75);
       resize(size);
    }
+
+   connect(webView(), SIGNAL(onCloseWindowShortcut()),
+           this, SLOT(onCloseWindowShortcut()));
+}
+
+void SecondaryWindow::finishLoading(bool ok)
+{
+   BrowserWindow::finishLoading(ok);
+
+   if (ok)
+      connect(webView(), SIGNAL(onCloseWindowShortcut()), this,
+              SLOT(onCloseWindowShortcut()));
+}
+
+void SecondaryWindow::onCloseWindowShortcut()
+{
+   close();
 }
 
 void SecondaryWindow::manageCommandState()
