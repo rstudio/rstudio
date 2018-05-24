@@ -1697,11 +1697,11 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
 {
    // use ps to capture process info
    // output format
-   // USER:PID:PPID:PGID:PROCNAME
+   // USER:PID:PPID:PGID:::STATE:::PROCNAME:ARG1:ARG2:...:ARGN
    // we use a colon as the separator as it is not a valid path character in OSX
-   std::string cmd = process.empty() ? "ps axj | awk '{OFS=\":\"; print $1,$2,$3,$4,$7,$10}'"
+   std::string cmd = process.empty() ? "ps axj | awk '{OFS=\":\"; $5=\"\"; $6=\"\"; $8=\"\"; $9=\"\"; print}'"
                                      : "ps axj | awk '{OFS=\":\"; if ($10==\"" +
-                                        process + "\") print $1,$2,$3,$4,$7,$10}'";
+                                        process + "\"){ $5=\"\"; $6=\"\"; $8=\"\"; $9=\"\"; print} }'";
 
    core::system::ProcessResult result;
    Error error = core::system::runCommand(cmd,
@@ -1725,9 +1725,9 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
                               line,
                               boost::algorithm::is_any_of(":"));
 
-      if (lineInfo.size() < 6)
+      if (lineInfo.size() < 10)
       {
-         LOG_WARNING_MESSAGE("Exepcted 6 items from ps output but received: " + safe_convert::numberToString<size_t>(lineInfo.size()));
+         LOG_WARNING_MESSAGE("Exepcted 10 items from ps output but received: " + safe_convert::numberToString<size_t>(lineInfo.size()));
          continue;
       }
 
@@ -1736,17 +1736,12 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
       procInfo.pid = safe_convert::stringTo<pid_t>(lineInfo[1], 0);
       procInfo.ppid = safe_convert::stringTo<pid_t>(lineInfo[2], 0);
       procInfo.pgrp = safe_convert::stringTo<pid_t>(lineInfo[3], 0);
-      procInfo.state = lineInfo[4];
+      procInfo.state = lineInfo[6];
 
       // parse process name and arguments
-      std::vector<std::string> commandVector;
-      boost::algorithm::split(commandVector, lineInfo[5], boost::is_any_of(" "));
-      if (commandVector.size() == 0)
-         return systemError(boost::system::errc::protocoL_error, ERROR_LOCATION);
-
-      procInfo.exe = commandVector.front();
-      commandVector.erase(commandVector.begin());
-      procInfo.arguments = commandVector;
+      procInfo.exe = lineInfo[9];
+      if (lineInfo.size() > 10)
+         procInfo.arguments = std::vector<std::string>(lineInfo.begin() + 10, lineInfo.end());
 
       // check to see if this process info passes the filter criteria
       if (!filter || filter(procInfo))
