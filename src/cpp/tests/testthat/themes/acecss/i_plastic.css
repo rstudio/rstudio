@@ -56,6 +56,10 @@
   color: #0000FF
 }
 
+.ace-i-plastic .ace_keyword.ace_operator {
+  color: #0000FF
+}
+
 .ace-i-plastic .ace_constant {
   color: #6782D3
 }
@@ -113,4 +117,8 @@
 
 .ace-i-plastic .ace_entity.ace_name.ace_function {
   color: #FF8000
+}
+
+.ace-i-plastic .ace_support.ace_type {
+  color: #000000
 }

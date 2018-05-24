@@ -56,6 +56,10 @@
   color: #FC803A
 }
 
+.ace-merbivore-soft .ace_keyword.ace_operator {
+  color: #FC803A
+}
+
 .ace-merbivore-soft .ace_constant {
   color: #68C1D8
 }
@@ -122,4 +126,8 @@
 
 .ace-merbivore-soft .ace_entity.ace_name.ace_tag {
   color: #FC803A
+}
+
+.ace-merbivore-soft .ace_variable {
+  color: #E6E1DC
 }

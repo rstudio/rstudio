@@ -56,6 +56,10 @@
   color: #E28964
 }
 
+.ace-sunburst .ace_keyword.ace_operator {
+  color: #E28964
+}
+
 .ace-sunburst .ace_constant {
   color: #3387CC
 }
@@ -115,4 +119,8 @@
 
 .ace-sunburst .ace_markup.ace_list {
   color: #E1D4B9
+}
+
+.ace-sunburst .ace_support.ace_type {
+  color: #F8F8F8
 }

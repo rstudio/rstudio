@@ -56,6 +56,10 @@
   color: #949C8B
 }
 
+.ace-kr-theme .ace_keyword.ace_operator {
+  color: #949C8B
+}
+
 .ace-kr-theme .ace_constant {
   color: rgba(210, 117, 24, 0.76)
 }
@@ -104,4 +108,8 @@
 
 .ace-kr-theme .ace_markup.ace_list {
   background-color: #0F0040
+}
+
+.ace-kr-theme .ace_support.ace_type {
+  color: #FCFFE0
 }

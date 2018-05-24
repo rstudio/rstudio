@@ -56,6 +56,10 @@
   color: #0100B6
 }
 
+.ace-eiffel .ace_keyword.ace_operator {
+  color: #0100B6
+}
+
 .ace-eiffel .ace_constant {
   font-style: italic;
   color: #C5060B

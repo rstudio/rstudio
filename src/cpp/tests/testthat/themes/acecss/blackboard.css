@@ -56,6 +56,10 @@
   color: #FBDE2D
 }
 
+.ace-blackboard .ace_keyword.ace_operator {
+  color: #FBDE2D
+}
+
 .ace-blackboard .ace_constant {
   color: #D8FA3C
 }
@@ -88,4 +92,12 @@
 
 .ace-blackboard .ace_meta.ace_tag {
   color: #7F90AA
+}
+
+.ace-blackboard .ace_support.ace_type {
+  color: #F8F8F8
+}
+
+.ace-blackboard .ace_variable {
+  color: #F8F8F8
 }

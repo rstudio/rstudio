@@ -133,3 +133,11 @@
 .ace-espresso-libre .ace_entity.ace_name.ace_function {
   color: #FF9358
 }
+
+.ace-espresso-libre .ace_keyword {
+  color: #BDAE9D
+}
+
+.ace-espresso-libre .ace_keyword.ace_operator {
+  color: #BDAE9D
+}

@@ -57,6 +57,11 @@
   background-color: rgba(163, 170, 216, 0.055)
 }
 
+.ace-katzenmilch .ace_keyword.ace_operator {
+  color: #674Aa8;
+  background-color: rgba(163, 170, 216, 0.055)
+}
+
 .ace-katzenmilch .ace_constant.ace_language {
   color: #7D7e52;
   background-color: rgba(189, 190, 130, 0.059)
@@ -137,4 +142,8 @@
 .ace-katzenmilch .ace_entity.ace_name.ace_tag {
   color: #3976a2;
   background-color: rgba(73, 166, 210, 0.039)
+}
+
+.ace-katzenmilch .ace_support.ace_type {
+  color: rgba(15, 0, 9, 1.0)
 }

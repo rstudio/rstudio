@@ -56,6 +56,10 @@
   color: #C800A4
 }
 
+.ace-xcode-default .ace_keyword.ace_operator {
+  color: #C800A4
+}
+
 .ace-xcode-default .ace_constant.ace_language {
   color: #C800A4
 }
@@ -110,4 +114,8 @@
 
 .ace-xcode-default .ace_entity.ace_name.ace_tag {
   color: #790EAD
+}
+
+.ace-xcode-default .ace_variable {
+  color: #000000
 }

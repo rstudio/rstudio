@@ -133,3 +133,11 @@
 .ace-magic-wb-amiga .ace_markup.ace_list {
   color: #4D4E60
 }
+
+.ace-magic-wb-amiga .ace_keyword {
+  color: #000000
+}
+
+.ace-magic-wb-amiga .ace_keyword.ace_operator {
+  color: #000000
+}

@@ -119,3 +119,11 @@
 .ace-pastels-on-dark .ace_variable.ace_language {
   color: #C1C144
 }
+ 
+.ace-pastels-on-dark .ace_support.ace_type {
+  color: #8F938F
+}
+ 
+.ace-pastels-on-dark .ace_variable {
+  color: #8F938F
+}

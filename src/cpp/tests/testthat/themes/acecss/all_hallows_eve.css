@@ -56,6 +56,10 @@
   color: #CC7833
 }
 
+.ace-all-hallows-eve .ace_keyword.ace_operator {
+  color: #CC7833
+}
+
 .ace-all-hallows-eve .ace_constant {
   color: #3387CC
 }
@@ -82,4 +86,12 @@
 
 .ace-all-hallows-eve .ace_entity.ace_name.ace_tag {
   text-decoration: underline
+}
+
+.ace-all-hallows-eve .ace_support.ace_type {
+  color: #FFFFFF
+}
+
+.ace-all-hallows-eve .ace_variable {
+  color: #FFFFFF
 }

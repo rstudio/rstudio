@@ -56,6 +56,10 @@
   color: #794938
 }
 
+.ace-dawn .ace_keyword.ace_operator {
+  color: #794938
+}
+
 .ace-dawn .ace_constant {
   color: #811F24
 }
@@ -113,4 +117,8 @@
 
 .ace-dawn .ace_markup.ace_list {
   color: #693A17
+}
+
+.ace-dawn .ace_support.ace_type {
+  color: #080808
 }

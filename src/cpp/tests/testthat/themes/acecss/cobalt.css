@@ -56,6 +56,10 @@
   color: #FF9D00
 }
 
+.ace-cobalt .ace_keyword.ace_operator {
+  color: #FF9D00
+}
+
 .ace-cobalt .ace_constant {
   color: #FF628C
 }
@@ -109,4 +113,8 @@
 
 .ace-cobalt .ace_markup.ace_list {
   background-color: #130D26
+}
+
+.ace-cobalt .ace_support.ace_type {
+  color: #FFFFFF
 }

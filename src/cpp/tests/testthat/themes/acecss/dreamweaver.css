@@ -60,3 +60,19 @@
 .ace-dreamweaver .ace_comment {
   color: #9A9A9A
 }
+
+.ace-dreamweaver .ace_keyword {
+  color: #000000
+}
+
+.ace-dreamweaver .ace_keyword.ace_operator {
+  color: #000000
+}
+
+.ace-dreamweaver .ace_variable {
+  color: #000000
+}
+
+.ace-dreamweaver .ace_support.ace_type {
+  color: #000000
+}

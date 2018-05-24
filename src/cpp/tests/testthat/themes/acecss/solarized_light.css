@@ -56,6 +56,10 @@
   color: #859900
 }
 
+.ace-solarized-light .ace_keyword.ace_operator {
+  color: #859900
+}
+
 .ace-solarized-light .ace_constant.ace_language {
   color: #B58900
 }

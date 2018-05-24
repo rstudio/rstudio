@@ -134,3 +134,11 @@
 .ace-git-hub .ace_markup.ace_heading.ace_1 {
   color: #999999
 }
+
+.ace-git-hub .ace_keyword {
+  color: #000000
+}
+
+.ace-git-hub .ace_keyword.ace_operator {
+  color: #000000
+}

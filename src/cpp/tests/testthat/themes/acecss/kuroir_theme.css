@@ -118,3 +118,15 @@
 .ace-kuroir-theme .ace_markup.ace_list {
   color: #8F5B26
 }
+
+.ace-kuroir-theme .ace_keyword {
+  color: #363636
+}
+
+.ace-kuroir-theme .ace_keyword.ace_operator {
+  color: #363636
+}
+
+.ace-kuroir-theme .ace_support.ace_type {
+  color: #363636
+}

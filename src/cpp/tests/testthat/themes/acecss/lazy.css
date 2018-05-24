@@ -56,6 +56,10 @@
   color: #FF7800
 }
 
+.ace-lazy .ace_keyword.ace_operator {
+  color: #FF7800
+}
+
 .ace-lazy .ace_constant {
   color: #3B5BB5
 }
@@ -88,4 +92,12 @@
 
 .ace-lazy .ace_meta.ace_tag {
   color: #3A4A64
+}
+
+.ace-lazy .ace_support.ace_type {
+  color: #000000
+}
+
+.ace-lazy .ace_variable {
+  color: #000000
 }

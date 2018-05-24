@@ -56,6 +56,10 @@
   color: #CDA869
 }
 
+.ace-twilight .ace_keyword.ace_operator {
+  color: #CDA869
+}
+
 .ace-twilight .ace_constant {
   color: #CF6A4C
 }
@@ -122,4 +126,8 @@
 
 .ace-twilight .ace_markup.ace_list {
   color: #F9EE98
+}
+
+.ace-twilight .ace_support.ace_type {
+  color: #F8F8F8
 }

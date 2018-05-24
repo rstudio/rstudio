@@ -56,6 +56,10 @@
   color: #FF6600
 }
 
+.ace-vibrant-ink .ace_keyword.ace_operator {
+  color: #FF6600
+}
+
 .ace-vibrant-ink .ace_constant {
   color: #339999
 }
@@ -105,4 +109,8 @@
 
 .ace-vibrant-ink .ace_entity.ace_name.ace_function {
   color: #FFCC00
+}
+
+.ace-vibrant-ink .ace_support.ace_type {
+  color: #FFFFFF
 }

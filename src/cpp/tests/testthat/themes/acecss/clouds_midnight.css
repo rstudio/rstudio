@@ -108,3 +108,11 @@
 .ace-clouds-midnight .ace_entity.ace_name.ace_tag {
   color: #606060
 }
+
+.ace-clouds-midnight .ace_support.ace_type {
+  color: #929292
+}
+
+.ace-clouds-midnight .ace_variable {
+  color: #929292
+}

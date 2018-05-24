@@ -56,6 +56,10 @@
   color: #006699
 }
 
+.ace-active4d .ace_keyword.ace_operator {
+  color: #006699
+}
+
 .ace-active4d .ace_constant.ace_language {
   color: #A535AE
 }

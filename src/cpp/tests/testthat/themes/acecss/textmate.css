@@ -56,6 +56,10 @@
   color: #0000FF
 }
 
+.ace-textmate .ace_keyword.ace_operator {
+  color: #0000FF
+}
+
 .ace-textmate .ace_constant {
   color: #C5060B
 }

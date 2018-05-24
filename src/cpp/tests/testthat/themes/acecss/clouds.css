@@ -107,3 +107,11 @@
 .ace-clouds .ace_entity.ace_name.ace_tag {
   color: #606060
 }
+
+.ace-clouds .ace_support.ace_type {
+  color: #000000
+}
+
+.ace-clouds .ace_variable {
+  color: #000000
+}
