@@ -40,6 +40,7 @@ public abstract class DynamicIFrame extends Frame
    @Override
    public void setUrl(String url)
    {
+      retryInterval_ = 0;
       url_ = url;
       super.setUrl(url);
       pollForLoad();
@@ -101,5 +102,5 @@ public abstract class DynamicIFrame extends Frame
    protected abstract void onFrameLoaded();
 
    private String url_;
-   private int retryInterval_ = 50;
+   private int retryInterval_ = 0;
 }
