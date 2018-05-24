@@ -600,9 +600,9 @@ Error executablePath(const char *argv0,
                      FilePath* pExecutablePath)
 {
    wchar_t exePath[MAX_PATH];
-   if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH))
+   if (!GetModuleFileNameW(NULL, exePath, MAX_PATH))
    {
-      auto lastErr = ::GetLastError();
+      DWORD lastErr = ::GetLastError();
       return systemError(lastErr, ERROR_LOCATION);
    }
    std::wstring wzPath(exePath);
