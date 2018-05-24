@@ -47,21 +47,41 @@ namespace {
 std::vector<std::string> systemClangVersions()
 {
    std::vector<std::string> clangVersions;
-
-   // platform-specific
-#ifndef _WIN32
+   
 #ifdef __APPLE__
-   clangVersions.push_back("/Applications/Xcode.app/Contents/"
-                           "Developer/Toolchains/XcodeDefault.xctoolchain"
-                           "/usr/lib/libclang.dylib");
-#else
-   clangVersions.push_back("/usr/lib/llvm/libclang.so");
-   clangVersions.push_back("/usr/lib64/llvm/libclang.so");
-   clangVersions.push_back("/usr/lib/llvm-3.5/lib/libclang.so.1");
-   clangVersions.push_back("/usr/lib/llvm-3.4/lib/libclang.so.1");
+   clangVersions = {
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib",
+      "/Library/Developer/CommandLineTools/usr/lib/libclang.dylib",
+      "/usr/local/opt/llvm/lib/libclang.dylib"
+   };
 #endif
-#endif
+   
+#ifdef __linux__
+   // default set of versions
+   clangVersions = {
+      "/usr/lib/llvm/libclang.so",
+      "/usr/lib64/llvm/libclang.so",
+   };
+   
+   // iterate through the set of available 'llvm' directories
+   for (const char* prefix : {"/usr/lib", "/usr/lib64"})
+   {
+      FilePath prefixPath(prefix);
+      if (!prefixPath.exists())
+         continue;
+      
+      std::vector<FilePath> directories;
+      Error error = prefixPath.children(&directories);
+      if (error)
+         LOG_ERROR(error);
 
+      // generate a path for each 'llvm' directory
+      for (const FilePath& path : directories)
+         if (path.filename().find("llvm") == 0)
+            clangVersions.push_back(path.complete("lib/libclang.so.1").absolutePath());
+   }
+#endif
+   
    return clangVersions;
 }
 
