@@ -182,10 +182,10 @@ std::string assignOutputUrl(const std::string& outputFile)
    // locations in parent directories (e.g. for navigation links)
    std::string path = "/";
    FilePath outputPath = module_context::resolveAliasedPath(outputFile);
-   if (module_context::isWebsiteProject() && !r_util::isWebsiteDirectory(outputPath.parent()))
+   FilePath websiteDir = r_util::websiteRootDirectory(outputPath);
+   if (!websiteDir.empty() && !r_util::isWebsiteDirectory(outputPath.parent()))
    {
       // assign website build dir as output root
-      FilePath websiteDir = projects::projectContext().buildTargetPath();
       FilePath indexPath = websiteDir.childPath("index.html");
       s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
 
