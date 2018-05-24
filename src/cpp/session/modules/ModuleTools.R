@@ -456,3 +456,8 @@ if (getRversion() < "3.5") {
       }
    })
 }
+
+.rs.addFunction("sessionModulePath", function() {
+   .Call("rs_sessionModulePath")
+})
+

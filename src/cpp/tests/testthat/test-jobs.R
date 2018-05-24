@@ -83,7 +83,6 @@ test_that("auto remove property is respected", {
    expect_equal(jobs[[jobId]], NULL)
 })
 
-
 test_that("job timers are started", {
    jobId <- .rs.api.addJob(name = "job7", autoRemove = FALSE)
 
