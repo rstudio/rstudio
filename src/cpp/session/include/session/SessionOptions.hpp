@@ -570,6 +570,16 @@ public:
       return verifySignatures_;
    }
 
+   std::string sessionRsaPublicKey() const
+   {
+      return sessionRsaPublicKey_;
+   }
+
+   std::string sessionRsaPrivateKey() const
+   {
+      return sessionRsaPrivateKey_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -724,6 +734,10 @@ private:
 
    // connect
    std::string defaultRSConnectServer_;
+
+   // in-session generated RSA keys
+   std::string sessionRsaPublicKey_;
+   std::string sessionRsaPrivateKey_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

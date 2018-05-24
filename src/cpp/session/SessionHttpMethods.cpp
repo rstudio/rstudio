@@ -52,6 +52,10 @@
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#ifdef RSTUDIO_SERVER
+#include <server_core/sessions/SessionSignature.hpp>
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -174,6 +178,10 @@ Error startHttpConnectionListener()
       boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
       std::cout << "Listener bound to address " << endpoint.address().to_string()
                 << " port " << endpoint.port() << std::endl;
+
+      // set the standalone port so rpostback and others know how to
+      // connect back into the session process
+      core::system::setenv(kRSessionStandalonePortNumber, safe_convert::numberToString(endpoint.port()));
    }
 
    return Success();
@@ -316,88 +324,29 @@ bool registeredWaitForMethod(const std::string& method,
 
 bool verifyRequestSignature(const core::http::Request& request)
 {
+#ifndef RSTUDIO_SERVER
+   // signatures only supported in server mode - requiresd a dependency
+   // on server_core, which is only available to server platforms
+   return true;
+#else
    // only verify signatures if we are in standalone mode and
    // we are explicitly configured to verify signatures
    if (!options().verifySignatures() || !options().standalone())
       return true;
 
-   // get signature from request
-   std::string signature = request.headerValue(kRStudioMessageSignature);
-   if (signature.empty())
-   {
-       LOG_ERROR_MESSAGE("No signature specified on request for session " +
-                         options().sessionContext().scope.id());
-       return false;
-   }
-
-   // base-64 decode the signature included on the request
-   // it is encoded to allow transmission of the binary payload over HTTP
-   std::vector<unsigned char> decoded;
-   Error error = core::system::crypto::base64Decode(signature, &decoded);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   // construct a string representation of the decoded data
-   std::string decodedSignature(decoded.begin(), decoded.end());
-
-   // get date from signature - used in signature calculation
-   // to prevent replay attacks
-   std::string date = request.headerValue("Date");
-   if (date.empty())
-   {
-       LOG_ERROR_MESSAGE("No date specified on request for session " +
-                         options().sessionContext().scope.id());
-       return false;
-   }
-
-   // ensure that the date is actually valid - ensures attacker doesn't supply a phoney date that
-   // wraps to the desired value or somehow exploits the system
-   if (!core::http::util::isValidDate(date))
-   {
-      LOG_ERROR_MESSAGE("Invalid date specified on request for session " +
-                        options().sessionContext().scope.id());
-      return false;
-   }
-
-   // ensure that the request is not stale - if it is, fail out as it could be a replay attack
-   boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
-   boost::posix_time::time_duration timeDelta = now - http::util::parseHttpDate(date);
-   if (abs(timeDelta.total_seconds()) > 60)
-   {
-      LOG_ERROR_MESSAGE("Received stale message with date " + date +
-                        " for session " + options().sessionContext().scope.id());
-      return false;
-   }
-
-   // get username from request
-   std::string username = request.headerValue(kRStudioUserIdentityDisplay);
-   if (username.empty())
-   {
-      LOG_ERROR_MESSAGE("No username specified on request for session " +
-                        options().sessionContext().scope.id());
-      return false;
-   }
-
-   // ensure the user matches the session process owner
-   // we only do this if we are not running as root (possible in container sessions)
-   std::string runningUser = core::system::username();
-   if (username != runningUser &&
-       !core::system::effectiveUserIsRoot())
-   {
-      LOG_ERROR_MESSAGE("Request from invalid user " + username +
-                        " for session " + options().sessionContext().scope.id() +
-                        " owned by user " + runningUser);
-      return false;
-   }
-
-   // calculate expected signature
-   std::string payload = username + "\n" + date + "\n" + request.body();
+   // determine which signing key pair to use
+   // we use an automatically generated key for postback requests
+   // (since we do not have access to the private key of rserver)
+   std::string signingKey = options().signingKey();
+   if (request.headerValue("X-Session-Postback") == "1")
+      signingKey = options().sessionRsaPublicKey();
 
    // ensure specified signature is valid
-   error = core::system::crypto::rsaVerify(payload, decodedSignature, options().signingKey());
+   // note: we do not validate the signing username if we are running in a root container
+   Error error = !core::system::effectiveUserIsRoot() ?
+                    server_core::sessions::verifyRequestSignature(signingKey, core::system::username(), request) :
+                    server_core::sessions::verifyRequestSignature(signingKey, request);
+
    if (error)
    {
       LOG_ERROR(error);
@@ -405,7 +354,9 @@ bool verifyRequestSignature(const core::http::Request& request)
    }
 
    return true;
+#endif
 }
+
 
 } // anonymous namespace
 

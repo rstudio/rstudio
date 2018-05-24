@@ -60,6 +60,9 @@ core::Error rsaVerify(const std::string& message,
                       const std::string& signature,
                       const std::string& pemPublicKey);
 
+core::Error generateRsaKeyPair(std::string* pOutPublicKey,
+                               std::string* pOutPrivateKey);
+
 core::Error generateRsaKeyFiles(const FilePath& publicKeyPath,
                                 const FilePath& privateKeyPath);
 
