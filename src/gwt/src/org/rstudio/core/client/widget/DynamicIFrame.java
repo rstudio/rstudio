@@ -76,7 +76,8 @@ public abstract class DynamicIFrame extends Frame
          {
             if (loadFrame.execute()) 
             {
-               Scheduler.get().scheduleFixedDelay(loadFrame, 50);
+               if (retryInterval_ < 500) retryInterval_ += 50;
+               Scheduler.get().scheduleFixedDelay(loadFrame, retryInterval_);
             }
          }
       });
@@ -100,4 +101,5 @@ public abstract class DynamicIFrame extends Frame
    protected abstract void onFrameLoaded();
 
    private String url_;
+   private int retryInterval_ = 50;
 }
