@@ -564,17 +564,15 @@ std::vector<std::string> defaultCompileArgs(
 {
    std::vector<std::string> compileArgs;
 
-   // on Linux, when using libclang, we need to add in the associated
+   // when using libclang, we need to add in the associated
    // libclang headers as they are not discovered / used by default
    // during compilation
-#ifdef __linux__
    FilePath llvmPath = s_libraryPath.parent().parent();
    boost::format fmt("%1%/lib/clang/%2%/include");
    fmt % llvmPath.absolutePath() % version.asString();
    std::string includePath = fmt.str();
    if (FilePath(includePath).exists())
      compileArgs.push_back(std::string("-I") + includePath);
-#endif
 
    return compileArgs;
 
