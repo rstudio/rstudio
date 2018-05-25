@@ -30,7 +30,7 @@ public class UrlContentEditingTargetWidget extends Composite
    {
       commands_ = commands;
 
-      frame_ = new RStudioThemedFrame(url, true, "allow-same-origin", null, null, false);
+      frame_ = new RStudioThemedFrame(url, true, "allow-same-origin", null, null, false, true);
       frame_.setSize("100%", "100%");
 
       PanelWithToolbars panel = new PanelWithToolbars(createToolbar(),
