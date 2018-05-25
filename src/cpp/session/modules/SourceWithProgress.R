@@ -13,6 +13,24 @@
 #
 #
 
-sourceWithProgress <- function(script, progressFile) {
-   source(script, local = globalenv())
+sourceWithProgress <- function(script, progress) {
+   output <- file(progress, open = "at")
+
+   # parse the script
+   statements <- parse(file = script)
+
+   # write statement count
+   writeLines(paste("count", length(statements), sep = ","), con = output)
+
+   # evaluate each statement
+   for (idx in seq_along(statements)) {
+      # evaluate the statement
+      eval(statements[[idx]], envir = globalenv())
+
+      # update progress
+      writeLines(paste("statement", idx, sep = ","), con = output)
+   }
+
+   writeLines(paste("completed", 1, sep = ","), con = output)
+   close(output)
 }

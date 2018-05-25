@@ -18,9 +18,42 @@ context("source-progress")
 # one-time setup; load progress script
 source(file.path(.rs.sessionModulePath(), "SourceWithProgress.R"))
 
+# helper method; splits a CSV line on the first comma
+splitLine <- function(line) {
+   idx <- regexpr(",", line, fixed = TRUE)
+   if (idx < 0) {
+      # no matches, just return the whole line
+      line
+   } else {
+      # split at the first comma
+      c(substring(line, 1, idx - 1), 
+        substring(line, idx + 1))
+   }
+}
+
 test_that("statements in script are executed", {
-   sourceWithProgress("resources/source-progress/assignment.R")
+   p <- tempfile(fileext = ".csv")
+   on.exit(file.remove(p), add = TRUE)
+   sourceWithProgress("resources/source-progress/assignment.R", p)
 
    expect_equal(2, var)
+})
+
+test_that("progress reports include expected values", {
+   p <- tempfile(fileext = ".csv")
+   on.exit(file.remove(p), add = TRUE)
+   sourceWithProgress("resources/source-progress/three.R", p)
+
+   # parse output
+   lines <- readLines(p)
+   output <- list()
+   for (line in lines) {
+      contents <- splitLine(line)
+      output[[contents[[1]]]] <- as.numeric(contents[[2]])
+   }
+
+   expect_equal(3, output[["count"]])
+   expect_equal(3, output[["statement"]])
+   expect_equal(1, output[["completed"]])
 })
 
