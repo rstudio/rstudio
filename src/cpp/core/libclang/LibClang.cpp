@@ -44,6 +44,7 @@ namespace libclang {
 
 namespace {
 
+// path and compilation arguments used for system (non-embedded) libclang
 FilePath s_libraryPath;
 std::vector<std::string> s_baseCompileArgs;
 
@@ -152,11 +153,14 @@ bool LibClang::load(EmbeddedLibrary embedded,
             if (version == embeddedVersion)
                embedded_ = embedded;
 
-            // save the library path
-            s_libraryPath = versionPath;
+            if (embedded_.empty())
+            {
+               // save the library path
+               s_libraryPath = versionPath;
 
-            // save default compilation arguments
-            s_baseCompileArgs = defaultCompileArgs(this->version());
+               // save default compilation arguments
+               s_baseCompileArgs = defaultCompileArgs(this->version());
+            }
 
             // print diagnostics
             ostr << "   LOADED: " << this->version().asString()
