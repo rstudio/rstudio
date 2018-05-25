@@ -1,7 +1,7 @@
 /*
- * GridViewer.java
+ * GridViewerFrame.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,15 +16,28 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDataActiveColumn;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class GridViewerFrame extends RStudioFrame
+public class GridViewerFrame extends RStudioThemedFrame
 {
    public GridViewerFrame()
    {
-      super("grid_resource/gridviewer.html?data_source=data");
+      this(false);
+   }
+
+   public GridViewerFrame(boolean enableThemes)
+   {
+      super(
+         "grid_resource/gridviewer.html?data_source=data",
+         false,
+         null, 
+         GridViewerStyles.getCustomStyle(),
+         null,
+         false,
+         enableThemes);
    }
    
    public void onAttach()

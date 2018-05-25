@@ -38,7 +38,7 @@ public class DataOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    { 
-      gridViewer_ = new GridViewerFrame();
+      gridViewer_ = new GridViewerFrame(true);
       return gridViewer_;
    }
 

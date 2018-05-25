@@ -26,6 +26,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
+import org.rstudio.core.client.widget.GridViewerStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -62,53 +63,6 @@ public class DataEditingTargetWidget extends Composite
       resources.styles().ensureInjected();
    }
 
-   private String getCustomStyle()
-   {
-      return
-         ".rstudio-themes-flat.rstudio-themes-default #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable thead th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable thead td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable tbody td {\n" +
-         "   border-color: " + ThemeColors.defaultBorder + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable tbody td {\n" +
-         "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable tbody td {\n" +
-         "   border-color: " + ThemeColors.alternateBorder + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-default #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default table.dataTable thead td {\n" +
-         "   background-color: " + ThemeColors.defaultBackground + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey table.dataTable thead th {\n" +
-         "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate #rsGridData_info,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate td.first-child,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate table.dataTable thead th {\n" +
-         "   background-color: " + ThemeColors.alternateBackground + ";\n" +
-         "}\n" +
-         "\n";
-   }
-
    public DataEditingTargetWidget(Commands commands, DataItem dataItem)
    {
       Styles styles = resources.styles();
@@ -117,7 +71,7 @@ public class DataEditingTargetWidget extends Composite
 
       frame_ = new RStudioThemedFrame(
          dataItem.getContentUrl(),
-         getCustomStyle(),
+         GridViewerStyles.getCustomStyle(),
          null,
          false);
       frame_.setSize("100%", "100%");
