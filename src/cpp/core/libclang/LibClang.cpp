@@ -44,6 +44,8 @@ namespace libclang {
 
 namespace {
 
+FilePath s_libraryPath;
+
 std::vector<std::string> systemClangVersions()
 {
    std::vector<std::string> clangVersions;
@@ -132,6 +134,9 @@ bool LibClang::load(EmbeddedLibrary embedded,
             // if this was the embedded version then record it
             if (version == embeddedVersion)
                embedded_ = embedded;
+
+            // save the library path
+            s_libraryPath = versionPath;
 
             // print diagnostics
             ostr << "   LOADED: " << this->version().asString()
@@ -551,11 +556,40 @@ LibraryVersion LibClang::version() const
    return LibraryVersion();
 }
 
+namespace {
+
+std::vector<std::string> defaultCompileArgs(
+      LibraryVersion version,
+      bool isCpp)
+{
+   std::vector<std::string> compileArgs;
+
+   // on Linux, when using libclang, we need to add in the associated
+   // libclang headers as they are not discovered / used by default
+   // during compilation
+#ifdef __linux__
+   FilePath llvmPath = s_libraryPath.parent().parent();
+   boost::format fmt("%1%/lib/clang/%2%/include");
+   fmt % llvmPath.absolutePath() % version.asString();
+   std::string includePath = fmt.str();
+   if (FilePath(includePath).exists())
+     compileArgs.push_back(std::string("-I") + includePath);
+#endif
+
+   return compileArgs;
+
+}
+
+} // end anonymous namespace
+
+
 std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
-   if (!embedded_.empty())
+   if (embedded_.empty())
+      compileArgs = defaultCompileArgs(version(), isCppFile);
+   else
       compileArgs = embedded_.compileArgs(version(), isCppFile);
 
    return compileArgs;
