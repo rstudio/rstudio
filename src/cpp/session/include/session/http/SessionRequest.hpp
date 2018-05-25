@@ -26,7 +26,7 @@
 
 #ifndef _WIN32
 #include <core/http/LocalStreamBlockingClient.hpp>
-#include <server_core/sessions/SessionLocalStreams.hpp>
+#include <session/SessionLocalStreams.hpp>
 #endif
 
 #include "session-config.h"
@@ -104,7 +104,7 @@ inline core::Error sendSessionRequest(const std::string& uri,
    }
    else
    {
-      streamPath = server_core::sessions::local_streams::streamPath(stream);
+      streamPath = local_streams::streamPath(stream);
    }
    return core::http::sendRequest(streamPath, request, pResponse);
 #endif
