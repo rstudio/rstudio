@@ -240,6 +240,34 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    }
    if (compilerPath.empty())
       return;
+
+   // it is likely that R is configured to use a compiler that exists
+   // on the PATH; however, when invoked through 'runCommand()' this
+   // can fail unless we explicitly find and resolve that path. also
+   // note that one can configure CXX with multiple arguments
+   // (e.g. as 'g++ -std=c++17') so we must also tear off only the
+   // compiler name. we hence assume that the supplemental arguments
+   // to CXX do not influence the compiler include paths.
+#ifdef __linux__
+   {
+       std::string compilerName = compilerPath;
+       std::size_t index = compilerPath.find(' ');
+       if (index != std::string::npos)
+       {
+           compilerName = compilerPath.substr(0, index);
+       }
+       else
+       {
+           compilerName = compilerPath;
+       }
+
+       Error error = r::exec::RFunction("Sys.which")
+               .addParam(compilerName)
+               .call(&compilerPath);
+       if (error)
+           LOG_ERROR(error);
+   }
+#endif
    
    // ask the compiler what the system include paths are (note that both
    // gcc and clang accept the same command)
@@ -247,7 +275,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    {
       core::system::ProcessResult result;
       std::string cmd = compilerPath + " -E -x c++ - -v < " kDevNull;
-      
+
       Error error = core::system::runCommand(cmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
