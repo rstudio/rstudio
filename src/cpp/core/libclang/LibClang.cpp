@@ -45,6 +45,23 @@ namespace libclang {
 namespace {
 
 FilePath s_libraryPath;
+std::vector<std::string> s_baseCompileArgs;
+
+std::vector<std::string> defaultCompileArgs(LibraryVersion version)
+{
+   std::vector<std::string> compileArgs;
+
+   // we need to add in the associated libclang headers as
+   // they are not discovered / used by default during compilation
+   FilePath llvmPath = s_libraryPath.parent().parent();
+   boost::format fmt("%1%/lib/clang/%2%/include");
+   fmt % llvmPath.absolutePath() % version.asString();
+   std::string includePath = fmt.str();
+   if (FilePath(includePath).exists())
+     compileArgs.push_back(std::string("-I") + includePath);
+
+   return compileArgs;
+}
 
 std::vector<std::string> systemClangVersions()
 {
@@ -137,6 +154,9 @@ bool LibClang::load(EmbeddedLibrary embedded,
 
             // save the library path
             s_libraryPath = versionPath;
+
+            // save default compilation arguments
+            s_baseCompileArgs = defaultCompileArgs(this->version());
 
             // print diagnostics
             ostr << "   LOADED: " << this->version().asString()
@@ -556,37 +576,12 @@ LibraryVersion LibClang::version() const
    return LibraryVersion();
 }
 
-namespace {
-
-std::vector<std::string> defaultCompileArgs(
-      LibraryVersion version,
-      bool isCpp)
-{
-   std::vector<std::string> compileArgs;
-
-   // when using libclang, we need to add in the associated
-   // libclang headers as they are not discovered / used by default
-   // during compilation
-   FilePath llvmPath = s_libraryPath.parent().parent();
-   boost::format fmt("%1%/lib/clang/%2%/include");
-   fmt % llvmPath.absolutePath() % version.asString();
-   std::string includePath = fmt.str();
-   if (FilePath(includePath).exists())
-     compileArgs.push_back(std::string("-I") + includePath);
-
-   return compileArgs;
-
-}
-
-} // end anonymous namespace
-
-
 std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
    if (embedded_.empty())
-      compileArgs = defaultCompileArgs(version(), isCppFile);
+      compileArgs = s_baseCompileArgs;
    else
       compileArgs = embedded_.compileArgs(version(), isCppFile);
 
