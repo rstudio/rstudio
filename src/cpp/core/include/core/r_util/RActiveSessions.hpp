@@ -103,7 +103,12 @@ public:
             return false;
       }
       else
-         return false;
+      {
+         // if empty, we are likely in desktop mode (as we have no specified scratch path)
+         // in this default case, we want initial to be true, since every time the session
+         // is started, we should start in the default working directory
+         return true;
+      }
    }
 
    void setInitial(bool initial)
@@ -357,7 +362,7 @@ public:
                       const std::string& working,
                       std::string* pId) const
    {
-      return create(project, working, false, pId);
+      return create(project, working, true, pId);
    }
 
    core::Error create(const std::string& project,
