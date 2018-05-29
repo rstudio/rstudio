@@ -27,6 +27,7 @@
 
 #include "Job.hpp"
 #include "JobsApi.hpp"
+#include "ScriptJob.hpp"
 #include "SessionJobs.hpp"
 
 using namespace rstudio::core;
@@ -67,11 +68,12 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
       
    // add the job
-   std::string id = addJob(name, status, group, progress, state, autoRemove);
+   boost::shared_ptr<Job> pJob =  
+      addJob(name, status, group, progress, state, autoRemove);
 
    // return job id
    r::sexp::Protect protect;
-   return r::sexp::create(id, &protect);
+   return r::sexp::create(pJob->id(), &protect);
 }
 
 SEXP rs_removeJob(SEXP jobSEXP)
@@ -186,6 +188,23 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    return R_NilValue;
 }
 
+SEXP rs_runScriptJob(SEXP path)
+{
+   std::string filePath = r::sexp::safeAsString(path, "");
+   if (filePath.empty())
+   {
+      r::exec::error("Please specify the path to the R script to run.");
+      return R_NilValue;
+   }
+   FilePath scriptPath(filePath);
+   if (!scriptPath.exists())
+   {
+      r::exec::error("The script file '" + filePath + "' does not exist.");
+   }
+   startScriptJob(scriptPath);
+   return R_NilValue;
+}
+
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -212,6 +231,12 @@ Error jobOutput(const json::JsonRpcRequest& request,
    // show output
    pResponse->setResult(pJob->output(position));
 
+   return Success();
+}
+
+Error runScriptJob(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
    return Success();
 }
 
@@ -283,6 +308,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
+   RS_REGISTER_CALL_METHOD(rs_runScriptJob, 1);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
@@ -295,6 +321,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "get_jobs", getJobs))
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
+      (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

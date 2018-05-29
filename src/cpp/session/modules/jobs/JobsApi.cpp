@@ -78,7 +78,7 @@ bool lookupJob(const std::string& id, boost::shared_ptr<Job> *pJob)
    return true;
 }
 
-std::string addJob(
+boost::shared_ptr<Job> addJob(
       const std::string& name,
       const std::string& status,
       const std::string& group,
@@ -102,7 +102,7 @@ std::string addJob(
    s_jobs[id] = pJob;
    notifyClient(JobAdded, pJob);
 
-   return id;
+   return pJob;
 }
 
 void setJobProgress(boost::shared_ptr<Job> pJob, int units)

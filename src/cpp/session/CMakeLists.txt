@@ -181,6 +181,7 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
    modules/jobs/SessionJobs.cpp
+   modules/jobs/ScriptJob.cpp
    modules/jobs/Job.cpp
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp

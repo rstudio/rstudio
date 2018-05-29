@@ -1,5 +1,5 @@
 /*
- * JobsApi.hpp
+ * ScriptJob.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,14 +13,15 @@
  *
  */
 
-#ifndef SESSION_JOBS_HPP
-#define SESSION_JOBS_HPP
+#ifndef SESSION_SCRIPT_JOB_HPP
+#define SESSION_SCRIPT_JOB_HPP
 
 #include "Job.hpp"
 
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
  
@@ -29,29 +30,7 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
-boost::shared_ptr<Job> addJob(
-      const std::string& name,
-      const std::string& status,
-      const std::string& group,
-      int progress,
-      JobState state,
-      bool autoRemove);
-
-void removeJob(boost::shared_ptr<Job> pJob);
-
-bool lookupJob(const std::string& id, boost::shared_ptr<Job> *pJob);
-
-void setJobProgress(boost::shared_ptr<Job> pJob, int units);
-
-void setJobState(boost::shared_ptr<Job> pJob, JobState state);
-
-void setJobStatus(boost::shared_ptr<Job> pJob, const std::string& status);
-
-core::json::Object jobsAsJson();
-
-void removeAllJobs();
-
-void endAllJobStreaming();
+core::Error startScriptJob(const core::FilePath& path);
 
 } // namespace jobs
 } // namespace modules

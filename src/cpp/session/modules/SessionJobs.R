@@ -78,3 +78,8 @@
    invisible(NULL)
 })
 
+.rs.addApiFunction("runScriptJob", function(path) {
+   .Call("rs_runScriptJob", normalizePath(path))
+   invisible(NULL)
+})
+
