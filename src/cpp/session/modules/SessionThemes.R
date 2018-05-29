@@ -792,8 +792,7 @@
 .rs.addFunction("convertTheme", convertTheme <- function(file, add, outputLocation, apply, force, globally) {
    tmTheme <- .rs.parseTmTheme(file)
    name <- tmTheme$name
-   fileName <- basename(file)
-   fileName <- paste0(regmatches(fileName, regexpr("[^\\.]*", fileName)), ".rstheme")
+   fileName <- tools::file_path_sans_ext(basename(file))
    
    aceTheme <- .rs.convertTmTheme(tmTheme)
    rsTheme <- .rs.convertAceTheme(aceTheme$theme, aceTheme$isDark)
@@ -813,7 +812,7 @@
       stop("Invalid input: unable to apply a theme which has not been added.")
    }
    
-   invisible(NULL)
+   name
 })
 
 # Adds a custom rstheme to RStudio.
@@ -907,7 +906,7 @@
 # set to the default theme.
 #
 # @param The name of the theme to remove.
-.rs.addFunction("removeTheme", removeTheme <- function(name, themeList, force) {
+.rs.addFunction("removeTheme", removeTheme <- function(name, themeList) {
    currentTheme <- .rs.api.getThemeInfo()$editor
    
    if (is.null(themeList[[name]]))
@@ -915,13 +914,14 @@
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   if (grepl(paste0("^", name, "$"), currentTheme, ignore.case = TRUE))
+   if (tolower(name) == tolower(currentTheme))
    {
       .rs.applyTheme("TextMate")
    }
 
    if (!file.remove(themeList[[name]]$fileName))
    {
+      # TODO: give better error when the theme is installed globally.
       if (file.exists(theme[[name]]$fileName))
       {
          stop(
