@@ -45,9 +45,25 @@
    }
    else
    {
-      keyring_list <- get("key_list", envir = asNamespace("keyring"))
-      keys <- keyring_list(.rs.getSecretService())
-      name %in% keys$username
+      keyring_default_backend <- get("default_backend", envir = asNamespace("keyring"))
+      if (identical(tolower(keyring_default_backend()$name), "env"))
+      {
+         # keyring env backend does not support listing keys
+         tryCatch({
+            keyring_get <- get("key_get", envir = asNamespace("keyring"))
+            keyring_get(.rs.getSecretService(), username = name)
+
+            TRUE
+         }, error = function(e) {
+            FALSE
+         })
+      }
+      else 
+      {
+         keyring_list <- get("key_list", envir = asNamespace("keyring"))
+         keys <- keyring_list(.rs.getSecretService())
+         name %in% keys$username
+      }
    }
 })
 
