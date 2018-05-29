@@ -149,8 +149,9 @@ parseCss <- function(cssLines, shouldBreak = FALSE)
    css
 }
 
-compareCss <- function(actual, expected, parent = NULL)
+compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
 {
+   browser(expr = shouldBreak)
    equal <- TRUE
    msgStart <- "\nCSS"
    if (!is.null(parent)) msgStart <- paste0("\nElement \"", parent, "\" ")
@@ -325,16 +326,17 @@ test_that("rgb conversion handles out of bounds values correctly", {
    )
 
    # Negative & too large values
+   negOrTooLarge = "(?:negative|greater than 255)"
    expect_error(
       .rs.getRgbColor("rgb(-300, 455, 1024)"),
-      "invalid color supplied: rgb(-300, 455, 1024). RGB value cannot be negative",
-      fixed = TRUE
-   )
+      paste0(
+         "invalid color supplied: rgb\\(-300, 455, 1024\\). RGB value cannot be ",
+         negOrTooLarge))
    expect_error(
       .rs.getRgbColor("rgb(300, -455, 1024)"),
-      "invalid color supplied: rgb(300, -455, 1024). RGB value cannot be greater than 255",
-      fixed = TRUE
-   )
+      paste0(
+         "invalid color supplied: rgb\\(300, -455, 1024\\). RGB value cannot be ",
+         negOrTooLarge))
 
    # Negatvie RGBA value.
    expect_error(
@@ -379,14 +381,14 @@ test_that("rgb conversion handles out of bounds values correctly", {
    # Negative & too large values
    expect_error(
       .rs.getRgbColor("rgba(-300, 455, 1024, 55)"),
-      "invalid color supplied: rgba(-300, 455, 1024, 55). RGB value cannot be negative",
-      fixed = TRUE
-   )
+      paste0(
+         "invalid color supplied: rgba\\(-300, 455, 1024, 55\\). RGB value cannot be ",
+         negOrTooLarge))
    expect_error(
       .rs.getRgbColor("rgba(300, -455, 1024, 55)"),
-      "invalid color supplied: rgba(300, -455, 1024, 55). RGB value cannot be greater than 255",
-      fixed = TRUE
-   )
+      paste0(
+         "invalid color supplied: rgba\\(300, -455, 1024, 55\\). RGB value cannot be ",
+         negOrTooLarge))
 
    # Non-integer RGB values
    expect_error(
@@ -423,43 +425,43 @@ test_that("rgb conversion handles invalid values correctly", {
    # Too many characters in hex representation
    expect_error(
       .rs.getRgbColor("#123456ab"),
-      "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: #123456ab",
+      "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #123456ab",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("#FfFfFf0"),
-      "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: #FfFfFf0",
+      "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #FfFfFf0",
       fixed = TRUE)
 
    # Too few values in rgb/rgba representation
    expect_error(
       .rs.getRgbColor("rgb(1, 10)"), 
-      "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: rgb(1, 10)",
+      "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgb(1, 10)",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("rgba(1, 10)"), 
-      "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: rgba(1, 10)",
+      "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgba(1, 10)",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("rgb(255)"), 
-      "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: rgb(255)",
+      "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgb(255)",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("rgba(255)"), 
-      "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: rgba(255)",
+      "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgba(255)",
       fixed = TRUE)
 
    # Completely wrong format
    expect_error(
       .rs.getRgbColor("86, 154, 214"),
-      "supplied color has an invalid format: 86, 154, 214. Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
+      "supplied color has an invalid format: 86, 154, 214. Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("Not a color"),
-      "supplied color has an invalid format: Not a color. Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
+      "supplied color has an invalid format: Not a color. Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("0xaaaaaa"),
-      "supplied color has an invalid format: 0xaaaaaa. Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
+      "supplied color has an invalid format: 0xaaaaaa. Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
       fixed = TRUE)
 })
 
@@ -2074,6 +2076,41 @@ test_that("convertAceTheme works correctly", {
       
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
       
-      expect_true(compareCss(parseCss(actual), parseCss(expected)), info = paste0("Theme: ", key))
+      # Check the css values
+      infoStr = paste0("Theme: ", key)
+      expect_true(compareCss(parseCss(actual), parseCss(expected)), info = infoStr)
+      
+      # Check the metadata values
+      nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
+      isDarkRegex <- "rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
+      
+      nameRowAct <- grep(nameRegex, actual, perl = TRUE)[1]
+      nameRowEx <- grep(nameRegex, expected, perl = TRUE)[1]
+      expect_equal(
+         regmatches(
+            actual[nameRowAct],
+            regexec(nameRegex, actual[nameRowAct], perl = TRUE))[[1]][2],
+         regmatches(
+            expected[nameRowEx],
+            regexec(nameRegex, expected[nameRowEx], perl = TRUE))[[1]][2],
+         fixed = TRUE,
+         info = infoStr)
+      
+      darkRowAct <- grep(isDarkRegex, actual, perl = TRUE)[1]
+      darkRowEx <- grep(isDarkRegex, actual, perl = TRUE)[1]
+      
+      actualIsDarkStr <- regmatches(
+         actual[darkRowAct],
+         regexec(isDarkRegex, actual[darkRowAct], perl = TRUE))[[1]][2]
+      expect_true(grepl("(?:true|false)", actualIsDarkStr, ignore.case = TRUE), info = infoStr)
+      expect_equal(
+         as.logical(toupper(actualIsDarkStr)),
+         as.logical(
+            toupper(
+               regmatches(
+                  expected[darkRowEx],
+                  regexec(isDarkRegex, expected[darkRowEx], perl = TRUE))[[1]][2])),
+         fixed = TRUE,
+         info = infoStr)
    })
 })

@@ -1,4 +1,5 @@
 /* rs-theme-name: Slush & Poppies */
+/* rs-theme-is-dark: FALSE */
 .ace_gutter {
   background: #F1F1F1;
   color: rgb(121,121,121)

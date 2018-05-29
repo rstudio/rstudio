@@ -1,4 +1,5 @@
 /* rs-theme-name: Chrome DevTools */
+/* rs-theme-is-dark: FALSE */
 .ace_gutter {
   background: #FFFFFF;
   color: rgb(128,128,128)

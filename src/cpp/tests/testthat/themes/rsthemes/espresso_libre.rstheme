@@ -1,4 +1,5 @@
 /* rs-theme-name: Espresso Libre */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #2A211C;
   color: rgb(116,104,93)

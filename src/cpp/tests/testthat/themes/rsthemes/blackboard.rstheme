@@ -1,4 +1,5 @@
 /* rs-theme-name: Blackboard */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #0C1021;
   color: rgb(130,132,141)

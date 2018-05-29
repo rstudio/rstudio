@@ -1,4 +1,5 @@
 /* rs-theme-name: Pastels on Dark */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #2C2828;
   color: rgb(94,94,92)

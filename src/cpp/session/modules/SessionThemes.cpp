@@ -40,60 +40,6 @@ namespace themes {
 
 namespace {
 
-/**
- * @brief Parses a colour and returns an RGB array.
- *
- * @param colorStr      The colour string to parse.
- *
- * @return An array of the integer RGB values.
- */
-std::array<int, 3> parseColor(const std::string& colorStr)
-{
-   // NOTE: This funciton is for internal use and assumes that the input has already been validated.
-   std::array<int, 3> rgb;
-
-   if (colorStr[0] == '#')
-   {
-      std::smatch matches;
-      std::regex_search(colorStr, matches, std::regex("#(..)(..)(..)"));
-      assert(matches.size() == 4);
-
-      for (int i = 0; i < 3; ++i)
-      {
-         rgb[i] = std::stoi(matches[i + 1], nullptr, 16);
-      }
-   }
-   else
-   {
-      std::smatch matches;
-      std::regex_search(colorStr, matches, std::regex("rgba?\\(\\s*(\\d*)\\s*,\\s*(\\d*)\\s*,\\s*(\\d*)"));
-      assert(matches.size() == 4);
-
-      for (int i = 0; i < 3; ++i)
-      {
-         rgb[i] = std::stoi(matches[i + 1]);
-      }
-   }
-
-   return rgb;
-}
-
-/**
- * @brief Checks whether a colour is dark or light.
- *
- * @param colorStr      The colour to test.
- *
- * @return True if the colour is dark; false otherwise.
- */
-bool isDarkColor(const std::string& colorStr)
-{
-   std::array<int, 3> rgb = parseColor(colorStr);
-
-  float luma = ((0.21f * rgb[0]) + (0.72f * rgb[1]) + (0.07f * rgb[2])) / 255.0f;
-
-  return luma < 0.5f;
-}
-
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
 typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
@@ -119,8 +65,7 @@ void getThemesInLocation(const boost::filesystem::path& location, ThemeMap& them
             std::regex_search(
                themeContents,
                matches,
-               std::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"),
-               std::regex_constants::match_default);
+               std::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
             // If there's at least one name specified, get the first one.
             if (matches.size() < 2)
@@ -142,22 +87,28 @@ void getThemesInLocation(const boost::filesystem::path& location, ThemeMap& them
             std::string name = matches[1];
 
             // Find out if the theme is dark or not.
-            std::regex defaultBlock(
-               "\\.ace_editor, "
-               "\\.rstudio-themes-flat\\.ace_editor_theme \\.profvis-flamegraph, "
-               "\\.rstudio-themes-flat.ace_editor_theme, "
-               "\\.rstudio-themes-flat .ace_editor_theme {.+?"
-               "[^-]color:\\s*(#[A-Fa-f\\d]{6}|rgba?\\(\\s*\\d{1-3}\\s*,\\s*\\d{1-3}\\s*,\\s*\\d{1-3}*[^\\)]*\\))");
-            std::regex_search(themeContents, matches, defaultBlock);
+            std::regex_search(
+                     themeContents,
+                     matches,
+                     std::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
-            if (matches.size() < 2)
+            bool isDark = false;
+            if (matches.size() >= 2)
             {
-               // TODO: warning / logging
-               // Incorrectly formed rstheme file, so skip.
-               continue;
+               isDark = std::regex_match(
+                  std::string(matches[1]),
+                  std::regex("(?:1|t(?:rue)?))", std::regex_constants::icase));
+            }
+            if ((matches.size() < 2) ||
+                (!isDark &&
+                !std::regex_match(
+                   std::string(matches[1]),
+                   std::regex("(?:0|f(?:alse)?))", std::regex_constants::icase))))
+            {
+               // TODO: warning / logging about using default isDark value.
             }
 
-            themeMap[name] = std::pair<std::string, bool>(fileLocation, isDarkColor(matches[1]));
+            themeMap[name] = std::pair<std::string, bool>(fileLocation, isDark);
          }
       }
    }

@@ -1,4 +1,5 @@
 /* rs-theme-name: Zenburnesque */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #404040;
   color: rgb(143,143,143)

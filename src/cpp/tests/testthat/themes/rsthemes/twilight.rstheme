@@ -1,4 +1,5 @@
 /* rs-theme-name: Twilight */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #141414;
   color: rgb(134,134,134)

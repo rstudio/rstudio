@@ -1,4 +1,5 @@
 /* rs-theme-name: Brilliance Dull */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: rgba(5, 5, 5, 0.98);
   color: rgb(105,105,105)

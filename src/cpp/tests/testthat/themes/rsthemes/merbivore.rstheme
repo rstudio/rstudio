@@ -1,4 +1,5 @@
 /* rs-theme-name: Merbivore */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #161616;
   color: rgb(126,124,121)

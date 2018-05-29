@@ -1,4 +1,5 @@
 /* rs-theme-name: Vibrant_Ink */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #0F0F0F;
   color: rgb(135,135,135)

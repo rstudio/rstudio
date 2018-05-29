@@ -1,4 +1,5 @@
 /* rs-theme-name: Idle Fingers */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #323232;
   color: rgb(153,153,153)

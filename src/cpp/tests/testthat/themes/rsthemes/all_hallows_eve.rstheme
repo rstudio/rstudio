@@ -1,4 +1,5 @@
 /* rs-theme-name: All Hallows Eve */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #000000;
   color: rgb(128,128,128)

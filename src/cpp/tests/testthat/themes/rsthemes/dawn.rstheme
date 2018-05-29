@@ -1,4 +1,5 @@
 /* rs-theme-name: Dawn */
+/* rs-theme-is-dark: FALSE */
 .ace_gutter {
   background: #F9F9F9;
   color: rgb(129,129,129)

@@ -1,4 +1,5 @@
 /* rs-theme-name: Cobalt */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #002240;
   color: rgb(128,145,160)

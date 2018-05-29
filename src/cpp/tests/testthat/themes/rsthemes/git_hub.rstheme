@@ -1,4 +1,5 @@
 /* rs-theme-name: Git Hub */
+/* rs-theme-is-dark: FALSE */
 .ace_gutter {
   background: #F8F8FF;
   color: rgb(124,124,128)

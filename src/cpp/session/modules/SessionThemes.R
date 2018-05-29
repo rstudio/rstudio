@@ -20,7 +20,7 @@
 #
 # Returns the RGB color.
 .rs.addFunction("getRgbColor", getRgbColor <- function(color) {
-   if (is.vector(color)) 
+   if (is.vector(color) && any(is.integer(color))) 
    {
       if (length(color) != 3) 
       {
@@ -65,26 +65,26 @@
       stop(
          "supplied color has an invalid format: ",
          color,
-         ". Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0].",
+         ". Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
          call. = FALSE)
    }
    
    # Check for inconsistencies.
-   invalidMsg <- paste0("invalid color supplied: ", color)
+   invalidMsg <- paste0("invalid color supplied: ", color, ". ")
    if (any(is.na(colorVec)) || any(!is.integer(colorVec)))
    {
       stop(
          invalidMsg,
-         ". One or more RGB values could not be converted to an integer",
+         "One or more RGB values could not be converted to an integer",
          call. = FALSE)
    }
    if (any(colorVec < 0))
    {
-      stop(invalidMsg, " RGB value cannot be negative", call. = FALSE)
+      stop(invalidMsg, "RGB value cannot be negative", call. = FALSE)
    }
    if (any(colorVec > 255))
    {
-      stop(invalidMsg, " RGB value cannot be greater than 255", call. = FALSE)
+      stop(invalidMsg, "RGB value cannot be greater than 255", call. = FALSE)
    }
    
    colorVec
@@ -775,7 +775,10 @@
          .call = FALSE)
    }
    
-   c(paste0("/* rs-theme-name: ", name, " */"), rsTheme)
+   c(
+      paste0("/* rs-theme-name: ", name, " */"),
+      paste0("/* rs-theme-is-dark: ", isDark, " */"),
+      rsTheme)
 })
 
 # Worker Functions =================================================================================
@@ -835,14 +838,16 @@
    # the name of the file.
    conn <- file(themePath)
    themeLines <- readLines(conn)
-
+   
+   nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
+   nameLine <- themeLines[grep(nameRegex, themeLines, perl = TRUE)]
    name <- sub(
       "^\\s*(.+?)\\s*$",
       "\\1",
       regmatches(
-         themeLines,
+         nameLine,
          regexec(
-            "rs-themeName:\\s*([^\\*]*)",
+            nameRegex,
             nameLine,
             perl = TRUE))[[1]][2],
       perl = TRUE)
