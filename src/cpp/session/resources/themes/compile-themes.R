@@ -744,6 +744,8 @@
 })
 
 .rs.addFunction("compile_theme", compile_theme <- function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
+   library("highlight")
+   
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", lines)
    stripped <- grep("^\\.", stripped, value = TRUE)
@@ -818,12 +820,11 @@
       for (class in allClasses) {
          modified <- c(modified, paste(class, blockPasted))
       }
-      
    }
    
    ## Parse the modified CSS.
    modified <- unlist(strsplit(modified, "\n", fixed = TRUE))
-   parsed <- suppressWarnings(css.parser(lines = modified))
+   parsed <- suppressWarnings(highlight::css.parser(lines = modified))
    
    if (!any(grepl("^ace_keyword", names(parsed)))) {
       warning("No field 'ace_keyword' in file '", basename(file), "'; skipping", call. = FALSE)

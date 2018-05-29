@@ -771,6 +771,7 @@
 # @param aceCss      The ace CSS to convert.
 # @param name        The name 
 .rs.addFunction("convertAceTheme", convertAceTheme <- function(name, aceCss, isDark) {
+   library("highlight")
    source(file.path(.Call("rs_rResourcesPath"), "themes", "compile-themes.R"))
    
    rsTheme <- .rs.compile_theme(aceCss, isDark)
