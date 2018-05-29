@@ -17,7 +17,5 @@ profvis/
 profvis*.tar.gz
 *.tar.bz
 *.tar.bz2
-r2d3/
-r2d3*.tar.gz
 plumber/
 plumber*.tar.gz
