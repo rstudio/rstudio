@@ -18,60 +18,131 @@ context("themes")
 inputFileLocation <- file.path(path.expand("."), "themes")
 
 # Helpers ==========================================================================================
-parseCss <- function(cssLines)
+parseCss <- function(cssLines, shouldBreak = FALSE)
 {
+   browser(expr = shouldBreak)
    css <- list()
    
+   # Split any lines with "\n" for proper parsing.
+   cssLines <- unlist(strsplit(cssLines, "\n", perl = TRUE))
+   
    currKey = NULL
-   for (line in cssLines)
+   isLastDescForKey <- FALSE
+   inCommentBlock <- FALSE
+   candidateKey <- NULL
+   for (currLine in cssLines)
    {
-      orgLine <- line
-      if (!is.null(currKey))
+      orgLine <- currLine
+      
+      # We use this to still parse the code before the start of the comment, if any.
+      startCommentBlock <- FALSE
+      
+      # Remove all in-line comments.
+      currLine <- gsub("/\\*.*?\\*/", "", currLine)
+      
+      # If we're not in a comment block and the current line has a comment opener, start the comment
+      # block and update the line by removing the commented section. This allows for CSS before the
+      # start of a comment. Note that this comment can't be contained wholly on a single line
+      # because of the gsub above this.
+      if (!inCommentBlock && grepl("/\\*", currLine))
       {
-         isLastDescForKey <- FALSE
-         if (grepl("\\}", line))
+         startCommentBlock <- TRUE
+         currLine <- sub("/\\*.*$", "", currLine)
+      }
+      
+      # If we're in a comment block and the current line has a comment closer, end the comment block
+      # and update the line by removing the commented section. This allows for CSS after the end of
+      # a comment.
+      if (inCommentBlock && grepl("\\*/", currLine))
+      {
+         inCommentBlock <- FALSE
+         currLine <- sub("^.*?\\*/", "", currLine)
+      }
+      
+      if (!inCommentBlock)
+      {
+         # Check for a change of key.
+         if (grepl("^\\s*\\.[^\\{]+\\{", currLine))
          {
-            isLastDescForKey <- TRUE
-            line <- sub("^([^\\}]*)\\}\\s*$", "\\1", line)
-            if (grepl("\\}", line))
+            candidateKey <- paste(
+               candidateKey, 
+               regmatches(
+                  currLine,
+                  regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
+               sep = " ")
+            
+            if (!grepl("^\\s*$", candidateKey))
             {
-               warning(sprintf("Maformed CSS: %s", orgLine))
+               if (!is.null(currKey))
+               {
+                  warning("Malformed CSS: ", orgLine, ". No closing bracket for last block.")
+               }
+               currKey <- candidateKey
+               candidateKey <- NULL
+               
+               css[[currKey]] <- list()
+               currLine <- sub("^\\s*[^\\{]*?\\s*\\{", "", currLine)
             }
          }
          
-         if (grepl(":", line))
+         if (!is.null(currKey))
          {
-            descValues <- strsplit(line, "\\s*;\\s*")[[1]]
-            for (value in descValues)
+            if (grepl("\\}", currLine))
             {
-               if (value != "")
+               isLastDescForKey <- TRUE
+               currLine <- sub("^([^\\}]*)\\}\\s*$", "\\1", currLine)
+               if (grepl("\\}", currLine))
                {
-                  desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", line), "\\s*:\\s*")[[1]]
-                  if (length(desc) != 2)
+                  warning("Maformed CSS: ", orgLine, ". Extra closing brackets.")
+               }
+            }
+            
+            if (grepl(":", currLine))
+            {
+               descValues <- strsplit(currLine, "\\s*;\\s*")[[1]]
+               for (value in descValues)
+               {
+                  if (value != "")
                   {
-                     warning(sprintf("Malformed CSS: %s", orgLine))
-                  }
-                  else
-                  {
-                     css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
+                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", currLine), "\\s*:\\s*")[[1]]
+                     if (length(desc) != 2)
+                     {
+                        warning("Malformed CSS: ", orgLine, ". Invalid element within block.")
+                     }
+                     else
+                     {
+                        css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
+                     }
                   }
                }
             }
+            else if (!grepl("^\\s*$", currLine))
+            {
+               warning("Malformd CSS: ", orgLine, ". Unexpected non-css line.")
+            }
          }
-         else if (grepl("^\\s*$", orgLine))
+         else if (!grepl("^\\s*$", currLine))
          {
-            warning(sprintf("Malformd CSS: %s", orgLine))
+            if (is.null(candidateKey))
+            {
+               candidateKey <- currLine
+            }
+            else
+            {
+               candidateKey <- paste(candidateKey, currLine)
+            }
          }
          
          if (isLastDescForKey)
          {
             currKey <- NULL
+            isLastDescForKey <- FALSE
          }
-      }
-      else if (grepl("\\.[^\\{]+\\{$", line))
-      {
-         currKey = regmatches(line, regexec("^\\s*([^\\{]+?)\\s*\\{\\s*$", line))[[1]][2]
-         css[[currKey]] <- list()
+         
+         if (startCommentBlock)
+         {
+            inCommentBlock <- TRUE
+         }
       }
    }
    
@@ -129,7 +200,7 @@ compareCss <- function(actual, expected, parent = NULL)
             length(extraNames),
             paste0(extraNames, collapse = "\",\n   \""))
          missingMsg <- sprintf(
-            "was missing %d elements with names: \"%s\"",
+            "was missing %d elements with names: \n   \"%s\"",
             length(missingNames),
             paste0(missingNames, collapse = "\",\n   \""))
 
@@ -1939,4 +2010,70 @@ test_that("parseTmTheme handles incorrect input", {
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "WrongTagStart.tmTheme")),
       "Unable to convert the tmtheme to an rstheme. Encountered unexpected element as a child of the current \"dict\" element: \"a-tag\". Expected \"key\", \"string\", \"array\", or \"dict\".",
       fixed = TRUE)
+})
+
+# Test convertAceTheme =============================================================================
+test_that("convertAceTheme works correctly", {
+   library("highlight")
+   
+   themes <- list(
+      "Active4D" = list("fileName" ="active4d", isDark = FALSE),
+      "All Hallows Eve" = list("fileName" ="all_hallows_eve", isDark = TRUE),
+      "Blackboard" = list("fileName" ="blackboard", isDark = TRUE),
+      "Amy" = list("fileName" ="amy", isDark = TRUE),
+      "Brilliance Black" = list("fileName" ="brilliance_black", isDark = TRUE),
+      "Brilliance Dull" = list("fileName" ="brilliance_dull", isDark = TRUE),
+      "Chrome DevTools" = list("fileName" ="chrome_dev_tools", isDark = FALSE),
+      "Clouds Midnight" = list("fileName" ="clouds_midnight", isDark = TRUE),
+      "Clouds" = list("fileName" ="clouds", isDark = FALSE),
+      "Cobalt" = list("fileName" ="cobalt", isDark = TRUE),
+      "Dawn" = list("fileName" ="dawn", isDark = FALSE),
+      "Dreamweaver" = list("fileName" ="dreamweaver", isDark = FALSE),
+      "Eiffel" = list("fileName" ="eiffel", isDark = FALSE),
+      "Espresso Libre" = list("fileName" ="espresso_libre", isDark = TRUE),
+      "Git Hub" = list("fileName" ="git_hub", isDark = FALSE),
+      "IPlastic" = list("fileName" ="i_plastic", isDark = FALSE),
+      "Idle Fingers" = list("fileName" ="idle_fingers", isDark = TRUE),
+      "IDLE" = list("fileName" ="idle", isDark = FALSE),
+      "Katzenmilch" = list("fileName" ="katzenmilch", isDark = FALSE),
+      "krTheme" = list("fileName" ="kr_theme", isDark = TRUE),
+      "Kuroir Theme" = list("fileName" ="kuroir_theme", isDark = FALSE),
+      "LAZY" = list("fileName" ="lazy", isDark = FALSE),
+      "MagicWB (Amiga)" = list("fileName" ="magic_wb_amiga", isDark = FALSE),
+      "Merbivore Soft" = list("fileName" ="merbivore_soft", isDark = TRUE),
+      "Merbivore" = list("fileName" ="merbivore", isDark = TRUE),
+      "mono industrial" = list("fileName" ="mono_industrial", isDark = TRUE),
+      "Monokai" = list("fileName" ="monokai", isDark = TRUE),
+      "Pastels on Dark" = list("fileName" ="pastels_on_dark", isDark = TRUE),
+      "Slush & Poppies" = list("fileName" ="slush_and_poppies", isDark = FALSE),
+      "Solarized (dark)" = list("fileName" ="solarized_dark", isDark = TRUE),
+      "Solarized (light)" = list("fileName" ="solarized_light", isDark = FALSE),
+      "Sunburst" = list("fileName" ="sunburst", isDark = TRUE),
+      "Textmate" = list("fileName" ="textmate", isDark = FALSE),
+      "Tomorrow Night - Blue" = list("fileName" ="tomorrow_night_blue", isDark = TRUE),
+      "Tomorrow Night - Bright" = list("fileName" ="tomorrow_night_bright", isDark = TRUE),
+      "Tomorrow Night - Eighties" = list("fileName" ="tomorrow_night_eighties", isDark = TRUE),
+      "Tomorrow Night" = list("fileName" ="tomorrow_night", isDark = TRUE),
+      "Tomorrow" = list("fileName" ="tomorrow", isDark = FALSE),
+      "Twilight" = list("fileName" ="twilight", isDark = TRUE),
+      "Vibrant_Ink" = list("fileName" ="vibrant_ink", isDark = TRUE),
+      "Xcode default" = list("fileName" ="xcode_default", isDark = FALSE),
+      "Zenburnesque" = list("fileName" ="zenburnesque", isDark = TRUE))
+
+   .rs.enumerate(themes, function(key, value) {
+      inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
+      expectedResultFile <- file.path(inputFileLocation, "rsthemes", paste0(value$fileName, ".rstheme"))
+      
+      conn <- file(expectedResultFile)
+      expected <- readLines(conn)
+      close(conn)
+      
+      conn <- file(inputAceFile)
+      aceActualLines <- readLines(conn)
+      close(conn)
+      
+      actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
+      
+      expect_true(compareCss(parseCss(actual), parseCss(expected)), info = paste0("Theme: ", key))
+   })
 })
