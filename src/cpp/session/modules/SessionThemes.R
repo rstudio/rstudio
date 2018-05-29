@@ -20,7 +20,7 @@
 #
 # Returns the RGB color.
 .rs.addFunction("getRgbColor", getRgbColor <- function(color) {
-   if (is.vector(color) && is.integer(color[1])) 
+   if (is.vector(color)) 
    {
       if (length(color) != 3) 
       {
@@ -36,7 +36,7 @@
       if (nchar(color) != 7)
       {
          stop(
-            "hex represntation of RGB values should have format \"#[0-9a-fA-F]{6}\". Found: ",
+            "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: ",
             color,
             call. = FALSE)
       }
@@ -54,7 +54,7 @@
       if (length(matches) != 4)
       {
          stop(
-            "expected RGB color with format \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\". Found: ",
+            "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: ",
             color,
             call. = FALSE)
       }
@@ -65,33 +65,26 @@
       stop(
          "supplied color has an invalid format: ",
          color,
-         ". Expected \"#[0-9a-fA-F]{6}\" or \"rgba?\\([0-9]+, [0-9]+, [0-9]+(, [0-9]+)\\)\"",
+         ". Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0].",
          call. = FALSE)
    }
    
    # Check for inconsistencies.
-   for (c in colorVec)
+   invalidMsg <- paste0("invalid color supplied: ", color)
+   if (any(is.na(colorVec)) || any(!is.integer(colorVec)))
    {
-      if (is.na(c))
-      {
-         stop(
-            sprintf(
-               "invalid color supplied: %s. One or more RGB values could not be converted to an integer",
-               color),
-            call. = FALSE)
-      }
-      if (c < 0)
-      {
-         stop(
-            sprintf("invalid color supplied: %s. RGB value cannot be negative", color),
-            call. = FALSE)
-      }
-      if (c > 255)
-      {
-         stop(
-            sprintf("invalid color supplied: %s. RGB value cannot be greater than 255", color),
-            call. = FALSE)
-      }
+      stop(
+         invalidMsg,
+         ". One or more RGB values could not be converted to an integer",
+         call. = FALSE)
+   }
+   if (any(colorVec < 0))
+   {
+      stop(invalidMsg, " RGB value cannot be negative", call. = FALSE)
+   }
+   if (any(colorVec > 255))
+   {
+      stop(invalidMsg, " RGB value cannot be greater than 255", call. = FALSE)
    }
    
    colorVec
@@ -124,7 +117,8 @@
       ")")
 })
 
-# Determines the luma of a colour. It's not quite clear what a "luma" is.
+# Determines the luma of a colour. This refers to the percieved luminance of the colour. More 
+# information can be found at https://en.wikipedia.org/wiki/Relative_luminance.
 # 
 # @param color    The colour for which to determine the luma.
 #
@@ -157,7 +151,11 @@
    {
       if (!grepl("^#[a-fA-F0-9]{8}$", color))
       {
-         stop(paste0("Unable to parse color: ", color), call. = FALSE)
+         stop(
+            "Unable to parse color: ",
+            color, 
+            "it must have format \"#RGB\", \"#RRGGBB\" or \"#RRGGBBAA\" where `R`, `G`, `B`, and `A` are in [0x00, 0xFF].",
+            call. = FALSE)
       }
       
       aVal <- format(
@@ -534,9 +532,7 @@
    key <- xml2::xml_text(element)
    if (key == "")
    {
-      stop(
-         sprintf("%s The value of a \"key\" element may not be empty.", parseError),
-         call. = FALSE)
+      stop(parseError, " The value of a \"key\" element may not be empty.", call. = FALSE)
    }
    
    key
@@ -558,10 +554,10 @@
    if (is.null(keyName))
    {
       stop(
-         sprintf(
-            "%s Unable to find a key for the \"string\" element with value \"%s\".",
-            parseError,
-            value),
+         parseError,
+         " Unable to find a key for the \"string\" element with value \"",
+         value,
+         "\".",
          call. = FALSE)
    }
    
@@ -578,9 +574,7 @@
    parseError <- "Unable to convert the tmtheme to an rstheme."
    if (is.null(keyName))
    {
-      stop(
-         sprintf("%s Unable to find a key for the current \"dict\" element.", parseError),
-         call. = FALSE)
+      stop(parseError, " Unable to find a key for the current \"dict\" element.", call. = FALSE)
    }
    
    values <- list()
@@ -597,10 +591,10 @@
                if (!is.null(key))
                {
                   stop(
-                     sprintf(
-                        "%s Unable to find a value for the key \"%s\".",
-                        parseError,
-                        key),
+                     parseError,
+                     " Unable to find a value for the key \"",
+                     key,
+                     "\".",
                      call. = FALSE)
                }
                key <- .rs.parseKeyElement(element)
@@ -625,10 +619,10 @@
             else
             {
                stop(
-                  sprintf(
-                     "%s Encountered unexpected element as a child of the current \"dict\" element: \"%s\". Expected \"key\", \"string\", \"array\", or \"dict\".",
-                     parseError,
-                     elName),
+                  parseError,
+                  " Encountered unexpected element as a child of the current \"dict\" element: \"",
+                  elName,
+                  "\". Expected \"key\", \"string\", \"array\", or \"dict\".",
                   call. = FALSE)
             }
          }
@@ -637,10 +631,10 @@
       if (!is.null(key))
       {
          stop(
-            sprintf(
-               "%s Unable to find a value for the key \"%s\".",
-               parseError,
-               key),
+            parseError,
+            " Unable to find a value for the key \"",
+            key,
+            "\".",
             call. = FALSE)
       }
    }
@@ -658,24 +652,20 @@
    parseError <- "Unable to convert the tmtheme to an rstheme."
    if (xml2::xml_length(arrayElement) < 1)
    {
-      stop(
-         sprintf("%s \"array\" element cannot be empty.", parseError),
-         call. = FALSE)
+      stop(parseError, " \"array\" element cannot be empty.", call. = FALSE)
    }
    
    if (is.null(keyName))
    {
-      stop(
-         sprintf("%s Unable to find a key for array value.", parseError),
-         call. = FALSE)
+      stop(parseError, " Unable to find a key for array value.", call. = FALSE)
    }
    if (keyName != "settings")
    {
       stop(
-         sprintf(
-            "%s Incorrect key for array element. Expected: \"settings\"; Actual: \"%s\".",
-            parseError,
-            keyName),
+         parseError,
+         " Incorrect key for array element. Expected: \"settings\"; Actual: \"",
+         keyName,
+         "\".",
          call. = FALSE)
    }
    
@@ -689,7 +679,10 @@
          if (elName != "dict")
          {
             stop(
-               sprintf("%s Expecting \"dict\" element; found \"%s\".", parseError, elName),
+               parseError,
+               " Expecting \"dict\" element; found \"",
+               elName,
+               "\".",
                call. = FALSE)
          }
          
@@ -718,12 +711,13 @@
       xmlStr, 
       error = function(msg, code, domain, line, col, level, filename) {
          stop(
-            sprintf(
-               "%s An error occurred while parsing %s at line %d: %s",
-               parseError,
-               filename,
-               line,
-               msg),
+            parseError,
+            " An error occurred while parsing ",
+            filename,
+            " at line ",
+            line,
+            ": ",
+            msg,
             call. = FALSE)
       },
       encoding = "UTF-8"))
@@ -732,11 +726,9 @@
    childrenCount <- xml2::xml_length(tmThemeDoc)
    if (childrenCount != 1)
    {
-      stop(
-         sprintf(
-            "%s Expected 1 non-text child of the root, found: %d",
-            parseError,
-            childrenCount),
+      stop(parseError,
+         " Expected 1 non-text child of the root, found: ",
+         childrenCount,
          call. = FALSE)
    }
    
@@ -744,18 +736,17 @@
    if (xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)) != "dict")
    {
       stop(
-         sprintf(
-            "%s Expecting \"dict\" element; found \"%s\".",
-            parseError,
-            xml2::xml_name(xml2::xml_child(tmThemeDoc, 1))),
+         parseError,
+         " Expecting \"dict\" element; found \"",
+         xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)),
+         "\".",
          call. = FALSE)
    }
    if (xml2::xml_length(xml2::xml_child(tmThemeDoc, 1)) < 1)
    {
       stop(
-         sprintf(
-            "%s \"dict\" element cannot be empty.",
-            parseError),
+         parseError,
+         " \"dict\" element cannot be empty.",
          call. = FALSE)
    }
    
@@ -889,7 +880,7 @@
          msg <- paste0(msg, " or try again with `force = TRUE`")
       }
       
-      stop(paste0(msg, "."))
+      stop(msg, ".")
    }
    
    # TODO add theme to list.
