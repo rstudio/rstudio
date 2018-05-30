@@ -95,7 +95,8 @@ std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
 
 Error startScriptJob(const core::FilePath& path)
 {
-   boost::shared_ptr<ScriptJob> job = ScriptJob::create(path);
+   boost::shared_ptr<ScriptJob> job = ScriptJob::create(
+         module_context::resolveAliasedPath(path.absolutePath()));
    s_scripts.push_back(job);
    return Success();
 }

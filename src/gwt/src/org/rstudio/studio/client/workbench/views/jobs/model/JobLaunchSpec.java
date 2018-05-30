@@ -1,5 +1,5 @@
 /*
- * JobsServerOperations.java
+ * JobLaunchSpec.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,14 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import com.google.gwt.core.client.JavaScriptObject;
 
-import com.google.gwt.core.client.JsArray;
-
-public interface JobsServerOperations
+public class JobLaunchSpec extends JavaScriptObject
 {
-   void setJobListening(String id, boolean listening,
-                        ServerRequestCallback<JsArray<JobOutput> > output);
-   void startJob(JobLaunchSpec spec, ServerRequestCallback<Void> callback); 
+   protected JobLaunchSpec() {}
+   
+   public final native String path() /*-{
+    return this.path;
+   }-*/;
+   
+   public final native static JobLaunchSpec create(String path) /*-{
+      return { "path": path };
+   }-*/;
 }

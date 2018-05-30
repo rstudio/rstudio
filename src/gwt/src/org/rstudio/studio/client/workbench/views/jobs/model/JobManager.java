@@ -19,7 +19,11 @@ import java.util.Collections;
 import java.util.Date;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -28,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -39,13 +45,24 @@ public class JobManager implements JobRefreshEvent.Handler,
                                    JobUpdatedEvent.Handler,
                                    SessionInitHandler
 {
+   interface Binder extends CommandBinder<Commands, JobManager>
+   {
+   }
+
    @Inject
    public JobManager(Provider<Session> pSession,
-                     EventBus events)
+                     EventBus events,
+                     Commands commands,
+                     Binder binder,
+                     JobsServerOperations server,
+                     Provider<SourceWindowManager> pSourceManager)
    {
       events_ = events;
       pSession_ = pSession;
       state_ = JobState.create();
+      server_ = server;
+      pSourceManager_ = pSourceManager;
+      binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(JobRefreshEvent.TYPE, this);
       events.addHandler(JobUpdatedEvent.TYPE, this);
@@ -91,6 +108,18 @@ public class JobManager implements JobRefreshEvent.Handler,
       
       // update global status 
       emitJobProgress();
+   }
+   
+   @Handler
+   public void onStartJob()
+   {
+      JobLauncherDialog dialog = new JobLauncherDialog("Select R Script", 
+            pSourceManager_.get().getCurrentDocPath(),
+            spec ->
+            {
+               server_.startJob(spec, new VoidServerRequestCallback());
+            });
+      dialog.showModal();
    }
    
    /**
@@ -274,6 +303,9 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private JobState state_;
 
+   // injected
    private final EventBus events_;
    private final Provider<Session> pSession_;
+   private final JobsServerOperations server_;
+   private final Provider<SourceWindowManager> pSourceManager_;
 }

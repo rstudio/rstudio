@@ -552,9 +552,12 @@ public abstract class
    
    // Addins
    public abstract AppCommand browseAddins();
+   
+   // Jobs
+   public abstract AppCommand startJob();
 
    // Other
-   public abstract AppCommand checkSpelling();   
+   public abstract AppCommand checkSpelling();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
    public abstract AppCommand layoutConsoleOnLeft();

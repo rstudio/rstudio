@@ -45,6 +45,7 @@ public class JobsPane extends WorkbenchPane
                    final EventBus events)
    {
       super("Jobs");
+      commands_ = commands;
 
       allJobs_ = new ToolbarButton(
             commands.helpBack().getImageResource(), evt ->
@@ -236,6 +237,7 @@ public class JobsPane extends WorkbenchPane
    private void installMainToolbar()
    {
       toolbar_.removeAllWidgets();
+      toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
    }
 
    // widgets
@@ -248,4 +250,7 @@ public class JobsPane extends WorkbenchPane
 
    // internal state
    String current_;
+
+   // injected
+   final Commands commands_;
 }

@@ -237,6 +237,17 @@ Error jobOutput(const json::JsonRpcRequest& request,
 Error runScriptJob(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
+   json::Object jobSpec;
+   std::string path;
+   Error error = json::readParams(request.params, &jobSpec);
+   if (error)
+      return error;
+
+   error = json::readObject(jobSpec, "path", &path);
+   if (error)
+      return error;
+
+   startScriptJob(FilePath(path));
    return Success();
 }
 
