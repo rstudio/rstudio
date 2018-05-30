@@ -183,6 +183,8 @@ std::string assignOutputUrl(const std::string& outputFile)
    std::string path = "/";
    FilePath outputPath = module_context::resolveAliasedPath(outputFile);
    FilePath websiteDir = r_util::websiteRootDirectory(outputPath);
+   if (!module_context::websiteOutputDir().empty())
+      websiteDir = websiteDir.childPath(module_context::websiteOutputDir());
    if (!websiteDir.empty() && !r_util::isWebsiteDirectory(outputPath.parent()))
    {
       // assign website build dir as output root
