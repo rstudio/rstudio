@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client.html;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
@@ -25,22 +27,109 @@ import com.google.gwt.user.client.Command;
 
 public class HTMLAttributesParser
 {
+   public static class Attributes
+   {
+      public Attributes(String identifier,
+                        List<String> classes,
+                        Map<String, String> attributes)
+      {
+         identifier_ = identifier;
+         classes_ = classes;
+         attributes_ = attributes;
+      }
+      
+      public String getIdentifier()
+      {
+         return identifier_;
+      }
+      
+      public List<String> getClasses()
+      {
+         return classes_;
+      }
+      
+      public Map<String, String> getAttributes()
+      {
+         return attributes_;
+      }
+      
+      private String identifier_;
+      private List<String> classes_;
+      private Map<String, String> attributes_;
+   }
+   
    private static class Parser
    {
       public Parser(String attributes)
       {
          attributes_ = StringUtil.notNull(attributes).trim();
          map_ = new HashMap<String, String>();
+         identifier_ = "";
+         classes_ = new ArrayList<String>();
          
          index_ = 0;
+         n_ = attributes.length();
          currentKey_ = "";
          currentValue_ = "";
       }
       
-      public boolean consumeKey()
+      public boolean consumeIdentifier()
+      {
+         char ch = attributes_.charAt(index_);
+         if (ch != '#')
+            return false;
+         
+         int index = index_;
+         return consumeUntilRegex("(?:\\s|$)", new Command()
+         {
+            @Override
+            public void execute()
+            {
+               identifier_ = attributes_.substring(index + 1, index_);
+            }
+         });
+      }
+      
+      public boolean consumeClass()
+      {
+         char ch = attributes_.charAt(index_);
+         if (ch != '.')
+            return false;
+         
+         int index = index_;
+         return consumeUntilRegex("(?:\\s|$)", new Command()
+         {
+            @Override
+            public void execute()
+            {
+               classes_.add(attributes_.substring(index + 1, index_));
+            }
+         });
+      }
+      
+      public boolean consumeAttribute()
+      {
+         if (!consumeKey())
+            return false;
+         
+         if (!consumeEquals())
+            return false;
+         
+         if (!consumeValue())
+            return false;
+         
+         return true;
+      }
+      
+      public boolean finished()
+      {
+         return index_ >= n_;
+      }
+      
+      private boolean consumeKey()
       {
          final int index = index_;
-         return consumeUntilRegex("[\\s=]", new Command()
+         return consumeUntilRegex("[=]", new Command()
          {
             @Override
             public void execute()
@@ -51,14 +140,19 @@ public class HTMLAttributesParser
          });
       }
       
-      public boolean consumeWhitespace()
+      private boolean consumeWhitespace()
       {
-         return consumeUntilRegex("\\S");
+         return consumeUntilRegex("(?:\\S|$)");
       }
       
-      public boolean consumeEquals()
+      private boolean consumeEquals()
       {
-         return consumeUntilRegex("[^\\s=]");
+         char ch = attributes_.charAt(index_);
+         if (ch != '=')
+            return false;
+         
+         index_++;
+         return true;
       }
       
       public boolean consumeValue()
@@ -73,7 +167,8 @@ public class HTMLAttributesParser
                public void execute()
                {
                   currentValue_ = attributes_.substring(index + 1, index_ - 1);
-                  map_.put(currentKey_, currentValue_);
+                  if (isValidKey(currentKey_))
+                     map_.put(currentKey_, currentValue_);
                }
             });
          }
@@ -84,14 +179,15 @@ public class HTMLAttributesParser
             public void execute()
             {
                currentValue_ = attributes_.substring(index, index_);
-               map_.put(currentKey_, currentValue_);
+               if (isValidKey(currentKey_))
+                  map_.put(currentKey_, currentValue_);
             }
          });
       }
       
-      public Map<String, String> parsedAttributes()
+      public Attributes getAttributes()
       {
-         return map_;
+         return new Attributes(identifier_, classes_, map_);
       }
       
       private boolean consumeUntilRegex(String regex)
@@ -133,35 +229,43 @@ public class HTMLAttributesParser
          return true;
       }
       
+      private static boolean isValidKey(String key)
+      {
+         return RE_KEY.test(key);
+      }
+      
       private final String attributes_;
       private final Map<String, String> map_;
+      private String identifier_;
+      private List<String> classes_;
       
       private int index_;
+      private int n_;
       private String currentKey_;
       private String currentValue_;
+      
+      private static final Pattern RE_KEY = Pattern.create("^[a-zA-Z][a-zA-Z0-9_.:-]*$", "");
    }
    
-   public static Map<String, String> parseAttributes(String attributes)
+   public static Attributes parseAttributes(String attributes)
    {
       Parser parser = new Parser(attributes);
-      while (true)
+      while (!parser.finished())
       {
          parser.consumeWhitespace();
          
-         if (!parser.consumeKey())
-            break;
+         if (parser.consumeIdentifier())
+            continue;
          
-         parser.consumeWhitespace();
+         if (parser.consumeClass())
+            continue;
          
-         if (!parser.consumeEquals())
-            break;
+         if (parser.consumeAttribute())
+            continue;
          
-         parser.consumeWhitespace();
-         
-         if (!parser.consumeValue())
-            break;
+         break;
       }
       
-      return parser.parsedAttributes();
+      return parser.getAttributes();
    }
 }

@@ -22,6 +22,7 @@ import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.html.HTMLAttributesParser;
+import org.rstudio.core.client.html.HTMLAttributesParser.Attributes;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
@@ -245,9 +246,9 @@ public class ImagePreviewer
       image.addStyleName(RES.styles().image());
       
       // parse and inject attributes
-      Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
+      Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
       final Element imgEl = image.getElement();
-      for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+      for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
       {
          String key = entry.getKey();
          String val = entry.getValue();
@@ -255,6 +256,12 @@ public class ImagePreviewer
             continue;
          imgEl.setAttribute(key, val);
       }
+      
+      if (!parsedAttributes.getIdentifier().isEmpty())
+         imgEl.setId(parsedAttributes.getIdentifier());
+
+      for (String className : parsedAttributes.getClasses())
+         imgEl.addClassName(className);
       
       // add load handlers to image
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
@@ -350,9 +357,9 @@ public class ImagePreviewer
                      sentinel, href_));
                
                // parse and inject attributes
-               Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_);
+               Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_);
                final Element imgEl = image.getElement();
-               for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+               for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
                {
                   String key = entry.getKey();
                   String val = entry.getValue();
@@ -360,6 +367,12 @@ public class ImagePreviewer
                      continue;
                   imgEl.setAttribute(key, val);
                }
+               
+               if (!parsedAttributes.getIdentifier().isEmpty())
+                  imgEl.setId(parsedAttributes.getIdentifier());
+               
+               for (String className : parsedAttributes.getClasses())
+                  imgEl.addClassName(className);
             }
          };
          
