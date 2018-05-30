@@ -693,10 +693,15 @@ CRANMirror UserSettings::cranMirror() const
    // a previous bug/regression
    if (mirror.url.empty() || (mirror.url == "/"))
    {
-      mirror.name = "Global (CDN)";
-      mirror.host = "RStudio";
-      mirror.url = "http://cran.rstudio.com/";
-      mirror.country = "us";
+      // But only if the default not changed in r-cran-repos and repos.conf
+      if (session::options().rCRANRepos().empty() &&
+          session::options().rCRANMultipleRepos().size() == 0)
+      {
+         mirror.name = "Global (CDN)";
+         mirror.host = "RStudio";
+         mirror.url = "http://cran.rstudio.com/";
+         mirror.country = "us";
+      }
    }
 
    // re-map cran.rstudio.org to cran.rstudio.com
@@ -704,7 +709,7 @@ CRANMirror UserSettings::cranMirror() const
       mirror.url = "http://cran.rstudio.com/";
 
    // remap url without trailing slash
-   if (!boost::algorithm::ends_with(mirror.url, "/"))
+   if (mirror.url.size() > 0 && !boost::algorithm::ends_with(mirror.url, "/"))
       mirror.url += "/";
 
    return mirror;
