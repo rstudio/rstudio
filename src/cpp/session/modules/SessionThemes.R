@@ -887,12 +887,12 @@
       stop(msg, ".")
    }
    
-   # TODO add theme to list.
-   
    if (apply)
    {
       .rs.applyTheme(name)
    }
+   
+   name
 })
 
 # Applies a theme to RStudio.
