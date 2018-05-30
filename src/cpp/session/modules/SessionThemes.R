@@ -785,17 +785,17 @@
 
 # Converts a tmtheme file into an rstheme file.
 # 
-# @param file              The tmtheme file to convert.
+# @param themePath         The tmtheme file to convert.
 # @param add               Whether to add the converted custom theme to RStudio.
 # @param outputLocation    Where to place a local copy of the converted theme.
 # @param apply             Whether to immediately apply the new custom theme.
 # @param force             Whether to force the operation when it may involve an overwrite.
 #
 # Returns the name of the theme on success.
-.rs.addFunction("convertTheme", convertTheme <- function(file, add, outputLocation, apply, force, globally) {
-   tmTheme <- .rs.parseTmTheme(file)
+.rs.addFunction("convertTheme", convertTheme <- function(themePath, add, outputLocation, apply, force, globally) {
+   tmTheme <- .rs.parseTmTheme(themePath)
    name <- tmTheme$name
-   fileName <- tools::file_path_sans_ext(basename(file))
+   fileName <- tools::file_path_sans_ext(basename(themePath))
    
    aceTheme <- .rs.convertTmTheme(tmTheme)
    rsTheme <- .rs.convertAceTheme(aceTheme$theme, aceTheme$isDark)
@@ -941,19 +941,19 @@
 # API Functions
 
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
-.rs.addApiFunction("convertTheme", api.convertTheme <- function(file, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
+.rs.addApiFunction("convertTheme", api.convertTheme <- function(themePath, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
    # Require XML package for parsing the tmtheme files.
    if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
       stop("Taking this action requires the xml2 library. Please run 'install.packages(\"xml2\")' before continuing.")
    }
    
-   .rs.convertTheme(file, add, outputLocation, apply, force, globally)
+   .rs.convertTheme(themePath, add, outputLocation, apply, force, globally)
 })
 
 # Add a theme to RStudio.
-.rs.addApiFunction("addTheme", api.addTheme <- function(file, apply = FALSE, force = FALSE, globally = FALSE) {
-   .rs.addTheme(file, apply, force, globally)
+.rs.addApiFunction("addTheme", api.addTheme <- function(themePath, apply = FALSE, force = FALSE, globally = FALSE) {
+   .rs.addTheme(themePath, apply, force, globally)
 })
 
 # Apply a theme to RStudio.
