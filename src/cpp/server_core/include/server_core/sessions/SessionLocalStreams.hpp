@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_LOCAL_STREAMS_HPP
-#define SESSION_LOCAL_STREAMS_HPP
+#ifndef SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
+#define SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
 
 #include <string>
 
@@ -27,7 +27,8 @@
 #define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
 
 namespace rstudio {
-namespace session {
+namespace server_core {
+namespace sessions {
 namespace local_streams {
 
 inline core::Error ensureStreamsDir()
@@ -46,9 +47,9 @@ inline core::FilePath streamPath(const std::string& file)
 }
 
 } // namespace local_streams
-} // namepspace session
+} // namepspace sessions
+} // namespace server_core
 } // namespace rstudio
 
-#endif // SESSION_LOCAL_STREAMS_HPP
-
+#endif // SERVER_CORE_SESSIONS_SESSION_LOCAL_STREAMS_HPP
 

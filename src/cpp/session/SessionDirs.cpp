@@ -44,6 +44,23 @@ FilePath getDefaultWorkingDirectory()
       return session::options().userHomePath();
 }
 
+FilePath getActiveSessionInitialWorkingDirectory()
+{
+   using namespace module_context;
+   if (activeSession().initial())
+   {
+      activeSession().setInitial(false);
+      return getDefaultWorkingDirectory();
+   }
+
+   FilePath workingDirPath = module_context::resolveAliasedPath(
+                   module_context::activeSession().workingDir());
+   if (workingDirPath.exists())
+      return workingDirPath;
+   else
+      return getDefaultWorkingDirectory();
+}
+
 FilePath getInitialWorkingDirectory()
 {
    // check for a project
@@ -55,21 +72,7 @@ FilePath getInitialWorkingDirectory()
    // check for working dir in project none
    else if (options().sessionScope().isProjectNone())
    {
-      // if this is the initial session then use the default working directory
-      // (reset initial to false so this is one shot thing)
-      using namespace module_context;
-      if (activeSession().initial())
-      {
-         activeSession().setInitial(false);
-         return getDefaultWorkingDirectory();
-      }
-
-      FilePath workingDirPath = module_context::resolveAliasedPath(
-                      module_context::activeSession().workingDir());
-      if (workingDirPath.exists())
-         return workingDirPath;
-      else
-         return getDefaultWorkingDirectory();
+      return getActiveSessionInitialWorkingDirectory();
    }
 
    // see if there is an override from the environment (perhaps based
@@ -81,8 +84,7 @@ FilePath getInitialWorkingDirectory()
    }
    else
    {
-      // if not then just return default working dir
-      return getDefaultWorkingDirectory();
+      return getActiveSessionInitialWorkingDirectory();
    }
 }
 

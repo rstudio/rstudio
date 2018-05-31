@@ -68,7 +68,8 @@ bool ExponentialBackoff::next()
       return true;
    }
 
-   boost::posix_time::milliseconds nextWait(initialWait_.total_milliseconds() * std::pow(2, totalNumTries_));
+   int factor = std::pow(2.0, totalNumTries_);
+   boost::posix_time::milliseconds nextWait(initialWait_.total_milliseconds() * factor);
    boost::posix_time::milliseconds timeout = (nextWait > maxWait_) ? maxWait_ : nextWait;
 
    if (maxNumRetries_ == 0 && timeout == maxWait_)

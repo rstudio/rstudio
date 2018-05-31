@@ -1765,7 +1765,13 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-         
+
+      // override the active session's working directory
+      // it is created with the default value of ~, so if our session options
+      // have specified that a different directory should be used, we should
+      // persist the value to the session state as soon as possible
+      module_context::activeSession().setWorkingDir(workingDir.absolutePath());
+
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);

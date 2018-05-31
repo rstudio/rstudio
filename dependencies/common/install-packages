@@ -80,7 +80,6 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # we often embed these packages but are not currently
 # install rsconnect master rstudio
 # install rmarkdown master rstudio
-install r2d3 master rstudio 
 install plumber master trestletech
 
 # back to install-dir

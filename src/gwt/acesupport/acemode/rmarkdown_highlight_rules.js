@@ -143,6 +143,16 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
+   // Embed JavaScript highlighting rules
+   Utils.embedRules(
+       this,
+       JavaScriptHighlightRules,
+       "js",
+       this.$reJavaScriptChunkStartString,
+       this.$reChunkEndString,
+       ["start", "listblock", "allowBlock"]
+   );
+
    // Embed YAML highlighting rules
    Utils.embedRules(
       this,
@@ -151,16 +161,6 @@ var RMarkdownHighlightRules = function() {
       "^\\s*---\\s*$",
       "^\\s*(?:---|\\.\\.\\.)\\s*$",
       ["firstLine"]
-   );
-
-   // Embed JavaScript highlighting rules
-   Utils.embedRules(
-       this,
-       JavaScriptHighlightRules,
-       "sql",
-       this.$reJavaScriptChunkStartString,
-       this.$reChunkEndString,
-       ["start", "listblock", "allowBlock"]
    );
 
    this.$rules["yaml-start"].unshift({
@@ -197,7 +197,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");
    this.$reSqlChunkStartString        = engineRegex("sql");
-   this.$reJavaScriptChunkStartString = engineRegex("d3");
+   this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js)");
    
 }).call(RMarkdownHighlightRules.prototype);
 

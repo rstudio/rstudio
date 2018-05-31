@@ -443,8 +443,10 @@ Error rsaVerify(const std::string& message,
    return Success();
 }
 
-Error generateRsaKeyFiles(const FilePath& publicKeyPath,
-                          const FilePath& privateKeyPath)
+namespace {
+
+Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
+                  const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPem)
 {
    std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
    if (!pRsa)
@@ -452,16 +454,6 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
 
    std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
    if (!pBigNum)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
-
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.absolutePath().c_str(), "w"),
-                                                     BIO_free);
-   if (!pBioPub)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
-
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.absolutePath().c_str(), "w"),
-                                                     BIO_free);
-   if (!pBioPem)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
    int ret = BN_set_word(pBigNum.get(), RSA_F4);
@@ -490,6 +482,55 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
    ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), NULL, NULL, 0, NULL, NULL);
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
+
+   return Success();
+}
+
+} // anonymous namespace
+
+Error generateRsaKeyFiles(const FilePath& publicKeyPath,
+                          const FilePath& privateKeyPath)
+{
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.absolutePath().c_str(), "w"),
+                                                     BIO_free);
+   if (!pBioPub)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.absolutePath().c_str(), "w"),
+                                                     BIO_free);
+   if (!pBioPem)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   return generateRsa(pBioPub, pBioPem);
+}
+
+Error generateRsaKeyPair(std::string* pOutPublicKey,
+                         std::string* pOutPrivateKey)
+{
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new(BIO_s_mem()),
+                                                     BIO_free);
+   if (!pBioPub)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   pOutPrivateKey->reserve(4096);
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new(BIO_s_mem()),
+                                                     BIO_free);
+   if (!pBioPem)
+      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+
+   Error error = generateRsa(pBioPub, pBioPem);
+   if (error)
+      return error;
+
+   // extract the underlying character buffers from the memory BIOs
+   // note - these will be freed automatically when the BIOs are freed
+   BUF_MEM* pubPtr;
+   BUF_MEM* pemPtr;
+   BIO_get_mem_ptr(pBioPub.get(), &pubPtr);
+   BIO_get_mem_ptr(pBioPem.get(), &pemPtr);
+
+   *pOutPublicKey = std::string(pubPtr->data, pubPtr->length);
+   *pOutPrivateKey = std::string(pemPtr->data, pemPtr->length);
 
    return Success();
 }

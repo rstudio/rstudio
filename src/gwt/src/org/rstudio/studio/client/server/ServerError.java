@@ -39,6 +39,9 @@ public interface ServerError
      
    // rpc transmission errors (method may have executed)
    public static final int TRANSMISSION = 6;
+   
+   // errors indicating the license usage limit has been reached
+   public static final int LICENSE_USAGE_LIMIT = 7;
  
    // error type
    int getCode() ;

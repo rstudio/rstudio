@@ -111,6 +111,10 @@ class RemoteServerError implements ServerError
          
       case RpcError.TRANSMISSION_ERROR:
          return ServerError.TRANSMISSION;
+         
+      case RpcError.MAX_SESSIONS_REACHED:
+      case RpcError.MAX_USERS_REACHED:
+    	  return ServerError.LICENSE_USAGE_LIMIT;
                
       default:
          return ServerError.SUCCESS;

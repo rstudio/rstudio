@@ -221,7 +221,12 @@ void httpServerAddHandlers()
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
-      uri_handlers::addProxyHandler("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
+   {
+      uri_handlers::addProxyHandler("/p/", secureAsyncHttpHandler(
+                                       boost::bind(proxyLocalhostRequest, false, _1, _2), true));
+      uri_handlers::addProxyHandler("/p6/", secureAsyncHttpHandler(
+                                       boost::bind(proxyLocalhostRequest, true, _1, _2), true));
+   }
 
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
