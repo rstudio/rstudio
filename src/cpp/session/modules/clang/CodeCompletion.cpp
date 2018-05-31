@@ -192,6 +192,8 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
    }
 }
 
+} // end anonymous namespace
+
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 {
    // if we've cached results already, just use that
@@ -209,24 +211,39 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    
    // add Rtools to PATH if necessary
    core::system::Options environment;
+   core::system::environment(&environment);
+
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&environment, &warning);
    processOptions.environment = environment;
    
-   // resolve R CMD location for shell command
-   FilePath rBinDir;
-   Error error = module_context::rBinDir(&rBinDir);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   
-   shell_utils::ShellCommand rCmd = module_context::rCmd(rBinDir);
-   
    // get the CXX compiler by asking R
    std::string compilerPath;
+
+#ifdef _WIN32
    {
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand("where.exe gcc.exe", processOptions, &result);
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("Error querying CXX compiler: " + result.stdOut);
+      else
+         compilerPath = string_utils::trimWhitespace(result.stdOut);
+   }
+#else
+   {
+      // resolve R CMD location for shell command
+      FilePath rBinDir;
+      Error error = module_context::rBinDir(&rBinDir);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      shell_utils::ShellCommand rCmd = module_context::rCmd(rBinDir);
+
       core::system::ProcessResult result;
       rCmd << "config";
       rCmd << "CXX";
@@ -238,6 +255,8 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       else
          compilerPath = string_utils::trimWhitespace(result.stdOut);
    }
+#endif
+
    if (compilerPath.empty())
       return;
 
@@ -323,6 +342,8 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
             includePaths.begin(),
             includePaths.end());
 }
+
+namespace {
 
 void discoverRelativeIncludePaths(const FilePath& filePath,
                                   const std::string& parentDir,

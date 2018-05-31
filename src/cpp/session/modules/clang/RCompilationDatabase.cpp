@@ -41,6 +41,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
 
 using namespace rstudio::core ;
@@ -313,9 +314,18 @@ void RCompilationDatabase::updateForCurrentPackage()
    // Check for C++11 in SystemRequirements
    if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
    {
-      // set both USE_CXX1X and USE_CXX11 to support older and newer R versions
       env.push_back(std::make_pair("USE_CXX1X", "1"));
       env.push_back(std::make_pair("USE_CXX11", "1"));
+   }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++14"))
+   {
+      env.push_back(std::make_pair("USE_CXX1Y", "1"));
+      env.push_back(std::make_pair("USE_CXX14", "1"));
+   }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++17"))
+   {
+      env.push_back(std::make_pair("USE_CXX1Z", "1"));
+      env.push_back(std::make_pair("USE_CXX17", "1"));
    }
 
    // Run R CMD SHLIB
@@ -880,11 +890,11 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
 {
    std::vector<std::string> args = clang().compileArgs(isCpp);
 
-   // add rTools when on windows
-#ifdef _WIN32
-   std::vector<std::string> rtArgs = rToolsArgs();
-   std::copy(rtArgs.begin(), rtArgs.end(), std::back_inserter(args));
-#endif
+   // add system include headers as reported by compiler
+   std::vector<std::string> includes;
+   discoverSystemIncludePaths(&includes);
+   for (auto include : includes)
+      args.push_back("-I" + include);
 
    return args;
 }
