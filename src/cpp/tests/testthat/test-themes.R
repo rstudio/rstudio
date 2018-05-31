@@ -1625,8 +1625,7 @@ BEFORE_FUN = function() {
 })
 
 # Test addTheme ====================================================================================
-test_that_wrapped("addTheme works correctly", {
-   files <- c()
+test_that("addTheme works correctly", {
    .rs.enumerate(themes, function(themeName, themeDesc) {
       fileName <- paste0(themeDesc$fileName, ".rstheme")
       if (file.exists(file.path(localInstallDir, fileName)))
@@ -1661,13 +1660,13 @@ test_that_wrapped("addTheme works correctly", {
       
       if (file.exists(file.path(localInstallDir, fileName)))
       {
-         files <- c(files, file.path(localInstallDir, fileName))
+         if (!file.remove(file.path(localInstallDir, fileName)))
+         {
+            warning(
+               "Unable to remove \"",
+               file.path(localInstallDir, fileName),
+               "\" from the system. Please check file system permissions.")
+         }
       }
    })
-},
-AFTER_FUN = function() {
-   for (f in files)
-   {
-      file.remove(f)
-   }
 })
