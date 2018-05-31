@@ -1821,11 +1821,11 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
       // CRAN repos: user setting then repos file then global server option
-      if (userSettings().cranMirror().url)
+      if (!userSettings().cranMirror().url.empty())
          rOptions.rCRANRepos = userSettings().cranMirror().url;
-      if (!options.rCRANMultipleRepos().empty())
+      else if (!options.rCRANMultipleRepos().empty())
          rOptions.rCRANRepos = options.rCRANMultipleRepos();
-      else (!options.rCRANRepos().empty())
+      else if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
