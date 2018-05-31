@@ -1598,7 +1598,7 @@ AFTER_FUN = function(){
    }
 })
 
-test_that("convertTheme gives error for file permission issues", {
+test_that_wrapped("convertTheme gives error for file permission issues", {
    expect_error(
       suppressWarnings(.rs.convertTheme(
          file.path(inputFileLocation, "tmThemes", paste0(names(themes)[1], ".tmTheme")),
@@ -1611,10 +1611,21 @@ test_that("convertTheme gives error for file permission issues", {
          "Unable to create the theme file in the requested location: %s. Please see above for relevant warnings.",
          file.path(inputFileLocation, "nopermission", paste0(names(themes)[1], ".rstheme"))),
       fixed = TRUE)
+},
+BEFORE_FUN = function() {
+   noPermissionFolder <- file.path(inputFileLocation, "nopermission")
+   if (dir.exists(noPermissionFolder))
+   {
+      Sys.chmod(noPermissionFolder, mode = "0555")
+   }
+   else
+   {
+      dir.create(noPermissionFolder, mode = "0555")
+   }
 })
 
 # Test addTheme ====================================================================================
-test_that_wrapper("addTheme works correctly", {
+test_that_wrapped("addTheme works correctly", {
    files <- c()
    .rs.enumerate(themes, function(themeName, themeDesc) {
       fileName <- paste0(themeDesc$fileName, ".rstheme")
