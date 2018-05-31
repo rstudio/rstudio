@@ -102,6 +102,7 @@ void proxyEventsRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
 
 void proxyLocalhostRequest(
+      bool ipv6,
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    
