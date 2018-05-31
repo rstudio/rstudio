@@ -833,9 +833,10 @@
 # @param themePath   The full or relative path of the rstheme file to add.
 # @param apply       Whether to immediately apply the newly added theme.
 # @param force       Whether to force the operation when it may involve an overwrite.
+# @param globally    Whether to add the theme for all users (true) or for the current user (false).
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, buffer = NULL, name = NULL) {
+.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, globally) {
    # Get the name of the file without extension.
    fileName <- regmatches(
       basename(themePath),
@@ -848,6 +849,7 @@
    # the name of the file.
    conn <- file(themePath)
    themeLines <- readLines(conn)
+   close(conn)
    
    nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
    nameLine <- themeLines[grep(nameRegex, themeLines, perl = TRUE)]
@@ -874,10 +876,11 @@
    }
    
    # Copy the file to the correct location.
-   outputDir <- file.path("~", ".R", "rstudio", "themes")
+   outputDir <- if (globally) file.path("etc", "rstudio", "themes")
+                else file.path("~", ".R", "rstudio", "themes")
    if (!dir.exists(outputDir))
    {
-      if (!dir.create(outputDir, showWarnings = FALSE, recursive = TRUE))
+      if (!dir.create(outputDir, recursive = TRUE))
       {
          stop("Unable to create the theme file. Please check file system permissions.")
       }

@@ -17,6 +17,8 @@ context("themes")
 
 inputFileLocation <- file.path(path.expand("."), "themes")
 outputDir <- file.path(inputFileLocation, "temp")
+localInstallDir <- file.path("~", ".R", "rstudio", "themes")
+globalInstallDir <- file.path("etc", "rstudio", "themes")
 
 themes <- list(
    "Active4D" = list("fileName" ="active4d",isDark = FALSE),
@@ -1609,4 +1611,52 @@ test_that("convertTheme gives error for file permission issues", {
          "Unable to create the theme file in the requested location: %s. Please see above for relevant warnings.",
          file.path(inputFileLocation, "nopermission", paste0(names(themes)[1], ".rstheme"))),
       fixed = TRUE)
+})
+
+# Test addTheme ====================================================================================
+test_that_wrapper("addTheme works correctly", {
+   files <- c()
+   .rs.enumerate(themes, function(themeName, themeDesc) {
+      fileName <- paste0(themeDesc$fileName, ".rstheme")
+      if (file.exists(file.path(localInstallDir, fileName)))
+      {
+         skip(
+            paste0(
+               "Skipping addTheme(",
+               themeName,
+               ") because it already exists in the local install location."))
+      }
+      
+      actualName <- .rs.addTheme(
+         file.path(inputFileLocation, "rsthemes", fileName),
+         FALSE,
+         FALSE,
+         FALSE)
+      
+      infoStr <- paste("Theme:", themeName)
+      expect_equal(actualName, themeName, info = infoStr)
+      expect_true(file.exists(file.path(localInstallDir, fileName)), info = infoStr)
+      
+      f <- file(file.path(localInstallDir, fileName))
+      actualLines <- readLines(f)
+      close(f)
+      
+      f <- file(file.path(inputFileLocation, "rsthemes", fileName))
+      expectedLines <- readLines(f)
+      close(f)
+      
+      expect_equal(actualLines, expectedLines, info = infoStr)
+      
+      
+      if (file.exists(file.path(localInstallDir, fileName)))
+      {
+         files <- c(files, file.path(localInstallDir, fileName))
+      }
+   })
+},
+AFTER_FUN = function() {
+   for (f in files)
+   {
+      file.remove(f)
+   }
 })
