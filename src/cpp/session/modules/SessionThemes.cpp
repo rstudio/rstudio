@@ -19,8 +19,9 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/json/JsonRpc.hpp>
 #include <core/FilePath.hpp>
+#include <core/json/JsonRpc.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -120,8 +121,8 @@ SEXP rs_getThemes()
    using rstudio::core::FilePath;
 
 #ifdef _WIN32
-   FilePath globalPath("%ProgramData%\\RStudio\\themes");
-   FilePath localPath("%UserProfile%\\Documents\\.R\\rstudio\\themes");
+   FilePath globalPath(rstudio::core::system::systemSettingsPath().childPath("RStudio\\themes"));
+   FilePath localPath(rstudio::core::system::userHomePath().childPath("\\Documents\\.R\\rstudio\\themes"));
 #else
    FilePath globalPath("/etc/rstudio/themes/");
    FilePath localPath("~/.R/rstudio/themes/");
