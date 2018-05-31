@@ -876,8 +876,18 @@
    }
    
    # Copy the file to the correct location.
-   outputDir <- if (globally) file.path("etc", "rstudio", "themes")
-                else file.path("~", ".R", "rstudio", "themes")
+   outputDir <- file.path("~", ".R", "rstudio", "themes")
+   if (globally)
+   {
+      if (grepl("windows", Sys.info()[["sysname"]], ignore.case = TRUE))
+      {
+         outputDir <- file.path("%ProgramData%", "RStudio", "themes")
+      }
+      else 
+      {
+         outputDir <- file.path("etc", "rstudio", "themes")
+      }
+   }
    if (!dir.exists(outputDir))
    {
       if (!dir.create(outputDir, recursive = TRUE))

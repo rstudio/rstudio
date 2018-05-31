@@ -1625,48 +1625,98 @@ BEFORE_FUN = function() {
 })
 
 # Test addTheme ====================================================================================
-test_that("addTheme works correctly", {
-   .rs.enumerate(themes, function(themeName, themeDesc) {
-      fileName <- paste0(themeDesc$fileName, ".rstheme")
-      if (file.exists(file.path(localInstallDir, fileName)))
+test_that("addTheme works correctly with local install", {
+   themeName <- names(themes)[4]
+   themeDesc <- themes[[themeName]]
+   
+   fileName <- paste0(themeDesc$fileName, ".rstheme")
+   installPath <- file.path(localInstallDir, fileName)
+   
+   if (file.exists(installPath))
+   {
+      skip(
+         paste0(
+            "Skipping addTheme(",
+            themeName,
+            ") because it already exists in the local install location."))
+   }
+   
+   actualName <- .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", fileName),
+      FALSE,
+      FALSE,
+      FALSE)
+   
+   infoStr <- paste("Theme:", themeName)
+   expect_equal(actualName, themeName, info = infoStr)
+   expect_true(file.exists(installPath), info = infoStr)
+   
+   f <- file(installPath)
+   actualLines <- readLines(f)
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
+   expectedLines <- readLines(f)
+   close(f)
+   
+   expect_equal(actualLines, expectedLines, info = infoStr)
+   
+   if (file.exists(installPath))
+   {
+      if (!file.remove(installPath))
       {
-         skip(
-            paste0(
-               "Skipping addTheme(",
-               themeName,
-               ") because it already exists in the local install location."))
+         warning(
+            "Unable to remove \"",
+            installPath,
+            "\" from the system. Please check file system permissions.")
       }
-      
-      actualName <- .rs.addTheme(
-         file.path(inputFileLocation, "rsthemes", fileName),
-         FALSE,
-         FALSE,
-         FALSE)
-      
-      infoStr <- paste("Theme:", themeName)
-      expect_equal(actualName, themeName, info = infoStr)
-      expect_true(file.exists(file.path(localInstallDir, fileName)), info = infoStr)
-      
-      f <- file(file.path(localInstallDir, fileName))
-      actualLines <- readLines(f)
-      close(f)
-      
-      f <- file(file.path(inputFileLocation, "rsthemes", fileName))
-      expectedLines <- readLines(f)
-      close(f)
-      
-      expect_equal(actualLines, expectedLines, info = infoStr)
-      
-      
-      if (file.exists(file.path(localInstallDir, fileName)))
+   }
+})
+
+test_that("addTheme works correctly with global install", {
+   themeName <- names(themes)[4]
+   themeDesc <- themes[[themeName]]
+   
+   fileName <- paste0(themeDesc$fileName, ".rstheme")
+   installPath <- file.path(globalInstallDir, fileName)
+   
+   if (file.exists(installPath))
+   {
+      skip(
+         paste0(
+            "Skipping addTheme(",
+            themeName,
+            ") because it already exists in the local install location."))
+   }
+   
+   actualName <- .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", fileName),
+      FALSE,
+      FALSE,
+      TRUE)
+   
+   infoStr <- paste("Theme:", themeName)
+   expect_equal(actualName, themeName, info = infoStr)
+   expect_true(file.exists(installPath), info = infoStr)
+   
+   f <- file(installPath)
+   actualLines <- readLines(f)
+   close(f)
+   
+   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
+   expectedLines <- readLines(f)
+   close(f)
+   
+   expect_equal(actualLines, expectedLines, info = infoStr)
+   
+   if (file.exists(installPath))
+   {
+      if (!file.remove(installPath))
       {
-         if (!file.remove(file.path(localInstallDir, fileName)))
-         {
-            warning(
-               "Unable to remove \"",
-               file.path(localInstallDir, fileName),
-               "\" from the system. Please check file system permissions.")
-         }
+         warning(
+            "Unable to remove \"",
+            installPath,
+            "\" from the system. Please check file system permissions.")
       }
-   })
+   }
 })
