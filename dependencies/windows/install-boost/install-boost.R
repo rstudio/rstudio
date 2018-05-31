@@ -30,7 +30,7 @@ PATH$prepend("../tools")
 
 # initialize variables
 boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
-output_name <- sprintf("boost-1.65.1-win-msvc14-%s-%s.zip", variant, link)
+output_name <- sprintf("boost-1.65.1-win-msvc141-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -91,7 +91,7 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
-exec("cmd.exe", "/C call bootstrap.bat vc14")
+exec("cmd.exe", "/C call bootstrap.bat vc141")
 
 # create bcp executable (so we can create Boost
 # using a private namespace)
@@ -107,9 +107,9 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat vc14")
+exec("cmd.exe", "/C call bootstrap.bat vc141")
 
-# construct common arguments for 32bit, 64bit boost builds
+# construct common arguments for 64bit boost builds
 b2_build_args <- function(bitness) {
    
    prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
@@ -117,7 +117,7 @@ b2_build_args <- function(bitness) {
    
    paste(
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.0",
+      "toolset=msvc-14.1",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       "--without-python",
@@ -129,10 +129,6 @@ b2_build_args <- function(bitness) {
       "install"
    )
 }
-
-# build 32bit Boost
-section("Building Boost 32bit...")
-exec("b2", b2_build_args("32"))
 
 # build 64bit Boost
 section("Building Boost 64bit...")
@@ -146,7 +142,7 @@ section("Creating archive '%s'...", output_name)
 if (file.exists(output_name))
    unlink(output_name)
 
-zip(output_name, files = c("boost32", "boost64"), extras = "-q")
+zip(output_name, files = c("boost64"), extras = "-q")
 if (!file.exists(output_name))
    fatal("Failed to create archive '%s'.", output_name)
 progress("Created archive '%s'.", output_name)

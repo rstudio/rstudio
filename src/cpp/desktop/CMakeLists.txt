@@ -13,7 +13,7 @@
 #
 #
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.1.0)
 
 project(DESKTOP)
 
@@ -21,7 +21,7 @@ if(CMAKE_VERSION VERSION_GREATER "3.0.0")
    cmake_policy(SET CMP0043 NEW)
 endif()
 
-set(QT_VERSION_SUBDIR "5.10.1")
+set(QT_VERSION_SUBDIR "5.11.0")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -41,7 +41,7 @@ if(NOT WIN32)
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_CANDIDATE 5.10.1)
+      foreach(QT_CANDIDATE 5.11.0)
 
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
          if(EXISTS ${QMAKE_QT50_SDK})
@@ -67,20 +67,20 @@ if(NOT WIN32)
       endforeach()
    endif()
 else()
-   set(QT_VERSION "5.10.1")
+   set(QT_VERSION "5.11.0")
    if(NOT QT_QMAKE_EXECUTABLE)
 
-      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2017_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
 
-      set(QMAKE_QT50_SDK "C:\\Qt\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt\\${QT_VERSION_SUBDIR}\\msvc2017_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
 
-      set(QMAKE_QT50_SDK "C:\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2017_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
@@ -112,6 +112,7 @@ find_package(Qt5WebEngine REQUIRED)
 find_package(Qt5WebEngineWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
+find_package(Qt5QuickWidgets REQUIRED)
 find_package(Qt5Positioning REQUIRED)
 find_package(Qt5Sensors REQUIRED)
 find_package(Qt5Svg REQUIRED)
@@ -295,10 +296,8 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
-   if(NOT RSTUDIO_SESSION_WIN64)
-      add_subdirectory(urlopener)
-      add_subdirectory(synctex/rsinverse)
-   endif()
+   add_subdirectory(urlopener)
+   add_subdirectory(synctex/rsinverse)
 
    set(
       CMAKE_EXE_LINKER_FLAGS
@@ -322,23 +321,28 @@ if(APPLE OR WIN32 OR
 endif()
 
 set(RSTUDIO_QTMODULES
-    Core
-    Widgets
-    Gui
-    Network
-    WebChannel
-    WebEngine
-    WebEngineWidgets
-    PrintSupport
-    Quick
-    QuickWidgets
-    Positioning
-    Sensors
-    Svg
-    Xml
-    XmlPatterns
-    Qml
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Gui
+    Qt5::Network
+    Qt5::WebChannel
+    Qt5::WebEngine
+    Qt5::WebEngineWidgets
+    Qt5::PrintSupport
+    Qt5::Quick
+    Qt5::QuickWidgets
+    Qt5::Positioning
+    Qt5::Sensors
+    Qt5::Svg
+    Qt5::Xml
+    Qt5::XmlPatterns
+    Qt5::Qml
 )
+if(UNIX AND NOT APPLE)
+    set(RSTUDIO_QTMODULES ${RSTUDIO_QTMODULES}
+        Qt5::DBus
+    )
+endif()
 
 # define executable (Windows & Linux)
 if(NOT APPLE)
@@ -352,16 +356,10 @@ if(NOT APPLE)
 
    # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
    # these on any platform.
-   set(RSTUDIO_EXTRA_QTMODULES
-      Sql
-      OpenGL
+   set(RSTUDIO_QTMODULES ${RSTUDIO_QTMODULES}
+      Qt5::Sql
+      Qt5::OpenGL
    )
-
-   if(WIN32)
-      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES} ${RSTUDIO_EXTRA_QTMODULES})
-   else()
-      qt5_use_modules(rstudio ${RSTUDIO_QTMODULES} ${RSTUDIO_EXTRA_QTMODULES} DBus)
-   endif()
 
    # add rpath for linux so we can find qt libraries in our bin dir
    if(UNIX AND RSTUDIO_BUNDLE_QT)
@@ -372,6 +370,7 @@ if(NOT APPLE)
 
    # set link dependencies
    target_link_libraries(rstudio
+      ${RSTUDIO_QTMODULES}
       ${QT_LIBRARIES}
       ${Boost_LIBRARIES}
       rstudio-core
@@ -412,9 +411,8 @@ else()
       ${ICNS_FILES}
       ${PNG_FILES})
 
-   qt5_use_modules(RStudio ${RSTUDIO_QTMODULES})
-
    target_link_libraries(RStudio
+      ${RSTUDIO_QTMODULES}
       ${QT_LIBRARIES}
       rstudio-core
       ${APPLICATION_SERVICES_LIBRARY}

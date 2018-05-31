@@ -57,7 +57,7 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.10.1 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.11.0 && \
     /tmp/install-qt-sdk
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting

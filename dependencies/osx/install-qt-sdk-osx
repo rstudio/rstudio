@@ -19,16 +19,19 @@
 # was created by installing Qt via an interactive installer, and
 # manually removing components not needed by RStudio.
 
-QT_VERSION=5.10.1
+QT_VERSION=5.11.0
 QT_SDK_BINARY=QtSDK-${QT_VERSION}-mac.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 
 # set Qt SDK dir if not already defined
 if [ -z "$QT_SDK_DIR" ]; then
-  QT_SDK_DIR=~/Qt${QT_VERSION}
+   QT_SDK_DIR=~/Qt${QT_VERSION}
+fi
+if [ -z "$ALT_QT_SDK_DIR" ]; then
+   ALT_QT_SDK_DIR=~/Qt/${QT_VERSION}
 fi
 
-if ! test -e $QT_SDK_DIR
+if [[ ! -e $QT_SDK_DIR ]] && [[ ! -e $ALT_QT_SDK_DIR ]]
 then
    # download and install
    curl -L $QT_SDK_URL > /tmp/$QT_SDK_BINARY
