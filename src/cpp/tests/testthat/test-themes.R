@@ -16,6 +16,51 @@
 context("themes")
 
 inputFileLocation <- file.path(path.expand("."), "themes")
+outputDir <- file.path(inputFileLocation, "temp")
+
+themes <- list(
+   "Active4D" = list("fileName" ="active4d",isDark = FALSE),
+   "All Hallow's Eve" = list("fileName" ="all_hallows_eve", isDark = TRUE),
+   "Amy" = list("fileName" ="amy", isDark = TRUE),
+   "Blackboard" = list("fileName" ="blackboard", isDark = TRUE),
+   "Brilliance Black" = list("fileName" ="brilliance_black", isDark = TRUE),
+   "Brilliance Dull" = list("fileName" ="brilliance_dull", isDark = TRUE),
+   "Chrome DevTools" = list("fileName" ="chrome_dev_tools", isDark = FALSE),
+   "Clouds Midnight" = list("fileName" ="clouds_midnight", isDark = TRUE),
+   "Clouds" = list("fileName" ="clouds", isDark = FALSE),
+   "Cobalt" = list("fileName" ="cobalt", isDark = TRUE),
+   "Dawn" = list("fileName" ="dawn", isDark = FALSE),
+   "Dreamweaver" = list("fileName" ="dreamweaver", isDark = FALSE),
+   "Eiffel" = list("fileName" ="eiffel", isDark = FALSE),
+   "Espresso Libre" = list("fileName" ="espresso_libre", isDark = TRUE),
+   "GitHub" = list("fileName" ="git_hub", isDark = FALSE),
+   "IDLE" = list("fileName" ="idle", isDark = FALSE),
+   "idleFingers" = list("fileName" ="idle_fingers", isDark = TRUE),
+   "iPlastic" = list("fileName" ="i_plastic", isDark = FALSE),
+   "Katzenmilch" = list("fileName" ="katzenmilch", isDark = FALSE),
+   "krTheme" = list("fileName" ="kr_theme", isDark = TRUE),
+   "Kuroir Theme" = list("fileName" ="kuroir_theme", isDark = FALSE),
+   "LAZY" = list("fileName" ="lazy", isDark = FALSE),
+   "MagicWB (Amiga)" = list("fileName" ="magic_wb_amiga", isDark = FALSE),
+   "Merbivore Soft" = list("fileName" ="merbivore_soft", isDark = TRUE),
+   "Merbivore" = list("fileName" ="merbivore", isDark = TRUE),
+   "mono industrial" = list("fileName" ="mono_industrial", isDark = TRUE),
+   "Monokai" = list("fileName" ="monokai", isDark = TRUE),
+   "Pastels on Dark" = list("fileName" ="pastels_on_dark", isDark = TRUE),
+   "Slush & Poppies" = list("fileName" ="slush_and_poppies", isDark = FALSE),
+   "Solarized (dark)" = list("fileName" ="solarized_dark", isDark = TRUE),
+   "Solarized (light)" = list("fileName" ="solarized_light", isDark = FALSE),
+   "Sunburst" = list("fileName" ="sunburst", isDark = TRUE),
+   "Textmate" = list("fileName" ="textmate", isDark = FALSE),
+   "Tomorrow Night - Blue" = list("fileName" ="tomorrow_night_blue", isDark = TRUE),
+   "Tomorrow Night - Bright" = list("fileName" ="tomorrow_night_bright", isDark = TRUE),
+   "Tomorrow Night - Eighties" = list("fileName" ="tomorrow_night_eighties", isDark = TRUE),
+   "Tomorrow Night" = list("fileName" ="tomorrow_night", isDark = TRUE),
+   "Tomorrow" = list("fileName" ="tomorrow", isDark = FALSE),
+   "Twilight" = list("fileName" ="twilight", isDark = TRUE),
+   "Vibrant Ink" = list("fileName" ="vibrant_ink", isDark = TRUE),
+   "Xcode default" = list("fileName" ="xcode_default", isDark = FALSE),
+   "Zenburnesque" = list("fileName" ="zenburnesque", isDark = TRUE))
 
 # Helpers ==========================================================================================
 parseCss <- function(cssLines, shouldBreak = FALSE)
@@ -24,7 +69,7 @@ parseCss <- function(cssLines, shouldBreak = FALSE)
    css <- list()
    
    # Split any lines with "\n" for proper parsing.
-   cssLines <- unlist(strsplit(cssLines, "\n", perl = TRUE))
+   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", cssLines), c("\n"), perl = TRUE))
    
    currKey = NULL
    isLastDescForKey <- FALSE
@@ -104,7 +149,7 @@ parseCss <- function(cssLines, shouldBreak = FALSE)
                {
                   if (value != "")
                   {
-                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", currLine), "\\s*:\\s*")[[1]]
+                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", value), "\\s*:\\s*")[[1]]
                      if (length(desc) != 2)
                      {
                         warning("Malformed CSS: ", orgLine, ". Invalid element within block.")
@@ -252,6 +297,27 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
    }
    
    equal
+}
+
+getFirstMatchInLines <- function(regex, lines)
+{
+   matchingLine <- lines[grep(regex, lines, perl = TRUE)[1]]
+   regmatches(matchingLine, regexec(regex, matchingLine, perl = TRUE))[[1]][2]
+}
+
+getRsThemeName <- function(lines)
+{
+   getFirstMatchInLines("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)", lines)
+}
+
+getRsIsDark <- function(lines)
+{
+   isDarkStr <- getFirstMatchInLines("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)", lines)
+   if(!grepl("^(?:true|false)$", isDarkStr, ignore.case = TRUE))
+   {
+      stop("Unable to convert isDark value to logical.")
+   }
+   as.logical(toupper(isDarkStr))
 }
 
 # Test getRgbColor =================================================================================
@@ -796,6 +862,21 @@ test_that("extractStyles works correctly", {
          "unsupportedScopes" = unsupportedScopes))
 })
 
+test_that_wrapped <- function(desc, FUN, BEFORE_FUN = NULL, AFTER_FUN = NULL)
+{
+   if (!is.null(BEFORE_FUN))
+   {
+      BEFORE_FUN()
+   }
+   
+   test_that(desc, FUN)
+   
+   if (!is.null(AFTER_FUN))
+   {
+      AFTER_FUN()
+   }
+}
+
 # Test convertTmTheme ==============================================================================
 test_that("convertTmTheme works correctly without parseTmTheme", {
    library("xml2")
@@ -919,596 +1000,24 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
 test_that("convertTmTheme works correctly with parseTmTheme", {
    library("xml2")
    
-   # Actual results
-   active4dConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Active4D.tmTheme")))
-   
-   allHallowsEveConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "All Hallows Eve.tmTheme")))
-   
-   amyConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Amy.tmTheme")))
-   
-   blackboardConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Blackboard.tmTheme")))
-   
-   brillianceBlackConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Brilliance Black.tmTheme")))
-   
-   brillianceDullConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Brilliance Dull.tmTheme")))
-   
-   chromeDevToolsConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Chrome DevTools.tmTheme")))
-   
-   cloudsMidnightConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Clouds Midnight.tmTheme")))
-   
-   cloudsConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Clouds.tmTheme")))
-   
-   cobaltConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Cobalt.tmTheme")))
-   
-   dawnConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Dawn.tmTheme")))
-   
-   dreamweaverConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Dreamweaver.tmTheme")))
-   
-   eiffelConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Eiffel.tmTheme")))
-   
-   espressoLibreConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Espresso Libre.tmTheme")))
-   
-   gitHubConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "GitHub.tmTheme")))
-   
-   idleConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "IDLE.tmTheme")))
-   
-   katzenmilchConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Katzenmilch.tmTheme")))
-   
-   kuroirConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Kuroir Theme.tmTheme")))
-   
-   lazyConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "LAZY.tmTheme")))
-   
-   magicWBConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "MagicWB (Amiga).tmTheme")))
-   
-   merbivoreSoftConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Merbivore Soft.tmTheme")))
-   
-   merbivoreConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Merbivore.tmTheme")))
-   
-   monokaiConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Monokai.tmTheme")))
-   
-   pastelsOnDarkConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Pastels on Dark.tmTheme")))
-   
-   slushAndPoppiesConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Slush and Poppies.tmTheme")))
-   
-   solarizedDarkConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Solarized-dark.tmTheme")))
-   
-   solarizedLightConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Solarized-light.tmTheme")))
-   
-   sunburstConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Sunburst.tmTheme")))
-   
-   textmateConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Textmate (Mac Classic).tmTheme")))
-   
-   tomorrowNightBlueConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Tomorrow-Night-Blue.tmTheme")))
-   
-   tomorrowNightBrightConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Tomorrow-Night-Bright.tmTheme")))
-   
-   tomorrowNightEightiesConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Tomorrow-Night-Eighties.tmTheme")))
-   
-   tomorrowNightConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Tomorrow-Night.tmTheme")))
-   
-   tomorrowConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Tomorrow.tmTheme")))
-   
-   twilightConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Twilight.tmTheme")))
-   
-   vibrantInkConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Vibrant Ink.tmTheme")))
-   
-   xcodeDefaultConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Xcode_default.tmTheme")))
-   
-   zenburnesqueConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "Zenburnesque.tmTheme")))
-   
-   iPlasticConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "iPlastic.tmTheme")))
-   
-   idleFingersConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "idleFingers.tmTheme")))
-   
-   krThemeConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "krTheme.tmTheme")))
-   
-   monoindustrialConverted <- .rs.convertTmTheme(
-      .rs.parseTmTheme(
-         file.path(
-            inputFileLocation,
-            "tmThemes",
-            "monoindustrial.tmTheme")))
-
-   # Expected results
-   f <- file(file.path(inputFileLocation, "acecss", "active4d.css"))
-   active4dCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "all_hallows_eve.css"))
-   allHallowsEveCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "amy.css"))
-   amyCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "blackboard.css"))
-   blackboardCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "brilliance_black.css"))
-   brillianceBlackCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "brilliance_dull.css"))
-   brillianceDullCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "chrome_dev_tools.css"))
-   chromeDevToolsCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "clouds_midnight.css"))
-   cloudsMidnightCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "clouds.css"))
-   cloudsCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "cobalt.css"))
-   cobaltCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "dawn.css"))
-   dawnCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "dreamweaver.css"))
-   dreamweaverCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "eiffel.css"))
-   eiffelCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "espresso_libre.css"))
-   espressoLibreCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "git_hub.css"))
-   gitHubCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "idle.css"))
-   idleCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "katzenmilch.css"))
-   katzenmilchCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "kuroir_theme.css"))
-   kuroirCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "lazy.css"))
-   lazyCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "magic_wb_amiga.css"))
-   magicWBCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "merbivore_soft.css"))
-   merbivoreSoftCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "merbivore.css"))
-   merbivoreCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "monokai.css"))
-   monokaiCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "pastels_on_dark.css"))
-   pastelsOnDarkCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "slush_and_poppies.css"))
-   slushAndPoppiesCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "solarized_dark.css"))
-   solarizedDarkCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "solarized_light.css"))
-   solarizedLightCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "sunburst.css"))
-   sunburstCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "textmate.css"))
-   textmateCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_blue.css"))
-   tomorrowNightBlueCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_bright.css"))
-   tomorrowNightBrightCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night_eighties.css"))
-   tomorrowNightEightiesCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "tomorrow_night.css"))
-   tomorrowNightCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
-   tomorrowCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "twilight.css"))
-   twilightCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "vibrant_ink.css"))
-   vibrantInkCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "xcode_default.css"))
-   xcodeDefaultCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "zenburnesque.css"))
-   zenburnesqueCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "i_plastic.css"))
-   iPlasticCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "idle_fingers.css"))
-   idleFingersCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "kr_theme.css"))
-   krThemeCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   f <- file(file.path(inputFileLocation, "acecss", "mono_industrial.css"))
-   monoindustrialCssEx <- parseCss(readLines(f))
-   close(f)
-   
-   # Tests
-   expect_true(compareCss(parseCss(active4dConverted$theme), active4dCssEx))
-   expect_false(active4dConverted$isDark)
-   
-   expect_true(compareCss(parseCss(allHallowsEveConverted$theme), allHallowsEveCssEx))
-   expect_true(allHallowsEveConverted$isDark)
-   
-   expect_true(compareCss(parseCss(amyConverted$theme), amyCssEx))
-   expect_true(amyConverted$isDark)
-   
-   expect_true(compareCss(parseCss(blackboardConverted$theme), blackboardCssEx))
-   expect_true(blackboardConverted$isDark)
-   
-   expect_true(compareCss(parseCss(brillianceBlackConverted$theme), brillianceBlackCssEx))
-   expect_true(brillianceBlackConverted$isDark)
-   
-   expect_true(compareCss(parseCss(brillianceDullConverted$theme), brillianceDullCssEx))
-   expect_true(brillianceDullConverted$isDark)
-   
-   expect_true(compareCss(parseCss(chromeDevToolsConverted$theme), chromeDevToolsCssEx))
-   expect_false(chromeDevToolsConverted$isDark)
-   
-   expect_true(compareCss(parseCss(cloudsMidnightConverted$theme), cloudsMidnightCssEx))
-   expect_true(cloudsMidnightConverted$isDark)
-   
-   expect_true(compareCss(parseCss(cloudsConverted$theme), cloudsCssEx))
-   expect_false(cloudsConverted$isDark)
-   
-   expect_true(compareCss(parseCss(cobaltConverted$theme), cobaltCssEx))
-   expect_true(cobaltConverted$isDark)
-   
-   expect_true(compareCss(parseCss(dawnConverted$theme), dawnCssEx))
-   expect_false(dawnConverted$isDark)
-   
-   expect_true(compareCss(parseCss(dreamweaverConverted$theme), dreamweaverCssEx))
-   expect_false(dreamweaverConverted$isDark)
-   
-   expect_true(compareCss(parseCss(eiffelConverted$theme), eiffelCssEx))
-   expect_false(eiffelConverted$isDark)
-   
-   expect_true(compareCss(parseCss(espressoLibreConverted$theme), espressoLibreCssEx))
-   expect_true(espressoLibreConverted$isDark)
-   
-   expect_true(compareCss(parseCss(gitHubConverted$theme), gitHubCssEx))
-   expect_false(gitHubConverted$isDark)
-   
-   expect_true(compareCss(parseCss(idleConverted$theme), idleCssEx))
-   expect_false(idleConverted$isDark)
-   
-   expect_true(compareCss(parseCss(katzenmilchConverted$theme), katzenmilchCssEx))
-   expect_false(katzenmilchConverted$isDark)
-   
-   expect_true(compareCss(parseCss(kuroirConverted$theme), kuroirCssEx))
-   expect_false(kuroirConverted$isDark)
-   
-   expect_true(compareCss(parseCss(lazyConverted$theme), lazyCssEx))
-   expect_false(lazyConverted$isDark)
-   
-   expect_true(compareCss(parseCss(magicWBConverted$theme), magicWBCssEx))
-   expect_false(magicWBConverted$isDark)
-   
-   expect_true(compareCss(parseCss(merbivoreSoftConverted$theme), merbivoreSoftCssEx))
-   expect_true(merbivoreSoftConverted$isDark)
-   
-   expect_true(compareCss(parseCss(merbivoreConverted$theme), merbivoreCssEx))
-   expect_true(merbivoreConverted$isDark)
-   
-   expect_true(compareCss(parseCss(monokaiConverted$theme), monokaiCssEx))
-   expect_true(monokaiConverted$isDark)
-   
-   expect_true(compareCss(parseCss(pastelsOnDarkConverted$theme), pastelsOnDarkCssEx))
-   expect_true(pastelsOnDarkConverted$isDark)
-   
-   expect_true(compareCss(parseCss(slushAndPoppiesConverted$theme), slushAndPoppiesCssEx))
-   expect_false(slushAndPoppiesConverted$isDark)
-   
-   expect_true(compareCss(parseCss(solarizedDarkConverted$theme), solarizedDarkCssEx))
-   expect_true(solarizedDarkConverted$isDark)
-   
-   expect_true(compareCss(parseCss(solarizedLightConverted$theme), solarizedLightCssEx))
-   expect_false(solarizedLightConverted$isDark)
-   
-   expect_true(compareCss(parseCss(sunburstConverted$theme), sunburstCssEx))
-   expect_true(sunburstConverted$isDark)
-   
-   expect_true(compareCss(parseCss(textmateConverted$theme), textmateCssEx))
-   expect_false(textmateConverted$isDark)
-   
-   expect_true(compareCss(parseCss(tomorrowNightBlueConverted$theme), tomorrowNightBlueCssEx))
-   expect_true(tomorrowNightBlueConverted$isDark)
-   
-   expect_true(compareCss(parseCss(tomorrowNightBrightConverted$theme), tomorrowNightBrightCssEx))
-   expect_true(tomorrowNightBrightConverted$isDark)
-   
-   expect_true(compareCss(parseCss(tomorrowNightEightiesConverted$theme), tomorrowNightEightiesCssEx))
-   expect_true(tomorrowNightEightiesConverted$isDark)
-   
-   expect_true(compareCss(parseCss(tomorrowNightConverted$theme), tomorrowNightCssEx))
-   expect_true(tomorrowNightConverted$isDark)
-   
-   expect_true(compareCss(parseCss(tomorrowConverted$theme), tomorrowCssEx))
-   expect_false(tomorrowConverted$isDark)
-   
-   expect_true(compareCss(parseCss(twilightConverted$theme), twilightCssEx))
-   expect_true(twilightConverted$isDark)
-   
-   expect_true(compareCss(parseCss(vibrantInkConverted$theme), vibrantInkCssEx))
-   expect_true(vibrantInkConverted$isDark)
-   
-   expect_true(compareCss(parseCss(xcodeDefaultConverted$theme), xcodeDefaultCssEx))
-   expect_false(xcodeDefaultConverted$isDark)
-   
-   expect_true(compareCss(parseCss(zenburnesqueConverted$theme), zenburnesqueCssEx))
-   expect_true(zenburnesqueConverted$isDark)
-   
-   expect_true(compareCss(parseCss(iPlasticConverted$theme), iPlasticCssEx))
-   expect_false(iPlasticConverted$isDark)
-   
-   expect_true(compareCss(parseCss(idleFingersConverted$theme), idleFingersCssEx))
-   expect_true(idleFingersConverted$isDark)
-   
-   expect_true(compareCss(parseCss(krThemeConverted$theme), krThemeCssEx))
-   expect_true(krThemeConverted$isDark)
-   
-   expect_true(compareCss(parseCss(monoindustrialConverted$theme), monoindustrialCssEx))
-   expect_true(monoindustrialConverted$isDark)
+   .rs.enumerate(themes, function(key, value) {
+      # Actual Results
+      actualConverted <- .rs.convertTmTheme(
+         .rs.parseTmTheme(
+            file.path(
+               inputFileLocation,
+               "tmThemes",
+               paste0(key, ".tmTheme"))))
+      
+      # Expected Results
+      f <- file(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")))
+      expectedCss <- parseCss(readLines(f))
+      close(f)
+      
+      infoStr <- paste("Theme:", key)
+      expect_true(compareCss(parseCss(actualConverted$theme), expectedCss), info = infoStr)
+      expect_equal(actualConverted$isDark, value$isDark, info = infoStr)
+   })
 })
 
 # Test parseKeyElement =============================================================================
@@ -2017,50 +1526,6 @@ test_that("parseTmTheme handles incorrect input", {
 # Test convertAceTheme =============================================================================
 test_that("convertAceTheme works correctly", {
    library("highlight")
-   
-   themes <- list(
-      "Active4D" = list("fileName" ="active4d", isDark = FALSE),
-      "All Hallows Eve" = list("fileName" ="all_hallows_eve", isDark = TRUE),
-      "Blackboard" = list("fileName" ="blackboard", isDark = TRUE),
-      "Amy" = list("fileName" ="amy", isDark = TRUE),
-      "Brilliance Black" = list("fileName" ="brilliance_black", isDark = TRUE),
-      "Brilliance Dull" = list("fileName" ="brilliance_dull", isDark = TRUE),
-      "Chrome DevTools" = list("fileName" ="chrome_dev_tools", isDark = FALSE),
-      "Clouds Midnight" = list("fileName" ="clouds_midnight", isDark = TRUE),
-      "Clouds" = list("fileName" ="clouds", isDark = FALSE),
-      "Cobalt" = list("fileName" ="cobalt", isDark = TRUE),
-      "Dawn" = list("fileName" ="dawn", isDark = FALSE),
-      "Dreamweaver" = list("fileName" ="dreamweaver", isDark = FALSE),
-      "Eiffel" = list("fileName" ="eiffel", isDark = FALSE),
-      "Espresso Libre" = list("fileName" ="espresso_libre", isDark = TRUE),
-      "Git Hub" = list("fileName" ="git_hub", isDark = FALSE),
-      "IPlastic" = list("fileName" ="i_plastic", isDark = FALSE),
-      "Idle Fingers" = list("fileName" ="idle_fingers", isDark = TRUE),
-      "IDLE" = list("fileName" ="idle", isDark = FALSE),
-      "Katzenmilch" = list("fileName" ="katzenmilch", isDark = FALSE),
-      "krTheme" = list("fileName" ="kr_theme", isDark = TRUE),
-      "Kuroir Theme" = list("fileName" ="kuroir_theme", isDark = FALSE),
-      "LAZY" = list("fileName" ="lazy", isDark = FALSE),
-      "MagicWB (Amiga)" = list("fileName" ="magic_wb_amiga", isDark = FALSE),
-      "Merbivore Soft" = list("fileName" ="merbivore_soft", isDark = TRUE),
-      "Merbivore" = list("fileName" ="merbivore", isDark = TRUE),
-      "mono industrial" = list("fileName" ="mono_industrial", isDark = TRUE),
-      "Monokai" = list("fileName" ="monokai", isDark = TRUE),
-      "Pastels on Dark" = list("fileName" ="pastels_on_dark", isDark = TRUE),
-      "Slush & Poppies" = list("fileName" ="slush_and_poppies", isDark = FALSE),
-      "Solarized (dark)" = list("fileName" ="solarized_dark", isDark = TRUE),
-      "Solarized (light)" = list("fileName" ="solarized_light", isDark = FALSE),
-      "Sunburst" = list("fileName" ="sunburst", isDark = TRUE),
-      "Textmate" = list("fileName" ="textmate", isDark = FALSE),
-      "Tomorrow Night - Blue" = list("fileName" ="tomorrow_night_blue", isDark = TRUE),
-      "Tomorrow Night - Bright" = list("fileName" ="tomorrow_night_bright", isDark = TRUE),
-      "Tomorrow Night - Eighties" = list("fileName" ="tomorrow_night_eighties", isDark = TRUE),
-      "Tomorrow Night" = list("fileName" ="tomorrow_night", isDark = TRUE),
-      "Tomorrow" = list("fileName" ="tomorrow", isDark = FALSE),
-      "Twilight" = list("fileName" ="twilight", isDark = TRUE),
-      "Vibrant_Ink" = list("fileName" ="vibrant_ink", isDark = TRUE),
-      "Xcode default" = list("fileName" ="xcode_default", isDark = FALSE),
-      "Zenburnesque" = list("fileName" ="zenburnesque", isDark = TRUE))
 
    .rs.enumerate(themes, function(key, value) {
       inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
@@ -2081,36 +1546,67 @@ test_that("convertAceTheme works correctly", {
       expect_true(compareCss(parseCss(actual), parseCss(expected)), info = infoStr)
       
       # Check the metadata values
-      nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
-      isDarkRegex <- "rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
-      
-      nameRowAct <- grep(nameRegex, actual, perl = TRUE)[1]
-      nameRowEx <- grep(nameRegex, expected, perl = TRUE)[1]
-      expect_equal(
-         regmatches(
-            actual[nameRowAct],
-            regexec(nameRegex, actual[nameRowAct], perl = TRUE))[[1]][2],
-         regmatches(
-            expected[nameRowEx],
-            regexec(nameRegex, expected[nameRowEx], perl = TRUE))[[1]][2],
-         fixed = TRUE,
-         info = infoStr)
-      
-      darkRowAct <- grep(isDarkRegex, actual, perl = TRUE)[1]
-      darkRowEx <- grep(isDarkRegex, actual, perl = TRUE)[1]
-      
-      actualIsDarkStr <- regmatches(
-         actual[darkRowAct],
-         regexec(isDarkRegex, actual[darkRowAct], perl = TRUE))[[1]][2]
-      expect_true(grepl("(?:true|false)", actualIsDarkStr, ignore.case = TRUE), info = infoStr)
-      expect_equal(
-         as.logical(toupper(actualIsDarkStr)),
-         as.logical(
-            toupper(
-               regmatches(
-                  expected[darkRowEx],
-                  regexec(isDarkRegex, expected[darkRowEx], perl = TRUE))[[1]][2])),
-         fixed = TRUE,
-         info = infoStr)
+      expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
+      expect_equal(getRsIsDark(actual), getRsIsDark(expected), fixed = TRUE, info = infoStr)
    })
+})
+
+# Test convertTheme ================================================================================
+test_that_wrapped("convertTheme works correctly", {
+   .rs.enumerate(themes, function(themeName, themeDesc) {
+      name <- .rs.convertTheme(
+         file.path(inputFileLocation, "tmThemes", paste0(themeName, ".tmTheme")),
+         FALSE,
+         outputDir,
+         FALSE,
+         FALSE,
+         FALSE)
+      
+       
+      f <- file(file.path(outputDir, paste0(themeName, ".rstheme")))
+      actualCssLines <- readLines(f)
+      close(f)
+      
+      f <- file(file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")))
+      expectedCssLines <- readLines(f)
+      close(f)
+      
+      infoStr <- paste("Theme:", themeName)
+      expect_true(compareCss(parseCss(actualCssLines), parseCss(expectedCssLines)), info = infoStr)
+      
+      # Check name values
+      expectedName <- getRsThemeName(expectedCssLines)
+      expect_equal(name, expectedName, info = infoStr)
+      expect_equal(getRsThemeName(actualCssLines), expectedName, info = infoStr)
+      
+      # Check dark value
+      expect_equal(getRsIsDark(actualCssLines), getRsIsDark(expectedCssLines), info = infoStr)
+      expect_equal(getRsIsDark(actualCssLines), themeDesc$isDark, info = infoStr)
+   })
+},
+BEFORE_FUN = function(){
+   # Make an output location.
+   dir.create(outputDir)
+},
+AFTER_FUN = function(){
+   # Clean up the output location.
+   if (unlink(outputDir, recursive = TRUE, force = TRUE) != 0) 
+   {
+      warning("Unable to clean up the actual results in: ", outputDir)
+   }
+})
+
+test_that("convertTheme gives error for file permission issues", {
+   expect_error(
+      suppressWarnings(.rs.convertTheme(
+         file.path(inputFileLocation, "tmThemes", paste0(names(themes)[1], ".tmTheme")),
+         FALSE,
+         file.path(inputFileLocation, "nopermission"),
+         FALSE,
+         FALSE,
+         FALSE)),
+      sprintf(
+         "Unable to create the theme file in the requested location: %s. Please see above for relevant warnings.",
+         file.path(inputFileLocation, "nopermission", paste0(names(themes)[1], ".rstheme"))),
+      fixed = TRUE)
 })

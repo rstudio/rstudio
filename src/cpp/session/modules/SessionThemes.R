@@ -778,7 +778,8 @@
    c(
       paste0("/* rs-theme-name: ", name, " */"),
       paste0("/* rs-theme-is-dark: ", isDark, " */"),
-      rsTheme)
+      rsTheme,
+      "\n")
 })
 
 # Worker Functions =================================================================================
@@ -790,21 +791,30 @@
 # @param outputLocation    Where to place a local copy of the converted theme.
 # @param apply             Whether to immediately apply the new custom theme.
 # @param force             Whether to force the operation when it may involve an overwrite.
+# @param globally          Whether to add the theme for all users (true) or just this user (false).
 #
 # Returns the name of the theme on success.
 .rs.addFunction("convertTheme", convertTheme <- function(themePath, add, outputLocation, apply, force, globally) {
    tmTheme <- .rs.parseTmTheme(themePath)
    name <- tmTheme$name
-   fileName <- tools::file_path_sans_ext(basename(themePath))
+   fileName <- paste0(tools::file_path_sans_ext(basename(themePath)), ".rstheme")
    
    aceTheme <- .rs.convertTmTheme(tmTheme)
-   rsTheme <- .rs.convertAceTheme(aceTheme$theme, aceTheme$isDark)
+   rsTheme <- .rs.convertAceTheme(name, aceTheme$theme, aceTheme$isDark)
    
    isTemp <- is.null(outputLocation)
    location <- if (is.null(outputLocation)) tempfile(pattern = fileName)
-               else file.path(outputLocation, fileName)
+   else file.path(outputLocation, fileName)
    
-   cat(rsTheme$theme, location)
+   if (!file.create(location))
+   {
+      stop(
+         "Unable to create the theme file in the requested location: ",
+         location,
+         ". Please see above for relevant warnings.")
+   }
+      
+   cat(rsTheme, file = location)
 
    if (add)
    {

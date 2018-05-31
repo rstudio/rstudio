@@ -58,6 +58,10 @@
   color: #F92672
 }
 
+.ace_keyword.ace_operator {
+  color: #F92672
+}
+
 .ace_constant.ace_language {
   color: #AE81FF
 }
