@@ -1,3 +1,6 @@
+@echo off
+setlocal
+
 set "QT_PLUGIN_PATH=@QT_PLUGIN_PATH@"
 set "PATH=@QT_BINARY_PATH@;%PATH%"
 desktop\rstudio.exe
