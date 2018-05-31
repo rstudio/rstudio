@@ -45,6 +45,13 @@ target_link_libraries(rpostback
    rstudio-core
 )
 
+# extra libraries
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+   target_link_libraries(rpostback
+      procstat
+   )
+endif()
+
 if (RSTUDIO_SERVER)
     target_link_libraries(rpostback
        rstudio-server-core

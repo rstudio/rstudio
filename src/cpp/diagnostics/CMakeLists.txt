@@ -63,6 +63,11 @@ endif()
 target_link_libraries(diagnostics
    rstudio-core
 )
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+   target_link_libraries(diagnostics
+      procstat
+   )
+endif()
 if(NOT RSTUDIO_SESSION_WIN64)
    install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
