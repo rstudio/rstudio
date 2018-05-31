@@ -16,17 +16,18 @@
 #include "SessionThemes.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/FilePath.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
+#include <fstream>
 #include <map>
 #include <regex>
 #include <string>
@@ -43,19 +44,19 @@ namespace {
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
 typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
-void getThemesInLocation(const boost::filesystem::path& location, ThemeMap& themeMap)
+void getThemesInLocation(const rstudio::core::FilePath& location, ThemeMap& themeMap)
 {
-   using namespace boost::filesystem;
-   if (is_directory(location))
+   using rstudio::core::FilePath;
+   if (location.isDirectory())
    {
-      for (directory_entry& themeFile : boost::make_iterator_range(directory_iterator(location), {}))
+      std::vector<FilePath> locationChildren;
+      location.children(&locationChildren);
+      for (const FilePath& themeFile: locationChildren)
       {
-         std::string fileLocation = themeFile.path().generic_string();
-         if (!std::regex_match(
-                fileLocation,
-                std::regex(".*\\.rstheme$", std::regex_constants::icase)))
+         if (themeFile.hasExtensionLowerCase(".rstheme"))
          {
-            std::ifstream themeIFStream(fileLocation);
+            const std::string k_themeFileStr = themeFile.canonicalPath();
+            std::ifstream themeIFStream(k_themeFileStr);
             std::string themeContents(
                (std::istreambuf_iterator<char>(themeIFStream)),
                (std::istreambuf_iterator<char>()));
@@ -67,24 +68,17 @@ void getThemesInLocation(const boost::filesystem::path& location, ThemeMap& them
                matches,
                std::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
-            // If there's at least one name specified, get the first one.
+            // If there's no name specified,use the name of the file
+            std::string name;
             if (matches.size() < 2)
             {
-               std::regex_search(
-                  fileLocation,
-                  matches,
-                  std::regex("([^/\\\\]+?)\\.rstheme"),
-                  std::regex_constants::match_default);
-
-               if (matches.size() < 2)
-               {
-                  // TODO: warning / logging
-                  // No name so skip.
-                  continue;
-               }
+               name = themeFile.stem();
             }
-
-            std::string name = matches[1];
+            else
+            {
+               // If there's at least one name specified, get the first one.
+               name = matches[1];
+            }
 
             // Find out if the theme is dark or not.
             std::regex_search(
@@ -108,7 +102,7 @@ void getThemesInLocation(const boost::filesystem::path& location, ThemeMap& them
                // TODO: warning / logging about using default isDark value.
             }
 
-            themeMap[name] = std::pair<std::string, bool>(fileLocation, isDark);
+            themeMap[name] = std::pair<std::string, bool>(k_themeFileStr, isDark);
          }
       }
    }
@@ -123,12 +117,14 @@ SEXP rs_getThemes()
 {
    // List all files in the global location first.
    // TODO: Windows
-   using namespace boost::filesystem;
+   using rstudio::core::FilePath;
 
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef _WIN32
+   FilePath globalPath("%ProgramData%\\RStudio\\themes");
+   FilePath localPath("%UserProfile%\\Documents\\.R\\rstudio\\themes");
 #else
-   path globalPath("/etc/rstudio/themes/");
-   path localPath("~/.R/rstudio/themes/");
+   FilePath globalPath("/etc/rstudio/themes/");
+   FilePath localPath("~/.R/rstudio/themes/");
 #endif
 
    // Intentionally get global themes before getting user specific themes so that user specific

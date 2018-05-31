@@ -476,7 +476,7 @@ test_that("rgb conversion handles out of bounds values correctly", {
       "invalid color supplied: rgba(2.1,10,5,45). One or more RGB values could not be converted to an integer",
       fixed = TRUE)
 
-   # Non-hex hex represntation values
+   # Non-hex hex representation values
    expect_error(
       .rs.getRgbColor("#afga01"),
       "invalid color supplied: #afga01. One or more RGB values could not be converted to an integer",
@@ -491,11 +491,11 @@ test_that("rgb conversion handles invalid values correctly", {
    # Too many characters in hex representation
    expect_error(
       .rs.getRgbColor("#123456ab"),
-      "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #123456ab",
+      "hex representation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #123456ab",
       fixed = TRUE)
    expect_error(
       .rs.getRgbColor("#FfFfFf0"),
-      "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #FfFfFf0",
+      "hex representation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: #FfFfFf0",
       fixed = TRUE)
 
    # Too few values in rgb/rgba representation
