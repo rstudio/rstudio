@@ -364,6 +364,13 @@ endif()
 # define executable
 add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
+# extra libraries
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+   target_link_libraries(rsession
+      procstat
+   )
+endif()
+
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
    set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
@@ -476,11 +483,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2.1")
-   file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
-   install(FILES ${PANDOC_FILES}
-           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-           DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
+   #set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2.1")
+   #file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
+   #install(FILES ${PANDOC_FILES}
+   #        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+   #        DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install rmarkdown package
    # file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
@@ -526,14 +533,14 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
    else()
-      file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
-      install(PROGRAMS ${LIBCLANG_FILES}
-              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
+      #file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
+      #install(PROGRAMS ${LIBCLANG_FILES}
+      #        DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
    endif()
 
    # install libclang builtin-headers
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+   #install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
+   #        DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
 
    # install winpty on windows
    if(WIN32)

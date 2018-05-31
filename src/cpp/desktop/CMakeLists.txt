@@ -383,6 +383,13 @@ if(NOT APPLE)
       target_link_libraries(rstudio Version)
    endif()
 
+   # extra dependencies for FreeBSD
+   if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+      target_link_libraries(rstudio
+         procstat
+      )
+   endif()
+
 # for OSX we create a bundle
 else()
 
