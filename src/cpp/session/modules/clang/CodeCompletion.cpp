@@ -233,9 +233,11 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    }
 #else
    {
+      Error error;
+      
       // resolve R CMD location for shell command
       FilePath rBinDir;
-      Error error = module_context::rBinDir(&rBinDir);
+      error = module_context::rBinDir(&rBinDir);
       if (error)
       {
          LOG_ERROR(error);
@@ -247,7 +249,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       core::system::ProcessResult result;
       rCmd << "config";
       rCmd << "CXX";
-      Error error = core::system::runCommand(rCmd, processOptions, &result);
+      error = core::system::runCommand(rCmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
       else if (result.exitStatus != EXIT_SUCCESS)
@@ -267,7 +269,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    // (e.g. as 'g++ -std=c++17') so we must also tear off only the
    // compiler name. we hence assume that the supplemental arguments
    // to CXX do not influence the compiler include paths.
-#ifdef __linux__
+#ifndef _WIN32
    {
        std::string compilerName = compilerPath;
        std::size_t index = compilerPath.find(' ');
@@ -280,11 +282,15 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
            compilerName = compilerPath;
        }
 
-       Error error = r::exec::RFunction("Sys.which")
-               .addParam(compilerName)
-               .call(&compilerPath);
+       core::system::ProcessResult result;
+       std::vector<std::string> args = { compilerName };
+       Error error = core::system::runProgram("which", args, "", processOptions, &result);
        if (error)
-           LOG_ERROR(error);
+          LOG_ERROR(error);
+       else if (result.exitStatus != EXIT_SUCCESS)
+          LOG_ERROR_MESSAGE("Error qualifying CXX compiler path: " + result.stdOut);
+       else
+          compilerPath = string_utils::trimWhitespace(result.stdOut);
    }
 #endif
    
