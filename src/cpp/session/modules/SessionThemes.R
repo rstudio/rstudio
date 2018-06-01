@@ -14,7 +14,7 @@
 
 # ACE/tools/tmThemes.js Functions ==================================================================
 
-# Converts a colour to an array of the RGB values of the colour.
+# Converts a color to an array of the RGB values of the color.
 #
 # @param color    The color to convert.
 #
@@ -36,7 +36,7 @@
       if (nchar(color) != 7)
       {
          stop(
-            "hex represntation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: ",
+            "hex representation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: ",
             color,
             call. = FALSE)
       }
@@ -90,14 +90,14 @@
    colorVec
 })
 
-# Mixes two colours together.
+# Mixes two colors together.
 #
-# @param color1   The first colour.
-# @param color2   The second colour.
-# @param alpha1   The alpha of the first colour.
-# @param alpha2   The alpha of the second colour.
+# @param color1   The first color.
+# @param color2   The second color.
+# @param alpha1   The alpha of the first color.
+# @param alpha2   The alpha of the second color.
 # 
-# Returns the mixed colour in string format.
+# Returns the mixed color in string format.
 .rs.addFunction("mixColors", mixColors <- function(color1, color2, alpha1, alpha2 = NULL) {
    c1rgb <- .rs.getRgbColor(color1)
    c2rgb <- .rs.getRgbColor(color2)
@@ -117,12 +117,12 @@
       ")")
 })
 
-# Determines the luma of a colour. This refers to the percieved luminance of the colour. More 
+# Determines the luma of a color. This refers to the perceived luminance of the color. More 
 # information can be found at https://en.wikipedia.org/wiki/Relative_luminance.
 # 
-# @param color    The colour for which to determine the luma.
+# @param color    The color for which to determine the luma.
 #
-# Returns the luma of the specified colour.
+# Returns the luma of the specified color.
 .rs.addFunction("getLuma", getLuma <- function(color) {
    # The numbers used in this calculation are taken from
    # https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js#L191. It is not entirely clear
@@ -480,7 +480,7 @@
    # Collaborators
    supportedScopes[["collab.user1"]] <- "collab.user1"
    
-   # Read the tempalte files
+   # Read the template files
    conn <- file(
       description = file.path(.Call("rs_rResourcesPath"), "templates", "ace_theme_template.css"),
       open = "rt")
