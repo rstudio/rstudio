@@ -79,7 +79,11 @@
 })
 
 .rs.addApiFunction("runScriptJob", function(path) {
-   .Call("rs_runScriptJob", normalizePath(path))
+   if (missing(path))
+      stop("Must specify path to R script to run.")
+   if (!file.exists(path))
+      stop("The R script '", path, "' does not exist.")
+   .Call("rs_runScriptJob", path)
    invisible(NULL)
 })
 

@@ -19,8 +19,10 @@ import java.util.Collections;
 import java.util.Date;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -113,8 +115,19 @@ public class JobManager implements JobRefreshEvent.Handler,
    @Handler
    public void onStartJob()
    {
+      // the default is to ask the user to supply a path to a script to run, but
+      // if currently open file in the editor happens to be a .R script, we
+      // default to that.
+      String script = "";
+      String path = pSourceManager_.get().getCurrentDocPath();
+      if (!StringUtil.isNullOrEmpty(path) &&
+          FileSystemItem.getExtensionFromPath(path).toLowerCase() == ".r")
+      {
+         script = path;
+      }
+
       JobLauncherDialog dialog = new JobLauncherDialog("Select R Script", 
-            pSourceManager_.get().getCurrentDocPath(),
+            script,
             spec ->
             {
                server_.startJob(spec, new VoidServerRequestCallback());

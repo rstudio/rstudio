@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobLaunchSpec;
@@ -37,6 +38,12 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    protected JobLaunchSpec collectInput()
    {
       return JobLaunchSpec.create(controls_.scriptPath());
+   }
+   
+   @Override
+   protected boolean validate(JobLaunchSpec spec)
+   {
+      return !StringUtil.isNullOrEmpty(spec.path());
    }
 
    @Override
