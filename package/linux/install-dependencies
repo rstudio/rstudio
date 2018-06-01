@@ -4,9 +4,9 @@ set -e
 
 # install cmake
 if ! command -v cmake &> /dev/null; then
-	CMAKE_VERSION=cmake-2.8.11.2
+	CMAKE_VERSION=cmake-3.1.0
 	CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
-	wget http://www.cmake.org/files/v2.8/$CMAKE_TARBALL
+	wget http://www.cmake.org/files/v3.1/$CMAKE_TARBALL
 	tar xf $CMAKE_TARBALL
 	cd $CMAKE_VERSION
 	./bootstrap 

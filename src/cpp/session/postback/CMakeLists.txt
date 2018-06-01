@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -61,13 +61,9 @@ configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
 
 # installation rules
-if(NOT RSTUDIO_SESSION_WIN64)
-   install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
-   file(GLOB POSTBACK_SCRIPTS "rpostback-*")
-   set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
-   install(PROGRAMS ${POSTBACK_SCRIPTS}
-           DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
-endif()
-
-
+install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
+file(GLOB POSTBACK_SCRIPTS "rpostback-*")
+set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
+install(PROGRAMS ${POSTBACK_SCRIPTS}
+        DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
 

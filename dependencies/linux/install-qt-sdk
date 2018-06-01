@@ -28,7 +28,7 @@ else
   QT_ARCH=x86
 fi
 
-QT_VERSION=5.10.1
+QT_VERSION=5.11.0
 QT_SDK_BINARY=QtSDK-${QT_VERSION}-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 

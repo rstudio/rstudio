@@ -8,7 +8,7 @@ RUN iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.or
 
 # install some deps via chocolatey
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
-  choco install -y jdk8 ant windows-sdk-7.1 ;\
+  choco install -y jdk8 ant windows-sdk-10.0 ;\
   choco install -y 7zip
 
 # install aws cli
@@ -36,14 +36,14 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-window
   Remove-Item c:\nsis-2.50-setup.exe
 
 # install visual c++
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuildtools_full.exe -OutFile C:\visualcppbuildtools_full.exe ;\
-  Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '/Quiet' ;\
-  Remove-Item c:\visualcppbuildtools_full.exe
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/vs_buildtools__2090754418.1513131190.exe -OutFile C:\vs_buildtools__2090754418.1513131190.exe ;\
+  Start-Process C:\vs_buildtools__2090754418.1513131190.exe -Wait -ArgumentList '--quiet --add Microsoft.VisualStudio.Workload.VCTools' ;\
+  Remove-Item C:\vs_buildtools__2090754418.1513131190.exe
 
 # install qt (note that we are using the current directory's context)
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.10.1-msvc2015.7z -OutFile c:\QtSDK-5.10.1-msvc2015.7z ;\
-  7z x c:\QtSDK-5.10.1-msvc2015.7z -oc:\ ;\
-  Remove-Item c:\QtSDK-5.10.1-msvc2015.7z -Force
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.11.0-msvc2017.7z -OutFile c:\QtSDK-5.11.0-msvc2017.7z ;\
+  7z x c:\QtSDK-5.11.0-msvc2017.7z -oc:\ ;\
+  Remove-Item c:\QtSDK-5.11.0-msvc2017.7z -Force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'

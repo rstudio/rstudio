@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -14,12 +14,7 @@
 # set minimum version
 cmake_minimum_required(VERSION 2.6)
 
-# don't add gwt for special 64-bit binary builds on windows (since
-# we've already got it from the 32-bit build), for development mode
-# (since we'll want to build it incrementally using superdevmode),
-# or when building monitor only
-if ( (NOT RSTUDIO_SESSION_WIN64) AND
-     (NOT RSTUDIO_DEVELOPMENT) AND
+if ( (NOT RSTUDIO_DEVELOPMENT) AND
      (NOT RSTUDIO_CONFIG_MONITOR_ONLY) )
    add_subdirectory(gwt)
 endif()
@@ -29,13 +24,4 @@ add_subdirectory(cpp)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
-
-
-
-
-
-
-
-   
-
 

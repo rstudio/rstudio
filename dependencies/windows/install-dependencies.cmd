@@ -18,7 +18,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.0.2m.zip
-set BOOST_FILES=boost-1.65.1-win-msvc14.zip
+set BOOST_FILES=boost-1.65.1-win-msvc141.zip
 
 set PANDOC_VERSION=2.2.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -30,8 +30,8 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
-set QT_VERSION=5.10.1
-set QT_FILE=QtSDK-%QT_VERSION%-msvc2015.7z
+set QT_VERSION=5.11.0
+set QT_FILE=QtSDK-%QT_VERSION%-msvc2017.7z
 
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
