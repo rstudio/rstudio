@@ -251,6 +251,13 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error clearJobs(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   removeCompletedJobs();
+   return Success();
+}
+
 Error setJobListening(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -333,6 +340,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
+      (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

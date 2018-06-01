@@ -555,6 +555,7 @@ public abstract class
    
    // Jobs
    public abstract AppCommand startJob();
+   public abstract AppCommand clearJobs();
 
    // Other
    public abstract AppCommand checkSpelling();

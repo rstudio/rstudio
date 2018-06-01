@@ -64,7 +64,6 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
-import org.rstudio.studio.client.common.plumber.model.PlumberCapabilities;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
@@ -5407,6 +5406,12 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(spec));
       sendRequest(RPC_SCOPE, "run_script_job", params, callback);
+   }
+   
+   @Override
+   public void clearJobs(ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, "clear_jobs", callback);
    }
 
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)

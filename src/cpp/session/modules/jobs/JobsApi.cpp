@@ -146,6 +146,23 @@ void removeAllJobs()
    s_jobs.clear();
 }
 
+void removeCompletedJobs()
+{
+   // collect completed jobs
+   std::vector<boost::shared_ptr<Job> > completed;
+   for (auto& job: s_jobs)
+   {
+      if (job.second->complete())
+         completed.push_back(job.second);
+   }
+
+   // and remove them!
+   for (auto& job: completed)
+   {
+      removeJob(job);
+   }
+}
+
 void endAllJobStreaming()
 {
    for (auto& job: s_jobs)

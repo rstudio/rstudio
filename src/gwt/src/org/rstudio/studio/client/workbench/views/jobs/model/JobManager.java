@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -57,12 +58,14 @@ public class JobManager implements JobRefreshEvent.Handler,
                      Commands commands,
                      Binder binder,
                      JobsServerOperations server,
+                     GlobalDisplay display,
                      Provider<SourceWindowManager> pSourceManager)
    {
       events_ = events;
       pSession_ = pSession;
       state_ = JobState.create();
       server_ = server;
+      display_ = display;
       pSourceManager_ = pSourceManager;
       binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
@@ -133,6 +136,23 @@ public class JobManager implements JobRefreshEvent.Handler,
                server_.startJob(spec, new VoidServerRequestCallback());
             });
       dialog.showModal();
+   }
+   
+   @Handler
+   public void onClearJobs()
+   {
+      display_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION, 
+            "Remove Completed Jobs", 
+            "Do you want to remove completed jobs from the list of jobs?\n\nYou can't undo this.", 
+            false, // include cancel
+            () ->  server_.clearJobs(new VoidServerRequestCallback()),
+            null,  // do nothing on No
+            null,  // do nothing on Cancel
+            "Remove jobs", 
+            "Cancel", 
+            false // yes is not default
+            );
    }
    
    /**
@@ -321,4 +341,5 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final Provider<Session> pSession_;
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
+   private final GlobalDisplay display_;
 }

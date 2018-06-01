@@ -238,6 +238,8 @@ public class JobsPane extends WorkbenchPane
    {
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
    }
 
    // widgets

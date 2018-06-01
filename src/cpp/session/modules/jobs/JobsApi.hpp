@@ -51,6 +51,8 @@ core::json::Object jobsAsJson();
 
 void removeAllJobs();
 
+void removeCompletedJobs();
+
 void endAllJobStreaming();
 
 } // namespace jobs

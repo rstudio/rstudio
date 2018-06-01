@@ -109,3 +109,22 @@ test_that("job output is persisted", {
    expect_true(length(output) == 3)
 })
 
+test_that("jobs can be cleaned up", {
+    # add a couple of jobs
+   job8 <- .rs.api.addJob(name = "job8", autoRemove = FALSE, running = TRUE)
+   job9 <- .rs.api.addJob(name = "job9", autoRemove = FALSE, running = TRUE)
+
+   # complete one
+   .rs.api.setJobState(job8, "failed")
+
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_true(job8 %in% names(jobs))
+
+   # clean it up
+   .rs.invokeRpc("clear_jobs")
+
+   # there should be 1 job remaining (only the completed job should be cleared)
+   jobs <- .rs.invokeRpc("get_jobs")
+   expect_true(job9 %in% names(jobs))
+   expect_false(job8 %in% names(jobs))
+})
