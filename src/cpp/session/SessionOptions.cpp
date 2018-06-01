@@ -602,11 +602,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-#ifdef _WIN32
-      libclangPath_ += "/3.4";
-#else
-      libclangPath_ += "/3.5";
-#endif
+      libclangPath_ += "/5.0.2";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 

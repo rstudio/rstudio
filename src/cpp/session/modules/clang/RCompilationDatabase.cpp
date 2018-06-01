@@ -891,10 +891,12 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
    std::vector<std::string> args = clang().compileArgs(isCpp);
 
    // add system include headers as reported by compiler
+#ifndef _WIN32
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
    for (auto include : includes)
       args.push_back("-I" + include);
+#endif
 
    return args;
 }

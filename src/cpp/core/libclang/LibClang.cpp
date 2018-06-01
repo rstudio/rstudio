@@ -25,17 +25,8 @@
 #include <core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/SafeConvert.hpp>
-#include <core/system/Environment.hpp>
 
 #include <core/system/LibraryLoader.hpp>
-
-#ifdef _WIN32
-# ifdef _WIN64
-#  define kProgramFilesEnvVar "ProgramFiles"
-# else
-#  define kProgramFilesEnvVar "ProgramFiles(x86)"
-# endif
-#endif
 
 #define LOAD_CLANG_SYMBOL(name) \
    error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
@@ -107,11 +98,6 @@ std::vector<std::string> systemClangVersions()
          if (path.filename().find("llvm") == 0)
             clangVersions.push_back(path.complete("lib/libclang.so.1").absolutePath());
    }
-#elif defined(_WIN32)
-   std::string programFiles = core::system::getenv(kProgramFilesEnvVar);
-   FilePath llvmPath = FilePath(programFiles).complete("LLVM/bin/libclang.dll");
-   if (llvmPath.exists())
-      clangVersions.push_back(llvmPath.absolutePath());
 #endif
    
    return clangVersions;

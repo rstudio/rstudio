@@ -43,7 +43,7 @@ endif()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "3.4")
+   set(LIBCLANG_VERSION "5.0.2")
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
@@ -517,10 +517,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # install libclang
    if(WIN32)
-      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
+      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
       install(PROGRAMS ${LIBCLANG_32_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
-      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/libclang.*")
+      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
    endif()
