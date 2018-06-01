@@ -87,8 +87,10 @@ endif()
 if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
    find_program(GIT_EXECUTABLE git)
    if(GIT_EXECUTABLE)
-      exec_program(git ARGS rev-parse HEAD
-                   OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+      execute_process(
+         COMMAND git rev-parse HEAD
+         OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH
+         OUTPUT_STRIP_TRAILING_WHITESPACE)
       SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
    endif()
 endif()
