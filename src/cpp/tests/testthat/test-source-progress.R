@@ -18,6 +18,9 @@ context("source-progress")
 # one-time setup; load progress script
 source(file.path(.rs.sessionModulePath(), "SourceWithProgress.R"))
 
+# given the output of an R script, extract the progress markers and build a list with name/value
+# pairs for each one (note that this will capture only the last value emitted when multiple markers
+# with the same category exist)
 processOutput <- function(output) {
    values <- list()
    for (line in seq_along(output)) {
@@ -30,30 +33,35 @@ processOutput <- function(output) {
    values
 }
 
-test_that("statements in script are executed", {
-   # create a temporary file to host the output
+# sources the given script with progress and returns the value of all emitted progress markers
+progressResult <- function(path) {
    p <- tempfile(fileext = ".txt")
    on.exit(file.remove(p), add = TRUE)
    con <- file(p, open = "at")
 
-   sourceWithProgress("resources/source-progress/assignment.R", con)
+   sourceWithProgress(path, con)
+   close(con)
+
+   processOutput(readLines(p))
+}
+
+test_that("statements in script are executed", {
+   progressResult("resources/source-progress/assignment.R")
 
    expect_equal(2, var)
 })
 
 test_that("progress reports include expected values", {
-   # create a temporary file to host the output
-   p <- tempfile(fileext = ".txt")
-   on.exit(file.remove(p), add = TRUE)
-   con <- file(p, open = "at")
-
-   sourceWithProgress("resources/source-progress/three.R", con)
-   close(con)
-
-   output <- processOutput(readLines(p))
+   output <- progressResult("resources/source-progress/three.R")
 
    expect_equal("3", output[["count"]])
    expect_equal("3", output[["statement"]])
    expect_equal("1", output[["completed"]])
 })
 
+
+test_that("sections in source are emitted as status", {
+   output <- progressResult("resources/source-progress/sections.R")
+
+   expect_equal("Compute", output[["section"]])
+})

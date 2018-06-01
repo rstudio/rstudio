@@ -149,22 +149,25 @@ private:
 
    void onProgress(const std::string& cat, const std::string& argument)
    {
-      // determine argument
-      int arg = safe_convert::stringTo<int>(argument, 0);
-
-      // process arg
+      // process argument according to category
       if (cat == "count")
       {
          // record job as started
-         job_ = addJob(path_.filename(), "", "", arg, JobRunning, false);
+         int count = safe_convert::stringTo<int>(argument, 0);
+         job_ = addJob(path_.filename(), "", "", count, JobRunning, false);
       }
       else if (cat == "statement" && job_)
       {
-         setJobProgress(job_, arg);
+         int statement = safe_convert::stringTo<int>(argument, 0);
+         setJobProgress(job_, statement);
       }
       else if (cat == "completed")
       {
          completed_ = true;
+      }
+      else if (cat == "section" && job_)
+      {
+         setJobStatus(job_, argument);
       }
    }
 
