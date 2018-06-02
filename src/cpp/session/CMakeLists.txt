@@ -41,21 +41,19 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/plumber")
   message(FATAL_ERROR "plumber package not found (re-run install-dependencies script to install)")
 endif()
 
-# verify libclang is installed
+# verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "3.4")
-else()
-   set(LIBCLANG_VERSION "3.5")
-endif()
-set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
-if(NOT EXISTS "${LIBCLANG_DIR}")
-  message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-endif()
-set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-  message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
-endif()
+   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
+   if(NOT EXISTS "${LIBCLANG_DIR}")
+      message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+   endif()
 
+   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
+   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
+      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
+   endif()
+endif()
 
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
@@ -519,16 +517,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # install libclang
    if(WIN32)
-      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
+      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
       install(PROGRAMS ${LIBCLANG_32_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
-      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/libclang.*")
+      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-   else()
-      file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
-      install(PROGRAMS ${LIBCLANG_FILES}
-              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
    endif()
 
    # install libclang builtin-headers
