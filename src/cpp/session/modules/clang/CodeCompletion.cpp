@@ -284,7 +284,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 
        core::system::ProcessResult result;
        std::vector<std::string> args = { compilerName };
-       Error error = core::system::runProgram("which", args, "", processOptions, &result);
+       Error error = core::system::runProgram("/usr/bin/which", args, "", processOptions, &result);
        if (error)
           LOG_ERROR(error);
        else if (result.exitStatus != EXIT_SUCCESS)
