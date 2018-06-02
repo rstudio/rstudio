@@ -77,7 +77,9 @@ std::vector<std::string> systemClangVersions()
 #elif defined(__unix__)
    // default set of versions
    clangVersions = {
+      "/usr/lib/libclang.so",
       "/usr/lib/llvm/libclang.so",
+      "/usr/lib64/libclang.so",
       "/usr/lib64/llvm/libclang.so",
    };
    
