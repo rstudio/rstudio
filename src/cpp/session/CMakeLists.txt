@@ -523,11 +523,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-   endif()
 
-   # install libclang builtin-headers
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+      # install libclang builtin-headers
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
+              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+   endif()
 
    # install winpty on windows
    if(WIN32)
