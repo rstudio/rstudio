@@ -162,6 +162,8 @@ SEXP rs_readIniFile(SEXP iniPathSEXP)
          std::string value = it->second.get_value<std::string>();
          entries.push_back(std::make_pair(key, value));
       }
+
+      r::sexp::Protect protect;
       SEXP secondsSEXP = create(entries, &protect);
       return secondsSEXP;
    }
