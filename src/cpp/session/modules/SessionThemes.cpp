@@ -122,10 +122,10 @@ SEXP rs_getThemes()
 
 #ifdef _WIN32
    FilePath globalPath = rstudio::core::system::systemSettingsPath("RStudio\\themes", false);
-   FilePath localPath(rstudio::core::system::userHomePath().childPath("\\Documents\\.R\\rstudio\\themes"));
+   FilePath localPath = rstudio::core::system::userHomePath().childPath(".R\\rstudio\\themes");
 #else
    FilePath globalPath("/etc/rstudio/themes/");
-   FilePath localPath("~/.R/rstudio/themes/");
+   FilePath localPath = rstudio::core::system::userHomePath().childPath(".R/rstudio/themes/");
 #endif
 
    // Intentionally get global themes before getting user specific themes so that user specific
