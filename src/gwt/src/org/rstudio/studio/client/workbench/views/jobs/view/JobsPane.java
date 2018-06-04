@@ -104,7 +104,17 @@ public class JobsPane extends WorkbenchPane
             list_.updateJob(job);
             if (job.id == current_ && progress_ != null)
             {
-               progress_.showProgress(new LocalJobProgress(job));
+               if (job.completed > 0)
+               {
+                  // the job is now finished; remove its progress
+                  toolbar_.removeLeftWidget(progress_);
+                  progress_ = null;
+               }
+               else
+               {
+                  // update progress
+                  progress_.showProgress(new LocalJobProgress(job));
+               }
             }
             break;
             
@@ -223,15 +233,22 @@ public class JobsPane extends WorkbenchPane
    {
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(allJobs_);
-      if (progress_ == null)
-      {
-         progress_ = new JobProgress();
-      }
+
+      // if we're currently tracking a job:
       if (current_ != null)
       {
-         progress_.showProgress(new LocalJobProgress(list_.getJob(current_)));
+         // show the progress bar if the job hasn't been completed yet
+         Job job = list_.getJob(current_);
+         if (job.completed == 0)
+         {
+            if (progress_ == null)
+            {
+               progress_ = new JobProgress();
+            }
+            progress_.showProgress(new LocalJobProgress(job));
+            toolbar_.addLeftWidget(progress_);
+         }
       }
-      toolbar_.addLeftWidget(progress_);
    }
    
    private void installMainToolbar()

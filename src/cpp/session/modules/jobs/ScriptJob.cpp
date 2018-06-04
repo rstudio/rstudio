@@ -170,6 +170,9 @@ private:
       else if (cat == "completed")
       {
          completed_ = true;
+
+         // clear the progress text
+         setJobStatus(job_, "");
       }
       else if (cat == "section" && job_)
       {
