@@ -3221,6 +3221,11 @@ well as menu structures (for main menu and popup menus).
          desc="Run an R script as a job"
          windowMode="main"/>
 
+    <cmd id="sourceAsJob"
+         menuLabel="Source as Job..."
+         desc="Run an the current R script as a job"
+         windowMode="any"/>
+
     <cmd id="clearJobs"
          menuLabel="Clear Jobs"
          desc="Clean up all completed jobs"

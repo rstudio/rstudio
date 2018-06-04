@@ -135,6 +135,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -5067,6 +5068,15 @@ public class TextEditingTarget implements
    void onSourceActiveDocumentWithEcho()
    {
       sourceActiveDocument(true);
+   }
+   
+   @Handler
+   void onSourceAsJob()
+   {
+      saveThenExecute(null, () ->
+      {
+         events_.fireEvent(new JobRunScriptEvent(getPath()));
+      });
    }
    
    @Handler

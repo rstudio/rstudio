@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -46,6 +47,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class JobManager implements JobRefreshEvent.Handler,
                                    JobUpdatedEvent.Handler,
+                                   JobRunScriptEvent.Handler,
                                    SessionInitHandler
 {
    interface Binder extends CommandBinder<Commands, JobManager>
@@ -71,7 +73,10 @@ public class JobManager implements JobRefreshEvent.Handler,
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(JobRefreshEvent.TYPE, this);
       events.addHandler(JobUpdatedEvent.TYPE, this);
+      events.addHandler(JobRunScriptEvent.TYPE, this);
    }
+   
+   // Event handlers ---------------------------------------------------------
    
    @Override
    public void onSessionInit(SessionInitEvent sie)
@@ -115,6 +120,14 @@ public class JobManager implements JobRefreshEvent.Handler,
       emitJobProgress();
    }
    
+   @Override
+   public void onJobRunScript(JobRunScriptEvent event)
+   {
+      showJobLauncherDialog(event.path());
+   }
+
+   // Command handlers -------------------------------------------------------
+   
    @Handler
    public void onStartJob()
    {
@@ -129,13 +142,7 @@ public class JobManager implements JobRefreshEvent.Handler,
          script = path;
       }
 
-      JobLauncherDialog dialog = new JobLauncherDialog("Select R Script", 
-            script,
-            spec ->
-            {
-               server_.startJob(spec, new VoidServerRequestCallback());
-            });
-      dialog.showModal();
+      showJobLauncherDialog(script);
    }
    
    @Handler
@@ -295,6 +302,17 @@ public class JobManager implements JobRefreshEvent.Handler,
    }
 
    // Private methods ---------------------------------------------------------
+   
+   private void showJobLauncherDialog(String path)
+   {
+      JobLauncherDialog dialog = new JobLauncherDialog("Select R Script", 
+            path,
+            spec ->
+            {
+               server_.startJob(spec, new VoidServerRequestCallback());
+            });
+      dialog.showModal();
+   }
    
    private void emitJobProgress()
    {
