@@ -101,6 +101,7 @@ protected:
                                  int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
+   QString viewerUrl();
 
 private:
    void handleBase64Download(QUrl url);

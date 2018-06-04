@@ -174,7 +174,7 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
    if (isSatellite)
    {
       // create and size
-      pWindow = new SatelliteWindow(pMainWindow, name);
+      pWindow = new SatelliteWindow(pMainWindow, name, this);
       pWindow->resize(width, height);
 
       if (x >= 0 && y >= 0)
@@ -265,6 +265,13 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
    bool isLocal = host == "localhost" || host == "127.0.0.1";
+   
+   bool isSubFrame = false;
+   WebProfile* webProfile = dynamic_cast<WebProfile*>(profile());
+   if (webProfile)
+   {
+      isSubFrame = webProfile->resourceType() == QWebEngineUrlRequestInfo::ResourceTypeSubFrame;
+   }
 
    if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme() &&
@@ -275,8 +282,8 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    }
    // allow viewer urls to be handled internally by Qt. note that the client is responsible for 
    // ensuring that non-local viewer urls are appropriately sandboxed.
-   else if (!viewerUrl_.isEmpty() &&
-            url.toString().startsWith(viewerUrl_))
+   else if (!viewerUrl().isEmpty() &&
+            url.toString().startsWith(viewerUrl()))
    {
       return true;
    }
@@ -301,7 +308,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       {
          return true;
       }
-      else
+      else if (!isSubFrame)
       {
          // when not allowing external navigation, open an external browser
          // to view the URL
@@ -332,6 +339,21 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
                 url.authority() + QString::fromUtf8("/");
 }
 
+QString WebPage::viewerUrl()
+{
+   if (viewerUrl_.isEmpty())
+   {
+      // if we don't know the viewer URL ourselves but we're a child window, ask our parent
+      BrowserWindow *parent = dynamic_cast<BrowserWindow*>(view()->window());
+      if (parent != nullptr && parent->opener() != nullptr)
+      {
+         return parent->opener()->viewerUrl();
+      }
+   }
+
+   // return our own viewer URL
+   return viewerUrl_;
+}
 
 void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 {

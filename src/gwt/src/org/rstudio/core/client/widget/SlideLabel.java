@@ -1,7 +1,7 @@
 /*
  * SlideLabel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.resources.CoreResources;
 
 public class SlideLabel extends Composite
@@ -185,11 +186,25 @@ public class SlideLabel extends Composite
       assert autoHideMillis >= 0 || executeOnComplete == null:
             "Possible error: executeOnComplete will never be called with " +
             "negative value for autoHideMillis";
+      
+      // don't push a second deferred show onto the stack
+      if (deferredShow_)
+         return;
+
+      // remember that we will show on the next event loop
+      deferredShow_ = true;
 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
+            // don't show if the label was hidden while waiting to be shown
+            if (!deferredShow_)
+               return;
+            
+            // mark deferred show as processed
+            deferredShow_ = false;
+
             stopCurrentAnimation();
             currentAnimation_ = new Animation() {
                @Override
@@ -239,6 +254,15 @@ public class SlideLabel extends Composite
 
    public void hide(final Command executeOnComplete)
    {
+      // if we're waiting to be shown, then we aren't visible yet (just cancel
+      // the queued show)
+      if (deferredShow_)
+      {
+         deferredShow_ = false;
+         if (executeOnComplete != null)
+            executeOnComplete.execute();
+      }
+
       stopCurrentAnimation();
       final int height = curtain_.getOffsetHeight();
       currentAnimation_ = new Animation() {
@@ -301,6 +325,7 @@ public class SlideLabel extends Composite
    private Animation currentAnimation_;
    private Timer currentAutoHideTimer_;
    private Operation onCancel_;
+   private boolean deferredShow_ = false;
 
    private static final int ANIM_MILLIS = 250;
 }

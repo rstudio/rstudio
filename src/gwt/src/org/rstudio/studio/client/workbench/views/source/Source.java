@@ -2577,6 +2577,8 @@ public class Source implements InsertSourceHandler,
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
          docType = FileTypeRegistry.R;
+      else if (event.getType() == NewDocumentWithCodeEvent.SQL)
+         docType = FileTypeRegistry.SQL;
       else
          docType = FileTypeRegistry.RMARKDOWN;
       
@@ -2585,12 +2587,12 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            newDoc(docType,  
-                  new ResultCallback<EditingTarget, ServerError>() {
+            newDoc(docType,
+                   event.getCode(),
+                   new ResultCallback<EditingTarget, ServerError>() {
                public void onSuccess(EditingTarget arg)
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
-                  editingTarget.insertCode(event.getCode(), false);
                   
                   if (event.getCursorPosition() != null)
                   {
@@ -2604,6 +2606,10 @@ public class Source implements InsertSourceHandler,
                      {
                         commands_.executeToCurrentLine().execute();
                         commands_.activateSource().execute();
+                     }
+                     else if (docType.equals(FileTypeRegistry.SQL))
+                     {
+                        commands_.previewSql().execute();
                      }
                      else
                      {

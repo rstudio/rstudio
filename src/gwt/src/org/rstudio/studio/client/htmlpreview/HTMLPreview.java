@@ -49,7 +49,7 @@ public class HTMLPreview
             {
                satelliteManager.openSatellite(HTMLPreviewApplication.NAME,     
                                               event.getParams(),
-                                              new Size(1100,1200));
+                                              new Size(1180,1200));
                                               
             } 
          }  

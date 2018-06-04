@@ -210,5 +210,10 @@ QString BrowserWindow::getName()
    return name_;
 }
 
+WebPage* BrowserWindow::opener()
+{
+   return pOpener_;
+}
+
 } // namespace desktop
 } // namespace rstudio

@@ -180,6 +180,7 @@ class ClientEvent extends JavaScriptObject
    public static final String JobRefresh = "job_refresh";
    public static final String JobOutput = "job_output";
    public static final String DataOutputCompleted = "data_output_completed";
+   public static final String NewDocumentWithCode = "new_document_with_code";
 
    protected ClientEvent()
    {

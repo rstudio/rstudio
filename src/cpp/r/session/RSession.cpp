@@ -31,6 +31,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <core/http/Util.hpp>
+#include <core/http/URL.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
@@ -207,6 +208,16 @@ SEXP rs_saveHistory(SEXP sFile)
    return R_NilValue;
 }
 
+
+SEXP rs_completeUrl(SEXP url, SEXP path)
+{
+   std::string completed = rstudio::core::http::URL::complete(
+      r::sexp::asString(url), r::sexp::asString(path));
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(completed, &rProtect);
+}
+
 namespace {
 
 SEXP rs_GEcopyDisplayList(SEXP fromDeviceSEXP)
@@ -334,6 +345,13 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    saveHistoryMethodDef.fun = (DL_FUNC) rs_saveHistory ;
    saveHistoryMethodDef.numArgs = 1;
    r::routines::addCallMethod(saveHistoryMethodDef);
+
+   // complete url
+   R_CallMethodDef completeUrlDef ;
+   completeUrlDef.name = "rs_completeUrl" ;
+   completeUrlDef.fun = (DL_FUNC) rs_completeUrl ;
+   completeUrlDef.numArgs = 2;
+   r::routines::addCallMethod(completeUrlDef);
 
    // register graphics methods
    RS_REGISTER_CALL_METHOD(rs_GEcopyDisplayList, 1);

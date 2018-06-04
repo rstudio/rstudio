@@ -47,7 +47,19 @@ public class TextEditingTargetSqlHelper
       SqlPreview sqlPreview = parseSqlPreview();
       if (sqlPreview != null)
       {
-         String command = "previewSql(statement = \"" + editingTarget.getPath() + "\"," +
+         String statement = "";
+         
+         if (editingTarget.dirtyState().getValue() || editingTarget.getPath() == null)
+         {
+            statement = docDisplay_.getCode();
+         }
+         else
+         {
+            statement = editingTarget.getPath();
+         }
+
+         String statementEscaped = statement.replaceAll("\\\"", "\\\\\"");
+         String command = "previewSql(statement = \"" + statementEscaped + "\"," +
             sqlPreview.args +
             ")";
 

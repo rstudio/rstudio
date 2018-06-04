@@ -49,10 +49,6 @@ void initializeSystemPrefs()
    [defaults setBool:YES forKey:@"NSDisabledDictationMenuItem"];
    [defaults setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
 
-   // Remove (don't allow) the "Show Tab Bar" menu item from the "View" menu, if supported
-   if ([NSWindow respondsToSelector:@selector(allowsAutomaticWindowTabbing)])
-      NSWindow.allowsAutomaticWindowTabbing = NO;
-
    // Remove the "Enter Full Screen" menu item from the "View" menu
    [defaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];
 }

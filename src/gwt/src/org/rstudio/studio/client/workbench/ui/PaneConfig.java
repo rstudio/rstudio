@@ -77,9 +77,11 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getAllTabs()
    {
+      // A list of all the tabs. Order matters; the Presentation tab must be the
+      // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Presentation",
-                           "Viewer", "Jobs"};
+                           "Packages", "Help", "Build", "VCS", "Jobs", "Presentation",
+                           "Viewer"};
    }
 
    public static String[] getAlwaysVisibleTabs()

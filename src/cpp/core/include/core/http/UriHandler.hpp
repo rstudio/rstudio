@@ -41,7 +41,7 @@ typedef boost::function<void(const Request&,Response*)> UriHandlerFunction ;
 // UriFilterFunction concept - return true if the filter handled the request
 typedef boost::function<bool(const http::Request&, http::Response*)> 
                                                          UriFilterFunction; 
-   
+
 class UriHandler
 {
 public:
@@ -80,7 +80,7 @@ private:
 
 inline void notFoundHandler(const Request& request, Response* pResponse)
 {
-   pResponse->setNotFoundError(request.uri());
+   pResponse->setNotFoundError(request);
 }
 
    

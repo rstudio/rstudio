@@ -17,3 +17,8 @@
 {
    .Call("rs_isNullExternalPointer", object, PACKAGE = "(embedding)")
 })
+
+.rs.addFunction("readIniFile", function(filePath)
+{
+   as.list(.Call("rs_readIniFile", filePath))
+})

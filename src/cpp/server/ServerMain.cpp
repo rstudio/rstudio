@@ -72,6 +72,7 @@ namespace overlay {
 
 Error initialize();
 Error startup();
+Error reloadConfiguration();
 void shutdown();
 
 } // namespace overlay
@@ -152,6 +153,33 @@ Error httpServerInit()
    return server::httpServerInit(s_pHttpServer.get());
 }
 
+void pageNotFoundHandler(const http::Request& request,
+                         http::Response* pResponse)
+{
+   std::ostringstream os;
+   std::map<std::string, std::string> vars;
+   vars["request_uri"] = request.uri();
+
+   FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).childPath("404.htm");
+   core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
+
+   if (err)
+   {
+      // if we cannot display the 404 page log the error
+      // note: this should never happen in a proper deployment
+      LOG_ERROR(err);
+   }
+   else
+   {
+      std::string body = os.str();
+      pResponse->setContentType("text/html");
+      pResponse->setBodyUnencoded(body);
+   }
+
+   // set 404 status even if there was an error showing the proper not found page
+   pResponse->setStatusCode(core::http::status::NotFound);
+}
+
 void httpServerAddHandlers()
 {
    // establish json-rpc handlers
@@ -215,7 +243,7 @@ void httpServerAddHandlers()
                              handleBrowserUnsupportedRequest);
 
    // restrct access to templates directory
-   uri_handlers::addBlocking("/templates", http::notFoundHandler);
+   uri_handlers::addBlocking("/templates", pageNotFoundHandler);
 
    // initialize gwt symbol maps
    gwt::initializeSymbolMaps(server::options().wwwSymbolMapsPath());
@@ -224,6 +252,10 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
+void reloadConfiguration()
+{
+   overlay::reloadConfiguration();
+}
 
 // bogus SIGCHLD handler (never called)
 void handleSIGCHLD(int)
@@ -252,6 +284,8 @@ Error waitForSignals()
    sigaddset(&wait_mask, SIGINT);
    sigaddset(&wait_mask, SIGQUIT);
    sigaddset(&wait_mask, SIGTERM);
+   sigaddset(&wait_mask, SIGHUP);
+
    result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
@@ -297,6 +331,12 @@ Error waitForSignals()
 
          // re-raise the signal
          ::kill(::getpid(), sig);
+      }
+
+      // SIGHUP
+      else if (sig == SIGHUP)
+      {
+         reloadConfiguration();
       }
 
       // Unexpected signal
@@ -543,6 +583,9 @@ int main(int argc, char * const argv[])
       error = overlay::startup();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // add http server not found handler
+      s_pHttpServer->setNotFoundHandler(pageNotFoundHandler);
 
       // run http server
       error = s_pHttpServer->run(options.wwwThreadPoolSize());

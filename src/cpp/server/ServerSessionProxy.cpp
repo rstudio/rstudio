@@ -129,9 +129,10 @@ http::ConnectionRetryProfile sessionRetryProfile(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context)
 {
+   server::Options& options = server::options();
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
-   retryProfile.maxWait = boost::posix_time::seconds(10);
+   retryProfile.maxWait = boost::posix_time::seconds(options.rsessionProxyMaxWaitSeconds());
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
                                                ptrConnection, _1, _2, context);
    return retryProfile;
@@ -767,7 +768,7 @@ void proxyLocalhostRequest(
    boost::smatch match;
    if (!regex_utils::search(request.uri(), match, re))
    {
-      ptrConnection->response().setNotFoundError(request.uri());
+      ptrConnection->response().setNotFoundError(request);
       return;
    }
    std::string port = match[1];

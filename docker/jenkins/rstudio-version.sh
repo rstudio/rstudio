@@ -177,9 +177,12 @@ case "$ACTION" in
         PRO_VERSION="$VERSION.$PATCH-$SUFFIX"
 
         log "Creating new Pro patch release $PRO_VERSION"
+        
+        # find the last commit (we'll tag it with this suffix)
+        COMMIT="$(git log --pretty=format:"%H" -n 1)"
 
         # prepend and push to s3
-        echo "$PATCH,$SUFFIX,$TIMESTAMP" > /tmp/suffix-prepend.csv
+        echo "$PATCH,$SUFFIX,$COMMIT,$TIMESTAMP" > /tmp/suffix-prepend.csv
         cat /tmp/suffix-prepend.csv /tmp/pro-suffix.csv > /tmp/pro-updated.csv
         if [[ $DEBUG = true ]]; then
             echo "Push updated suffix to S3 and git"

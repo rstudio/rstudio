@@ -232,6 +232,11 @@ public:
    {
       return running_;
    }
+
+   void setNotFoundHandler(const NotFoundHandler& handler)
+   {
+      notFoundHandler_ = handler;
+   }
    
 private:
 
@@ -335,6 +340,10 @@ private:
          boost::shared_ptr<AsyncConnection> pAsyncConnection =
              boost::static_pointer_cast<AsyncConnection>(pConnection);
 
+         // set the default 404 not found handler on the response if we have one
+         if (notFoundHandler_)
+            pAsyncConnection->response().setNotFoundHandler(notFoundHandler_);
+
          // call the appropriate handler to generate a response
          std::string uri = pRequest->uri();
          AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
@@ -370,7 +379,7 @@ private:
             LOG_ERROR_MESSAGE("Handler not found for uri: " + pRequest->uri());
             
             // return 404 not found
-            pConnection->response().setStatusCode(http::status::NotFound) ;
+            sendNotFoundError(pConnection);
          }
       }
       catch(const boost::system::system_error& e)
@@ -459,7 +468,6 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-
 protected: 
    SocketAcceptorService<ProtocolType>& acceptorService()
    {
@@ -518,6 +526,18 @@ private:
       pConnection->writeResponse();
    }
 
+   void sendNotFoundError(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >&
+                             pConnection)
+   {
+      if (notFoundHandler_)
+      {
+         notFoundHandler_(pConnection->request(), &pConnection->response());
+         return;
+      }
+
+      pConnection->response().setStatusCode(http::status::NotFound);
+   }
+
 private:
    bool abortOnResourceError_;
    std::string serverName_;
@@ -533,6 +553,7 @@ private:
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
+   NotFoundHandler notFoundHandler_;
    bool running_;
 };
 

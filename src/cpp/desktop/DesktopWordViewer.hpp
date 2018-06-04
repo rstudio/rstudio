@@ -15,35 +15,24 @@
 #ifndef DESKTOPWORDVIEWER_HPP
 #define DESKTOPWORDVIEWER_HPP
 
-#include <QString>
-
-#include <boost/utility.hpp>
-#include <core/Error.hpp>
-
-struct IDispatch;
+#include "DesktopOfficeViewer.hpp"
 
 namespace rstudio {
 namespace desktop {
 
-class WordViewer : boost::noncopyable
+class WordViewer : public OfficeViewer
 {
 public:
    WordViewer();
-   ~WordViewer();
-   core::Error showDocument(QString& path);
-   core::Error closeLastViewedDocument();
+
+   core::Error savePosition(IDispatch* source) override;
+   core::Error restorePosition(IDispatch* target) const override;
+   void resetPosition() override;
+   bool hasPosition() const override;
 
 private:
-   core::Error openDocument(QString& path, IDispatch* idispDocs,
-                            IDispatch** pidispDoc);
-   core::Error showWord();
-   core::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
-   core::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
-   core::Error getDocumentByPath(QString& path, IDispatch** pidispDoc);
-   IDispatch* idispWord_;
    int docScrollX_;
    int docScrollY_;
-   QString docPath_;
 };
 
 } // namespace desktop
