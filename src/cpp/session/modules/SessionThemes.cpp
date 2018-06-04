@@ -128,6 +128,17 @@ SEXP rs_getThemes()
    FilePath localPath = rstudio::core::system::userHomePath().childPath(".R/rstudio/themes/");
 #endif
 
+   const char* k_globalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
+   const char* k_localPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
+   if (k_globalPathAlt)
+   {
+      globalPath = FilePath(k_globalPathAlt);
+   }
+   if (k_localPathAlt)
+   {
+      localPath = FilePath(k_localPathAlt);
+   }
+
    // Intentionally get global themes before getting user specific themes so that user specific
    // themes will override global ones.
    ThemeMap themeMap;

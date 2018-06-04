@@ -783,6 +783,40 @@
 })
 
 # Worker Functions =================================================================================
+# Gets the install location.
+#
+# @param global    Whether to get the global or local install dir.
+#
+# Returns the install location.
+.rs.addFunction("getThemeInstallDir", getThemeInstallDir <- function(global) 
+{
+   # Copy the file to the correct location.
+   installLocation <- ""
+   if (global)
+   {
+      installLocation <- Sys.getenv("RS_THEME_GLOBAL_HOME", unset = NA)
+      if (is.na(installLocation))
+      {
+         if (grepl("windows", Sys.info()[["sysname"]], ignore.case = TRUE))
+         {
+            installLocation <- file.path("%ProgramData%", "RStudio", "themes")
+         }
+         else 
+         {
+            installLocation <- file.path("etc", "rstudio", "themes")
+         }
+      }
+   }
+   else
+   {
+      installLocation <- Sys.getenv("RS_THEME_LOCAL_HOME", unset = NA)
+      installLocation <- if (is.na(installLocation)) file.path("~", ".R", "rstudio", "themes") 
+                         else installLocation
+   }
+   
+   installLocation
+})
+
 
 # Converts a tmtheme file into an rstheme file.
 # 
@@ -875,19 +909,7 @@
          "\" is valid.")
    }
    
-   # Copy the file to the correct location.
-   outputDir <- file.path("~", ".R", "rstudio", "themes")
-   if (globally)
-   {
-      if (grepl("windows", Sys.info()[["sysname"]], ignore.case = TRUE))
-      {
-         outputDir <- file.path("%ProgramData%", "RStudio", "themes")
-      }
-      else 
-      {
-         outputDir <- file.path("etc", "rstudio", "themes")
-      }
-   }
+   outputDir <- .rs.getThemeInstallDir(globally)
    if (!dir.exists(outputDir))
    {
       if (!dir.create(outputDir, recursive = TRUE))
