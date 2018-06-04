@@ -43,7 +43,6 @@ void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
                             DWORD dwEventThread, DWORD dwmsEventTime)
 {
    ::BringWindowToTop(hwnd);
-   ::SetActiveWindow(hwnd);
 }
 
 #endif
@@ -342,13 +341,16 @@ void MainWindow::setSessionProcess(QProcess* pSessionProcess)
    if (eventHook_)
       ::UnhookWinEvent(eventHook_);
 
-   eventHook_ = ::SetWinEventHook(
-            EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
-            NULL,
-            onDialogStart,
-            pSessionProcess->processId(),
-            0,
-            WINEVENT_OUTOFCONTEXT);
+   if (pSessionProcess)
+   {
+      eventHook_ = ::SetWinEventHook(
+               EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
+               NULL,
+               onDialogStart,
+               pSessionProcess->processId(),
+               0,
+               WINEVENT_OUTOFCONTEXT);
+   }
 #endif
 
 }
