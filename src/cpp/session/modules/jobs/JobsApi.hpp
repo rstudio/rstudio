@@ -43,6 +43,8 @@ bool lookupJob(const std::string& id, boost::shared_ptr<Job> *pJob);
 
 void setJobProgress(boost::shared_ptr<Job> pJob, int units);
 
+void setJobProgressMax(boost::shared_ptr<Job> pJob, int max);
+
 void setJobState(boost::shared_ptr<Job> pJob, JobState state);
 
 void setJobStatus(boost::shared_ptr<Job> pJob, const std::string& status);

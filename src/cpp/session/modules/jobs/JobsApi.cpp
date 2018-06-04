@@ -111,6 +111,12 @@ void setJobProgress(boost::shared_ptr<Job> pJob, int units)
    processUpdate(pJob);
 }
 
+void setProgressMax(boost::shared_ptr<Job> pJob, int max)
+{
+   pJob->setProgressMax(max);
+   processUpdate(pJob);
+}
+
 void setJobState(boost::shared_ptr<Job> pJob, JobState state)
 {
    pJob->setState(state);

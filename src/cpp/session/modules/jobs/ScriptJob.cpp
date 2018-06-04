@@ -70,6 +70,9 @@ private:
       FilePath working = FilePath::safeCurrentPath(FilePath());
       async_r::AsyncRProcess::start(cmd.c_str(), environment, working,
                                     async_r::R_PROCESS_NO_RDATA);
+
+      // add the job -- currently idle until we get some content from it
+      job_ = addJob(path_.filename(), "", "", 0, JobIdle, false);
    }
 
    void onStdout(const std::string& output)
@@ -154,7 +157,10 @@ private:
       {
          // record job as started
          int count = safe_convert::stringTo<int>(argument, 0);
-         job_ = addJob(path_.filename(), "", "", count, JobRunning, false);
+         job_->setProgressMax(count);
+
+         // set state to running
+         setJobState(job_, JobRunning);
       }
       else if (cat == "statement" && job_)
       {
@@ -180,7 +186,6 @@ private:
 
 
 std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
-boost::shared_ptr<boost::thread> s_thread;
 
 } // anonymous namespace
 
