@@ -1,0 +1,143 @@
+.ace-espresso-libre .ace_gutter {
+  background: #2A211C;
+  color: rgb(116,104,93)
+}
+
+.ace-espresso-libre .ace_print-margin {
+  width: 1px;
+  background: #e8e8e8
+}
+
+.ace-espresso-libre {
+  background-color: #2A211C;
+  color: #BDAE9D
+}
+
+.ace-espresso-libre .ace_cursor {
+  color: #889AFF
+}
+
+.ace-espresso-libre .ace_marker-layer .ace_selection {
+  background: #C3DCFF
+}
+
+.ace-espresso-libre.ace_multiselect .ace_selection.ace_start {
+  box-shadow: 0 0 3px 0px #2A211C;
+  border-radius: 2px
+}
+
+.ace-espresso-libre .ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174)
+}
+
+.ace-espresso-libre .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #BFBFBF
+}
+
+.ace-espresso-libre .ace_marker-layer .ace_active-line {
+  background: #3A312C
+}
+
+.ace-espresso-libre .ace_gutter-active-line {
+  background-color: #3A312C
+}
+
+.ace-espresso-libre .ace_marker-layer .ace_selected-word {
+  border: 1px solid #C3DCFF
+}
+
+.ace-espresso-libre .ace_fold {
+  background-color: #FF9358;
+  border-color: #BDAE9D
+}
+
+.ace-espresso-libre .ace_keyword {
+  color: #43A8ED
+}
+
+.ace-espresso-libre .ace_constant {
+  color: #C5656B
+}
+
+.ace-espresso-libre .ace_constant.ace_language {
+  color: #585CF6
+}
+
+.ace-espresso-libre .ace_constant.ace_numeric {
+  color: #44AA43
+}
+
+.ace-espresso-libre .ace_constant.ace_character.ace_escape {
+  color: #2FE420
+}
+
+.ace-espresso-libre .ace_support.ace_function {
+  color: #7290D9
+}
+
+.ace-espresso-libre .ace_support.ace_constant {
+  color: #00AF0E
+}
+
+.ace-espresso-libre .ace_support.ace_class {
+  color: #6D79DE
+}
+
+.ace-espresso-libre .ace_support.ace_type {
+  color: #6D79DE
+}
+
+.ace-espresso-libre .ace_storage {
+  color: #43A8ED
+}
+
+.ace-espresso-libre .ace_invalid {
+  color: #FFFFFF;
+  background-color: #990000
+}
+
+.ace-espresso-libre .ace_string {
+  color: #049B0A
+}
+
+.ace-espresso-libre .ace_comment {
+  font-style: italic;
+  color: #0066FF
+}
+
+.ace-espresso-libre .ace_variable {
+  color: #FF9358
+}
+
+.ace-espresso-libre .ace_variable.ace_language {
+  color: #318495
+}
+
+.ace-espresso-libre .ace_variable.ace_parameter {
+  font-style: italic
+}
+
+.ace-espresso-libre .ace_xml-pe {
+  color: #888888
+}
+
+.ace-espresso-libre .ace_meta.ace_tag {
+  color: #43A8ED
+}
+
+.ace-espresso-libre .ace_entity.ace_other.ace_attribute-name {
+  font-style: italic
+}
+
+.ace-espresso-libre .ace_entity.ace_name.ace_function {
+  color: #FF9358
+}
+
+.ace-espresso-libre .ace_keyword {
+  color: #BDAE9D
+}
+
+.ace-espresso-libre .ace_keyword.ace_operator {
+  color: #BDAE9D
+}
