@@ -72,18 +72,12 @@ std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& versi
    FilePath headersPath = options().libclangHeadersPath();
 
    // add compiler headers
-   std::string headersVersion = "3.5";
-   if (version < LibraryVersion(3,5,0))
-      headersVersion = "3.4";
-   compileArgs.push_back("-I" + headersPath.childPath(headersVersion)
-                                                   .absolutePath());
+   std::string headersVersion = "5.0.2";
+   compileArgs.push_back("-I" + headersPath.childPath(headersVersion).absolutePath());
 
    // add libc++ for embedded clang 3.5
-   if (isCppFile && (headersVersion == "3.5"))
-   {
-      compileArgs.push_back("-I" + headersPath.childPath("libc++/3.5")
-                                                   .absolutePath());
-   }
+   if (isCppFile)
+      compileArgs.push_back("-I" + headersPath.childPath("libc++/5.0.2").absolutePath());
 
    return compileArgs;
 }

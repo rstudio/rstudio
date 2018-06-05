@@ -1079,6 +1079,11 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
+
+      // if it's a directory then auto-append index.html
+      if (filePath.isDirectory())
+         filePath = filePath.childPath("index.html");
+
       html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

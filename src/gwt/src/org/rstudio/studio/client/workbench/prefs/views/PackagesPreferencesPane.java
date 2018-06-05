@@ -316,7 +316,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                                       mirrotTextValue.startsWith("http");
       ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
 
-      if (cranRepoChangedToUrl || secondaryRepos.size() > 0) {
+      if (cranRepoChangedToUrl ||
+          secondaryRepos.size() != cranMirror_.getSecondaryRepos().size()) {
 
          if (cranRepoChangedToUrl)
          {
@@ -328,8 +329,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          }
          
          ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
-         if (repos.size() > 0)
-            cranMirror_.setSecondaryRepos(repos);
+         cranMirror_.setSecondaryRepos(repos);
 
          server_.setCRANMirror(
             cranMirror_,

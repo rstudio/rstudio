@@ -68,6 +68,7 @@
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
 * Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
+* Update embedded libclang to 5.0.2 (Windows only)
 
 ### Bug Fixes
 

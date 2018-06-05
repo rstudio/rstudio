@@ -22,7 +22,6 @@ set -e
 ./install-mathjax
 ./install-boost
 ./install-pandoc
-./install-libclang
 ./install-packages
 
 if [ -e install-overlay ]

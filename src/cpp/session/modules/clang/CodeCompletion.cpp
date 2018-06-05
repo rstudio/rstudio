@@ -192,6 +192,8 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
    }
 }
 
+} // end anonymous namespace
+
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 {
    // if we've cached results already, just use that
@@ -209,28 +211,19 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    
    // add Rtools to PATH if necessary
    core::system::Options environment;
+   core::system::environment(&environment);
+
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&environment, &warning);
    processOptions.environment = environment;
    
-   // resolve R CMD location for shell command
-   FilePath rBinDir;
-   Error error = module_context::rBinDir(&rBinDir);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   
-   shell_utils::ShellCommand rCmd = module_context::rCmd(rBinDir);
-   
    // get the CXX compiler by asking R
    std::string compilerPath;
+
+#ifdef _WIN32
    {
       core::system::ProcessResult result;
-      rCmd << "config";
-      rCmd << "CXX";
-      Error error = core::system::runCommand(rCmd, processOptions, &result);
+      Error error = core::system::runCommand("where.exe gcc.exe", processOptions, &result);
       if (error)
          LOG_ERROR(error);
       else if (result.exitStatus != EXIT_SUCCESS)
@@ -238,8 +231,68 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       else
          compilerPath = string_utils::trimWhitespace(result.stdOut);
    }
+#else
+   {
+      Error error;
+      
+      // resolve R CMD location for shell command
+      FilePath rBinDir;
+      error = module_context::rBinDir(&rBinDir);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      shell_utils::ShellCommand rCmd = module_context::rCmd(rBinDir);
+
+      core::system::ProcessResult result;
+      rCmd << "config";
+      rCmd << "CXX";
+      error = core::system::runCommand(rCmd, processOptions, &result);
+      if (error)
+         LOG_ERROR(error);
+      else if (result.exitStatus != EXIT_SUCCESS)
+         LOG_ERROR_MESSAGE("Error querying CXX compiler: " + result.stdOut);
+      else
+         compilerPath = string_utils::trimWhitespace(result.stdOut);
+   }
+#endif
+
    if (compilerPath.empty())
       return;
+
+   // it is likely that R is configured to use a compiler that exists
+   // on the PATH; however, when invoked through 'runCommand()' this
+   // can fail unless we explicitly find and resolve that path. also
+   // note that one can configure CXX with multiple arguments
+   // (e.g. as 'g++ -std=c++17') so we must also tear off only the
+   // compiler name. we hence assume that the supplemental arguments
+   // to CXX do not influence the compiler include paths.
+#ifndef _WIN32
+   {
+       std::string compilerName = compilerPath;
+       std::size_t index = compilerPath.find(' ');
+       if (index != std::string::npos)
+       {
+           compilerName = compilerPath.substr(0, index);
+       }
+       else
+       {
+           compilerName = compilerPath;
+       }
+
+       core::system::ProcessResult result;
+       std::vector<std::string> args = { compilerName };
+       Error error = core::system::runProgram("/usr/bin/which", args, "", processOptions, &result);
+       if (error)
+          LOG_ERROR(error);
+       else if (result.exitStatus != EXIT_SUCCESS)
+          LOG_ERROR_MESSAGE("Error qualifying CXX compiler path: " + result.stdOut);
+       else
+          compilerPath = string_utils::trimWhitespace(result.stdOut);
+   }
+#endif
    
    // ask the compiler what the system include paths are (note that both
    // gcc and clang accept the same command)
@@ -247,7 +300,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    {
       core::system::ProcessResult result;
       std::string cmd = compilerPath + " -E -x c++ - -v < " kDevNull;
-      
+
       Error error = core::system::runCommand(cmd, processOptions, &result);
       if (error)
          LOG_ERROR(error);
@@ -295,6 +348,8 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
             includePaths.begin(),
             includePaths.end());
 }
+
+namespace {
 
 void discoverRelativeIncludePaths(const FilePath& filePath,
                                   const std::string& parentDir,

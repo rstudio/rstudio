@@ -117,7 +117,7 @@ public:
    // version
    LibraryVersion version() const;
 
-   // compile args required by this configuration of liblcnag
+   // compile args required by this configuration of libclang
    std::vector<std::string> compileArgs(bool isCppFile) const;
 
    // strings
