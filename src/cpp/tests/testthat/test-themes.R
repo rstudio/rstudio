@@ -16,9 +16,10 @@
 context("themes")
 
 inputFileLocation <- file.path(path.expand("."), "themes")
-outputDir <- file.path(inputFileLocation, "temp")
-localInstallDir <- file.path("~", ".R", "rstudio", "themes")
-globalInstallDir <- file.path("etc", "rstudio", "themes")
+tempOutputDir <- file.path(inputFileLocation, "temp")
+localInstallDir <- file.path(inputFileLocation, "localInstall")
+globalInstallDir <- file.path(inputFileLocation, "globalInstall")
+noPermissionDir <- file.path(inputFileLocation, "nopermission")
 
 themes <- list(
    "Active4D" = list("fileName" ="active4d",isDark = FALSE),
@@ -334,6 +335,30 @@ test_that_wrapped <- function(desc, FUN, BEFORE_FUN = NULL, AFTER_FUN = NULL)
    if (!is.null(AFTER_FUN))
    {
       AFTER_FUN()
+   }
+}
+
+setThemeLocations <- function()
+{
+   Sys.setenv(
+      RS_THEME_GLOBAL_HOME = globalInstallDir,
+      RS_THEME_LOCAL_HOME = localInstallDir)
+}
+
+unsetThemeLocations <- function()
+{
+   Sys.unsetenv("RS_THEME_GLOBAL_HOME")
+   Sys.unsetenv("RS_THEME_LOCAL_HOME")
+}
+
+makeNoPermissionDir <- function() {
+   if (dir.exists(noPermissionDir))
+   {
+      Sys.chmod(noPermissionDir, mode = "0555")
+   }
+   else
+   {
+      dir.create(noPermissionDir, mode = "0555")
    }
 }
 
@@ -1559,13 +1584,12 @@ test_that_wrapped("convertTheme works correctly", {
       name <- .rs.convertTheme(
          file.path(inputFileLocation, "tmThemes", paste0(themeName, ".tmTheme")),
          FALSE,
-         outputDir,
+         tempOutputDir,
          FALSE,
          FALSE,
          FALSE)
 
-
-      f <- file(file.path(outputDir, paste0(themeName, ".rstheme")))
+      f <- file(file.path(tempOutputDir, paste0(themeName, ".rstheme")))
       actualCssLines <- readLines(f)
       close(f)
 
@@ -1588,13 +1612,13 @@ test_that_wrapped("convertTheme works correctly", {
 },
 BEFORE_FUN = function(){
    # Make an output location.
-   dir.create(outputDir)
+   dir.create(tempOutputDir)
 },
 AFTER_FUN = function(){
    # Clean up the output location.
-   if (unlink(outputDir, recursive = TRUE, force = TRUE) != 0)
+   if (unlink(tempOutputDir, recursive = TRUE, force = TRUE) != 0)
    {
-      warning("Unable to clean up the actual results in: ", outputDir)
+      warning("Unable to clean up the actual results in: ", tempOutputDir)
    }
 })
 
@@ -1612,20 +1636,10 @@ test_that_wrapped("convertTheme gives error for file permission issues", {
          file.path(inputFileLocation, "nopermission", paste0(names(themes)[1], ".rstheme"))),
       fixed = TRUE)
 },
-BEFORE_FUN = function() {
-   noPermissionFolder <- file.path(inputFileLocation, "nopermission")
-   if (dir.exists(noPermissionFolder))
-   {
-      Sys.chmod(noPermissionFolder, mode = "0555")
-   }
-   else
-   {
-      dir.create(noPermissionFolder, mode = "0555")
-   }
-})
+BEFORE_FUN = makeNoPermissionDir)
 
 # Test addTheme ====================================================================================
-test_that("addTheme works correctly with local install", {
+test_that_wrapped("addTheme works correctly with local install", {
    themeName <- names(themes)[4]
    themeDesc <- themes[[themeName]]
 
@@ -1660,20 +1674,25 @@ test_that("addTheme works correctly with local install", {
    close(f)
 
    expect_equal(actualLines, expectedLines, info = infoStr)
-
-   if (file.exists(installPath))
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   if (!all(file.remove(file.path(localInstallDir, dir(localInstallDir)))))
    {
-      if (!file.remove(installPath))
+      if (length(dir(localInstallDir)) != 0)
       {
          warning(
-            "Unable to remove \"",
-            installPath,
-            "\" from the system. Please check file system permissions.")
+            "Unable to remove the following files: \"",
+            paste0(
+               file.path(localInstallDir, dir(localInstallDir)),
+               collapse = "\", \""),
+            '\"')
       }
    }
 })
 
-test_that("addTheme works correctly with global install", {
+test_that_wrapped("addTheme works correctly with global install", {
    themeName <- names(themes)[4]
    themeDesc <- themes[[themeName]]
 
@@ -1719,41 +1738,49 @@ test_that("addTheme works correctly with global install", {
             "\" from the system. Please check file system permissions.")
       }
    }
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   if (!all(file.remove(dir(globalInstallDir))))
+   {
+      if (length(dir(globalInstallDir)) != 0)
+      {
+         warning(
+            "Unable to remove the following files: \"",
+            paste0(
+               file.path(globalInstallDir, dir(globalInstallDir)),
+               collapse = "\", \""),
+            '\"')
+      }
+   }
 })
 
+test_that_wrapped("addTheme gives error when permission are bad", {
+   expect_error(
+      suppressWarnings(.rs.addTheme(
+         file.path(inputFileLocation, "rsthemes", paste0(themes[[20]]$fileName, ".rstheme")),
+         FALSE,
+         FALSE,
+         FALSE)),
+      message = "Unable to create the theme file. Please check file system permissions.",
+      FIXED = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_LOCAL_HOME = noPermissionDir)
+},
+AFTER_FUN = unsetThemeLocations)
+
 # Test rs_getThemes ================================================================================
-test_that_wrapped("rs_getThemes works correctly with local installs (relies on .rs.addTheme)", {
+test_that_wrapped("rs_getThemes works correctly", {
    addedThemes <- list()
    .rs.enumerate(themes, function(themeName, themeDesc) {
-      prefix <- "test_"
-      postfix <- ".rstheme"
-      tempFile <- file.path(
-         inputFileLocation,
-         "rsthemes",
-         paste0(prefix, themeDesc$fileName, postfix))
-      tryCatch({
-         file.copy(
-            file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, postfix)), 
-            tempFile)
-         .rs.addTheme(
-            tempFile,
-            apply = FALSE,
-            force = FALSE,
-            globally = FALSE)
-         
-         addedThemes[[themeName]] <<- file.path(
-            localInstallDir,
-            paste0(prefix, themeDesc$fileName, postfix))
-      },
-      error = function(e) {
-         warning("Skipping ", themeName, ". See message: ", e)
-      },
-      finally = {
-         file.remove(file.path(
-            inputFileLocation,
-            "rsthemes",
-            paste0("test_", themeDesc$fileName, ".rstheme")))
-      })
+      fileName <- paste0(themeDesc$fileName, ".rstheme")
+      themeLocation <- if (sample.int(2, 1) > 1) file.path(globalInstallDir, fileName)
+                       else file.path(localInstallDir, fileName)
+      file.copy(file.path(inputFileLocation, "rsthemes", fileName), themeLocation)
+      addedThemes[[themeName]] <<- themeLocation
    })
    
    themeList <- .Call("rs_getThemes")
@@ -1762,28 +1789,19 @@ test_that_wrapped("rs_getThemes works correctly with local installs (relies on .
       infoStr <- paste("Theme:", themeName)
       expect_true(themeName %in% names(themeList), info = infoStr)
       expect_equal(
-         path.expand(themeList[[themeName]]$fileName),
-         path.expand(themeLocation),
+         normalizePath(themeList[[themeName]]$fileName),
+         normalizePath(themeLocation),
          info = infoStr)
       expect_equal(themeList[[themeName]]$isDark, themes[[themeName]]$isDark, info = infoStr)
    })
 },
+BEFORE_FUN = setThemeLocations,
 AFTER_FUN = function() {
-   toRemove <- dir(path = file.path(localInstallDir), pattern = "^test_.*")
+   toRemove <- c(
+      file.path(localInstallDir, dir(localInstallDir)),
+      file.path(globalInstallDir, dir(globalInstallDir)))
    foundLen <- length(toRemove)
-   expectLen <- length(dir(file.path(inputFileLocation, "rsthemes")))
-   if (foundLen != expectLen)
-   {
-      stop(
-         "Found ",
-         foundLen,
-         " files to remove when ",
-         expectLen,
-         " files were expected. Unable to clean up after tests. Please manually clean ",
-         path.expand(localInstallDir))
-   }
-   
-   removed <- file.remove(file.path(localInstallDir, toRemove))
+   removed <- file.remove(toRemove)
    for (i in 1:foundLen)
    {
       if (!removed[i])
@@ -1792,6 +1810,50 @@ AFTER_FUN = function() {
             "Unable to remove ",
             file.path(path.expand(localInstallDir), toRemove[i]),
             call. = FALSE)
+      }
+   }
+})
+
+
+# Test removeTheme =================================================================================
+test_that_wrapped("removeTheme works correctly locally", {
+   .rs.removeTheme(names(themes)[19], .Call("rs_getThemes"))
+   expect_false(file.exists(file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))))
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   toAdd <- paste0(themes[[19]]$fileName, ".rstheme")
+   file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(localInstallDir, toAdd))
+},
+AFTER_FUN = function() {
+   unsetThemeLocations() 
+   toRemove <- file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))
+   if (file.exists(toRemove))
+   {
+      if (!file.remove(toRemove))
+      {
+         warning("Unable to remove the file ", toRemove)
+      }
+   }
+})
+
+test_that_wrapped("removeTheme works correctly globally", {
+   .rs.removeTheme(names(themes)[22], .Call("rs_getThemes"))
+   expect_false(file.exists(file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))))
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   toAdd <- paste0(themes[[22]]$fileName, ".rstheme")
+   file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(globalInstallDir, toAdd))
+},
+AFTER_FUN = function() {
+   unsetThemeLocations() 
+   toRemove <- file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))
+   if (file.exists(toRemove))
+   {
+      if (!file.remove(toRemove))
+      {
+         warning("Unable to remove the file ", toRemove)
       }
    }
 })

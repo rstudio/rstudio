@@ -899,9 +899,9 @@
       perl = TRUE)
    
    # If there's no name in the file, use the name of the file.
-   if (is.na(name)) name <- fileName
+   if (is.na(name) || (name == "")) name <- fileName
    
-   if (is.na(name))
+   if (is.na(name) || (name == ""))
    {
       stop(
          "Unable to find a name for the new theme. Please check that the file \"",
