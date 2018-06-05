@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,7 +56,6 @@ public class PaneConfig extends JavaScriptObject
       tabSet1.push("History");
       tabSet1.push("Connections");
       tabSet1.push("Build");
-      tabSet1.push("Jobs");
       tabSet1.push("VCS");
       tabSet1.push("Presentation");
 
@@ -80,7 +79,7 @@ public class PaneConfig extends JavaScriptObject
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Jobs", "Presentation",
+                           "Packages", "Help", "Build", "VCS", "Presentation",
                            "Viewer"};
    }
 
@@ -92,15 +91,13 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Packages", 
-                           "Jobs"};
+      return new String[] {"Build", "VCS", "Presentation", "Connections", "Packages" };
    }
 
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Viewer",
-                           "Jobs"};
+      return new String[] {"Build", "VCS", "Presentation", "Connections", "Viewer" };
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets

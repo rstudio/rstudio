@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class JobsPresenter extends BasePresenter  
@@ -108,6 +109,11 @@ public class JobsPresenter extends BasePresenter
    public void onJobElapsedTick(JobElapsedTickEvent event)
    {
       display_.syncElapsedTime(event.timestamp());
+   }
+   
+   public void confirmClose(Command onConfirmed)
+   {
+      onConfirmed.execute();
    }
    
    // Private methods ---------------------------------------------------------

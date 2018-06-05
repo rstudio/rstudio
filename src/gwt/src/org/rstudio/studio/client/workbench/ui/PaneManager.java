@@ -86,7 +86,7 @@ public class PaneManager
    
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Build, Connections,
-      Presentation, Environment, Viewer, Source, Console, Jobs
+      Presentation, Environment, Viewer, Source, Console
    }
    
    class SelectedTabStateValue extends IntStateValue
@@ -856,8 +856,6 @@ public class PaneManager
             return viewerTab_;
          case Connections:
             return connectionsTab_;
-         case Jobs:
-            return jobsTab_;
          case Source:
          case Console:
             // not 'real' tabs so should be an error to ask for their tabs
@@ -986,7 +984,8 @@ public class PaneManager
             eventBus_,
             goToWorkingDirButton,
             testsTab_,
-            dataTab_);
+            dataTab_,
+            jobsTab_);
       
       consoleTabPanel_.addLayoutStyles(frame.getElement());
       
@@ -1130,8 +1129,6 @@ public class PaneManager
          return Tab.Source;
       if (name.equalsIgnoreCase("console"))
          return Tab.Console;
-      if (name.equalsIgnoreCase("jobs"))
-         return Tab.Jobs;
       
       return null;
    }
