@@ -101,6 +101,7 @@
 * Fix display of consecutive spaces in the Data Viewer (#2499)
 * Fix issue where '#' in YAML strings would be highlighted as comments (#2591)
 * Fix over-eager loading of `yaml` package when IDE starts up (#2602)
+* Fix issue on Windows with R dialogs showing behind RStudio window (#2901)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
 
