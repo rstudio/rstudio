@@ -63,3 +63,8 @@
 .themeInfobarShowing {
    display: block;
 }
+
+.settingDefault,
+.settingDefault option {
+   color: #909090;
+}

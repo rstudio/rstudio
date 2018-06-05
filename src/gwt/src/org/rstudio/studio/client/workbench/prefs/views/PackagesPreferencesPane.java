@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -97,8 +98,6 @@ public class PackagesPreferencesPane extends PreferencesPane
                            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
                         }
 
-                        cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
-
                         secondaryReposWidget_.setCranRepoUrl(
                            cranMirror_.getURL(),
                            cranMirror_.getHost().equals("Custom")
@@ -106,6 +105,7 @@ public class PackagesPreferencesPane extends PreferencesPane
                      }     
                   });
                  
+                  useDefaultsStyles(false);
                }
             },
             true);
@@ -273,6 +273,17 @@ public class PackagesPreferencesPane extends PreferencesPane
          
          secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
+      
+      useDefaultsStyles(!cranMirror_.getChanged());
+
+      secondaryReposWidget_.setUpdateHandler(new Operation() {
+         @Override
+         public void execute()
+         {
+            useDefaultsStyles(false);
+         }
+      });
+      
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
       useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -305,6 +316,36 @@ public class PackagesPreferencesPane extends PreferencesPane
       useNewlineInMakefiles_.setEnabled(true);
       useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
    }
+   
+   private void useDefaultsStyles(boolean use)
+   {
+      if (use)
+      {
+         cranMirrorTextBox_.getTextBox().addStyleName(res_.styles().settingDefault());
+         secondaryReposWidget_.addStyleName(res_.styles().settingDefault());
+      }
+      else
+      {
+         cranMirrorTextBox_.getTextBox().removeStyleName(res_.styles().settingDefault());
+         secondaryReposWidget_.removeStyleName(res_.styles().settingDefault());
+      }
+   }
+
+   private boolean secondaryReposHasChanged()
+   {
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
+
+      if (secondaryRepos.size() != cranMirror_.getSecondaryRepos().size())
+         return true;
+
+      for (int i = 0; i < secondaryRepos.size(); i++)
+      {
+         if (secondaryRepos.get(i) != cranMirror_.getSecondaryRepos().get(i))
+            return true;
+      }
+
+      return false;
+   }
 
    @Override
    public boolean onApply(RPrefs rPrefs)
@@ -312,12 +353,16 @@ public class PackagesPreferencesPane extends PreferencesPane
       boolean reload = super.onApply(rPrefs);
 
       String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
+
+      if (!mirrotTextValue.equals(cranMirrorStored_))
+         cranMirror_.setChanged(true);
+
       boolean cranRepoChangedToUrl = !mirrotTextValue.equals(cranMirrorStored_) && 
                                       mirrotTextValue.startsWith("http");
-      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
-
-      if (cranRepoChangedToUrl ||
-          secondaryRepos.size() != cranMirror_.getSecondaryRepos().size()) {
+      
+      if (cranRepoChangedToUrl || secondaryReposHasChanged())
+      {
+         cranMirror_.setChanged(true);
 
          if (cranRepoChangedToUrl)
          {
@@ -326,6 +371,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
             cranMirror_.setHost("Custom");
             cranMirror_.setName("Custom");
+            cranMirror_.setChanged(true);
          }
          
          ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();

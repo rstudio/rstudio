@@ -64,6 +64,7 @@ const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
+const char * const kCRANMirrorChanged = "cranMirrorChanged";
 const char * const kBioconductorMirrorName = "bioconductorMirrorName";
 const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
@@ -686,6 +687,7 @@ CRANMirror UserSettings::cranMirror() const
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
    mirror.country = settings_.get(kCRANMirrorCountry);
+   mirror.changed = settings_.getBool(kCRANMirrorChanged);
 
    // if there is no URL then return the default RStudio mirror
    // (return the insecure version so we can rely on probing for
@@ -693,14 +695,14 @@ CRANMirror UserSettings::cranMirror() const
    // a previous bug/regression
    if (mirror.url.empty() || (mirror.url == "/"))
    {
-      // But only if the default not changed in r-cran-repos and repos.conf
-      if (session::options().rCRANRepos().empty() &&
-          session::options().rCRANMultipleRepos().size() == 0)
+      // But only if not changed by the user
+      if (mirror.changed)
       {
          mirror.name = "Global (CDN)";
          mirror.host = "RStudio";
          mirror.url = "http://cran.rstudio.com/";
          mirror.country = "us";
+         mirror.changed = false;
       }
    }
 
@@ -717,16 +719,22 @@ CRANMirror UserSettings::cranMirror() const
 
 void UserSettings::setCRANMirror(const CRANMirror& mirror)
 {
+    setCRANMirror(mirror, true);
+}
+
+void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
+{
    settings_.set(kCRANMirrorName, mirror.name);
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
    settings_.set(kCRANMirrorCountry, mirror.country);
+   settings_.set(kCRANMirrorChanged, mirror.changed);
 
    // only set the underlying option if it's not empty (some
    // evidence exists that this is possible, it doesn't appear to
    // be possible in the current code however previous releases
    // may have let this in)
-   if (!mirror.url.empty())
+   if (!mirror.url.empty() && update)
       setCRANReposOption(mirror.url);
 }
 
