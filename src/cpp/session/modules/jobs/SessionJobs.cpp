@@ -188,7 +188,7 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    return R_NilValue;
 }
 
-SEXP rs_runScriptJob(SEXP path, SEXP dir)
+SEXP rs_runScriptJob(SEXP path, SEXP dir, SEXP importEnv, SEXP exportEnv)
 {
    std::string filePath = r::sexp::safeAsString(path, "");
    if (filePath.empty())
@@ -217,7 +217,9 @@ SEXP rs_runScriptJob(SEXP path, SEXP dir)
 
    startScriptJob(ScriptLaunchSpec(
             module_context::resolveAliasedPath(filePath),
-            module_context::resolveAliasedPath(workingDir)));
+            module_context::resolveAliasedPath(workingDir),
+            r::sexp::asLogical(importEnv),
+            r::sexp::asLogical(exportEnv)));
    return R_NilValue;
 }
 
@@ -256,18 +258,24 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    json::Object jobSpec;
    std::string path;
    std::string workingDir;
+   bool importEnv;
+   bool exportEnv;
    Error error = json::readParams(request.params, &jobSpec);
    if (error)
       return error;
 
    error = json::readObject(jobSpec, "path", &path,
-                                     "working_dir", &workingDir);
+                                     "working_dir", &workingDir,
+                                     "import_env", &importEnv,
+                                     "export_env", &exportEnv);
    if (error)
       return error;
 
    startScriptJob(ScriptLaunchSpec(
             module_context::resolveAliasedPath(path),
-            module_context::resolveAliasedPath(workingDir)));
+            module_context::resolveAliasedPath(workingDir),
+            importEnv,
+            exportEnv));
    return Success();
 }
 

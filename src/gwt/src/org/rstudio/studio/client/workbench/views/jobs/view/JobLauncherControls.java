@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.FileChooserTextBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -56,7 +57,19 @@ public class JobLauncherControls extends Composite
    {
       return dir_.getText();
    }
+   
+   public boolean importEnv()
+   {
+      return importEnv_.getValue();
+   }
+   
+   public boolean exportEnv()
+   {
+      return exportEnv_.getValue();
+   }
 
    @UiField(provided=true) FileChooserTextBox file_;
    @UiField(provided=true) DirectoryChooserTextBox dir_;
+   @UiField CheckBox importEnv_;
+   @UiField CheckBox exportEnv_;
 }

@@ -15,6 +15,8 @@
 
 #include <boost/asio.hpp>
 
+#include <r/RExec.hpp>
+
 #include <core/Algorithm.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -59,21 +61,57 @@ private:
 
    void start()
    {
+      Error error;
+      
+      // add the job -- currently idle until we get some content from it
+      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, false);
+
+      std::string importRdata = "NULL";
+      std::string exportRdata = "NULL";
+
+      if (spec_.importEnv())
+      {
+         // create temporary file to save/load the data
+         FilePath::tempFilePath(&import_);
+         importRdata = "'" + string_utils::utf8ToSystem(import_.absolutePath()) + "'";
+
+         // prepare the environment for the script by exporting the current env
+         setJobStatus(job_, "Preparing environment");
+         r::exec::RFunction save("save.image");
+         save.addParam("file", import_.absolutePath());
+         save.addParam("safe", false); // no need to write a temp file
+         error = save.call();
+         if (error)
+         {
+            job_->addOutput("Error importing environment: " + error.summary() + "\n", true);
+         }
+
+         // clear status in preparation for execution
+         setJobStatus(job_, "");
+      }
+
+      if (spec_.exportEnv())
+      {
+         FilePath::tempFilePath(&export_);
+         exportRdata = "'" + string_utils::utf8ToSystem(export_.absolutePath()) + "'";
+      }
+      
       // form the command to send to R
       std::string cmd = "source('" +
-         string_utils::singleQuotedStrEscape(
-               session::options().modulesRSourcePath()
-                                 .complete("SourceWithProgress.R").absolutePath()) + 
+         string_utils::utf8ToSystem(
+            string_utils::singleQuotedStrEscape(
+                  session::options().modulesRSourcePath()
+                                    .complete("SourceWithProgress.R").absolutePath())) + 
          "'); sourceWithProgress(script = '" +
-         string_utils::singleQuotedStrEscape(spec_.path().absolutePath()) +
-         "', con = stdout())";
+         string_utils::utf8ToSystem(
+               string_utils::singleQuotedStrEscape(spec_.path().absolutePath())) + "', "
+         "con = stdout(), "
+         "importRdata = " + importRdata + ", "
+         "exportRdata = " + exportRdata + ");";
         
       core::system::Options environment;
       async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
                                     async_r::R_PROCESS_NO_RDATA);
-
-      // add the job -- currently idle until we get some content from it
-      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, false);
    }
 
    void onStdout(const std::string& output)
@@ -83,8 +121,10 @@ private:
 
       // examine each line and look for progress markers; for performance we do this using
       // piecewise string indexing rather than regular expressions
-      for (auto line: lines)
+      for (size_t i = 0; i < lines.size(); i++)
       {
+         std::string line = lines.at(i);
+         
          // initialize string positions (where we found the progress marker)
          size_t start = std::string::npos, 
                 middle = std::string::npos, 
@@ -116,20 +156,33 @@ private:
          }
          if (job_)
          {
+            std::string output;
+            
             if (start != std::string::npos)
             {
                // emit the output that occurred before the start marker
-               job_->addOutput(line.substr(0, start), false);
+               output = line.substr(0, start);
             }
             if (end != std::string::npos)
             {
-               // emit the output that ocurred after the end marker
-               job_->addOutput(line.substr(end + std::strlen(kProgressEnd)), false);
+               // emit the output that occurred after the end marker
+               output.append(line.substr(end + std::strlen(kProgressEnd)));
             }
             if (start == std::string::npos && end == std::string::npos)
             {
                // no progress markers were found; just emit the whole line
-               job_->addOutput(line, false);
+               output.append(line);
+            }
+            
+            if (!output.empty())
+            {
+               // if this isn't the final line in the set, add a newline
+               if (i < lines.size() - 1)
+               {
+                  output.append("\n");
+               }
+               
+               job_->addOutput(output, false);
             }
          }
       }
@@ -143,9 +196,32 @@ private:
 
    void onCompleted(int exitStatus)
    {
+      Error error;
+      
+      // export results if requested
+      if (spec_.exportEnv() && export_.exists())
+      {
+         setJobStatus(job_, "Loading results");
+         r::exec::RFunction load("load");
+         load.addParam("file", export_.absolutePath());
+         load.addParam("envir", R_GlobalEnv);
+         error = load.call();
+         if (error)
+         {
+            job_->addOutput("Error loading results: " + error.summary() + "\n", true);
+         }
+         setJobStatus(job_, "");
+      }
+
       // mark job state
       if (job_)
          setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
+
+      // clean up temporary files, if we used them
+      // import_.removeIfExists();
+      // export_.removeIfExists();
+      std::cerr << "import file " << import_.absolutePath() << std::endl;
+      std::cerr << "export file " << export_.absolutePath() << std::endl;
 
       // run caller-provided completion function
       onComplete_();
@@ -184,6 +260,8 @@ private:
    boost::shared_ptr<Job> job_;
    ScriptLaunchSpec spec_;
    bool completed_;
+   FilePath import_;
+   FilePath export_;
    boost::function<void()> onComplete_;
 };
 
@@ -194,9 +272,13 @@ std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
 
 ScriptLaunchSpec::ScriptLaunchSpec(
       const core::FilePath& path,
-      const core::FilePath& workingDir):
+      const core::FilePath& workingDir,
+      bool importEnv,
+      bool exportEnv):
    path_(path),
-   workingDir_(workingDir)
+   workingDir_(workingDir),
+   importEnv_(importEnv),
+   exportEnv_(exportEnv)
 {
 }
 
@@ -208,6 +290,16 @@ FilePath ScriptLaunchSpec::path()
 FilePath ScriptLaunchSpec::workingDir()
 {
    return workingDir_;
+}
+
+bool ScriptLaunchSpec::exportEnv()
+{
+   return exportEnv_;
+}
+
+bool ScriptLaunchSpec::importEnv()
+{
+   return importEnv_;
 }
 
 Error startScriptJob(const ScriptLaunchSpec& spec)

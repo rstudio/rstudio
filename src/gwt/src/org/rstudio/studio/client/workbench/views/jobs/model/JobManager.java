@@ -305,7 +305,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(String path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Select R Script", 
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job", 
             path,
             spec ->
             {

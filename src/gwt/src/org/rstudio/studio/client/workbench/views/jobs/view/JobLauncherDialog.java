@@ -38,7 +38,9 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    protected JobLaunchSpec collectInput()
    {
       return JobLaunchSpec.create(controls_.scriptPath(), 
-            controls_.workingDir());
+            controls_.workingDir(),
+            controls_.importEnv(),
+            controls_.exportEnv());
    }
    
    @Override

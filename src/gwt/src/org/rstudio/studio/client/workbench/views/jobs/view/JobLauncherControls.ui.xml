@@ -3,10 +3,18 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
-	
+		.spaced {
+			margin-bottom: 5px;
+		}
+		
+		.outer {
+			margin: 10px;
+		}
 	</ui:style>
-	<g:VerticalPanel>
-		<rw:FileChooserTextBox ui:field="file_"></rw:FileChooserTextBox>
-		<rw:DirectoryChooserTextBox ui:field="dir_"></rw:DirectoryChooserTextBox>
+	<g:VerticalPanel styleName="{style.outer}">
+		<rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
+		<rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
+		<g:CheckBox styleName="{style.spaced}" text="Copy global environment" ui:field="importEnv_"></g:CheckBox>
+		<g:CheckBox styleName="{style.spaced}" text="Import created values" ui:field="exportEnv_"></g:CheckBox>
 	</g:VerticalPanel>
 </ui:UiBinder> 

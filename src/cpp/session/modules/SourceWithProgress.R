@@ -18,12 +18,39 @@ emitProgress <- function(kind, arg, con) {
               " __rs_progress_1__\n"), file = con)
 }
 
-sourceWithProgress <- function(script, con) {
+sourceWithProgress <- function(script,  # path to R script
+                               con,     # connection to write progress
+                               importRdata = NULL,  # RData file to import on start 
+                               exportRdata = NULL   # RData file to export when done
+                               ) {
+   # create a new enviroment to host any values created; make its parent the global env so any
+   # variables inside this function's environment aren't visible to the script
+   sourceEnv <- new.env(parent = globalenv())
+
    # parse the script
    statements <- parse(file = script, keep.source = TRUE)
+   units <- length(statements)
+   unit <- 0
 
-   # write statement count
-   emitProgress("count", length(statements), con)
+   # add extra steps for importing/exporting
+   if (!is.null(importRdata))
+      units <- units + 1
+   if (!is.null(exportRdata))
+      units <- units + 1
+
+   # notify host process of 
+   emitProgress("count", units, con)
+
+   if (!is.null(importRdata)) {
+      # indicate that we're importing the requested env
+      emitProgress("section", "Importing environment", con)
+      load(importRdata, envir = globalenv())
+
+      # clear progress text and advance marker
+      unit <- unit + 1
+      emitProgress("section", "", con)
+      emitProgress("statement", unit, con)
+   }
 
    # find the sections
    lines <- readLines(script)
@@ -53,10 +80,24 @@ sourceWithProgress <- function(script, con) {
       }
       
       # evaluate the statement
-      eval(statements[[idx]], envir = globalenv())
+      eval(statements[[idx]], envir = sourceEnv)
 
       # update progress; statement is complete
-      emitProgress("statement", idx, con)
+      unit <- unit + 1
+      emitProgress("statement", unit, con)
+   }
+
+   if (!is.null(exportRdata))
+   {
+      # export any created values
+      emitProgress("section", "Exporting environment", con)
+      save(list = ls(envir = sourceEnv, all.names = TRUE), 
+           file = exportRdata, 
+           envir = sourceEnv)
+
+      # update progress
+      unit <- unit + 1
+      emitProgress("statement", unit, con)
    }
 
    emitProgress("completed", 1, con)

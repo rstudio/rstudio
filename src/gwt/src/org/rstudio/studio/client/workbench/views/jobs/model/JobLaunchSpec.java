@@ -28,10 +28,22 @@ public class JobLaunchSpec extends JavaScriptObject
       return this.working_dir;
    }-*/;
    
+   public final native boolean importEnv() /*-{
+      return this.import_env;
+   }-*/;
+   
+   public final native boolean exportEnv() /*-{
+      return this.export_env;
+   }-*/;
+   
    public final native static JobLaunchSpec create(
       String path,
-      String workingDir) /*-{
+      String workingDir,
+      boolean importEnv,
+      boolean exportEnv) /*-{
       return { "path": path,
-               "working_dir": workingDir };
+               "working_dir": workingDir,
+               "import_env": importEnv,
+               "export_env": exportEnv };
    }-*/;
 }

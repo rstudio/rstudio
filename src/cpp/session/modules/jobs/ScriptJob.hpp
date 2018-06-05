@@ -34,12 +34,18 @@ class ScriptLaunchSpec
 {
 public:
    ScriptLaunchSpec(const core::FilePath& path,
-         const core::FilePath& workingDir);
+         const core::FilePath& workingDir,
+         bool importEnv,
+         bool exportEnv);
    core::FilePath path();
    core::FilePath workingDir();
+   bool importEnv();
+   bool exportEnv();
 private:
    core::FilePath path_;
    core::FilePath workingDir_;
+   bool importEnv_;
+   bool exportEnv_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec);

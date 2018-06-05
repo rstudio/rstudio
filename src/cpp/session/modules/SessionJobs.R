@@ -78,7 +78,9 @@
    invisible(NULL)
 })
 
-.rs.addApiFunction("runScriptJob", function(path) {
+.rs.addApiFunction("runScriptJob", function(path, workingDir = NULL, 
+                                            importEnv = FALSE,
+                                            exportEnv = FALSE) {
    if (missing(path))
       stop("Must specify path to R script to run.")
    if (!file.exists(path))
