@@ -50,6 +50,14 @@ public:
       pJob->start();
       return pJob;
    }
+   
+   std::string id()
+   {
+      if (job_)
+         return job_->id();
+      return "";
+   }
+   
 private:
    ScriptJob(const ScriptLaunchSpec& spec, 
          boost::function<void()> onComplete):
@@ -306,7 +314,7 @@ bool ScriptLaunchSpec::importEnv()
    return importEnv_;
 }
 
-Error startScriptJob(const ScriptLaunchSpec& spec)
+Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pJobId)
 {
    boost::shared_ptr<ScriptJob> job = ScriptJob::create(spec,
          [&]() 
