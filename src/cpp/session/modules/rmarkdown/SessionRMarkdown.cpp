@@ -176,32 +176,9 @@ std::string assignOutputUrl(const std::string& outputFile)
 {
    std::string outputUrl(kRmdOutput "/");
    s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
-
-   // if this is a website project and the file is not at the root then we need
-   // to do some special handling to make sure that the HTML can refer to
-   // locations in parent directories (e.g. for navigation links)
-   std::string path = "/";
-   FilePath outputPath = module_context::resolveAliasedPath(outputFile);
-   FilePath websiteDir = r_util::websiteRootDirectory(outputPath);
-   if (!module_context::websiteOutputDir().empty())
-      websiteDir = websiteDir.childPath(module_context::websiteOutputDir());
-   if (!websiteDir.empty() && !r_util::isWebsiteDirectory(outputPath.parent()))
-   {
-      // assign website build dir as output root
-      FilePath indexPath = websiteDir.childPath("index.html");
-      s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
-
-      // compute relative path to target file and append it to the path
-      std::string relativePath = outputPath.relativePath(websiteDir);
-      path += relativePath;
-   }
-   else
-   {
-      s_renderOutputs[s_currentRenderOutput] = outputFile;
-   }
-
+   s_renderOutputs[s_currentRenderOutput] = outputFile;
    outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
-   outputUrl.append(path);
+   outputUrl.append("/");
    return outputUrl;
 }
 
