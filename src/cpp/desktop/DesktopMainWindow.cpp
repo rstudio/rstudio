@@ -54,10 +54,13 @@ MainWindow::MainWindow(QUrl url) :
       menuCallback_(this),
       gwtCallback_(this, this),
       pSessionLauncher_(nullptr),
-      pCurrentSessionProcess_(nullptr),
-      eventHook_(NULL)
+      pCurrentSessionProcess_(nullptr)
 {
    pToolbar_->setVisible(false);
+
+#ifdef _WIN32
+   eventHook_ = NULL;
+#endif
 
    // bind GWT callbacks
    auto* channel = webPage()->webChannel();
