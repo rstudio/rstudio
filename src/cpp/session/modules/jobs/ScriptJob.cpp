@@ -40,16 +40,18 @@ namespace {
 class ScriptJob : public async_r::AsyncRProcess 
 {
 public:
-   static boost::shared_ptr<ScriptJob> create(const FilePath& path, 
+   static boost::shared_ptr<ScriptJob> create(
+         const ScriptLaunchSpec& spec,
          boost::function<void()> onComplete)
    {
-      boost::shared_ptr<ScriptJob> pJob(new ScriptJob(path, onComplete));
+      boost::shared_ptr<ScriptJob> pJob(new ScriptJob(spec, onComplete));
       pJob->start();
       return pJob;
    }
 private:
-   ScriptJob(const FilePath& path, boost::function<void()> onComplete):
-      path_(path),
+   ScriptJob(const ScriptLaunchSpec& spec, 
+         boost::function<void()> onComplete):
+      spec_(spec),
       completed_(false),
       onComplete_(onComplete)
    {
@@ -63,16 +65,15 @@ private:
                session::options().modulesRSourcePath()
                                  .complete("SourceWithProgress.R").absolutePath()) + 
          "'); sourceWithProgress(script = '" +
-         string_utils::singleQuotedStrEscape(path_.absolutePath()) +
+         string_utils::singleQuotedStrEscape(spec_.path().absolutePath()) +
          "', con = stdout())";
         
       core::system::Options environment;
-      FilePath working = FilePath::safeCurrentPath(FilePath());
-      async_r::AsyncRProcess::start(cmd.c_str(), environment, working,
+      async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
                                     async_r::R_PROCESS_NO_RDATA);
 
       // add the job -- currently idle until we get some content from it
-      job_ = addJob(path_.filename(), "", "", 0, JobIdle, false);
+      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, false);
    }
 
    void onStdout(const std::string& output)
@@ -181,8 +182,7 @@ private:
    }
 
    boost::shared_ptr<Job> job_;
-   FilePath path_;
-   FilePath progress_;
+   ScriptLaunchSpec spec_;
    bool completed_;
    boost::function<void()> onComplete_;
 };
@@ -192,10 +192,27 @@ std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
 
 } // anonymous namespace
 
-Error startScriptJob(const core::FilePath& path)
+ScriptLaunchSpec::ScriptLaunchSpec(
+      const core::FilePath& path,
+      const core::FilePath& workingDir):
+   path_(path),
+   workingDir_(workingDir)
 {
-   boost::shared_ptr<ScriptJob> job = ScriptJob::create(
-         module_context::resolveAliasedPath(path.absolutePath()),
+}
+
+FilePath ScriptLaunchSpec::path()
+{
+   return path_;
+}
+
+FilePath ScriptLaunchSpec::workingDir()
+{
+   return workingDir_;
+}
+
+Error startScriptJob(const ScriptLaunchSpec& spec)
+{
+   boost::shared_ptr<ScriptJob> job = ScriptJob::create(spec,
          [&]() 
          { 
             // remove the script from the list of those running

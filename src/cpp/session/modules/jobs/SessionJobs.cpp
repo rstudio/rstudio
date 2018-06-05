@@ -188,7 +188,7 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    return R_NilValue;
 }
 
-SEXP rs_runScriptJob(SEXP path)
+SEXP rs_runScriptJob(SEXP path, SEXP dir)
 {
    std::string filePath = r::sexp::safeAsString(path, "");
    if (filePath.empty())
@@ -201,7 +201,23 @@ SEXP rs_runScriptJob(SEXP path)
    {
       r::exec::error("The script file '" + filePath + "' does not exist.");
    }
-   startScriptJob(scriptPath);
+
+   std::string workingDir = r::sexp::safeAsString(dir);
+   if (workingDir.empty())
+   {
+      // default working dir to parent directory of script
+      workingDir = scriptPath.parent().absolutePath();
+   }
+
+   FilePath workingDirPath(workingDir);
+   if (!workingDirPath.exists())
+   {
+      r::exec::error("The requested working directory '" + workingDir + "' does not exist.");
+   }
+
+   startScriptJob(ScriptLaunchSpec(
+            module_context::resolveAliasedPath(filePath),
+            module_context::resolveAliasedPath(workingDir)));
    return R_NilValue;
 }
 
@@ -239,15 +255,19 @@ Error runScriptJob(const json::JsonRpcRequest& request,
 {
    json::Object jobSpec;
    std::string path;
+   std::string workingDir;
    Error error = json::readParams(request.params, &jobSpec);
    if (error)
       return error;
 
-   error = json::readObject(jobSpec, "path", &path);
+   error = json::readObject(jobSpec, "path", &path,
+                                     "working_dir", &workingDir);
    if (error)
       return error;
 
-   startScriptJob(FilePath(path));
+   startScriptJob(ScriptLaunchSpec(
+            module_context::resolveAliasedPath(path),
+            module_context::resolveAliasedPath(workingDir)));
    return Success();
 }
 

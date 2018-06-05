@@ -30,7 +30,19 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
-core::Error startScriptJob(const core::FilePath& path);
+class ScriptLaunchSpec 
+{
+public:
+   ScriptLaunchSpec(const core::FilePath& path,
+         const core::FilePath& workingDir);
+   core::FilePath path();
+   core::FilePath workingDir();
+private:
+   core::FilePath path_;
+   core::FilePath workingDir_;
+};
+
+core::Error startScriptJob(const ScriptLaunchSpec& spec);
 
 } // namespace jobs
 } // namespace modules

@@ -5,7 +5,8 @@
 	<ui:style>
 	
 	</ui:style>
-	<g:HTMLPanel>
+	<g:VerticalPanel>
 		<rw:FileChooserTextBox ui:field="file_"></rw:FileChooserTextBox>
-	</g:HTMLPanel>
+		<rw:DirectoryChooserTextBox ui:field="dir_"></rw:DirectoryChooserTextBox>
+	</g:VerticalPanel>
 </ui:UiBinder> 

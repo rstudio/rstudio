@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 
 import com.google.gwt.core.client.GWT;
@@ -34,6 +36,7 @@ public class JobLauncherControls extends Composite
    public JobLauncherControls()
    {
       file_ = new FileChooserTextBox("R Script", null);
+      dir_ = new DirectoryChooserTextBox("Working Directory", null);
 
       initWidget(uiBinder.createAndBindUi(this));
    }
@@ -41,12 +44,19 @@ public class JobLauncherControls extends Composite
    public void setScriptPath(String path)
    {
       file_.setText(path);
+      dir_.setText(FileSystemItem.createFile(path).getParentPathString());
    }
    
    public String scriptPath()
    {
       return file_.getText();
    }
+   
+   public String workingDir()
+   {
+      return dir_.getText();
+   }
 
    @UiField(provided=true) FileChooserTextBox file_;
+   @UiField(provided=true) DirectoryChooserTextBox dir_;
 }

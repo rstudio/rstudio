@@ -21,10 +21,17 @@ public class JobLaunchSpec extends JavaScriptObject
    protected JobLaunchSpec() {}
    
    public final native String path() /*-{
-    return this.path;
+      return this.path;
    }-*/;
    
-   public final native static JobLaunchSpec create(String path) /*-{
-      return { "path": path };
+   public final native String workingDir() /*-{
+      return this.working_dir;
+   }-*/;
+   
+   public final native static JobLaunchSpec create(
+      String path,
+      String workingDir) /*-{
+      return { "path": path,
+               "working_dir": workingDir };
    }-*/;
 }
