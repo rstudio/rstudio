@@ -34,12 +34,28 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
+namespace {
+
+#ifdef _WIN32
+
+void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
+                            LONG idObject, LONG idChild,
+                            DWORD dwEventThread, DWORD dwmsEventTime)
+{
+   ::BringWindowToTop(hwnd);
+}
+
+#endif
+
+} // end anonymous namespace
+
 MainWindow::MainWindow(QUrl url) :
       GwtWindow(false, false, QString(), url, nullptr),
       menuCallback_(this),
       gwtCallback_(this, this),
       pSessionLauncher_(nullptr),
-      pCurrentSessionProcess_(nullptr)
+      pCurrentSessionProcess_(nullptr),
+      eventHook_(NULL)
 {
    pToolbar_->setVisible(false);
 
@@ -210,6 +226,11 @@ wnd.desktopHooks.invokeCommand('%1');
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
+#ifdef _WIN32
+   if (eventHook_)
+      ::UnhookWinEvent(eventHook_);
+#endif
+
    if (!webPage())
    {
        pEvent->accept();
@@ -311,6 +332,27 @@ void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
 void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 {
    pCurrentSessionProcess_ = pSessionProcess;
+
+   // when R creates dialogs (e.g. through utils::askYesNo), their first
+   // invocation might show behind the RStudio window. this allows us
+   // to detect when those Windows are opened and focused, and raise them
+   // to the front.
+#ifdef _WIN32
+   if (eventHook_)
+      ::UnhookWinEvent(eventHook_);
+
+   if (pSessionProcess)
+   {
+      eventHook_ = ::SetWinEventHook(
+               EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
+               NULL,
+               onDialogStart,
+               pSessionProcess->processId(),
+               0,
+               WINEVENT_OUTOFCONTEXT);
+   }
+#endif
+
 }
 
 void MainWindow::setAppLauncher(ApplicationLaunch *pAppLauncher)
