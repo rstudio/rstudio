@@ -3,18 +3,28 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
-		.spaced {
+		.spaced, .header {
 			margin-bottom: 5px;
 		}
 		
 		.outer {
-			margin: 10px;
+			margin: 5px;
+		}
+		
+		.header {
+			font-weight: bold;
+		}
+		
+		.check {
+			display: block;
 		}
 	</ui:style>
-	<g:VerticalPanel styleName="{style.outer}">
+	<g:VerticalPanel styleName="{style.outer}" width="350px">
+		<g:Label styleName="{style.header}" text="Script Paths"></g:Label>
 		<rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
 		<rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
-		<g:CheckBox styleName="{style.spaced}" text="Copy global environment" ui:field="importEnv_"></g:CheckBox>
-		<g:CheckBox styleName="{style.spaced}" text="Import created values" ui:field="exportEnv_"></g:CheckBox>
+		<g:Label styleName="{style.header}" text="Environment"></g:Label>
+		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" text="Copy global environment" ui:field="importEnv_"></g:CheckBox>
+		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" text="Import created values" ui:field="exportEnv_"></g:CheckBox>
 	</g:VerticalPanel>
 </ui:UiBinder> 

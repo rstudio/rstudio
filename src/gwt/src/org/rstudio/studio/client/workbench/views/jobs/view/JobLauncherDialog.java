@@ -32,6 +32,8 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
       controls_ = new JobLauncherControls();
       if (scriptPath != null)
          controls_.setScriptPath(scriptPath);
+
+      setOkButtonCaption("Start");
    }
 
    @Override

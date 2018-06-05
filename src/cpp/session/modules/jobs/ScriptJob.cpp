@@ -210,6 +210,12 @@ private:
          {
             job_->addOutput("Error loading results: " + error.summary() + "\n", true);
          }
+         else
+         {
+            // act as though the user had just invoked load() at the R console; this will cause the
+            // environment monitor to pick up the new values, if any
+            module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
+         }
          setJobStatus(job_, "");
       }
 
@@ -218,10 +224,8 @@ private:
          setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
 
       // clean up temporary files, if we used them
-      // import_.removeIfExists();
-      // export_.removeIfExists();
-      std::cerr << "import file " << import_.absolutePath() << std::endl;
-      std::cerr << "export file " << export_.absolutePath() << std::endl;
+      import_.removeIfExists();
+      export_.removeIfExists();
 
       // run caller-provided completion function
       onComplete_();
