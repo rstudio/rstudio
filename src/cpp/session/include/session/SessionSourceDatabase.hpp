@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -139,6 +139,12 @@ public:
                type_ == SourceDocumentTypeRMarkdown ||
                type_ == SourceDocumentTypeRHTML ||
                type_ == SourceDocumentTypeCpp);
+   }
+   
+   // is this a straight R source file?
+   bool isRFile()
+   {
+      return type_.size() > 0 && type_ == SourceDocumentTypeRSource;
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);

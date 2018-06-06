@@ -35,6 +35,7 @@
 namespace rstudio {
 namespace core {
    class ProgramStatus;
+   class FilePath;
 }
 }
 
@@ -147,6 +148,8 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   bool timeoutSuspend() const { return timeoutSuspend_; }
+
    int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
 
    bool createProfile() const { return createProfile_; }
@@ -201,6 +204,21 @@ public:
    std::string rCRANRepos() const
    {
       return std::string(rCRANRepos_.c_str());
+   }
+
+   std::string rCRANMultipleRepos() const
+   {
+      return rCRANMultipleRepos_;
+   }
+
+   std::string rCRANReposUrl() const
+   {
+      return std::string(rCRANReposUrl_.c_str());
+   }
+
+   std::string rCRANReposFile() const
+   {
+      return std::string(rCRANReposFile_.c_str());
    }
 
    int rCompatibleGraphicsEngineVersion() const
@@ -552,6 +570,16 @@ public:
       return verifySignatures_;
    }
 
+   std::string sessionRsaPublicKey() const
+   {
+      return sessionRsaPublicKey_;
+   }
+
+   std::string sessionRsaPrivateKey() const
+   {
+      return sessionRsaPrivateKey_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -565,6 +593,7 @@ private:
    bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
+   std::string parseReposConfig(core::FilePath reposFile);
 
 private:
    // tests
@@ -598,6 +627,7 @@ private:
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
+   bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;
    bool createProfile_;
    bool createPublicFolder_;
@@ -627,6 +657,9 @@ private:
    std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
    std::string rCRANRepos_;
+   std::string rCRANMultipleRepos_;
+   std::string rCRANReposUrl_;
+   std::string rCRANReposFile_;
    bool autoReloadSource_ ;
    int rCompatibleGraphicsEngineVersion_;
    std::string rResourcesPath_;
@@ -701,6 +734,10 @@ private:
 
    // connect
    std::string defaultRSConnectServer_;
+
+   // in-session generated RSA keys
+   std::string sessionRsaPublicKey_;
+   std::string sessionRsaPrivateKey_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

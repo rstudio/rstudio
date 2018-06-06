@@ -1,7 +1,7 @@
 /*
  * SessionAbout.cpp
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,8 @@ Error productInfo(const json::JsonRpcRequest& request,
 {
    json::Object result;
    result["version"] = RSTUDIO_VERSION;
+   result["commit"] = RSTUDIO_GIT_COMMIT;
+   result["build"] = RSTUDIO_BUILD_ID;
    result["notice"] = module_context::resourceFileAsString("NOTICE");
    pResponse->setResult(result);
    return Success();

@@ -64,11 +64,13 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.plumber.model.PlumberCapabilities;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -92,6 +94,8 @@ import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
+import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
+import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
@@ -1675,6 +1679,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
    }
    
+   public void createPlumberAPI(String apiName,
+                                String apiDir,
+                                ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(apiName));
+      params.set(1, new JSONString(apiDir));
+      sendRequest(RPC_SCOPE, CREATE_PLUMBER_API, params, requestCallback);
+   }
+   
    public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
                                          ServerRequestCallback<Void> requestCallback)
    {
@@ -2211,7 +2225,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "get_shiny_capabilities", requestCallback);
    }
-
+   
    public void getRecentHistory(
          long maxItems,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
@@ -4298,6 +4312,26 @@ public class RemoteServer implements Server
             params,
             requestCallback);
    }
+   
+   @Override
+   public void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            GET_PLUMBER_VIEWER_TYPE,
+            requestCallback);
+   }
+
+   @Override
+   public void getPlumberRunCmd(String plumberFile, 
+                                ServerRequestCallback<PlumberRunCmd> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(plumberFile));
+      sendRequest(RPC_SCOPE,
+            GET_PLUMBER_RUN_CMD,
+            params,
+            requestCallback);
+   }
 
    @Override
    public void getRSConnectAccountList(
@@ -5292,7 +5326,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       sendRequest(RPC_SCOPE, STOP_SHINY_APP, params, true, callback);
    }
-
+  
    @Override
    public void connectionAddPackage(String packageName,
                                     ServerRequestCallback<Void> callback)
@@ -5389,6 +5423,36 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE,
                   HAS_SHINYTEST_RESULTS,
+                  params,
+                  true,
+                  callback);
+   }
+
+   @Override
+   public void getSecondaryRepos(ServerRequestCallback<SecondaryReposResult> callback,
+                                 String cranRepoUrl,
+                                 boolean cranIsCustom)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(cranRepoUrl));
+      params.set(1, JSONBoolean.getInstance(cranIsCustom));
+
+      sendRequest(RPC_SCOPE,
+                  GET_SECONDARY_REPOS,
+                  params,
+                  true,
+                  callback);
+   }
+
+   @Override
+   public void validateCranRepo(ServerRequestCallback<Boolean> callback,
+                                String cranRepoUrl)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(cranRepoUrl));
+
+      sendRequest(RPC_SCOPE,
+                  VALIDATE_CRAN_REPO,
                   params,
                   true,
                   callback);
@@ -5739,6 +5803,10 @@ public class RemoteServer implements Server
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
    
+   private static final String CREATE_PLUMBER_API = "create_plumber_api";
+   private static final String GET_PLUMBER_VIEWER_TYPE = "get_plumber_viewer_type";
+   private static final String GET_PLUMBER_RUN_CMD = "get_plumber_run_cmd";
+   
    private static final String GET_RSCONNECT_ACCOUNT_LIST = "get_rsconnect_account_list";
    private static final String REMOVE_RSCONNECT_ACCOUNT = "remove_rsconnect_account";
    private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
@@ -5825,4 +5893,7 @@ public class RemoteServer implements Server
    private static final String HAS_SHINYTEST_HAS_DEPENDENCIES = "has_shinytest_dependencies";
    private static final String INSTALL_SHINYTEST_DEPENDENCIES = "install_shinytest_dependencies";
    private static final String HAS_SHINYTEST_RESULTS = "has_shinytest_results";
+
+   private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
+   private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
 }

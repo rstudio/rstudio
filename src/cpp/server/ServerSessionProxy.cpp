@@ -51,7 +51,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionConstants.hpp>
-#include <session/SessionLocalStreams.hpp>
+#include <server_core/sessions/SessionLocalStreams.hpp>
 #include <session/SessionInvalidScope.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -113,7 +113,7 @@ Error launchSessionRecovery(
    }
 
    // recreate streams dir if necessary
-   Error error = session::local_streams::ensureStreamsDir();
+   Error error = server_core::sessions::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
@@ -129,9 +129,10 @@ http::ConnectionRetryProfile sessionRetryProfile(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context)
 {
+   server::Options& options = server::options();
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
-   retryProfile.maxWait = boost::posix_time::seconds(10);
+   retryProfile.maxWait = boost::posix_time::seconds(options.rsessionProxyMaxWaitSeconds());
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
                                                ptrConnection, _1, _2, context);
    return retryProfile;
@@ -191,12 +192,13 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
                                    const http::Request& originalRequest,
                                    const std::string& port,
                                    const std::string& baseAddress,
+                                   bool ipv6,
                                    http::Response* pResponse)
 {
    // get the address and the proxied address
    std::string address = pResponse->headerValue(headerName);
    std::string proxiedAddress = "http://" + baseAddress + ":" + port;
-   std::string portPath = "/p/" + port;
+   std::string portPath = ipv6 ? ("/p6/" + port) : ("/p/" + port);
 
    // relative address, just prepend port
    if (boost::algorithm::starts_with(address, "/"))
@@ -262,6 +264,7 @@ void handleLocalhostResponse(
       boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
       const std::string& port,
       const std::string& baseAddress,
+      bool ipv6,
       const http::Response& response)
 {
    // check for upgrade to websockets
@@ -300,6 +303,7 @@ void handleLocalhostResponse(
                                           ptrConnection->request(),
                                           port,
                                           baseAddress,
+                                          ipv6,
                                           &redirectResponse);
          }
 
@@ -310,6 +314,7 @@ void handleLocalhostResponse(
                                           ptrConnection->request(),
                                           port,
                                           baseAddress,
+                                          ipv6,
                                           &redirectResponse);
          }
 
@@ -574,7 +579,7 @@ void proxyRequest(
 
    // determine path to user stream
    std::string streamFile = r_util::sessionContextFile(context);
-   FilePath streamPath = session::local_streams::streamPath(streamFile);
+   FilePath streamPath = server_core::sessions::local_streams::streamPath(streamFile);
 
    // determine the uid for the username (for validation)
    UidType uid;
@@ -657,7 +662,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 
 Error initialize()
 { 
-   return session::local_streams::ensureStreamsDir();
+   return server_core::sessions::local_streams::ensureStreamsDir();
 }
 
 Error runVerifyInstallationSession()
@@ -743,6 +748,7 @@ void proxyEventsRequest(
 }
 
 void proxyLocalhostRequest(
+      bool ipv6,
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
@@ -763,11 +769,12 @@ void proxyLocalhostRequest(
    invokeRequestFilter(&request);
 
    // extract the port
-   boost::regex re("/p/(\\d+)/");
+   std::string pMap = ipv6 ? "/p6/" : "/p/";
+   boost::regex re(pMap + "(\\d+)/");
    boost::smatch match;
    if (!regex_utils::search(request.uri(), match, re))
    {
-      ptrConnection->response().setNotFoundError(request.uri());
+      ptrConnection->response().setNotFoundError(request);
       return;
    }
    std::string port = match[1];
@@ -799,7 +806,7 @@ void proxyLocalhostRequest(
       request.setHeader("Connection", "close");
 
    LocalhostResponseHandler onResponse =
-         boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, _1);
+         boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, ipv6, _1);
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
    // see if the request should be handled by the overlay
@@ -810,16 +817,21 @@ void proxyLocalhostRequest(
    }
 
    // set the host
-   request.setHost("localhost:" + port);
+   std::string address;
+   if (!ipv6)
+      address = "localhost";
+   else
+      address = "::1";
+   request.setHost("[" + address + "]" + ":" + port);
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
-      new LocalhostAsyncClient(ptrConnection->ioService(), "localhost", port));
+      new LocalhostAsyncClient(ptrConnection->ioService(), address, port));
    pClient->request().assign(request);
 
    // execute request
    pClient->execute(
-            boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, "localhost", _1),
+            boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, address, ipv6, _1),
             onError);
 }
 

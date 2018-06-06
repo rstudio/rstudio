@@ -25,17 +25,18 @@ install()
 PACKAGE=$1
 PACKAGE_DIR=$PACKAGE
 PACKAGE_VERSION=$2
-PACKAGE_BUILD_OPTIONS=$3
+PACKAGE_GITHUB_ROOT=$3
+PACKAGE_BUILD_OPTIONS=$4
 
 # git clone if necessary
 if [ ! -d "$PACKAGE_DIR" ]
 then
   if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
       # no supplied credentials, clone directly
-      git clone "https://github.com/rstudio/$PACKAGE.git"
+      git clone "https://github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
   else
       # credentials supplied, use them
-      git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/rstudio/$PACKAGE.git"
+      git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
   fi
 fi
 
@@ -72,9 +73,14 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
-# install rsconnect master
-# install rmarkdown master
-install r2d3 master
+# Packages embedded with the IDE. See also:
+#   src/cpp/session/CMakeLists.txt
+#   DependencyManager.java: "Dependency.embeddedPackage" vs. ".cranPackage"
+
+# we often embed these packages but are not currently
+# install rsconnect master rstudio
+# install rmarkdown master rstudio
+install plumber master trestletech
 
 # back to install-dir
 cd $INSTALL_DIR

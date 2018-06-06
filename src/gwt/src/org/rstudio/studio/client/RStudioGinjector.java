@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,6 +51,8 @@ import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
+import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
+import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
@@ -61,6 +63,9 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.plumber.PlumberAPI;
+import org.rstudio.studio.client.plumber.PlumberAPISatellite;
+import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
@@ -106,6 +111,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
+import org.rstudio.studio.client.workbench.views.source.NewPlumberAPI;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
@@ -209,6 +215,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(WindowFrame frame);
    void injectMembers(ShinyGadgetDialog dialog);
    void injectMembers(NewShinyWebApplication dialog);
+   void injectMembers(NewPlumberAPI dialog);
    void injectMembers(AddinCommandBinding binding);
    void injectMembers(BrowseAddinsDialog dialog);
    void injectMembers(AddinExecutor addinExecutor);
@@ -251,6 +258,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AboutDialog aboutDialog);
    void injectMembers(NewConnectionInstallOdbcHost newConnectionInstallOdbcHost);
    void injectMembers(NewConnectionPreInstallOdbcHost NewConnectionPreInstallOdbcHost);
+   void injectMembers(SecondaryReposWidget widget);
+   void injectMembers(SecondaryReposDialog widget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -288,4 +297,7 @@ public interface RStudioGinjector extends Ginjector
    DependencyManager getDependencyManager();
    ShinyTestPopupMenu getShinyTestPopupMenu();
    HtmlMessageListener getHtmlMessageListener();
+   PlumberViewerTypePopupMenu getPlumberViewerTypePopupMenu();
+   PlumberAPISatellite getPlumberAPISatellite();
+   PlumberAPI getPlumberAPI();
 }

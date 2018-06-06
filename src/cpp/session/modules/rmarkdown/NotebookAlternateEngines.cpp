@@ -64,6 +64,23 @@ private:
    std::string chunkId_;
 };
 
+class ChunkExecDisconnectScope : boost::noncopyable
+{
+public:
+   ChunkExecDisconnectScope(ChunkExecContext& chunkExecContext)
+      : chunkExecContext_(chunkExecContext)
+   {
+   }
+
+   ~ChunkExecDisconnectScope()
+   {
+      chunkExecContext_.disconnect();
+   }
+
+private:
+   ChunkExecContext& chunkExecContext_;
+};
+
 Error prepareCacheConsoleOutputFile(const std::string& docId,
                                     const std::string& chunkId,
                                     const std::string& nbCtxId,
@@ -458,6 +475,9 @@ Error runUserDefinedEngine(const std::string& docId,
    
    // always ensure we emit a 'execution complete' event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
+
+   // connect to capture html file output
+   ChunkExecDisconnectScope chunkExecDisconnectScope(htmlCaptureContext);
    
    // prepare cache folder
    FilePath cachePath = notebook::chunkOutputPath(
@@ -772,9 +792,6 @@ Error executeAlternateEngineChunk(const std::string& docId,
 
          runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions,
             htmlCaptureContext);
-
-         // release htmlwidget capture
-         htmlCaptureContext.disconnect();
       }
    }
 

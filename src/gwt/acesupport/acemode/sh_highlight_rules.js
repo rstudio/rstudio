@@ -86,7 +86,7 @@ var ShHighlightRules = function() {
             }, {
                 token : "string.end",
                 regex : '"',
-                next: "pop"
+                next  : "pop"
             }, {
                 defaultToken: "string"
             }]
@@ -99,7 +99,7 @@ var ShHighlightRules = function() {
             }, {
                 token : "string",
                 regex : "'",
-                next: "pop"
+                next  : "pop"
             }, {
                 defaultToken: "string"
             }]
@@ -219,7 +219,20 @@ var ShHighlightRules = function() {
         }, {
             token : "paren.rparen",
             regex : "[\\)\\}]",
-            next : "pop"
+            next  : function(currentState, stack) {
+
+                // NOTE (kevin): I'm not exactly sure why, but it appears as
+                // though states can be duplicated on the stack when they are
+                // pushed. Similar logic lives in Ace's own
+                // text_highlight_rules.js, so we just follow in their
+                // footsteps here but be a bit more careful about popping out
+                // of the 'start' state.
+                if (stack.length < 2)
+                    return currentState;
+
+                stack.shift();
+                return stack.shift();
+            }
         }],
         variables: [{
             token : "variable",

@@ -1,7 +1,7 @@
 /*
  * ModalDialogBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -329,8 +329,7 @@ public abstract class ModalDialogBase extends DialogBox
       return addProgressIndicator(true);
    }
 
-   protected ProgressIndicator addProgressIndicator(
-                                                    final boolean closeOnCompleted)
+   protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted)
    {
       final SlideLabel label = new SlideLabel(true);
       Element labelEl = label.getElement();

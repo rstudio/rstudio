@@ -369,11 +369,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // included Rmd files always produce a rebuild of the current file
          if (file.getStem().startsWith("_"))
             reRenderPreview();
-         
-         // files in subdirectories are also includes so re-render them also
-         if (file.getParentPathString() != websiteDir)
-            reRenderPreview();
-         
+     
          // ...otherwise leave it alone (requires a knit)
       }
       

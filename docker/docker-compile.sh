@@ -99,6 +99,10 @@ if [ -n "$VERSION" ]; then
     fi
 fi
 
+# set up build flags
+ENV="$ENV GIT_COMMIT=$(git rev-parse HEAD)"
+ENV="$ENV BUILD_ID=local"
+
 # if we have an nproc command, use it to infer make parallelism
 if hash nproc 2>/dev/null; then
     # linux

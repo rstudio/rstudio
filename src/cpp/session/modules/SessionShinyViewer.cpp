@@ -1,7 +1,7 @@
 /*
  * SessionShinyViewer.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,29 +185,8 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
             shinyPath);
 
    // check to see if Shiny is attached to the search path
-   bool isShinyAttached = false;
-   SEXP namespaces = R_NilValue;
-   r::sexp::Protect protect;
-   error = r::exec::RFunction("search").call(&namespaces, &protect);
-   if (error)
-   {
-      // not fatal; we'll just presume Shiny is not on the path
-      LOG_ERROR(error);
-   }
-   else
-   {
-      int len = r::sexp::length(namespaces);
-      for (int i = 0; i < len; i++)
-      {
-         std::string ns = r::sexp::safeAsString(STRING_ELT(namespaces, i), "");
-         if (ns == "package:shiny") 
-         {
-            isShinyAttached = true;
-            break;
-         }
-      }
-   }
-
+   bool isShinyAttached = r::util::isPackageAttached("shiny");
+   
    std::string runCmd; 
    if (shinyType == modules::shiny::ShinyDirectory)
    {

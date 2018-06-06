@@ -236,6 +236,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kShowPageViewerEvent;
       else if (name == "data_output_completed")
          type = session::client_events::kDataOutputCompleted;
+      else if (name == "new_document_with_code")
+         type = session::client_events::kNewDocumentWithCode;
 
       if (type != -1)
       {
@@ -2011,16 +2013,19 @@ std::string resourceFileAsString(const std::string& fileName)
 
 bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
 {
-   // extract the port
-   boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1):([0-9]+)(/.*)?");
+   // match an http URL (ipv4 localhost or ipv6 localhst) and extract the port
+   boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1|::1|\\[::1\\]):([0-9]+)(/.*)?");
    boost::smatch match;
    if (regex_utils::search(url, match, re))
    {
+      bool ipv6 = (url.find("::1") != std::string::npos);
+
       // calculate the path
       std::string path = match[2];
       if (path.empty())
          path = "/";
-      path = "p/" + match[1] + path;
+      std::string portPath = ipv6 ? "p6/" : "p/";
+      path = portPath + match[1] + path;
       *pPath = path;
 
       return true;

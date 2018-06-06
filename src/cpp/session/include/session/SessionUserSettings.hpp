@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,7 @@ struct CRANMirror
    std::string host;
    std::string url;
    std::string country;
+   bool changed;
 };
 
 struct BioconductorMirror
@@ -103,6 +104,7 @@ public:
    bool alwaysEnableRnwCorcordance() const;
    bool handleErrorsInUserCodeOnly() const;
    int shinyViewerType() const;
+   int plumberViewerType() const;
    bool enableRSConnectUI() const;
    core::text::AnsiCodeMode ansiConsoleMode() const;
    bool terminalWebsockets() const;
@@ -154,6 +156,7 @@ public:
 
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);
+   void setCRANMirror(const CRANMirror& cranMirror, bool update);
 
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
@@ -266,6 +269,7 @@ private:
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
+   mutable boost::scoped_ptr<int> pPlumberViewerType_;
    mutable boost::scoped_ptr<bool> pEnableRSConnectUI_;
    mutable boost::scoped_ptr<int> pAnsiConsoleMode_;
    mutable boost::scoped_ptr<bool> pTerminalWebsockets_;

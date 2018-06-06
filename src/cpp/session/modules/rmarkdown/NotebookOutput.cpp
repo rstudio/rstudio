@@ -296,7 +296,7 @@ Error handleChunkOutputRequest(const http::Request& request,
 
    if (!target.exists())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return Success();
    }
 

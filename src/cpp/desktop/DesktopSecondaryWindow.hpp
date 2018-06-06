@@ -1,7 +1,7 @@
 /*
  * DesktopSecondaryWindow.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,20 +24,23 @@ namespace desktop {
 
 class SecondaryWindow : public BrowserWindow
 {
-    Q_OBJECT
+   Q_OBJECT
 public:
-    explicit SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
-                             QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
-                             bool allowExternalNavigate = false);
+   explicit SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
+                            QWidget* pParent = nullptr, WebPage *pOpener = nullptr,
+                            bool allowExternalNavigate = false);
+public Q_SLOTS:
+   void onCloseWindowShortcut();
 
 protected Q_SLOTS:
-    virtual void manageCommandState();
+   void finishLoading(bool ok) override;
+   virtual void manageCommandState();
 
 private:
-    QAction* back_;
-    QAction* forward_;
-    QAction* reload_;
-    QAction* print_;
+   QAction* back_;
+   QAction* forward_;
+   QAction* reload_;
+   QAction* print_;
 };
 
 } // namespace desktop

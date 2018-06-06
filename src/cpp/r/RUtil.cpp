@@ -1,7 +1,7 @@
 /*
  * RUtil.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -226,6 +226,32 @@ bool isWindowsOnlyFunction(const std::string& name)
 {
    static const std::set<std::string> s_rWindowsOnly = makeWindowsOnlyFunctions();
    return core::algorithm::contains(s_rWindowsOnly, name);
+}
+
+bool isPackageAttached(const std::string& packageName)
+{
+   SEXP namespaces = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction("search").call(&namespaces, &protect);
+   if (error)
+   {
+      // not fatal; we'll just presume package is not on the path
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   std::string fullPackageName = "package:";
+   fullPackageName += packageName;
+   int len = r::sexp::length(namespaces);
+   for (int i = 0; i < len; i++)
+   {
+      std::string ns = r::sexp::safeAsString(STRING_ELT(namespaces, i), "");
+      if (ns == fullPackageName) 
+      {
+         return true;
+      }
+   }
+   return false;
 }
 
 } // namespace util

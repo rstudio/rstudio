@@ -30,7 +30,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -54,9 +53,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       VerticalPanel leftPanel = new VerticalPanel();
       
-      infoBar_ = new InfoBar(InfoBar.WARNING);
-      infoBar_.setText("Relaunch RStudio to complete this change.");
-      infoBar_.addStyleName(res_.styles().themeInfobar());
+      relaunchRequired_ = false;
 
       // dark-grey theme used to be derived from default, now also applies to sky
       if (uiPrefs_.getFlatTheme().getValue() == "dark-grey")
@@ -74,14 +71,12 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          public void onChange(ChangeEvent event)
          {
-            preview_.setHeight(previewDefaultHeight_);
-            infoBar_.removeStyleName(res_.styles().themeInfobarShowing());
+            relaunchRequired_ = false;
             
             if (originalTheme == "classic" && flatTheme_.getValue() != "classic" ||
                 flatTheme_.getValue() == "classic" && originalTheme != "classic")
             {
-               preview_.setHeight("478px");
-               infoBar_.addStyleName(res_.styles().themeInfobarShowing());
+               relaunchRequired_ = true;
             }
          }
       });
@@ -228,7 +223,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(theme_);
 
       FlowPanel previewPanel = new FlowPanel();
-      previewPanel.add(infoBar_);
       
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(CODE_SAMPLE);
@@ -310,7 +304,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       eventBus_.fireEvent(themeChangedEvent);
       eventBus_.fireEventToAllSatellites(themeChangedEvent);
       
-      return restartRequired;
+      return restartRequired || relaunchRequired_;
    }
 
    @Override
@@ -331,7 +325,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private CheckBox useLigatures_;
    private final SelectWidget flatTheme_;
    private EventBus eventBus_;
-   private final InfoBar infoBar_;
+   private Boolean relaunchRequired_;
    private static String previewDefaultHeight_ = "498px";
 
    private static final String CODE_SAMPLE =

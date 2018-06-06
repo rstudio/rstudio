@@ -41,13 +41,19 @@ boost::shared_ptr<RVersionsScanner> s_scanner;
 
 } // anonymous namespace
 
-bool initialize(std::string* pErrMsg)
+void initializeScanner()
 {
    s_scanner.reset(
             new RVersionsScanner(true,
                                  options().rsessionWhichR(),
                                  options().rldpathPath(),
                                  options().rsessionLdLibraryPath()));
+}
+
+bool initialize(std::string* pErrMsg)
+{
+   if (!s_scanner)
+      initializeScanner();
 
    // if we already have a cached version (such as multi version setting it)
    // then simply return success
@@ -88,6 +94,9 @@ bool detectRVersion(const core::FilePath& rScriptPath,
                     core::r_util::RVersion* pVersion,
                     std::string* pErrMsg)
 {
+   if (!s_scanner)
+      initializeScanner();
+
    return s_scanner->detectRVersion(rScriptPath, pVersion, pErrMsg);
 }
 

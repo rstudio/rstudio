@@ -462,7 +462,7 @@ void handleFilesRequest(const http::Request& request,
    Options& options = session::options();
    if (options.programMode() != kSessionProgramModeServer)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
    
@@ -478,7 +478,7 @@ void handleFilesRequest(const http::Request& request,
        uri.find(prefix) != 0 ||              // uri doesn't start with prefix
        uri.find("..") != std::string::npos)  // uri has inavlid char sequence
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
    
@@ -487,7 +487,7 @@ void handleFilesRequest(const http::Request& request,
    std::string relativePath = http::util::urlDecode(uri.substr(prefixLen));
    if (relativePath.empty())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -497,7 +497,7 @@ void handleFilesRequest(const http::Request& request,
    // no directory listing available
    if (filePath.isDirectory())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -818,7 +818,7 @@ void handleFileExportRequest(const http::Request& request,
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (!filePath.exists())
       {
-         pResponse->setNotFoundError(request.uri());
+         pResponse->setNotFoundError(request);
          return;
       }
       

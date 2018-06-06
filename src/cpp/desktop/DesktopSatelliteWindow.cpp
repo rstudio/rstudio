@@ -22,8 +22,8 @@ namespace rstudio {
 namespace desktop {
 
 
-SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
-    GwtWindow(false, true, name),
+SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage* opener) :
+    GwtWindow(false, true, name, QUrl(), nullptr, opener),
     gwtCallback_(pMainWindow, this),
     close_(CloseStageOpen)
 {

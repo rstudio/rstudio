@@ -44,6 +44,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newRMarkdownDoc"/>
             <cmd refid="newRShinyApp"/>
+            <cmd refid="newRPlumberDoc"/>
             <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
@@ -860,7 +861,12 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new D3 script"
         rebindable="false"/>     
         
-   <cmd id="rcppHelp"
+   <cmd id="newRPlumberDoc"
+        menuLabel="Plumber _API..."
+        desc="Create a new Plumber API"
+        rebindable="false"/>
+
+    <cmd id="rcppHelp"
         desc="Help on using Rcpp"
         rebindable="false"/>
         
@@ -2997,7 +3003,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="debugFinish"
         menuLabel="_Finish Function/Loop"
         buttonLabel=""
-        desc="Execute the remainer of the current function or loop"
+        desc="Execute the remainder of the current function or loop"
         rebindable="false"/>
         
    <cmd id="debugHelp"
@@ -3120,6 +3126,33 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Compare Results"
         desc="Compare test results for Shiny application"/>
 
+   <cmd id="reloadPlumberAPI"
+        label="Reload Plumber API"
+        menuLabel="Reload"
+        buttonLabel=""
+        desc="Reload the Plumber API"/>
+        
+   <cmd id="plumberRunInPane"
+        label="Run Plumber API in New Pane"
+        menuLabel="Run in Viewer Pane"
+        desc="Run the Plumber API in an RStudio pane"
+        checkable="true"
+        windowMode="background"/>
+        
+   <cmd id="plumberRunInViewer"
+        label="Run Plumber API in RStudio Viewer"
+        menuLabel="Run in Window"
+        desc="Run the Plumber API in an RStudio viewer window"
+        checkable="true"
+        windowMode="background"/>
+        
+   <cmd id="plumberRunInBrowser"
+        label="Run Plumber API in Web Browser"
+        menuLabel="Run External"
+        desc="Run the Plumber API in the system's default Web browser"
+        checkable="true"
+        windowMode="background"/>
+    
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."
         desc="Publish the application or document"

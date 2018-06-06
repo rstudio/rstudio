@@ -369,7 +369,8 @@ int main(int argc, char* argv[])
          {
             std::vector<std::string> blackList = {
                "NVIDIA GeForce GT 650M",
-               "NVIDIA GeForce GT 750M"
+               "NVIDIA GeForce GT 750M",
+               "Intel Iris Graphics 6100"
             };
 
             for (const std::string& entry : blackList)

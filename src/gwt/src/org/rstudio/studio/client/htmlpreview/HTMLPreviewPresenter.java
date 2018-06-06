@@ -16,8 +16,6 @@ package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HtmlMessageListener;
-import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -192,7 +190,6 @@ public class HTMLPreviewPresenter implements IsWidget
                lastSuccessfulPreview_ = result;
                view_.closeProgress();
                String url = result.getPreviewURL();
-               url_ = url;
                if (!url.startsWith("http"))
                   url = server_.getApplicationURL(url);
 
@@ -357,7 +354,6 @@ public class HTMLPreviewPresenter implements IsWidget
    }
    
    private final Display view_;
-   private String url_;
    private boolean previewRunning_ = false;
    private HTMLPreviewParams lastPreviewParams_;
    private HTMLPreviewResult lastSuccessfulPreview_;

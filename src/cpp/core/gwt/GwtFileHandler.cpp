@@ -59,7 +59,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
    // request for a URI not within our location scope
    if (uri.find(baseUri) != 0)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
    
@@ -90,7 +90,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
    FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
    if (filePath.empty())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
    else if (filePath.isDirectory())

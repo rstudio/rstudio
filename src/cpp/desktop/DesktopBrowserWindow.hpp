@@ -52,6 +52,7 @@ public:
      void postWebViewEvent(QEvent *event);
      void triggerPageAction(QWebEnginePage::WebAction action);
      void closeEvent(QCloseEvent *event) override;
+     WebPage* opener();
 
 protected:
      WebView* pView_;

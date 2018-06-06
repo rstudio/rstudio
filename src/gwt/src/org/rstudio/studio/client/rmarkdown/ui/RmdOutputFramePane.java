@@ -129,11 +129,19 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       }
       else
       {
-         if (frame_ == null ||
-             frame_.getIFrame() == null ||
-             frame_.getIFrame().getContentWindow() == null)
-            return 0;
-         return frame_.getIFrame().getContentWindow().getScrollTop();
+         int position = 0;
+         try
+         {
+            position = frame_.getIFrame().getContentWindow().getScrollTop();
+         }
+         catch(Exception ex)
+         {
+            // can happen if there's no document at this point, or the browser
+            // thinks we're a different origin; handle this by returning a safe
+            // default below
+         }
+
+         return position;
       }
    }
    
@@ -147,11 +155,16 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       }
       else
       {
-         if (frame_ == null ||
-             frame_.getIFrame() == null ||
-             frame_.getIFrame().getContentDocument() == null)
-            return "";
-         url = frame_.getIFrame().getContentDocument().getURL();
+         try
+         {
+            url = frame_.getIFrame().getContentDocument().getURL();
+         }
+         catch(Exception x)
+         {
+            // can happen if there's no document at this point, or the browser
+            // thinks we're a different origin; handle this by returning a safe
+            // default below
+         }
       }
       if (url == null)
          return "";

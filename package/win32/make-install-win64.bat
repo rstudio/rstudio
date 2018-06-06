@@ -16,6 +16,13 @@ REM perform 64-bit build
 mkdir %WIN64_BUILD_PATH%
 cd %WIN64_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
+
+REM Ensure Windows toolkit is on the PATH (for rc.exe)
+set "WINDOWS_TOOLKIT=C:\Program Files (x86)\Windows Kits\8.1\bin\x64"
+set "OLDPATH=%PATH%"
+set "PATH=%PATH%;%WINDOWS_TOOLKIT%"
+
+REM Build the project
 cmake -G"Visual Studio 14 2015 Win64" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
@@ -24,6 +31,9 @@ cmake -G"Visual Studio 14 2015 Win64" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% --target install || goto :error
 cd ..
+
+set "PATH=%OLDPATH%"
+
 endlocal
 
 goto :EOF

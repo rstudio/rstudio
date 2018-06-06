@@ -92,6 +92,10 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
+import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -221,6 +225,7 @@ public class TextEditingTarget implements
       
       void adaptToExtendedFileType(String extendedType);
       void onShinyApplicationStateChanged(String state);
+      void onPlumberAPIStateChanged(String state);
 
       void debug_dumpContents();
       void debug_importDump();
@@ -648,6 +653,34 @@ public class TextEditingTarget implements
                }
             });
       
+      events_.addHandler(
+            PlumberAPIStatusEvent.TYPE, 
+            new PlumberAPIStatusEvent.Handler()
+            {
+               @Override
+               public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
+               {
+                  // If the document appears to be inside the directory 
+                  // associated with the event, update the view to match the
+                  // new state.
+                  if (getPath() != null &&
+                      getPath().startsWith(event.getParams().getPath()))
+                  {
+                     String state = event.getParams().getState();
+                     if (event.getParams().getViewerType() != 
+                            PlumberViewerType.PLUMBER_VIEWER_PANE &&
+                         event.getParams().getViewerType() != 
+                            PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+                     {
+                        // we can't control the state when it's not in an
+                        // RStudio-owned window, so treat the app as stopped
+                        state = PlumberAPIParams.STATE_STOPPED;
+                     }
+                     view_.onPlumberAPIStateChanged(state);
+                  }
+               }
+            });
+       
       events_.addHandler(
             BreakpointsSavedEvent.TYPE, 
             new BreakpointsSavedEvent.Handler()
@@ -1594,7 +1627,8 @@ public class TextEditingTarget implements
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            timer_.schedule(1000);
+            if (prefs_.restoreSourceDocumentCursorPosition().getValue())
+               timer_.schedule(1000);
          }
       });
       
@@ -1603,6 +1637,9 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
+            if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
+               return;
+            
             String cursorPosition = docUpdateSentinel_.getProperty(
                   PROPERTY_CURSOR_POSITION,
                   "");
@@ -5056,12 +5093,20 @@ public class TextEditingTarget implements
          return;
       }
 
-      // If the document being sourced is a Shiny file, run the app instead.
-      if (fileType_.isR() && 
-          extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
+      if (fileType_.isR())
       {
-         runShinyApp();
-         return;
+         if (extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
+         {
+            // If the document being sourced is a Shiny file, run the app instead.
+            runShinyApp();
+            return;
+         }
+         else if (extendedType_ == SourceDocument.XT_PLUMBER_API)
+         {
+            // If the document being sourced in a Plumber file, run the API instead.
+            runPlumberAPI();
+            return;
+         }
       }
       
       // if the document is an R Markdown notebook, run all its chunks instead
@@ -5173,6 +5218,17 @@ public class TextEditingTarget implements
                   getExtendedFileType()));
          }
       }, "Run Shiny Application");
+   }
+   
+   private void runPlumberAPI()
+   {
+      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
+         }
+      }, "Run Plumber API");
    }
    
    private void sourcePython()
@@ -5364,13 +5420,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, new Command() {
-               @Override
-               public void execute()
-               {
-                  sqlHelper_.previewSql(TextEditingTarget.this);
-               }
-            });
+            sqlHelper_.previewSql(TextEditingTarget.this);
          }
       }); 
    }

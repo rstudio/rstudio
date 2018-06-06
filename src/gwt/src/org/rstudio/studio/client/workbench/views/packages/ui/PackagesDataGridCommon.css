@@ -61,6 +61,16 @@
    color: inherit;
 }
 
+.dataGridCell img
+{
+   margin-top: 3px;
+}
+
+.dataGridLastColumn img
+{
+   margin-top: 0px;
+}
+
 .dataGridOddRow
 {
 	background-color: white; 

@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -12,18 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.HtmlMessageListener;
-import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -34,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -194,6 +191,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.invalidateSeparators();
    };
    
+   @Override
+   public void previewPlumber(PlumberAPIParams params) 
+   {
+      navigate(params.getUrl(), true);
+      publishButton_.setManuallyHidden(false);
+      publishButton_.setPlumberPreview(params);
+      toolbar_.invalidateSeparators();
+   };
+    
    @Override
    public void setExportEnabled(boolean exportEnabled)
    {

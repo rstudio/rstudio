@@ -9,25 +9,25 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rsconnect master --no-build-vignettes
-REM call:install rmarkdown master --no-build-vignettes
-call:install r2d3 master --no-build-vignettes
-
+REM call:install rsconnect master rstudio --no-build-vignettes
+REM call:install rmarkdown master rstudio --no-build-vignettes
+call:install plumber master trestletech --no-build-vignettes
 GOTO:EOF
 
 :install
 
 set PACKAGE=%1
 set PACKAGE_VERSION=%2
-set PACKAGE_BUILD_OPTIONS=%3
+set PACKAGE_GITHUB_ROOT=%3
+set PACKAGE_BUILD_OPTIONS=%4
 
 REM git clone if necessary
 set PACKAGE_DIR="%PACKAGE%"
 if not exist "%PACKAGE_DIR%" (
    if "%RSTUDIO_GITHUB_LOGIN%" == "" (
-      git clone "https://github.com/rstudio/%PACKAGE%.git"
+      git clone "https://github.com/%PACKAGE_GITHUB_ROOT%/%PACKAGE%.git"
    ) else (
-      git clone "https://%RSTUDIO_GITHUB_LOGIN%@github.com/rstudio/%PACKAGE%.git"
+      git clone "https://%RSTUDIO_GITHUB_LOGIN%@github.com/%PACKAGE_GITHUB_ROOT%/%PACKAGE%.git"
    )
 )
 

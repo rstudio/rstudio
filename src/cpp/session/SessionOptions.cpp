@@ -18,9 +18,13 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -101,10 +105,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // detect running in x64 directory and tweak resource path
 #ifdef _WIN32
-   bool is64 = false;
    if (resourcePath_.complete("x64").exists())
    {
-      is64 = true;
       resourcePath_ = resourcePath_.parent();
    }
 #endif
@@ -188,6 +190,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      (kTimeoutSuspendSessionOption,
+         value<bool>(&timeoutSuspend_)->default_value(true),
+         "whether to suspend on session timeout")
       (kDisconnectedTimeoutSessionOption,
          value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
          "session disconnected timeout (minutes)" )
@@ -310,6 +315,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       ("r-cran-repos",
          value<std::string>(&rCRANRepos_)->default_value(""),
          "Default CRAN repository")
+      ("r-cran-repos-file",
+         value<std::string>(&rCRANReposFile_)->default_value("/etc/rstudio/repos.conf"),
+         "Path to configuration file with default CRAN repositories")
+      ("r-cran-repos-url",
+         value<std::string>(&rCRANReposUrl_)->default_value(""),
+         "URL to configuration file with optional CRAN repositories")
       ("r-auto-reload-source",
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
@@ -567,17 +578,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    std::string completion;
    if (pty.isWithin(resourcePath_))
    {
-      if (is64)
-         completion = "x64/winpty.dll";
-      else
-         completion = "winpty.dll";
+#ifdef _WIN64
+      completion = "x64/winpty.dll";
+#else
+      completion = "winpty.dll";
+#endif
    }
    else
    {
-      if (is64)
-         completion = "64/bin/winpty.dll";
-      else
-         completion = "32/bin/winpty.dll";
+#ifdef _WIN64
+      completion = "64/bin/winpty.dll";
+#else
+      completion = "32/bin/winpty.dll";
+#endif
    }
    winptyPath_ = pty.complete(completion).absolutePath();
 #endif
@@ -589,11 +602,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-#ifdef _WIN32
-      libclangPath_ += "/3.4";
-#else
-      libclangPath_ += "/3.5";
-#endif
+      libclangPath_ += "/5.0.2";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 
@@ -684,8 +693,77 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // in standalone mode
    signingKey_ = core::system::getenv(kRStudioSigningKey);
 
+   if (verifySignatures_)
+   {
+      // generate our own signing key to be used when posting back to ourselves
+      // this key is kept secret within this process and any child processes,
+      // and only allows communication from this rsession process and its children
+      error = core::system::crypto::generateRsaKeyPair(&sessionRsaPublicKey_, &sessionRsaPrivateKey_);
+      if (error)
+         LOG_ERROR(error);
+
+      core::system::setenv(kRSessionRsaPublicKey, sessionRsaPublicKey_);
+      core::system::setenv(kRSessionRsaPrivateKey, sessionRsaPrivateKey_);
+   }
+
+   // load cran options from repos.conf
+   FilePath reposFile(rCRANReposFile());
+   rCRANMultipleRepos_ = parseReposConfig(reposFile);
+
    // return status
    return status;
+}
+
+std::string Options::parseReposConfig(FilePath reposFile)
+{
+    using namespace boost::property_tree;
+
+    if (!reposFile.exists())
+      return "";
+
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(reposFile).open_r(&pIfs);
+   if (error)
+   {
+      core::program_options::reportError("Unable to open repos file: " + reposFile.absolutePath(),
+                  ERROR_LOCATION);
+
+      return "";
+   }
+
+   try
+   {
+      ptree pt;
+      ini_parser::read_ini(reposFile.absolutePath(), pt);
+
+      if (!pt.get_child_optional("CRAN"))
+      {
+         LOG_ERROR_MESSAGE("Repos file " + reposFile.absolutePath() + " is missing CRAN entry.");
+         return "";
+      }
+
+      std::stringstream ss;
+
+      for (ptree::iterator it = pt.begin(); it != pt.end(); it++)
+      {
+         if (it != pt.begin())
+         {
+            ss << "|";
+         }
+
+         ss << it->first << "|" << it->second.get_value<std::string>();
+      }
+
+      return ss.str();
+   }
+   catch(const std::exception& e)
+   {
+      core::program_options::reportError(
+        "Error reading " + reposFile.absolutePath() + ": " + std::string(e.what()),
+        ERROR_LOCATION);
+
+      return "";
+   }
 }
 
 bool Options::getBoolOverlayOption(const std::string& name)

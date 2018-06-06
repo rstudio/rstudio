@@ -13,6 +13,8 @@
  *
  */
 
+#include "session-config.h"
+
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
@@ -414,6 +416,9 @@ private:
          environment.push_back(std::make_pair("RMARKDOWN_PREVIEW_DIR", tempDir));
       else
          LOG_ERROR(error);
+
+      // pass along the RSTUDIO_VERSION
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", RSTUDIO_VERSION));
 
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
@@ -996,7 +1001,7 @@ void handleRmdOutputRequest(const http::Request& request,
    size_t pos = path.find('/', 1);
    if (pos == std::string::npos)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -1008,7 +1013,7 @@ void handleRmdOutputRequest(const http::Request& request,
    }
    catch (boost::bad_lexical_cast const&)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return ;
    }
 
@@ -1017,7 +1022,7 @@ void handleRmdOutputRequest(const http::Request& request,
    FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
    if (!outputFilePath.exists())
    {
-      pResponse->setNotFoundError(outputFile);
+      pResponse->setNotFoundError(outputFile, request);
       return;
    }
 
@@ -1051,6 +1056,11 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
+
+      // if it's a directory then auto-append index.html
+      if (filePath.isDirectory())
+         filePath = filePath.childPath("index.html");
+
       html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

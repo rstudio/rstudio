@@ -19,7 +19,6 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -35,10 +34,9 @@ public class TextEditingTargetSqlHelper
    }
    
    @Inject
-   void initialize(EventBus eventBus, SourceServerOperations server)
+   void initialize(EventBus eventBus)
    {
       eventBus_ = eventBus;
-      server_ = server;
    }
    
    
@@ -47,7 +45,19 @@ public class TextEditingTargetSqlHelper
       SqlPreview sqlPreview = parseSqlPreview();
       if (sqlPreview != null)
       {
-         String command = "previewSql(statement = \"" + editingTarget.getPath() + "\"," +
+         String statement = "";
+         
+         if (editingTarget.dirtyState().getValue() || editingTarget.getPath() == null)
+         {
+            statement = docDisplay_.getCode();
+         }
+         else
+         {
+            statement = editingTarget.getPath();
+         }
+
+         String statementEscaped = statement.replaceAll("\\\"", "\\\\\"");
+         String command = "previewSql(statement = \"" + statementEscaped + "\"," +
             sqlPreview.args +
             ")";
 
@@ -112,5 +122,4 @@ public class TextEditingTargetSqlHelper
    
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
-   private SourceServerOperations server_;
 }

@@ -44,24 +44,64 @@ namespace libclang {
 
 namespace {
 
+// path and compilation arguments used for system (non-embedded) libclang
+FilePath s_libraryPath;
+std::vector<std::string> s_baseCompileArgs;
+
+std::vector<std::string> defaultCompileArgs(LibraryVersion version)
+{
+   std::vector<std::string> compileArgs;
+
+   // we need to add in the associated libclang headers as
+   // they are not discovered / used by default during compilation
+   FilePath llvmPath = s_libraryPath.parent().parent();
+   boost::format fmt("%1%/lib/clang/%2%/include");
+   fmt % llvmPath.absolutePath() % version.asString();
+   std::string includePath = fmt.str();
+   if (FilePath(includePath).exists())
+     compileArgs.push_back(std::string("-I") + includePath);
+
+   return compileArgs;
+}
+
 std::vector<std::string> systemClangVersions()
 {
    std::vector<std::string> clangVersions;
+   
+#if defined(__APPLE__)
+   clangVersions = {
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib",
+      "/Library/Developer/CommandLineTools/usr/lib/libclang.dylib",
+      "/usr/local/opt/llvm/lib/libclang.dylib"
+   };
+#elif defined(__unix__)
+   // default set of versions
+   clangVersions = {
+      "/usr/lib/libclang.so",
+      "/usr/lib/llvm/libclang.so",
+      "/usr/lib64/libclang.so",
+      "/usr/lib64/llvm/libclang.so",
+   };
+   
+   // iterate through the set of available 'llvm' directories
+   for (const char* prefix : {"/usr/lib", "/usr/lib64"})
+   {
+      FilePath prefixPath(prefix);
+      if (!prefixPath.exists())
+         continue;
+      
+      std::vector<FilePath> directories;
+      Error error = prefixPath.children(&directories);
+      if (error)
+         LOG_ERROR(error);
 
-   // platform-specific
-#ifndef _WIN32
-#ifdef __APPLE__
-   clangVersions.push_back("/Applications/Xcode.app/Contents/"
-                           "Developer/Toolchains/XcodeDefault.xctoolchain"
-                           "/usr/lib/libclang.dylib");
-#else
-   clangVersions.push_back("/usr/lib/llvm/libclang.so");
-   clangVersions.push_back("/usr/lib64/llvm/libclang.so");
-   clangVersions.push_back("/usr/lib/llvm-3.5/lib/libclang.so.1");
-   clangVersions.push_back("/usr/lib/llvm-3.4/lib/libclang.so.1");
+      // generate a path for each 'llvm' directory
+      for (const FilePath& path : directories)
+         if (path.filename().find("llvm") == 0)
+            clangVersions.push_back(path.complete("lib/libclang.so.1").absolutePath());
+   }
 #endif
-#endif
-
+   
    return clangVersions;
 }
 
@@ -112,6 +152,15 @@ bool LibClang::load(EmbeddedLibrary embedded,
             // if this was the embedded version then record it
             if (version == embeddedVersion)
                embedded_ = embedded;
+
+            if (embedded_.empty())
+            {
+               // save the library path
+               s_libraryPath = versionPath;
+
+               // save default compilation arguments
+               s_baseCompileArgs = defaultCompileArgs(this->version());
+            }
 
             // print diagnostics
             ostr << "   LOADED: " << this->version().asString()
@@ -535,7 +584,9 @@ std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
-   if (!embedded_.empty())
+   if (embedded_.empty())
+      compileArgs = s_baseCompileArgs;
+   else
       compileArgs = embedded_.compileArgs(version(), isCppFile);
 
    return compileArgs;

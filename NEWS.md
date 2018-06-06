@@ -30,6 +30,19 @@
 
 * Create PowerPoint presentations with R Markdown
 
+### Package Management
+
+* Specify a primary CRAN URL and secondary CRAN repos from the package preferences pane.
+* Link to a package's primary CRAN page from the packages pane.
+* Configure CRAN repos with a repos.conf configuration file and the `r-cran-repos-file` option.
+* Suggest additional secondary CRAN repos with the `r-cran-repos-url` option.
+
+### Plumber
+
+* Create [Plumber APIs](https://www.rplumber.io/) in RStudio
+* Execute Plumber APIs within RStudio to view Swagger documentation and make test calls to the APIs
+* Publish Plumber APIs to [RStudio Connect](https://www.rstudio.com/products/connect/)
+
 ### Miscellaneous
 
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
@@ -40,7 +53,7 @@
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
-* Upgrade embedded Pandoc to 2.2 (#1807)
+* Upgrade embedded Pandoc to 2.2.1 (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
@@ -52,7 +65,10 @@
 * Add Rename command to File menu for quick rename of current file (#2199)
 * Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
 * Improved support for custom `knitr` engines in R Notebooks (#2401)
+* Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
+* Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
+* Update embedded libclang to 5.0.2 (Windows only)
 
 ### Bug Fixes
 
@@ -85,6 +101,7 @@
 * Fix display of consecutive spaces in the Data Viewer (#2499)
 * Fix issue where '#' in YAML strings would be highlighted as comments (#2591)
 * Fix over-eager loading of `yaml` package when IDE starts up (#2602)
+* Fix issue on Windows with R dialogs showing behind RStudio window (#2901)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
 
@@ -95,6 +112,7 @@
 * Added support for auth-pam-sessions-use-password option in a load balanced setup.
 * Added ability to suspend sessions from user home page.
 * Added hmac signature verification for proxy auth mode with new auth-proxy-require-hmac option in rserver.conf.
+* Add nodes to RStudio Server Pro load-balanced clusters without service interruptions.
 
 ### RStudio Pro Drivers
 

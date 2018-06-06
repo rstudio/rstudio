@@ -25,6 +25,7 @@
 
 #ifdef Q_OS_WIN32
 #include "DesktopWordViewer.hpp"
+#include "DesktopPowerpointViewer.hpp"
 #endif
 
 namespace rstudio {
@@ -254,7 +255,9 @@ private:
    int pendingQuit_;
    QString printText_;
 #ifdef Q_OS_WIN32
+   // viewers for Office file formats
    WordViewer wordViewer_;
+   PowerpointViewer pptViewer_;
 #endif
 
 };

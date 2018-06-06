@@ -1,7 +1,7 @@
 #
 # NotebookData.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -101,16 +101,13 @@
   overrides <- .rs.dataCaptureOverrides()
   lapply(names(overrides), function(overrideName) {
     overrideMap <- overrides[[overrideName]]
-    assign(
-      overrideName,
-      function(x, ...) {
+    overrideFun <- function(x, ...) {
         o <- overrideMap(x, options)
         if (!is.null(o)) {
           overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
         }
-      },
-      envir = as.environment("tools:rstudio")
-    )
+      }
+     .rs.addS3Override(overrideName, overrideFun)
   })
 
   assign(
@@ -126,17 +123,12 @@
     print(as.data.frame(head(x, n)))
   })
 
-  assign(
-    "print.knitr_kable",
-    function(x, ...) {
-      print(
-        knitr::asis_output(x)
-      )
-
-      invisible(x)
-    },
-    envir = as.environment("tools:rstudio")
-  )
+  .rs.addS3Override("print.knitr_kable", function(x, ...) {
+    print(
+      knitr::asis_output(x)
+    )
+    invisible(x)
+  })
 })
 
 .rs.addFunction("releaseDataCapture", function()
@@ -152,18 +144,9 @@
 
   overrides <- .rs.dataCaptureOverrides()
   lapply(names(overrides), function(override) {
-    if (exists(override, envir = as.environment("tools:rstudio"), inherits = FALSE)) {
-      rm(
-        list = override,
-        envir = as.environment("tools:rstudio"),
-        inherits = FALSE
-      )
-    }
+    .rs.removeS3Override(override)
   })
-  rm(list = "print.knitr_kable",
-     envir = as.environment("tools:rstudio"),
-     inherits = FALSE
-  )   
+  .rs.removeS3Override("print.knitr_kable")
 })
 
 .rs.addFunction("readDataCapture", function(path)

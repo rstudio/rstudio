@@ -100,6 +100,11 @@ private:
    SessionLauncher* pSessionLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
+
+#ifdef _WIN32
+   HWINEVENTHOOK eventHook_;
+#endif
+
 };
 
 } // namespace desktop

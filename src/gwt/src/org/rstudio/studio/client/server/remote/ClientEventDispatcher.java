@@ -61,6 +61,8 @@ import org.rstudio.studio.client.htmlpreview.events.ShowPageViewerEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.packages.events.PackageExtensionIndexingCompletedEvent;
+import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
+import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
@@ -174,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartPa
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
+import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
@@ -995,6 +998,16 @@ public class ClientEventDispatcher
          {
             DataOutputResult result = event.getData();
             eventBus_.fireEvent(new DataOutputCompletedEvent(result));
+         }
+         else if (type == ClientEvent.NewDocumentWithCode)
+         {
+            NewDocumentWithCodeEvent.Data result = event.getData();
+            eventBus_.fireEvent(new NewDocumentWithCodeEvent(result));
+         }
+         else if (type == ClientEvent.PlumberViewer)
+         {
+            PlumberAPIParams data = event.getData();
+            eventBus_.fireEvent(new PlumberAPIStatusEvent(data, true));
          }
          else
          {

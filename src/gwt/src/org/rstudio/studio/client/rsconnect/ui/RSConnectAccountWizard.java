@@ -1,7 +1,7 @@
 /*
  * RSConnectAccountWizard.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -122,5 +122,5 @@ public class RSConnectAccountWizard
    public static final String SERVICE_NAME =  "RStudio Connect";
    public static final String SERVICE_DESCRIPTION = 
      "RStudio Connect is a server product from RStudio " +
-     "for secure sharing of applications, reports, and plots.";
+     "for secure sharing of applications, reports, plots, and APIs.";
 }
