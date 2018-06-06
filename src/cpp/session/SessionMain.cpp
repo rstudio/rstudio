@@ -1831,6 +1831,13 @@ int main (int argc, char * const argv[])
 
       bool customRepo = true;
 
+      // When edit disabled, clear CRAN user setting preferences
+      if (!options.allowCRANReposEdit()) {
+        CRANMirror userMirror = userSettings().cranMirror();
+        userMirror.changed = false;
+        userSettings().setCRANMirror(userMirror, false);
+      }
+
       // CRAN repos precedence: user setting then repos file then global server option
       if (userSettings().cranMirror().changed)
          rOptions.rCRANRepos = userSettings().cranMirror().url;
