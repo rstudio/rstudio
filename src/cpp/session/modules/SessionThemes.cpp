@@ -120,12 +120,13 @@ SEXP rs_getThemes()
    // TODO: Windows
    using rstudio::core::FilePath;
 
+   FilePath preInstalledPath = session::options.rResourcesPath().childPath("themes");
 #ifdef _WIN32
-   FilePath globalPath = rstudio::core::system::systemSettingsPath("RStudio\\themes", false);
-   FilePath localPath = rstudio::core::system::userHomePath().childPath(".R\\rstudio\\themes");
+   FilePath globalPath = core::system::systemSettingsPath("RStudio\\themes", false);
+   FilePath localPath = core::system::userHomePath().childPath(".R\\rstudio\\themes");
 #else
    FilePath globalPath("/etc/rstudio/themes/");
-   FilePath localPath = rstudio::core::system::userHomePath().childPath(".R/rstudio/themes/");
+   FilePath localPath = core::system::userHomePath().childPath(".R/rstudio/themes/");
 #endif
 
    const char* k_globalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
@@ -142,6 +143,7 @@ SEXP rs_getThemes()
    // Intentionally get global themes before getting user specific themes so that user specific
    // themes will override global ones.
    ThemeMap themeMap;
+   getThemesInLocation(preInstalledPath, themeMap);
    getThemesInLocation(globalPath, themeMap);
    getThemesInLocation(localPath, themeMap);
    // TODO: get default themes.
