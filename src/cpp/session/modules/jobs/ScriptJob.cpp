@@ -86,7 +86,7 @@ private:
          // prepare the environment for the script by exporting the current env
          setJobStatus(job_, "Preparing environment");
          r::exec::RFunction save("save.image");
-         save.addParam("file", import_.absolutePath());
+         save.addParam("file", string_utils::utf8ToSystem(import_.absolutePath()));
          save.addParam("safe", false); // no need to write a temp file
          error = save.call();
          if (error)
@@ -214,7 +214,7 @@ private:
       {
          setJobStatus(job_, "Loading results");
          r::exec::RFunction load("load");
-         load.addParam("file", export_.absolutePath());
+         load.addParam("file", string_utils::utf8ToSystem(export_.absolutePath()));
          if (spec_.exportEnv() == "R_GlobalEnv")
          {
             // user requested that results be loaded into the global environment
