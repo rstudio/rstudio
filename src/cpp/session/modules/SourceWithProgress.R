@@ -14,12 +14,14 @@
 #
 
 emitProgress <- function(kind, arg, con) {
-   cat(paste0("__rs_progress_0__ ", kind, " __ ", arg, 
-              " __rs_progress_1__\n"), file = con)
+   if (!is.null(con)) {
+      cat(paste0("__rs_progress_0__ ", kind, " __ ", arg, 
+                 " __rs_progress_1__\n"), file = con)
+   }
 }
 
-sourceWithProgress <- function(script,  # path to R script
-                               con,     # connection to write progress
+sourceWithProgress <- function(script,              # path to R script
+                               con = NULL,          # connection to write progress
                                importRdata = NULL,  # RData file to import on start 
                                exportRdata = NULL   # RData file to export when done
                                ) {

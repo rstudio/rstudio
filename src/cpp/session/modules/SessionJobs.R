@@ -85,7 +85,7 @@
       stop("Must specify path to R script to run.")
    if (!file.exists(path))
       stop("The R script '", path, "' does not exist.")
-   .Call("rs_runScriptJob", path, PACKAGE = "(embedding)")
+   .Call("rs_runScriptJob", path, workingDir, importEnv, exportEnv, PACKAGE = "(embedding)")
    invisible(NULL)
 })
 

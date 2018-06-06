@@ -45,12 +45,6 @@ progressResult <- function(path) {
    processOutput(readLines(p))
 }
 
-test_that("statements in script are executed", {
-   progressResult("resources/source-progress/assignment.R")
-
-   expect_equal(2, var)
-})
-
 test_that("progress reports include expected values", {
    output <- progressResult("resources/source-progress/three.R")
 
@@ -59,9 +53,37 @@ test_that("progress reports include expected values", {
    expect_equal("1", output[["completed"]])
 })
 
-
 test_that("sections in source are emitted as status", {
    output <- progressResult("resources/source-progress/sections.R")
 
    expect_equal("Compute", output[["section"]])
+})
+
+test_that("environment import/export works", {
+   # create a new environment with a couple of values
+   inputEnv <- new.env(parent = emptyenv())
+   assign("x", 1, envir = inputEnv)
+   assign("y", 2, envir = inputEnv)
+
+   # write the environment to disk
+   inputRdata <- tempfile(fileext = ".Rdata")
+   on.exit(file.remove(inputRdata), add = TRUE)
+   save(list = ls(inputEnv), file = inputRdata, envir = inputEnv)
+
+   # create filename for output
+   outputRdata <- tempfile(fileext = ".Rdata")
+   on.exit(file.remove(outputRdata), add = TRUE)
+
+   # source the script; it simply adds x and y to make z
+   sourceWithProgress(script = "resources/source-progress/assignment.R",
+                      con = NULL,
+                      importRdata = inputRdata,
+                      exportRdata = outputRdata)
+
+   # load results into a new environment
+   outputEnv <- new.env(parent = emptyenv())
+   load(file = outputRdata, envir = outputEnv)
+
+   # validate results
+   expect_equal(3, get("z", envir = outputEnv))
 })
