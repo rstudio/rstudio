@@ -198,6 +198,11 @@ void Job::setProgress(int units)
       setState(JobSucceeded);
 }
 
+void Job::setProgressMax(int max)
+{
+   max_ = max;
+}
+
 void Job::setStatus(const std::string& status)
 {
    status_ = status;

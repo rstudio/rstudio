@@ -15,29 +15,29 @@
 
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
-   .Call("rs_enqueClientEvent", type, data)
+   .Call("rs_enqueClientEvent", type, data, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("invokeRpc", function(method, ...) 
 {
    # callback to session to invoke RPC
    args <- list(...)
-   .Call("rs_invokeRpc", method, .rs.scalarListFromList(args))
+   .Call("rs_invokeRpc", method, .rs.scalarListFromList(args), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("showErrorMessage", function(title, message)
 {
-   .Call("rs_showErrorMessage", title, message)
+   .Call("rs_showErrorMessage", title, message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("logErrorMessage", function(message)
 {
-   .Call("rs_logErrorMessage", message)
+   .Call("rs_logErrorMessage", message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("logWarningMessage", function(message)
 {
-   .Call("rs_logWarningMessage", message)
+   .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getSignature", function(obj)
@@ -217,7 +217,7 @@
 {
   pkgDir <- find.package(name)
   .rs.forceUnloadPackage(name)
-  .Call("rs_installPackage",  archive, dirname(pkgDir))
+  .Call("rs_installPackage",  archive, dirname(pkgDir), PACKAGE = "(embedding)")
 })
 
 
@@ -247,7 +247,7 @@
          yesLabel,
          noLabel,
          includeCancel,
-         yesIsDefault)
+         yesIsDefault, PACKAGE = "(embedding)")
 
    if (result == 0)
       "yes"
@@ -262,17 +262,17 @@
 .rs.addFunction("restartR", function(afterRestartCommand = "") {
    afterRestartCommand <- paste(as.character(afterRestartCommand),
                                 collapse = "\n")
-   .Call("rs_restartR", afterRestartCommand)
+   .Call("rs_restartR", afterRestartCommand, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("markdownToHTML", function(content) {
-   .Call("rs_markdownToHTML", content)
+   .Call("rs_markdownToHTML", content, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readUiPref", prefName)
+  .Call("rs_readUiPref", prefName, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
@@ -280,17 +280,17 @@
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value)))
+  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("removeUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  invisible(.Call("rs_removeUiPref", prefName))
+  invisible(.Call("rs_removeUiPref", prefName, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {
-  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49))
+  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49, PACKAGE = "(embedding)"))
 })
 
 
@@ -456,3 +456,8 @@ if (getRversion() < "3.5") {
       }
    })
 }
+
+.rs.addFunction("sessionModulePath", function() {
+   .Call("rs_sessionModulePath", PACKAGE = "(embedding)")
+})
+

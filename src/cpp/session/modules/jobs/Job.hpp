@@ -95,6 +95,7 @@ public:
    time_t completed() const;
 
    void setProgress(int units);
+   void setProgressMax(int units);
    void setStatus(const std::string& status);
    void setState(JobState state);
 

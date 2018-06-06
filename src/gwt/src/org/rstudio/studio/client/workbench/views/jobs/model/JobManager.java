@@ -19,7 +19,14 @@ import java.util.Collections;
 import java.util.Date;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -27,7 +34,11 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -37,19 +48,36 @@ import com.google.inject.Singleton;
 @Singleton
 public class JobManager implements JobRefreshEvent.Handler,
                                    JobUpdatedEvent.Handler,
+                                   JobRunScriptEvent.Handler,
                                    SessionInitHandler
 {
+   interface Binder extends CommandBinder<Commands, JobManager>
+   {
+   }
+
    @Inject
    public JobManager(Provider<Session> pSession,
-                     EventBus events)
+                     EventBus events,
+                     Commands commands,
+                     Binder binder,
+                     JobsServerOperations server,
+                     GlobalDisplay display,
+                     Provider<SourceWindowManager> pSourceManager)
    {
       events_ = events;
       pSession_ = pSession;
       state_ = JobState.create();
+      server_ = server;
+      display_ = display;
+      pSourceManager_ = pSourceManager;
+      binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(JobRefreshEvent.TYPE, this);
       events.addHandler(JobUpdatedEvent.TYPE, this);
+      events.addHandler(JobRunScriptEvent.TYPE, this);
    }
+   
+   // Event handlers ---------------------------------------------------------
    
    @Override
    public void onSessionInit(SessionInitEvent sie)
@@ -91,6 +119,48 @@ public class JobManager implements JobRefreshEvent.Handler,
       
       // update global status 
       emitJobProgress();
+   }
+   
+   @Override
+   public void onJobRunScript(JobRunScriptEvent event)
+   {
+      showJobLauncherDialog(event.path());
+   }
+
+   // Command handlers -------------------------------------------------------
+   
+   @Handler
+   public void onStartJob()
+   {
+      // the default is to ask the user to supply a path to a script to run, but
+      // if currently open file in the editor happens to be a .R script, we
+      // default to that.
+      String script = "";
+      String path = pSourceManager_.get().getCurrentDocPath();
+      if (!StringUtil.isNullOrEmpty(path) &&
+          FileSystemItem.getExtensionFromPath(path).toLowerCase() == ".r")
+      {
+         script = path;
+      }
+
+      showJobLauncherDialog(script);
+   }
+   
+   @Handler
+   public void onClearJobs()
+   {
+      display_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION, 
+            "Remove Completed Jobs", 
+            "Do you want to remove completed jobs from the list of jobs?\n\nYou can't undo this.", 
+            false, // include cancel
+            () ->  server_.clearJobs(new VoidServerRequestCallback()),
+            null,  // do nothing on No
+            null,  // do nothing on Cancel
+            "Remove jobs", 
+            "Cancel", 
+            false // yes is not default
+            );
    }
    
    /**
@@ -234,6 +304,26 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    // Private methods ---------------------------------------------------------
    
+   private void showJobLauncherDialog(String path)
+   {
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job", 
+            path,
+            spec ->
+            {
+               // check to see if we know the encoding of this document
+               SourceDocument doc = pSourceManager_.get().getDocFromPath(spec.path());
+               if (doc != null &&
+                   !StringUtil.isNullOrEmpty(doc.getEncoding()))
+               {
+                  spec.setEncoding(doc.getEncoding());
+               }
+               
+               // tell the server to start running this script
+               server_.startJob(spec, new VoidServerRequestCallback());
+            });
+      dialog.showModal();
+   }
+   
    private void emitJobProgress()
    {
       LocalJobProgress progress = summarizeProgress(state_);
@@ -274,6 +364,10 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private JobState state_;
 
+   // injected
    private final EventBus events_;
    private final Provider<Session> pSession_;
+   private final JobsServerOperations server_;
+   private final Provider<SourceWindowManager> pSourceManager_;
+   private final GlobalDisplay display_;
 }

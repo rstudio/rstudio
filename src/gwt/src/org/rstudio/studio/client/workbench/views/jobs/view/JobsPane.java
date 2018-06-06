@@ -45,12 +45,14 @@ public class JobsPane extends WorkbenchPane
                    final EventBus events)
    {
       super("Jobs");
+      commands_ = commands;
+      events_ = events;
 
       allJobs_ = new ToolbarButton(
             commands.helpBack().getImageResource(), evt ->
       {
          // deselect current job 
-         events.fireEvent(new JobSelectionEvent(current_, false));
+         events.fireEvent(new JobSelectionEvent(current_, false, true));
       });
       allJobs_.setTitle("View all jobs");
       
@@ -86,13 +88,19 @@ public class JobsPane extends WorkbenchPane
       {
          case JobConstants.JOB_ADDED:
             list_.addJob(job);
+            
+            // bring the pane to the front so the new job is visible
+            bringToFront();
+            
+            // select the job
+            events_.fireEvent(new JobSelectionEvent(job.id, true, false));
             break;
 
          case JobConstants.JOB_REMOVED:
             // if this is the job we're currently tracking, do so no longer
             if (job.id == current_)
             {
-               hideJobOutput(job.id);
+               hideJobOutput(job.id, true);
             }
             
             // clean up 
@@ -101,9 +109,22 @@ public class JobsPane extends WorkbenchPane
 
          case JobConstants.JOB_UPDATED:
             list_.updateJob(job);
-            if (job.id == current_ && progress_ != null)
+            if (job.id == current_)
             {
-               progress_.showProgress(new LocalJobProgress(job));
+               if (job.completed > 0 && progress_ != null)
+               {
+                  progress_.setComplete();
+               }
+               else
+               {
+                  // update progress
+                  if (progress_ == null)
+                  {
+                     progress_ = new JobProgress();
+                     toolbar_.addLeftWidget(progress_);
+                  }
+                  progress_.showProgress(new LocalJobProgress(job));
+               }
             }
             break;
             
@@ -142,7 +163,7 @@ public class JobsPane extends WorkbenchPane
    }
 
    @Override
-   public void showJobOutput(String id, JsArray<JobOutput> output)
+   public void showJobOutput(String id, JsArray<JobOutput> output, boolean animate)
    {
       // clear any existing output in the pane
       output_.clearOutput();
@@ -157,9 +178,16 @@ public class JobsPane extends WorkbenchPane
       
       // scroll to show all output so far
       output_.scrollToBottom();
+      
+      // remove the progress for the current job if we're showing it
+      if (progress_ != null)
+      {
+         toolbar_.removeLeftWidget(progress_);
+         progress_ = null;
+      }
 
       // show the output pane
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, true, () -> 
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, animate, () -> 
       {
          installJobToolbar();
       });
@@ -185,7 +213,7 @@ public class JobsPane extends WorkbenchPane
    
 
    @Override
-   public void hideJobOutput(String id)
+   public void hideJobOutput(String id, boolean animate)
    {
       // make sure this output belongs to the job currently being displayed
       if (current_ == null || id != current_)
@@ -195,7 +223,7 @@ public class JobsPane extends WorkbenchPane
          return;
       }
       
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft, true, () -> 
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft, animate, () -> 
       {
          installMainToolbar();
       });
@@ -222,20 +250,37 @@ public class JobsPane extends WorkbenchPane
    {
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(allJobs_);
-      if (progress_ == null)
-      {
-         progress_ = new JobProgress();
-      }
+
+      // if we're currently tracking a job:
       if (current_ != null)
       {
-         progress_.showProgress(new LocalJobProgress(list_.getJob(current_)));
+         // show the progress bar if the job hasn't been completed yet
+         Job job = list_.getJob(current_);
+
+         // clear previous progress
+         if (progress_ != null)
+            toolbar_.removeLeftWidget(progress_);
+         
+         // show progress
+         progress_ = new JobProgress();
+         toolbar_.addLeftWidget(progress_);
+         progress_.showProgress(new LocalJobProgress(job));
+
+         // if job is complete, mark that
+         if (job.completed > 0)
+         {
+            progress_.setComplete();
+         }
       }
-      toolbar_.addLeftWidget(progress_);
    }
    
    private void installMainToolbar()
    {
       toolbar_.removeAllWidgets();
+      toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+      progress_ = null;
    }
 
    // widgets
@@ -248,4 +293,8 @@ public class JobsPane extends WorkbenchPane
 
    // internal state
    String current_;
+
+   // injected
+   final Commands commands_;
+   final EventBus events_;
 }

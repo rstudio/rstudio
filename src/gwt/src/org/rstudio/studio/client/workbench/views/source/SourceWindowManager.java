@@ -308,6 +308,25 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          return getMainWindowSourceDocs();
    }
    
+   /**
+    * Given a path to a source document, returns a data structure with information about the document.
+    * 
+    * @param path The path to the document.
+    * @return A data structure with document metadata, or null if no metadata was found.
+    */
+   public SourceDocument getDocFromPath(String path)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (StringUtil.equals(docs.get(i).getPath(), path))
+         {
+            return docs.get(i);
+         }
+      }
+      return null;
+   }
+   
    public boolean isSourceWindowOpen(String windowId)
    {
       return sourceWindows_.containsKey(windowId);
@@ -315,20 +334,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public String getWindowIdOfDocPath(String path)
    {
-      JsArray<SourceDocument> docs = getSourceDocs();
-      for (int i = 0; i < docs.length(); i++)
-      {
-         if (docs.get(i).getPath() != null && 
-             docs.get(i).getPath().equals(path))
-         {
-            String windowId = docs.get(i).getSourceWindowId();
-            if (windowId != null)
-               return windowId;
-            else
-               return "";
-         }
-      }
-      return null;
+      SourceDocument doc = getDocFromPath(path);
+      if (path == null)
+         return null;
+      String windowId = doc.getSourceWindowId();
+      if (windowId != null)
+         return windowId;
+      else
+         return "";
    }
    
    public String getWindowIdOfDocId(String id)

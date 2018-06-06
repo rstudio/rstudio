@@ -3203,17 +3203,32 @@ well as menu structures (for main menu and popup menus).
          desc="View the log for the Spark connection"
          windowMode="main"/> 
          
-     <cmd id="sparkUI"
+    <cmd id="sparkUI"
          menuLabel="SparkUI"
          buttonLabel = "SparkUI"
          desc="View the browser UI for the Spark connection"
          windowMode="main"/> 
      
-     <cmd id="sparkHelp"
+    <cmd id="sparkHelp"
          menuLabel="Using Spark with RStudio"
          buttonLabel=""
          desc="Help on using Spark with RStudio"
          windowMode="main"/>
-     
+
+    <cmd id="startJob"
+         menuLabel="Start Job..."
+         buttonLabel="Start Job"
+         desc="Run an R script as a job"
+         windowMode="main"/>
+
+    <cmd id="sourceAsJob"
+         menuLabel="Source as Job..."
+         desc="Run the current R script as a job"
+         windowMode="any"/>
+
+    <cmd id="clearJobs"
+         menuLabel="Clear Jobs"
+         desc="Clean up all completed jobs"
+         windowMode="main"/>
         
 </commands>
