@@ -252,7 +252,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(true);
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
-         cranMirror_ = packagesPrefs.getCRANMirror();
+         cranMirrorOriginal_ = cranMirror_ = packagesPrefs.getCRANMirror();
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
             cranMirror_.getHost().equals("Custom")
@@ -309,12 +309,12 @@ public class PackagesPreferencesPane extends PreferencesPane
    {
       ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
 
-      if (secondaryRepos.size() != cranMirror_.getSecondaryRepos().size())
+      if (secondaryRepos.size() != cranMirrorOriginal_.getSecondaryRepos().size())
          return true;
 
       for (int i = 0; i < secondaryRepos.size(); i++)
       {
-         if (secondaryRepos.get(i) != cranMirror_.getSecondaryRepos().get(i))
+         if (secondaryRepos.get(i) != cranMirrorOriginal_.getSecondaryRepos().get(i))
             return true;
       }
 
@@ -383,6 +383,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final MirrorsServerOperations server_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private CRANMirror cranMirrorOriginal_ = CRANMirror.empty();
    private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;
