@@ -57,6 +57,8 @@ void removeCompletedJobs();
 
 void endAllJobStreaming();
 
+bool localJobsRunning();
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

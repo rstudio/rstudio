@@ -348,6 +348,12 @@ core::json::Object jobState()
    return jobsAsJson();
 }
 
+bool isSuspendable()
+{
+   // don't suspend while we're running local jobs
+   return !localJobsRunning();
+}
+
 core::Error initialize()
 {
    // register API handlers

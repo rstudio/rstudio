@@ -177,6 +177,18 @@ void endAllJobStreaming()
    }
 }
 
+bool localJobsRunning()
+{
+   for (auto& job: s_jobs)
+   {
+      if (!job.second->complete())
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

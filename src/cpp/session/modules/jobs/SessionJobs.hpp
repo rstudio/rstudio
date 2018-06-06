@@ -31,6 +31,8 @@ core::Error initialize();
 
 core::json::Object jobState();
 
+bool isSuspendable();
+
 } // namespace jobs
 } // namespace modules
 } // namespace session
