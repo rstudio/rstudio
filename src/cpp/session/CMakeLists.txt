@@ -37,9 +37,6 @@ endif()
 # if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
 #   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 # endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/plumber")
-  message(FATAL_ERROR "plumber package not found (re-run install-dependencies script to install)")
-endif()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
@@ -490,11 +487,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    #file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
    #install(FILES ${RSCONNECT_PACKAGE}
    #        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
-
-   # install plumber package
-   file(GLOB PLUMBER_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/plumber*.tar.gz")
-   install(FILES ${PLUMBER_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
