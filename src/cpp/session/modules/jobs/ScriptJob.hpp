@@ -37,18 +37,18 @@ public:
          const std::string& encoding,
          const core::FilePath& workingDir,
          bool importEnv,
-         bool exportEnv);
+         const std::string& exportEnv);
    core::FilePath path();
    std::string encoding();
    core::FilePath workingDir();
    bool importEnv();
-   bool exportEnv();
+   std::string exportEnv();
 private:
    core::FilePath path_;
    std::string encoding_;
    core::FilePath workingDir_;
    bool importEnv_;
-   bool exportEnv_;
+   std::string exportEnv_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec);

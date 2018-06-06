@@ -220,7 +220,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
             r::sexp::safeAsString(encoding),
             module_context::resolveAliasedPath(workingDir),
             r::sexp::asLogical(importEnv),
-            r::sexp::asLogical(exportEnv)));
+            r::sexp::safeAsString(exportEnv)));
    return R_NilValue;
 }
 
@@ -261,7 +261,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    std::string workingDir;
    std::string encoding;
    bool importEnv;
-   bool exportEnv;
+   std::string exportEnv;
    Error error = json::readParams(request.params, &jobSpec);
    if (error)
       return error;

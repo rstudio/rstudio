@@ -23,6 +23,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class JobLauncherControls extends Composite
@@ -40,6 +41,10 @@ public class JobLauncherControls extends Composite
       dir_ = new DirectoryChooserTextBox("Working Directory", null);
 
       initWidget(uiBinder.createAndBindUi(this));
+      
+      exportEnv_.addItem("Do nothing", "");
+      exportEnv_.addItem("Copy objects to global environment", "R_GlobalEnv");
+      exportEnv_.addItem("Copy objects to new environment", "local");
    }
    
    public void setScriptPath(String path)
@@ -63,13 +68,18 @@ public class JobLauncherControls extends Composite
       return importEnv_.getValue();
    }
    
-   public boolean exportEnv()
+   public String exportEnv()
    {
-      return exportEnv_.getValue();
+      String env = exportEnv_.getSelectedValue();
+      if (env == "local")
+      {
+         env = FileSystemItem.createFile(file_.getText()).getStem() + "_results";
+      }
+      return env;
    }
 
    @UiField(provided=true) FileChooserTextBox file_;
    @UiField(provided=true) DirectoryChooserTextBox dir_;
    @UiField CheckBox importEnv_;
-   @UiField CheckBox exportEnv_;
+   @UiField ListBox exportEnv_;
 }

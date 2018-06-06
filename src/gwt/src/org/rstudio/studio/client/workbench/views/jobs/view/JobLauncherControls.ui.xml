@@ -24,7 +24,12 @@
 		<rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
 		<rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
 		<g:Label styleName="{style.header}" text="Environment"></g:Label>
-		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" text="Copy global environment" ui:field="importEnv_"></g:CheckBox>
-		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" text="Import created values" ui:field="exportEnv_"></g:CheckBox>
+		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" 
+		            text="Run job with copy of global environment" 
+		            ui:field="importEnv_"></g:CheckBox>
+		<g:HorizontalPanel>
+			<g:InlineLabel text="After job:"></g:InlineLabel>
+			<g:ListBox styleName="{style.check} {style.spaced}" ui:field="exportEnv_"></g:ListBox>
+		</g:HorizontalPanel>
 	</g:VerticalPanel>
 </ui:UiBinder> 

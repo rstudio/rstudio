@@ -40,7 +40,7 @@ public class JobLaunchSpec extends JavaScriptObject
       return this.import_env;
    }-*/;
    
-   public final native boolean exportEnv() /*-{
+   public final native String exportEnv() /*-{
       return this.export_env;
    }-*/;
    
@@ -49,7 +49,7 @@ public class JobLaunchSpec extends JavaScriptObject
       String encoding,
       String workingDir,
       boolean importEnv,
-      boolean exportEnv) /*-{
+      String exportEnv) /*-{
       return { "path": path,
                "encoding": encoding,
                "working_dir": workingDir,

@@ -98,8 +98,9 @@ private:
          setJobStatus(job_, "");
       }
 
-      if (spec_.exportEnv())
+      if (!spec_.exportEnv().empty())
       {
+         // if exporting, create a file to host the exported values
          FilePath::tempFilePath(&export_);
          exportRdata = "'" + string_utils::utf8ToSystem(export_.absolutePath()) + "'";
       }
@@ -206,15 +207,32 @@ private:
    void onCompleted(int exitStatus)
    {
       Error error;
+      r::sexp::Protect protect;
       
       // export results if requested
-      if (spec_.exportEnv() && export_.exists())
+      if (!spec_.exportEnv().empty() && export_.exists())
       {
          setJobStatus(job_, "Loading results");
          r::exec::RFunction load("load");
          load.addParam("file", export_.absolutePath());
-         load.addParam("envir", R_GlobalEnv);
-         error = load.call();
+         if (spec_.exportEnv() == "R_GlobalEnv")
+         {
+            // user requested that results be loaded into the global environment
+            load.addParam("envir", R_GlobalEnv);
+         }
+         else
+         {
+            // user requested a named local environment
+            SEXP localEnv = R_NilValue;
+            error = r::exec::evaluateString(
+                  "`" + spec_.exportEnv() + "` <- new.env(parent = emptyenv())",
+                  &localEnv, &protect);
+            load.addParam("envir", localEnv);
+         }
+         if (!error)
+         {
+            error = load.call();
+         }
          if (error)
          {
             job_->addOutput("Error loading results: " + error.summary() + "\n", true);
@@ -288,7 +306,7 @@ ScriptLaunchSpec::ScriptLaunchSpec(
       const std::string& encoding,
       const core::FilePath& workingDir,
       bool importEnv,
-      bool exportEnv):
+      const std::string& exportEnv):
    path_(path),
    encoding_(encoding),
    workingDir_(workingDir),
@@ -307,7 +325,7 @@ FilePath ScriptLaunchSpec::workingDir()
    return workingDir_;
 }
 
-bool ScriptLaunchSpec::exportEnv()
+std::string ScriptLaunchSpec::exportEnv()
 {
    return exportEnv_;
 }
