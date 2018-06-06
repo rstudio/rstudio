@@ -314,7 +314,7 @@ bool ScriptLaunchSpec::importEnv()
    return importEnv_;
 }
 
-Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pJobId)
+Error startScriptJob(const ScriptLaunchSpec& spec)
 {
    boost::shared_ptr<ScriptJob> job = ScriptJob::create(spec,
          [&]() 
