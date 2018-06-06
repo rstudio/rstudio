@@ -1829,19 +1829,27 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
-      CRANMirror emptyMirror;
-
-      // When edit disabled, clear user setting to fix previous versions
-      if (!options.allowCRANReposEdit())
-        userSettings().setCRANMirror(emptyMirror);
+      bool customRepo = true;
 
       // CRAN repos precedence: user setting then repos file then global server option
-      if (!userSettings().cranMirror().url.empty())
+      if (userSettings().cranMirror().changed)
          rOptions.rCRANRepos = userSettings().cranMirror().url;
       else if (!options.rCRANMultipleRepos().empty())
          rOptions.rCRANRepos = options.rCRANMultipleRepos();
       else if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
+      else {
+         rOptions.rCRANRepos = "https://cran.rstudio.com/";
+         customRepo = false;
+      }
+
+      if (!userSettings().cranMirror().changed) {
+         CRANMirror defaultMirror;
+         defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
+         defaultMirror.host = customRepo ? "Custom" : "RStudio";
+         defaultMirror.url = rOptions.rCRANRepos;
+         userSettings().setCRANMirror(defaultMirror, false);
+      }
 
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =

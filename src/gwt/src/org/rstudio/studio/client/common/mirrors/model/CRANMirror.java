@@ -33,6 +33,8 @@ public class CRANMirror extends JavaScriptObject
       cranMirror.host = "";
       cranMirror.url = "";
       cranMirror.country = "";
+      cranMirror.changed = false;
+
       return cranMirror;
    }-*/;
    
@@ -66,7 +68,15 @@ public class CRANMirror extends JavaScriptObject
    }-*/;
 
    private final native String getError() /*-{
-      this.error = error;
+      return this.error;
+   }-*/;
+
+   public final native boolean getChanged() /*-{
+      return this.changed;
+   }-*/;
+
+   public final native void setChanged(boolean changed) /*-{
+      this.changed = changed;
    }-*/;
 
    public final String getURL()
