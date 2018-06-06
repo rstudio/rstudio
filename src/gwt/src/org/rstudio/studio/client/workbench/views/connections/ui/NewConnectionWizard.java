@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionWizardRequestCloseEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -45,6 +46,15 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server)
    {
+      events.addHandler(NewConnectionWizardRequestCloseEvent.TYPE, 
+         new NewConnectionWizardRequestCloseEvent.Handler()
+      {
+         @Override
+         public void onNewConnectionWizardRequestClose(NewConnectionWizardRequestCloseEvent event)
+         {
+            closeDialog();
+         }
+      });
    }
 
    public NewConnectionWizard(NewConnectionContext context,

@@ -322,7 +322,7 @@
    lines <- readLines(odbcinstPath)
    data <- list()
    
-   currentDriver <- NULL
+   currentDriver <- "__header__"
    
    for (line in lines) {
       # Is header?
@@ -349,7 +349,10 @@
    for (name in names(data)) {
       lines <- c(
          lines, 
-         paste("[", name, "]", sep = "")
+         if (identical(name, "__header__")) 
+            ""
+         else
+            paste("[", name, "]", sep = "")
       )
       
       lines <- c(

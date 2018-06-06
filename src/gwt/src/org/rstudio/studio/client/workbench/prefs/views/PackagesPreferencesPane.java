@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -97,15 +98,12 @@ public class PackagesPreferencesPane extends PreferencesPane
                            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
                         }
 
-                        cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
-
                         secondaryReposWidget_.setCranRepoUrl(
                            cranMirror_.getURL(),
                            cranMirror_.getHost().equals("Custom")
                         );
                      }     
                   });
-                 
                }
             },
             true);
@@ -254,7 +252,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(true);
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
-         cranMirror_ = packagesPrefs.getCRANMirror();
+         cranMirrorOriginal_ = cranMirror_ = packagesPrefs.getCRANMirror();
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
             cranMirror_.getHost().equals("Custom")
@@ -273,6 +271,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          
          secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
+      
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
       useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -306,18 +305,38 @@ public class PackagesPreferencesPane extends PreferencesPane
       useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
    }
 
+   private boolean secondaryReposHasChanged()
+   {
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
+
+      if (secondaryRepos.size() != cranMirrorOriginal_.getSecondaryRepos().size())
+         return true;
+
+      for (int i = 0; i < secondaryRepos.size(); i++)
+      {
+         if (secondaryRepos.get(i) != cranMirrorOriginal_.getSecondaryRepos().get(i))
+            return true;
+      }
+
+      return false;
+   }
+
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
       boolean reload = super.onApply(rPrefs);
 
       String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
+
+      if (!mirrotTextValue.equals(cranMirrorStored_))
+         cranMirror_.setChanged(true);
+
       boolean cranRepoChangedToUrl = !mirrotTextValue.equals(cranMirrorStored_) && 
                                       mirrotTextValue.startsWith("http");
-      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
-
-      if (cranRepoChangedToUrl ||
-          secondaryRepos.size() != cranMirror_.getSecondaryRepos().size()) {
+      
+      if (cranRepoChangedToUrl || secondaryReposHasChanged())
+      {
+         cranMirror_.setChanged(true);
 
          if (cranRepoChangedToUrl)
          {
@@ -326,6 +345,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
             cranMirror_.setHost("Custom");
             cranMirror_.setName("Custom");
+            cranMirror_.setChanged(true);
          }
          
          ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
@@ -363,6 +383,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final MirrorsServerOperations server_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private CRANMirror cranMirrorOriginal_ = CRANMirror.empty();
    private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;

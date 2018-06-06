@@ -47,6 +47,7 @@ struct CRANMirror
    std::string host;
    std::string url;
    std::string country;
+   bool changed;
 };
 
 struct BioconductorMirror
@@ -155,6 +156,7 @@ public:
 
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);
+   void setCRANMirror(const CRANMirror& cranMirror, bool update);
 
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);

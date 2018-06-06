@@ -144,6 +144,7 @@
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionTests.hpp"
+#include "modules/SessionThemes.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionHistory.hpp"
@@ -520,6 +521,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::reticulate::initialize)
       (modules::tests::initialize)
       (modules::jobs::initialize)
+      (modules::themes::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -1827,19 +1829,34 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
-      CRANMirror emptyMirror;
+      bool customRepo = true;
 
-      // When edit disabled, clear user setting to fix previous versions
-      if (!options.allowCRANReposEdit())
-        userSettings().setCRANMirror(emptyMirror);
+      // When edit disabled, clear CRAN user setting preferences
+      if (!options.allowCRANReposEdit()) {
+        CRANMirror userMirror = userSettings().cranMirror();
+        userMirror.changed = false;
+        userSettings().setCRANMirror(userMirror, false);
+      }
 
       // CRAN repos precedence: user setting then repos file then global server option
-      if (!userSettings().cranMirror().url.empty())
+      if (userSettings().cranMirror().changed)
          rOptions.rCRANRepos = userSettings().cranMirror().url;
       else if (!options.rCRANMultipleRepos().empty())
          rOptions.rCRANRepos = options.rCRANMultipleRepos();
       else if (!options.rCRANRepos().empty())
          rOptions.rCRANRepos = options.rCRANRepos();
+      else {
+         rOptions.rCRANRepos = "https://cran.rstudio.com/";
+         customRepo = false;
+      }
+
+      if (!userSettings().cranMirror().changed) {
+         CRANMirror defaultMirror;
+         defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
+         defaultMirror.host = customRepo ? "Custom" : "RStudio";
+         defaultMirror.url = rOptions.rCRANRepos;
+         userSettings().setCRANMirror(defaultMirror, false);
+      }
 
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =

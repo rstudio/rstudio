@@ -1120,21 +1120,6 @@ bool isWebsiteDirectory(const FilePath& projectDir)
    }
 }
 
-// find the website root (if any) for the given filepath
-FilePath websiteRootDirectory(const FilePath& filePath)
-{
-   FilePath dir = filePath.parent();
-   while (!dir.empty())
-   {
-      if (r_util::isWebsiteDirectory(dir))
-         return dir;
-
-      dir = dir.parent();
-   }
-
-   return FilePath();
-}
-
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

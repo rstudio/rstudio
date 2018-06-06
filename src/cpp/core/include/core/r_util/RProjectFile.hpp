@@ -156,9 +156,6 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig);
 // indicate whether the given directory is an R Markdown website
 bool isWebsiteDirectory(const FilePath& projectDir);
 
-// discover website root directory for a filePath
-FilePath websiteRootDirectory(const FilePath& filePath);
-
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
