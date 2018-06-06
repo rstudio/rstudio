@@ -113,6 +113,7 @@ private:
          "'); sourceWithProgress(script = '" +
          string_utils::utf8ToSystem(
                string_utils::singleQuotedStrEscape(spec_.path().absolutePath())) + "', "
+         "encoding = '" + spec_.encoding() + "', "
          "con = stdout(), "
          "importRdata = " + importRdata + ", "
          "exportRdata = " + exportRdata + ");";
@@ -284,10 +285,12 @@ std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
 
 ScriptLaunchSpec::ScriptLaunchSpec(
       const core::FilePath& path,
+      const std::string& encoding,
       const core::FilePath& workingDir,
       bool importEnv,
       bool exportEnv):
    path_(path),
+   encoding_(encoding),
    workingDir_(workingDir),
    importEnv_(importEnv),
    exportEnv_(exportEnv)
@@ -312,6 +315,11 @@ bool ScriptLaunchSpec::exportEnv()
 bool ScriptLaunchSpec::importEnv()
 {
    return importEnv_;
+}
+
+std::string ScriptLaunchSpec::encoding()
+{
+   return encoding_;
 }
 
 Error startScriptJob(const ScriptLaunchSpec& spec)

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -309,6 +310,15 @@ public class JobManager implements JobRefreshEvent.Handler,
             path,
             spec ->
             {
+               // check to see if we know the encoding of this document
+               SourceDocument doc = pSourceManager_.get().getDocFromPath(spec.path());
+               if (doc != null &&
+                   !StringUtil.isNullOrEmpty(doc.getEncoding()))
+               {
+                  spec.setEncoding(doc.getEncoding());
+               }
+               
+               // tell the server to start running this script
                server_.startJob(spec, new VoidServerRequestCallback());
             });
       dialog.showModal();

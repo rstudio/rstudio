@@ -20,17 +20,18 @@ emitProgress <- function(kind, arg, con) {
    }
 }
 
-sourceWithProgress <- function(script,              # path to R script
-                               con = NULL,          # connection to write progress
-                               importRdata = NULL,  # RData file to import on start 
-                               exportRdata = NULL   # RData file to export when done
+sourceWithProgress <- function(script,               # path to R script
+                               encoding = "unknown", # character encoding of script
+                               con = NULL,           # connection to write progress
+                               importRdata = NULL,   # RData file to import on start 
+                               exportRdata = NULL    # RData file to export when done
                                ) {
    # create a new enviroment to host any values created; make its parent the global env so any
    # variables inside this function's environment aren't visible to the script
    sourceEnv <- new.env(parent = globalenv())
 
    # parse the script
-   statements <- parse(file = script, keep.source = TRUE)
+   statements <- parse(file = script, keep.source = TRUE, encoding = encoding)
    units <- length(statements)
    unit <- 0
 
@@ -55,7 +56,7 @@ sourceWithProgress <- function(script,              # path to R script
    }
 
    # find the sections
-   lines <- readLines(script)
+   lines <- readLines(con = script, encoding = encoding)
    sections <- regmatches(lines, regexec("^\\s*#+ (.+) -----*$", lines))
    sectLines <- which(sapply(sections, length) > 0)
 

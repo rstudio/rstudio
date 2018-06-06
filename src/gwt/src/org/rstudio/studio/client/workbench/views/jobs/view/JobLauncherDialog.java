@@ -40,6 +40,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    protected JobLaunchSpec collectInput()
    {
       return JobLaunchSpec.create(controls_.scriptPath(), 
+            "unknown", // encoding unknown (will try to look it up later)
             controls_.workingDir(),
             controls_.importEnv(),
             controls_.exportEnv());

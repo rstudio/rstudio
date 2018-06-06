@@ -24,6 +24,14 @@ public class JobLaunchSpec extends JavaScriptObject
       return this.path;
    }-*/;
    
+   public final native String encoding() /*-{
+      return this.encoding;
+   }-*/;
+   
+   public final native void setEncoding(String encoding) /*-{
+      this.encoding = encoding;
+   }-*/;
+   
    public final native String workingDir() /*-{
       return this.working_dir;
    }-*/;
@@ -38,10 +46,12 @@ public class JobLaunchSpec extends JavaScriptObject
    
    public final native static JobLaunchSpec create(
       String path,
+      String encoding,
       String workingDir,
       boolean importEnv,
       boolean exportEnv) /*-{
       return { "path": path,
+               "encoding": encoding,
                "working_dir": workingDir,
                "import_env": importEnv,
                "export_env": exportEnv };

@@ -34,15 +34,18 @@ class ScriptLaunchSpec
 {
 public:
    ScriptLaunchSpec(const core::FilePath& path,
+         const std::string& encoding,
          const core::FilePath& workingDir,
          bool importEnv,
          bool exportEnv);
    core::FilePath path();
+   std::string encoding();
    core::FilePath workingDir();
    bool importEnv();
    bool exportEnv();
 private:
    core::FilePath path_;
+   std::string encoding_;
    core::FilePath workingDir_;
    bool importEnv_;
    bool exportEnv_;
