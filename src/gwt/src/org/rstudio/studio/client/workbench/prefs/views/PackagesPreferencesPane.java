@@ -104,8 +104,6 @@ public class PackagesPreferencesPane extends PreferencesPane
                         );
                      }     
                   });
-                 
-                  useDefaultsStyles(false);
                }
             },
             true);
@@ -274,16 +272,6 @@ public class PackagesPreferencesPane extends PreferencesPane
          secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
       
-      useDefaultsStyles(!cranMirror_.getChanged());
-
-      secondaryReposWidget_.setUpdateHandler(new Operation() {
-         @Override
-         public void execute()
-         {
-            useDefaultsStyles(false);
-         }
-      });
-      
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
       useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -315,20 +303,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       useNewlineInMakefiles_.setEnabled(true);
       useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
-   }
-   
-   private void useDefaultsStyles(boolean use)
-   {
-      if (use)
-      {
-         cranMirrorTextBox_.getTextBox().addStyleName(res_.styles().settingDefault());
-         secondaryReposWidget_.addStyleName(res_.styles().settingDefault());
-      }
-      else
-      {
-         cranMirrorTextBox_.getTextBox().removeStyleName(res_.styles().settingDefault());
-         secondaryReposWidget_.removeStyleName(res_.styles().settingDefault());
-      }
    }
 
    private boolean secondaryReposHasChanged()
