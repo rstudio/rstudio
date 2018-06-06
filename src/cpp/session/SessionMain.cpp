@@ -1831,7 +1831,7 @@ int main (int argc, char * const argv[])
 
       bool customRepo = true;
 
-      // When edit disabled, clear user setting to fix previous versions
+      // When edit disabled, clear CRAN user setting preferences
       if (!options.allowCRANReposEdit()) {
         CRANMirror userMirror = userSettings().cranMirror();
         userMirror.changed = false;
