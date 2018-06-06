@@ -109,6 +109,15 @@ void getThemesInLocation(const rstudio::core::FilePath& location, ThemeMap& them
    }
 }
 
+void getAllThemes(ThemeMap& themeMap)
+{
+   // Intentionally get global themes before getting user specific themes so that user specific
+   // themes will override global ones.
+   getThemesInLocation(preInstalledPath, themeMap);
+   getThemesInLocation(globalPath, themeMap);
+   getThemesInLocation(localPath, themeMap);
+}
+
 /**
  * @brief Gets the list of all RStudio editor themes.
  *
@@ -140,13 +149,8 @@ SEXP rs_getThemes()
       localPath = FilePath(k_localPathAlt);
    }
 
-   // Intentionally get global themes before getting user specific themes so that user specific
-   // themes will override global ones.
    ThemeMap themeMap;
-   getThemesInLocation(preInstalledPath, themeMap);
-   getThemesInLocation(globalPath, themeMap);
-   getThemesInLocation(localPath, themeMap);
-   // TODO: get default themes.
+   getAllThemes(themeMap);
 
    // Convert to an R list.
    rstudio::r::sexp::Protect protect;
