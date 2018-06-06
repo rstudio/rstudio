@@ -551,18 +551,8 @@
 
    validShellType = TRUE
    if (!is.null(shellType)) {
-      validShellType <- grepl(
-         paste(
-            "default",
-            "win-cmd",
-            "win-ps",
-            "win-git-bash",
-            "win-wsl-bash",
-            "custom",
-          sep = "|"
-        ),
-        shellType,
-        ignore.case = TRUE)
+      validShellType <- tolower(shellType) %in% c("default", "win-cmd", 
+            "win-ps", "win-git-bash", "win-wsl-bash", "custom")
    }      
    if (!validShellType)
       stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', or 'custom'.") 
