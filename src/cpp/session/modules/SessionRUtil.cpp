@@ -134,6 +134,29 @@ SEXP rs_isNullExternalPointer(SEXP objectSEXP)
    return create(isNullExternalPointer(objectSEXP), &protect);
 }
 
+SEXP readInitFileLevel(boost::property_tree::ptree pt, r::sexp::Protect& protect)
+{
+   using namespace boost::property_tree;
+
+   if (pt.empty())
+   {
+      std::string value = std::string(pt.data());
+      SEXP valueSEXP = create(value, &protect);
+      return valueSEXP;
+   }
+
+   std::map<std::string, SEXP> entries;
+   for (ptree::iterator it = pt.begin(); it != pt.end(); it++)
+   {
+      std::string key = it->first;
+      ptree value = it->second;
+
+      entries[key] = readInitFileLevel(value, protect);
+   }
+
+   return create(entries, &protect);
+}
+
 SEXP rs_readIniFile(SEXP iniPathSEXP)
 {
     using namespace boost::property_tree;
@@ -154,18 +177,8 @@ SEXP rs_readIniFile(SEXP iniPathSEXP)
       ptree pt;
       ini_parser::read_ini(iniFile.absolutePath(), pt);
 
-      std::vector<std::pair<std::string,std::string> > entries;
-
-      for (ptree::iterator it = pt.begin(); it != pt.end(); it++)
-      {
-         std::string key = it->first;
-         std::string value = it->second.get_value<std::string>();
-         entries.push_back(std::make_pair(key, value));
-      }
-
       r::sexp::Protect protect;
-      SEXP secondsSEXP = create(entries, &protect);
-      return secondsSEXP;
+      return readInitFileLevel(pt, protect);
    }
    catch(const std::exception& e)
    {

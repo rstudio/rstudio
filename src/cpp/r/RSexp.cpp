@@ -1111,6 +1111,28 @@ SEXP create(const std::map<std::string, std::vector<std::string> > &value,
    
    return listSEXP;
 }
+
+SEXP create(const std::map<std::string, SEXP> &value,
+            Protect *pProtect)
+{
+   SEXP listSEXP, namesSEXP;
+   std::size_t n = value.size();
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   
+   int index = 0;
+   typedef std::map<std::string, SEXP>::const_iterator iterator;
+   for (iterator it = value.begin(); it != value.end(); ++it)
+   {
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_VECTOR_ELT(listSEXP, index, it->second);
+      ++index;
+   }
+   
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+   
+   return listSEXP;
+}
    
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect)
