@@ -161,7 +161,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             Dependency.cranPackage("jsonlite", "0.9.19"),
             Dependency.cranPackage("httpuv", "1.3.3"),
             Dependency.cranPackage("crayon", "1.3.4"),
-            Dependency.embeddedPackage("plumber")
+            Dependency.cranPackage("plumber", "0.4.6", true)
          },
          true,
          new CommandWithArg<Boolean>()
