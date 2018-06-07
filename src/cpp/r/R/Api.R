@@ -539,14 +539,25 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE) {
+.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE, shellType = NULL) {
    if (!is.null(caption) && (!is.character(caption) || (length(caption) != 1)))
       stop("'caption' must be NULL or a character vector of length one")
 
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalCreate", caption, show)
+   if (!is.null(shellType) && (!is.character(shellType) || (length(shellType) != 1)))
+      stop("'shellType' must be NULL or a character vector of length one")
+
+   validShellType = TRUE
+   if (!is.null(shellType)) {
+      validShellType <- tolower(shellType) %in% c("default", "win-cmd", 
+            "win-ps", "win-git-bash", "win-wsl-bash", "custom")
+   }      
+   if (!validShellType)
+      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', or 'custom'.") 
+
+   .Call("rs_terminalCreate", caption, show, shellType)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {

@@ -1533,6 +1533,13 @@ SEXP rs_resolveAliasedPath(SEXP pathSEXP)
    return r::sexp::create(resolved.absolutePath(), &protect);
 }
 
+SEXP rs_sessionModulePath()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(
+         session::options().modulesRSourcePath().absolutePath(), &protect);
+}
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;
@@ -2607,6 +2614,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
    
    RS_REGISTER_CALL_METHOD(rs_resolveAliasedPath, 1);
+   RS_REGISTER_CALL_METHOD(rs_sessionModulePath, 0);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

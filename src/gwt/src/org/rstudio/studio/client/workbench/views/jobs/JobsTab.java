@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -37,7 +38,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                    JobInitEvent.Handler,
                    JobElapsedTickEvent.Handler
    {
-      
+      abstract void confirmClose(Command onConfirmed);
    }
    
    public interface Binder extends CommandBinder<Commands, JobsTab.Shim> {}
@@ -49,6 +50,8 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                         EventBus events)
    {
       super("Jobs", shim);
+      shim_ = shim;
+      
       binder.bind(commands, shim);
       events.addHandler(JobUpdatedEvent.TYPE, shim);
       events.addHandler(JobOutputEvent.TYPE, shim);
@@ -56,4 +59,18 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       events.addHandler(JobInitEvent.TYPE, shim);
       events.addHandler(JobElapsedTickEvent.TYPE, shim);
    }
+
+   @Override
+   public boolean closeable()
+   {
+      return true;
+   }
+
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      shim_.confirmClose(onConfirmed);
+   }
+   
+   final Shim shim_;
 }

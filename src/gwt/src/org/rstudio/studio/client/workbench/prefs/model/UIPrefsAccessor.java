@@ -656,6 +656,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_hidden_files", false);
    }
 
+   public PrefValue<Boolean> showJobsTab()
+   {
+      return bool("show_jobs_tab", true);
+   }
+   
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;
    public static final int BUSY_DETECT_WHITELIST = 2;

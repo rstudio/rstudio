@@ -17,6 +17,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/system/System.hpp>
+#include <core/StringUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include "SessionGit.hpp"
@@ -185,6 +186,37 @@ std::string TerminalShell::getShellName(TerminalShellType type)
       return "User command";
    default:
       return "Unknown";
+   }
+}
+
+// keep in sync with values supported by terminalCreate "shellType" argument in 
+// rstudioapi and rs_terminalCreate
+TerminalShell::TerminalShellType TerminalShell::shellTypeFromString(const std::string& str)
+{
+   std::string typeStr = core::string_utils::toLower(str);
+   if (typeStr == "win-cmd")
+   {
+      return TerminalShell::TerminalShellType::Cmd64;
+   }
+   else if (typeStr == "win-ps")
+   {
+      return TerminalShell::TerminalShellType::PS64;
+   }
+   else if (typeStr == "win-git-bash")
+   {
+      return TerminalShell::TerminalShellType::GitBash;
+   }
+   else if (typeStr == "win-wsl-bash")
+   {
+      return TerminalShell::TerminalShellType::WSLBash;
+   }
+   else if (typeStr == "custom")
+   {
+      return TerminalShell::TerminalShellType::CustomShell;
+   }
+   else // implicity includes "default"
+   {
+      return TerminalShell::TerminalShellType::DefaultShell;
    }
 }
 
