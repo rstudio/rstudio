@@ -80,8 +80,9 @@
    if (!.rs.odbcBundleCheckPrereqsUnixodbc()) {
       if (!.rs.odbcBundleCheckPrereqsBrew()) {
          stop(
-            "Brew is required to install unixODBC. ",
-            "Install Brew by running: ",
+            "unixODBC is required but missing, you can install from http://www.unixodbc.org/. ",
+            "Alternatively, install Brew and RStudio will install unixODBC automatically, ",
+            "you can install Brew by running: ",
             "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
          )
       }
