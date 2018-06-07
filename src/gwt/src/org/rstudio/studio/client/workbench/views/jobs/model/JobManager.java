@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.jobs.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -37,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobQuitDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -300,6 +303,32 @@ public class JobManager implements JobRefreshEvent.Handler,
             elapsed,                      // time elapsed so far
             sample.received               // received time
       );
+   }
+   
+   public void promptForTermination(CommandWithArg<Boolean> onConfirmed)
+   {
+      // compute list of jobs that are running
+      List<Job> running = new ArrayList<Job>();
+      for (String id: state_.iterableKeys())
+      {
+         Job job = state_.getJob(id);
+         if (job.completed == 0)
+         {
+            running.add(job);
+         }
+      }
+      
+      // if no jobs are running, we're already done
+      if (running.isEmpty())
+      {
+         onConfirmed.execute(true);
+         return;
+      }
+      
+      JobQuitDialog dialog = new JobQuitDialog(running,
+            (confirmed) -> { onConfirmed.execute(confirmed); },
+            () -> { onConfirmed.execute(false); });
+      dialog.showModal();
    }
 
    // Private methods ---------------------------------------------------------
