@@ -1,8 +1,10 @@
 ﻿# ----------------------------------------------------------------------------
-# Bootstrap a clean Windows-10 system for development of RStudio.
+# Bootstrap a clean Windows-10 system for RStudio development.
 #
 # Run this from an Administrator PowerShell prompt after enabling scripts
 # via 'Set-ExecutionPolicy Unrestricted -force'.
+#
+# See README.md for more details.
 # ----------------------------------------------------------------------------
 
 # Set to $false to keep downloads after installing; helpful for debugging script
@@ -66,8 +68,6 @@ Controller.prototype.ComponentSelectionPageCallback = function() {
     widget.selectComponent("qt.qt5.5101.qtwebengine.win32_msvc2015");
     widget.selectComponent("qt.qt5.5101.qtwebengine.win64_msvc2015_64");
     widget.deselectComponent("qt.qt5.5101.src");
-    widget.deselectComponent("qt.qt5.5101.doc");
-    widget.deselectComponent("qt.qt5.5101.doc.qtwebengine");
     gui.clickButton(buttons.NextButton);
 }
 
@@ -102,7 +102,7 @@ Controller.prototype.FinishedPageCallback = function() {
 
 function Broadcast-SettingChange {
 
-    # broadcast WM_SETTINGCHANGE so Explorer picks up new path
+    # broadcast WM_SETTINGCHANGE so Explorer picks up new path from registry
     Add-Type -TypeDefinition @"
         using System;
         using System.Runtime.InteropServices;
@@ -124,9 +124,9 @@ function Broadcast-SettingChange {
     [void] ([Nativemethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [UIntPtr]::Zero, 'Environment', $SMTO_ABORTIFHUNG, 5000, [ref] $result))
 }
 
-#######################################
+##############################################################################
 # script execution starts here
-#######################################
+##############################################################################
 If (-Not (Test-Administrator)) {
     Write-Host "Error: Must run this script as Administrator"
     exit
@@ -201,15 +201,20 @@ if (-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual C++ Build Tools")) 
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
 # install Qt and Qt Creator
+$QtInstallTries = 5
 if (Test-Qt-Installed("5.10.1")) {
     Write-Host "Qt already installed, skipping"
 } else {
-    Install-Qt
+    # Qt online installer has a high failure rate, so try several times
+    for ($i = 0; $i -le $QtInstallTries; $i++) {
+        Install-Qt
+        if (Test-Qt-Installed("5.10.1")) {break}
+    }        
 }
 
 # Qt installation doesn't always work (maybe a timeout?)
 if (-Not (Test-Qt-Installed("5.10.1"))) {
-    Write-Host "Qt not installed; either install yourself or re-run this script to try again"
+    Write-Host "Qt not installed; either install yourself or re-run this script to try again" -ForegroundColor Red
 } else {
 
     # Add QtCreator binaries to path, needed for building with JOM
@@ -219,7 +224,7 @@ if (-Not (Test-Qt-Installed("5.10.1"))) {
     Broadcast-SettingChange
 
     Write-Host "-----------------------------------------------------------"
-    Write-Host "Core dependencies installed. Next steps:"
+    Write-Host "Core dependencies successfully installed. Next steps:"
     Write-Host "(1) Start a non-adminstrator Command Prompt"
     Write-Host "(2) git clone https://github.com/rstudio/rstudio"
     Write-Host "(3) change working dir to rstudio\src\dependencies\windows"

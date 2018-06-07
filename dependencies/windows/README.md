@@ -1,17 +1,11 @@
 Configure Windows for RStudio Development
 =============================================================================
 
-These instructions are intended to be used on a clean Windows-10 machine. The
-scripts may not behave correctly if any dependencies are already installed.
+These instructions are intended for a clean Windows-10 machine and may not
+produce a successful build environment if any dependencies are already 
+installed.
 
-A summary of the steps:
-
-1. Run PowerShell script to bootstrap essential tools
-2. Clone the RStudio repo
-3. Run batch file from the repo to install the remaining dependencies
-4. Configure the project in Qt Creator and build
-
-Install-RStudio-Prereqs.ps1
+Bootstrap
 =============================================================================
 - Open an Administrator PowerShell and enter these commands
 - `Set-ExecutionPolicy Unrestricted -force`
@@ -20,20 +14,39 @@ Install-RStudio-Prereqs.ps1
 
 Clone the Repo and Run Batch File
 =============================================================================
-- Open a regular Command Prompt (non-administrator); this needs to be opened after running the PowerShell script above in order to pick up changes to the path, etc.
-- Change directories to the location you want the repo
-- `git clone https://github.com/rstudio/rstudio`
+- Open Command Prompt (non-administrator); do this **after** running the 
+PowerShell bootstrapping script above to pick up environment changes
+- `cd` to the location you want the repo
+- clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
 - `cd rstudio\dependencies\windows`
 - `install-dependencies.cmd`
 - wait for the script to complete, it runs unattended
 
-Build
+Build Java/Gwt
 =============================================================================
-- TODO - write instructions on building the Java/Gwt code and building and debugging with Qt Creator
+- `cd rstudio\src\gwt`
+- `ant draft` or for iterative development of Java/Gwt code, `ant desktop`
+
+Build C++
+=============================================================================
+- open Qt Creator
+- Open Project and select rstudio\src\cpp\CMakelists.txt
+- Select the kit(s) you wish to use, 32-bit and/or 64-bit
+- click Configure, then build
+
+Run RStudio
+=============================================================================
+- from command prompt, `cd` to the build location, and run `rstudio.bat`
+- to run RStudio in Qt Creator, _TODO_
+
+Debug RStudio
+=============================================================================
+- use Qt's debugger; it leverages the Microsoft CDB
 
 Package Build
 =============================================================================
-This is not necessary for regular development work, but can be used to fully test your installation. This builds RStudio and bundles it up in a setup package.
+This is not necessary for regular development work, but can be used to fully 
+test your installation. This builds RStudio and bundles it up in a setup package.
 
 In a non-administrator command prompt:
 - `cd rstudio\package\win32`
