@@ -69,19 +69,38 @@
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsUnixodbc", function() {
-   identical(system2("odbcinst", stdout = FALSE), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "odbcinst",
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsBrew", function() {
-   identical(system2("brew", stdout = FALSE), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "brew",
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
    if (!.rs.odbcBundleCheckPrereqsUnixodbc()) {
       if (!.rs.odbcBundleCheckPrereqsBrew()) {
          stop(
-            "Brew is required to install unixODBC. ",
-            "Install Brew by running: ",
+            "unixODBC is required but missing, you can install from http://www.unixodbc.org/. ",
+            "Alternatively, install Brew and RStudio will install unixODBC automatically, ",
+            "you can install Brew by running: ",
             "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
          )
       }
