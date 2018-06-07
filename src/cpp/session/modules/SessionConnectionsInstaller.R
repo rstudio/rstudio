@@ -69,11 +69,29 @@
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsUnixodbc", function() {
-   identical(system2("odbcinst", stdout = FALSE), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "odbcinst",
+            stdout = getOption("odbc.installer.verviso", FALSE),
+            stderr = getOption("odbc.installer.verviso", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsBrew", function() {
-   identical(suppressWarnings(system2("brew", stdout = FALSE)), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "brew",
+            stdout = getOption("odbc.installer.verviso", FALSE),
+            stderr = getOption("odbc.installer.verviso", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
