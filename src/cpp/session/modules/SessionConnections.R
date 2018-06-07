@@ -649,10 +649,15 @@ options(connectionObserver = list(
    context
 })
 
-.rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name) {
-   connectionContext <- Filter(function(e) {
+.rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name, retries = 1) {
+   singleEntryFilter <- function(e) {
       identical(as.character(e$name), name)
-   }, .rs.connectionReadOdbc())
+   }
+
+   connectionContext <- Filter(singleEntryFilter, .rs.connectionReadOdbc())
+
+   while (length(connectionContext) != 1 && (retries <- retries - 1) >= 0)
+      Sys.sleep(1)
 
    if (length(connectionContext) != 1)
       list(
