@@ -335,7 +335,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public String getWindowIdOfDocPath(String path)
    {
       SourceDocument doc = getDocFromPath(path);
-      if (path == null)
+      if (doc == null)
          return null;
       String windowId = doc.getSourceWindowId();
       if (windowId != null)
