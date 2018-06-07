@@ -73,7 +73,7 @@
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsBrew", function() {
-   identical(system2("brew", stdout = FALSE), 1L)
+   identical(suppressWarnings(system2("brew", stdout = FALSE)), 1L)
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
