@@ -39,7 +39,7 @@ progressResult <- function(path) {
    on.exit(file.remove(p), add = TRUE)
    con <- file(p, open = "at")
 
-   sourceWithProgress(path, con)
+   sourceWithProgress(script = path, con = con)
    close(con)
 
    processOutput(readLines(p))
