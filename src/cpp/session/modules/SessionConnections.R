@@ -830,7 +830,7 @@ options(connectionObserver = list(
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {
    tryCatch({
-      defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), driverName)
+      defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), tolower(driverName))
       defaultInstallExists <- dir.exists(defaultInstallPath)
 
       # delete the driver
