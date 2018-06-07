@@ -138,7 +138,8 @@
            "/f",
            paste("/reg:", bitness, sep = "")
         ),
-        stderr = FALSE
+        stdout = getOption("odbc.installer.verbose", FALSE),
+        stderr = getOption("odbc.installer.verbose", FALSE)
      )
 
      if (!validateEntry(entry)) {
