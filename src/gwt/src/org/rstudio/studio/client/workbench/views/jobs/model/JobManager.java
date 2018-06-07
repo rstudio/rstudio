@@ -305,6 +305,14 @@ public class JobManager implements JobRefreshEvent.Handler,
       );
    }
    
+   public List<Job> getJobs()
+   {
+      List<Job> jobs = new ArrayList<Job>();
+      for (String id: state_.iterableKeys())
+         jobs.add(state_.getJob(id));
+      return jobs;
+   }
+   
    public void promptForTermination(CommandWithArg<Boolean> onConfirmed)
    {
       // compute list of jobs that are running
