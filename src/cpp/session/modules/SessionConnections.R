@@ -406,7 +406,7 @@ options(connectionObserver = list(
    tryCatch({
       currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
       driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]
-      driverId <- gsub(" with RStudio", "", driver)
+      driverId <- gsub(.rs.connectionOdbcRStudioDriver(), "", driver)
 
       basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
       snippetsFile <- file.path(
@@ -643,7 +643,7 @@ options(connectionObserver = list(
       entryName <- connectionList[[i]]$name
       if (!is.null(connectionNames[[entryName]])) {
          existingDriver <- connectionNames[[entryName]]
-         withRStudioName <- paste(entryName, "with RStudio")
+         withRStudioName <- paste(entryName, .rs.connectionOdbcRStudioDriver(), sep = "")
 
          if (identical(as.character(connectionList[[i]]$type), "Install") &&
              !identical(existingDriver$installer, "RStudio") &&
@@ -770,7 +770,7 @@ options(connectionObserver = list(
    connectionContext <- Filter(function(e) {
       identical(
          as.character(e$name),
-         gsub(" with RStudio", "", driverName)
+         gsub(.rs.connectionOdbcRStudioDriver(), "", driverName)
       )
    }, .rs.connectionReadInstallers())[[1]]
 

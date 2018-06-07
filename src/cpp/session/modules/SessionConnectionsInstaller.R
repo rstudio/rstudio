@@ -421,7 +421,7 @@
    )
    
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
-   driverName <- gsub(" |with RStudio", "", name)
+   driverName <- gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", name)
    
    if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
@@ -513,4 +513,8 @@
    message("Installation complete")
 
    invisible(NULL)
+})
+
+.rs.addFunction("connectionOdbcRStudioDriver", function() {
+   " with RStudio Driver"
 })
