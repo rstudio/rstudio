@@ -28,7 +28,7 @@
 		            text="Run job with copy of global environment" 
 		            ui:field="importEnv_"></g:CheckBox>
 		<g:HorizontalPanel>
-			<g:InlineLabel text="After job:"></g:InlineLabel>
+			<g:InlineLabel text="Copy job results: "></g:InlineLabel>
 			<g:ListBox styleName="{style.check} {style.spaced}" ui:field="exportEnv_"></g:ListBox>
 		</g:HorizontalPanel>
 	</g:VerticalPanel>
