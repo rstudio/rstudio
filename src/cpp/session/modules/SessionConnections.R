@@ -433,7 +433,7 @@ options(connectionObserver = list(
       if (nchar(iconData) == 0)
          iconData <- .Call("rs_connectionIcon", "ODBC")
 
-      hasInstaller <- .rs.connectionHasInstaller(driverId)
+      hasInstaller <- identical(driverInstaller$value, "RStudio")
       warningMessage <- NULL
 
       if (hasInstaller) {
