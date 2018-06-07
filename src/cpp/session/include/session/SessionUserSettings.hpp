@@ -47,7 +47,7 @@ struct CRANMirror
    std::string host;
    std::string url;
    std::string country;
-   bool changed;
+   bool changed = false;
 };
 
 struct BioconductorMirror
