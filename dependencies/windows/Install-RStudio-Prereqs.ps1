@@ -61,7 +61,6 @@ Controller.prototype.TargetDirectoryPageCallback = function()
 
 Controller.prototype.ComponentSelectionPageCallback = function() {
     var widget = gui.currentPageWidget();
-    widget.deselectAll();
     widget.selectComponent("qt.qt5.5101.win32_msvc2015");
     widget.selectComponent("qt.qt5.5101.win64_msvc2015_64");
     widget.selectComponent("qt.qt5.5101.qtwebengine");
@@ -157,7 +156,7 @@ refreshenv
 # install some deps via chocolatey
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8 ant windows-sdk-10.1 7zip git
+choco install -y jdk8 ant windows-sdk-10.1 vcbuildtools 7zip git
 
 # fixups for Windows SDK
 mv "C:\Program Files (x86)\Windows Kits\10\bin\x86" "C:\Program Files (x86)\Windows Kits\10\bin\x86_orig"
@@ -179,22 +178,6 @@ if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
     if ($DeleteDownloads) { Remove-Item $NSISSetup }
 } else {
     Write-Host "NSIS already found, skipping"
-}
-
-# install visual c++ build tools (MSVC 2015 32 and 64-bit)
-if (-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual C++ Build Tools")) {
-    $VSBuildTools = 'C:\visualcppbuildtools_full.exe'
-    if (-Not (Test-Path $VSBuildTools)) {
-        Write-Host "Downloading Visual C++ Build Tools..."
-        Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuildtools_full.exe -OutFile C:\visualcppbuildtools_full.exe
-    } else {
-        Write-Host "Using previously downloaded VC++ Build Tools installer"
-    }
-    Write-Host "Installing Visual C++ Build Tools..."
-    Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '/Quiet'
-    if ($DeleteDownloads) { Remove-Item c:\visualcppbuildtools_full.exe }
-} else {
-    Write-Host "Visual C++ BUild Tools already found, skipping"
 }
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
