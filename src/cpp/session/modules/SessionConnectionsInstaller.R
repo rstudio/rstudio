@@ -378,7 +378,8 @@
    # Set odbcinst.ini entries
    odbcinst[[name]] <- list(
       paste("Driver", "=", driverPath),
-      paste("Version", "=", version)
+      paste("Version", "=", version),
+      paste("Installer", "=", "RStudio")
    )
    
    # Write odbcinst.ini
@@ -402,6 +403,11 @@
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Version",
             value = version
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Installer",
+            value = "RStudio"
          )
       )
    )
@@ -415,7 +421,7 @@
    )
    
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
-   driverName <- gsub(" ", "", name)
+   driverName <- gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", name)
    
    if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
@@ -507,4 +513,8 @@
    message("Installation complete")
 
    invisible(NULL)
+})
+
+.rs.addFunction("connectionOdbcRStudioDriver", function() {
+   " with RStudio Driver"
 })
