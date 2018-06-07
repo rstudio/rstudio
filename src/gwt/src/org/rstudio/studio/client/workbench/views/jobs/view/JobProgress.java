@@ -39,6 +39,7 @@ public class JobProgress extends Composite
    public JobProgress()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      complete_ = false;
       
       progress_.setHeight("10px");
    }
@@ -54,11 +55,19 @@ public class JobProgress extends Composite
    @Override
    public void updateElapsed(int timestamp)
    {
-      if (jobProgress_ == null)
+      if (jobProgress_ == null || complete_)
          return;
       
       int delta = timestamp - jobProgress_.received();
       elapsed_.setText(StringUtil.conciseElaspedTime(jobProgress_.elapsed() + delta));
+   }
+
+   @Override
+   public void setComplete()
+   {
+      progress_.setVisible(false);
+      elapsed_.setVisible(false);
+      complete_ = true;
    }
 
    @UiField Label name_;
@@ -66,4 +75,5 @@ public class JobProgress extends Composite
    @UiField Label elapsed_;
    
    private LocalJobProgress jobProgress_;
+   private boolean complete_;
 }

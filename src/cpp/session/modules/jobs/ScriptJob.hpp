@@ -1,5 +1,5 @@
 /*
- * SessionJobs.hpp
+ * ScriptJob.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,12 +13,15 @@
  *
  */
 
-#ifndef SESSION_JOBS_HPP
-#define SESSION_JOBS_HPP
+#ifndef SESSION_SCRIPT_JOB_HPP
+#define SESSION_SCRIPT_JOB_HPP
+
+#include "Job.hpp"
 
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
  
@@ -27,15 +30,32 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
-core::Error initialize();
+class ScriptLaunchSpec 
+{
+public:
+   ScriptLaunchSpec(const core::FilePath& path,
+         const std::string& encoding,
+         const core::FilePath& workingDir,
+         bool importEnv,
+         const std::string& exportEnv);
+   core::FilePath path();
+   std::string encoding();
+   core::FilePath workingDir();
+   bool importEnv();
+   std::string exportEnv();
+private:
+   core::FilePath path_;
+   std::string encoding_;
+   core::FilePath workingDir_;
+   bool importEnv_;
+   std::string exportEnv_;
+};
 
-core::json::Object jobState();
-
-bool isSuspendable();
+core::Error startScriptJob(const ScriptLaunchSpec& spec);
 
 } // namespace jobs
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_JOBS_HPP
+#endif

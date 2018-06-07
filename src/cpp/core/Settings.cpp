@@ -15,8 +15,6 @@
 
 #include <core/Settings.hpp>
 
-#include <boost/lexical_cast.hpp>
-
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
@@ -104,7 +102,7 @@ int Settings::getInt(const std::string& name, int defaultValue) const
    if (value.empty())
        return defaultValue ;
    else
-       return boost::lexical_cast<int>(value);
+       return safe_convert::stringTo<int>(value, defaultValue);
 }
 
 double Settings::getDouble(const std::string& name, double defaultValue) const
@@ -113,7 +111,7 @@ double Settings::getDouble(const std::string& name, double defaultValue) const
    if (value.empty())
        return defaultValue ;
    else
-       return boost::lexical_cast<double>(value);
+      return safe_convert::stringTo<double>(value, defaultValue);
 }
 
 bool Settings::getBool(const std::string& name, bool defaultValue) const
@@ -122,7 +120,7 @@ bool Settings::getBool(const std::string& name, bool defaultValue) const
    if (value.empty())
       return defaultValue ;
    else
-      return boost::lexical_cast<bool>(value);
+      return safe_convert::stringTo<bool>(value, defaultValue);
 }   
    
 void Settings::forEach(const boost::function<void(const std::string&,

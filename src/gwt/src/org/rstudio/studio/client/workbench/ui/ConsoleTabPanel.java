@@ -1,7 +1,7 @@
 /*
  * ConsoleTabPanel.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           EventBus events,
                           ToolbarButton goToWorkingDirButton,
                           WorkbenchTab testsTab,
-                          WorkbenchTab dataTab)
+                          WorkbenchTab dataTab,
+                          WorkbenchTab jobsTab)
    {
       super(owner, parentWindow);
       owner_ = owner;
@@ -84,6 +85,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       terminalTab_ = terminalTab;
       testsTab_ = testsTab;
       dataTab_ = dataTab;
+      jobsTab_ = jobsTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -296,6 +298,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
 
+      jobsTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            jobsTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(jobsTab_);
+         }
+      });
+      jobsTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            jobsTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
+
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
          @Override
@@ -315,10 +340,13 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       {
          terminalTabVisible_ = false;
       }
+      
+      // Determine initial visibility of jobs tab
+      jobsTabVisible_ = uiPrefs_.showJobsTab().getValue();
 
       // This ensures the logic in managePanels() works whether starting
       // up with terminal tab on by default or not.
-      consoleOnly_ = terminalTabVisible_;
+      consoleOnly_ = terminalTabVisible_ || jobsTabVisible_;
       managePanels();
    }
 
@@ -332,7 +360,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !deployContentTabVisible_ &&
                             !markersTabVisible_ &&
                             !testsTabVisible_ &&
-                            !dataTabVisible_;
+                            !dataTabVisible_ &&
+                            !jobsTabVisible_;
       
       if (consoleOnly)
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
@@ -361,6 +390,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(testsTab_);
          if (dataTabVisible_)
             tabs.add(dataTab_);
+         if (jobsTabVisible_)
+            tabs.add(jobsTab_);
 
          setTabs(tabs);
       }
@@ -461,4 +492,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean testsTabVisible_;
    private final WorkbenchTab dataTab_;
    private boolean dataTabVisible_;
+   private final WorkbenchTab jobsTab_;
+   private boolean jobsTabVisible_;
 }

@@ -1,5 +1,5 @@
 /*
- * JobSelectionEvent.java
+ * JobRunScriptEvent.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -14,38 +14,34 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
-public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
+import com.google.gwt.event.shared.EventHandler;
+
+@JavaScriptSerializable
+public class JobRunScriptEvent extends CrossWindowEvent<JobRunScriptEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onJobSelection(JobSelectionEvent event);
-   }
-   
-   public JobSelectionEvent(String id, boolean selected, boolean animate)
-   {
-      id_ = id;
-      selected_ = selected;
-      animate_ = animate;
+      void onJobRunScript(JobRunScriptEvent event);
    }
 
-   public String id()
+   public JobRunScriptEvent()
    {
-      return id_;
+      path_ = "";
    }
    
-   public boolean selected()
+   public JobRunScriptEvent(String path)
    {
-      return selected_;
-   }
-   
-   public boolean animate()
-   {
-      return animate_;
+      path_ = path;
    }
 
+   public String path()
+   {
+      return path_;
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -55,12 +51,10 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onJobSelection(this);
+      handler.onJobRunScript(this);
    }
 
-   private final String id_;
-   private final boolean selected_;
-   private final boolean animate_;
+   private final String path_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
