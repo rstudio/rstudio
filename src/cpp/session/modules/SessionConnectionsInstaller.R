@@ -137,7 +137,8 @@
            shQuote(entry$value),
            "/f",
            paste("/reg:", bitness, sep = "")
-        )
+        ),
+        stderr = FALSE
      )
 
      if (!validateEntry(entry)) {
