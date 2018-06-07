@@ -73,8 +73,8 @@
       suppressWarnings(
          system2(
             "odbcinst",
-            stdout = getOption("odbc.installer.verviso", FALSE),
-            stderr = getOption("odbc.installer.verviso", FALSE)
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
          )
       ),
       1L
@@ -86,8 +86,8 @@
       suppressWarnings(
          system2(
             "brew",
-            stdout = getOption("odbc.installer.verviso", FALSE),
-            stderr = getOption("odbc.installer.verviso", FALSE)
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
          )
       ),
       1L
