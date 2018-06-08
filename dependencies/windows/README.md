@@ -11,7 +11,7 @@ Bootstrap
 - Open an Administrator PowerShell and enter this command:
     - `Set-ExecutionPolicy Unrestricted -force`
 - Execute the downloaded `Install-RStudio-Prereqs.ps1` script 
-- wait for the script to complete (UI will be shown when installing Qt, but
+- Wait for the script to complete (UI will be shown when installing Qt, but
 don't interact with it, the script will make the selections)
 
 Clone the Repo and Run Batch File
@@ -19,10 +19,10 @@ Clone the Repo and Run Batch File
 - Open Command Prompt (non-administrator); do this **after** running the 
 PowerShell bootstrapping script above to pick up environment changes
 - `cd` to the location you want the repo
-- clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
+- Clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
 - `cd rstudio\dependencies\windows`
 - `install-dependencies.cmd`
-- wait for the script to complete
+- Wait for the script to complete
 
 Build Java/Gwt
 =============================================================================
@@ -31,15 +31,15 @@ Build Java/Gwt
 
 Build C++
 =============================================================================
-- open Qt Creator
+- Open Qt Creator
 - Open Project and select rstudio\src\cpp\CMakelists.txt
 - Select the kit(s) you wish to use, 32-bit and/or 64-bit
-- click Configure, then build
+- Click Configure, then build
 
 Run RStudio
 =============================================================================
-- from command prompt, `cd` to the build location, and run `rstudio.bat`
-- to run RStudio in Qt Creator, select the rstudio run configuration and
+- From command prompt, `cd` to the build location, and run `rstudio.bat`
+- To run RStudio in Qt Creator, select the rstudio run configuration and
 change the working directory to be the root of the build output directory,
 i.e. the parent of the `desktop` directory containing rstudio.exe 
 
