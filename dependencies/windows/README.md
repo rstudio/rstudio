@@ -7,9 +7,10 @@ installed.
 
 Bootstrap
 =============================================================================
-- Open an Administrator PowerShell and enter these commands
+- Save the file `https://github.com/rstudio/rstudio/blob/master/dependencies/windows/Install-RStudio-Prereqs.ps1` to the Windows system. Location doesn't matter. 
+Open an Administrator PowerShell and enter this command:
 - `Set-ExecutionPolicy Unrestricted -force`
-- `iex ((New-Object System.Net.WebClient).DownloadString('https://github.com/rstudio/rstudio/blob/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))` 
+- Execute the downloaded `Install-RStudio-Prereqs.ps1` script 
 - wait for the script to complete (UI will be shown when installing Qt, but
 don't interact with it, the script will make the selections)
 
