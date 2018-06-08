@@ -97,9 +97,10 @@ endif()
 
 # record these from Jenkins if available
 if("$ENV{GIT_COMMIT}" STREQUAL "")
-  if(RSTUDIO_GIT_REVISION_HASH) 
+  string(LENGTH "${RSTUDIO_GIT_REVISION_HASH}" HASH_LENGTH)
+  if(HASH_LENGTH EQUAL 40) 
     # use the cached revision hash if we have one
-    set(RSTUDIO_GIT_COMMIT RSTUDIO_GIT_REVISION_HASH)
+    set(RSTUDIO_GIT_COMMIT "${RSTUDIO_GIT_REVISION_HASH}")
   else()
     # make one up if we don't
     set(RSTUDIO_GIT_COMMIT "99999999999999999999999999999999")
