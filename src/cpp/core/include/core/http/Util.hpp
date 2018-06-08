@@ -173,6 +173,9 @@ bool isIpAddress(const std::string& addr);
 // querying the DNS system
 bool isNetworkAddress(const std::string& str);
 
+// determins if the given request is request to upgrade the connection to a websocket
+bool isWSUpgradeRequest(const Request& request);
+
 } // namespace util
 
 } // namespace http
