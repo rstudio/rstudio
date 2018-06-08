@@ -1756,6 +1756,48 @@ AFTER_FUN = function() {
    }
 })
 
+test_that_wrapped("addTheme gives error when the theme already exists", {
+   themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
+   .rs.addTheme(themePath, FALSE, FALSE, FALSE)
+   expect_error(
+      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      paste0(
+         "Unable to add the theme. A file with the same name, \"",
+         themes[[40]]$fileName,
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`."))
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function()
+{
+   .rs.removeTheme(names(themes)[40], .Call("rs_getThemes"))
+   unsetThemeLocations()
+})
+
+test_that_wrapped("addTheme works correctly with force = TRUE", {
+   inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
+   name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
+   
+   f <- file(inputThemePath)
+   exLines <- readLines(f)
+   close(f)
+   
+   installedTheme <- .Call("rs_getThemes")[[name]]
+   f <- file(installedTheme$fileName)
+   acLines <- readLines(f)
+   close(f)
+   
+   expect_equal(name, names(themes)[14])
+   expect_equal(acLines, exLines)
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   file.create(file.path(localInstallDir, paste0(themes[[14]]$fileName, ".rstheme")))
+},
+AFTER_FUN = function() {
+   .rs.removeTheme(names(themes)[14], .Call("rs_getThemes"))
+   unsetThemeLocations()
+})
+
 test_that_wrapped("addTheme gives error when permission are bad", {
    expect_error(
       suppressWarnings(.rs.addTheme(
@@ -1782,7 +1824,7 @@ test_that_wrapped("rs_getThemes works correctly", {
       file.copy(file.path(inputFileLocation, "rsthemes", fileName), themeLocation)
       addedThemes[[themeName]] <<- themeLocation
    })
-   
+
    themeList <- .Call("rs_getThemes")
    .rs.enumerate(addedThemes, function(themeName, themeLocation)
    {
@@ -1826,7 +1868,7 @@ BEFORE_FUN = function() {
    file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(localInstallDir, toAdd))
 },
 AFTER_FUN = function() {
-   unsetThemeLocations() 
+   unsetThemeLocations()
    toRemove <- file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))
    if (file.exists(toRemove))
    {
@@ -1847,7 +1889,7 @@ BEFORE_FUN = function() {
    file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(globalInstallDir, toAdd))
 },
 AFTER_FUN = function() {
-   unsetThemeLocations() 
+   unsetThemeLocations()
    toRemove <- file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))
    if (file.exists(toRemove))
    {
@@ -1856,4 +1898,56 @@ AFTER_FUN = function() {
          warning("Unable to remove the file ", toRemove)
       }
    }
+})
+
+test_that_wrapped("removeTheme gives correct error when unable to remove locally", {
+   expect_error(
+      suppressWarnings(.rs.removeTheme(names(themes)[5], .Call("rs_getThemes"))),
+      paste0(
+         "Unable to remove the specified theme \"",
+         names(themes)[5],
+         "\". Please check your file system permissions."),
+      fixed = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_LOCAL_HOME = noPermissionDir)
+   Sys.chmod(noPermissionDir, mode = "0777")
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(themes[[5]]$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      FALSE)
+   Sys.chmod(noPermissionDir, mode = "0555")
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   Sys.chmod(noPermissionDir, mode = "0777")
+   file.remove(file.path(noPermissionDir, paste0(themes[[5]]$fileName, ".rstheme")))
+})
+
+test_that_wrapped("removeTheme gives correct error when unable to remove globally", {
+   expect_error(
+      suppressWarnings(.rs.removeTheme(names(themes)[32], .Call("rs_getThemes"))),
+      paste0(
+         "Unable to remove the specified theme \"",
+         names(themes)[32],
+         "\", which is installed for all users. Please contact your system administrator."),
+      fixed = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_GLOBAL_HOME = noPermissionDir)
+   Sys.chmod(noPermissionDir, mode = "0777")
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(themes[[32]]$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      TRUE)
+   Sys.chmod(noPermissionDir, mode = "0555")
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   Sys.chmod(noPermissionDir, mode = "0777")
+   file.remove(file.path(noPermissionDir, paste0(themes[[32]]$fileName, ".rstheme")))
 })

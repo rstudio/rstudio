@@ -917,16 +917,25 @@
          stop("Unable to create the theme file. Please check file system permissions.")
       }
    }
-   
+
+   addedTheme <- file.path(outputDir, paste0(fileName, ".rstheme"))
+   if (file.exists(addedTheme) && !force)
+   {
+      stop(
+         "Unable to add the theme. A file with the same name, \"",
+         fileName,
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.")
+   }
+
    if (!file.copy(
       themePath,
-      file.path(outputDir, paste0(fileName, ".rstheme")),
+      addedTheme,
       overwrite = force))
    {
       msg <- "Unable to create the theme file. Please check file system permissions"
       if (!force)
       {
-         msg <- paste0(msg, " or try again with `force = TRUE`")
+         msg <- paste0(msg, " or try again with `force = TRUE`.")
       }
       
       stop(msg, ".")
@@ -971,13 +980,25 @@
 
    if (!file.remove(themeList[[name]]$fileName))
    {
-      # TODO: give better error when the theme is installed globally.
-      if (file.exists(theme[[name]]$fileName))
+      if (file.exists(themeList[[name]]$fileName))
       {
-         stop(
-            "Unable to remove the speicified theme \"",
-            name,
-            "\". Please check your file system permissions.")
+         justFileName <- basename(themeList[[name]]$fileName)
+         actualPath <- normalizePath(themeList[[name]]$fileName)
+         globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE))
+         if (file.path(globalPath, justFileName) == actualPath)
+         {
+            stop(
+               "Unable to remove the specified theme \"",
+               name,
+               "\", which is installed for all users. Please contact your system administrator.")
+         }
+         else
+         {
+            stop(
+               "Unable to remove the specified theme \"",
+               name,
+               "\". Please check your file system permissions.")
+         }
       }
    }
 })
