@@ -10,7 +10,8 @@ Bootstrap
 - Open an Administrator PowerShell and enter these commands
 - `Set-ExecutionPolicy Unrestricted -force`
 - `iex ((New-Object System.Net.WebClient).DownloadString('https://github.com/rstudio/rstudio/blob/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))` 
-- wait for the script to complete, it runs unattended
+- wait for the script to complete (UI will be shown when installing Qt, but
+don't interact with it, the script will make the selections)
 
 Clone the Repo and Run Batch File
 =============================================================================
@@ -20,7 +21,7 @@ PowerShell bootstrapping script above to pick up environment changes
 - clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
 - `cd rstudio\dependencies\windows`
 - `install-dependencies.cmd`
-- wait for the script to complete, it runs unattended
+- wait for the script to complete
 
 Build Java/Gwt
 =============================================================================
@@ -37,11 +38,13 @@ Build C++
 Run RStudio
 =============================================================================
 - from command prompt, `cd` to the build location, and run `rstudio.bat`
-- to run RStudio in Qt Creator, _TODO_
+- to run RStudio in Qt Creator, select the rstudio run configuration and
+change the working directory to be the root of the build output directory,
+i.e. the parent of the `desktop` directory containing rstudio.exe 
 
 Debug RStudio
 =============================================================================
-- use Qt's debugger; it leverages the Microsoft CDB
+- Debug using Qt's debugger
 
 Package Build
 =============================================================================
