@@ -114,7 +114,7 @@ public:
    {
       // get the URL currently in settings. if it's https already then bail
       CRANMirror mirror = userSettings().cranMirror();
-      if (isSecure(mirror.url))
+      if (isSecure(mirror.primary))
          return;
 
       // modify to be secure
@@ -125,7 +125,7 @@ public:
       // build the command
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
       cmd += "tmp <- tempfile(); ";
-      cmd += "download.file(paste(contrib.url('" + mirror.url +
+      cmd += "download.file(paste(contrib.url('" + mirror.primary +
               "'), '/PACKAGES.gz', sep = ''), destfile = tmp); ";
       cmd += "cat(readLines(tmp)); ";
       cmd += "} ";
@@ -149,9 +149,9 @@ public:
       }
       else
       {
-         std::string url = userSettings().cranMirror().url;
+         std::string url = userSettings().cranMirror().primary;
          if (isKnownSecureMirror(url))
-            unableToSecureConnectionWarning(secureMirror_.url);
+            unableToSecureConnectionWarning(secureMirror_.primary);
          else
             insecureReposURLWarning(url);
       }

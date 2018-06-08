@@ -689,6 +689,14 @@ CRANMirror UserSettings::cranMirror() const
    mirror.country = settings_.get(kCRANMirrorCountry);
    mirror.changed = settings_.getBool(kCRANMirrorChanged);
 
+   // extract primary cran repo
+   std::vector<std::string> parts;
+   boost::split(parts, mirror.url, boost::is_any_of("|"));
+   if (parts.size() >= 2)
+      mirror.primary = parts.at(1);
+   else
+      mirror.primary = mirror.url;
+
    // if there is no URL then return the default RStudio mirror
    // (return the insecure version so we can rely on probing for
    // the secure version). also check for "/" to cleanup from
