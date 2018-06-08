@@ -16,6 +16,12 @@
 * Author D3 visualizations in RStudio and preview in the Viewer pane
 * Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
 
+### Jobs
+
+* Run any R script as a background job in a clean R session
+* Monitor progress and see script output in real time
+* Optionally give jobs your global environment when started, and export values back when complete
+
 ### SQL
 
 * Author SQL queries in RStudio and preview in the SQL Results pane

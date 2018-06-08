@@ -42,9 +42,9 @@ public class JobLauncherControls extends Composite
 
       initWidget(uiBinder.createAndBindUi(this));
       
-      exportEnv_.addItem("Do nothing", "");
-      exportEnv_.addItem("Copy objects to global environment", "R_GlobalEnv");
-      exportEnv_.addItem("Copy objects to new environment", "local");
+      exportEnv_.addItem("(Don't copy)", "");
+      exportEnv_.addItem("To global environment", "R_GlobalEnv");
+      exportEnv_.addItem("To results object in global environment", "local");
    }
    
    public void setScriptPath(String path)

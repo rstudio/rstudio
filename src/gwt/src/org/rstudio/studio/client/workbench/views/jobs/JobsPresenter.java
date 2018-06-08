@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
@@ -38,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class JobsPresenter extends BasePresenter  
                            implements JobUpdatedEvent.Handler,
@@ -64,12 +68,14 @@ public class JobsPresenter extends BasePresenter
                         Binder binder,
                         Commands commands,
                         EventBus events,
-                        GlobalDisplay globalDisplay)
+                        GlobalDisplay globalDisplay,
+                        Provider<JobManager> pJobManager)
    {
       super(display);
       display_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      pJobManager_ = pJobManager;
       binder.bind(commands, this);
    }
 
@@ -113,6 +119,31 @@ public class JobsPresenter extends BasePresenter
    
    public void confirmClose(Command onConfirmed)
    {
+      List<Job> jobs = pJobManager_.get().getJobs();
+      
+      // if there are no jobs, go ahead and let the tab close
+      if (jobs.isEmpty())
+         onConfirmed.execute();
+
+      // count the number of running jobs
+      int running = 0;
+      for (int i = 0; i < jobs.size(); i++)
+      {
+         running++;
+      }
+      
+      if (running > 0)
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+               "Jobs Still Running", 
+               "The Jobs tab cannot be closed while there " +
+               (running > 1 ?
+                  "are unfinished jobs" : "is an unfinished job") + "." +
+               "\n\nWait until all jobs have completed.");
+         return;
+      }
+      
+      // done, okay to close
       onConfirmed.execute();
    }
    
@@ -169,4 +200,5 @@ public class JobsPresenter extends BasePresenter
    private final JobsServerOperations server_;
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<JobManager> pJobManager_;
 }
