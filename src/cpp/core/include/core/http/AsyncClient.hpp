@@ -184,8 +184,7 @@ protected:
       // specify closing of the connection after the request unless this is
       // an attempt to upgrade to websockets
       Header overrideHeader;
-      if (!boost::algorithm::iequals(request_.headerValue("Connection"),
-                                     "Upgrade"))
+      if (!util::isWSUpgradeRequest(request_))
       {
          overrideHeader = Header::connectionClose();
       }

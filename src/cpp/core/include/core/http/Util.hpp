@@ -161,6 +161,9 @@ void fileRequestHandler(const std::string& wwwLocalPath,
                         const core::http::Request& request,
                         core::http::Response* pResponse);
 
+// determines if the given request is request to upgrade the connection to a websocket
+bool isWSUpgradeRequest(const Request& request);
+
 } // namespace util
 
 } // namespace http

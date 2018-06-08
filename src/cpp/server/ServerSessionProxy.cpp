@@ -773,8 +773,10 @@ void proxyLocalhostRequest(
 
    // specify closing of the connection after the request unless this is
    // an attempt to upgrade to websockets
-   if (!boost::algorithm::iequals(request.headerValue("Connection"), "Upgrade"))
+   if (!http::util::isWSUpgradeRequest(request))
+   {
       request.setHeader("Connection", "close");
+   }
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<LocalhostAsyncClient> pClient(
