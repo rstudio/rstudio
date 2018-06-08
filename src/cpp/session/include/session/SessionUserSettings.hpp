@@ -48,6 +48,7 @@ struct CRANMirror
    std::string url;
    std::string country;
    bool changed = false;
+   std::string primary;
 };
 
 struct BioconductorMirror
