@@ -8,7 +8,7 @@ installed.
 Bootstrap
 =============================================================================
 - Save the file `https://github.com/rstudio/rstudio/blob/master/dependencies/windows/Install-RStudio-Prereqs.ps1` to the Windows machine. 
-Open an Administrator PowerShell and enter this command:
+- Open an Administrator PowerShell and enter this command:
 - `Set-ExecutionPolicy Unrestricted -force`
 - Execute the downloaded `Install-RStudio-Prereqs.ps1` script 
 - wait for the script to complete (UI will be shown when installing Qt, but
