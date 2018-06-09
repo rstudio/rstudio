@@ -1,6 +1,11 @@
 @echo off
 set PACKAGE_DIR="%CD%"
 
+if NOT "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
+      echo "Building RStudio requires 64-bit Windows"
+      exit /b 1
+)
+
 REM clean if requested
 if "%1" == "clean" (
       call clean-build.bat
@@ -31,7 +36,7 @@ set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 
-REM perform 32-bit build 
+REM perform build 
 cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
@@ -44,7 +49,7 @@ set "PATH=%PATH%;%WINDOWS_TOOLKIT%"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
-cmake -G"Visual Studio 14 2015" ^
+cmake -G"Visual Studio 14 2015 Win64" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
@@ -53,12 +58,6 @@ cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
 
 set "PATH=%OLDPATH%"
-
-REM perform 64-bit build and install it into the 32-bit tree
-REM (but only do this if we are on win64)
-if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-      call make-install-win64.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
-)
 
 REM create packages
 set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0"

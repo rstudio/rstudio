@@ -134,20 +134,15 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
-   # require Windows Vista (for both 32bit and 64bit targets)
+   # require Windows-7 SP1
    add_definitions(
       -DNOMINMAX
-      -DWINVER=0x600
-      -D_WIN32_WINNT=0x600
-      -D_WIN32_IE=0x600
+      -DWINVER=0x601
+      -D_WIN32_WINNT=0x601
+      -D_WIN32_IE=0x601
       -DWIN32_LEAN_AND_MEAN
+      -D_WIN64
       -DBOOST_USE_WINDOWS_H)
-
-   # ensure we use 64-bit APIs for 64-bit builds
-   if(RSTUDIO_SESSION_WIN64)
-      add_definitions(-D_WIN64)
-   endif()
-
 endif()
 
 # determine whether we should statically link boost. we always do this
@@ -214,11 +209,7 @@ if(UNIX)
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
-   if(RSTUDIO_SESSION_WIN64)
-      set(BOOST_ARCH "64")
-   else()
-      set(BOOST_ARCH "32")
-   endif()
+   set(BOOST_ARCH "64")
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(BOOST_SUFFIX "vc140-mt-1_65_1.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc14-release-static/boost${BOOST_ARCH}")
@@ -241,15 +232,9 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 if(WIN32)
      # winpty - pseudoterminal support on Windows
-     if(RSTUDIO_SESSION_WIN64)
-        set(WINPTY_ARCH "64")
-     else()
-        set(WINPTY_ARCH "32")
-     endif()
-
+     set(WINPTY_ARCH "64")
      set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.3-msys2-2.7.0")
      set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/${WINPTY_ARCH}/include")
-     set(WINPTY_BINDIR_32 "${WINPTY_ROOT}/32/bin")
      set(WINPTY_BINDIR_64 "${WINPTY_ROOT}/64/bin")
 
      # add winpty as system include directory
@@ -262,12 +247,7 @@ if(WIN32)
         set(OPENSSL_BUILD_TYPE "release")
      endif()
 
-     if(RSTUDIO_SESSION_WIN64)
-        set(OPENSSL_BITNESS "64")
-     else()
-        set(OPENSSL_BITNESS "32")
-     endif()
-
+     set(OPENSSL_BITNESS "64")
      set(OPENSSL_NAME "openssl-1.0.2m")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
@@ -316,9 +296,6 @@ endif()
 if(RSTUDIO_CONFIG_MONITOR_ONLY)
    message(STATUS "Configured to build MONITOR_ONLY")
 endif()
-if(RSTUDIO_SESSION_WIN64)
-   message(STATUS "Configured to build SESSION_WIN64")
-endif()
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
@@ -340,9 +317,7 @@ else()
    if(NOT RSTUDIO_CONFIG_MONITOR_ONLY)
 
       # find LibR
-      if(RSTUDIO_SESSION_WIN64)
-         set(LIBR_FIND_WINDOWS_64BIT TRUE)
-      endif()
+      set(LIBR_FIND_WINDOWS_64BIT TRUE)
       find_package(LibR REQUIRED)
 
       # verify we got the required R version

@@ -33,7 +33,7 @@ Build C++
 =============================================================================
 - Open Qt Creator
 - Open Project and select rstudio\src\cpp\CMakelists.txt
-- Select the kit(s) you wish to use, 32-bit and/or 64-bit
+- Select the 64-bit kit (RStudio for Windows is 64-bit only)
 - Click Configure, then build
 
 Run RStudio

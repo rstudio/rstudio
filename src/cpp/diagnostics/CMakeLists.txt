@@ -63,9 +63,7 @@ endif()
 target_link_libraries(diagnostics
    rstudio-core
 )
-if(NOT RSTUDIO_SESSION_WIN64)
-   install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
-endif()
+install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
 
 # if doing a package build on MacOS, reroute the OpenSSL libraries to our bundled copies
 if(APPLE AND RSTUDIO_PACKAGE_BUILD)
