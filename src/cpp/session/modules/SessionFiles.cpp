@@ -497,10 +497,14 @@ void handleFilesRequest(const http::Request& request,
    // no directory listing available
    if (filePath.isDirectory())
    {
-      pResponse->setNotFoundError(request);
-      return;
+      // if there is an index.html then serve that
+      filePath = filePath.childPath("index.html");
+      if (!filePath.exists())
+      {
+         pResponse->setNotFoundError(request);
+         return;
+      }
    }
-
 
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
