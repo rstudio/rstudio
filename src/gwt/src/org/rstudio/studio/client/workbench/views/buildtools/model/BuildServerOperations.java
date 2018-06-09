@@ -45,4 +45,7 @@ public interface BuildServerOperations
    
    // get bookdown output formats
    void getBookdownFormats(ServerRequestCallback<BookdownFormats> requestCallback);
+
+   // check if test file exists
+   void checkTestFileExists(ServerRequestCallback<Boolean> callback, String path);
 }

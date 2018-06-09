@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -74,7 +76,8 @@ public class BuildPresenter extends BasePresenter
                       JsArray<SourceMarker> errors, 
                       boolean ensureVisible,
                       int autoSelect,
-                      boolean openErrors);
+                      boolean openErrors,
+                      String buildType);
       void buildCompleted();
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
@@ -82,6 +85,8 @@ public class BuildPresenter extends BasePresenter
       HasSelectionCommitHandlers<String> buildSubType();
           
       HasClickHandlers stopButton();
+      
+      String errorsBuildType();
    }
    
    @Inject
@@ -148,7 +153,8 @@ public class BuildPresenter extends BasePresenter
                              uiPrefs_.navigateToBuildError().getValue() ?
                                  SourceMarkerList.AUTO_SELECT_FIRST_ERROR :
                                  SourceMarkerList.AUTO_SELECT_NONE,
-                             event.openErrorList());
+                             event.openErrorList(),
+                             event.type());
             
             if (uiPrefs_.navigateToBuildError().getValue() && event.openErrorList())
             {
@@ -212,7 +218,31 @@ public class BuildPresenter extends BasePresenter
          {
             CodeNavigationTarget target = event.getSelectedItem();
             FileSystemItem fsi = FileSystemItem.createFile(target.getFile());
-            fileTypeRegistry_.editFile(fsi, target.getPosition());
+            
+            if (view_.errorsBuildType() == "test-file" ||
+                view_.errorsBuildType() == "test-shiny-file")
+            {
+               // for test files, we want to avoid throwing errors when the file is missing
+               server_.checkTestFileExists(new ServerRequestCallback<Boolean>()
+               {
+                  @Override
+                  public void onResponseReceived(Boolean success)
+                  {
+                     if (success)
+                        fileTypeRegistry_.editFile(fsi, target.getPosition());
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               }, target.getFile());
+            }
+            else
+            {
+               fileTypeRegistry_.editFile(fsi, target.getPosition());
+            }
          }
       });
       
@@ -247,7 +277,8 @@ public class BuildPresenter extends BasePresenter
                           buildState.getErrors(), 
                           false,
                           SourceMarkerList.AUTO_SELECT_NONE,
-                          true);
+                          true,
+                          buildState.type());
       
       if (!buildState.isRunning())
          view_.buildCompleted();

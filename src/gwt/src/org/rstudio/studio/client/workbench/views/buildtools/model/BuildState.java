@@ -42,4 +42,8 @@ public class BuildState extends JavaScriptObject
    public final native JsArray<CompileOutput> getOutputs() /*-{
       return this.outputs;
    }-*/;
+
+   public final native String type() /*-{
+      return this.type;
+   }-*/;
 }

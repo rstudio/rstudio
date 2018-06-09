@@ -5473,6 +5473,20 @@ public class RemoteServer implements Server
                   callback);
    }
 
+   @Override
+   public void checkTestFileExists(ServerRequestCallback<Boolean> callback,
+                                   String path)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+
+      sendRequest(RPC_SCOPE,
+                  CHECK_TEST_FILE_EXISTS,
+                  params,
+                  true,
+                  callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private String userHomePath_;
@@ -5911,4 +5925,6 @@ public class RemoteServer implements Server
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
    private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
+
+   private static final String CHECK_TEST_FILE_EXISTS = "check_test_file_exists";
 }
