@@ -184,7 +184,7 @@ var renderCellContents = function(data, type, row, meta, clazz) {
   if (clazz === "dataCell" || clazz === "listCell") {
      escaped += ' <a class="viewerLink" href="javascript:window.' + 
                 (clazz === "dataCell" ? 'dataViewerCallback' : 'listViewerCallback') +
-                ' (' + (meta.row + 1) + ', ' + meta.col +')">' +
+                ' (' + row[1] + ', ' + meta.col +')">' +
                 '<img src="' +
                 (clazz === "dataCell" ? 'data-viewer.png' : 'object-viewer.png') +
                 '" class="viewerImage" /></a>';

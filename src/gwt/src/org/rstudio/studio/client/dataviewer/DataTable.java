@@ -193,7 +193,7 @@ public class DataTable
    }-*/;
    
    private static final native void setListViewerCallback(
-      WindowEx fame,
+      WindowEx frame,
       CommandWith2Args<Integer, Integer> listCallback) /*-{
       frame.setOption(
          "listViewerCallback", 
