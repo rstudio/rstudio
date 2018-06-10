@@ -157,8 +157,18 @@ var renderCellContents = function(data, type, row, meta, clazz) {
     return '<span class="naCell">NA</span>';
   }
 
-  // if row matches because of a global search, highlight that
-  if (cachedSearch.length > 0) {
+  if (clazz === "dataCell") {
+     // a little ugly: R deparses data cell values as list(col = val, col = val...).  when rendering
+     // a data cell which appears to have this format, count the assignment tokens to get a variable
+     // count and show that as a summary. 
+     if (data.substring(0, 5) === "list(" && data.indexOf("=") > 0) {
+        var varCount = data.split("=").length - 1;
+        data = "" + varCount + " variable";
+        if (varCount > 1)
+           data += "s";
+     }
+  } else if (cachedSearch.length > 0) {
+     // if row matches because of a global search, highlight that
     var idx = data.toLowerCase().indexOf(cachedSearch.toLowerCase());
     if (idx >= 0) {
       return highlightSearchMatch(data, cachedSearch, idx);
@@ -182,9 +192,10 @@ var renderCellContents = function(data, type, row, meta, clazz) {
   // special additional rendering for cells which themselves contain data frames or lists:
   // these include an icon that can be clicked to view contents
   if (clazz === "dataCell" || clazz === "listCell") {
-     escaped += ' <a class="viewerLink" href="javascript:window.' + 
+     escaped = '<i>' + escaped + '</i> ' +
+                '<a class="viewerLink" href="javascript:window.' + 
                 (clazz === "dataCell" ? 'dataViewerCallback' : 'listViewerCallback') +
-                ' (' + row[1] + ', ' + meta.col +')">' +
+                '(' + row[1] + ', ' + meta.col +')">' +
                 '<img src="' +
                 (clazz === "dataCell" ? 'data-viewer.png' : 'object-viewer.png') +
                 '" class="viewerImage" /></a>';
