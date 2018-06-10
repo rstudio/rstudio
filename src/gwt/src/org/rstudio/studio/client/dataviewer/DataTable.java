@@ -1,7 +1,7 @@
 /*
  * DataTable.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.dataviewer;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -109,6 +110,16 @@ public class DataTable
       return setFilterUIVisible(getWindow(), visible);
    }
    
+   public void setDataViewerCallback(CommandWith2Args<Integer, Integer> dataCallback)
+   {
+      setDataViewerCallback(getWindow(), dataCallback);
+   }
+   
+   public void setListViewerCallback(CommandWith2Args<Integer, Integer> listCallback)
+   {
+      setListViewerCallback(getWindow(), listCallback);
+   }
+
    public void refreshData(boolean structureChanged, boolean sizeChanged)
    {
       // if the structure of the data changed, the old search/filter data is
@@ -169,6 +180,26 @@ public class DataTable
    private static final native void onDeactivate(WindowEx frame) /*-{
       if (frame && frame.onDeactivate)
          frame.onDeactivate();
+   }-*/;
+
+   private static final native void setDataViewerCallback(
+      WindowEx frame,
+      CommandWith2Args<Integer, Integer> dataCallback) /*-{
+      frame.setOption(
+         "dataViewerCallback", 
+         $entry(function(row, col) {
+            dataCallback.@org.rstudio.core.client.CommandWith2Args::execute(Ljava/lang/Object;Ljava/lang/Object;)(row, col);
+         }));
+   }-*/;
+   
+   private static final native void setListViewerCallback(
+      WindowEx fame,
+      CommandWith2Args<Integer, Integer> listCallback) /*-{
+      frame.setOption(
+         "listViewerCallback", 
+         $entry(function(row, col) {
+            listCallback.@org.rstudio.core.client.CommandWith2Args::execute(Ljava/lang/Object;Ljava/lang/Object;)(row, col);
+         }));
    }-*/;
 
    private Host host_;

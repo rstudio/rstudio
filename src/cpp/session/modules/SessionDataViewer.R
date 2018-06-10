@@ -102,9 +102,9 @@
 
     # ensure that the column contains some scalar values we can examine 
     # (treat vector-valued columns as of unknown type) 
-    if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
+    if (length(x[[idx]]) > 0 && length(x[[idx]][[1]]) == 1)
     {
-      val <- x[[idx]][1]
+      val <- x[[idx]][[1]]
       col_type_r <- typeof(val)
       if (is.factor(val))
       {
@@ -149,6 +149,14 @@
       {
         col_type <- "boolean"
         col_search_type <- "boolean"
+      }
+      else if (is.data.frame(val))
+      {
+        col_type <- "data.frame"
+      }
+      else if (is.list(val))
+      {
+         col_type <- "list"
       }
     }
     list(

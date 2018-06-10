@@ -301,6 +301,10 @@ th:focus {
     color: #FFF;
 }
 
+.dataCell, .listCell {
+    margin-right: 16px;
+}
+
 .numberCell {
     text-align: right;
 }
@@ -483,5 +487,15 @@ div.dataTables_scroll div.dataTables_scrollHead {
 
 .rstudio-themes-flat.editor_dark .selected .histBar {
     background-color: #79A9D9;
+}
+
+.viewerImage {
+    width: 12px;
+    height: 12px;
+}
+
+.viewerLink {
+    position: absolute;
+    right: 0px;
 }
 
