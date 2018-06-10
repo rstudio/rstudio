@@ -23,6 +23,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -87,10 +88,31 @@ public class DataEditingTargetWidget extends Composite
       {
          CommandWith2Args<Integer, Integer> view = (row, col) ->
          {
+            String lho = dataItem.getCaption();
+            String object = dataItem.getObject();
+            if (StringUtil.isNullOrEmpty(object))
+            {
+               // we're viewing an expression -- wrap in parens before indexing
+               lho = "(" + lho + ")";
+            }
+            else
+            {
+               // we're viewing a live variable
+               if (RegexUtil.isSyntacticRIdentifier(object))
+               {
+                  // object is a valid identifier, use as-is
+                  lho = object;
+               }
+               else
+               {
+                  // not a valid identifier; escape before indexing
+                  lho = "`" + object + "`";
+               }
+            }
             events.fireEvent(new SendToConsoleEvent(
-                  "View(" + dataItem.getCaption() + 
-                            "[[" + col + "]]" + 
-                            "[[" + row + "]])", true));
+                  "View(" + lho + 
+                     "[[" + col + "]]" + 
+                     "[[" + row + "]])", true));
          };
          table_.setDataViewerCallback(view);
          table_.setListViewerCallback(view);
