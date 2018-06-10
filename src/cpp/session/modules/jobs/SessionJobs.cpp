@@ -364,7 +364,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
-   RS_REGISTER_CALL_METHOD(rs_runScriptJob, 4);
+   RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
