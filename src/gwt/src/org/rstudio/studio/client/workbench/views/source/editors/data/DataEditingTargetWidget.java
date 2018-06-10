@@ -88,7 +88,7 @@ public class DataEditingTargetWidget extends Composite
       {
          CommandWith2Args<Integer, Integer> view = (row, col) ->
          {
-            String lho = dataItem.getCaption();
+            String lho = dataItem.getExpression();
             String object = dataItem.getObject();
             if (StringUtil.isNullOrEmpty(object))
             {

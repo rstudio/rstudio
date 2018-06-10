@@ -549,9 +549,15 @@
 })
 
 .rs.addFunction("viewHook", function(original, x, title) {
-   # generate title if necessary
+   # remember the expression from which the data was generated
+   expr <- deparse(substitute(x))
+
+   # generate title if necessary (from deparsed expr)
    if (missing(title))
-      title <- paste(deparse(substitute(x))[1])
+      title <- paste(expr[1])
+
+   # collapse expr for serialization
+   expr <- paste(expr, collapse = " ")
 
    name <- ""
    env <- emptyenv()
@@ -639,14 +645,14 @@
    cacheKey <- .rs.addCachedData(force(x), name)
    
    # call viewData 
-   invisible(.Call("rs_viewData", x, title, name, env, cacheKey, FALSE))
+   invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE))
 })
 
 .rs.registerReplaceHook("View", "utils", .rs.viewHook)
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
-   invisible(.Call("rs_viewData", x, title, "", emptyenv(), cacheKey, preview))
+   invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
