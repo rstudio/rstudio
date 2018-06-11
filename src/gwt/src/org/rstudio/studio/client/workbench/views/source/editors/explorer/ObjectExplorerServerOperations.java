@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -34,4 +35,8 @@ public interface ObjectExplorerServerOperations
          String handleId,
          String objectName,
          ServerRequestCallback<ObjectExplorerInspectionResult> requestCallback);
+   
+   void explorerEndInspect(
+         String handleId,
+         ServerRequestCallback<Void> requestCallback);
 }
