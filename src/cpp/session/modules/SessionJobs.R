@@ -13,6 +13,16 @@
 #
 #
 
+# Helpers --------------------------------------------------------------------
+
+.rs.addFunction("stopScriptFunction", function(id) {
+   function() {
+      .rs.api.stopScriptJob(id)
+   }
+})
+
+# API functions --------------------------------------------------------------
+
 .rs.addApiFunction("addJob", function(name, status = "", progressUnits = 0L,
       actions = NULL, estimate = 0L, estimateRemaining = FALSE, running = FALSE, 
       autoRemove = TRUE, group = "") {
@@ -89,6 +99,9 @@
       stop("The R script '", path, "' does not exist.")
    .Call("rs_runScriptJob", path, encoding, workingDir, importEnv, exportEnv, 
          PACKAGE = "(embedding)")
-   invisible(NULL)
+})
+
+.rs.addApiFunction("stopScriptJob", function(id) {
+   .Call("rs_stopScriptJob", id)
 })
 

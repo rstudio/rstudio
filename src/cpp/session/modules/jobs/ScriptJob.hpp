@@ -51,7 +51,8 @@ private:
    std::string exportEnv_;
 };
 
-core::Error startScriptJob(const ScriptLaunchSpec& spec);
+core::Error startScriptJob(const ScriptLaunchSpec& spec, 
+      std::string *pId);
 
 } // namespace jobs
 } // namespace modules

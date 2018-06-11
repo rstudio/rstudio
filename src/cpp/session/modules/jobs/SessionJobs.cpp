@@ -190,6 +190,7 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
 
 SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP exportEnv)
 {
+   r::sexp::Protect protect;
    std::string filePath = r::sexp::safeAsString(path, "");
    if (filePath.empty())
    {
@@ -215,13 +216,15 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
       r::exec::error("The requested working directory '" + workingDir + "' does not exist.");
    }
 
+   std::string id;
    startScriptJob(ScriptLaunchSpec(
             module_context::resolveAliasedPath(filePath),
             r::sexp::safeAsString(encoding),
             module_context::resolveAliasedPath(workingDir),
             r::sexp::asLogical(importEnv),
-            r::sexp::safeAsString(exportEnv)));
-   return R_NilValue;
+            r::sexp::safeAsString(exportEnv)), &id);
+
+   return r::sexp::create(id, &protect);
 }
 
 Error getJobs(const json::JsonRpcRequest& request,
@@ -262,6 +265,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    std::string encoding;
    bool importEnv;
    std::string exportEnv;
+   std::string id;
    Error error = json::readParams(request.params, &jobSpec);
    if (error)
       return error;
@@ -279,7 +283,10 @@ Error runScriptJob(const json::JsonRpcRequest& request,
             encoding,
             module_context::resolveAliasedPath(workingDir),
             importEnv,
-            exportEnv));
+            exportEnv), &id);
+
+   pResponse->setResult(id);
+
    return Success();
 }
 
@@ -365,6 +372,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
    RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
+   RS_REGISTER_CALL_METHOD(rs_stopScriptJob, 1);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));

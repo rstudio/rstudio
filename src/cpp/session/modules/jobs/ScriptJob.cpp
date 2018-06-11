@@ -340,7 +340,7 @@ std::string ScriptLaunchSpec::encoding()
    return encoding_;
 }
 
-Error startScriptJob(const ScriptLaunchSpec& spec)
+Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pId)
 {
    boost::shared_ptr<ScriptJob> job = ScriptJob::create(spec,
          [&]() 
@@ -348,6 +348,11 @@ Error startScriptJob(const ScriptLaunchSpec& spec)
             // remove the script from the list of those running
             s_scripts.erase(std::remove(s_scripts.begin(), s_scripts.end(), job), s_scripts.end());
          });
+
+   if (pId != nullptr)
+   {
+      *pId = job->id();
+   }
 
    s_scripts.push_back(job);
    return Success();
