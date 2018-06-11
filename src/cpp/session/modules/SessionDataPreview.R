@@ -44,6 +44,9 @@
    # remove comments since some drivers might not support them
    statement <- gsub("--[^\n]*\n+", "", statement)
 
+   # force the connection to let DBI and others initialize S3
+   conn <- force(conn)
+
    # fetch at most 100 records as a preview
    rs <- DBI::dbSendQuery(conn, statement = statement, ...)
    data <- DBI::dbFetch(rs, n = 1000)
