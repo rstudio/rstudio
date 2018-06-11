@@ -122,11 +122,6 @@ public class SecondaryReposWidget extends Composite
       cranRepoUrl_ = cranUrl;
       cranIsCustom_ = cranIsCustom;
    }
-
-   public void setUpdateHandler(Operation updateHandler)
-   {
-      updateHandler_ = updateHandler;
-   }
    
    private ClickHandler addButtonClicked_ = new ClickHandler() {
       @Override
@@ -142,8 +137,6 @@ public class SecondaryReposWidget extends Composite
             {
                repos_.add(input);
                updateRepos();
-
-               updateHandler_.execute();
             }
          }, excluded, cranRepoUrl_, cranIsCustom_);
          
@@ -173,8 +166,6 @@ public class SecondaryReposWidget extends Composite
                   }
                },
                false);
-            
-            updateHandler_.execute();  
          }
       }
    };
@@ -191,8 +182,6 @@ public class SecondaryReposWidget extends Composite
             repos_.set(index, swap);
             updateRepos();
             listBox_.setSelectedIndex(index - 1);
-
-            updateHandler_.execute();
          }
       }
    };
@@ -209,8 +198,6 @@ public class SecondaryReposWidget extends Composite
             repos_.set(index + 1, swap);
             updateRepos();
             listBox_.setSelectedIndex(index + 1);
-
-            updateHandler_.execute();
          }
       }
    };
@@ -234,8 +221,6 @@ public class SecondaryReposWidget extends Composite
    private SmallButton buttonRemove_;
    private SmallButton buttonUp_;
    private SmallButton buttonDown_;
-
-   private Operation updateHandler_;
    
    static interface Styles extends CssResource
    {
