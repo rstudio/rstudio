@@ -22,6 +22,7 @@
 #include <QFileDialog>
 #include <QWebEngineSettings>
 
+#include "DesktopInfo.hpp"
 #include "DesktopDownloadItemHelper.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopSatelliteWindow.hpp"
@@ -261,10 +262,16 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       qDebug() << url.toString();
       return false;
    }
-
+   
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
    bool isLocal = host == "localhost" || host == "127.0.0.1";
+   
+   // accept Chrome Developer Tools navigation attempts
+#ifndef NDEBUG
+   if (isLocal && url.port() == desktopInfo().getChromiumDevtoolsPort())
+      return true;
+#endif
 
    if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme() &&
