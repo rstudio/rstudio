@@ -46,7 +46,7 @@
                                                           start)
 {
    # retrieve object from cache
-   object  <- .rs.explorer.getCachedObject(id, extractingCode)
+   entry <- .rs.explorer.getCachedObject(id, extractingCode)
    
    # construct context
    context <- .rs.explorer.createContext(
@@ -59,7 +59,7 @@
    )
    
    # generate inspection result
-   result <- .rs.explorer.inspectObject(object, context)
+   result <- .rs.explorer.inspectObject(entry$object, context)
    result
 })
 
@@ -272,7 +272,7 @@
    name <- .rs.explorer.objectName(object, title)
    
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name, title)
+   handle <- .rs.explorer.createHandle(object, name, title, envir)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
@@ -280,10 +280,12 @@
 
 .rs.addFunction("explorer.createHandle", function(object,
                                                   name,
-                                                  title)
+                                                  title,
+                                                  envir)
 {
    # save in cached data environment
-   id <- .rs.explorer.setCachedObject(object)
+   entry <- list(object = object, name = name, title = title, envir = envir)
+   id <- .rs.explorer.setCachedObject(entry)
    
    # return a handle object
    list(
