@@ -321,10 +321,11 @@ Error initialize()
    r::routines::registerAll();
    
    // set default repository if requested
-   if (!utils::rCRANRepos().empty())
+   if (!utils::rCRANUrl().empty() || !utils::rCRANSecondary().empty())
    {
       error = r::exec::RFunction(".rs.setCRANReposAtStartup",
-                                 utils::rCRANRepos()).call();
+                                 utils::rCRANUrl(),
+                                 utils::rCRANSecondary()).call();
       if (error)
          return error;
    }

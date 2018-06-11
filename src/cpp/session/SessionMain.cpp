@@ -1839,14 +1839,29 @@ int main (int argc, char * const argv[])
       }
 
       // CRAN repos precedence: user setting then repos file then global server option
-      if (userSettings().cranMirror().changed)
-         rOptions.rCRANRepos = userSettings().cranMirror().url;
-      else if (!options.rCRANMultipleRepos().empty())
-         rOptions.rCRANRepos = options.rCRANMultipleRepos();
-      else if (!options.rCRANRepos().empty())
-         rOptions.rCRANRepos = options.rCRANRepos();
+      if (userSettings().cranMirror().changed) {
+         rOptions.rCRANUrl = userSettings().cranMirror().url;
+         rOptions.rCRANSecondary = userSettings().cranMirror().secondary;
+      }
+      else if (!options.rCRANMultipleRepos().empty()) {
+         std::vector<std::string> parts;
+         std::string repos = options.rCRANMultipleRepos();
+         boost::split(parts, repos, boost::is_any_of("|"));
+         rOptions.rCRANSecondary = "";
+
+         std::vector<std::string> secondary;
+         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2) {
+            if (string_utils::toLower(parts[idxParts]) == "cran")
+               rOptions.rCRANUrl = parts[idxParts + 1];
+            else
+               secondary.push_back(std::string(parts[idxParts]) + "|" + parts[idxParts + 1]);
+         }
+         rOptions.rCRANSecondary = algorithm::join(secondary, "|");
+      }
+      else if (!options.rCRANUrl().empty())
+         rOptions.rCRANUrl = options.rCRANUrl();
       else {
-         rOptions.rCRANRepos = "https://cran.rstudio.com/";
+         rOptions.rCRANUrl = "https://cran.rstudio.com/";
          customRepo = false;
       }
 
@@ -1854,7 +1869,9 @@ int main (int argc, char * const argv[])
          CRANMirror defaultMirror;
          defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
          defaultMirror.host = customRepo ? "Custom" : "RStudio";
-         defaultMirror.url = rOptions.rCRANRepos;
+         defaultMirror.secondary = rOptions.rCRANSecondary;
+         defaultMirror.url = rOptions.rCRANUrl;
+
          userSettings().setCRANMirror(defaultMirror, false);
       }
 

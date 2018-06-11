@@ -114,7 +114,7 @@ public:
    {
       // get the URL currently in settings. if it's https already then bail
       CRANMirror mirror = userSettings().cranMirror();
-      if (isSecure(mirror.primary))
+      if (isSecure(mirror.url))
          return;
 
       // modify to be secure
@@ -125,7 +125,7 @@ public:
       // build the command
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
       cmd += "tmp <- tempfile(); ";
-      cmd += "download.file(paste(contrib.url('" + mirror.primary +
+      cmd += "download.file(paste(contrib.url('" + mirror.url +
               "'), '/PACKAGES.gz', sep = ''), destfile = tmp); ";
       cmd += "cat(readLines(tmp)); ";
       cmd += "} ";
@@ -149,9 +149,9 @@ public:
       }
       else
       {
-         std::string url = userSettings().cranMirror().primary;
+         std::string url = userSettings().cranMirror().url;
          if (isKnownSecureMirror(url))
-            unableToSecureConnectionWarning(secureMirror_.primary);
+            unableToSecureConnectionWarning(secureMirror_.url);
          else
             insecureReposURLWarning(url);
       }
@@ -218,7 +218,7 @@ void reconcileSecureDownloadConfiguration()
       // (in this case the global repository is always overriding the user
       // provided repository so it only makes sense to check/verify the
       // global repository)
-      std::string globalRepos = session::options().rCRANRepos();
+      std::string globalRepos = session::options().rCRANUrl();
       if (!globalRepos.empty() && !isSecure(globalRepos))
       {
          insecureReposURLWarning(globalRepos,

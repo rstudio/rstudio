@@ -210,6 +210,7 @@ CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
                     "name", &cranMirror.name,
                     "host", &cranMirror.host,
                     "url", &cranMirror.url,
+                    "secondary", &cranMirror.secondary,
                     "country", &cranMirror.country,
                     "changed", &cranMirror.changed);
    return cranMirror;
@@ -512,6 +513,7 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    cranMirrorJson["name"] = cranMirror.name;
    cranMirrorJson["host"] = cranMirror.host;
    cranMirrorJson["url"] = cranMirror.url;
+   cranMirrorJson["secondary"] = cranMirror.secondary;
    cranMirrorJson["country"] = cranMirror.country;
    cranMirrorJson["changed"] = cranMirror.changed;
    return cranMirrorJson;
