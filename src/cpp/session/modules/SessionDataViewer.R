@@ -101,8 +101,7 @@
       col_label <- ""
 
     # ensure that the column contains some scalar values we can examine 
-    # (treat vector-valued columns as of unknown type) 
-    if (length(x[[idx]]) > 0 && length(x[[idx]][[1]]) == 1)
+    if (length(x[[idx]]) > 0)
     {
       val <- x[[idx]][[1]]
       col_type_r <- typeof(val)

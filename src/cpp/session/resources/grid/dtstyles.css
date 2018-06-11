@@ -302,14 +302,14 @@ th:focus {
 }
 
 .dataCell, .listCell {
-    margin-right: 16px;
+    padding-right: 16px;
 }
 
 .numberCell {
     text-align: right;
 }
 
-.numberCell, .textCell {
+.numberCell, .textCell, .listCell, .dataCell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -321,11 +321,13 @@ th:focus {
     color: #FFF;
 }
 
-.autoSize .numberCell, .autoSize .textCell {
+.autoSize .numberCell, .autoSize .textCell, 
+.autoSize .dataCell, .autoSize .listCell {
     max-width: 300px; 
 }
 
-.manualSize .numberCell, .manualSize .textCell {
+.manualSize .numberCell, .manualSize .textCell, 
+.manualSize .dataCell, .manualSize .listCell {
     max-width: 100%;
 }
 
