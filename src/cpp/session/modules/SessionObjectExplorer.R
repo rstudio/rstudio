@@ -46,7 +46,7 @@
                                                           start)
 {
    # retrieve object from cache
-   entry <- .rs.explorer.getCachedObject(id, extractingCode)
+   object <- .rs.explorer.getCachedObject(id, extractingCode)
    
    # construct context
    context <- .rs.explorer.createContext(
@@ -59,20 +59,32 @@
    )
    
    # generate inspection result
-   result <- .rs.explorer.inspectObject(entry$object, context)
+   result <- .rs.explorer.inspectObject(object, context)
    result
 })
 
 .rs.addJsonRpcHandler("explorer_begin_inspect", function(id, name)
 {
-   .rs.rpc.explorer_inspect_object(
-      id             = id,
+   # retrieve object from cache
+   object <- .rs.explorer.getCachedObject(
+      id = id,
       extractingCode = NULL,
-      name           = name,
-      access         = NULL,
-      tags           = character(),
-      start          = 0
+      refresh = TRUE
    )
+   
+   # construct context
+   context <- .rs.explorer.createContext(
+      name      = name,
+      access    = NULL,
+      tags      = character(),
+      recursive = 1,
+      start     = 1,
+      end       = .rs.explorer.defaultRowLimit
+   )
+   
+   # generate inspection result
+   result <- .rs.explorer.inspectObject(object, context)
+   result
 })
 
 .rs.addFunction("objectAddress", function(object)
@@ -167,13 +179,24 @@
 })
 
 .rs.addFunction("explorer.getCachedObject", function(id,
-                                                     extractingCode = NULL)
+                                                     extractingCode = NULL,
+                                                     refresh = FALSE)
 {
+   # retrieve cached entry
    cache <- .rs.explorer.getCache()
-   object <- cache[[id]]
+   entry <- cache[[id]]
+   
+   # get object (refreshing if requested)
+   object <- if (refresh)
+      .rs.tryCatch(eval(parse(text = entry$title), envir = entry$envir))
+   else
+      entry$object
+   
+   # return if no sub-extraction needed
    if (is.null(extractingCode))
       return(object)
    
+   # otherwise, evaluate expression to retrieve sub-object
    envir <- new.env(parent = globalenv())
    envir[["__OBJECT__"]] <- object
    
@@ -796,7 +819,7 @@
    else if (is.data.frame(object))
    {
       fmt <- "A %s with %s %s and %s %s"
-    
+      
       name <- if (inherits(object, "tbl"))
          "tibble"
       else if (inherits(object, "data.table"))
