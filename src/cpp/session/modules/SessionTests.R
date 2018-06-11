@@ -41,7 +41,3 @@
 
    .rs.scalar(result)
 })
-
-.rs.addJsonRpcHandler("check_test_file_exists", function(path) {
-   .rs.scalar(file.exists(path))
-})

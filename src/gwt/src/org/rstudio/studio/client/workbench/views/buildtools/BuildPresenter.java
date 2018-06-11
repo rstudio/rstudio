@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
@@ -101,7 +102,8 @@ public class BuildPresenter extends BasePresenter
                          Session session,
                          DependencyManager dependencyManager,
                          SourceBuildHelper sourceBuildHelper,
-                         TerminalHelper terminalHelper)
+                         TerminalHelper terminalHelper,
+                         FilesServerOperations fileServer)
    {
       super(display);
       view_ = display;
@@ -116,6 +118,7 @@ public class BuildPresenter extends BasePresenter
       terminalHelper_ = terminalHelper;
       session_ = session;
       dependencyManager_ = dependencyManager;
+      fileServer_ = fileServer;
         
       eventBus.addHandler(BuildStartedEvent.TYPE, 
                           new BuildStartedEvent.Handler()
@@ -223,12 +226,12 @@ public class BuildPresenter extends BasePresenter
                 view_.errorsBuildType() == "test-shiny-file")
             {
                // for test files, we want to avoid throwing errors when the file is missing
-               server_.checkTestFileExists(new ServerRequestCallback<Boolean>()
+               fileServer_.stat(target.getFile(), new ServerRequestCallback<FileSystemItem>()
                {
                   @Override
-                  public void onResponseReceived(Boolean success)
+                  public void onResponseReceived(final FileSystemItem fsi)
                   {
-                     if (success)
+                     if (fsi.exists())
                         fileTypeRegistry_.editFile(fsi, target.getPosition());
                   }
                   
@@ -237,7 +240,7 @@ public class BuildPresenter extends BasePresenter
                   {
                      Debug.logError(error);
                   }
-               }, target.getFile());
+               });
             }
             else
             {
@@ -487,6 +490,7 @@ public class BuildPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final UIPrefs uiPrefs_;
    private final BuildServerOperations server_;
+   private FilesServerOperations fileServer_;
    private final Display view_ ; 
    private final EventBus eventBus_;
    private final Session session_;
