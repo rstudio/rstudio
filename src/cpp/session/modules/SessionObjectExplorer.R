@@ -46,7 +46,11 @@
                                                           start)
 {
    # retrieve object from cache
-   object <- .rs.explorer.getCachedObject(id, extractingCode)
+   object <- .rs.explorer.getCachedObject(
+      id = id,
+      extractingCode = extractingCode,
+      refresh = FALSE
+   )
    
    # construct context
    context <- .rs.explorer.createContext(
@@ -187,10 +191,12 @@
    entry <- cache[[id]]
    
    # get object (refreshing if requested)
-   object <- if (refresh)
-      .rs.tryCatch(eval(parse(text = entry$title), envir = entry$envir))
-   else
-      entry$object
+   if (refresh) {
+      object <- .rs.tryCatch(eval(parse(text = entry$title), envir = entry$envir))
+      entry$object <- object
+      cache[[id]] <- entry
+   }
+   object <- entry$object
    
    # return if no sub-extraction needed
    if (is.null(extractingCode))

@@ -134,6 +134,8 @@ public class ObjectExplorerEditingTarget
       {
          reloadDisplay();
       }
+      
+      view_.refresh();
    }
    
    // Private methods ----
