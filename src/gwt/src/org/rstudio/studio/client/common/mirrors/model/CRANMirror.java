@@ -32,6 +32,7 @@ public class CRANMirror extends JavaScriptObject
       cranMirror.name = "";
       cranMirror.host = "";
       cranMirror.url = "";
+      cranMirror.secondary = "";
       cranMirror.country = "";
       cranMirror.changed = false;
 
@@ -59,12 +60,20 @@ public class CRANMirror extends JavaScriptObject
       this.host = host;
    }-*/;
 
-   private final native String getRawURL() /*-{
+   public final native String getURL() /*-{
       return this.url;
    }-*/;
 
-   private final native void setRawURL(String url) /*-{
+   public final native void setURL(String url) /*-{
       this.url = url;
+   }-*/;
+
+   private final native String getSecondary() /*-{
+      return this.secondary;
+   }-*/;
+
+   private final native void setSecondary(String secondary) /*-{
+      this.secondary = secondary;
    }-*/;
 
    private final native String getError() /*-{
@@ -79,29 +88,11 @@ public class CRANMirror extends JavaScriptObject
       this.changed = changed;
    }-*/;
 
-   public final String getURL()
-   {
-      String rawUrl = getRawURL();
-
-      if (rawUrl.startsWith("CRAN|"))
-         return rawUrl.split("\\|")[1];
-      else
-         return rawUrl;
-   }
-
-   public final void setURL(String url)
-   {
-      if (getRawURL().startsWith("CRAN|"))
-         setSecondaryRepos(url, getSecondaryRepos());
-      else
-         setRawURL(url);
-   }
-
    private final void setSecondaryRepos(String cran, ArrayList<CRANMirror> repos)
    {
-      ArrayList<String> entries = new ArrayList<String>();
-      entries.add("CRAN|" + cran);
+      setURL(cran);
 
+      ArrayList<String> entries = new ArrayList<String>();
       for (CRANMirror repo : repos)
       {
          if (!repo.getName().toLowerCase().equals("cran"))
@@ -110,7 +101,7 @@ public class CRANMirror extends JavaScriptObject
          }
       }
       
-      setRawURL(StringUtil.join(entries, "|"));
+      setSecondary(StringUtil.join(entries, "|"));
    }
 
    public final void setSecondaryRepos(ArrayList<CRANMirror> repos)
@@ -122,23 +113,14 @@ public class CRANMirror extends JavaScriptObject
    {
       ArrayList<CRANMirror> repos = new ArrayList<CRANMirror>();
 
-      if (getRawURL().startsWith("CRAN|"))
+      String[] entries = getSecondary().split("\\|");
+      for (int i = 0; i < entries.length / 2; i++)
       {
-         String[] entries = getRawURL().split("\\|");
-         if (entries.length > 0)
-         {
-            for (int i = 1; i < entries.length / 2; i++)
-            {
-               CRANMirror repo = CRANMirror.empty();
-               repo.setName(entries[2 * i]);
-               repo.setURL(entries[2 * i + 1]);
+         CRANMirror repo = CRANMirror.empty();
+         repo.setName(entries[2 * i]);
+         repo.setURL(entries[2 * i + 1]);
 
-               if (!repo.getName().toLowerCase().equals("cran"))
-               {
-                  repos.add(repo);
-               }
-            }
-         }
+         repos.add(repo);
       }
       
       return repos;

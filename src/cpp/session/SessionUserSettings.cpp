@@ -63,6 +63,7 @@ const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
 const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
+const char * const kCRANMirrorRepos = "cranMirrorRepos";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
 const char * const kCRANMirrorChanged = "cranMirrorChanged";
 const char * const kBioconductorMirrorName = "bioconductorMirrorName";
@@ -95,12 +96,12 @@ T readPref(const json::Object& prefs,
    return value;
 }
 
-void setCRANReposOption(const std::string& url)
+ void setCRANReposOption(const std::string& url, const std::string& secondary)
 {
    if (!url.empty())
    {
       Error error = r::exec::RFunction(".rs.setCRANReposFromSettings",
-                                       url).call();
+                                       url, secondary).call();
       if (error)
          LOG_ERROR(error);
    }
@@ -274,7 +275,7 @@ void UserSettings::onSettingsFileChanged(
    // set underlying R repos options
    std::string cranMirrorURL = cranMirror().url;
    if (!cranMirrorURL.empty())
-      setCRANReposOption(cranMirrorURL);
+      setCRANReposOption(cranMirrorURL, cranMirror().secondary);
    std::string bioconductorMirrorURL = settings_.get(kBioconductorMirrorUrl);
    if (!bioconductorMirrorURL.empty())
       setBioconductorReposOption(bioconductorMirrorURL);
@@ -686,16 +687,18 @@ CRANMirror UserSettings::cranMirror() const
    mirror.name = settings_.get(kCRANMirrorName);
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
+   mirror.secondary = settings_.get(kCRANMirrorRepos);
    mirror.country = settings_.get(kCRANMirrorCountry);
    mirror.changed = settings_.getBool(kCRANMirrorChanged);
 
-   // extract primary cran repo
+   // upgrade 1.2 preview builds
    std::vector<std::string> parts;
    boost::split(parts, mirror.url, boost::is_any_of("|"));
    if (parts.size() >= 2)
-      mirror.primary = parts.at(1);
-   else
-      mirror.primary = mirror.url;
+   {
+      mirror.secondary = mirror.url;
+      mirror.url = parts.at(1);
+   }
 
    // if there is no URL then return the default RStudio mirror
    // (return the insecure version so we can rely on probing for
@@ -704,11 +707,12 @@ CRANMirror UserSettings::cranMirror() const
    if (mirror.url.empty() || (mirror.url == "/"))
    {
       // But only if not changed by the user
-      if (mirror.changed)
+      if (!mirror.changed)
       {
          mirror.name = "Global (CDN)";
          mirror.host = "RStudio";
          mirror.url = "http://cran.rstudio.com/";
+         mirror.secondary = "";
          mirror.country = "us";
          mirror.changed = false;
       }
@@ -735,6 +739,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
    settings_.set(kCRANMirrorName, mirror.name);
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
+   settings_.set(kCRANMirrorRepos, mirror.secondary);
    settings_.set(kCRANMirrorCountry, mirror.country);
    settings_.set(kCRANMirrorChanged, mirror.changed);
 
@@ -743,7 +748,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
    // be possible in the current code however previous releases
    // may have let this in)
    if (!mirror.url.empty() && update)
-      setCRANReposOption(mirror.url);
+      setCRANReposOption(mirror.url, mirror.secondary);
 }
 
 BioconductorMirror UserSettings::bioconductorMirror() const

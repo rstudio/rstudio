@@ -201,9 +201,9 @@ public:
       return std::string(rLibsUser_.c_str());
    }
 
-   std::string rCRANRepos() const
+   std::string rCRANUrl() const
    {
-      return std::string(rCRANRepos_.c_str());
+      return std::string(rCRANUrl_.c_str());
    }
 
    std::string rCRANMultipleRepos() const
@@ -656,7 +656,7 @@ private:
    std::string sessionLibraryPath_;
    std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
-   std::string rCRANRepos_;
+   std::string rCRANUrl_;
    std::string rCRANMultipleRepos_;
    std::string rCRANReposUrl_;
    std::string rCRANReposFile_;
