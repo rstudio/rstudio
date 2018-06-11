@@ -37,25 +37,20 @@ endif()
 # if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
 #   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 # endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/r2d3")
-  message(FATAL_ERROR "r2d3 package not found (re-run install-dependencies script to install)")
-endif()
 
-# verify libclang is installed
+# verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "3.4")
-else()
-   set(LIBCLANG_VERSION "3.5")
-endif()
-set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
-if(NOT EXISTS "${LIBCLANG_DIR}")
-  message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-endif()
-set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-  message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
-endif()
+   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
+   if(NOT EXISTS "${LIBCLANG_DIR}")
+      message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+   endif()
 
+   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
+   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
+      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
+   endif()
+endif()
 
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
@@ -134,6 +129,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPackrat.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
+   modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
    modules/SessionRAddins.cpp
@@ -178,9 +174,12 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
    modules/jobs/SessionJobs.cpp
+   modules/jobs/ScriptJob.cpp
    modules/jobs/Job.cpp
+   modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
+   modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
@@ -475,7 +474,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2.1")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -487,14 +486,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install rsconnect package
-   file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
-   install(FILES ${RSCONNECT_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
-           
-   # install r2d3 package
-   file(GLOB R2D3_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/r2d3*.tar.gz")
-   install(FILES ${R2D3_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+   #file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
+   #install(FILES ${RSCONNECT_PACKAGE}
+   #        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
@@ -518,21 +512,17 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # install libclang
    if(WIN32)
-      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
+      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
       install(PROGRAMS ${LIBCLANG_32_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
-      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/libclang.*")
+      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-   else()
-      file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
-      install(PROGRAMS ${LIBCLANG_FILES}
-              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
-   endif()
 
-   # install libclang builtin-headers
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+      # install libclang builtin-headers
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
+              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+   endif()
 
    # install winpty on windows
    if(WIN32)

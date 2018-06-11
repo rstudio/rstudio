@@ -14,24 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.output.data;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
-import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
@@ -48,7 +38,7 @@ public class DataOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    { 
-      gridViewer_ = new GridViewerFrame();
+      gridViewer_ = new GridViewerFrame(true);
       return gridViewer_;
    }
 

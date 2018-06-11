@@ -159,6 +159,8 @@ SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
+SEXP create(const std::map<std::string, SEXP> &value,
+            Protect *pProtect);
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);

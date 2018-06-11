@@ -43,6 +43,10 @@ public class PackageInfo extends JavaScriptObject
    public final native String getUrl() /*-{
       return this.url;
    }-*/;
+
+   public final native String getBrowseUrl() /*-{
+      return this.browse;
+   }-*/;
    
    public final native boolean isLoaded() /*-{
       return this.loaded;

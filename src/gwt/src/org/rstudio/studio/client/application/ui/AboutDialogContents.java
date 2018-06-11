@@ -52,7 +52,10 @@ public class AboutDialogContents extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionLabel.setText(info.version);
-      userAgentLabel.setText(Window.Navigator.getUserAgent());
+      userAgentLabel.setText(
+            Window.Navigator.getUserAgent());
+      buildLabel.setText(
+           "Build " + info.build + " (" + info.commit.substring(0, 8) + ")");
       noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
       
@@ -73,6 +76,7 @@ public class AboutDialogContents extends Composite
 
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
+   @UiField InlineLabel buildLabel;
    @UiField TextArea noticeBox;
    @UiField Label licenseLabel;
    @UiField TextArea licenseBox;

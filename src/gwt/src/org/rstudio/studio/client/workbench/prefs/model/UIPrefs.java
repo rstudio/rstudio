@@ -268,6 +268,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          stripTrailingWhitespace().setGlobalValue(
                        newUiPrefs.stripTrailingWhitespace().getGlobalValue());
+         
+         restoreSourceDocumentCursorPosition().setGlobalValue(
+                       newUiPrefs.restoreSourceDocumentCursorPosition().getGlobalValue());
       
          // soft wrap R files
          softWrapRFiles().setGlobalValue(

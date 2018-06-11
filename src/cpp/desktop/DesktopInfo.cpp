@@ -112,35 +112,30 @@ void initializeOsRelease()
    readEntry(entries, "VERSION_ID", &s_version);
 }
 
+#endif /* Q_OS_LINUX */
+
 void initialize()
 {
+#ifdef Q_OS_LINUX
+   if (FilePath(kOsRelease).exists())
+   {
+      initializeOsRelease();
+      return;
+   }
+   
    if (FilePath(kLsbRelease).exists())
+   {
       initializeLsbRelease();
+      return;
+   }
 
    if (FilePath(kRedhatRelease).exists())
+   {
       initializeRedhatRelease();
-
-   if (FilePath(kOsRelease).exists())
-      initializeOsRelease();
-}
-
-#endif // Q_OS_LINUX
-
-#ifdef Q_OS_WIN32
-
-void initialize()
-{
-}
-
+      return;
+   }
 #endif
-
-#ifdef Q_OS_MAC
-
-void initialize()
-{
 }
-
-#endif
 
 } // end anonymous namespace
 

@@ -1,7 +1,7 @@
 /*
  * UIPrefsAccessor.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
+import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -264,6 +265,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> stripTrailingWhitespace()
    {
       return bool("strip_trailing_whitespace", false);
+   }
+   
+   public PrefValue<Boolean> restoreSourceDocumentCursorPosition()
+   {
+      return bool("restore_source_document_cursor_position", true);
    }
    
    public PrefValue<Boolean> reindentOnPaste()
@@ -531,6 +537,11 @@ public class UIPrefsAccessor extends Prefs
       return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
    }
 
+   public PrefValue<Integer> plumberViewerType()
+   {
+      return integer("plumber_viewer_type", PlumberViewerType.PLUMBER_VIEWER_WINDOW);
+   }
+   
    public PrefValue<String> documentAuthor()
    {
       return string("document_author", "");
@@ -645,6 +656,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_hidden_files", false);
    }
 
+   public PrefValue<Boolean> showJobsTab()
+   {
+      return bool("show_jobs_tab", true);
+   }
+   
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;
    public static final int BUSY_DETECT_WHITELIST = 2;

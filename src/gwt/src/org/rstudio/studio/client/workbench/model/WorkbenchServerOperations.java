@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
+import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -103,7 +104,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    AddinsServerOperations,
                                                    DataImportServerOperations,
                                                    ConnectionsServerOperations,
-                                                   JobsServerOperations
+                                                   JobsServerOperations,
+                                                   SecondaryReposServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

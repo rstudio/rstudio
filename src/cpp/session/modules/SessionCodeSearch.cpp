@@ -771,7 +771,7 @@ public:
    
    void walkFiles(const FilePath& parentPath,
                   boost::function<void(const Entry&)> operation,
-                  boost::function<bool(const Entry&)> filter = NULL)
+                  boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);

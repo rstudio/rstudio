@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -383,6 +383,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.notebookToggleExpansion());
       dynamicCommands_.add(commands.sendToTerminal());
       dynamicCommands_.add(commands.renameSourceDoc());
+      dynamicCommands_.add(commands.sourceAsJob());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -1373,6 +1374,22 @@ public class Source implements InsertSourceHandler,
       );
    }
    
+   private void doNewRPlumberAPI(NewPlumberAPI.Result result)
+   {
+      server_.createPlumberAPI(
+            result.getAPIName(),
+            result.getAPIDir(),
+            new SimpleRequestCallback<JsArrayString>("Error Creating Plumber API", true)
+            {
+               @Override
+               public void onResponseReceived(JsArrayString createdFiles)
+               {
+                  // Open and focus files that we created
+                  new SourceFilesOpener(createdFiles).run();
+               }
+            });
+   }
+    
    // open a list of source files then focus the first one within the list
    private class SourceFilesOpener extends SerializedCommandQueue
    {
@@ -2577,6 +2594,8 @@ public class Source implements InsertSourceHandler,
       final EditableFileType docType;
       if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
          docType = FileTypeRegistry.R;
+      else if (event.getType() == NewDocumentWithCodeEvent.SQL)
+         docType = FileTypeRegistry.SQL;
       else
          docType = FileTypeRegistry.RMARKDOWN;
       
@@ -2585,12 +2604,12 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            newDoc(docType,  
-                  new ResultCallback<EditingTarget, ServerError>() {
+            newDoc(docType,
+                   event.getCode(),
+                   new ResultCallback<EditingTarget, ServerError>() {
                public void onSuccess(EditingTarget arg)
                {
                   TextEditingTarget editingTarget = (TextEditingTarget)arg;
-                  editingTarget.insertCode(event.getCode(), false);
                   
                   if (event.getCursorPosition() != null)
                   {
@@ -2604,6 +2623,10 @@ public class Source implements InsertSourceHandler,
                      {
                         commands_.executeToCurrentLine().execute();
                         commands_.activateSource().execute();
+                     }
+                     else if (docType.equals(FileTypeRegistry.SQL))
+                     {
+                        commands_.previewSql().execute();
                      }
                      else
                      {
@@ -2628,6 +2651,30 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   @Handler
+   public void onNewRPlumberDoc()
+   {
+      dependencyManager_.withRPlumber("Creating R Plumber API", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            NewPlumberAPI widget = new NewPlumberAPI(
+                  "New Plumber API",
+                  new OperationWithInput<NewPlumberAPI.Result>()
+                  {
+                     @Override
+                     public void execute(NewPlumberAPI.Result input)
+                     {
+                        doNewRPlumberAPI(input);
+                     }
+                  });
+         
+            widget.showModal();
+
+         }
+      });
+   }
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
@@ -2638,8 +2685,6 @@ public class Source implements InsertSourceHandler,
                      event.getNavigationMethod(),
                      false);
    }
-   
-   
    
    public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
    {
@@ -3800,17 +3845,29 @@ public class Source implements InsertSourceHandler,
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() != null &&
-              activeEditor_.getExtendedFileType()
-                 .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
-             (activeEditor_.getExtendedFileType() == 
-                 SourceDocument.XT_RMARKDOWN));
+              activeEditor_.getExtendedFileType() .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
+              activeEditor_.getExtendedFileType() == SourceDocument.XT_RMARKDOWN ||
+              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API);
       commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
       if (activeEditor_ != null)
-         commands_.rsconnectDeploy().setLabel(
-               activeEditor_.getExtendedFileType() != null &&
-               activeEditor_.getExtendedFileType() 
-                    .startsWith(SourceDocument.XT_SHINY_PREFIX) ?
-               "Publish Application..." : "Publish Document...");
+      {
+         String deployLabel = null;
+         if (activeEditor_.getExtendedFileType() != null)
+         {
+            if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX))
+            {
+               deployLabel = "Publish Application...";
+            }
+            else if (activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API)
+            {
+               deployLabel = "Publish Plumber API..."; 
+            }
+         }
+         if (deployLabel == null)
+            deployLabel = "Publish Document...";
+   
+         commands_.rsconnectDeploy().setLabel(deployLabel);
+      }
       commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
    

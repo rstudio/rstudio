@@ -496,6 +496,25 @@
    .Call("rs_requestDocumentSave", NULL, PACKAGE = "(embedding)")
 })
 
+.rs.addApiFunction("documentNew", function(type, code, row = 0, column= 0, execute = FALSE) {
+   type <- switch(
+      type,
+      rmarkdown = "r_markdown",
+      sql = "sql",
+      "r_script"
+   )
+
+   .rs.enqueClientEvent("new_document_with_code", list(
+      type = .rs.scalar(type),
+      code = .rs.scalar(code),
+      row = .rs.scalar(row),
+      column = .rs.scalar(column),
+      execute = .rs.scalar(execute)
+   ))
+
+   invisible(NULL)
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE
@@ -520,14 +539,25 @@
   invisible(NULL)
 })
 
-.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE) {
+.rs.addApiFunction("terminalCreate", function(caption = NULL, show = TRUE, shellType = NULL) {
    if (!is.null(caption) && (!is.character(caption) || (length(caption) != 1)))
       stop("'caption' must be NULL or a character vector of length one")
 
    if (is.null(show) || !is.logical(show))
       stop("'show' must be a logical vector")
 
-   .Call("rs_terminalCreate", caption, show)
+   if (!is.null(shellType) && (!is.character(shellType) || (length(shellType) != 1)))
+      stop("'shellType' must be NULL or a character vector of length one")
+
+   validShellType = TRUE
+   if (!is.null(shellType)) {
+      validShellType <- tolower(shellType) %in% c("default", "win-cmd", 
+            "win-ps", "win-git-bash", "win-wsl-bash", "custom")
+   }      
+   if (!validShellType)
+      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', or 'custom'.") 
+
+   .Call("rs_terminalCreate", caption, show, shellType)
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {

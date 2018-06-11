@@ -16,6 +16,8 @@
 #ifndef CORE_SYSTEM_POSIX_SYSTEM_HPP
 #define CORE_SYSTEM_POSIX_SYSTEM_HPP
 
+#include <boost/date_time.hpp>
+
 #include <core/system/System.hpp>
 
 #include <core/system/PosixSched.hpp>
@@ -100,6 +102,12 @@ struct ProcessInfo
    PidType pgrp;
    std::string username;
    std::string exe;
+   std::string state;
+   std::vector<std::string> arguments;
+
+#ifndef __APPLE__
+   core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
+#endif
 };
 
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;

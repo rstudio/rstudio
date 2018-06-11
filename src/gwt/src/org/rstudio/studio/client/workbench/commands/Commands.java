@@ -42,6 +42,7 @@ public abstract class
    public abstract AppCommand newRDocumentationDoc();
    public abstract AppCommand newRPresentationDoc();
    public abstract AppCommand newSqlDoc();
+   public abstract AppCommand newRPlumberDoc();
    public abstract AppCommand openSourceDoc();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();
@@ -538,6 +539,12 @@ public abstract class
    public abstract AppCommand shinyRunAllTests();
    public abstract AppCommand shinyCompareTest();
    
+   // Plumber IDE features
+   public abstract AppCommand reloadPlumberAPI();
+   public abstract AppCommand plumberRunInPane();
+   public abstract AppCommand plumberRunInViewer();
+   public abstract AppCommand plumberRunInBrowser();
+
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();
    public abstract AppCommand rsconnectConfigure();
@@ -545,9 +552,14 @@ public abstract class
    
    // Addins
    public abstract AppCommand browseAddins();
+   
+   // Jobs
+   public abstract AppCommand startJob();
+   public abstract AppCommand sourceAsJob();
+   public abstract AppCommand clearJobs();
 
    // Other
-   public abstract AppCommand checkSpelling();   
+   public abstract AppCommand checkSpelling();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
    public abstract AppCommand layoutConsoleOnLeft();

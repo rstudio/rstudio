@@ -42,9 +42,20 @@ public class URIUtils
       return base + anchor;
    }
    
+   /**
+    * Indicates whether the given URL refers to a resource on a machine-local
+    * (loopback) network interface.
+    * 
+    * @param url The URL to test.
+    * @return True if the URL is local.
+    */
    public static boolean isLocalUrl(String url)
    {
-      String host = StringUtil.getHostFromUrl(url);
+      // ensure URL is absolute
+      String absolute = StringUtil.makeAbsoluteUrl(url);
+      
+      // extract host and see if it's on the whitelist of loopback hosts
+      String host = StringUtil.getHostFromUrl(absolute);
       return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1");
    }
 }

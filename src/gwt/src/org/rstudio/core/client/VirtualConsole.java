@@ -145,6 +145,7 @@ public class VirtualConsole
    /**
     * Debugging aid
     */
+   @SuppressWarnings("unused")
    private void debugDumpClassMap(String name, Map<Integer, ClassRange> map)
    {
       Debug.logToConsole("Dumping " + name);

@@ -13,6 +13,8 @@
  *
  */
 
+#include "session-config.h"
+
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
@@ -80,6 +82,13 @@ std::string projectBuildDir()
        projects::projectContext().buildTargetPath().absolutePath());
 }
 
+Error detectWebsiteOutputDir(const std::string& siteDir,
+                             std::string* pWebsiteOutputDir)
+{
+   r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir", siteDir);
+   return websiteOutputDir.call(pWebsiteOutputDir);
+}
+
 std::string s_websiteOutputDir;
 
 void initWebsiteOutputDir()
@@ -87,10 +96,8 @@ void initWebsiteOutputDir()
    if (!module_context::isWebsiteProject())
       return;
 
-   r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
-                                       projectBuildDir());
    std::string outputDirFullPath;
-   Error error = websiteOutputDir.call(&outputDirFullPath);
+   Error error = detectWebsiteOutputDir(projectBuildDir(), &outputDirFullPath);
    if (error)
    {
       LOG_ERROR(error);
@@ -174,9 +181,44 @@ std::string assignOutputUrl(const std::string& outputFile)
 {
    std::string outputUrl(kRmdOutput "/");
    s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
-   s_renderOutputs[s_currentRenderOutput] = outputFile;
+
+   // if this is a website project and the file is not at the root then we need
+   // to do some special handling to make sure that the HTML can refer to
+   // locations in parent directories (e.g. for navigation links)
+   std::string path = "/";
+   FilePath outputPath = module_context::resolveAliasedPath(outputFile);
+   FilePath websiteDir = r_util::websiteRootDirectory(outputPath);
+   if (!websiteDir.empty())
+   {
+      std::string websiteOutputDir;
+      Error error = detectWebsiteOutputDir(websiteDir.absolutePath(), &websiteOutputDir);
+      if (error)
+      {
+         websiteDir = FilePath();
+         LOG_ERROR(error);
+      }
+      else
+      {
+         websiteDir = FilePath(websiteOutputDir);
+      }
+   }
+   if (!websiteDir.empty() && !r_util::isWebsiteDirectory(outputPath.parent()))
+   {
+      // assign website build dir as output root
+      FilePath indexPath = websiteDir.childPath("index.html");
+      s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
+
+      // compute relative path to target file and append it to the path
+      std::string relativePath = outputPath.relativePath(websiteDir);
+      path += relativePath;
+   }
+   else
+   {
+      s_renderOutputs[s_currentRenderOutput] = outputFile;
+   }
+
    outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
-   outputUrl.append("/");
+   outputUrl.append(path);
    return outputUrl;
 }
 
@@ -414,6 +456,9 @@ private:
          environment.push_back(std::make_pair("RMARKDOWN_PREVIEW_DIR", tempDir));
       else
          LOG_ERROR(error);
+
+      // pass along the RSTUDIO_VERSION
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", RSTUDIO_VERSION));
 
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
@@ -996,7 +1041,7 @@ void handleRmdOutputRequest(const http::Request& request,
    size_t pos = path.find('/', 1);
    if (pos == std::string::npos)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 
@@ -1008,7 +1053,7 @@ void handleRmdOutputRequest(const http::Request& request,
    }
    catch (boost::bad_lexical_cast const&)
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return ;
    }
 
@@ -1017,7 +1062,7 @@ void handleRmdOutputRequest(const http::Request& request,
    FilePath outputFilePath(module_context::resolveAliasedPath(outputFile));
    if (!outputFilePath.exists())
    {
-      pResponse->setNotFoundError(outputFile);
+      pResponse->setNotFoundError(outputFile, request);
       return;
    }
 
@@ -1051,6 +1096,11 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
+
+      // if it's a directory then auto-append index.html
+      if (filePath.isDirectory())
+         filePath = filePath.childPath("index.html");
+
       html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

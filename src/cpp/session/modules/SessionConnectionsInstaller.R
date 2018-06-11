@@ -69,19 +69,38 @@
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsUnixodbc", function() {
-   identical(system2("odbcinst", stdout = FALSE), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "odbcinst",
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsBrew", function() {
-   identical(system2("brew", stdout = FALSE), 1L)
+   identical(
+      suppressWarnings(
+         system2(
+            "brew",
+            stdout = getOption("odbc.installer.verbose", FALSE),
+            stderr = getOption("odbc.installer.verbose", FALSE)
+         )
+      ),
+      1L
+   )
 })
 
 .rs.addFunction("odbcBundleCheckPrereqsOsx", function() {
    if (!.rs.odbcBundleCheckPrereqsUnixodbc()) {
       if (!.rs.odbcBundleCheckPrereqsBrew()) {
          stop(
-            "Brew is required to install unixODBC. ",
-            "Install Brew by running: ",
+            "unixODBC is required but missing, you can install from http://www.unixodbc.org/. ",
+            "Alternatively, install Brew and RStudio will install unixODBC automatically, ",
+            "you can install Brew by running: ",
             "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
          )
       }
@@ -137,7 +156,9 @@
            shQuote(entry$value),
            "/f",
            paste("/reg:", bitness, sep = "")
-        )
+        ),
+        stdout = getOption("odbc.installer.verbose", FALSE),
+        stderr = getOption("odbc.installer.verbose", FALSE)
      )
 
      if (!validateEntry(entry)) {
@@ -322,7 +343,7 @@
    lines <- readLines(odbcinstPath)
    data <- list()
    
-   currentDriver <- NULL
+   currentDriver <- "__header__"
    
    for (line in lines) {
       # Is header?
@@ -349,7 +370,10 @@
    for (name in names(data)) {
       lines <- c(
          lines, 
-         paste("[", name, "]", sep = "")
+         if (identical(name, "__header__")) 
+            ""
+         else
+            paste("[", name, "]", sep = "")
       )
       
       lines <- c(
@@ -374,7 +398,8 @@
    # Set odbcinst.ini entries
    odbcinst[[name]] <- list(
       paste("Driver", "=", driverPath),
-      paste("Version", "=", version)
+      paste("Version", "=", version),
+      paste("Installer", "=", "RStudio")
    )
    
    # Write odbcinst.ini
@@ -398,6 +423,11 @@
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Version",
             value = version
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Installer",
+            value = "RStudio"
          )
       )
    )
@@ -411,7 +441,7 @@
    )
    
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
-   driverName <- gsub(" ", "", name)
+   driverName <- gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", name)
    
    if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
@@ -503,4 +533,8 @@
    message("Installation complete")
 
    invisible(NULL)
+})
+
+.rs.addFunction("connectionOdbcRStudioDriver", function() {
+   " with RStudio Driver"
 })

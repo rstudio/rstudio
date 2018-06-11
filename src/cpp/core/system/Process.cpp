@@ -235,8 +235,8 @@ ProcessCallbacks createProcessCallbacks(
    cb.onError = bind(&ChildCallbacks::onError, pCC, _1, _2);
 
    // Not implemented for generic processes
-   cb.onHasSubprocs = NULL;
-   cb.reportCwd = NULL;
+   cb.onHasSubprocs.clear();
+   cb.reportCwd.clear();
 
    // return it
    return cb;

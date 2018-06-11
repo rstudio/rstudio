@@ -43,7 +43,27 @@ public class RStudioThemedFrame extends RStudioFrame
       String urlStyle,
       boolean removeBodyStyle)
    {
-      this(url, false, null, customStyle, urlStyle, removeBodyStyle);
+      this(url,
+           customStyle,
+           urlStyle,
+           removeBodyStyle,
+           true);
+   }
+
+   public RStudioThemedFrame(
+      String url,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle,
+      boolean enableThemes)
+   {
+      this(url,
+           false,
+           null,
+           customStyle,
+           urlStyle,
+           removeBodyStyle,
+           enableThemes);
    }
 
    public RStudioThemedFrame(
@@ -52,13 +72,15 @@ public class RStudioThemedFrame extends RStudioFrame
       String sandboxAllow,
       String customStyle,
       String urlStyle,
-      boolean removeBodyStyle)
+      boolean removeBodyStyle,
+      boolean enableThemes)
    {
       super(url, sandbox, sandboxAllow);
       
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;
       removeBodyStyle_ = removeBodyStyle;
+      enableThemes_ = enableThemes;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -142,6 +164,8 @@ public class RStudioThemedFrame extends RStudioFrame
       final String urlStyle,
       final boolean removeBodyStyle)
    {
+      if (!enableThemes_) return;
+
       addThemesStyle(customStyle, urlStyle, removeBodyStyle);
       
       this.addLoadHandler(new LoadHandler()
@@ -158,4 +182,5 @@ public class RStudioThemedFrame extends RStudioFrame
    private String customStyle_;
    private String urlStyle_;
    private boolean removeBodyStyle_;
+   private boolean enableThemes_;
 }

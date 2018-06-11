@@ -16,6 +16,9 @@
 #ifndef SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
 #define SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
 
+#include <vector>
+#include <string>
+
 #include <core/Error.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -27,7 +30,9 @@ namespace clang {
 
 core::Error getCppCompletions(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
-   
+
+void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths);
+
 } // namespace clang
 } // namepace handlers
 } // namespace session

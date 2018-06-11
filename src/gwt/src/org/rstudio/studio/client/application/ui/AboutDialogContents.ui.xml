@@ -11,17 +11,25 @@
 		.productName {
 			font-size: 20pt;
 			font-weight: bold;
-			margin-bottom: 5px;
+			margin-bottom: 3px;
 		}
 		
 		.productVersion {
-			margin-bottom: 5px;
+			font-size: 10pt;
+			margin-bottom: 3px;
+		}
+
+		.buildInfo {
+			margin-top: 10px;
+		}
+
+		.buildInfo, .userAgent {
+			text-align: center;
+			font-size: 8pt;
+			margin-bottom: 3px;
 		}
 		
 		.userAgent {
-			text-align: center;
-			font-size: 8pt;
-			margin-top: 10px;
 			margin-bottom: 15px;
 		}
 		
@@ -43,8 +51,8 @@
 		.logo {
 	      float: left;
 	      margin-right: 20px;
-	      width: 48px;
-	      height: 48px;
+	      width: 64px;
+	      height: 64px;
 	   }
 	   
 	   .productInfo {
@@ -52,7 +60,7 @@
 	      overflow: hidden;
 	      margin-left: auto;
 	      margin-right: auto;
-	      width: 65%;
+	      width: 50%;
 	   }
 	   
 	   .outerProductInfo {
@@ -67,7 +75,7 @@
 	<g:HTMLPanel styleName="{style.aboutBox}">
 	   <g:HTMLPanel styleName="{style.outerProductInfo}">
 		   <g:HTMLPanel styleName="{style.productInfo}">
-				<g:Image resource='{res.rstudio2x}'
+				<g:Image resource='{res.rstudioLarge2x}'
                      styleName="{style.logo}"
                      width="48"
                      height="48"/>
@@ -75,10 +83,15 @@
 				<g:HTMLPanel styleName="{style.productVersion}">
 					<g:InlineLabel text="Version "></g:InlineLabel>
 					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
-					<g:InlineLabel text="&ndash; &copy; 2009-2018 RStudio, Inc."></g:InlineLabel>
+				</g:HTMLPanel>
+				<g:HTMLPanel styleName="{style.productVersion}">
+					<g:InlineLabel text="&copy; 2009-2018 RStudio, Inc."></g:InlineLabel>
 				</g:HTMLPanel>
 			</g:HTMLPanel>
 	   </g:HTMLPanel>
+		<g:HTMLPanel styleName="{style.buildInfo}">
+			<g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
+		</g:HTMLPanel>
 		<g:HTMLPanel styleName="{style.userAgent}">
 			<g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
 		</g:HTMLPanel>

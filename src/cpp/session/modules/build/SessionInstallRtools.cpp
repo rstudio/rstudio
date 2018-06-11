@@ -82,7 +82,7 @@ Error installRtools()
       {
          version = rTools.name();
 
-         std::string repos = userSettings().cranMirror().url;
+         std::string repos = userSettings().cranMirror().primary;
          if (repos.empty())
             repos = module_context::rstudioCRANReposURL();
          url = rTools.url(repos);

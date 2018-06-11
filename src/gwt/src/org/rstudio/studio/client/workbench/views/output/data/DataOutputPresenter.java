@@ -15,28 +15,16 @@
 
 package org.rstudio.studio.client.workbench.views.output.data;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
-import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
 public class DataOutputPresenter extends BasePresenter
@@ -56,11 +44,6 @@ public class DataOutputPresenter extends BasePresenter
    {
       super(view);
       view_ = (DataOutputPane) view;
-      
-      paneManager_ = paneManager;
-
-      
-      globalDisplay_ = globalDisplay;
    }
    
    public void initialize()
@@ -81,6 +64,4 @@ public class DataOutputPresenter extends BasePresenter
    }
    
    private final DataOutputPane view_;
-   private final GlobalDisplay globalDisplay_;
-   private final PaneManager paneManager_;
 }

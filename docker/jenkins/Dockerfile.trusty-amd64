@@ -36,7 +36,6 @@ RUN apt-get update && \
     libgtk-3-0 \
     libgl1-mesa-dev \
     libegl1-mesa \
-    libjpeg62 \
     libpam-dev \
     libpango1.0-dev \
     libssl-dev \

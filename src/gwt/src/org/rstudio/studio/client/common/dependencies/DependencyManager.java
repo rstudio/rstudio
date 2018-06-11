@@ -135,7 +135,33 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          new Dependency[] {
             Dependency.cranPackage("htmltools", "0.3.6"),
             Dependency.cranPackage("htmlwidgets", "1.2", true),
-            Dependency.embeddedPackage("r2d3")
+            Dependency.cranPackage("r2d3", "0.2.0", true)
+         },
+         true,
+         new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+      );
+   }
+   
+   public void withRPlumber(String userAction, final Command command)
+   {
+      withDependencies(
+        "Plumber",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("R6", "2.0"),
+            Dependency.cranPackage("stringi", "0.3.0"),
+            Dependency.cranPackage("jsonlite", "0.9.19"),
+            Dependency.cranPackage("httpuv", "1.3.3"),
+            Dependency.cranPackage("crayon", "1.3.4"),
+            Dependency.cranPackage("plumber", "0.4.6", true)
          },
          true,
          new CommandWithArg<Boolean>()
@@ -746,7 +772,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing " + name,
         "Using " + name, 
         new Dependency[] {
-           Dependency.cranPackage("odbc", "1.1.5"),
+           Dependency.cranPackage("odbc", "1.1.6"),
            Dependency.cranPackage("rstudioapi", "0.5")
         }, 
         true, // update odbc if needed

@@ -66,11 +66,6 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
    connect(reload_, SIGNAL(triggered()),
            webView(), SLOT(reload()));
 
-   print_ = pToolbar_->addAction(icon("print"), QString::fromUtf8("Print"));
-   print_->setToolTip(QString::fromUtf8("Print"));
-   connect(print_, SIGNAL(triggered()),
-           this, SLOT(print()));
-
    connect(webView(), SIGNAL(loadStarted()),
            this, SLOT(manageCommandState()));
    connect(webView(), SIGNAL(urlChanged(QUrl)),
@@ -86,6 +81,23 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
       size.setHeight(size.height()-75);
       resize(size);
    }
+
+   connect(webView(), SIGNAL(onCloseWindowShortcut()),
+           this, SLOT(onCloseWindowShortcut()));
+}
+
+void SecondaryWindow::finishLoading(bool ok)
+{
+   BrowserWindow::finishLoading(ok);
+
+   if (ok)
+      connect(webView(), SIGNAL(onCloseWindowShortcut()), this,
+              SLOT(onCloseWindowShortcut()));
+}
+
+void SecondaryWindow::onCloseWindowShortcut()
+{
+   close();
 }
 
 void SecondaryWindow::manageCommandState()

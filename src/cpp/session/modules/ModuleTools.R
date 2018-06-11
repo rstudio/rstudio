@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -15,29 +15,29 @@
 
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
-   .Call("rs_enqueClientEvent", type, data)
+   .Call("rs_enqueClientEvent", type, data, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("invokeRpc", function(method, ...) 
 {
    # callback to session to invoke RPC
    args <- list(...)
-   .Call("rs_invokeRpc", method, .rs.scalarListFromList(args))
+   .Call("rs_invokeRpc", method, .rs.scalarListFromList(args), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("showErrorMessage", function(title, message)
 {
-   .Call("rs_showErrorMessage", title, message)
+   .Call("rs_showErrorMessage", title, message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("logErrorMessage", function(message)
 {
-   .Call("rs_logErrorMessage", message)
+   .Call("rs_logErrorMessage", message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("logWarningMessage", function(message)
 {
-   .Call("rs_logWarningMessage", message)
+   .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getSignature", function(obj)
@@ -217,7 +217,7 @@
 {
   pkgDir <- find.package(name)
   .rs.forceUnloadPackage(name)
-  .Call("rs_installPackage",  archive, dirname(pkgDir))
+  .Call("rs_installPackage",  archive, dirname(pkgDir), PACKAGE = "(embedding)")
 })
 
 
@@ -247,7 +247,7 @@
          yesLabel,
          noLabel,
          includeCancel,
-         yesIsDefault)
+         yesIsDefault, PACKAGE = "(embedding)")
 
    if (result == 0)
       "yes"
@@ -262,17 +262,17 @@
 .rs.addFunction("restartR", function(afterRestartCommand = "") {
    afterRestartCommand <- paste(as.character(afterRestartCommand),
                                 collapse = "\n")
-   .Call("rs_restartR", afterRestartCommand)
+   .Call("rs_restartR", afterRestartCommand, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("markdownToHTML", function(content) {
-   .Call("rs_markdownToHTML", content)
+   .Call("rs_markdownToHTML", content, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readUiPref", prefName)
+  .Call("rs_readUiPref", prefName, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
@@ -280,17 +280,17 @@
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value)))
+  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("removeUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  invisible(.Call("rs_removeUiPref", prefName))
+  invisible(.Call("rs_removeUiPref", prefName, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {
-  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49))
+  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49, PACKAGE = "(embedding)"))
 })
 
 
@@ -358,4 +358,106 @@
    invisible(output)
 })
 
+# create an environment to hold original versions of S3 functions we have overridden
+assign(".rs.S3Originals", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
+
+# create an environment to hold current S3 overrides
+assign(".rs.S3Overrides", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
+
+if (getRversion() < "3.5") {
+   # prior to R 3.5, we can override S3 methods just by installing the override function into the
+   # tools:rstudio namespace, which is on the search path
+   .rs.addFunction("addS3Override", function(name, method) {
+      assign(name, method, envir = .rs.toolsEnv())
+   })
+
+   .rs.addFunction("removeS3Override", function(name) {
+      if (exists(name, envir = .rs.toolsEnv(), inherits = FALSE)) {
+         rm(list = name, envir = .rs.toolsEnv(), inherits = FALSE)
+      }
+   })
+
+   .rs.addFunction("reattachS3Overrides", function() {
+      # S3 methods on the search path maintain precedence
+   })
+} else {
+   # after R 3.5, S3 methods are not discovered on the search path, so we resort to injecting our
+   # overrides directly into the base namespace's S3 methods table
+   .rs.addFunction("addS3Override", function(name, method) {
+      # get a reference to the table of S3 methods stored in the base namespace
+      table <- .BaseNamespaceEnv[[".__S3MethodsTable__."]]
+
+      # cache old dispatch table entry if it exists
+      if (exists(name, envir = table)) {
+         assign(name, get(name, envir = table), envir = .rs.S3Originals)
+      }
+
+      # add a flag indicating that this method belongs to us
+      attr(method, ".rs.S3Override") <- TRUE
+
+      # ... and inject our own entry
+      assign(name, method, envir = table)
+
+      # make a copy in our override table so we can restore when overwritten by e.g. an attached
+      # package
+      assign(name, method, envir = .rs.S3Overrides)
+
+      invisible(NULL)
+   })
+
+   .rs.addFunction("removeS3Override", function(name) {
+      table <- .BaseNamespaceEnv[[".__S3MethodsTable__."]]
+
+      # see if there's an override to remove; if not, no work to do
+      if (!exists(name, envir = table))
+         return(invisible(NULL))
+      
+      # see if the copy that exists in the methods table is one that we put there.
+      if (!isTRUE(attr(get(name, envir = table), ".rs.S3Override", exact = TRUE)))
+      {
+         # it isn't, so don't touch it. we do this so that changes to the S3 dispatch table that
+         # have occurred since the call to .rs.addS3Override are persisted
+         return(invisible(NULL))
+      }
+
+      # see if we have a copy to restore
+      if (exists(name, envir = .rs.S3Originals))
+      {
+         # we do, so overwrite with our copy
+         assign(name, get(name, envir = .rs.S3Originals), envir = table)
+      }
+      else
+      {
+         # no copy to restore, so just remove from the dispatch table
+         rm(list = name, envir = table)
+      }
+
+      # remove from our override table if present
+      if (exists(name, envir = .rs.S3Overrides))
+         rm(list = name, envir = .rs.S3Overrides)
+
+      invisible(NULL)
+   })
+
+   # recovers from changes made to the S3 method dispatch table during e.g. package load
+   .rs.addFunction("reattachS3Overrides", function() {
+      # get a list of all of the methods that are currently overridden
+      names <- ls(envir = .rs.S3Overrides)
+      table <- .BaseNamespaceEnv[[".__S3MethodsTable__."]]
+      for (name in names) {
+         if (exists(name, envir = table)) {
+            # retrieve reference to method
+            method = get(name, envir = table)
+
+            # if we didn't put the method there, we've been replaced; reattach our own method. 
+            if (!isTRUE(attr(get(name, envir = table), ".rs.S3Override", exact = TRUE)))
+               .rs.addS3Override(name, get(name, envir = .rs.S3Overrides))
+         }
+      }
+   })
+}
+
+.rs.addFunction("sessionModulePath", function() {
+   .Call("rs_sessionModulePath", PACKAGE = "(embedding)")
+})
 

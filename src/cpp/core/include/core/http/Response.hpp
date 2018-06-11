@@ -43,6 +43,9 @@ class ErrorLocation;
    
 namespace http {
 
+// uri not found handler
+typedef boost::function<void(const Request&, Response*)> NotFoundHandler;
+
 class Cookie ;
    
 namespace status {
@@ -82,7 +85,7 @@ public:
       return boost::iostreams::write(dest, s, n);
    }   
 };     
-   
+
 class Response : public Message
 {
 public:
@@ -274,7 +277,7 @@ public:
       // ensure that the file exists
       if (!filePath.exists())
       {
-         setNotFoundError(request.uri());
+         setNotFoundError(request);
          return;
       }
       
@@ -308,7 +311,7 @@ public:
       // ensure that the file exists
       if (!filePath.exists())
       {
-         setNotFoundError(request.uri());
+         setNotFoundError(request);
          return;
       }
       
@@ -338,13 +341,23 @@ public:
    // these calls do no stream io or encoding so don't return errors
    void setBodyUnencoded(const std::string& body);
    void setError(int statusCode, const std::string& message);
-   void setNotFoundError(const std::string& uri);
+
+   // request uri not found
+   void setNotFoundError(const http::Request& request);
+
+   // non-request uri not found
+   void setNotFoundError(const std::string& uri, const http::Request& request);
+
    void setError(const Error& error);
    
    void setMovedPermanently(const http::Request& request, const std::string& location);
    void setMovedTemporarily(const http::Request& request, const std::string& location);
    
-   
+   void setNotFoundHandler(const NotFoundHandler& handler)
+   {
+      notFoundHandler_ = handler;
+   }
+
 private:
    virtual void appendFirstLineBuffers(
          std::vector<boost::asio::const_buffer>& buffers) const ;
@@ -368,6 +381,8 @@ private:
 
    // string storage for integer members (need for toBuffers)
    mutable std::string statusCodeStr_ ;
+
+   NotFoundHandler notFoundHandler_;
 };
 
 std::ostream& operator << (std::ostream& stream, const Response& r) ;

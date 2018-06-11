@@ -210,7 +210,8 @@ CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
                     "name", &cranMirror.name,
                     "host", &cranMirror.host,
                     "url", &cranMirror.url,
-                    "country", &cranMirror.country);
+                    "country", &cranMirror.country,
+                    "changed", &cranMirror.changed);
    return cranMirror;
 }
 
@@ -512,6 +513,7 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    cranMirrorJson["host"] = cranMirror.host;
    cranMirrorJson["url"] = cranMirror.url;
    cranMirrorJson["country"] = cranMirror.country;
+   cranMirrorJson["changed"] = cranMirror.changed;
    return cranMirrorJson;
 }
 
@@ -944,6 +946,7 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    if (error)
       return error;
    CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+   cranMirror.changed = true;
 
    userSettings().beginUpdate();
    userSettings().setCRANMirror(cranMirror);
@@ -972,7 +975,7 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    FilePath filePath = module_context::resolveAliasedPath(request.queryParamValue("path"));
    if (!filePath.exists())
    {
-      pResponse->setNotFoundError(request.uri());
+      pResponse->setNotFoundError(request);
       return;
    }
 

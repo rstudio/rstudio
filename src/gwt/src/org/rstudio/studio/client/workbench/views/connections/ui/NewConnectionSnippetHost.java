@@ -32,10 +32,12 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionWizardRequestCloseEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -71,10 +73,12 @@ public class NewConnectionSnippetHost extends Composite
 {
    @Inject
    private void initialize(ConnectionsServerOperations server,
-                           GlobalDisplay globalDisplay)
+                           GlobalDisplay globalDisplay,
+                           EventBus eventBus)
    {
       server_ = server;
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -508,6 +512,15 @@ public class NewConnectionSnippetHost extends Composite
                            @Override
                            public void onResponseReceived(ConnectionUninstallResult result)
                            {
+                              Operation dismissOperation = new Operation()
+                              {
+                                 @Override
+                                 public void execute()
+                                 {
+                                    eventBus_.fireEvent(new NewConnectionWizardRequestCloseEvent());
+                                 }
+                              };
+                              
                               if (!StringUtil.isNullOrEmpty(result.getError())) {
                                  globalDisplay_.showErrorMessage(
                                     "Uninstallation failed",
@@ -518,18 +531,18 @@ public class NewConnectionSnippetHost extends Composite
                                  globalDisplay_.showMessage(
                                     MessageDialog.INFO,
                                     "Uninstallation complete",
-                                    result.getMessage()
+                                    result.getMessage(),
+                                    dismissOperation
                                  );
-                                 uninstallButton_.setVisible(false);
                               }
                               else
                               {
                                  globalDisplay_.showMessage(
-                                       MessageDialog.INFO,
-                                       "Uninstallation complete",
-                                       "Driver " + info_.getName() + " was successfully uninstalled."
-                                    );
-                                 uninstallButton_.setVisible(false);
+                                    MessageDialog.INFO,
+                                    "Uninstallation complete",
+                                    "Driver " + info_.getName() + " was successfully uninstalled.",
+                                    dismissOperation
+                                 );
                               }
                            } 
 
@@ -644,4 +657,5 @@ public class NewConnectionSnippetHost extends Composite
    private ConnectionsServerOperations server_;
    private GlobalDisplay globalDisplay_;
    private ThemedButton uninstallButton_;
+   private EventBus eventBus_;
 }

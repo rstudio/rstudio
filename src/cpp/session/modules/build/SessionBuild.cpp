@@ -643,6 +643,9 @@ private:
       parsers.add(rErrorParser(packagePath.complete("R")));
       parsers.add(gccErrorParser(packagePath.complete("src")));
 
+      // track build type
+      type_ = type;
+
       // add testthat and shinyteset result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
@@ -1472,6 +1475,7 @@ public:
                      module_context::compileOutputAsJson);
       return outputJson;
    }
+   const std::string type() const { return type_; }
 
    std::string outputAsText()
    {
@@ -1620,6 +1624,7 @@ private:
       jsonData["base_dir"] = errorsBaseDir_;
       jsonData["errors"] = errors;
       jsonData["open_error_list"] = openErrorList_;
+      jsonData["type"] = type_;
 
       ClientEvent event(client_events::kBuildErrors, jsonData);
       module_context::enqueClientEvent(event);
@@ -1754,6 +1759,7 @@ private:
    bool restartR_;
    bool usedDevtools_;
    bool openErrorList_;
+   std::string type_;
 };
 
 boost::shared_ptr<Build> s_pBuild;
@@ -1842,6 +1848,7 @@ struct BuildContext
    std::string errorsBaseDir;
    json::Array errors;
    json::Array outputs;
+   std::string type;
 };
 
 BuildContext s_suspendBuildContext;
@@ -1869,6 +1876,7 @@ void onSuspend(core::Settings* pSettings)
       buildContext.outputs = s_pBuild->outputAsJson();
       buildContext.errors = s_pBuild->errorsAsJson();
       buildContext.errorsBaseDir = s_pBuild->errorsBaseDir();
+      buildContext.type = s_pBuild->type();
       writeBuildContext(buildContext, pSettings);
    }
    else if (!s_suspendBuildContext.empty())
@@ -2026,6 +2034,7 @@ json::Value buildStateAsJson()
       stateJson["running"] = s_pBuild->isRunning();
       stateJson["outputs"] = s_pBuild->outputAsJson();
       stateJson["errors_base_dir"] = s_pBuild->errorsBaseDir();
+      stateJson["type"] = s_pBuild->type();
       stateJson["errors"] = s_pBuild->errorsAsJson();
       return stateJson;
    }
@@ -2035,6 +2044,7 @@ json::Value buildStateAsJson()
       stateJson["running"] = false;
       stateJson["outputs"] = s_suspendBuildContext.outputs;
       stateJson["errors_base_dir"] = s_suspendBuildContext.errorsBaseDir;
+      stateJson["type"] = s_suspendBuildContext.type;
       stateJson["errors"] = s_suspendBuildContext.errors;
       return stateJson;
    }

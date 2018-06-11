@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -189,6 +189,8 @@ const int kJobUpdated = 170;
 const int kJobRefresh = 171;
 const int kJobOutput = 172;
 const int kDataOutputCompleted = 173;
+const int kNewDocumentWithCode = 174;
+const int kPlumberViewer = 175;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -522,6 +524,10 @@ std::string ClientEvent::typeName() const
          return "job_output";
       case client_events::kDataOutputCompleted:
          return "data_output_completed";
+      case client_events::kNewDocumentWithCode:
+         return "new_document_with_code";
+      case client_events::kPlumberViewer:
+         return "plumber_viewer";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

@@ -55,6 +55,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    notifyPackageLoaded <- function(pkgname, ...)
    {
       .Call("rs_packageLoaded", pkgname)
+
+      # when a package is loaded, it can register S3 methods which replace overrides we've
+      # attached manually; take this opportunity to reattach them.
+      .rs.reattachS3Overrides()
    }
 
    notifyPackageUnloaded <- function(pkgname, ...)
@@ -273,6 +277,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .rs.initDefaultUserLibrary()
 })
 
+.rs.addFunction("lastCharacterIs", function(value, ending) {
+   identical(tail(strsplit(value, "")[[1]], n = 1), ending)
+})
+
 .rs.addFunction("listInstalledPackages", function()
 {
    # calculate unique libpaths
@@ -301,6 +309,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    pkgs.version <- sapply(seq_along(pkgs.name), function(i){
      .rs.packageVersion(pkgs.name[[i]], pkgs.library[[i]], instPkgs)
    })
+
+   pkgs.browse <- sapply(seq_along(pkgs.name), function(i){
+     repo <- getOption("repos")[[1]]
+     if (!identical(repo, NULL)) {
+       slash <- if (.rs.lastCharacterIs(repo, "/")) "" else "/"
+       .rs.scalar(paste(repo, slash, "package=", pkgs.name[[i]], sep = ""))
+     } 
+     else {
+       NULL
+     }
+   })
    
    # alias library paths for the client
    pkgs.library <- .rs.createAliasedPath(pkgs.library)
@@ -313,7 +332,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                          url=pkgs.url,
                          loaded=pkgs.loaded,
                          check.rows = TRUE,
-                         stringsAsFactors = FALSE)
+                         stringsAsFactors = FALSE,
+                         browse=pkgs.browse)
 
    # sort and return
    packages[order(packages$name),]
@@ -1158,4 +1178,133 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # delegate to 'setInternet2'
    utils::setInternet2(value)
+})
+
+.rs.addFunction("parseSecondaryReposIni", function(conf) {
+   entries <- .rs.readIniFile(conf)
+   repos <- list()
+
+   for (entryName in names(entries)) {
+     repo <- list(
+        name  = .rs.scalar(trimws(entryName)),
+        url = .rs.scalar(trimws(entries[[entryName]])),
+        host = .rs.scalar("Custom"),
+        country = .rs.scalar("")
+     )
+
+     if (identical(tolower(as.character(repo$name)), "cran")) {
+        repo$name <- .rs.scalar("CRAN")
+        repos <- append(list(repo), repos, 1)
+     } else {
+        repos[[length(repos) + 1]] <- repo
+     }
+   }
+
+   repos
+})
+
+.rs.addFunction("parseSecondaryReposJson", function(conf) {
+   lines <- readLines(conf)
+   repos <- list()
+
+   entries <- .rs.fromJSON(paste(lines, collpse = "\n"))
+
+   for (entry in entries) {
+      url <- if (is.null(entry$url)) "" else url
+
+      repo <- list(
+         name  = .rs.scalar(entry$name),
+         url = .rs.scalar(url),
+         host = .rs.scalar("Custom"),
+         country = .rs.scalar("")
+      )
+
+      if (identical(tolower(as.character(repo$name)), "cran")) {
+         repo$name <- .rs.scalar("CRAN")
+         repos <- append(list(repo), repos, 1)
+      } else {
+         repos[[length(repos) + 1]] <- repo
+      }
+   }
+
+   repos
+})
+
+.rs.addFunction("getSecondaryRepos", function(cran = getOption("repos")[[1]], custom = TRUE) {
+   result <- list(
+      repos = list()
+   )
+   
+   rCranReposUrl <- .Call("rs_getCranReposUrl")
+   isDefault <- identical(rCranReposUrl, NULL) || nchar(rCranReposUrl) == 0
+
+   if (isDefault) {
+      slash <- if (.rs.lastCharacterIs(cran, "/")) "" else "/"
+      rCranReposUrl <- paste(slash, "../../__api__/repos", sep = "")
+   }
+   else {
+      custom <- TRUE
+   }
+
+   if (.rs.startsWith(rCranReposUrl, "..") ||
+       .rs.startsWith(rCranReposUrl, "/..")) {
+      rCranReposUrl <- .rs.completeUrl(cran, rCranReposUrl)
+   }
+
+   if (custom) {
+      conf <- tempfile(fileext = ".conf")
+      
+      result <- tryCatch({
+         download.file(
+            rCranReposUrl,
+            conf,
+            method = "curl",
+            extra = "-H 'Accept: text/ini'",
+            quiet = TRUE
+         )
+         
+         result$repos <- .rs.parseSecondaryReposIni(conf)
+         if (length(result$repos) == 0) {
+            result$repos <- .rs.parseSecondaryReposJson(conf)
+         }
+
+         result
+      }, error = function(e) {
+         list(
+            error = .rs.scalar(
+               paste(
+                  "Failed to process repos list from ",
+                  rCranReposUrl, ". ", e$message, ".", sep = ""
+               )
+            )
+         )
+      })
+   }
+
+   result
+})
+
+.rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom) {
+   .rs.getSecondaryRepos(cran, custom)
+})
+
+.rs.addFunction("appendSlashIfNeeded", function(url) {
+   slash <- if (.rs.lastCharacterIs(url, "/")) "" else "/"
+   paste(url, slash, sep = "")
+})
+
+.rs.addJsonRpcHandler("validate_cran_repo", function(url) {
+   packagesFile <- tempfile(fileext = ".gz")
+   
+   tryCatch({
+      download.file(
+         .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz"),
+         packagesFile,
+         quiet = TRUE
+      )
+
+      .rs.scalar(TRUE)
+   }, error = function(e) {
+      .rs.scalar(FALSE)
+   })
 })

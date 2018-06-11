@@ -46,6 +46,8 @@ enum errc_t {
    InvalidClientVersion = 12, // client is running an invalid version
    ServerOffline = 13,    // server is offline
    InvalidSession = 14,   // target session is invalid
+   MaxSessionsReached = 15,     // license error - max sessions reached
+   MaxUsersReached = 16,  // license error - max users reached
 
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior

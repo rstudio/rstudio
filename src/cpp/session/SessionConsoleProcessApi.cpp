@@ -94,8 +94,8 @@ SEXP rs_terminalList()
 }
 
 // Create a terminal with given caption. If null, create with automatically
-// generated name.
-SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP)
+// generated name. Optionally specify shell type.
+SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
 {
    r::sexp::Protect protect;
 
@@ -119,6 +119,14 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP)
       return R_NilValue;
    }
 
+   TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+   std::string terminalTypeStr;
+   if (!r::sexp::isNull(shellTypeSEXP))
+      terminalTypeStr = r::sexp::asString(shellTypeSEXP);
+   if (!terminalTypeStr.empty())
+   {
+      shellType = TerminalShell::shellTypeFromString(terminalTypeStr);
+   }
    bool show = r::sexp::asLogical(showSEXP);
 
    boost::shared_ptr<ConsoleProcessInfo> pCpi(
@@ -127,7 +135,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP)
                std::string() /*title*/,
                std::string() /*handle*/,
                termSequence.first,
-               TerminalShell::DefaultShell,
+               shellType,
                false /*altBufferActive*/,
                core::FilePath() /*cwd*/,
                core::system::kDefaultCols, core::system::kDefaultRows,
@@ -939,7 +947,7 @@ Error initializeApi()
    using boost::bind;
 
    RS_REGISTER_CALL_METHOD(rs_terminalActivate, 2);
-   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 2);
+   RS_REGISTER_CALL_METHOD(rs_terminalCreate, 3);
    RS_REGISTER_CALL_METHOD(rs_terminalClear, 1);
    RS_REGISTER_CALL_METHOD(rs_terminalList, 0);
    RS_REGISTER_CALL_METHOD(rs_terminalContext, 1);

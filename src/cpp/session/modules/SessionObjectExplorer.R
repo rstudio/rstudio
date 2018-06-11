@@ -722,7 +722,7 @@
 {
    output <- ""
    more <- FALSE
-   comma <- FALSE
+   trailing <- " ..."
    n <- 6L
    
    if (is.primitive(object))
@@ -759,19 +759,18 @@
    }
    else if (is.factor(object))
    {
-      fmt <- "Factor with %i levels: %s"
+      fmt <- "%s with %i %s: %s"
       header <- head(levels(object), n)
-      output <- sprintf(fmt, length(levels(object)), paste(.rs.surround(header, with = "\""), collapse = ", "))
+      collapse <- if (is.ordered(object)) " < " else ", "
+      output <- sprintf(
+         fmt,
+         if (is.ordered(object)) "Ordered factor" else "Factor",
+         length(levels(object)),
+         if (length(levels(object)) == 1) "level" else "levels",
+         paste(.rs.surround(header, with = "\""), collapse = collapse)
+      )
       more <- length(levels(object)) > n
-      comma <- TRUE
-   }
-   else if (is.ordered(object))
-   {
-      fmt <- "Ordered factor with %i levels: %s"
-      header <- head(object, n)
-      output <- sprintf(fmt, length(object), paste(.rs.surround(header, with = "\""), collapse = ", "))
-      more <- length(object) > n
-      comma <- TRUE
+      trailing <- if (is.ordered(object)) " < ..." else ", ..."
    }
    else if (is.character(object))
    {
@@ -794,14 +793,24 @@
    }
    else if (is.data.frame(object))
    {
-      fmt <- "A %s with %s rows and %s columns"
+      fmt <- "A %s with %s %s and %s %s"
     
       name <- if (inherits(object, "tbl"))
          "tibble"
+      else if (inherits(object, "data.table"))
+         "data.table"
       else
          "data.frame"
       
-      output <- sprintf(fmt, name, nrow(object), ncol(object))
+      output <- sprintf(
+         fmt,
+         name,
+         nrow(object),
+         if (nrow(object) == 1) "row" else "rows",
+         ncol(object),
+         if (ncol(object) == 1) "column" else "columns"
+      )
+      
       more <- FALSE
    }
    else if (is.pairlist(object))
@@ -876,7 +885,7 @@
    if (more || nchar(output) > 80)
    {
       truncated <- substring(output, 1, 80)
-      output <- paste(truncated, if (comma) ", ..." else "...")
+      output <- paste(truncated, trailing, sep = "")
    }
    
    output

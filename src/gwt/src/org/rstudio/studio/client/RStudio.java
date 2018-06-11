@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,8 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
+import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
+import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerListResources;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
@@ -64,6 +66,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
+import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
@@ -291,6 +294,12 @@ public class RStudio implements EntryPoint
          satellite.go(RootLayoutPanel.get(), 
                dismissProgressAnimation_);
       }
+      else if (PlumberAPISatellite.NAME.equals(view))
+      {
+         RStudioGinjector.INSTANCE.getPlumberAPISatellite().go(
+               RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
       else
       {
          RStudioGinjector.INSTANCE.getApplication().go(
@@ -359,6 +368,8 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetHost.ensureStylesInjected();
       NewConnectionSnippetDialog.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
+      SecondaryReposWidget.ensureStylesInjected();
+      SecondaryReposDialog.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

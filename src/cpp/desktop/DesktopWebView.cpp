@@ -23,6 +23,7 @@
 
 #include <QWebEngineContextMenuData>
 #include <QWebEngineSettings>
+#include <QWebEngineHistory>
 
 #include <core/system/Environment.hpp>
 
@@ -155,7 +156,26 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
    QMenu* menu = new QMenu(this);
    const auto& data = webPage()->contextMenuData();
- 
+   
+   bool canNavigateHistory =
+         webPage()->history()->canGoBack() ||
+         webPage()->history()->canGoForward();
+   
+   if (data.selectedText().isEmpty() && canNavigateHistory)
+   {
+      auto* back = menu->addAction(tr("&Back"), [&]() {
+         webPage()->history()->back();
+      });
+      back->setEnabled(webPage()->history()->canGoBack());
+
+      auto* forward = menu->addAction(tr("&Forward"), [&]() {
+         webPage()->history()->forward();
+      });
+      forward->setEnabled(webPage()->history()->canGoForward());
+      
+      menu->addSeparator();
+   }
+   
    if (data.mediaUrl().isValid())
    {
       switch (data.mediaType())
@@ -179,6 +199,12 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       default:
          break;
       }
+   }
+   else if (data.linkUrl().isValid())
+   {
+      menu->addAction(webPage()->action(QWebEnginePage::OpenLinkInNewWindow));
+      menu->addAction(webPage()->action(QWebEnginePage::CopyLinkToClipboard));
+      menu->addAction(webPage()->action(QWebEnginePage::DownloadLinkToDisk));
    }
    else
    {

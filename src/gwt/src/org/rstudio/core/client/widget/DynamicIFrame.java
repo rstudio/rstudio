@@ -40,6 +40,7 @@ public abstract class DynamicIFrame extends Frame
    @Override
    public void setUrl(String url)
    {
+      retryInterval_ = 0;
       url_ = url;
       super.setUrl(url);
       pollForLoad();
@@ -76,7 +77,8 @@ public abstract class DynamicIFrame extends Frame
          {
             if (loadFrame.execute()) 
             {
-               Scheduler.get().scheduleFixedDelay(loadFrame, 50);
+               if (retryInterval_ < 500) retryInterval_ += 50;
+               Scheduler.get().scheduleFixedDelay(loadFrame, retryInterval_);
             }
          }
       });
@@ -100,4 +102,5 @@ public abstract class DynamicIFrame extends Frame
    protected abstract void onFrameLoaded();
 
    private String url_;
+   private int retryInterval_ = 0;
 }

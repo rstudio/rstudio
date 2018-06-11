@@ -24,18 +24,29 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -48,16 +59,25 @@ public class PackagesPreferencesPane extends PreferencesPane
                                   GlobalDisplay globalDisplay,
                                   UIPrefs uiPrefs,
                                   Session session,
-                                  final DefaultCRANMirror defaultCRANMirror)
+                                  final DefaultCRANMirror defaultCRANMirror,
+                                  MirrorsServerOperations server)
    {
       res_ = res;
       globalDisplay_ = globalDisplay;
+      server_ = server;
+
+      secondaryReposWidget_ = new SecondaryReposWidget();
+
+      VerticalPanel management = new VerticalPanel();
+      VerticalPanel development = new VerticalPanel();
     
-      add(headerLabel("Package management"));
+      management.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "CRAN mirror:",
+            "Primary CRAN repo:",
+            "",
             "Change...",
+            null,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)
@@ -68,22 +88,58 @@ public class PackagesPreferencesPane extends PreferencesPane
                      {
                         cranMirror_ = cranMirror;
                         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                        
+                        if (cranMirror_.getHost().equals("Custom"))
+                        {
+                           cranMirrorTextBox_.setText(cranMirror_.getURL());
+                        }
+                        else
+                        {
+                           cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                        }
+
+                        secondaryReposWidget_.setCranRepoUrl(
+                           cranMirror_.getURL(),
+                           cranMirror_.getHost().equals("Custom")
+                        );
                      }     
                   });
-                 
                }
-            });
+            },
+            true);
+      
+      cranMirrorTextBox_.getTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if (!event.getValue().equals(cranMirror_.getDisplay()))
+            {
+               secondaryReposWidget_.setCranRepoUrl(event.getValue(), true);
+            }
+         }
+      });
+
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
+
+      Label secondaryReposLabel = new Label("Secondary repos:");
+      secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
+
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
          lessSpaced(cranMirrorTextBox_);
-         add(cranMirrorTextBox_);
+         management.add(cranMirrorTextBox_);
+
+         management.add(spacedBefore(secondaryReposLabel));
+         management.add(secondaryReposWidget_);
       }
-      
+
       CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
-            uiPrefs.packagesPaneEnabled());
+         uiPrefs.packagesPaneEnabled());
+
       chkEnablePackages.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -91,9 +147,10 @@ public class PackagesPreferencesPane extends PreferencesPane
             reloadRequired_ = true;
          }
       });
+
       if (!session.getSessionInfo().getDisablePackages())
       {
-         add(chkEnablePackages);
+         management.add(spacedBefore(chkEnablePackages));
       }
       
       useSecurePackageDownload_ = new CheckBox(
@@ -101,7 +158,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
                         useSecurePackageDownload_, "secure_download");
       lessSpaced(secureDownloadPanel);
-      add(secureDownloadPanel);
+      management.add(secureDownloadPanel);
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
@@ -110,45 +167,47 @@ public class PackagesPreferencesPane extends PreferencesPane
       {     
          lessSpaced(chkEnablePackages);
          spaced(useInternet2_);
-         add(useInternet2_);
+         management.add(useInternet2_);
       }
       else
       {
          spaced(useSecurePackageDownload_);
          useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
+
+      management.add(spacedBefore(new HelpLink("Managing Packages", "managing_packages")));
       
-      add(headerLabel("Package development"));
+      development.add(headerLabel("Package development"));
       
       useDevtools_ = new CheckBox("Use devtools package functions if available");
       lessSpaced(useDevtools_);
-      add(useDevtools_);
+      development.add(useDevtools_);
       
-      add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
-      add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
+      development.add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
+      development.add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
       
       hideObjectFiles_ = new CheckBox("Hide object files in package src directory");
       lessSpaced(hideObjectFiles_);
-      add(hideObjectFiles_);
+      development.add(hideObjectFiles_);
       
       cleanupAfterCheckSuccess_ = new CheckBox("Cleanup output after successful R CMD check");
       lessSpaced(cleanupAfterCheckSuccess_);
-      add(cleanupAfterCheckSuccess_);
+      development.add(cleanupAfterCheckSuccess_);
       
       viewDirAfterCheckFailure_ = new CheckBox("View Rcheck directory after failed R CMD check");
       lessSpaced(viewDirAfterCheckFailure_);
-      add(viewDirAfterCheckFailure_);
+      development.add(viewDirAfterCheckFailure_);
       
-      add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
+      development.add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
       
       useNewlineInMakefiles_ = new CheckBox("Always use LF line-endings in Unix Makefiles");
       lessSpaced(useNewlineInMakefiles_);
-      add(useNewlineInMakefiles_);
+      development.add(useNewlineInMakefiles_);
       
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
       nudgeRight(packagesHelpLink); 
-      add(packagesHelpLink);
+      development.add(packagesHelpLink);
       
       cranMirrorTextBox_.setEnabled(false);
       useInternet2_.setEnabled(false);
@@ -157,9 +216,14 @@ public class PackagesPreferencesPane extends PreferencesPane
       hideObjectFiles_.setEnabled(false);
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(management, "Management");
+      tabPanel.add(development, "Development");
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
-
-
 
    @Override
    public ImageResource getIcon()
@@ -188,9 +252,26 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(true);
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
-         cranMirror_ = packagesPrefs.getCRANMirror();
-         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+         cranMirrorOriginal_ = cranMirror_ = packagesPrefs.getCRANMirror();
+         secondaryReposWidget_.setCranRepoUrl(
+            cranMirror_.getURL(),
+            cranMirror_.getHost().equals("Custom")
+         );
+
+         if (cranMirror_.getHost().equals("Custom"))
+         {
+            cranMirrorTextBox_.setText(cranMirror_.getURL());
+         }
+         else
+         {
+            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+         }
+         
+         cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
+         
+         secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
+      
       useInternet2_.setEnabled(true);
       useInternet2_.setValue(packagesPrefs.getUseInternet2());
       useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -224,10 +305,62 @@ public class PackagesPreferencesPane extends PreferencesPane
       useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
    }
 
+   private boolean secondaryReposHasChanged()
+   {
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
+
+      if (secondaryRepos.size() != cranMirrorOriginal_.getSecondaryRepos().size())
+         return true;
+
+      for (int i = 0; i < secondaryRepos.size(); i++)
+      {
+         if (secondaryRepos.get(i) != cranMirrorOriginal_.getSecondaryRepos().get(i))
+            return true;
+      }
+
+      return false;
+   }
+
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
       boolean reload = super.onApply(rPrefs);
+
+      String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
+
+      if (!mirrotTextValue.equals(cranMirrorStored_))
+         cranMirror_.setChanged(true);
+
+      boolean cranRepoChangedToUrl = !mirrotTextValue.equals(cranMirrorStored_) && 
+                                      mirrotTextValue.startsWith("http");
+      
+      if (cranRepoChangedToUrl || secondaryReposHasChanged())
+      {
+         cranMirror_.setChanged(true);
+
+         if (cranRepoChangedToUrl)
+         {
+            cranMirror_ = CRANMirror.empty();
+            cranMirror_.setURL(mirrotTextValue);
+
+            cranMirror_.setHost("Custom");
+            cranMirror_.setName("Custom");
+            cranMirror_.setChanged(true);
+         }
+         
+         ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
+         cranMirror_.setSecondaryRepos(repos);
+
+         server_.setCRANMirror(
+            cranMirror_,
+            new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
+                @Override
+                public void onResponseReceived(Void response)
+                {
+                }
+            }
+         );
+      }
      
       // set packages prefs
       PackagesPrefs packagesPrefs = PackagesPrefs.create(
@@ -247,9 +380,10 @@ public class PackagesPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    private final GlobalDisplay globalDisplay_;
-   
+   private final MirrorsServerOperations server_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private CRANMirror cranMirrorOriginal_ = CRANMirror.empty();
    private CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private CheckBox cleanupAfterCheckSuccess_;
@@ -259,4 +393,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox useSecurePackageDownload_;
    private CheckBox useNewlineInMakefiles_;
    private boolean reloadRequired_ = false;
+   private String cranMirrorStored_;
+   private SecondaryReposWidget secondaryReposWidget_;
 }

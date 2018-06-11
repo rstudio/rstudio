@@ -69,6 +69,9 @@ public interface ThemeResources extends ClientBundle
 
    @Source("rstudio_2x.png")
    ImageResource rstudio2x();
+   
+   @Source("rstudio_large_2x.png")
+   ImageResource rstudioLarge2x();
 
    @Source("rstudio_small_2x.png")
    ImageResource rstudio_small2x();
@@ -300,4 +303,7 @@ public interface ThemeResources extends ClientBundle
    
    @Source("refreshWorkspaceUnmonitored_2x.png")
    ImageResource refreshWorkspaceUnmonitored2x();
+   
+   @Source("browsePackage_2x.png")
+   ImageResource browsePackage2x();
 }

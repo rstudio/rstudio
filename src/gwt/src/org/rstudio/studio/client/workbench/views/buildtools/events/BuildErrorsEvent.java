@@ -40,6 +40,10 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
       public final native boolean openErrorList() /*-{
          return this.open_error_list;
       }-*/;
+
+      public final native String type() /*-{
+         return this.type;
+      }-*/;
    }
 
    
@@ -61,6 +65,11 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
    public boolean openErrorList()
    {
       return data_.openErrorList();
+   }
+
+   public String type()
+   {
+      return data_.type();
    }
    
    public JsArray<SourceMarker> getErrors()

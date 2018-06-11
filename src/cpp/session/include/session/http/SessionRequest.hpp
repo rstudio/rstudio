@@ -25,8 +25,14 @@
 #include <core/http/ConnectionRetryProfile.hpp>
 
 #ifndef _WIN32
-# include <core/http/LocalStreamBlockingClient.hpp>
-# include <session/SessionLocalStreams.hpp>
+#include <core/http/LocalStreamBlockingClient.hpp>
+#include <session/SessionLocalStreams.hpp>
+#endif
+
+#include "session-config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/sessions/SessionSignature.hpp>
 #endif
 
 #include <session/SessionConstants.hpp>
@@ -48,20 +54,40 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setUri(uri);
    request.setHeader("Accept", "*/*");
    request.setHeader("Connection", "close");
+   request.setHeader("X-Session-Postback", "1");
+   request.setHeader(kRStudioUserIdentityDisplay, core::system::username());
    request.setBody(body);
 
-   std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
-
    // first, attempt to send a plain old http request
+   std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
    if (tcpipPort.empty())
    {
-      // if no standalone port, make an authenticated session request
+      // if no standalone port, grab regular port number (desktop mode)
       tcpipPort = core::system::getenv(kRSessionPortNumber);
-      if (!tcpipPort.empty())
+   }
+
+   if (!tcpipPort.empty())
+   {
+      std::string sharedSecret = core::system::getenv("RS_SHARED_SECRET");
+      if (!sharedSecret.empty())
       {
-         request.setHeader("X-Shared-Secret", core::system::getenv("RS_SHARED_SECRET"));
+         // if we have a shared secret to use (like in desktop mode), simply stamp it on the request
+         request.setHeader("X-Shared-Secret", sharedSecret);
          return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
       }
+#ifdef RSTUDIO_SERVER
+      else
+      {
+         // otherwise, we need to authenticate via message signing with RSA crypto
+         core::Error error = server_core::sessions::signRequest(
+                  core::system::getenv("RSTUDIO_SESSION_RSA_PRIVATE_KEY"),
+                  request);
+         if (error)
+            return error;
+
+         return core::http::sendRequest("127.0.0.1", tcpipPort, request, pResponse);
+      }
+#endif
    }
 
 #ifndef _WIN32
@@ -78,7 +104,7 @@ inline core::Error sendSessionRequest(const std::string& uri,
    }
    else
    {
-      streamPath = session::local_streams::streamPath(stream);
+      streamPath = local_streams::streamPath(stream);
    }
    return core::http::sendRequest(streamPath, request, pResponse);
 #endif

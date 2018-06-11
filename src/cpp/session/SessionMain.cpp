@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -133,6 +133,7 @@
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
+#include "modules/SessionPlumberViewer.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionRCompletions.hpp"
@@ -156,6 +157,7 @@
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
+#include "modules/plumber/SessionPlumber.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/preview/SessionPreview.hpp"
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
@@ -487,6 +489,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
+      (modules::plumber::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
@@ -499,6 +502,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::updates::initialize)
       (modules::about::initialize)
       (modules::shiny_viewer::initialize)
+      (modules::plumber_viewer::initialize)
       (modules::rsconnect::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
@@ -1763,7 +1767,13 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-         
+
+      // override the active session's working directory
+      // it is created with the default value of ~, so if our session options
+      // have specified that a different directory should be used, we should
+      // persist the value to the session state as soon as possible
+      module_context::activeSession().setWorkingDir(workingDir.absolutePath());
+
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
@@ -1818,11 +1828,36 @@ int main (int argc, char * const argv[])
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
-      // CRAN repos: global server option trumps user setting
-      if (!options.rCRANRepos().empty())
-         rOptions.rCRANRepos = options.rCRANRepos();
-      else
+
+      bool customRepo = true;
+
+      // When edit disabled, clear CRAN user setting preferences
+      if (!options.allowCRANReposEdit()) {
+        CRANMirror userMirror = userSettings().cranMirror();
+        userMirror.changed = false;
+        userSettings().setCRANMirror(userMirror, false);
+      }
+
+      // CRAN repos precedence: user setting then repos file then global server option
+      if (userSettings().cranMirror().changed)
          rOptions.rCRANRepos = userSettings().cranMirror().url;
+      else if (!options.rCRANMultipleRepos().empty())
+         rOptions.rCRANRepos = options.rCRANMultipleRepos();
+      else if (!options.rCRANRepos().empty())
+         rOptions.rCRANRepos = options.rCRANRepos();
+      else {
+         rOptions.rCRANRepos = "https://cran.rstudio.com/";
+         customRepo = false;
+      }
+
+      if (!userSettings().cranMirror().changed) {
+         CRANMirror defaultMirror;
+         defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
+         defaultMirror.host = customRepo ? "Custom" : "RStudio";
+         defaultMirror.url = rOptions.rCRANRepos;
+         userSettings().setCRANMirror(defaultMirror, false);
+      }
+
       rOptions.useInternet2 = userSettings().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();

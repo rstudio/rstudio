@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
@@ -31,12 +33,15 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class JobsPresenter extends BasePresenter  
                            implements JobUpdatedEvent.Handler,
@@ -49,9 +54,9 @@ public class JobsPresenter extends BasePresenter
    {
       void updateJob(int type, Job job);
       void setInitialJobs(JsObject jobs);
-      void showJobOutput(String id, JsArray<JobOutput> output);
+      void showJobOutput(String id, JsArray<JobOutput> output, boolean animate);
       void addJobOutput(String id, int type, String output);
-      void hideJobOutput(String id);
+      void hideJobOutput(String id, boolean animate);
       void syncElapsedTime(int timestamp);
    }
    
@@ -63,12 +68,14 @@ public class JobsPresenter extends BasePresenter
                         Binder binder,
                         Commands commands,
                         EventBus events,
-                        GlobalDisplay globalDisplay)
+                        GlobalDisplay globalDisplay,
+                        Provider<JobManager> pJobManager)
    {
       super(display);
       display_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      pJobManager_ = pJobManager;
       binder.bind(commands, this);
    }
 
@@ -96,11 +103,11 @@ public class JobsPresenter extends BasePresenter
    {
       if (event.selected())
       {
-         selectJob(event.id());
+         selectJob(event.id(), event.animate());
       }
       else
       {
-         unselectJob(event.id());
+         unselectJob(event.id(), event.animate());
       }
    }
    
@@ -110,6 +117,36 @@ public class JobsPresenter extends BasePresenter
       display_.syncElapsedTime(event.timestamp());
    }
    
+   public void confirmClose(Command onConfirmed)
+   {
+      List<Job> jobs = pJobManager_.get().getJobs();
+      
+      // if there are no jobs, go ahead and let the tab close
+      if (jobs.isEmpty())
+         onConfirmed.execute();
+
+      // count the number of running jobs
+      int running = 0;
+      for (int i = 0; i < jobs.size(); i++)
+      {
+         running++;
+      }
+      
+      if (running > 0)
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+               "Jobs Still Running", 
+               "The Jobs tab cannot be closed while there " +
+               (running > 1 ?
+                  "are unfinished jobs" : "is an unfinished job") + "." +
+               "\n\nWait until all jobs have completed.");
+         return;
+      }
+      
+      // done, okay to close
+      onConfirmed.execute();
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void setJobState(JobState state)
@@ -117,14 +154,14 @@ public class JobsPresenter extends BasePresenter
       display_.setInitialJobs(state);
    }
    
-   private void unselectJob(final String id)
+   private void unselectJob(final String id, boolean animate)
    {
       server_.setJobListening(id, false, new ServerRequestCallback<JsArray<JobOutput>>()
       {
          @Override
          public void onResponseReceived(JsArray<JobOutput> output)
          {
-            display_.hideJobOutput(id);
+            display_.hideJobOutput(id, animate);
          }
          
          @Override
@@ -133,20 +170,20 @@ public class JobsPresenter extends BasePresenter
             // if we couldn't turn off listening on the server, it's not a big
             // deal (we'll ignore output from the job if we don't recognize it),
             // so hide the output anyway and don't complain to the user
-            display_.hideJobOutput(id);
+            display_.hideJobOutput(id, animate);
             Debug.logError(error);
          }
       });
    }
    
-   private void selectJob(final String id)
+   private void selectJob(final String id, boolean animate)
    {
       server_.setJobListening(id, true, new ServerRequestCallback<JsArray<JobOutput>>()
       {
          @Override
          public void onResponseReceived(JsArray<JobOutput> output)
          {
-            display_.showJobOutput(id, output);
+            display_.showJobOutput(id, output, animate);
          }
          
          @Override
@@ -163,4 +200,5 @@ public class JobsPresenter extends BasePresenter
    private final JobsServerOperations server_;
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<JobManager> pJobManager_;
 }

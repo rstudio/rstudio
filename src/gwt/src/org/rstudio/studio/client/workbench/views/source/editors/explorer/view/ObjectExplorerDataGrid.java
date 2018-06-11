@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -695,56 +696,64 @@ public class ObjectExplorerDataGrid
    {
       Event event = Event.getCurrentEvent();
       int code = event.getKeyCode();
+      int modifier = KeyboardShortcut.getModifierValue(event);
       int type = event.getTypeInt();
       int row = getKeyboardSelectedRow();
       boolean isDefault = false;
       
-      if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
+      if (modifier == 0)
       {
-         switch (code)
+         if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
          {
-         case KeyCodes.KEY_UP:
-            selectRowRelative(-1);
-            break;
+            switch (code)
+            {
+            case KeyCodes.KEY_UP:
+               selectRowRelative(-1);
+               break;
 
-         case KeyCodes.KEY_DOWN:
-            selectRowRelative(+1);
-            break;
+            case KeyCodes.KEY_DOWN:
+               selectRowRelative(+1);
+               break;
 
-         case KeyCodes.KEY_PAGEUP:
-            selectRowRelative(-10);
-            break;
+            case KeyCodes.KEY_PAGEUP:
+               selectRowRelative(-10);
+               break;
 
-         case KeyCodes.KEY_PAGEDOWN:
-            selectRowRelative(+10);
-            break;
+            case KeyCodes.KEY_PAGEDOWN:
+               selectRowRelative(+10);
+               break;
 
-         case KeyCodes.KEY_LEFT:
-            selectParentOrClose(row);
-            break;
+            case KeyCodes.KEY_LEFT:
+               selectParentOrClose(row);
+               break;
 
-         case KeyCodes.KEY_RIGHT:
-            selectChildOrOpen(row);
-            break;
-            
-         default:
-            isDefault = true;
-            break;
+            case KeyCodes.KEY_RIGHT:
+               selectChildOrOpen(row);
+               break;
+
+            default:
+               isDefault = true;
+               break;
+            }
          }
-      }
-      
-      else if (type == Event.ONKEYUP)
-      {
-         switch (code)
-         {
-         case KeyCodes.KEY_ENTER:
-         case KeyCodes.KEY_SPACE:
-            toggleExpansion(row);
-            break;
 
-         default:
+         else if (type == Event.ONKEYUP)
+         {
+            switch (code)
+            {
+            case KeyCodes.KEY_ENTER:
+            case KeyCodes.KEY_SPACE:
+               toggleExpansion(row);
+               break;
+
+            default:
+               isDefault = true;
+               break;
+            }
+         }
+         else
+         {
             isDefault = true;
-            break;
          }
       }
       else

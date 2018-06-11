@@ -35,6 +35,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionShinyViewer.hpp"
+#include "modules/SessionPlumberViewer.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -63,6 +64,7 @@ const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
+const char * const kCRANMirrorChanged = "cranMirrorChanged";
 const char * const kBioconductorMirrorName = "bioconductorMirrorName";
 const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
@@ -380,6 +382,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
 
+   int plumberViewerType = readPref<int>(prefs, "plumber_viewer_type", modules::plumber_viewer::PLUMBER_VIEWER_WINDOW);
+   pPlumberViewerType_.reset(new int(plumberViewerType));
+
    bool enableRSConnectUI = readPref<bool>(prefs, "enable_rstudio_connect", false);
    pEnableRSConnectUI_.reset(new bool(enableRSConnectUI));
 
@@ -483,6 +488,11 @@ bool UserSettings::handleErrorsInUserCodeOnly() const
 int UserSettings::shinyViewerType() const
 {
    return readUiPref<int>(pShinyViewerType_);
+}
+
+int UserSettings::plumberViewerType() const
+{
+   return readUiPref<int>(pPlumberViewerType_);
 }
 
 bool UserSettings::enableRSConnectUI() const
@@ -677,6 +687,15 @@ CRANMirror UserSettings::cranMirror() const
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
    mirror.country = settings_.get(kCRANMirrorCountry);
+   mirror.changed = settings_.getBool(kCRANMirrorChanged);
+
+   // extract primary cran repo
+   std::vector<std::string> parts;
+   boost::split(parts, mirror.url, boost::is_any_of("|"));
+   if (parts.size() >= 2)
+      mirror.primary = parts.at(1);
+   else
+      mirror.primary = mirror.url;
 
    // if there is no URL then return the default RStudio mirror
    // (return the insecure version so we can rely on probing for
@@ -684,10 +703,15 @@ CRANMirror UserSettings::cranMirror() const
    // a previous bug/regression
    if (mirror.url.empty() || (mirror.url == "/"))
    {
-      mirror.name = "Global (CDN)";
-      mirror.host = "RStudio";
-      mirror.url = "http://cran.rstudio.com/";
-      mirror.country = "us";
+      // But only if not changed by the user
+      if (mirror.changed)
+      {
+         mirror.name = "Global (CDN)";
+         mirror.host = "RStudio";
+         mirror.url = "http://cran.rstudio.com/";
+         mirror.country = "us";
+         mirror.changed = false;
+      }
    }
 
    // re-map cran.rstudio.org to cran.rstudio.com
@@ -695,7 +719,7 @@ CRANMirror UserSettings::cranMirror() const
       mirror.url = "http://cran.rstudio.com/";
 
    // remap url without trailing slash
-   if (!boost::algorithm::ends_with(mirror.url, "/"))
+   if (mirror.url.size() > 0 && !boost::algorithm::ends_with(mirror.url, "/"))
       mirror.url += "/";
 
    return mirror;
@@ -703,16 +727,22 @@ CRANMirror UserSettings::cranMirror() const
 
 void UserSettings::setCRANMirror(const CRANMirror& mirror)
 {
+    setCRANMirror(mirror, true);
+}
+
+void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
+{
    settings_.set(kCRANMirrorName, mirror.name);
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
    settings_.set(kCRANMirrorCountry, mirror.country);
+   settings_.set(kCRANMirrorChanged, mirror.changed);
 
    // only set the underlying option if it's not empty (some
    // evidence exists that this is possible, it doesn't appear to
    // be possible in the current code however previous releases
    // may have let this in)
-   if (!mirror.url.empty())
+   if (!mirror.url.empty() && update)
       setCRANReposOption(mirror.url);
 }
 

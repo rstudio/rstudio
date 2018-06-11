@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -87,16 +87,40 @@ endif()
 if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
    find_program(GIT_EXECUTABLE git)
    if(GIT_EXECUTABLE)
-      exec_program(git ARGS rev-parse HEAD
-                   OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+      execute_process(
+         COMMAND git rev-parse HEAD
+         WORKING_DIRECTORY "${ROOT_SRC_DIR}"
+         OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH
+         OUTPUT_STRIP_TRAILING_WHITESPACE)
       SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
    endif()
 endif()
 
+# record these from Jenkins if available
+if("$ENV{GIT_COMMIT}" STREQUAL "")
+  string(LENGTH "${RSTUDIO_GIT_REVISION_HASH}" HASH_LENGTH)
+  if(HASH_LENGTH EQUAL 40) 
+    # use the cached revision hash if we have one
+    set(RSTUDIO_GIT_COMMIT "${RSTUDIO_GIT_REVISION_HASH}")
+  else()
+    # make one up if we don't
+    set(RSTUDIO_GIT_COMMIT "99999999999999999999999999999999")
+  endif()
+else()
+  # use the git commit from Jenkins
+  set(RSTUDIO_GIT_COMMIT $ENV{GIT_COMMIT})
+endif()
+if("$ENV{BUILD_ID}" STREQUAL "")
+  # no known build ID
+  set(RSTUDIO_BUILD_ID "unknown")
+else()
+  # use build ID from Jenkins
+  set(RSTUDIO_BUILD_ID $ENV{BUILD_ID})
+endif()
 
 # required R version
-set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 2)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 11)
+set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 0)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 1)
 
 # allow opting out of version checking (for building on older distros)

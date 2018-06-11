@@ -27,6 +27,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <boost/regex.hpp>
 
 #include <core/YamlUtil.hpp>
@@ -132,6 +134,61 @@ SEXP rs_isNullExternalPointer(SEXP objectSEXP)
    return create(isNullExternalPointer(objectSEXP), &protect);
 }
 
+SEXP readInitFileLevel(boost::property_tree::ptree pt, r::sexp::Protect& protect)
+{
+   using namespace boost::property_tree;
+
+   if (pt.empty())
+   {
+      std::string value = std::string(pt.data());
+      SEXP valueSEXP = create(value, &protect);
+      return valueSEXP;
+   }
+
+   std::map<std::string, SEXP> entries;
+   for (ptree::iterator it = pt.begin(); it != pt.end(); it++)
+   {
+      std::string key = it->first;
+      ptree value = it->second;
+
+      entries[key] = readInitFileLevel(value, protect);
+   }
+
+   return create(entries, &protect);
+}
+
+SEXP rs_readIniFile(SEXP iniPathSEXP)
+{
+    using namespace boost::property_tree;
+    std::string iniPath = r::sexp::asString(iniPathSEXP);
+    FilePath iniFile(iniPath);
+    if (!iniFile.exists())
+      return R_NilValue;
+
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(iniFile).open_r(&pIfs);
+   if (error)
+   {
+      return R_NilValue;
+   }
+
+   try
+   {
+      ptree pt;
+      ini_parser::read_ini(iniFile.absolutePath(), pt);
+
+      r::sexp::Protect protect;
+      return readInitFileLevel(pt, protect);
+   }
+   catch(const std::exception& e)
+   {
+      LOG_ERROR_MESSAGE("Error reading " + iniFile.absolutePath() +
+        ": " + std::string(e.what()));
+
+      return R_NilValue;
+   }
+}
+
 SEXP rs_rResourcesPath()
 {
    r::sexp::Protect protect;
@@ -144,6 +201,7 @@ Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
    RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
+   RS_REGISTER_CALL_METHOD(rs_readIniFile, 1);
    RS_REGISTER_CALL_METHOD(rs_rResourcesPath, 0);
    
    using boost::bind;
