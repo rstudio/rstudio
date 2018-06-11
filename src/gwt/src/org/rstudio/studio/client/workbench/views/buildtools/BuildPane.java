@@ -243,8 +243,10 @@ public class BuildPane extends WorkbenchPane
                           JsArray<SourceMarker> errors, 
                           boolean ensureVisible,
                           int autoSelect,
-                          boolean openErrors)
+                          boolean openErrors,
+                          String buildType)
    {
+      errorsBuildType_ = buildType;
       compilePanel_.showErrors(basePath, errors, autoSelect, openErrors);
       
       if (ensureVisible && SourceMarker.showErrorList(errors))
@@ -290,6 +292,12 @@ public class BuildPane extends WorkbenchPane
          
       };
    }
+
+   @Override
+   public String errorsBuildType()
+   {
+      return errorsBuildType_;
+   }
    
    @Override
    public void scrollToBottom()
@@ -300,6 +308,7 @@ public class BuildPane extends WorkbenchPane
    private Commands commands_;
    private Session session_;
    private BuildServerOperations server_;
+   private String errorsBuildType_;
    
    CompilePanel compilePanel_;
 
