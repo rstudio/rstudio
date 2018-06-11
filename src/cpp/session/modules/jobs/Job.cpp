@@ -20,6 +20,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
+
 #include "Job.hpp"
 
 #define kJobId          "id"
@@ -53,7 +55,8 @@ Job::Job(const std::string& id,
          int progress, 
          int max,
          JobState state,
-         bool autoRemove):
+         bool autoRemove,
+         SEXP actions):
    id_(id), 
    name_(name),
    status_(status),
@@ -65,7 +68,8 @@ Job::Job(const std::string& id,
    started_(0),
    completed_(0),
    autoRemove_(autoRemove),
-   listening_(false)
+   listening_(false),
+   actions_(actions)
 {
    setState(state);
 }
@@ -396,6 +400,18 @@ JobState Job::stringAsState(const std::string& state)
    else if (state == kJobStateFailed)     return JobFailed;
 
    return JobInvalid;
+}
+
+Error Job::executeAction(const std::string& action)
+{
+   // find the action in the list of named actions
+   SEXP method = R_NilValue;
+   Error error = r::sexp::getNamedListSEXP(actions_.get(), action, &method);
+   if (error)
+      return error;
+
+   // ... and call it!
+   return r::exec::RFunction(method).call();
 }
 
 } // namepsace jobs

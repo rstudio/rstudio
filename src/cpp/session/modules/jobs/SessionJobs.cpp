@@ -69,7 +69,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
       
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, autoRemove);
+      addJob(name, status, group, progress, state, autoRemove, actionsSEXP);
 
    // return job id
    r::sexp::Protect protect;
@@ -227,6 +227,17 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
    return r::sexp::create(id, &protect);
 }
 
+SEXP rs_executeJobAction(SEXP sexpId, SEXP action)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(sexpId, &pJob))
+      return R_NilValue;
+
+   pJob->executeAction(r::sexp::safeAsString(action));
+
+   return R_NilValue;
+}
+
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -372,7 +383,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
    RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
-   RS_REGISTER_CALL_METHOD(rs_stopScriptJob, 1);
+   RS_REGISTER_CALL_METHOD(rs_executeJobAction, 2);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));

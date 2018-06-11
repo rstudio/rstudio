@@ -18,6 +18,7 @@
 
 #include <string>
 #include <core/json/Json.hpp>
+#include <r/RSexp.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rstudio {
@@ -53,7 +54,8 @@ public:
        int progress, 
        int max,
        JobState state,
-       bool autoRemove);
+       bool autoRemove,
+       SEXP actions);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -84,6 +86,9 @@ public:
 
    // whether the client is listening to the job
    void setListening(bool listening);
+
+   // execute a custom (user-defined) action
+   core::Error executeAction(const std::string& name);
 
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
@@ -130,6 +135,8 @@ private:
 
    bool autoRemove_;
    bool listening_;
+
+   r::sexp::PreservedSEXP actions_;
 };
 
 

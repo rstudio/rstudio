@@ -35,7 +35,8 @@ boost::shared_ptr<Job> addJob(
       const std::string& group,
       int progress,
       JobState state,
-      bool autoRemove);
+      bool autoRemove,
+      SEXP actions);
 
 void removeJob(boost::shared_ptr<Job> pJob);
 

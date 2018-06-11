@@ -101,7 +101,9 @@
          PACKAGE = "(embedding)")
 })
 
-.rs.addApiFunction("stopScriptJob", function(id) {
-   .Call("rs_stopScriptJob", id)
+.rs.addApiFunction("executeJobAction", function(job, action) {
+   if (missing(job))
+      stop("Must specify job ID to execute action for.")
+   .Call("rs_executeJobAction", job, action)
 })
 
