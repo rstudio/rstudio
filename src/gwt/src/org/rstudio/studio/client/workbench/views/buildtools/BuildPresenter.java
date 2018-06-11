@@ -313,7 +313,10 @@ public class BuildPresenter extends BasePresenter
 
    void onTestTestthatFile()
    {
-      startBuild("test-file");
+   }
+
+   void onTestShinytestFile()
+   {
    }
    
    void onRebuildAll()

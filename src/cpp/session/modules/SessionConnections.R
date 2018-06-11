@@ -423,7 +423,7 @@ options(connectionObserver = list(
          snippet <- paste(
             "library(DBI)\n",
             "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-            "Driver={", driver, "};${1:Parameters}\")",
+            "Driver={", driver, "};${1:Parameters}\", timeout = 10)",
             sep = "")
       }
 
@@ -573,7 +573,7 @@ options(connectionObserver = list(
                "library(DBI)\n",
                "con <- dbConnect(odbc::odbc(), \"${1:Data Source Name=", 
                dataSource$name,
-               "}\")",
+               "}\", timeout = 10)",
                sep = "")
 
             iconData <- .Call("rs_connectionIcon", dataSource$name)

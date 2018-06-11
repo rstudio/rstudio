@@ -428,6 +428,11 @@ public class TextFileType extends EditableFileType
       if (!SourceWindowManager.isMainSourceWindow())
          results.add(commands.returnDocToMain());
       
+      if (isR())
+      {
+         results.add(commands.sourceAsJob());
+      }
+
       results.add(commands.sendToTerminal());
 
       return results;

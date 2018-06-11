@@ -89,6 +89,7 @@ if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
    if(GIT_EXECUTABLE)
       execute_process(
          COMMAND git rev-parse HEAD
+         WORKING_DIRECTORY "${ROOT_SRC_DIR}"
          OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH
          OUTPUT_STRIP_TRAILING_WHITESPACE)
       SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
@@ -97,9 +98,10 @@ endif()
 
 # record these from Jenkins if available
 if("$ENV{GIT_COMMIT}" STREQUAL "")
-  if(RSTUDIO_GIT_REVISION_HASH) 
+  string(LENGTH "${RSTUDIO_GIT_REVISION_HASH}" HASH_LENGTH)
+  if(HASH_LENGTH EQUAL 40) 
     # use the cached revision hash if we have one
-    set(RSTUDIO_GIT_COMMIT RSTUDIO_GIT_REVISION_HASH)
+    set(RSTUDIO_GIT_COMMIT "${RSTUDIO_GIT_REVISION_HASH}")
   else()
     # make one up if we don't
     set(RSTUDIO_GIT_COMMIT "99999999999999999999999999999999")
@@ -117,8 +119,8 @@ else()
 endif()
 
 # required R version
-set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 2)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 11)
+set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 0)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 1)
 
 # allow opting out of version checking (for building on older distros)

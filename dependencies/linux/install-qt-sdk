@@ -15,8 +15,8 @@
 #
 #
 
-# This archive includes the files required to build against Qt 5.4.0. It
-# was created by installing Qt 5.4.0 via an interactive installer, and 
+# This archive includes the files required to build against Qt. It
+# was created by installing Qt via an interactive installer, and 
 # manually removing components not needed by RStudio.
 
 # define QT archive to download
@@ -35,9 +35,11 @@ QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 # set Qt SDK dir if not already defined
 if [ -z "$QT_SDK_DIR" ]; then
   QT_SDK_DIR=~/Qt${QT_VERSION}
+  QT_SDK_DIR2=~/Qt/Qt${QT_VERSION}
+  QT_SDK_DIR3=~/Qt/${QT_VERSION}
 fi
 
-if ! test -e $QT_SDK_DIR
+if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
 then
    # download and install
    wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY

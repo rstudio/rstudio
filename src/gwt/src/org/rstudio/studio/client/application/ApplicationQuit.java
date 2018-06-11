@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
@@ -90,7 +91,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           Provider<UIPrefs> pUiPrefs,
                           Commands commands,
                           Binder binder,
-                          TerminalHelper terminalHelper)
+                          TerminalHelper terminalHelper,
+                          Provider<JobManager> pJobManager)
    {
       // save references
       server_ = server;
@@ -100,6 +102,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       sourceShim_ = sourceShim;
       pUiPrefs_ = pUiPrefs;
       terminalHelper_ = terminalHelper;
+      pJobManager_ = pJobManager;
       
       // bind to commands
       binder.bind(commands, this);
@@ -155,12 +158,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   MessageDialog.QUESTION,
                   caption, 
                   msg + " Are you sure you want to quit?",
-                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext),
+                  () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
                   true);
          }
          else
          {
-            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
+            handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext);
          }
       }
       else
@@ -169,22 +172,41 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
          {
             sourceShim_.closeAllSourceDocs(caption,
-                  () -> handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext));
+                  () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext));
          }
          else
          {
-            handleUnsavedChanges(caption, allowCancel, forceSaveAll, quitContext);
+            handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext);
          }
       }
    }
    
-   private void handleUnsavedChanges(String caption, 
+   private void handleUnfinishedWork(String caption, 
                                      boolean allowCancel,
                                      boolean forceSaveAll,
                                      QuitContext quitContext)
    {
-      handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
-            sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
+      Command handleUnsaved = () -> {
+         // handle unsaved editor changes
+         handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
+               sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
+      };
+
+      if (allowCancel)
+      {
+         // check for running jobs
+         pJobManager_.get().promptForTermination((confirmed) -> 
+         {
+            if (confirmed)
+            {
+               handleUnsaved.execute();
+            }
+         });
+      }
+      else
+      {
+         handleUnsaved.execute();
+      }
    }
    
    
@@ -815,6 +837,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final SourceShim sourceShim_;
    private final TerminalHelper terminalHelper_;
    private SaveAction saveAction_ = SaveAction.saveAsk();
+   private final Provider<JobManager> pJobManager_;
    
    private boolean suspendingAndRestarting_ = false;
 }

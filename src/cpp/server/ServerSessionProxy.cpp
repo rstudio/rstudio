@@ -802,8 +802,10 @@ void proxyLocalhostRequest(
 
    // specify closing of the connection after the request unless this is
    // an attempt to upgrade to websockets
-   if (!boost::algorithm::iequals(request.headerValue("Connection"), "Upgrade"))
+   if (!http::util::isWSUpgradeRequest(request))
+   {
       request.setHeader("Connection", "close");
+   }
 
    LocalhostResponseHandler onResponse =
          boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, ipv6, _1);

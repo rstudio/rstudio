@@ -26,9 +26,11 @@ QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
 # set Qt SDK dir if not already defined
 if [ -z "$QT_SDK_DIR" ]; then
   QT_SDK_DIR=~/Qt${QT_VERSION}
+  QT_SDK_DIR2=~/Qt/Qt${QT_VERSION}
+  QT_SDK_DIR3=~/Qt/${QT_VERSION}
 fi
 
-if ! test -e $QT_SDK_DIR
+if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
 then
    # download and install
    curl -L $QT_SDK_URL > /tmp/$QT_SDK_BINARY
