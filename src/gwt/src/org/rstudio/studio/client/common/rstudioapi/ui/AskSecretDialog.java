@@ -20,6 +20,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -64,6 +66,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          true)
       );
 
+      stillHasSecret_ = hasSecret;
       if (hasSecret) {
         // set some data to represent an existing value
         textbox_.setText(secretPlaceholder_);
@@ -80,6 +83,19 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          public void onChange(ChangeEvent event)
          {
             hasChanged_ = true;
+         }
+      });
+      
+      textbox_.addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            if (stillHasSecret_)
+            {
+               stillHasSecret_ = false;
+               textbox_.setText("");
+            }
          }
       });
 
@@ -177,6 +193,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    protected void onDialogShown()
    {
       textbox_.setFocus(true);
+      textbox_.setSelectionRange(0, textbox_.getText().length());
    }
 
    @Override
@@ -226,5 +243,6 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @UiField HTMLPanel rememberDisabled_;
 
    private boolean hasChanged_ = false;
+   private boolean stillHasSecret_ = false;
    private static String secretPlaceholder_ = "00000000";
 }
