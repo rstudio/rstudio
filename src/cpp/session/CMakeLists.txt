@@ -523,14 +523,13 @@ endif()
 
 # install winpty on windows
 if(WIN32)
-   file(MAKE_DIRECTORY  "${CMAKE_CURRENT_BINARY_DIR}/x64")
-   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64"
+   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
            USE_SOURCE_PERMISSIONS
            DESTINATION  ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${WINPTY_BINDIR_64}/winpty.dll"
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
+           DESTINATION "${RSTUDIO_INSTALL_BIN}")
    install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
+           DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
 
 # install gnudiff, mysys_ssh, and sumatra-pdf on windows

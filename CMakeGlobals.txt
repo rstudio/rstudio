@@ -72,19 +72,9 @@ if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desk
    set(RSTUDIO_DESKTOP TRUE)
 endif()
 
-# set session64 if specified
-if(RSTUDIO_TARGET STREQUAL "SessionWin64")
-   set(RSTUDIO_SESSION_WIN64 TRUE)
-endif()
-
-# prefer 64bit session when using 64bit toolchain
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(RSTUDIO_SESSION_WIN64 TRUE)
-endif()
-
 # record git revision hash (cache it since we don't use this in development
 # mode and we don't want it to force rebuilds there)
-if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
+if(NOT RSTUDIO_GIT_REVISION_HASH)
    find_program(GIT_EXECUTABLE git)
    if(GIT_EXECUTABLE)
       execute_process(
@@ -170,11 +160,7 @@ if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
    set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
 else()
-   if (RSTUDIO_SESSION_WIN64)
-     set(RSTUDIO_INSTALL_BIN x64)
-   else()
-     set(RSTUDIO_INSTALL_BIN bin)
-   endif()
+   set(RSTUDIO_INSTALL_BIN bin)
    set(RSTUDIO_INSTALL_SUPPORTING .)
 endif()
 
