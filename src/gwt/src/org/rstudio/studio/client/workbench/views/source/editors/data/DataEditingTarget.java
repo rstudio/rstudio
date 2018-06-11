@@ -147,6 +147,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       view_ = new DataEditingTargetWidget(
             commands_,
+            events_,
             getDataItem());
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);

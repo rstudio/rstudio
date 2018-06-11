@@ -28,14 +28,16 @@ public class DataItem extends JavaScriptObject
    }
 
    public static final native DataItem create(String caption,
+                                              String expression,
                                               int totalObservations,
                                               int displayedObservations,
                                               int variables,
                                               String contentUrl,
                                               int preview) /*-{
       var dataItem = new Object();
-      dataItem.caption = caption ;
-      dataItem.totalObservations = totalObservations ;
+      dataItem.caption = caption;
+      dataItem.expression = expression;
+      dataItem.totalObservations = totalObservations;
       dataItem.displayedObservations = displayedObservations;
       dataItem.variables = variables;
       dataItem.contentUrl = contentUrl;
@@ -50,6 +52,10 @@ public class DataItem extends JavaScriptObject
    
    public native final String getCaption() /*-{
       return this.caption;
+   }-*/;
+   
+   public native final String getExpression() /*-{
+      return this.expression;
    }-*/;
    
    public native final int getTotalObservations() /*-{
@@ -98,6 +104,7 @@ public class DataItem extends JavaScriptObject
       // SourceServerOperations#modifyDocumentProperties to take a less typesafe
       // container type.
       properties.put("caption", getCaption());
+      properties.put("expression", getExpression());
       properties.put("totalObservations", getTotalObservations() + "");
       properties.put("displayedObservations", getDisplayedObservations() + "");
       properties.put("variables", getVariables() + "");
@@ -111,6 +118,7 @@ public class DataItem extends JavaScriptObject
    public final void fillProperties(JsObject properties)
    {
       properties.setString("caption", getCaption());
+      properties.setString("expression", getExpression());
       properties.setInteger("totalObservations", getTotalObservations());
       properties.setInteger("displayedObservations", getDisplayedObservations());
       properties.setInteger("variables", getVariables());
