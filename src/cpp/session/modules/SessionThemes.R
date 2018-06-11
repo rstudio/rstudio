@@ -799,7 +799,7 @@
       {
          if (grepl("windows", Sys.info()[["sysname"]], ignore.case = TRUE))
          {
-            installLocation <- file.path("%ProgramData%", "RStudio", "themes")
+            installLocation <- file.path(Sys.getenv("ProgramData"), "RStudio", "themes")
          }
          else 
          {
@@ -983,9 +983,9 @@
       if (file.exists(themeList[[name]]$fileName))
       {
          justFileName <- basename(themeList[[name]]$fileName)
-         actualPath <- normalizePath(themeList[[name]]$fileName)
-         globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE))
-         if (file.path(globalPath, justFileName) == actualPath)
+         actualPath <- normalizePath(themeList[[name]]$fileName, mustWork = FALSE, winslash = "/")
+         globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE), mustWork = FALSE, winslash = "/")
+         if (identical(file.path(globalPath, justFileName), actualPath))
          {
             stop(
                "Unable to remove the specified theme \"",
