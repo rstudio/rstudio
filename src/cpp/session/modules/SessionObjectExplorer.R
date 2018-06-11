@@ -91,6 +91,11 @@
    result
 })
 
+.rs.addJsonRpcHandler("explorer_end_inspect", function(id)
+{
+   .rs.explorer.removeCachedObject(id)
+})
+
 .rs.addFunction("objectAddress", function(object)
 {
    .Call("rs_objectAddress", object, PACKAGE = "(embedding)")
@@ -190,11 +195,18 @@
    cache <- .rs.explorer.getCache()
    entry <- cache[[id]]
    
-   # get object (refreshing if requested)
+   # get object (refreshing if requested). note that refreshes following a
+   # restart may lose reference to the original object if e.g. the object lived
+   # in the global environment but the global environment was not restored
    if (refresh) {
-      object <- .rs.tryCatch(eval(parse(text = entry$title), envir = entry$envir))
-      entry$object <- object
-      cache[[id]] <- entry
+      tryCatch(
+         expr = {
+            object <- eval(parse(text = entry$title), envir = entry$envir)
+            entry$object <- object
+            cache[[id]] <- entry
+         },
+         error = identity
+      )
    }
    object <- entry$object
    
