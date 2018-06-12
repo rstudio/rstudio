@@ -477,7 +477,7 @@ Error readDirectoryChanges(FileEventContext* pContext)
    DWORD dwBytes = 0;
    if(!::ReadDirectoryChangesW(pContext->hDirectory,
                                &(pContext->receiveBuffer[0]),
-                               pContext->receiveBuffer.size(),
+                               static_cast<DWORD>(pContext->receiveBuffer.size()),
                                pContext->recursive ? TRUE : FALSE,
                                FILE_NOTIFY_CHANGE_FILE_NAME |
                                FILE_NOTIFY_CHANGE_DIR_NAME |

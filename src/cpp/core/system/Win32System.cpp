@@ -234,11 +234,6 @@ bool isCurrentProcessWin64()
    return getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
-bool isVistaOrLater()
-{
-   return IsWindowsVistaOrGreater();
-}
-
 bool isWin7OrLater()
 {
    return IsWindows7OrGreater();
@@ -565,7 +560,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    std::wstring wPath = filePath.absolutePathW();
    std::vector<wchar_t> buffer(512);
    DWORD res = ::GetFullPathNameW(wPath.c_str(),
-                                  buffer.size(),
+                                  static_cast<DWORD>(buffer.size()),
                                   &(buffer[0]),
                                   NULL);
    if (res == 0)
@@ -578,7 +573,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    {
       buffer.resize(res);
       res = ::GetFullPathNameW(wPath.c_str(),
-                               buffer.size(),
+                               static_cast<DWORD>(buffer.size()),
                                &(buffer[0]),
                                NULL);
       if (res == 0)
@@ -941,7 +936,7 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
    std::vector<char> buffer(sizeRequired);
    auto result = ::ExpandEnvironmentStrings(value.c_str(),
                                            &buffer[0],
-                                           buffer.capacity());
+                                           static_cast<DWORD>(buffer.capacity()));
 
    if (!result)
    {

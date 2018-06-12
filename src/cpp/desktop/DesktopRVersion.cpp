@@ -61,7 +61,7 @@ DWORD getVersion(QString path)
    if (!::GetFileVersionInfo(
          path.toLocal8Bit(),
          0,
-         buffer.size(),
+         static_cast<DWORD>(buffer.size()),
          pBlock))
    {
       return 0;
@@ -261,13 +261,8 @@ void enumRegistry(Architecture architecture, HKEY key, QList<RVersion>* pResults
 
 void enumRegistry(QList<RVersion>* pResults)
 {
-   enumRegistry(ArchX86, HKEY_CURRENT_USER, pResults);
-   enumRegistry(ArchX86, HKEY_LOCAL_MACHINE, pResults);
-   if (core::system::isWin64())
-   {
-       enumRegistry(ArchX64, HKEY_CURRENT_USER, pResults);
-       enumRegistry(ArchX64, HKEY_LOCAL_MACHINE, pResults);
-   }
+   enumRegistry(ArchX64, HKEY_CURRENT_USER, pResults);
+   enumRegistry(ArchX64, HKEY_LOCAL_MACHINE, pResults);
 }
 
 // Return all valid versions of R we can find, nicely sorted and de-duped.
@@ -362,62 +357,17 @@ RVersion autoDetect(Architecture architecture, bool preferredOnly)
 
 RVersion autoDetect()
 {
-   Options& options = desktop::options();
-
-   if (options.rBinDir().isNull() && system::isWin64())
-   {
-      // Special case where user has never specified a preference
-      // for R64 vs. R.
-
-      RVersion ver;
-
-      // rBinDir is getting set to null whenever it is empty
-      // (perhaps a change in Qt behavior?). we therefore
-      // need to look for 32bit first when preferR64 is false
-      if (!options.preferR64())
-      {
-         // Preferred R
-         ver = autoDetect(ArchX86, true);
-         if (ver.isValid())
-            return ver;
-      }
-
-      // Preferred R64
-      ver = autoDetect(ArchX64, true);
-      if (ver.isValid())
-         return ver;
-
-      // Preferred R
-      ver = autoDetect(ArchX86, true);
-      if (ver.isValid())
-         return ver;
-
-      // Any R64
-      ver = autoDetect(ArchX64);
-      if (ver.isValid())
-         return ver;
-
-      // Any R
-      ver = autoDetect(ArchX86);
-      if (ver.isValid())
-         return ver;
-
-      return RVersion();
-   }
-   else
-   {
-      return autoDetect(options.preferR64() ? ArchX64 : ArchX86);
-   }
+   return autoDetect(ArchX64);
 }
 
 /*
 Looks for a valid R directory in the following places:
 - Value of %R_HOME%
 - Value of HKEY_LOCAL_MACHINE\Software\R-core\R@InstallPath
-    (both 32-bit and 64-bit keys)
+    (64-bit keys)
 - Values under HKEY_LOCAL_MACHINE\Software\R-core\R\*@InstallPath
-    (both 32-bit and 64-bit keys)
-- Enumerate %ProgramFiles% directory (both 32-bit and 64-bit dirs)
+    (64-bit keys)
+- Enumerate %ProgramFiles% directory (64-bit dirs)
 
 If forceUi is true, we always show the picker dialog.
 Otherwise, we try to do our best to match the user's specified wishes,
@@ -452,7 +402,7 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
    // Now we show the dialog and make the user choose.
 
    ChooseRHome dialog(allRVersions(QList<RVersion>() << rVersion), parent);
-   dialog.setValue(rVersion, options.preferR64());
+   dialog.setValue(rVersion);
    if (dialog.exec() == QDialog::Accepted)
    {
       // Keep in mind this value might be "", if the user indicated
@@ -460,8 +410,6 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
       // itself be accepted unless a valid installation is detected.
       rVersion = dialog.value();
       options.setRBinDir(rVersion.binDir());
-      if (rVersion.isEmpty())
-         options.setPreferR64(dialog.preferR64());
 
       // Recurse. The ChooseRHome dialog should've validated that
       // the values are acceptable, so this recursion will never
@@ -503,13 +451,10 @@ QString RVersion::description() const
 {
    QString result;
 
-   if (core::system::isWin64())
-   {
-      if (architecture() == ArchX64)
-         result.append(QString::fromUtf8("[64-bit] "));
-      else if (architecture() == ArchX86)
-         result.append(QString::fromUtf8("[32-bit] "));
-   }
+   if (architecture() == ArchX64)
+      result.append(QString::fromUtf8("[64-bit] "));
+   else if (architecture() == ArchX86)
+      result.append(QString::fromUtf8("[32-bit] "));
 
    result.append(QDir::toNativeSeparators(homeDir_));
 

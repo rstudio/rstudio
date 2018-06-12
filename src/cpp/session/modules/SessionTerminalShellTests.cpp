@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShellTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,50 +40,24 @@ context("session terminal shell tests")
       expect_true(origCount == arr.size());
    }
 
-   test_that("Windows has 32-bit command prompt")
-   {
-      AvailableTerminalShells shells;
-      expect_true(shells.count() > 0);
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::Cmd32, &shell));
-      expect_true(shell.type == TerminalShell::Cmd32);
-      expect_true(shell.path.exists());
-   }
-
-   test_that("Windows has 32-bit powershell")
-   {
-      AvailableTerminalShells shells;
-      expect_true(shells.count() > 0);
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::PS32, &shell));
-      expect_true(shell.type == TerminalShell::PS32);
-      expect_true(shell.path.exists());
-   }
-
    test_that("64-bit Windows has 64-bit command prompt")
    {
-      if (core::system::isWin64())
-      {
-         AvailableTerminalShells shells;
-         expect_true(shells.count() > 0);
-         TerminalShell shell;
-         expect_true(shells.getInfo(TerminalShell::Cmd64, &shell));
-         expect_true(shell.type == TerminalShell::Cmd64);
-         expect_true(shell.path.exists());
-      }
+      AvailableTerminalShells shells;
+      expect_true(shells.count() > 0);
+      TerminalShell shell;
+      expect_true(shells.getInfo(TerminalShell::Cmd64, &shell));
+      expect_true(shell.type == TerminalShell::Cmd64);
+      expect_true(shell.path.exists());
    }
 
    test_that("64-bit Windows has 64-bit powershell")
    {
-      if (core::system::isWin64())
-      {
-         AvailableTerminalShells shells;
-         expect_true(shells.count() > 0);
-         TerminalShell shell;
-         expect_true(shells.getInfo(TerminalShell::PS64, &shell));
-         expect_true(shell.type == TerminalShell::PS64);
-         expect_true(shell.path.exists());
-      }
+      AvailableTerminalShells shells;
+      expect_true(shells.count() > 0);
+      TerminalShell shell;
+      expect_true(shells.getInfo(TerminalShell::PS64, &shell));
+      expect_true(shell.type == TerminalShell::PS64);
+      expect_true(shell.path.exists());
    }
 
    test_that("WSL Bash is detected if installed")
