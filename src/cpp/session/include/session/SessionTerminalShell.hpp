@@ -37,9 +37,9 @@ struct TerminalShell
 
       GitBash      = 1, // Win32: Bash from Windows Git
       WSLBash      = 2, // Win32: Windows Services for Linux (64-bit Windows-10 only)
-      Cmd32        = 3, // Win32: Windows command shell (32-bit)
+      Cmd32        = 3, // Win32: Windows command shell (32-bit), dropped support in RStudio 1.2
       Cmd64        = 4, // Win32: Windows command shell (64-bit)
-      PS32         = 5, // Win32: PowerShell (32-bit)
+      PS32         = 5, // Win32: PowerShell (32-bit), dropped support in RStudio 1.2
       PS64         = 6, // Win32: PowerShell (64-bit)
 
       PosixBash    = 7, // Posix: Bash

@@ -120,13 +120,11 @@ std::string TerminalShell::getShellName(TerminalShellType type)
    case WSLBash:
       return "WSL";
    case Cmd32:
-      return "Command Prompt (32-bit)";
    case Cmd64:
-      return "Command Prompt (64-bit)";
+      return "Command Prompt";
    case PS32:
-      return "PowerShell (32-bit)";
    case PS64:
-      return "PowerShell (64-bit)";
+      return "PowerShell";
    case PosixBash:
       return "Bash";
    case CustomShell:

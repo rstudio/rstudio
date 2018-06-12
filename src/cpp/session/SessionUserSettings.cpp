@@ -594,9 +594,18 @@ void UserSettings::setShowLastDotValue(bool show)
 
 console_process::TerminalShell::TerminalShellType UserSettings::defaultTerminalShellValue() const
 {
-   return static_cast<console_process::TerminalShell::TerminalShellType>(
+   using ShellType = console_process::TerminalShell::TerminalShellType;
+   ShellType type = static_cast<ShellType>(
             settings_.getInt(kDefaultTerminalShell,
-               static_cast<int>(console_process::TerminalShell::DefaultShell)));
+            static_cast<int>(console_process::TerminalShell::DefaultShell)));
+
+   // map obsolete 32-bit shell types to their 64-bit equivalents
+   if (type == console_process::TerminalShell::Cmd32)
+      type = console_process::TerminalShell::Cmd64;
+   else if (type == console_process::TerminalShell::PS32)
+      type = console_process::TerminalShell::PS64;
+
+   return static_cast<console_process::TerminalShell::TerminalShellType>(type);
 }
 
 void UserSettings::setDefaultTerminalShellValue(

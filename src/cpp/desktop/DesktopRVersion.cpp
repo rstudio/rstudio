@@ -290,6 +290,14 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
          versions.removeAt(i--);
    }
 
+   // Remove unsupported architectures
+   QMutableListIterator<RVersion> verList(versions);
+   while (verList.hasNext())
+   {
+      if (verList.next().architecture() != ArchX64)
+         verList.remove();
+   }
+
    return versions;
 }
 
@@ -377,7 +385,14 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
 {
    Options& options = desktop::options();
 
-   RVersion rVersion(options.rBinDir());
+   RVersion rVersion;
+
+   // if currently select R version is 32-bit, ignore it
+   RVersion rCurrentVersion(options.rBinDir());
+   if (!rCurrentVersion.isEmpty() && rCurrentVersion.architecture() == ArchX64)
+   {
+      rVersion = rCurrentVersion;
+   }
 
    if (!forceUi)
    {
