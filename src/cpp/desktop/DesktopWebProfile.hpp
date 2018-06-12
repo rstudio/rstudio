@@ -18,6 +18,7 @@
 
 #include <QWebEngineProfile>
 #include <QWebEngineUrlRequestInterceptor>
+#include <QWebEngineUrlRequestInfo>
 
 namespace rstudio {
 namespace desktop {
@@ -29,6 +30,10 @@ class WebProfile : public QWebEngineProfile
 public:
    explicit WebProfile(const QUrl& baseUrl, QObject* parent = nullptr);
    void setBaseUrl(const QUrl& baseUrl);
+   void onInterceptRequest(QWebEngineUrlRequestInfo& info);
+   
+Q_SIGNALS:
+   void urlIntercepted(QUrl url, int type);
 
 private:
    QScopedPointer<QWebEngineUrlRequestInterceptor> interceptor_;

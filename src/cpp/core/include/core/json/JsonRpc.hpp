@@ -152,6 +152,20 @@ struct JsonRpcRequest
       params.clear();
       kwparams.clear();
    }
+
+   json::Object toJsonObject()
+   {
+      json::Object obj;
+      obj["method"] = method;
+      obj["params"] = params;
+      obj["kwparams"] = kwparams;
+      obj["sourceWindow"] = sourceWindow;
+      obj["clientId"] = clientId;
+      obj["version"] = version;
+      obj["isBackgroundConnection"] = isBackgroundConnection;
+
+      return obj;
+   }
 };
 
 // 
@@ -1144,6 +1158,13 @@ public:
    { 
       setField(name, json::Value(value));
    }
+
+   template <typename T>
+   Error getField(const std::string& name,
+                 T* pValue)
+   {
+      return json::readObject(response_, name, pValue);
+   }
    
    // low level hook to set the full response
    void setResponse(const json::Object& response)
@@ -1165,6 +1186,12 @@ public:
    json::Object getRawResponse();
    
    void write(std::ostream& os) const;
+
+   static bool parse(const std::string& input,
+                     JsonRpcResponse* pResponse);
+
+   static bool parse(const json::Value& value,
+                     JsonRpcResponse* pResponse);
    
 private:
    json::Object response_;

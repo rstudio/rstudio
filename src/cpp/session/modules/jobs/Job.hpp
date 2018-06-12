@@ -53,7 +53,8 @@ public:
        int progress, 
        int max,
        JobState state,
-       bool autoRemove);
+       bool autoRemove,
+       bool show);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -88,6 +89,9 @@ public:
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
    core::json::Array output(int position);
+
+   // whether the job pane should should be shown at start
+   bool show() const;
 
    // timing
    time_t recorded() const;
@@ -130,6 +134,7 @@ private:
 
    bool autoRemove_;
    bool listening_;
+   bool show_;
 };
 
 
