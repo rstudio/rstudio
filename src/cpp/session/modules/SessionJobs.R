@@ -27,7 +27,7 @@
 
    # begin tracking job
    .Call("rs_addJob", name, status, progressUnits,
-      actions, estimate, estimateRemaining, running, autoRemove, group, PACKAGE = "(embedding)", show)
+      actions, estimate, estimateRemaining, running, autoRemove, group, show, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("removeJob", function(job) {

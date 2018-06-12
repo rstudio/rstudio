@@ -89,11 +89,15 @@ public class JobsPane extends WorkbenchPane
          case JobConstants.JOB_ADDED:
             list_.addJob(job);
             
-            // bring the pane to the front so the new job is visible
-            if (job.show) bringToFront();
+            if (job.show)
+            {
+               // bring the pane to the front so the new job is visible
+               bringToFront();
             
-            // select the job
-            events_.fireEvent(new JobSelectionEvent(job.id, true, false));
+               // select the job
+               events_.fireEvent(new JobSelectionEvent(job.id, true, false));
+            }
+            
             break;
 
          case JobConstants.JOB_REMOVED:
