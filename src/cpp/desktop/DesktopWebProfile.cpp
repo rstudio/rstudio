@@ -40,6 +40,9 @@ public:
 
    void interceptRequest(QWebEngineUrlRequestInfo& info) override
    {
+      // notify the parent of the intercept -- this is primarily done to
+      // communicate some extra information about the incoming request
+      // to WebPage, for use in acceptNavigationRequest()
       parent_->onInterceptRequest(info);
       
       if (info.requestUrl().authority() == baseUrl_.authority())
