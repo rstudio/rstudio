@@ -16,7 +16,10 @@
 context("themes")
 
 inputFileLocation <- file.path(path.expand("."), "themes")
-outputDir <- file.path(inputFileLocation, "temp")
+tempOutputDir <- file.path(inputFileLocation, "temp")
+localInstallDir <- file.path(inputFileLocation, "localInstall")
+globalInstallDir <- file.path(inputFileLocation, "globalInstall")
+noPermissionDir <- file.path(inputFileLocation, "nopermission")
 
 themes <- list(
    "Active4D" = list("fileName" ="active4d",isDark = FALSE),
@@ -320,6 +323,45 @@ getRsIsDark <- function(lines)
    as.logical(toupper(isDarkStr))
 }
 
+test_that_wrapped <- function(desc, FUN, BEFORE_FUN = NULL, AFTER_FUN = NULL)
+{
+   if (!is.null(BEFORE_FUN))
+   {
+      BEFORE_FUN()
+   }
+
+   test_that(desc, FUN)
+
+   if (!is.null(AFTER_FUN))
+   {
+      AFTER_FUN()
+   }
+}
+
+setThemeLocations <- function()
+{
+   Sys.setenv(
+      RS_THEME_GLOBAL_HOME = globalInstallDir,
+      RS_THEME_LOCAL_HOME = localInstallDir)
+}
+
+unsetThemeLocations <- function()
+{
+   Sys.unsetenv("RS_THEME_GLOBAL_HOME")
+   Sys.unsetenv("RS_THEME_LOCAL_HOME")
+}
+
+makeNoPermissionDir <- function() {
+   if (dir.exists(noPermissionDir))
+   {
+      Sys.chmod(noPermissionDir, mode = "0555")
+   }
+   else
+   {
+      dir.create(noPermissionDir, mode = "0555")
+   }
+}
+
 # Test getRgbColor =================================================================================
 test_that("rgb coversion from hex format works", {
    # All lowercase
@@ -500,19 +542,19 @@ test_that("rgb conversion handles invalid values correctly", {
 
    # Too few values in rgb/rgba representation
    expect_error(
-      .rs.getRgbColor("rgb(1, 10)"), 
+      .rs.getRgbColor("rgb(1, 10)"),
       "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgb(1, 10)",
       fixed = TRUE)
    expect_error(
-      .rs.getRgbColor("rgba(1, 10)"), 
+      .rs.getRgbColor("rgba(1, 10)"),
       "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgba(1, 10)",
       fixed = TRUE)
    expect_error(
-      .rs.getRgbColor("rgb(255)"), 
+      .rs.getRgbColor("rgb(255)"),
       "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgb(255)",
       fixed = TRUE)
    expect_error(
-      .rs.getRgbColor("rgba(255)"), 
+      .rs.getRgbColor("rgba(255)"),
       "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: rgba(255)",
       fixed = TRUE)
 
@@ -558,7 +600,7 @@ test_that("parseColor works correctly", {
    expect_equal(.rs.parseColor("#86D4C2FF"), "rgba(134, 212, 194, 1.00)")
    expect_equal(.rs.parseColor("#1B22A7D6"), "rgba(27, 34, 167, 0.84)")
    expect_null(.rs.parseColor(""))
-   
+
    # Error cases
    expect_error(.rs.parseColor("1a2b"), "Unable to parse color: 11aa22bb", fixed = TRUE)
    expect_error(.rs.parseColor("654"), "Unable to parse color: 654", fixed = TRUE)
@@ -585,7 +627,7 @@ test_that("parseStyles works correctly", {
       "fontStyle" = "asdafafeaunderlineadafweglkj;op",
       "foreground" = "#ccc")
    emptyList <- list()
-   
+
    # Expected Values
    allValuesEx <- "text-decoration:underline;font-style:italic;color:#a12d96;background-color:#1ad269;"
    noFontEx <- "color:#863021;background-color:#A1A1A1;"
@@ -594,7 +636,7 @@ test_that("parseStyles works correctly", {
    nonsenseFontEx <- "color:rgba(26, 43, 60, 0.30);background-color:#112233;"
    nonsenseFont2Ex <- "text-decoration:underline;color:#cccccc;background-color:#1a2b3c;"
    emptyListEx <- ""
-   
+
    # Test cases (no error)
    expect_equal(.rs.parseStyles(allValues), allValuesEx)
    expect_equal(.rs.parseStyles(noFont), noFontEx)
@@ -603,7 +645,7 @@ test_that("parseStyles works correctly", {
    expect_equal(.rs.parseStyles(nonsenseFont), nonsenseFontEx)
    expect_equal(.rs.parseStyles(nonsenseFont2), nonsenseFont2Ex)
    expect_equal(.rs.parseStyles(emptyList), emptyListEx)
-   
+
    # Test cases (error)
    expect_error(.rs.parseStyles(nonsense), "Unable to parse color: asdafwegwr", fixed = TRUE)
 })
@@ -613,11 +655,11 @@ test_that("extractStyles works correctly", {
    # Static supported scopes list that extractStyle requires. It's defined in the function that
    # calls extractStyles (.rs.convertTmTheme)
    supportedScopes <- list()
-   
+
    supportedScopes[["keyword"]] <- "keyword"
    supportedScopes[["keyword.operator"]] <- "keyword.operator"
    supportedScopes[["keyword.other.unit"]] <- "keyword.other.unit"
-   
+
    supportedScopes[["constant"]] <- "constant"
    supportedScopes[["constant.language"]] <- "constant.language"
    supportedScopes[["constant.library"]] <- "constant.library"
@@ -625,7 +667,7 @@ test_that("extractStyles works correctly", {
    supportedScopes[["constant.character"]] <- "constant.character"
    supportedScopes[["constant.character.escape"]] <- "constant.character.escape"
    supportedScopes[["constant.character.entity"]] <- "constant.character.entity"
-   
+
    supportedScopes[["support"]] <- "support"
    supportedScopes[["support.function"]] <- "support.function"
    supportedScopes[["support.function.dom"]] <- "support.function.dom"
@@ -636,38 +678,38 @@ test_that("extractStyles works correctly", {
    supportedScopes[["support.class"]] <- "support.class"
    supportedScopes[["support.type"]] <- "support.type"
    supportedScopes[["support.other"]] <- "support.other"
-   
+
    supportedScopes[["function"]] <- "function"
    supportedScopes[["function.buildin"]] <- "function.buildin"
-   
+
    supportedScopes[["storage"]] <- "storage"
    supportedScopes[["storage.type"]] <- "storage.type"
-   
+
    supportedScopes[["invalid"]] <- "invalid"
    supportedScopes[["invalid.illegal"]] <- "invalid.illegal"
    supportedScopes[["invalid.deprecated"]] <- "invalid.deprecated"
-   
+
    supportedScopes[["string"]] <- "string"
    supportedScopes[["string.regexp"]] <- "string.regexp"
-   
+
    supportedScopes[["comment"]] <- "comment"
    supportedScopes[["comment.documentation"]] <- "comment.doc"
    supportedScopes[["comment.documentation.tag"]] <- "comment.doc.tag"
-   
+
    supportedScopes[["variable"]] <- "variable"
    supportedScopes[["variable.language"]] <- "variable.language"
    supportedScopes[["variable.parameter"]] <- "variable.parameter"
-   
+
    supportedScopes[["meta"]] <- "meta"
    supportedScopes[["meta.tag.sgml.doctype"]] <- "xml-pe"
    supportedScopes[["meta.tag"]] <- "meta.tag"
    supportedScopes[["meta.selector"]] <- "meta.selector"
-   
+
    supportedScopes[["entity.other.attribute-name"]] <- "entity.other.attribute-name"
    supportedScopes[["entity.name.function"]] <- "entity.name.function"
    supportedScopes[["entity.name"]] <- "entity.name"
    supportedScopes[["entity.name.tag"]] <- "entity.name.tag"
-   
+
    supportedScopes[["markup.heading"]] <- "markup.heading"
    supportedScopes[["markup.heading.1"]] <- "markup.heading.1"
    supportedScopes[["markup.heading.2"]] <- "markup.heading.2"
@@ -676,17 +718,17 @@ test_that("extractStyles works correctly", {
    supportedScopes[["markup.heading.5"]] <- "markup.heading.5"
    supportedScopes[["markup.heading.6"]] <- "markup.heading.6"
    supportedScopes[["markup.list"]] <- "markup.list"
-   
+
    supportedScopes[["collab.user1"]] <- "collab.user1"
-   
+
    supportedScopes[["marker-layer.bracket"]] <- "marker-layer.bracket"
-   
+
    # Setup objects for test cases
    tomorrowTmTheme <- list()
    tomorrowTmTheme$comment <- "http://chriskempson.com"
    tomorrowTmTheme$name <- "Tomorrow"
    tomorrowTmTheme$settings <- list()
-   
+
    tomorrowTmTheme$settings[[1]] <- list()
    tomorrowTmTheme$settings[[1]]$settings <- list(
       "background" = "#FFFFFF",
@@ -695,97 +737,97 @@ test_that("extractStyles works correctly", {
       "invisibles" = "#D1D1D1",
       "lineHighlight" = "#EFEFEF",
       "selection" = "#D6D6D6")
-   
+
    tomorrowTmTheme$settings[[2]] <- list()
    tomorrowTmTheme$settings[[2]]$name <- "Comment"
    tomorrowTmTheme$settings[[2]]$scope <- "comment"
    tomorrowTmTheme$settings[[2]]$settings <- list("foreground" = "#8E908C")
-   
+
    tomorrowTmTheme$settings[[3]] <- list()
    tomorrowTmTheme$settings[[3]]$name <- "Foreground"
    tomorrowTmTheme$settings[[3]]$scope <- "keyword.operator.class, constant.other, source.php.embedded.line"
    tomorrowTmTheme$settings[[3]]$settings <- list()
    tomorrowTmTheme$settings[[3]]$settings$fontStyle <- ""
    tomorrowTmTheme$settings[[3]]$settings$foreground <- "#666969"
-   
+
    tomorrowTmTheme$settings[[4]] <- list()
    tomorrowTmTheme$settings[[4]]$name <- "Variable, String Link, Regular Expression, Tag Name, GitGutter deleted"
    tomorrowTmTheme$settings[[4]]$scope <- "variable, support.other.variable, string.other.link, string.regexp, entity.name.tag, entity.other.attribute-name, meta.tag, declaration.tag, markup.deleted.git_gutter"
    tomorrowTmTheme$settings[[4]]$settings <- list("foreground" = "#C82829")
-   
+
    tomorrowTmTheme$settings[[5]] <- list()
    tomorrowTmTheme$settings[[5]]$name <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
    tomorrowTmTheme$settings[[5]]$scope <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
    tomorrowTmTheme$settings[[5]]$settings <- list("fontStyle" = "", "foreground" = "#F5871F")
-   
+
    tomorrowTmTheme$settings[[6]] <- list()
    tomorrowTmTheme$settings[[6]]$name <- "Class, Support"
    tomorrowTmTheme$settings[[6]]$scope <- "entity.name.class, entity.name.type.class, support.type, support.class"
    tomorrowTmTheme$settings[[6]]$settings <- list("fontStyle" = "", "foreground" = "#C99E00")
-   
+
    tomorrowTmTheme$settings[[7]] <- list()
    tomorrowTmTheme$settings[[7]]$name <- "String, Symbols, Inherited Class, Markup Heading, GitGutter inserted"
    tomorrowTmTheme$settings[[7]]$scope <- "string, constant.other.symbol, entity.other.inherited-class, entity.name.filename, markup.heading, markup.inserted.git_gutter"
    tomorrowTmTheme$settings[[7]]$settings <- list("fontStyle" = "", "foreground" = "#718C00")
-   
+
    tomorrowTmTheme$settings[[8]] <- list()
    tomorrowTmTheme$settings[[8]]$name <- "Operator, Misc"
    tomorrowTmTheme$settings[[8]]$scope <- "keyword.operator, constant.other.color"
    tomorrowTmTheme$settings[[8]]$settings <- list("foreground" = "#3E999F")
-   
+
    tomorrowTmTheme$settings[[9]] <- list()
    tomorrowTmTheme$settings[[9]]$name <- "Function, Special Method, Block Level, GitGutter changed"
    tomorrowTmTheme$settings[[9]]$scope <- "entity.name.function, meta.function-call, support.function, keyword.other.special-method, meta.block-level, markup.changed.git_gutter"
    tomorrowTmTheme$settings[[9]]$settings <- list("fontStyle" = "", "foreground" = "#4271AE")
-   
+
    tomorrowTmTheme$settings[[10]] <- list()
    tomorrowTmTheme$settings[[10]]$name <- "Keyword, Storage"
    tomorrowTmTheme$settings[[10]]$scope <- "keyword, storage, storage.type"
    tomorrowTmTheme$settings[[10]]$settings <- list("fontStyle" = "", "foreground" = "#8959A8")
-   
+
    tomorrowTmTheme$settings[[11]] <- list()
    tomorrowTmTheme$settings[[11]]$name <- "Invalid"
    tomorrowTmTheme$settings[[11]]$scope <- "invalid"
    tomorrowTmTheme$settings[[11]]$settings <- list("background" = "#C82829", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[12]] <- list()
    tomorrowTmTheme$settings[[12]]$name <- "Separator"
    tomorrowTmTheme$settings[[12]]$scope <- "meta.separator"
    tomorrowTmTheme$settings[[12]]$settings <- list("background" = "#4271AE", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[13]] <- list()
    tomorrowTmTheme$settings[[13]]$name <- "Deprecated"
    tomorrowTmTheme$settings[[13]]$scope <- "invalid.deprecated"
    tomorrowTmTheme$settings[[13]]$settings <- list("background" = "#8959A8", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[14]] <- list()
    tomorrowTmTheme$settings[[14]]$name <- "Diff foreground"
    tomorrowTmTheme$settings[[14]]$scope <- "markup.inserted.diff, markup.deleted.diff, meta.diff.header.to-file, meta.diff.header.from-file"
    tomorrowTmTheme$settings[[14]]$settings <- list("foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[15]] <- list()
    tomorrowTmTheme$settings[[15]]$name <- "Diff insertion"
    tomorrowTmTheme$settings[[15]]$scope <- "markup.inserted.diff, meta.diff.header.to-file"
    tomorrowTmTheme$settings[[15]]$settings <- list("background" = "#718c00")
-   
+
    tomorrowTmTheme$settings[[16]] <- list()
    tomorrowTmTheme$settings[[16]]$name <- "Diff deletion"
    tomorrowTmTheme$settings[[16]]$scope <- "markup.deleted.diff, meta.diff.header.from-file"
    tomorrowTmTheme$settings[[16]]$settings <- list("background" = "#c82829")
-   
+
    tomorrowTmTheme$settings[[17]] <- list()
    tomorrowTmTheme$settings[[17]]$name <- "Diff header"
    tomorrowTmTheme$settings[[17]]$scope <- "meta.diff.header.from-file, meta.diff.header.to-file"
    tomorrowTmTheme$settings[[17]]$settings <- list("foreground" = "#FFFFFF", "background" = "#4271ae")
-   
+
    tomorrowTmTheme$settings[[18]] <- list()
    tomorrowTmTheme$settings[[18]]$name <- "Diff range"
    tomorrowTmTheme$settings[[18]]$scope <- "meta.diff.range"
    tomorrowTmTheme$settings[[18]]$settings <- list("fontStyle" = "italic", "foreground" = "#3e999f")
-   
+
    tomorrowTmTheme$uuid <- "82CCD69C-F1B1-4529-B39E-780F91F07604"
    tomorrowTmTheme$colorSpaceName <- "sRGB"
-   
+
    # Expected Results
    tomorrowStyles <- list()
    tomorrowStyles$printMargin = "#e8e8e8"
@@ -827,7 +869,7 @@ test_that("extractStyles works correctly", {
    tomorrowStyles$gutterFg = "rgb(166,166,166)"
    tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6;"
    tomorrowStyles$isDark = "false"
-      
+
    unsupportedScopes = list(
       "keyword.operator.class" = 0,
       "constant.other" = 0,
@@ -854,7 +896,7 @@ test_that("extractStyles works correctly", {
       "meta.diff.header.to-file" = 2,
       "meta.diff.header.from-file" = 2,
       "meta.diff.range" = 0)
-   
+
    expect_equal(
       .rs.extractStyles(tomorrowTmTheme, supportedScopes),
       list(
@@ -862,31 +904,16 @@ test_that("extractStyles works correctly", {
          "unsupportedScopes" = unsupportedScopes))
 })
 
-test_that_wrapped <- function(desc, FUN, BEFORE_FUN = NULL, AFTER_FUN = NULL)
-{
-   if (!is.null(BEFORE_FUN))
-   {
-      BEFORE_FUN()
-   }
-   
-   test_that(desc, FUN)
-   
-   if (!is.null(AFTER_FUN))
-   {
-      AFTER_FUN()
-   }
-}
-
 # Test convertTmTheme ==============================================================================
 test_that("convertTmTheme works correctly without parseTmTheme", {
    library("xml2")
-   
+
    # Setup objects for test cases
    tomorrowTmTheme <- list()
    tomorrowTmTheme$comment <- "http://chriskempson.com"
    tomorrowTmTheme$name <- "Tomorrow"
    tomorrowTmTheme$settings <- list()
-   
+
    tomorrowTmTheme$settings[[1]] <- list()
    tomorrowTmTheme$settings[[1]]$settings <- list(
       "background" = "#FFFFFF",
@@ -895,111 +922,111 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
       "invisibles" = "#D1D1D1",
       "lineHighlight" = "#EFEFEF",
       "selection" = "#D6D6D6")
-   
+
    tomorrowTmTheme$settings[[2]] <- list()
    tomorrowTmTheme$settings[[2]]$name <- "Comment"
    tomorrowTmTheme$settings[[2]]$scope <- "comment"
    tomorrowTmTheme$settings[[2]]$settings <- list("foreground" = "#8E908C")
-   
+
    tomorrowTmTheme$settings[[3]] <- list()
    tomorrowTmTheme$settings[[3]]$name <- "Foreground"
    tomorrowTmTheme$settings[[3]]$scope <- "keyword.operator.class, constant.other, source.php.embedded.line"
    tomorrowTmTheme$settings[[3]]$settings <- list()
    tomorrowTmTheme$settings[[3]]$settings$fontStyle <- ""
    tomorrowTmTheme$settings[[3]]$settings$foreground <- "#666969"
-   
+
    tomorrowTmTheme$settings[[4]] <- list()
    tomorrowTmTheme$settings[[4]]$name <- "Variable, String Link, Regular Expression, Tag Name, GitGutter deleted"
    tomorrowTmTheme$settings[[4]]$scope <- "variable, support.other.variable, string.other.link, string.regexp, entity.name.tag, entity.other.attribute-name, meta.tag, declaration.tag, markup.deleted.git_gutter"
    tomorrowTmTheme$settings[[4]]$settings <- list("foreground" = "#C82829")
-   
+
    tomorrowTmTheme$settings[[5]] <- list()
    tomorrowTmTheme$settings[[5]]$name <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
    tomorrowTmTheme$settings[[5]]$scope <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
    tomorrowTmTheme$settings[[5]]$settings <- list("fontStyle" = "", "foreground" = "#F5871F")
-   
+
    tomorrowTmTheme$settings[[6]] <- list()
    tomorrowTmTheme$settings[[6]]$name <- "Class, Support"
    tomorrowTmTheme$settings[[6]]$scope <- "entity.name.class, entity.name.type.class, support.type, support.class"
    tomorrowTmTheme$settings[[6]]$settings <- list("fontStyle" = "", "foreground" = "#C99E00")
-   
+
    tomorrowTmTheme$settings[[7]] <- list()
    tomorrowTmTheme$settings[[7]]$name <- "String, Symbols, Inherited Class, Markup Heading, GitGutter inserted"
    tomorrowTmTheme$settings[[7]]$scope <- "string, constant.other.symbol, entity.other.inherited-class, entity.name.filename, markup.heading, markup.inserted.git_gutter"
    tomorrowTmTheme$settings[[7]]$settings <- list("fontStyle" = "", "foreground" = "#718C00")
-   
+
    tomorrowTmTheme$settings[[8]] <- list()
    tomorrowTmTheme$settings[[8]]$name <- "Operator, Misc"
    tomorrowTmTheme$settings[[8]]$scope <- "keyword.operator, constant.other.color"
    tomorrowTmTheme$settings[[8]]$settings <- list("foreground" = "#3E999F")
-   
+
    tomorrowTmTheme$settings[[9]] <- list()
    tomorrowTmTheme$settings[[9]]$name <- "Function, Special Method, Block Level, GitGutter changed"
    tomorrowTmTheme$settings[[9]]$scope <- "entity.name.function, meta.function-call, support.function, keyword.other.special-method, meta.block-level, markup.changed.git_gutter"
    tomorrowTmTheme$settings[[9]]$settings <- list("fontStyle" = "", "foreground" = "#4271AE")
-   
+
    tomorrowTmTheme$settings[[10]] <- list()
    tomorrowTmTheme$settings[[10]]$name <- "Keyword, Storage"
    tomorrowTmTheme$settings[[10]]$scope <- "keyword, storage, storage.type"
    tomorrowTmTheme$settings[[10]]$settings <- list("fontStyle" = "", "foreground" = "#8959A8")
-   
+
    tomorrowTmTheme$settings[[11]] <- list()
    tomorrowTmTheme$settings[[11]]$name <- "Invalid"
    tomorrowTmTheme$settings[[11]]$scope <- "invalid"
    tomorrowTmTheme$settings[[11]]$settings <- list("background" = "#C82829", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[12]] <- list()
    tomorrowTmTheme$settings[[12]]$name <- "Separator"
    tomorrowTmTheme$settings[[12]]$scope <- "meta.separator"
    tomorrowTmTheme$settings[[12]]$settings <- list("background" = "#4271AE", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[13]] <- list()
    tomorrowTmTheme$settings[[13]]$name <- "Deprecated"
    tomorrowTmTheme$settings[[13]]$scope <- "invalid.deprecated"
    tomorrowTmTheme$settings[[13]]$settings <- list("background" = "#8959A8", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[14]] <- list()
    tomorrowTmTheme$settings[[14]]$name <- "Diff foreground"
    tomorrowTmTheme$settings[[14]]$scope <- "markup.inserted.diff, markup.deleted.diff, meta.diff.header.to-file, meta.diff.header.from-file"
    tomorrowTmTheme$settings[[14]]$settings <- list("foreground" = "#FFFFFF")
-   
+
    tomorrowTmTheme$settings[[15]] <- list()
    tomorrowTmTheme$settings[[15]]$name <- "Diff insertion"
    tomorrowTmTheme$settings[[15]]$scope <- "markup.inserted.diff, meta.diff.header.to-file"
    tomorrowTmTheme$settings[[15]]$settings <- list("background" = "#718c00")
-   
+
    tomorrowTmTheme$settings[[16]] <- list()
    tomorrowTmTheme$settings[[16]]$name <- "Diff deletion"
    tomorrowTmTheme$settings[[16]]$scope <- "markup.deleted.diff, meta.diff.header.from-file"
    tomorrowTmTheme$settings[[16]]$settings <- list("background" = "#c82829")
-   
+
    tomorrowTmTheme$settings[[17]] <- list()
    tomorrowTmTheme$settings[[17]]$name <- "Diff header"
    tomorrowTmTheme$settings[[17]]$scope <- "meta.diff.header.from-file, meta.diff.header.to-file"
    tomorrowTmTheme$settings[[17]]$settings <- list("foreground" = "#FFFFFF", "background" = "#4271ae")
-   
+
    tomorrowTmTheme$settings[[18]] <- list()
    tomorrowTmTheme$settings[[18]]$name <- "Diff range"
    tomorrowTmTheme$settings[[18]]$scope <- "meta.diff.range"
    tomorrowTmTheme$settings[[18]]$settings <- list("fontStyle" = "italic", "foreground" = "#3e999f")
-   
+
    tomorrowTmTheme$uuid <- "82CCD69C-F1B1-4529-B39E-780F91F07604"
    tomorrowTmTheme$colorSpaceName <- "sRGB"
-   
+
    tomorrowConverted <- .rs.convertTmTheme(tomorrowTmTheme)
-   
+
    # expected results
    conn <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
-   
+
    expect_true(compareCss(parseCss(tomorrowConverted$theme), parseCss(readLines(conn))))
    expect_false(tomorrowConverted$isDark)
-   
+
    close(conn)
 })
 
 test_that("convertTmTheme works correctly with parseTmTheme", {
    library("xml2")
-   
+
    .rs.enumerate(themes, function(key, value) {
       # Actual Results
       actualConverted <- .rs.convertTmTheme(
@@ -1008,12 +1035,12 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
                inputFileLocation,
                "tmThemes",
                paste0(key, ".tmTheme"))))
-      
+
       # Expected Results
       f <- file(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")))
       expectedCss <- parseCss(readLines(f))
       close(f)
-      
+
       infoStr <- paste("Theme:", key)
       expect_true(compareCss(parseCss(actualConverted$theme), expectedCss), info = infoStr)
       expect_equal(actualConverted$isDark, value$isDark, info = infoStr)
@@ -1144,7 +1171,7 @@ test_that("parseDictElement works correctly", {
 
    recursiveDictEl2 <- xml2::read_xml(
       "<dict>
-         <key>name</key> 
+         <key>name</key>
          <string>Number, Constant, Function Argument, Tag Attribute, Embedded</string>
          <key>scope</key>
          <string>constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit</string>
@@ -1211,7 +1238,7 @@ test_that("parseDictElement works correctly", {
 # Test parseArrayElement ===========================================================================
 test_that("parseArrayElement works correctly", {
    library("xml2")
-   
+
    # Setup test case input objects
    emptyArrayEl <- xml2::read_xml("<array/>")
    textArrayEl <- xml2::read_xml("<array>some text</array>")
@@ -1235,7 +1262,7 @@ test_that("parseArrayElement works correctly", {
             <string>#F5871F</string>
          </dict>
       </array>")
-   
+
    arrayEl <- xml2::read_xml(
       "<array>
          <dict>
@@ -1320,7 +1347,7 @@ test_that("parseArrayElement works correctly", {
 # Test parseTmTheme ================================================================================
 test_that("parseTmTheme handles correct input", {
    library("xml2")
-   
+
    # Setup expected output
    expected <- list()
    expected$comment <- "http://chriskempson.com"
@@ -1357,82 +1384,82 @@ test_that("parseTmTheme handles correct input", {
    expected$settings[[5]]$name <- "Number, Constant, Function Argument, Tag Attribute, Embedded"
    expected$settings[[5]]$scope <- "constant.numeric, constant.language, support.constant, constant.character, variable.parameter, punctuation.section.embedded, keyword.other.unit"
    expected$settings[[5]]$settings <- list("fontStyle" = "", "foreground" = "#F5871F")
-   
+
    expected$settings[[6]] <- list()
    expected$settings[[6]]$name <- "Class, Support"
    expected$settings[[6]]$scope <- "entity.name.class, entity.name.type.class, support.type, support.class"
    expected$settings[[6]]$settings <- list("fontStyle" = "", "foreground" = "#C99E00")
-   
+
    expected$settings[[7]] <- list()
    expected$settings[[7]]$name <- "String, Symbols, Inherited Class, Markup Heading, GitGutter inserted"
    expected$settings[[7]]$scope <- "string, constant.other.symbol, entity.other.inherited-class, entity.name.filename, markup.heading, markup.inserted.git_gutter"
    expected$settings[[7]]$settings <- list("fontStyle" = "", "foreground" = "#718C00")
-   
+
    expected$settings[[8]] <- list()
    expected$settings[[8]]$name <- "Operator, Misc"
    expected$settings[[8]]$scope <- "keyword.operator, constant.other.color"
    expected$settings[[8]]$settings <- list("foreground" = "#3E999F")
-   
+
    expected$settings[[9]] <- list()
    expected$settings[[9]]$name <- "Function, Special Method, Block Level, GitGutter changed"
    expected$settings[[9]]$scope <- "entity.name.function, meta.function-call, support.function, keyword.other.special-method, meta.block-level, markup.changed.git_gutter"
    expected$settings[[9]]$settings <- list("fontStyle" = "", "foreground" = "#4271AE")
-   
+
    expected$settings[[10]] <- list()
    expected$settings[[10]]$name <- "Keyword, Storage"
    expected$settings[[10]]$scope <- "keyword, storage, storage.type"
    expected$settings[[10]]$settings <- list("fontStyle" = "", "foreground" = "#8959A8")
-   
+
    expected$settings[[11]] <- list()
    expected$settings[[11]]$name <- "Invalid"
    expected$settings[[11]]$scope <- "invalid"
    expected$settings[[11]]$settings <- list("background" = "#C82829", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    expected$settings[[12]] <- list()
    expected$settings[[12]]$name <- "Separator"
    expected$settings[[12]]$scope <- "meta.separator"
    expected$settings[[12]]$settings <- list("background" = "#4271AE", "foreground" = "#FFFFFF")
-   
+
    expected$settings[[13]] <- list()
    expected$settings[[13]]$name <- "Deprecated"
    expected$settings[[13]]$scope <- "invalid.deprecated"
    expected$settings[[13]]$settings <- list("background" = "#8959A8", "fontStyle" = "", "foreground" = "#FFFFFF")
-   
+
    expected$settings[[14]] <- list()
    expected$settings[[14]]$name <- "Diff foreground"
    expected$settings[[14]]$scope <- "markup.inserted.diff, markup.deleted.diff, meta.diff.header.to-file, meta.diff.header.from-file"
    expected$settings[[14]]$settings <- list("foreground" = "#FFFFFF")
-   
+
    expected$settings[[15]] <- list()
    expected$settings[[15]]$name <- "Diff insertion"
    expected$settings[[15]]$scope <- "markup.inserted.diff, meta.diff.header.to-file"
    expected$settings[[15]]$settings <- list("background" = "#718c00")
-   
+
    expected$settings[[16]] <- list()
    expected$settings[[16]]$name <- "Diff deletion"
    expected$settings[[16]]$scope <- "markup.deleted.diff, meta.diff.header.from-file"
    expected$settings[[16]]$settings <- list("background" = "#c82829")
-   
+
    expected$settings[[17]] <- list()
    expected$settings[[17]]$name <- "Diff header"
    expected$settings[[17]]$scope <- "meta.diff.header.from-file, meta.diff.header.to-file"
    expected$settings[[17]]$settings <- list("foreground" = "#FFFFFF", "background" = "#4271ae")
-   
+
    expected$settings[[18]] <- list()
    expected$settings[[18]]$name <- "Diff range"
    expected$settings[[18]]$scope <- "meta.diff.range"
    expected$settings[[18]]$settings <- list("fontStyle" = "italic", "foreground" = "#3e999f")
-   
+
    expected$uuid <- "82CCD69C-F1B1-4529-B39E-780F91F07604"
    expected$colorSpaceName <- "sRGB"
-   
+
    # Test cases (no error)
    expect_equal(.rs.parseTmTheme(file.path(inputFileLocation, "tmThemes", "Tomorrow.tmTheme")), expected)
 })
 
 test_that("parseTmTheme handles incorrect input", {
    library("xml2")
-   
+
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "EmptyBody.tmTheme")),
       "Unable to convert the tmtheme to an rstheme. Expected 1 non-text child of the root, found: 0",
@@ -1456,25 +1483,25 @@ test_that("parseTmTheme handles incorrect input", {
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
       sprintf(
-         "error parsing attribute name [68]", 
+         "error parsing attribute name [68]",
          inputFileLocation),
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
       sprintf(
-         "Opening and ending tag mismatch: string line 223 and notstring [76]", 
+         "Opening and ending tag mismatch: string line 223 and notstring [76]",
          inputFileLocation),
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
       sprintf(
-         "StartTag: invalid element name [68]", 
+         "StartTag: invalid element name [68]",
          inputFileLocation),
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
       sprintf(
-         "StartTag: invalid element name [68]", 
+         "StartTag: invalid element name [68]",
          inputFileLocation),
       fixed = TRUE)
    expect_error(
@@ -1530,21 +1557,21 @@ test_that("convertAceTheme works correctly", {
    .rs.enumerate(themes, function(key, value) {
       inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
       expectedResultFile <- file.path(inputFileLocation, "rsthemes", paste0(value$fileName, ".rstheme"))
-      
+
       conn <- file(expectedResultFile)
       expected <- readLines(conn)
       close(conn)
-      
+
       conn <- file(inputAceFile)
       aceActualLines <- readLines(conn)
       close(conn)
-      
+
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
-      
+
       # Check the css values
       infoStr = paste0("Theme: ", key)
       expect_true(compareCss(parseCss(actual), parseCss(expected)), info = infoStr)
-      
+
       # Check the metadata values
       expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
       expect_equal(getRsIsDark(actual), getRsIsDark(expected), fixed = TRUE, info = infoStr)
@@ -1557,28 +1584,27 @@ test_that_wrapped("convertTheme works correctly", {
       name <- .rs.convertTheme(
          file.path(inputFileLocation, "tmThemes", paste0(themeName, ".tmTheme")),
          FALSE,
-         outputDir,
+         tempOutputDir,
          FALSE,
          FALSE,
          FALSE)
-      
-       
-      f <- file(file.path(outputDir, paste0(themeName, ".rstheme")))
+
+      f <- file(file.path(tempOutputDir, paste0(themeName, ".rstheme")))
       actualCssLines <- readLines(f)
       close(f)
-      
+
       f <- file(file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")))
       expectedCssLines <- readLines(f)
       close(f)
-      
+
       infoStr <- paste("Theme:", themeName)
       expect_true(compareCss(parseCss(actualCssLines), parseCss(expectedCssLines)), info = infoStr)
-      
+
       # Check name values
       expectedName <- getRsThemeName(expectedCssLines)
       expect_equal(name, expectedName, info = infoStr)
       expect_equal(getRsThemeName(actualCssLines), expectedName, info = infoStr)
-      
+
       # Check dark value
       expect_equal(getRsIsDark(actualCssLines), getRsIsDark(expectedCssLines), info = infoStr)
       expect_equal(getRsIsDark(actualCssLines), themeDesc$isDark, info = infoStr)
@@ -1586,17 +1612,17 @@ test_that_wrapped("convertTheme works correctly", {
 },
 BEFORE_FUN = function(){
    # Make an output location.
-   dir.create(outputDir)
+   dir.create(tempOutputDir)
 },
 AFTER_FUN = function(){
    # Clean up the output location.
-   if (unlink(outputDir, recursive = TRUE, force = TRUE) != 0) 
+   if (unlink(tempOutputDir, recursive = TRUE, force = TRUE) != 0)
    {
-      warning("Unable to clean up the actual results in: ", outputDir)
+      warning("Unable to clean up the actual results in: ", tempOutputDir)
    }
 })
 
-test_that("convertTheme gives error for file permission issues", {
+test_that_wrapped("convertTheme gives error for file permission issues", {
    expect_error(
       suppressWarnings(.rs.convertTheme(
          file.path(inputFileLocation, "tmThemes", paste0(names(themes)[1], ".tmTheme")),
@@ -1609,4 +1635,319 @@ test_that("convertTheme gives error for file permission issues", {
          "Unable to create the theme file in the requested location: %s. Please see above for relevant warnings.",
          file.path(inputFileLocation, "nopermission", paste0(names(themes)[1], ".rstheme"))),
       fixed = TRUE)
+},
+BEFORE_FUN = makeNoPermissionDir)
+
+# Test addTheme ====================================================================================
+test_that_wrapped("addTheme works correctly with local install", {
+   themeName <- names(themes)[4]
+   themeDesc <- themes[[themeName]]
+
+   fileName <- paste0(themeDesc$fileName, ".rstheme")
+   installPath <- file.path(localInstallDir, fileName)
+
+   if (file.exists(installPath))
+   {
+      skip(
+         paste0(
+            "Skipping addTheme(",
+            themeName,
+            ") because it already exists in the local install location."))
+   }
+
+   actualName <- .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", fileName),
+      FALSE,
+      FALSE,
+      FALSE)
+
+   infoStr <- paste("Theme:", themeName)
+   expect_equal(actualName, themeName, info = infoStr)
+   expect_true(file.exists(installPath), info = infoStr)
+
+   f <- file(installPath)
+   actualLines <- readLines(f)
+   close(f)
+
+   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
+   expectedLines <- readLines(f)
+   close(f)
+
+   expect_equal(actualLines, expectedLines, info = infoStr)
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   if (!all(file.remove(file.path(localInstallDir, dir(localInstallDir)))))
+   {
+      if (length(dir(localInstallDir)) != 0)
+      {
+         warning(
+            "Unable to remove the following files: \"",
+            paste0(
+               file.path(localInstallDir, dir(localInstallDir)),
+               collapse = "\", \""),
+            '\"')
+      }
+   }
+})
+
+test_that_wrapped("addTheme works correctly with global install", {
+   themeName <- names(themes)[4]
+   themeDesc <- themes[[themeName]]
+
+   fileName <- paste0(themeDesc$fileName, ".rstheme")
+   installPath <- file.path(globalInstallDir, fileName)
+
+   if (file.exists(installPath))
+   {
+      skip(
+         paste0(
+            "Skipping addTheme(",
+            themeName,
+            ") because it already exists in the local install location."))
+   }
+
+   actualName <- .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", fileName),
+      FALSE,
+      FALSE,
+      TRUE)
+
+   infoStr <- paste("Theme:", themeName)
+   expect_equal(actualName, themeName, info = infoStr)
+   expect_true(file.exists(installPath), info = infoStr)
+
+   f <- file(installPath)
+   actualLines <- readLines(f)
+   close(f)
+
+   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
+   expectedLines <- readLines(f)
+   close(f)
+
+   expect_equal(actualLines, expectedLines, info = infoStr)
+
+   if (file.exists(installPath))
+   {
+      if (!file.remove(installPath))
+      {
+         warning(
+            "Unable to remove \"",
+            installPath,
+            "\" from the system. Please check file system permissions.")
+      }
+   }
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   if (!all(file.remove(dir(globalInstallDir))))
+   {
+      if (length(dir(globalInstallDir)) != 0)
+      {
+         warning(
+            "Unable to remove the following files: \"",
+            paste0(
+               file.path(globalInstallDir, dir(globalInstallDir)),
+               collapse = "\", \""),
+            '\"')
+      }
+   }
+})
+
+test_that_wrapped("addTheme gives error when the theme already exists", {
+   themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
+   .rs.addTheme(themePath, FALSE, FALSE, FALSE)
+   expect_error(
+      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      paste0(
+         "Unable to add the theme. A file with the same name, \"",
+         themes[[40]]$fileName,
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`."))
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function()
+{
+   .rs.removeTheme(names(themes)[40], .Call("rs_getThemes"))
+   unsetThemeLocations()
+})
+
+test_that_wrapped("addTheme works correctly with force = TRUE", {
+   inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
+   name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
+   
+   f <- file(inputThemePath)
+   exLines <- readLines(f)
+   close(f)
+   
+   installedTheme <- .Call("rs_getThemes")[[name]]
+   f <- file(installedTheme$fileName)
+   acLines <- readLines(f)
+   close(f)
+   
+   expect_equal(name, names(themes)[14])
+   expect_equal(acLines, exLines)
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   file.create(file.path(localInstallDir, paste0(themes[[14]]$fileName, ".rstheme")))
+},
+AFTER_FUN = function() {
+   .rs.removeTheme(names(themes)[14], .Call("rs_getThemes"))
+   unsetThemeLocations()
+})
+
+test_that_wrapped("addTheme gives error when permission are bad", {
+   expect_error(
+      suppressWarnings(.rs.addTheme(
+         file.path(inputFileLocation, "rsthemes", paste0(themes[[20]]$fileName, ".rstheme")),
+         FALSE,
+         FALSE,
+         FALSE)),
+      message = "Unable to create the theme file. Please check file system permissions.",
+      FIXED = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_LOCAL_HOME = noPermissionDir)
+},
+AFTER_FUN = unsetThemeLocations)
+
+# Test rs_getThemes ================================================================================
+test_that_wrapped("rs_getThemes works correctly", {
+   addedThemes <- list()
+   .rs.enumerate(themes, function(themeName, themeDesc) {
+      fileName <- paste0(themeDesc$fileName, ".rstheme")
+      themeLocation <- if (sample.int(2, 1) > 1) file.path(globalInstallDir, fileName)
+                       else file.path(localInstallDir, fileName)
+      file.copy(file.path(inputFileLocation, "rsthemes", fileName), themeLocation)
+      addedThemes[[themeName]] <<- themeLocation
+   })
+
+   themeList <- .Call("rs_getThemes")
+   .rs.enumerate(addedThemes, function(themeName, themeLocation)
+   {
+      infoStr <- paste("Theme:", themeName)
+      expect_true(themeName %in% names(themeList), info = infoStr)
+      expect_equal(
+         normalizePath(themeList[[themeName]]$fileName),
+         normalizePath(themeLocation),
+         info = infoStr)
+      expect_equal(themeList[[themeName]]$isDark, themes[[themeName]]$isDark, info = infoStr)
+   })
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = function() {
+   toRemove <- c(
+      file.path(localInstallDir, dir(localInstallDir)),
+      file.path(globalInstallDir, dir(globalInstallDir)))
+   foundLen <- length(toRemove)
+   removed <- file.remove(toRemove)
+   for (i in 1:foundLen)
+   {
+      if (!removed[i])
+      {
+         warning(
+            "Unable to remove ",
+            file.path(path.expand(localInstallDir), toRemove[i]),
+            call. = FALSE)
+      }
+   }
+})
+
+
+# Test removeTheme =================================================================================
+test_that_wrapped("removeTheme works correctly locally", {
+   .rs.removeTheme(names(themes)[19], .Call("rs_getThemes"))
+   expect_false(file.exists(file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))))
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   toAdd <- paste0(themes[[19]]$fileName, ".rstheme")
+   file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(localInstallDir, toAdd))
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   toRemove <- file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))
+   if (file.exists(toRemove))
+   {
+      if (!file.remove(toRemove))
+      {
+         warning("Unable to remove the file ", toRemove)
+      }
+   }
+})
+
+test_that_wrapped("removeTheme works correctly globally", {
+   .rs.removeTheme(names(themes)[22], .Call("rs_getThemes"))
+   expect_false(file.exists(file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))))
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   toAdd <- paste0(themes[[22]]$fileName, ".rstheme")
+   file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(globalInstallDir, toAdd))
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   toRemove <- file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))
+   if (file.exists(toRemove))
+   {
+      if (!file.remove(toRemove))
+      {
+         warning("Unable to remove the file ", toRemove)
+      }
+   }
+})
+
+test_that_wrapped("removeTheme gives correct error when unable to remove locally", {
+   expect_error(
+      suppressWarnings(.rs.removeTheme(names(themes)[5], .Call("rs_getThemes"))),
+      paste0(
+         "Unable to remove the specified theme \"",
+         names(themes)[5],
+         "\". Please check your file system permissions."),
+      fixed = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_LOCAL_HOME = noPermissionDir)
+   Sys.chmod(noPermissionDir, mode = "0777")
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(themes[[5]]$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      FALSE)
+   Sys.chmod(noPermissionDir, mode = "0555")
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   Sys.chmod(noPermissionDir, mode = "0777")
+   file.remove(file.path(noPermissionDir, paste0(themes[[5]]$fileName, ".rstheme")))
+})
+
+test_that_wrapped("removeTheme gives correct error when unable to remove globally", {
+   expect_error(
+      suppressWarnings(.rs.removeTheme(names(themes)[32], .Call("rs_getThemes"))),
+      paste0(
+         "Unable to remove the specified theme \"",
+         names(themes)[32],
+         "\", which is installed for all users. Please contact your system administrator."),
+      fixed = TRUE)
+},
+BEFORE_FUN = function() {
+   makeNoPermissionDir()
+   Sys.setenv(RS_THEME_GLOBAL_HOME = noPermissionDir)
+   Sys.chmod(noPermissionDir, mode = "0777")
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(themes[[32]]$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      TRUE)
+   Sys.chmod(noPermissionDir, mode = "0555")
+},
+AFTER_FUN = function() {
+   unsetThemeLocations()
+   Sys.chmod(noPermissionDir, mode = "0777")
+   file.remove(file.path(noPermissionDir, paste0(themes[[32]]$fileName, ".rstheme")))
 })

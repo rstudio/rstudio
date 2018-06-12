@@ -22,6 +22,8 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -30,9 +32,11 @@ import org.rstudio.core.client.widget.GridViewerStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -63,7 +67,9 @@ public class DataEditingTargetWidget extends Composite
       resources.styles().ensureInjected();
    }
 
-   public DataEditingTargetWidget(Commands commands, DataItem dataItem)
+   public DataEditingTargetWidget(Commands commands, 
+                                  EventBus events,
+                                  DataItem dataItem)
    {
       Styles styles = resources.styles();
 
@@ -76,6 +82,41 @@ public class DataEditingTargetWidget extends Composite
          false);
       frame_.setSize("100%", "100%");
       table_ = new DataTable(this);
+      
+      // when loaded, hook up event handlers
+      frame_.addLoadHandler((event) ->
+      {
+         CommandWith2Args<Integer, Integer> view = (row, col) ->
+         {
+            String lho = dataItem.getExpression();
+            String object = dataItem.getObject();
+            if (StringUtil.isNullOrEmpty(object))
+            {
+               // we're viewing an expression -- wrap in parens before indexing
+               lho = "(" + lho + ")";
+            }
+            else
+            {
+               // we're viewing a live variable
+               if (RegexUtil.isSyntacticRIdentifier(object))
+               {
+                  // object is a valid identifier, use as-is
+                  lho = object;
+               }
+               else
+               {
+                  // not a valid identifier; escape before indexing
+                  lho = "`" + object + "`";
+               }
+            }
+            events.fireEvent(new SendToConsoleEvent(
+                  "View(" + lho + 
+                     "[[" + col + "]]" + 
+                     "[[" + row + "]])", true));
+         };
+         table_.setDataViewerCallback(view);
+         table_.setListViewerCallback(view);
+      });
 
       Widget mainWidget;
 

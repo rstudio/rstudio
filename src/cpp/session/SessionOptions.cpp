@@ -313,7 +313,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          value<std::string>(&rLibsUser_)->default_value(""),
          "R user library path")
       ("r-cran-repos",
-         value<std::string>(&rCRANRepos_)->default_value(""),
+         value<std::string>(&rCRANUrl_)->default_value(""),
          "Default CRAN repository")
       ("r-cran-repos-file",
          value<std::string>(&rCRANReposFile_)->default_value("/etc/rstudio/repos.conf"),

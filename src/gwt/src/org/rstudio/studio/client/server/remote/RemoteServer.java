@@ -2005,6 +2005,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, EXPLORER_BEGIN_INSPECT, params, requestCallback);
    }
    
+   public void explorerEndInspect(String handleId,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handleId));
+      sendRequest(RPC_SCOPE, EXPLORER_END_INSPECT, params, requestCallback);
+   }
+   
    public void createRdShell(
                         String name,
                         String type,
@@ -5654,6 +5662,7 @@ public class RemoteServer implements Server
    
    private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";
    private static final String EXPLORER_BEGIN_INSPECT = "explorer_begin_inspect";
+   private static final String EXPLORER_END_INSPECT = "explorer_end_inspect";
    
    private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
 

@@ -76,7 +76,9 @@ core::FilePath suspendedSessionPath();
 
 std::string sessionPort();
 
-std::string rCRANRepos();
+std::string rCRANUrl();
+
+std::string rCRANSecondary();
 
 bool restoreWorkspace();
 

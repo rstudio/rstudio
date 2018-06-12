@@ -783,6 +783,40 @@
 })
 
 # Worker Functions =================================================================================
+# Gets the install location.
+#
+# @param global    Whether to get the global or local install dir.
+#
+# Returns the install location.
+.rs.addFunction("getThemeInstallDir", getThemeInstallDir <- function(global) 
+{
+   # Copy the file to the correct location.
+   installLocation <- ""
+   if (global)
+   {
+      installLocation <- Sys.getenv("RS_THEME_GLOBAL_HOME", unset = NA)
+      if (is.na(installLocation))
+      {
+         if (grepl("windows", Sys.info()[["sysname"]], ignore.case = TRUE))
+         {
+            installLocation <- file.path(Sys.getenv("ProgramData"), "RStudio", "themes")
+         }
+         else 
+         {
+            installLocation <- file.path("etc", "rstudio", "themes")
+         }
+      }
+   }
+   else
+   {
+      installLocation <- Sys.getenv("RS_THEME_LOCAL_HOME", unset = NA)
+      installLocation <- if (is.na(installLocation)) file.path("~", ".R", "rstudio", "themes") 
+                         else installLocation
+   }
+   
+   installLocation
+})
+
 
 # Converts a tmtheme file into an rstheme file.
 # 
@@ -833,9 +867,10 @@
 # @param themePath   The full or relative path of the rstheme file to add.
 # @param apply       Whether to immediately apply the newly added theme.
 # @param force       Whether to force the operation when it may involve an overwrite.
+# @param globally    Whether to add the theme for all users (true) or for the current user (false).
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, buffer = NULL, name = NULL) {
+.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, globally) {
    # Get the name of the file without extension.
    fileName <- regmatches(
       basename(themePath),
@@ -848,6 +883,7 @@
    # the name of the file.
    conn <- file(themePath)
    themeLines <- readLines(conn)
+   close(conn)
    
    nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
    nameLine <- themeLines[grep(nameRegex, themeLines, perl = TRUE)]
@@ -863,9 +899,9 @@
       perl = TRUE)
    
    # If there's no name in the file, use the name of the file.
-   if (is.na(name)) name <- fileName
+   if (is.na(name) || (name == "")) name <- fileName
    
-   if (is.na(name))
+   if (is.na(name) || (name == ""))
    {
       stop(
          "Unable to find a name for the new theme. Please check that the file \"",
@@ -873,36 +909,44 @@
          "\" is valid.")
    }
    
-   # Copy the file to the correct location.
-   outputDir <- file.path("~", ".R", "rstudio", "themes")
+   outputDir <- .rs.getThemeInstallDir(globally)
    if (!dir.exists(outputDir))
    {
-      if (!dir.create(outputDir, showWarnings = FALSE, recursive = TRUE))
+      if (!dir.create(outputDir, recursive = TRUE))
       {
          stop("Unable to create the theme file. Please check file system permissions.")
       }
    }
-   
+
+   addedTheme <- file.path(outputDir, paste0(fileName, ".rstheme"))
+   if (file.exists(addedTheme) && !force)
+   {
+      stop(
+         "Unable to add the theme. A file with the same name, \"",
+         fileName,
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.")
+   }
+
    if (!file.copy(
       themePath,
-      file.path(outputDir, paste0(fileName, ".rstheme")),
+      addedTheme,
       overwrite = force))
    {
       msg <- "Unable to create the theme file. Please check file system permissions"
       if (!force)
       {
-         msg <- paste0(msg, " or try again with `force = TRUE`")
+         msg <- paste0(msg, " or try again with `force = TRUE`.")
       }
       
       stop(msg, ".")
    }
    
-   # TODO add theme to list.
-   
    if (apply)
    {
       .rs.applyTheme(name)
    }
+   
+   name
 })
 
 # Applies a theme to RStudio.
@@ -936,13 +980,25 @@
 
    if (!file.remove(themeList[[name]]$fileName))
    {
-      # TODO: give better error when the theme is installed globally.
-      if (file.exists(theme[[name]]$fileName))
+      if (file.exists(themeList[[name]]$fileName))
       {
-         stop(
-            "Unable to remove the speicified theme \"",
-            name,
-            "\". Please check your file system permissions.")
+         justFileName <- basename(themeList[[name]]$fileName)
+         actualPath <- normalizePath(themeList[[name]]$fileName, mustWork = FALSE, winslash = "/")
+         globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE), mustWork = FALSE, winslash = "/")
+         if (identical(file.path(globalPath, justFileName), actualPath))
+         {
+            stop(
+               "Unable to remove the specified theme \"",
+               name,
+               "\", which is installed for all users. Please contact your system administrator.")
+         }
+         else
+         {
+            stop(
+               "Unable to remove the specified theme \"",
+               name,
+               "\". Please check your file system permissions.")
+         }
       }
    }
 })

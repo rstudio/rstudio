@@ -43,7 +43,27 @@ public class RStudioThemedFrame extends RStudioFrame
       String urlStyle,
       boolean removeBodyStyle)
    {
-      this(url, false, null, customStyle, urlStyle, removeBodyStyle, true);
+      this(url,
+           customStyle,
+           urlStyle,
+           removeBodyStyle,
+           true);
+   }
+
+   public RStudioThemedFrame(
+      String url,
+      String customStyle,
+      String urlStyle,
+      boolean removeBodyStyle,
+      boolean enableThemes)
+   {
+      this(url,
+           false,
+           null,
+           customStyle,
+           urlStyle,
+           removeBodyStyle,
+           enableThemes);
    }
 
    public RStudioThemedFrame(
