@@ -28,10 +28,11 @@ class Interceptor : public QWebEngineUrlRequestInterceptor
 {
 public:
    explicit Interceptor(
-         QObject* parent,
+         WebProfile* parent,
          const QUrl& baseUrl,
          const std::string& sharedSecret)
       : QWebEngineUrlRequestInterceptor(parent),
+        parent_(parent),
         sharedSecret_(sharedSecret),
         baseUrl_(baseUrl)
    {
@@ -39,6 +40,11 @@ public:
 
    void interceptRequest(QWebEngineUrlRequestInfo& info) override
    {
+      // notify the parent of the intercept -- this is primarily done to
+      // communicate some extra information about the incoming request
+      // to WebPage, for use in acceptNavigationRequest()
+      parent_->onInterceptRequest(info);
+      
       if (info.requestUrl().authority() == baseUrl_.authority())
       {
          // The shared secret helps the session authenticate that the request actually came from the
@@ -53,6 +59,7 @@ public:
    }
 
 private:
+   WebProfile* parent_;
    std::string sharedSecret_;
    QUrl baseUrl_;
 };
@@ -70,6 +77,11 @@ void WebProfile::setBaseUrl(const QUrl& baseUrl)
 {
    interceptor_.reset(new Interceptor(this, baseUrl, sharedSecret_));
    setRequestInterceptor(interceptor_.data());
+}
+
+void WebProfile::onInterceptRequest(QWebEngineUrlRequestInfo& info)
+{
+   emit urlIntercepted(info.requestUrl(), info.resourceType());
 }
 
 } // end namespace desktop
