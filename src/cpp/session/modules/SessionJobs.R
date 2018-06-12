@@ -15,10 +15,10 @@
 
 # Helpers --------------------------------------------------------------------
 
-.rs.addFunction("stopScriptFunction", function(id) {
-   function() {
-      .rs.api.stopScriptJob(id)
-   }
+.rs.addFunction("scriptActions", function() {
+   list(stop = function(id) {
+      .Call("rs_stopScriptJob", id, PACKAGE = "(embedding)")
+   })
 })
 
 # API functions --------------------------------------------------------------
@@ -107,3 +107,6 @@
    .Call("rs_executeJobAction", job, action)
 })
 
+.rs.addApiFunction("stopJob", function(job) {
+   .rs.api.executeJobAction(job, "stop")
+})

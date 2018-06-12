@@ -227,6 +227,21 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
    return r::sexp::create(id, &protect);
 }
 
+SEXP rs_stopScriptJob(SEXP sexpId)
+{
+   std::string id = r::sexp::safeAsString(sexpId);
+   Error error = stopScriptJob(id);
+   if (error.code() == boost::system::errc::no_such_file_or_directory)
+   {
+      r::exec::error("The script job '" + id + "' was not found.");
+   }
+   else if (error)
+   {
+      r::exec::error("Error while stopping script job: " + error.summary());
+   }
+   return R_NilValue;
+}
+
 SEXP rs_executeJobAction(SEXP sexpId, SEXP action)
 {
    boost::shared_ptr<Job> pJob;
@@ -383,6 +398,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
    RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
+   RS_REGISTER_CALL_METHOD(rs_stopScriptJob, 1);
    RS_REGISTER_CALL_METHOD(rs_executeJobAction, 2);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(

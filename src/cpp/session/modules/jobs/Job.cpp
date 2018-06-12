@@ -410,8 +410,10 @@ Error Job::executeAction(const std::string& action)
    if (error)
       return error;
 
-   // ... and call it!
-   return r::exec::RFunction(method).call();
+   // ... and call it with our ID
+   r::exec::RFunction function(method);
+   function.addParam("id", id());
+   return function.call();
 }
 
 } // namepsace jobs

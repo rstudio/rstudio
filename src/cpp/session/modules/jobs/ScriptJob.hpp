@@ -54,6 +54,8 @@ private:
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 
       std::string *pId);
 
+core::Error stopScriptJob(const std::string& id);
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

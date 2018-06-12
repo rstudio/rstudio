@@ -133,7 +133,7 @@ test_that("custom job actions are executed", {
    mutable <- 0
    job10 <- .rs.api.addJob(name = "job10", autoRemove = FALSE, running = TRUE,
                            actions = list(
-                              mutate = function() { mutable <<- 1 }))
+                              mutate = function(id) { mutable <<- 1 }))
    expect_equal(0, mutable)
 
    # execute the custom action and validate that the value becomes what we want

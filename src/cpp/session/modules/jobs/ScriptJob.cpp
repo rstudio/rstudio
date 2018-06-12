@@ -70,10 +70,17 @@ private:
    void start()
    {
       Error error;
-      
-      // add the job -- currently idle until we get some content from it
-      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, false, R_NilValue);
+      r::sexp::Protect protect;
 
+      // create the actions list
+      SEXP actions = R_NilValue;
+      error = r::exec::RFunction(".rs.scriptActions").call(&actions, &protect);
+      if (error)
+         LOG_ERROR(error);
+
+      // add the job -- currently idle until we get some content from it
+      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, false, actions);
+      
       std::string importRdata = "NULL";
       std::string exportRdata = "NULL";
 
@@ -356,6 +363,25 @@ Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pId)
 
    s_scripts.push_back(job);
    return Success();
+}
+
+Error stopScriptJob(const std::string& id)
+{
+   for (auto script: s_scripts)
+   {
+      if (script->id() == id)
+      {
+         // request terminate
+         script->terminate();
+         return Success();
+      }
+   }
+
+   // indicate that we didn't find the job
+   Error error = systemError(boost::system::errc::no_such_file_or_directory, 
+         ERROR_LOCATION);
+   error.addProperty("id", id);
+   return error;
 }
 
 } // namespace jobs

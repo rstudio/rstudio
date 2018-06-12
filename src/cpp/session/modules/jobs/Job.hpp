@@ -89,6 +89,7 @@ public:
 
    // execute a custom (user-defined) action
    core::Error executeAction(const std::string& name);
+   void setActions(SEXP actions);
 
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
