@@ -31,6 +31,7 @@
 
 #include <session/projects/SessionProjectSharing.hpp>
 
+#include "ServerActivation.hpp"
 #include "ServerSessionRpc.hpp"
 
 #define kInvalidSecretEndpoint "/invalid_secret"
@@ -176,7 +177,7 @@ Error initialize()
 {
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
-   bool spawnerSessionsEnabled = getServerBoolOption(kSpawnerSessionsEnabled);
+   bool spawnerSessionsEnabled = getServerBoolOption(kSpawnerSessionsEnabled) && activation::spawnerEnabled();
 
    // currently only shared projects and spawner sessions perform session RPCs
    if (hasSharedStorage &&
