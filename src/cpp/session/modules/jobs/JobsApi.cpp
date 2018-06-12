@@ -84,7 +84,8 @@ boost::shared_ptr<Job> addJob(
       const std::string& group,
       int progress,
       JobState state,
-      bool autoRemove)
+      bool autoRemove,
+      bool show)
 {
    // find an unused job id
    std::string id;
@@ -96,7 +97,7 @@ boost::shared_ptr<Job> addJob(
 
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
-         id, name, status, group, 0 /* completed units */, progress, state, autoRemove); 
+         id, name, status, group, 0 /* completed units */, progress, state, autoRemove, show); 
 
    // cache job and notify client
    s_jobs[id] = pJob;

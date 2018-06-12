@@ -90,7 +90,7 @@ public class JobsPane extends WorkbenchPane
             list_.addJob(job);
             
             // bring the pane to the front so the new job is visible
-            bringToFront();
+            if (job.show) bringToFront();
             
             // select the job
             events_.fireEvent(new JobSelectionEvent(job.id, true, false));
