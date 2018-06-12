@@ -52,4 +52,7 @@ public class Job
    
    // the time the browser (client) received the job
    public int received;
+
+   // whether the job pane should should be shown at start
+   public boolean show;
 }
