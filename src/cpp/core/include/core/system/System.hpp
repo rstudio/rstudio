@@ -70,13 +70,13 @@ Error closeNonStdFileDescriptors();
 // retrieves a list of file descriptors opened by the specified child process
 // and sends each fd to the child via pipe so that the child can signal-safely
 // close the fds
-Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, unsigned int fdStart);
+Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart);
 
 // gets the list of open fds for the current process
-Error getOpenFds(std::vector<unsigned int>* pFds);
+Error getOpenFds(std::vector<uint32_t>* pFds);
 
 // gets the list of open fds for the specified process
-Error getOpenFds(pid_t pid, std::vector<unsigned int>* pFds);
+Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds);
 
 namespace signal_safe {
 
@@ -85,7 +85,7 @@ void closeNonStdFileDescriptors(rlim_t fdLimit);
 
 // close file descriptors given to us by our parent process
 // must be paired with a call to closeChildFileDescriptorsFrom in the parent
-void closeFileDescriptorsFromParent(int pipeFd, unsigned int fdStart, rlim_t fdLimit);
+void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit);
 
 } // namespace signal_safe
 

@@ -294,7 +294,27 @@ void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
                           error.code().message());
    }
 }     
-   
+
+bool JsonRpcResponse::parse(const std::string& input,
+                            JsonRpcResponse* pResponse)
+{
+   json::Value value;
+   bool valid = json::parse(input, &value);
+   if (!valid)
+      return false;
+
+   return parse(value, pResponse);
+}
+
+bool JsonRpcResponse::parse(const json::Value& value,
+                            JsonRpcResponse* pResponse)
+{
+   if (value.type() != json::ObjectType)
+      return false;
+
+   pResponse->response_ = value.get_obj();
+   return true;
+}
  
 class JsonRpcErrorCategory : public boost::system::error_category
 {

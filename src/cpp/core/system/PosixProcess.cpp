@@ -51,7 +51,16 @@ struct AsioProcessSupervisor::Impl
       // run the child
       Error error = pChild->run(callbacks);
       if (error)
+      {
+         // error occured - remove the child
+         LOCK_MUTEX(mutex_)
+         {
+            children_.erase(pChild);
+         }
+         END_LOCK_MUTEX
+
          return error;      
+      }
 
       // success
       return Success();
@@ -86,7 +95,7 @@ struct AsioProcessSupervisor::Impl
       {
          if (killChildProcs)
          {
-            // kill child's chidlren
+            // kill child's children
             Error error = core::system::terminateChildProcesses(pChild->pid(), SIGKILL);
             if (error)
                LOG_ERROR(error);

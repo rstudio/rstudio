@@ -31,15 +31,15 @@ class ExponentialBackoff : public boost::enable_shared_from_this<ExponentialBack
 {
 public:
    ExponentialBackoff(boost::asio::io_service& ioService,
-                            const boost::posix_time::milliseconds& initialWait,
-                            const boost::posix_time::milliseconds& maxWait,
-                            const boost::function<void(ExponentialBackoffPtr)>& action);
+                      const boost::posix_time::milliseconds& initialWait,
+                      const boost::posix_time::milliseconds& maxWait,
+                      const boost::function<void(ExponentialBackoffPtr)>& action);
 
    ExponentialBackoff(boost::asio::io_service& ioService,
-                            const boost::posix_time::milliseconds& initialWait,
-                            const boost::posix_time::milliseconds& maxWait,
-                            unsigned int maxNumRetries,
-                            const boost::function<void(ExponentialBackoffPtr)>& action);
+                      const boost::posix_time::milliseconds& initialWait,
+                      const boost::posix_time::milliseconds& maxWait,
+                      unsigned int maxNumRetries,
+                      const boost::function<void(ExponentialBackoffPtr)>& action);
 
    // keep trying the action
    // invoke this to indicate that the action should be retried
