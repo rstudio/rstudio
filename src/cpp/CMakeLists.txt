@@ -317,7 +317,6 @@ else()
    if(NOT RSTUDIO_CONFIG_MONITOR_ONLY)
 
       # find LibR
-      set(LIBR_FIND_WINDOWS_64BIT TRUE)
       find_package(LibR REQUIRED)
 
       # verify we got the required R version
