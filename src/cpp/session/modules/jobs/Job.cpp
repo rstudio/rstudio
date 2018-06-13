@@ -123,6 +123,8 @@ JobState Job::state() const
 
 json::Object Job::toJson() const
 {
+   Error error;
+
    json::Object job;
 
    // fill out fields from local information
@@ -155,6 +157,21 @@ json::Object Job::toJson() const
 
    // amend running state description
    job["state_description"] = stateAsString(state_);
+
+   json::Array actions;
+
+   // if this job has custom actions, send the list to the client
+   if (!actions_.isNil())
+   {
+      std::vector<std::string> names;
+      error = r::sexp::getNames(actions_.get(), &names);
+      if (!error)
+      {
+         std::copy(names.begin(), names.end(), std::back_inserter(actions));
+      }
+   }
+
+   job["actions"] = actions;
 
    return job;
 }
