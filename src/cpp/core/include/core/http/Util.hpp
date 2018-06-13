@@ -1,7 +1,7 @@
 /*
  * Util.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -175,6 +175,9 @@ bool isNetworkAddress(const std::string& str);
 
 // determins if the given request is request to upgrade the connection to a websocket
 bool isWSUpgradeRequest(const Request& request);
+
+// does the given error represent SSL truncation/shutdown?
+bool isSslShutdownError(const core::Error& error);
 
 } // namespace util
 

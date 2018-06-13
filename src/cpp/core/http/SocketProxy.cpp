@@ -23,6 +23,7 @@
 #endif
 
 #include <core/http/SocketProxy.hpp>
+#include <core/http/Util.hpp>
 
 #include <iostream>
 
@@ -143,28 +144,6 @@ void SocketProxy::handleServerWrite(const boost::system::error_code& e,
    }
 }
 
-namespace {
-
-#ifndef _WIN32
-bool isSslShutdownError(const core::Error& error)
-{
-#ifdef SSL_R_SHORT_READ
-   // OpenSSL 1.0.0
-   return error.code().category() == boost::asio::error::get_ssl_category() &&
-          error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
-#else
-   // OpenSSL 1.1.0
-   return error.code() == boost::asio::ssl::error::stream_truncated;
-#endif
-}
-#else
-bool isSslShutdownError(const core::Error& error)
-{
-   return false;
-}
-#endif
-} // anonymous namespace
-
 void SocketProxy::handleError(const boost::system::error_code& e,
                               const core::ErrorLocation& location)
 {
@@ -172,7 +151,7 @@ void SocketProxy::handleError(const boost::system::error_code& e,
    Error error(e, location);
    if (!http::isConnectionTerminatedError(error) &&
        (error.code() != boost::asio::error::operation_aborted) &&
-       !isSslShutdownError(error))
+       !util::isSslShutdownError(error))
    {
       LOG_ERROR(error);
    }
