@@ -77,7 +77,7 @@
 							<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
 							</rw:ProgressBar>
 						</g:cell>
-						<g:cell width="20px">
+						<g:cell width="30px" horizontalAlignment="ALIGN_RIGHT">
 							<rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
 						</g:cell>
 					</g:HorizontalPanel>

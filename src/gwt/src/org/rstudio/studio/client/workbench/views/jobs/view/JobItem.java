@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
@@ -95,6 +96,11 @@ public class JobItem extends Composite
       progress_.setVisible(
             job.max > 0 && 
             job_.state == JobConstants.STATE_RUNNING);
+      
+      // show stop button if job has a "stop" action, and is not completed
+      stop_.setVisible(
+            JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
+            job_.completed == 0);
       
       // udpate progress bar if it's showing
       if (progress_.isVisible())
