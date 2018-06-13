@@ -617,7 +617,7 @@ Error WinPty::writeToPty(HANDLE hPipe, const std::string& input)
    DWORD dwWritten;
    BOOL bSuccess = ::WriteFile(hPipe,
                                input.data(),
-                               input.length(),
+                               static_cast<DWORD>(input.length()),
                                &dwWritten,
                                &over);
    auto lastErr = ::GetLastError();

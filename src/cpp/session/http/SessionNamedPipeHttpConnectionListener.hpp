@@ -285,10 +285,8 @@ private:
             if (sa.lpSecurityDescriptor)
                pSA = &sa;
 
-            // set pipe mode, specify rejection of remote clients if >= vista
-            DWORD dwPipeMode = PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT;
-            if (core::system::isVistaOrLater())
-                dwPipeMode |= PIPE_REJECT_REMOTE_CLIENTS;
+            // set pipe mode, specify rejection of remote clients
+            DWORD dwPipeMode = PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS;
 
             // create pipe
             HANDLE hPipe = ::CreateNamedPipeA(pipeName_.c_str(),

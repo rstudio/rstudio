@@ -70,17 +70,17 @@ else()
    set(QT_VERSION "5.10.1")
    if(NOT QT_QMAKE_EXECUTABLE)
 
-      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
 
-      set(QMAKE_QT50_SDK "C:\\Qt\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt\\${QT_VERSION_SUBDIR}\\msvc2015_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
 
-      set(QMAKE_QT50_SDK "C:\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015")
+      set(QMAKE_QT50_SDK "C:\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2015_64")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
@@ -295,10 +295,8 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
-   if(NOT RSTUDIO_SESSION_WIN64)
-      add_subdirectory(urlopener)
-      add_subdirectory(synctex/rsinverse)
-   endif()
+   add_subdirectory(urlopener)
+   add_subdirectory(synctex/rsinverse)
 
    set(
       CMAKE_EXE_LINKER_FLAGS
