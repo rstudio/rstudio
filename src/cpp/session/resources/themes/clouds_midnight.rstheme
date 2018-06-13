@@ -1,3 +1,5 @@
+/* rs-theme-name: Clouds Midnight */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #232323;
   color: #929292

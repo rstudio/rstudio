@@ -1,3 +1,5 @@
+/* rs-theme-name: Vibrant Ink */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #1a1a1a;
   color: #BEBEBE

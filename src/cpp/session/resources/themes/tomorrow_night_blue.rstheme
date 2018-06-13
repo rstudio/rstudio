@@ -1,3 +1,5 @@
+/* rs-theme-name: Tomorrow Night Blue */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #00204b;
   color: #7388b5

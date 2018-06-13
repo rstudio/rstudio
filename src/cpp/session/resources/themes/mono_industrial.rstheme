@@ -1,3 +1,5 @@
+/* rs-theme-name: Mono Industrial */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #1d2521;
   color: #C5C9C9

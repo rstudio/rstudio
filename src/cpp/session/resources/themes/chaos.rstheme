@@ -1,3 +1,5 @@
+/* rs-theme-name: Chaos */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #141414;
   color: #595959;

@@ -1,3 +1,5 @@
+/* rs-theme-name: Kr Theme */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #1c1917;
   color: #FCFFE0

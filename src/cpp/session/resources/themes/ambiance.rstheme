@@ -1,3 +1,5 @@
+/* rs-theme-name: Ambiance */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background-color: #3d3d3d;
   background-image: -moz-linear-gradient(left, #3D3D3D, #333);

@@ -1,3 +1,5 @@
+/* rs-theme-name: Tomorrow Night Bright */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #1a1a1a;
   color: #DEDEDE

@@ -1,3 +1,5 @@
+/* rs-theme-name: Tomorrow */
+/* rs-theme-is-dark: FALSE */
 .ace_gutter {
   background: #f6f6f6;
   color: #4D4D4C

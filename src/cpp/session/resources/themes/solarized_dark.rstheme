@@ -1,3 +1,5 @@
+/* rs-theme-name: Solarized Dark */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #01313f;
   color: #d0edf7
