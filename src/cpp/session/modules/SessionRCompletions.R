@@ -1743,7 +1743,8 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!("knit_params" %in% getNamespaceExports(asNamespace("knitr"))))
       return(NULL)
-   
+
+   Encoding(content) <- "UTF-8"
    knitr::knit_params(content)
 })
 
