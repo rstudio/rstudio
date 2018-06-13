@@ -134,7 +134,6 @@ void versionsFromRHome(QDir rHome, QList<RVersion>* pResults)
 {
    QStringList dirs = QStringList() <<
                       QString::fromUtf8("bin") <<
-                      QString::fromUtf8("bin/i386") <<
                       QString::fromUtf8("bin/x64");
    for (int i = 0; i < dirs.size(); i++)
    {

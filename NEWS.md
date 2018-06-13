@@ -75,6 +75,7 @@
 * Add option to disable drag-and-drop for text in the editor (#2428)
 * Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
 * Update embedded libclang to 5.0.2 (Windows only)
+* Build RStudio as a 64-bit application (Windows only; Linux and Mac are already 64-bit)
 
 ### Bug Fixes
 
