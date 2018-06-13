@@ -45,7 +45,18 @@ namespace {
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
 typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
-void getThemesInLocation(const rstudio::core::FilePath& location, ThemeMap& themeMap)
+
+/**
+ * @brief Gets themes in the specified location.
+ *
+ * @param location         The location in which to look for themes.
+ * @param themeMap         The map which will contain all found themes after the call.
+ * @param urlPrefix        The URL prefix for the theme. Must end with "/"
+ */
+void getThemesInLocation(
+      const rstudio::core::FilePath& location,
+      ThemeMap& themeMap,
+      const std::string& urlPrefix = "")
 {
    using rstudio::core::FilePath;
    if (location.isDirectory())
@@ -103,7 +114,7 @@ void getThemesInLocation(const rstudio::core::FilePath& location, ThemeMap& them
                // TODO: warning / logging about using default isDark value.
             }
 
-            themeMap[name] = std::pair<std::string, bool>(k_themeFileStr, isDark);
+            themeMap[name] = std::tuple<std::string, bool>(urlPrefix + themeFile.filename(), isDark);
          }
       }
    }
@@ -111,25 +122,9 @@ void getThemesInLocation(const rstudio::core::FilePath& location, ThemeMap& them
 
 void getAllThemes(ThemeMap& themeMap)
 {
-   // Intentionally get global themes before getting user specific themes so that user specific
-   // themes will override global ones.
-   getThemesInLocation(preInstalledPath, themeMap);
-   getThemesInLocation(globalPath, themeMap);
-   getThemesInLocation(localPath, themeMap);
-}
-
-/**
- * @brief Gets the list of all RStudio editor themes.
- *
- * @return The list of all RStudio editor themes.
- */
-SEXP rs_getThemes()
-{
-   // List all files in the global location first.
-   // TODO: Windows
    using rstudio::core::FilePath;
 
-   FilePath preInstalledPath = session::options.rResourcesPath().childPath("themes");
+   FilePath preInstalledPath = session::options().rResourcesPath().childPath("themes");
 #ifdef _WIN32
    FilePath globalPath = core::system::systemSettingsPath("RStudio\\themes", false);
    FilePath localPath = core::system::userHomePath().childPath(".R\\rstudio\\themes");
@@ -149,6 +144,20 @@ SEXP rs_getThemes()
       localPath = FilePath(k_localPathAlt);
    }
 
+   // Intentionally get global themes before getting user specific themes so that user specific
+   // themes will override global ones.
+   getThemesInLocation(preInstalledPath, themeMap, "theme/default/");
+   getThemesInLocation(globalPath, themeMap, "theme/custom/global/");
+   getThemesInLocation(localPath, themeMap, "theme/custom/local/");
+}
+
+/**
+ * @brief Gets the list of all RStudio editor themes.
+ *
+ * @return The list of all RStudio editor themes.
+ */
+SEXP rs_getThemes()
+{
    ThemeMap themeMap;
    getAllThemes(themeMap);
 
@@ -159,7 +168,7 @@ SEXP rs_getThemes()
    for (auto theme: themeMap)
    {
       rstudio::r::sexp::ListBuilder themeDetailsListBuilder(&protect);
-      themeDetailsListBuilder.add("fileName", theme.second.first);
+      themeDetailsListBuilder.add("url", theme.second.first);
       themeDetailsListBuilder.add("isDark", theme.second.second);
 
       themeListBuilder.add(theme.first, themeDetailsListBuilder);

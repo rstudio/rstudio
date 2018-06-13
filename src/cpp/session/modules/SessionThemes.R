@@ -817,6 +817,20 @@
    installLocation
 })
 
+.rs.addFunction("getThemeDirFromUrl", getThemeDirFromUrl <- function(url) {
+   if (grepl("^theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
+   {
+      file.path(.rs.getThemeInstallDir(TRUE), basename(url))
+   }
+   else if (grepl("^theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
+   {
+      file.path(.rs.getThemeInstallDir(FALSE), basename(url))
+   }
+   else
+   {
+      NULL
+   }
+})
 
 # Converts a tmtheme file into an rstheme file.
 # 
@@ -973,17 +987,25 @@
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   if (tolower(name) == tolower(currentTheme))
+   if (identical(tolower(name), tolower(currentTheme)))
    {
       .rs.applyTheme("TextMate")
    }
 
-   if (!file.remove(themeList[[name]]$fileName))
+   filePath <- .rs.getThemeDirFromUrl(themeList[[name]]$url)
+   if (is.null(filePath))
    {
-      if (file.exists(themeList[[name]]$fileName))
+      stop(
+         "Unable to remove the specified theme: ",
+         name,
+         ". Please verify that the theme is installed as a custom theme.")
+   }
+   if (!file.remove(filePath))
+   {
+      if (file.exists(filePath))
       {
-         justFileName <- basename(themeList[[name]]$fileName)
-         actualPath <- normalizePath(themeList[[name]]$fileName, mustWork = FALSE, winslash = "/")
+         justFileName <- basename(filePath)
+         actualPath <- normalizePath(filePath, mustWork = FALSE, winslash = "/")
          globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE), mustWork = FALSE, winslash = "/")
          if (identical(file.path(globalPath, justFileName), actualPath))
          {
@@ -1024,10 +1046,10 @@
 
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", api.applyTheme <-  function(name) {
-   .rs.applyTheme(name)
+   .rs.applyTheme(name, .Call("rs_getThemes"))
 })
 
 # Remove a theme from RStudio.()
 .rs.addApiFunction("removeTheme", api.removeTheme <- function(name) {
-   .rs.removeTheme(name)
+   .rs.removeTheme(name, .Call("rs_getThemes"))
 })
