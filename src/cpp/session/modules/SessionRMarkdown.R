@@ -177,6 +177,8 @@
 
 .rs.addFunction("evaluateRmdParams", function(contents) {
 
+   Encoding(contents) <- "UTF-8"
+
    # extract the params using knitr::knit_params
    knitParams <- knitr::knit_params(contents)
 
