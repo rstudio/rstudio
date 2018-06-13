@@ -19,7 +19,9 @@ import java.util.Date;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
@@ -62,6 +64,12 @@ public class JobItem extends Composite
 
    public JobItem(final Job job)
    {
+      stop_ = new ToolbarButton(
+            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
+            {
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+            });
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
@@ -150,4 +158,5 @@ public class JobItem extends Composite
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
+   @UiField(provided=true) ToolbarButton stop_;
 }

@@ -350,6 +350,24 @@ Error setJobListening(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error executeJobAction(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // extract params
+   std::string id;
+   std::string action;
+   Error error = json::readParams(request.params, &id, &action);
+   if (error)
+      return error;
+
+   // look up in cache
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(id, &pJob))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   return pJob->executeAction(action);
+}
+
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
    // currently no jobs can survive a suspend, so let the client know they're all finished
@@ -414,6 +432,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
       (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
+      (bind(module_context::registerRpcMethod, "execute_job_action", executeJobAction))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

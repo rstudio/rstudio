@@ -72,8 +72,15 @@
 							<g:Label ui:field="status_" styleName="{style.status}"></g:Label>
 						</g:cell>
 					</g:HorizontalPanel>
-					<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
-					</rw:ProgressBar>
+					<g:HorizontalPanel>
+						<g:cell width="100%">
+							<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
+							</rw:ProgressBar>
+						</g:cell>
+						<g:cell width="20px">
+							<rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+						</g:cell>
+					</g:HorizontalPanel>
 					<g:HorizontalPanel>
 						<g:cell verticalAlignment="ALIGN_MIDDLE">
 							<g:Image styleName="{style.state}" ui:field="state_"></g:Image>

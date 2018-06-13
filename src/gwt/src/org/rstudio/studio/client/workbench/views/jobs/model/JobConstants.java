@@ -27,4 +27,7 @@ public class JobConstants
    public final static int STATE_SUCCEEDED = 3;
    public final static int STATE_CANCELLED = 4;
    public final static int STATE_FAILED    = 5;
+   
+   // special job actions
+   public final static String ACTION_STOP = "stop";
 }
