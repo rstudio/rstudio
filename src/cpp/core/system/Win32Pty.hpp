@@ -1,7 +1,7 @@
 /*
  * Win32Pty.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,14 +37,14 @@ class WinPty : boost::noncopyable
 {
 public:
    WinPty()
-      : pPty_(NULL)
+      : pPty_(nullptr)
    {}
 
    virtual ~WinPty();
 
    // Start the process specified by exe; it will do I/O via the returned
    // handles. On success, caller is responsible for closing
-   // returned handles. On failure, handles will contain NULL.
+   // returned handles. On failure, handles will contain nullptr.
    Error start(const std::string& exe,
                const std::vector<std::string> args,
                const ProcessOptions& options,
