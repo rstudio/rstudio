@@ -52,6 +52,17 @@ protected:
          auto* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
          auto modifiers = pKeyEvent->modifiers();
          
+         // translate backtab to regular tab
+         if (pKeyEvent->key() == Qt::Key_Backtab)
+         {
+            auto* pTabEvent = new QKeyEvent(
+                     pKeyEvent->type(),
+                     Qt::Key_Tab,
+                     pKeyEvent->modifiers() | Qt::ShiftModifier);
+            QCoreApplication::postEvent(pObject, pTabEvent);
+            return true;
+         }
+         
          // fix up modifiers
          if (modifiers.testFlag(Qt::MetaModifier) &&
              !modifiers.testFlag(Qt::ControlModifier))
