@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.common;
 
-import com.google.gwt.core.client.GWT;
-
 public class SuperDevMode
 {
    public final static native void reload() /*-{
@@ -31,10 +29,10 @@ public class SuperDevMode
    }-*/ ;
    
    
-   public static boolean isActive()
-   {
-      return 
-        GWT.getModuleBaseURL() == "http://localhost:8787/rstudio/" &&
-        GWT.getModuleBaseForStaticFiles() == "http://localhost:9876/rstudio/";
-   }
+   public static final native boolean isActive()
+   /*-{
+      var modules = $wnd.__gwt_activeModules || {};
+      var rstudio = modules.rstudio || {};
+      return !!rstudio.superdevmode;
+   }-*/;
 }

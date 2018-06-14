@@ -425,8 +425,6 @@ public class MathJax
       final FlowPanel panel = new FlowPanel();
       panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
       panel.addStyleName(RES.styles().mathjaxRoot());
-      if (BrowseCap.isWindowsDesktop())
-         panel.addStyleName(RES.styles().mathjaxRootWindows());
       return panel;
    }
    
@@ -702,7 +700,6 @@ public class MathJax
    public interface Styles extends CssResource
    {
       String mathjaxRoot();
-      String mathjaxRootWindows();
    }
 
    public interface Resources extends ClientBundle

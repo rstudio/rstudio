@@ -821,10 +821,15 @@ void proxyLocalhostRequest(
    // set the host
    std::string address;
    if (!ipv6)
+   {
       address = "localhost";
+      request.setHost(address + ":" + port);
+   }
    else
+   {
       address = "::1";
-   request.setHost("[" + address + "]" + ":" + port);
+      request.setHost("[" + address + "]" + ":" + port);
+   }
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(

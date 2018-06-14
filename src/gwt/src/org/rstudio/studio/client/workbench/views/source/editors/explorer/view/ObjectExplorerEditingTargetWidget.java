@@ -160,6 +160,11 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       mainWidget_.add(resizePanel_);
    }
    
+   public void refresh()
+   {
+      grid_.refresh();
+   }
+   
    public ObjectExplorerHandle getHandle()
    {
       return handle_;

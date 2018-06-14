@@ -22,6 +22,7 @@
 #include <QFileDialog>
 #include <QWebEngineSettings>
 
+#include "DesktopInfo.hpp"
 #include "DesktopDownloadItemHelper.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopSatelliteWindow.hpp"
@@ -71,17 +72,12 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
    connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
+   connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted);
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
 {
-   const WebProfile* pProfile = dynamic_cast<const WebProfile*>(profile());
-   if (pProfile != nullptr)
-   {
-      // if we're using our own WebProfile implementation, update its base URL
-      const_cast<WebProfile*>(pProfile)->setBaseUrl(baseUrl);
-   }
-
+   profile()->setBaseUrl(baseUrl);
    baseUrl_ = baseUrl;
 }
 
@@ -230,6 +226,12 @@ void WebPage::closeRequested()
    view()->window()->close();
 }
 
+void WebPage::onUrlIntercepted(QUrl url, int type)
+{
+   lastInterceptedRequestUrl_ = url;
+   lastInterceptedResourceType_ = static_cast<QWebEngineUrlRequestInfo::ResourceType>(type);
+}
+
 bool WebPage::shouldInterruptJavaScript()
 {
    return false;
@@ -261,10 +263,25 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       qDebug() << url.toString();
       return false;
    }
-
+   
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
    bool isLocal = host == "localhost" || host == "127.0.0.1";
+   
+   // accept Chrome Developer Tools navigation attempts
+#ifndef NDEBUG
+   if (isLocal && url.port() == desktopInfo().getChromiumDevtoolsPort())
+      return true;
+#endif
+   
+   // if this appears to be an attempt to load an external page within
+   // an iframe, don't load it
+   if (!isLocal &&
+       lastInterceptedRequestUrl_ == url &&
+       lastInterceptedResourceType_ == QWebEngineUrlRequestInfo::ResourceTypeSubFrame)
+   {
+      return false;
+   }
 
    if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme() &&

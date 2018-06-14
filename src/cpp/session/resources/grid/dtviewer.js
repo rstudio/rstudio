@@ -150,15 +150,25 @@ var highlightSearchMatch = function(data, search, pos) {
 // render cell contents--if no search is active, just renders the data
 // literally; when search is active, highlights the portion of the text that
 // matches the search
-var renderCellContents = function(data, type, row, meta) {
+var renderCellContents = function(data, type, row, meta, clazz) {
 
   // usually data is a string; 0 is a special value signifying NA 
   if (data === 0 || (displayNullsAsNAs && data === null)) {
     return '<span class="naCell">NA</span>';
   }
 
-  // if row matches because of a global search, highlight that
-  if (cachedSearch.length > 0) {
+  if (clazz === "dataCell") {
+     // a little ugly: R deparses data cell values as list(col = val, col = val...).  when rendering
+     // a data cell which appears to have this format, count the assignment tokens to get a variable
+     // count and show that as a summary. 
+     if (data.substring(0, 5) === "list(" && data.indexOf("=") > 0) {
+        var varCount = data.split("=").length - 1;
+        data = "" + varCount + " variable";
+        if (varCount > 1)
+           data += "s";
+     }
+  } else if (cachedSearch.length > 0) {
+     // if row matches because of a global search, highlight that
     var idx = data.toLowerCase().indexOf(cachedSearch.toLowerCase());
     if (idx >= 0) {
       return highlightSearchMatch(data, cachedSearch, idx);
@@ -176,7 +186,22 @@ var renderCellContents = function(data, type, row, meta) {
       }
     }
   }
-  return escapeHtml(data);
+
+  var escaped = escapeHtml(data);
+
+  // special additional rendering for cells which themselves contain data frames or lists:
+  // these include an icon that can be clicked to view contents
+  if (clazz === "dataCell" || clazz === "listCell") {
+     escaped = '<i>' + escaped + '</i> ' +
+                '<a class="viewerLink" href="javascript:window.' + 
+                (clazz === "dataCell" ? 'dataViewerCallback' : 'listViewerCallback') +
+                '(' + row[0] + ', ' + meta.col +')">' +
+                '<img src="' +
+                (clazz === "dataCell" ? 'data-viewer.png' : 'object-viewer.png') +
+                '" class="viewerImage" /></a>';
+  }
+
+  return escaped;
 };
 
 var renderCellClass = function (data, type, row, meta, clazz) {
@@ -187,7 +212,7 @@ var renderCellClass = function (data, type, row, meta, clazz) {
          '<div class="' + clazz + '" ' + 
          (title !== null ? 'title="' + title + '"' : '') +
          '>' + 
-         renderCellContents(data, type, row, meta) + '</div>' +
+         renderCellContents(data, type, row, meta, clazz) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
 
@@ -199,6 +224,16 @@ var renderNumberCell = function(data, type, row, meta) {
 // render a text cell
 var renderTextCell = function(data, type, row, meta) {
   return renderCellClass(data, type, row, meta, "textCell");
+};
+
+// render a data cell
+var renderDataCell = function(data, type, row, meta) {
+  return renderCellClass(data, type, row, meta, "dataCell");
+};
+
+// render a list cell
+var renderListCell = function(data, type, row, meta) {
+  return renderCellClass(data, type, row, meta, "listCell");
 };
 
 // restores scroll information lost on tab switch
@@ -885,20 +920,24 @@ var initDataTable = function(resCols, data) {
   var parsedLocation = parseLocationUrl();
   var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
 
-  // keep track of which columns are numeric and which are text (we use
-  // different renderers for these types)
-  var numberCols = [];
-  var textCols = [];
+  // keep track of column types for later render
+  var typeIndices = {
+     "numeric": [],
+     "data.frame": [],
+     "list": [],
+     "text": []
+  }
 
   // add each column
   var thead = document.getElementById("data_cols");
   for (var j = 0; j < cols.length; j++) {
     // create table header
     thead.appendChild(createHeader(j, cols[j]));
-    if (cols[j].col_type === "numeric") {
-      numberCols.push(j);
+    var colType = cols[j].col_type;
+    if (colType === "numeric" || colType === "data.frame" || colType === "list") {
+      typeIndices[colType].push(j);
     } else {
-      textCols.push(j);
+      typeIndices["text"].push(j);
     }
   }
   addResizeHandlers(thead);
@@ -934,11 +973,17 @@ var initDataTable = function(resCols, data) {
       }
      };
     dataTableColumnDefs = [ {
-        "targets": numberCols,
+        "targets": typeIndices["numeric"],
         "render": renderNumberCell
       }, {
-        "targets": textCols,
+        "targets": typeIndices["text"],
         "render": renderTextCell
+      }, {
+        "targets": typeIndices["list"],
+        "render": renderListCell
+      } , {
+        "targets": typeIndices["data.frame"],
+        "render": renderDataCell
       }, {
         "targets": "_all",
         "width": "4em"
@@ -1405,8 +1450,20 @@ window.setOption = function(option, value) {
     case "rowNumbers":
       rowNumbers = value === "true" ? true : false;
       break;
+    case "dataViewerCallback":
+      window.dataViewerCallback = value;
+      break;
+    case "listViewerCallback":
+      window.listViewerCallback = value;
+      break;
   }
 };
+
+// default viewer for data cells
+window.dataViewerCallback = function(row, col) { alert("No viewer for data at " + col + ", " + row  + "."); };
+
+// default viewer for list cells
+window.listViewerCallback = function(row, col) { alert("No viewer for list at " + col + ", " + row  + "."); };
 
 window.getActiveColumn = function() {
   return activeColumnInfo;

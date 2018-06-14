@@ -55,7 +55,8 @@ public:
        int max,
        JobState state,
        bool autoRemove,
-       SEXP actions);
+       SEXP actions,
+       bool show);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -94,6 +95,9 @@ public:
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
    core::json::Array output(int position);
+
+   // whether the job pane should should be shown at start
+   bool show() const;
 
    // timing
    time_t recorded() const;
@@ -136,6 +140,7 @@ private:
 
    bool autoRemove_;
    bool listening_;
+   bool show_;
 
    r::sexp::PreservedSEXP actions_;
 };

@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -28,21 +28,20 @@ if(RSTUDIO_UNINSTALL_PREVIOUS)
 endif()
 
 # install root docs
-if (NOT RSTUDIO_SESSION_WIN64)
-   # dynamically configure SOURCE with the git revision hash
-   INSTALL(CODE "
-      exec_program(git ARGS rev-parse HEAD
+# dynamically configure SOURCE with the git revision hash
+INSTALL(CODE "
+   execute_process(COMMAND git rev-parse HEAD
+                   WORKING_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}\"
                    OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
-      configure_file (\"${CMAKE_CURRENT_SOURCE_DIR}/SOURCE.in\"
-                      \"${CMAKE_CURRENT_BINARY_DIR}/SOURCE\")
-    ")
+   configure_file (\"${CMAKE_CURRENT_SOURCE_DIR}/SOURCE.in\"
+                   \"${CMAKE_CURRENT_BINARY_DIR}/SOURCE\")
+")
 
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VERSION.in
-                  ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VERSION.in
+               ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
 
-   # install root docs
-   include(CMakeInstallDocs.txt)
-endif()
+# install root docs
+include(CMakeInstallDocs.txt)
 
 # overlay
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
@@ -54,11 +53,4 @@ add_subdirectory(src)
 
 # packaging
 add_subdirectory(package)
-
-
-
-
-
-   
-
 

@@ -113,13 +113,16 @@ void saveJsonResponse(const core::Error& error, core::json::JsonRpcResponse *pSr
 // invoke an HTTP RPC directly from R.
 SEXP rs_invokeRpc(SEXP name, SEXP args)
 {
-   // find name of RPC to invoke
-   std::string method = r::sexp::safeAsString(name, "");
-   auto it = s_pJsonRpcMethods->find(method);
+   // generate RPC request from this R command
+   json::JsonRpcRequest request;
+   rpc::formatRpcRequest(name, args, &request);
+
+   // check to see if the RPC exists
+   auto it = s_pJsonRpcMethods->find(request.method);
    if (it == s_pJsonRpcMethods->end())
    {
       // specified method doesn't exist
-      r::exec::error("Requested RPC method " + method + " does not exist.");
+      r::exec::error("Requested RPC method " + request.method + " does not exist.");
       return R_NilValue;    
    }
 
@@ -129,36 +132,9 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    if (!reg.first)
    {
       // this indicates an async RPC, which isn't currently handled
-      r::exec::error("Requested RPC method " + method + " is asynchronous.");
+      r::exec::error("Requested RPC method " + request.method + " is asynchronous.");
       return R_NilValue;
    }
-
-   // assemble a request
-   core::json::JsonRpcRequest request;
-   request.method = method;
-
-   // form argument list; convert from R to JSON
-   core::json::Value rpcArgs;
-   Error error = r::json::jsonValueFromObject(args, &rpcArgs);
-   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-      std::cout << ">>>" << std::endl;
-   if (rpcArgs.type() == json::ObjectType)
-   {
-      // named pair parameters
-      request.kwparams = rpcArgs.get_obj();
-      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-         core::json::writeFormatted(request.kwparams, std::cout);
-   }
-   else if (rpcArgs.type() == json::ArrayType)
-   {
-      // array parameters
-      request.params = rpcArgs.get_array();
-      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-         core::json::writeFormatted(request.params, std::cout);
-   }
-   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-      std::cout << std::endl;
-
 
    // invoke handler and record response
    core::json::JsonRpcResponse response;
@@ -186,22 +162,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    result = r::sexp::create(response.result(), &protect);
 
    // raise an R error if the RPC returns an error
-   if (response.error().type() == json::ObjectType)
-   {
-      // formulate verbose error string
-      json::Object &err = response.error().get_obj();
-      std::string message = err["message"].get_str();
-      if (err.find("error") != err.end())
-         message += ", Error " + err["error"].get_str();
-      if (err.find("category") != err.end())
-         message += ", Category " + err["category"].get_str();
-      if (err.find("code") != err.end())
-         message += ", Code " + err["code"].get_str();
-      if (err.find("location") != err.end())
-         message += " at " + err["location"].get_str();
-
-      r::exec::error(message);
-   }
+   rpc::raiseJsonRpcResponseError(response);
 
    return result;
 }
@@ -236,6 +197,60 @@ void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method)
 } // namespace module_context
 
 namespace rpc {
+
+void formatRpcRequest(SEXP name,
+                      SEXP args,
+                      core::json::JsonRpcRequest* pRequest)
+{
+   // find name of RPC to invoke
+   std::string method = r::sexp::safeAsString(name, "");
+
+   // assemble a request
+   pRequest->method = method;
+
+   // form argument list; convert from R to JSON
+   core::json::Value rpcArgs;
+   Error error = r::json::jsonValueFromObject(args, &rpcArgs);
+   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+      std::cout << ">>>" << std::endl;
+   if (rpcArgs.type() == json::ObjectType)
+   {
+      // named pair parameters
+      pRequest->kwparams = rpcArgs.get_obj();
+      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+         core::json::writeFormatted(pRequest->kwparams, std::cout);
+   }
+   else if (rpcArgs.type() == json::ArrayType)
+   {
+      // array parameters
+      pRequest->params = rpcArgs.get_array();
+      if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+         core::json::writeFormatted(pRequest->params, std::cout);
+   }
+   if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
+      std::cout << std::endl;
+}
+
+void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
+{
+   // raise an R error if the RPC returns an error
+   if (response.error().type() == json::ObjectType)
+   {
+      // formulate verbose error string
+      json::Object &err = response.error().get_obj();
+      std::string message = err["message"].get_str();
+      if (err.find("error") != err.end())
+         message += ", Error " + err["error"].get_str();
+      if (err.find("category") != err.end())
+         message += ", Category " + err["category"].get_str();
+      if (err.find("code") != err.end())
+         message += ", Code " + err["code"].get_str();
+      if (err.find("location") != err.end())
+         message += " at " + err["location"].get_str();
+
+      r::exec::error(message);
+   }
+}
 
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,

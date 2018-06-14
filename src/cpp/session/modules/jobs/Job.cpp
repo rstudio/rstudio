@@ -34,6 +34,7 @@
 #define kJobStarted     "started"
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
+#define kJobShow        "show"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -56,7 +57,8 @@ Job::Job(const std::string& id,
          int max,
          JobState state,
          bool autoRemove,
-         SEXP actions):
+         SEXP actions,
+         bool show):
    id_(id), 
    name_(name),
    status_(status),
@@ -69,7 +71,8 @@ Job::Job(const std::string& id,
    completed_(0),
    autoRemove_(autoRemove),
    listening_(false),
-   actions_(actions)
+   actions_(actions),
+   show_(show)
 {
    setState(state);
 }
@@ -82,7 +85,9 @@ Job::Job():
    started_(0),
    completed_(0),
    autoRemove_(true),
-   listening_(false)
+   listening_(false),
+   actions_(R_NilValue),
+   show_(true)
 {
 }
 
@@ -137,6 +142,7 @@ json::Object Job::toJson() const
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
+   job[kJobShow]  = static_cast<int64_t>(show_);
 
    // amend with computed elapsed time
    if (started_ >= recorded_ && started_ > completed_)
@@ -190,7 +196,8 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobRecorded,  &recorded,
       kJobStarted,   &started,
       kJobCompleted, &completed,
-      kJobState,     &state);
+      kJobState,     &state,
+      kJobShow,      &pJob->show_);
    if (error)
       return error;
 
@@ -275,6 +282,11 @@ time_t Job::started() const
 time_t Job::completed() const
 {
    return completed_;
+}
+
+bool Job::show() const
+{
+   return show_;
 }
 
 FilePath Job::jobCacheFolder()

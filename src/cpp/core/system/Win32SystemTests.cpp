@@ -1,7 +1,7 @@
 /*
  * Win32SystemTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,17 +30,9 @@ namespace tests {
 
 TEST_CASE("Win32SystemTests")
 {
-   SECTION("Test Vista or Later")
-   {
-      CHECK(isVistaOrLater());
-   }
-
    SECTION("Test Win7 or Later")
    {
-      if (isWin7OrLater())
-      {
-         CHECK(isVistaOrLater());
-      }
+      CHECK(isWin7OrLater());
    }
 
    SECTION("Expand Empty Environment Variable")
@@ -88,28 +80,10 @@ TEST_CASE("Win32SystemTests")
       CHECK(windirPath.exists());
 
       core::FilePath sysWowPath(windir + "\\" + "syswow64");
-      core::FilePath sysNativePath(windir + "\\" + "sysnative");
       core::FilePath sys32Path(windir + "\\" + "system32");
 
       CHECK(sys32Path.exists());
-
-      if (!isWin64())
-      {
-         CHECK_FALSE(isCurrentProcessWin64());
-         CHECK_FALSE(sysWowPath.exists());
-         CHECK_FALSE(sysNativePath.exists());
-      }
-      else
-      {
-         if (isCurrentProcessWin64())
-         {
-            CHECK(sysWowPath.exists());
-         }
-         else
-         {
-            CHECK(sysNativePath.exists());
-         }
-      }
+      CHECK(sysWowPath.exists());
    }
 
    SECTION("Correct detection of no child processes")

@@ -1,7 +1,7 @@
 /*
  * TerminalShellInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,13 +59,11 @@ public class TerminalShellInfo extends JavaScriptObject
       case SHELL_WSLBASH:
          return "WSL";
       case SHELL_CMD32:
-         return "Command Prompt (32-bit)";
       case SHELL_CMD64:
-         return "Command Prompt (64-bit)";
+         return "Command Prompt";
       case SHELL_PS32:
-         return "PowerShell (32-bit)";
       case SHELL_PS64:
-         return "PowerShell (64-bit)";
+         return "PowerShell";
       case SHELL_POSIX_BASH:
          return "Bash";
       case SHELL_CUSTOM:

@@ -301,11 +301,15 @@ th:focus {
     color: #FFF;
 }
 
+.dataCell, .listCell {
+    padding-right: 16px;
+}
+
 .numberCell {
     text-align: right;
 }
 
-.numberCell, .textCell {
+.numberCell, .textCell, .listCell, .dataCell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -317,11 +321,13 @@ th:focus {
     color: #FFF;
 }
 
-.autoSize .numberCell, .autoSize .textCell {
+.autoSize .numberCell, .autoSize .textCell, 
+.autoSize .dataCell, .autoSize .listCell {
     max-width: 300px; 
 }
 
-.manualSize .numberCell, .manualSize .textCell {
+.manualSize .numberCell, .manualSize .textCell, 
+.manualSize .dataCell, .manualSize .listCell {
     max-width: 100%;
 }
 
@@ -483,5 +489,15 @@ div.dataTables_scroll div.dataTables_scrollHead {
 
 .rstudio-themes-flat.editor_dark .selected .histBar {
     background-color: #79A9D9;
+}
+
+.viewerImage {
+    width: 12px;
+    height: 12px;
+}
+
+.viewerLink {
+    position: absolute;
+    right: 0px;
 }
 

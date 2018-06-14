@@ -27,6 +27,12 @@ namespace session {
 
 namespace rpc {
 
+void formatRpcRequest(SEXP name,
+                      SEXP args,
+                      core::json::JsonRpcRequest* pRequest);
+
+void raiseJsonRpcResponseError(core::json::JsonRpcResponse& response);
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType);

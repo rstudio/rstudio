@@ -326,41 +326,36 @@ public class PackagesPreferencesPane extends PreferencesPane
    {
       boolean reload = super.onApply(rPrefs);
 
-      String mirrotTextValue = cranMirrorTextBox_.getTextBox().getText();
+      String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
-      if (!mirrotTextValue.equals(cranMirrorStored_))
+      if (!mirrorTextValue.equals(cranMirrorStored_))
          cranMirror_.setChanged(true);
 
-      boolean cranRepoChangedToUrl = !mirrotTextValue.equals(cranMirrorStored_) && 
-                                      mirrotTextValue.startsWith("http");
-      
-      if (cranRepoChangedToUrl || secondaryReposHasChanged())
+      boolean cranRepoChangedToUrl = !mirrorTextValue.equals(cranMirrorStored_) && 
+                                      mirrorTextValue.startsWith("http");
+   
+      cranMirror_.setChanged(true);
+
+      if (cranRepoChangedToUrl)
       {
-         cranMirror_.setChanged(true);
+         cranMirror_.setURL(mirrorTextValue);
 
-         if (cranRepoChangedToUrl)
-         {
-            cranMirror_ = CRANMirror.empty();
-            cranMirror_.setURL(mirrotTextValue);
-
-            cranMirror_.setHost("Custom");
-            cranMirror_.setName("Custom");
-            cranMirror_.setChanged(true);
-         }
-         
-         ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
-         cranMirror_.setSecondaryRepos(repos);
-
-         server_.setCRANMirror(
-            cranMirror_,
-            new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
-                @Override
-                public void onResponseReceived(Void response)
-                {
-                }
-            }
-         );
+         cranMirror_.setHost("Custom");
+         cranMirror_.setName("Custom");
       }
+      
+      ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
+      cranMirror_.setSecondaryRepos(repos);
+
+      server_.setCRANMirror(
+         cranMirror_,
+         new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
+             @Override
+             public void onResponseReceived(Void response)
+             {
+             }
+         }
+      );
      
       // set packages prefs
       PackagesPrefs packagesPrefs = PackagesPrefs.create(

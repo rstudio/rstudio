@@ -240,7 +240,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
          DWORD dwWritten;
          BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
                                      input.data(),
-                                     input.length(),
+                                     static_cast<DWORD>(input.length()),
                                      &dwWritten,
                                      NULL);
          if (!bSuccess)

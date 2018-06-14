@@ -55,8 +55,6 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     pOK_(nullptr)
 {
     ui->setupUi(this);
-    if (!rstudio::core::system::isWin64())
-       ui->radioDefault64->setVisible(false);
 
     setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
@@ -82,9 +80,7 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
             this, SLOT(validateSelection()));
     validateSelection();
 
-    ui->radioDefault->setChecked(true);
-    connect(ui->radioDefault, SIGNAL(toggled(bool)),
-            this, SLOT(onModeChanged()));
+    ui->radioDefault64->setChecked(true);
     connect(ui->radioDefault64, SIGNAL(toggled(bool)),
             this, SLOT(onModeChanged()));
     onModeChanged();
@@ -207,12 +203,12 @@ void ChooseRHome::done(int r)
    {
       if (!ui->radioCustom->isChecked())
       {
-         Architecture arch = preferR64() ? ArchX64 : ArchX86;
+         Architecture arch = ArchX64;
          if (rstudio::desktop::autoDetect(arch).isEmpty())
          {
             if (rstudio::desktop::allRVersions().length() > 0)
             {
-               QString name = QString::fromUtf8(preferR64() ? "R64" : "R");
+               QString name = QString::fromUtf8("R64");
 
                showWarning(
                      this,
@@ -283,14 +279,11 @@ RVersion ChooseRHome::value()
              : toVersion(selectedItems.at(0));
 }
 
-void ChooseRHome::setValue(const RVersion& value, bool preferR64)
+void ChooseRHome::setValue(const RVersion& value)
 {
    if (value.isEmpty())
    {
-      if (preferR64)
-         ui->radioDefault64->setChecked(true);
-      else
-         ui->radioDefault->setChecked(true);
+      ui->radioDefault64->setChecked(true);
    }
    else
    {
@@ -303,7 +296,3 @@ void ChooseRHome::setValue(const RVersion& value, bool preferR64)
    }
 }
 
-bool ChooseRHome::preferR64()
-{
-   return ui->radioDefault64->isChecked();
-}

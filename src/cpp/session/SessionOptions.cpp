@@ -313,7 +313,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          value<std::string>(&rLibsUser_)->default_value(""),
          "R user library path")
       ("r-cran-repos",
-         value<std::string>(&rCRANRepos_)->default_value(""),
+         value<std::string>(&rCRANUrl_)->default_value(""),
          "Default CRAN repository")
       ("r-cran-repos-file",
          value<std::string>(&rCRANReposFile_)->default_value("/etc/rstudio/repos.conf"),
@@ -573,27 +573,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &winptyPath_);
 
    // winpty.dll lives next to rsession.exe on a full install; otherwise
-   // it lives in a directory named 32 or 64
+   // it lives in a directory named 64
    core::FilePath pty(winptyPath_);
    std::string completion;
    if (pty.isWithin(resourcePath_))
    {
-#ifdef _WIN64
-      completion = "x64/winpty.dll";
-#else
       completion = "winpty.dll";
-#endif
    }
    else
    {
-#ifdef _WIN64
       completion = "64/bin/winpty.dll";
-#else
-      completion = "32/bin/winpty.dll";
-#endif
    }
    winptyPath_ = pty.complete(completion).absolutePath();
-#endif
+#endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);
    resolvePath(resourcePath_, &libclangHeadersPath_);

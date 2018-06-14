@@ -57,7 +57,7 @@ bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
       SEXP estimateSEXP, SEXP estimateRemainingSEXP, SEXP runningSEXP, SEXP autoRemoveSEXP,
-      SEXP groupSEXP) 
+      SEXP groupSEXP, SEXP showSEXP) 
 {
    // convert to native types
    std::string name   = r::sexp::safeAsString(nameSEXP, "");
@@ -66,10 +66,11 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    int progress       = r::sexp::asInteger(progressUnitsSEXP);
    JobState state     = r::sexp::asLogical(runningSEXP) ? JobRunning : JobIdle;
    bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
+   bool show          = r::sexp::asLogical(showSEXP);
       
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, autoRemove, actionsSEXP);
+      addJob(name, status, group, progress, state, autoRemove, actionsSEXP, show);
 
    // return job id
    r::sexp::Protect protect;

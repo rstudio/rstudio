@@ -1,7 +1,7 @@
 /*
  * Win32PtyTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/Environment.hpp>
 
 namespace rstudio {
 namespace core {
@@ -46,11 +47,7 @@ FilePath getWinPtyPath()
    if (!ptyPath.empty())
       return FilePath(ptyPath);
 
-#ifdef _WIN64
    std::string suffix("/64/bin/winpty.dll");
-#else
-   std::string suffix("/32/bin/winpty.dll");
-#endif
    std::string prefix("external-winpty-path=");
    std::ifstream in("./conf/rdesktop-dev.conf");
 
@@ -152,7 +149,7 @@ TEST_CASE("Win32PtyTests")
 
       Error err = pty.start(
                "C:\\NoWindows\\system08\\huhcmd.exe", emptyArgs, options,
-               &hInWrite, &hOutRead, NULL /*conerr*/, &hProcess);
+               &hInWrite, &hOutRead, nullptr /*conerr*/, &hProcess);
       CHECK(err);
       CHECK_FALSE(hInWrite);
       CHECK_FALSE(hOutRead);
@@ -173,7 +170,7 @@ TEST_CASE("Win32PtyTests")
       ProcessOptions plainOptions = options;
       plainOptions.pseudoterminal.get().plainText = true;
       Error err = pty.start(cmdExe, args, plainOptions,
-                            &hInWrite, &hOutRead, NULL /*conerr*/, &hProcess);
+                            &hInWrite, &hOutRead, nullptr /*conerr*/, &hProcess);
       CHECK(!err);
       CHECK(hInWrite);
       CHECK(hOutRead);
@@ -205,9 +202,15 @@ TEST_CASE("Win32PtyTests")
       HANDLE hProcess;
 
       ProcessOptions plainOptions = options;
+
+      // set simple prompt (>)
+      core::system::Options shellEnv;
+      core::system::setenv(&shellEnv, "PROMPT", "$G");
+      plainOptions.environment = shellEnv;
+
       plainOptions.pseudoterminal.get().plainText = true;
       Error err = pty.start(cmdExe, emptyArgs, plainOptions,
-                            &hInWrite, &hOutRead, NULL /*conerr*/, &hProcess);
+                            &hInWrite, &hOutRead, nullptr /*conerr*/, &hProcess);
       CHECK(!err);
       CHECK(hInWrite);
       CHECK(hOutRead);
@@ -223,9 +226,6 @@ TEST_CASE("Win32PtyTests")
          err = WinPty::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
          tries--;
-         // assume '>' means we're at a prompt; should really be setting
-         // this in temporary environment before starting pty to be
-         // deterministic
          if (stdOut.find('>') != std::string::npos)
             break;
       }
@@ -258,14 +258,7 @@ TEST_CASE("Win32PtyTests")
          tries--;
       }
 
-      int result = stdOut.compare(line1);
-      if (result)
-      {
-         std::cout << line1 << std::endl;
-         std::cout << stdOut << std::endl;
-      }
-      CHECK_FALSE(result);
-
+      CHECK_FALSE(stdOut.compare(line1));
       CHECK(::CloseHandle(hProcess));
       CHECK(::CloseHandle(hInWrite));
       CHECK(::CloseHandle(hOutRead));

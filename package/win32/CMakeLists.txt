@@ -10,17 +10,14 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 # install ssh-console batch file into msys_ssh directory (called by shortcut)
-if(NOT RSTUDIO_SESSION_WIN64)
-   install(PROGRAMS src/ssh-console.bat
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/msys_ssh")
-endif()
+install(PROGRAMS src/ssh-console.bat
+        DESTINATION "${RSTUDIO_INSTALL_BIN}/msys_ssh")
 
-# cpack variables
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
 if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release")
    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CMAKE_BUILD_TYPE}")
 endif()
-set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\rstudio.exe")
+set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\rstudio.exe")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "RStudio")
 set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)

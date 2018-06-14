@@ -30,6 +30,10 @@ well as menu structures (for main menu and popup menus).
       "background": always operates on main window, but in the background
       "<satellite name>": operates on named satellite; sent to the main window
         for processing unless fired from the named satellite
+  @handlesEventPropagation: Whether the command itself handles event propagation.
+     This is primarily used by commands which may be active and dispatched to,
+     but opt not to handle the event, thereby allowing the browser default
+     behavior in response to the pressed key.
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -570,7 +574,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="insertPipeOperator" value="Cmd+Shift+M" title="Insert Pipe Operator" />
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
-         <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet"/>
+         <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet" handlesEventPropagation="true" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>

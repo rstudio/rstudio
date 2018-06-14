@@ -1,7 +1,7 @@
 /*
  * TcpIpAsyncClientSsl.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -130,16 +130,7 @@ private:
 
    virtual bool isShutdownError(const boost::system::error_code& ec)
    {
-      // boost returns "short_read" when the peer calls SSL_shutdown()
-      if (ec.category() == boost::asio::error::get_ssl_category() &&
-          ec.value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ))
-      {
-         return true;
-      }
-      else
-      {
-         return false;
-      }
+      return util::isSslShutdownError(ec);
    }
 
 private:

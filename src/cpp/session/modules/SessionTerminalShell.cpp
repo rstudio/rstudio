@@ -42,89 +42,38 @@ void addShell(const core::FilePath& expectedPath,
 void scanAvailableShells(std::vector<TerminalShell>* pShells)
 {
 #ifdef _WIN32
-   // On Vista and above virtual directories allow processes to get at both
-   // 32 and 64-bit system binaries (cmd.exe and powershell.exe).
-   //
-   // * On a 32-bit OS, %windir%\system32 contains 32-bit, and there are
-   //   no 64-bit bins.
-   //
-   // * On a 64-bit OS, a 32-bit process sees 32-bit bins in %windir%\system32,
-   //   and 64-bit bins in %windir%\sysnative.
-   //
-   // * On a 64-bit OS, a 64-bit process sees 32-bit bins in %windir%\syswow64,
-   //   and 64-bit bins in %windir%\system32.
-
    std::vector<std::string> args;
 
-   if (!core::system::isVistaOrLater())
+   const std::string sys32("system32\\");
+   const std::string cmd("cmd.exe");
+   const std::string ps("WindowsPowerShell\\v1.0\\powershell.exe");
+   const std::string bash("bash.exe");
+
+   std::string windir;
+   core::Error err = core::system::expandEnvironmentVariables("%windir%\\", &windir);
+   if (err)
    {
-      // Below Vista, just use %comspec%
-      addShell(core::system::expandComSpec(),
-               TerminalShell::Cmd32, "Command Prompt", args, pShells);
+      LOG_ERROR(err);
+      return;
    }
-   else
-   {
-      const std::string sysnative("sysnative\\");
-      const std::string sys32("system32\\");
-      const std::string wow64("syswow64\\");
-      const std::string cmd("cmd.exe");
-      const std::string ps("WindowsPowerShell\\v1.0\\powershell.exe");
-      const std::string bash("bash.exe");
 
-      std::string windir;
-      core::Error err = core::system::expandEnvironmentVariables("%windir%\\", &windir);
-      if (err)
-      {
-         LOG_ERROR(err);
-         return;
-      }
+   addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", args, pShells);
 
-      addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", args, pShells);
+   core::FilePath cmd64;
+   core::FilePath ps64;
+   core::FilePath bashWSL; // Windows Subsystem for Linux
 
-      core::FilePath cmd32;
-      core::FilePath cmd64;
-      core::FilePath ps32;
-      core::FilePath ps64;
-      core::FilePath bashWSL; // Windows Subsystem for Linux
+   cmd64 = core::FilePath(windir + sys32 + cmd);
+   ps64 = core::FilePath(windir + sys32 + ps);
+   bashWSL = core::FilePath(windir + sys32 + bash);
 
-      if (core::system::isWin64())
-      {
-         if (core::system::isCurrentProcessWin64())
-         {
-            cmd32 = core::FilePath(windir + wow64 + cmd);
-            cmd64 = core::FilePath(windir + sys32 + cmd);
-            ps32 = core::FilePath(windir + wow64 + ps);
-            ps64 = core::FilePath(windir + sys32 + ps);
-            bashWSL = core::FilePath(windir + sys32 + bash);
-         }
-         else
-         {
-            cmd32 = core::FilePath(windir + sys32 + cmd);
-            cmd64 = core::FilePath(windir + sysnative + cmd);
-            ps32 = core::FilePath(windir + sys32 + ps);
-            ps64 = core::FilePath(windir + sysnative + ps);
-            bashWSL = core::FilePath(windir + sysnative + bash);
-         }
-      }
-      else // 32-bit windows
-      {
-         cmd32 = core::FilePath(windir + sys32 + cmd);
-         ps32 = core::FilePath(windir + sys32 + ps);
-      }
+   addShell(cmd64, TerminalShell::Cmd64, "Command Prompt", args, pShells);
+   addShell(ps64, TerminalShell::PS64, "Windows PowerShell", args, pShells);
 
-      addShell(cmd32, TerminalShell::Cmd32, "Command Prompt (32-bit)", args, pShells);
-      addShell(cmd64, TerminalShell::Cmd64, "Command Prompt (64-bit)", args, pShells);
-      addShell(ps32, TerminalShell::PS32, "Windows PowerShell (32-bit)", args, pShells);
-      addShell(ps64, TerminalShell::PS64, "Windows PowerShell (64-bit)", args, pShells);
-
-      // Is there a better way to detect WSL? This will match any 64-bit
-      // bash.exe found in same location as the WSL bash.
-      if (core::system::isWin64())
-      {
-         addShell(bashWSL, TerminalShell::WSLBash,
-                  "Bash (Windows Subsystem for Linux)", args, pShells);
-      }
-   }
+   // Is there a better way to detect WSL? This will match any 64-bit
+   // bash.exe found in same location as the WSL bash.
+   addShell(bashWSL, TerminalShell::WSLBash,
+            "Bash (Windows Subsystem for Linux)", args, pShells);
 #endif
 
    // If nothing found add standard shell (%comspec% on Windows, Bash on Posix)
@@ -171,13 +120,11 @@ std::string TerminalShell::getShellName(TerminalShellType type)
    case WSLBash:
       return "WSL";
    case Cmd32:
-      return "Command Prompt (32-bit)";
    case Cmd64:
-      return "Command Prompt (64-bit)";
+      return "Command Prompt";
    case PS32:
-      return "PowerShell (32-bit)";
    case PS64:
-      return "PowerShell (64-bit)";
+      return "PowerShell";
    case PosixBash:
       return "Bash";
    case CustomShell:
@@ -279,16 +226,8 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
    pShellInfo->path = core::system::expandComSpec();
-   if (core::system::isWin64())
-   {
-      pShellInfo->type = TerminalShell::Cmd64;
-      pShellInfo->name = "Command Prompt (64-bit)";
-   }
-   else
-   {
-      pShellInfo->type = TerminalShell::Cmd32;
-      pShellInfo->name = "Command Prompt (32-bit)";
-   }
+   pShellInfo->type = TerminalShell::Cmd64;
+   pShellInfo->name = "Command Prompt";
 #else
    pShellInfo->name = "Bash";
    pShellInfo->type = TerminalShell::PosixBash;

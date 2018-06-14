@@ -4703,8 +4703,12 @@ public class TextEditingTarget implements
       executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
    }
    
-   public void executeChunks(final Position position, int which)
+   public void executeChunks(Position position, int which)
    {
+      // null implies we should use current cursor position
+      if (position == null)
+         position = docDisplay_.getSelectionStart();
+      
       if (docDisplay_.showChunkOutputInline())
       {
          executeChunksNotebookMode(position, which);
@@ -4734,6 +4738,7 @@ public class TextEditingTarget implements
       final String code = builder.toString().trim();
       if (fileType_.isRmd())
       {
+         final Position positionFinal = position;
          docUpdateSentinel_.withSavedDoc(new Command()
          {
             @Override
@@ -4749,7 +4754,7 @@ public class TextEditingTarget implements
                         {
                            // compute the language for this chunk
                            String language = "R";
-                           if (DocumentMode.isPositionInPythonMode(docDisplay_, position))
+                           if (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
                               language = "Python";
 
                            events_.fireEvent(new SendToConsoleEvent(code, language, true));

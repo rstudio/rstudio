@@ -101,10 +101,9 @@
       col_label <- ""
 
     # ensure that the column contains some scalar values we can examine 
-    # (treat vector-valued columns as of unknown type) 
-    if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
+    if (length(x[[idx]]) > 0)
     {
-      val <- x[[idx]][1]
+      val <- x[[idx]][[1]]
       col_type_r <- typeof(val)
       if (is.factor(val))
       {
@@ -149,6 +148,14 @@
       {
         col_type <- "boolean"
         col_search_type <- "boolean"
+      }
+      else if (is.data.frame(val))
+      {
+        col_type <- "data.frame"
+      }
+      else if (is.list(val))
+      {
+         col_type <- "list"
       }
     }
     list(
@@ -541,9 +548,15 @@
 })
 
 .rs.addFunction("viewHook", function(original, x, title) {
-   # generate title if necessary
+   # remember the expression from which the data was generated
+   expr <- deparse(substitute(x))
+
+   # generate title if necessary (from deparsed expr)
    if (missing(title))
-      title <- paste(deparse(substitute(x))[1])
+      title <- paste(expr[1])
+
+   # collapse expr for serialization
+   expr <- paste(expr, collapse = " ")
 
    name <- ""
    env <- emptyenv()
@@ -631,14 +644,14 @@
    cacheKey <- .rs.addCachedData(force(x), name)
    
    # call viewData 
-   invisible(.Call("rs_viewData", x, title, name, env, cacheKey, FALSE))
+   invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE))
 })
 
 .rs.registerReplaceHook("View", "utils", .rs.viewHook)
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
-   invisible(.Call("rs_viewData", x, title, "", emptyenv(), cacheKey, preview))
+   invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
