@@ -546,7 +546,7 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 #endif
 }
 #else
-bool isSslShutdownError(const boost:;system::error_code& ec)
+bool isSslShutdownError(const boost::system::error_code& ec)
 {
    return false;
 }
