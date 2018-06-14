@@ -154,7 +154,7 @@ refreshenv
 # install some deps via chocolatey
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8 ant windows-sdk-10.1 vcbuildtools 7zip git
+choco install -y jdk8 ant windows-sdk-10.1 vcbuildtools 7zip git ninja
 
 # fixups for Windows SDK
 mv "C:\Program Files (x86)\Windows Kits\10\bin\x86" "C:\Program Files (x86)\Windows Kits\10\bin\x86_orig"
