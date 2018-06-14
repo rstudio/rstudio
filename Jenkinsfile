@@ -140,7 +140,6 @@ try {
           [os: 'centos6',    arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'opensuse',   arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'trusty',     arch: 'amd64',  flavor: 'server',  variant: ''],
