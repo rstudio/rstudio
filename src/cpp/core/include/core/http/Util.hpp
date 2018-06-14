@@ -23,6 +23,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace rstudio {
 namespace core {
@@ -177,7 +178,7 @@ bool isNetworkAddress(const std::string& str);
 bool isWSUpgradeRequest(const Request& request);
 
 // does the given error represent SSL truncation/shutdown?
-bool isSslShutdownError(const core::Error& error);
+bool isSslShutdownError(const boost::system::error_code& code);
 
 } // namespace util
 

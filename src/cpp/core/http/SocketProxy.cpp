@@ -151,7 +151,7 @@ void SocketProxy::handleError(const boost::system::error_code& e,
    Error error(e, location);
    if (!http::isConnectionTerminatedError(error) &&
        (error.code() != boost::asio::error::operation_aborted) &&
-       !util::isSslShutdownError(error))
+       !util::isSslShutdownError(error.code()))
    {
       LOG_ERROR(error);
    }

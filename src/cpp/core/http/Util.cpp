@@ -533,20 +533,20 @@ bool isWSUpgradeRequest(const Request& request)
 }
 
 #ifndef _WIN32
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const boost::system::error_code& ec)
 {
    // boost returns "short_read" when the peer calls SSL_shutdown()
 #ifdef SSL_R_SHORT_READ
    // OpenSSL 1.0.0
-   return error.code().category() == boost::asio::error::get_ssl_category() &&
-          error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
+   return ec.category() == boost::asio::error::get_ssl_category() &&
+          ec.value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
 #else
    // OpenSSL 1.1.0
-   return error.code() == boost::asio::ssl::error::stream_truncated;
+   return ec == boost::asio::ssl::error::stream_truncated;
 #endif
 }
 #else
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const boost:;system::error_code& ec)
 {
    return false;
 }
