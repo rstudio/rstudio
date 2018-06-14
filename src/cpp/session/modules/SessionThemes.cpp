@@ -23,6 +23,9 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/system/System.hpp>
 
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RRoutines.hpp>
@@ -41,6 +44,10 @@ namespace modules {
 namespace themes {
 
 namespace {
+
+const std::string kDefaultThemeLocation = "/theme/default/";
+const std::string kGlobalCustomThemeLocation = "/theme/custom/global/";
+const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -120,35 +127,51 @@ void getThemesInLocation(
    }
 }
 
-void getAllThemes(ThemeMap& themeMap)
+FilePath getDefaultThemePath()
+{
+   return session::options().rResourcesPath().childPath("themes");
+}
+
+FilePath getGlobalCustomThemePath()
 {
    using rstudio::core::FilePath;
 
-   FilePath preInstalledPath = session::options().rResourcesPath().childPath("themes");
+   const char* kGlobalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
+   if (kGlobalPathAlt)
+   {
+      return FilePath(kGlobalPathAlt);
+   }
+
 #ifdef _WIN32
-   FilePath globalPath = core::system::systemSettingsPath("RStudio\\themes", false);
-   FilePath localPath = core::system::userHomePath().childPath(".R\\rstudio\\themes");
+   return core::system::systemSettingsPath("RStudio\\themes", false);
 #else
-   FilePath globalPath("/etc/rstudio/themes/");
-   FilePath localPath = core::system::userHomePath().childPath(".R/rstudio/themes/");
+   return FilePath("/etc/rstudio/themes/");
 #endif
+}
 
-   const char* k_globalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
-   const char* k_localPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
-   if (k_globalPathAlt)
+FilePath getLocalCustomThemePath()
+{
+   using rstudio::core::FilePath;
+   const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
+   if (kLocalPathAlt)
    {
-      globalPath = FilePath(k_globalPathAlt);
-   }
-   if (k_localPathAlt)
-   {
-      localPath = FilePath(k_localPathAlt);
+      return FilePath(kLocalPathAlt);
    }
 
+#ifdef _WIN32
+   return core::system::userHomePath().childPath(".R\\rstudio\\themes");
+#else
+   return core::system::userHomePath().childPath(".R/rstudio/themes/");
+#endif
+}
+
+void getAllThemes(ThemeMap& themeMap)
+{
    // Intentionally get global themes before getting user specific themes so that user specific
    // themes will override global ones.
-   getThemesInLocation(preInstalledPath, themeMap, "theme/default/");
-   getThemesInLocation(globalPath, themeMap, "theme/custom/global/");
-   getThemesInLocation(localPath, themeMap, "theme/custom/local/");
+   getThemesInLocation(getDefaultThemePath(), themeMap, kDefaultThemeLocation);
+   getThemesInLocation(getGlobalCustomThemePath(), themeMap, kGlobalCustomThemeLocation);
+   getThemesInLocation(getLocalCustomThemePath(), themeMap, kLocalCustomThemeLocation);
 }
 
 /**
@@ -177,6 +200,27 @@ SEXP rs_getThemes()
    return rstudio::r::sexp::create(themeListBuilder, &protect);
 }
 
+void handleDefaultThemeRequest(const http::Request& request,
+                                     http::Response* pResponse)
+{
+   std::string fileName = http::util::pathAfterPrefix(request, kDefaultThemeLocation);
+   pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
+}
+
+void handleGlobalCustomThemeRequest(const http::Request& request,
+                                          http::Response* pResponse)
+{
+   std::string fileName = http::util::pathAfterPrefix(request, kGlobalCustomThemeLocation);
+   pResponse->setCacheableFile(getGlobalCustomThemePath().childPath(fileName), request);
+}
+
+void handleLocalCustomThemeRequest(const http::Request& request,
+                                         http::Response* pResponse)
+{
+   std::string fileName = http::util::pathAfterPrefix(request, kLocalCustomThemeLocation);
+   pResponse->setCacheableFile(getLocalCustomThemePath().childPath(fileName), request);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -188,7 +232,10 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionThemes.R"));
+      (bind(sourceModuleRFile, "SessionThemes.R"))
+      (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
+      (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
+      (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
 
    return initBlock.execute();
 }
