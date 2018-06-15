@@ -118,9 +118,6 @@ private:
    bool allowExternalNav_;
    std::queue<PendingWindow> pendingWindows_;
    QDir defaultSaveDir_;
-   
-   QUrl lastInterceptedRequestUrl_;
-   QWebEngineUrlRequestInfo::ResourceType lastInterceptedResourceType_;
 };
 
 } // namespace desktop

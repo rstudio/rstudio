@@ -42,6 +42,13 @@ namespace {
 WindowTracker s_windowTracker;
 std::mutex s_mutex;
 
+// NOTE: This variable is static and hence shared by all of the web pages
+// created by RStudio. This is intentional as it's possible that the
+// request interceptor from one page will handle a request, and a _different_
+// page will handle the new navigation attempt -- so both pages will need
+// access to the same data.
+std::map<QUrl, int> s_subframes;
+
 void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 {
    // request directory from user
@@ -72,7 +79,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
    connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
-   connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted);
+   connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted, Qt::DirectConnection);
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
@@ -228,8 +235,10 @@ void WebPage::closeRequested()
 
 void WebPage::onUrlIntercepted(QUrl url, int type)
 {
-   lastInterceptedRequestUrl_ = url;
-   lastInterceptedResourceType_ = static_cast<QWebEngineUrlRequestInfo::ResourceType>(type);
+   if (type == QWebEngineUrlRequestInfo::ResourceTypeSubFrame)
+   {
+      s_subframes[url] = type;
+   }
 }
 
 bool WebPage::shouldInterruptJavaScript()
@@ -276,10 +285,9 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    
    // if this appears to be an attempt to load an external page within
    // an iframe, don't load it
-   if (!isLocal &&
-       lastInterceptedRequestUrl_ == url &&
-       lastInterceptedResourceType_ == QWebEngineUrlRequestInfo::ResourceTypeSubFrame)
+   if (!isLocal && s_subframes.count(url))
    {
+      s_subframes.erase(url);
       return false;
    }
 
