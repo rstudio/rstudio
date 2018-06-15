@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -352,9 +353,9 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_ligatures", false);
    }
 
-   public PrefValue<String> theme()
+   public PrefValue<AceTheme> theme()
    {
-      return string("theme", null);
+      return object("theme", AceTheme.createDefault());
    }
    
    public String getThemeErrorClass()

@@ -5472,6 +5472,11 @@ public class RemoteServer implements Server
                   true,
                   callback);
    }
+   
+   public void getThemes(ServerRequestCallback<JsObject> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_THEMES, new JSONArray(), callback);
+   }
 
    private String clientId_;
    private String clientVersion_ = "";
@@ -5911,4 +5916,6 @@ public class RemoteServer implements Server
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
    private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
+   
+   private static final String GET_THEMES = "get_themes";
 }
