@@ -523,9 +523,6 @@ endif()
 
 # install winpty on windows
 if(WIN32)
-   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-           USE_SOURCE_PERMISSIONS
-           DESTINATION  ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${WINPTY_BINDIR_64}/winpty.dll"
            DESTINATION "${RSTUDIO_INSTALL_BIN}")
    install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
