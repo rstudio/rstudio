@@ -37,7 +37,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
+
+import java.util.HashMap;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
@@ -50,7 +53,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       res_ = res;
       uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
-
+      themeList_ = themes.getThemes();
+      
       VerticalPanel leftPanel = new VerticalPanel();
       
       relaunchRequired_ = false;
@@ -194,15 +198,8 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
-
       
-      String[] themeOptions = themes.getThemeNames();
-      for (int idxTheme = 0; idxTheme < themeOptions.length; idxTheme++) {
-         if (themeOptions[idxTheme] == "TextMate") {
-            themeOptions[idxTheme] = "TextMate (default)";
-         }
-      }
-      
+      String[] themeOptions = themeList_.keySet().toArray(new String[0]);
       theme_ = new SelectWidget("Editor theme:",
                                 themeOptions,
                                 themes.getThemeNames(),
@@ -211,13 +208,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          public void onChange(ChangeEvent event)
          {
-            preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
+            preview_.setTheme(themeList_.get(theme_.getValue()).getUrl());
          }
       });
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
       theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
       theme_.addStyleName(res.styles().themeChooser());
-      theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
+      theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
       
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
@@ -228,7 +225,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
-      preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
+      preview_.setTheme(uiPrefs_.theme().getGlobalValue().getUrl());
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       preview_.setUseLigatures(uiPrefs.useLigatures().getValue());
       updatePreviewZoomLevel();
@@ -280,7 +277,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
-      uiPrefs_.theme().setGlobalValue(theme_.getValue());
+      uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
       if (Desktop.isDesktop())
       {
          if (initialFontFace_ != fontFace_.getValue())
@@ -327,6 +324,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private EventBus eventBus_;
    private Boolean relaunchRequired_;
    private static String previewDefaultHeight_ = "498px";
+   private HashMap<String, AceTheme> themeList_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

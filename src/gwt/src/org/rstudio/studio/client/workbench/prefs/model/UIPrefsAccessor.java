@@ -361,7 +361,7 @@ public class UIPrefsAccessor extends Prefs
    public String getThemeErrorClass()
    {    
       if ((theme().getValue() == null) ||
-          AceThemes.TEXTMATE.equals(theme().getValue()))
+          AceTheme.createDefault().equals(theme().getValue()))
          return " ace_constant";
       else  
          return " ace_constant ace_language";

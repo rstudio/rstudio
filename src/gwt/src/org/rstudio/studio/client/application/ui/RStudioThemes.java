@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 public class RStudioThemes
 {
@@ -81,17 +82,10 @@ public class RStudioThemes
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(String aceTheme, String rstudioTheme) {
+   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme) {
       if (rstudioTheme == "classic") return rstudioTheme;
-
-      RegExp keyReg = RegExp.compile(
-         "ambiance|chaos|clouds midnight|cobalt|dracula|idle fingers|kr theme|" +
-         "material|merbivore soft|merbivore|mono industrial|monokai|" +
-         "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
-         "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
       
-      MatchResult result = keyReg.exec(aceTheme);
-      return result != null ? "dark-grey" : rstudioTheme;
+      return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
    public static String getThemeFromUiPrefs(UIPrefs prefs) {

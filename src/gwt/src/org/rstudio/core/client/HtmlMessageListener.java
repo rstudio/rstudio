@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
 public class HtmlMessageListener
@@ -53,12 +54,12 @@ public class HtmlMessageListener
          {
             if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
             {
-               String editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-               String bakground = RStudioThemes.getBackground(editorTheme);
-               String foreground = RStudioThemes.getForeground(editorTheme);
+               AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
+               String background = RStudioThemes.getBackground(editorTheme.getName());
+               String foreground = RStudioThemes.getForeground(editorTheme.getName());
 
                for (JavaScriptObject themeSource : themeSources_) {
-                  postThemeMessage(themeSource, themeOrigin_, bakground, foreground);
+                  postThemeMessage(themeSource, themeOrigin_, background, foreground);
                }
             }
          }
@@ -124,10 +125,10 @@ public class HtmlMessageListener
       themeOrigin_ = origin;
       themeSources_.add(source);
 
-      String editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-      if (!StringUtil.isNullOrEmpty(editorTheme)) {
-         String bakground = RStudioThemes.getBackground(editorTheme);
-         String foreground = RStudioThemes.getForeground(editorTheme);
+      AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
+      if (editorTheme != null) {
+         String bakground = RStudioThemes.getBackground(editorTheme.getName());
+         String foreground = RStudioThemes.getForeground(editorTheme.getName());
 
          postThemeMessage(source, themeOrigin_, bakground, foreground);
       }

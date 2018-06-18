@@ -25,7 +25,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -104,22 +104,18 @@ public class TextEditingTargetChunks
    // Private methods ---------------------------------------------------------
    
    @Inject
-   private void initialize(UIPrefs prefs, AceThemes themes)
+   private void initialize(UIPrefs prefs)
    {
-      themes_ = themes;
       prefs_ = prefs;
+      dark_ = prefs.theme().getValue().isDark();
       
-      dark_ = themes_.isDark(themes_.getEffectiveThemeName(
-            prefs.theme().getValue()));
-      
-      prefs_.theme().addValueChangeHandler(new ValueChangeHandler<String>()
+      prefs_.theme().addValueChangeHandler(new ValueChangeHandler<AceTheme>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<String> theme)
+         public void onValueChange(ValueChangeEvent<AceTheme> theme)
          {
             // recompute dark state
-            boolean isDark = themes_.isDark(
-                  themes_.getEffectiveThemeName(theme.getValue()));
+            boolean isDark = theme.getValue().isDark();
             
             // redraw all the toolbars if necessary
             if (isDark != dark_)
@@ -271,7 +267,6 @@ public class TextEditingTargetChunks
    private boolean dark_;
    private boolean initialized_;
    
-   private AceThemes themes_;
    private UIPrefs prefs_;
 
    private int lastRow_;
