@@ -42,7 +42,7 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
     BrowserWindow(showToolbar, true, name, baseUrl, pParent, pOpener,
                   allowExternalNavigate)
 {
-   setAttribute(Qt::WA_QuitOnClose, false);
+   setAttribute(Qt::WA_QuitOnClose, true);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
 #ifdef Q_OS_MAC
