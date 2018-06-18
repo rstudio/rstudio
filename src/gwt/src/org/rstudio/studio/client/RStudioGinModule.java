@@ -225,6 +225,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatell
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandDispatcher;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
@@ -447,6 +448,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(JobsServerOperations.class).to(RemoteServer.class);
       bind(DesktopInfo.class).asEagerSingleton();
       bind(SecondaryReposServerOperations.class).to(RemoteServer.class);
+      bind(ThemeServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

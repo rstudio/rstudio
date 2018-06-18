@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -29,21 +30,23 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
 import java.util.HashMap;
-
 
 @Singleton
 public class AceThemes
 {
    @Inject
-   public AceThemes(AceThemeResources res,
+   public AceThemes(ThemeServerOperations themeServerOperations,
                     final Provider<UIPrefs> prefs,
                     EventBus events)
    {
+      themeServerOperations_ = themeServerOperations;
       events_ = events;
       prefs_ = prefs;
 
@@ -58,7 +61,7 @@ public class AceThemes
 
    public String[] getThemeNames()
    {
-      return themes_.toArray(new String[themes_.size()]);
+      return getThemes().keySet().toArray(new String[0]);
    }
    
    private void applyTheme(Document document, final AceTheme theme)
@@ -121,11 +124,34 @@ public class AceThemes
       applyTheme(document, prefs_.get().theme().getValue());
    }
    
-   private HashMap<String, AceTheme> getThemes()
+   public HashMap<String, AceTheme> getThemes()
    {
-      sendRequest(RPC_SCOPE, GET_THEMES, new JsonArray(), ServerRequestCallback<>)
+      HashMap<String, AceTheme> themes = new HashMap<>();
+      themeServerOperations_.getThemes(new ServerRequestCallback<JsArray<AceTheme>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<AceTheme> jsonThemeArray)
+         {
+            int len = jsonThemeArray.length();
+            for (int i = 0; i < len; ++i)
+            {
+               AceTheme theme = jsonThemeArray.get(i);
+               themes.put(theme.getName(), theme);
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            AceTheme defaultTheme = AceTheme.createDefault();
+            themes.put(defaultTheme.getName(), defaultTheme);
+         }
+      });
+      
+      return themes;
    }
 
+   ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";

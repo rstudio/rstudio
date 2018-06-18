@@ -196,6 +196,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -5473,7 +5474,8 @@ public class RemoteServer implements Server
                   callback);
    }
    
-   public void getThemes(ServerRequestCallback<JsObject> callback)
+   @Override
+   public void getThemes(ServerRequestCallback<JsArray<AceTheme>> callback)
    {
       sendRequest(RPC_SCOPE, GET_THEMES, new JSONArray(), callback);
    }
