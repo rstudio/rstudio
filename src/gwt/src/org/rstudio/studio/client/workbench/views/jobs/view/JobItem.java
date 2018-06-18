@@ -37,6 +37,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -94,6 +95,9 @@ public class JobItem extends Composite
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
+      
+      running_.addStyleName("rstudio-themes-background");
+      outer_.addStyleName("rstudio-themes-border");
       
       update(job);
    }
@@ -179,6 +183,7 @@ public class JobItem extends Composite
    @UiField Label name_;
    @UiField Label status_;
    @UiField VerticalPanel running_;
+   @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
 }

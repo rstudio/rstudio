@@ -49,7 +49,7 @@
 	.outer
 	{
 		width: 100%;
-		border-bottom: 1px solid #e5e5e5;
+		border-bottom: 1px solid;
 		padding-left: 10px;
 		padding-top: 8px;
 		padding-bottom: 8px;
@@ -81,12 +81,11 @@
 	.running
 	{
 		padding: 5px;
-		background-color: #f0f0f0;
 		cursor: default;
 	}
 	</ui:style>
 	<g:FocusPanel ui:field="panel_" styleName="{style.panel}">
-		<g:HorizontalPanel styleName="{style.outer}">
+		<g:HorizontalPanel styleName="{style.outer}" ui:field="outer_">
 			<g:cell width="93%">
 				<g:VerticalPanel styleName="{style.item}">
 					<g:HorizontalPanel styleName="{style.metadata}">

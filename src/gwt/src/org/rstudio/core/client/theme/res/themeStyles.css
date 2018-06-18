@@ -41,7 +41,7 @@
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens;
+@external rstudio-themes-background, rstudio-themes-inverts, rstudio-themes-scrollbars, rstudio-themes-darkens, rstudio-themes-border;
 @external rstudio-themes-dark-menus;
 
 @external rstudio-classic-inverts;
@@ -2465,6 +2465,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
    background: THEME_DEFAULT_BODY_BACKGROUND !important;
 }
 
+.rstudio-themes-flat .rstudio-themes-default .rstudio-themes-border,
 .rstudio-themes-flat .rstudio-themes-default table.header > tbody > tr > td,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-default .secondaryToolbar,
@@ -2521,6 +2522,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
    background: THEME_DARKGREY_BODY_BACKGROUND !important;
 }
 
+.rstudio-themes-flat .rstudio-themes-dark-grey .rstudio-themes-border,
 .rstudio-themes-flat .rstudio-themes-dark-grey table.header > tbody > tr > td,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-dark-grey .secondaryToolbar,
@@ -2580,6 +2582,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
    background: THEME_ALTERNATE_BODY_BACKGROUND !important;
 }
 
+.rstudio-themes-flat .rstudio-themes-alternate .rstudio-themes-border,
 .rstudio-themes-flat .rstudio-themes-alternate table.header > tbody > tr > td,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-alternate .secondaryToolbar,
