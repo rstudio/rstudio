@@ -53,6 +53,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudio;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -746,22 +747,39 @@ public class Application implements ApplicationEventHandlers
       return url;
    }
    
+   private void updateTheme(String themeName)
+   {
+      RStudioThemes.initializeThemes(
+            uiPrefs_.get(),
+            Document.get(),
+            rootPanel_.getElement());
+   
+      events_.fireEventToAllSatellites(new ThemeChangedEvent(themeName));
+   }
+   
    private void initializeWorkbench()
    {
       CommandWithArg<String> changedTheme = new CommandWithArg<String>()
       {
          public void execute(String theme)
          {
-            RStudioThemes.initializeThemes(uiPrefs_.get(),
-                                           Document.get(),
-                                           rootPanel_.getElement());
-
-            events_.fireEventToAllSatellites(new ThemeChangedEvent(theme));
+            updateTheme(theme);
+         }
+      };
+      
+      CommandWithArg<AceTheme> changedEditorTheme = new CommandWithArg<AceTheme>()
+      {
+         public void execute(AceTheme theme)
+         {
+            updateTheme(
+               RStudioThemes.suggestThemeFromAceTheme(
+                  theme,
+                  uiPrefs_.get().getFlatTheme().getGlobalValue()));
          }
       };
 
       uiPrefs_.get().getFlatTheme().bind(changedTheme);
-      uiPrefs_.get().theme().bind(changedTheme);
+      uiPrefs_.get().theme().bind(changedEditorTheme);
       changedTheme.execute(uiPrefs_.get().getFlatTheme().getValue());
 
       pAceThemes_.get();

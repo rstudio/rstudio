@@ -73,8 +73,8 @@ public abstract class SatelliteWindow extends Composite
       // specific satellites can opt in to full theming using `suportsThemes()`.
 
       String themeName = event.getName();
-{
-      if (!supportsThemes()) 
+      if (!supportsThemes())
+      {
          themeName = event.getName() != "classic" ? "default" : "classic";
       }
 
