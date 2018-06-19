@@ -227,18 +227,23 @@ wnd.desktopHooks.invokeCommand('%1');
    webPage()->runJavaScript(command);
 }
 
+namespace {
+
+void closeAllSatellites(QWidget* mainWindow)
+{
+   for (auto window: QApplication::topLevelWidgets())
+      if (window != mainWindow)
+         window->close();
+}
+
+} // end anonymous namespace
+
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
 #ifdef _WIN32
    if (eventHook_)
       ::UnhookWinEvent(eventHook_);
 #endif
-
-   if (!webPage())
-   {
-       pEvent->accept();
-       return;
-   }
 
    if (!geometrySaved_)
    {
@@ -250,6 +255,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        pCurrentSessionProcess_ == nullptr ||
        pCurrentSessionProcess_->state() != QProcess::Running)
    {
+      closeAllSatellites(this);
       pEvent->accept();
       return;
    }
@@ -264,6 +270,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
          LOG_ERROR_MESSAGE("Main window closed unexpectedly");
 
          // exit to avoid user having to kill/force-close the application
+         closeAllSatellites(this);
          QApplication::quit();
       }
       else
@@ -272,6 +279,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
                   QStringLiteral("window.desktopHooks.quitR()"),
                   [&](QVariant ignored)
          {
+            closeAllSatellites(this);
          });
       }
    });
