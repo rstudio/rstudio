@@ -138,7 +138,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     // ok so scan for R tools
     bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanRegistryForRTools(usingGcc49, &rTools);
+    error = core::r_util::scanForRTools(usingGcc49, &rTools);
     if (error)
     {
        LOG_ERROR(error);
