@@ -275,7 +275,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
-   bool isLocal = host == "localhost" || host == "127.0.0.1";
+   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1";
    
    // accept Chrome Developer Tools navigation attempts
 #ifndef NDEBUG
