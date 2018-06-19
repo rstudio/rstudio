@@ -70,7 +70,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
       
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, autoRemove, show);
+      addJob(name, status, group, progress, state, autoRemove, actionsSEXP, show);
 
    // return job id
    r::sexp::Protect protect;
@@ -191,6 +191,7 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
 
 SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP exportEnv)
 {
+   r::sexp::Protect protect;
    std::string filePath = r::sexp::safeAsString(path, "");
    if (filePath.empty())
    {
@@ -216,12 +217,40 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
       r::exec::error("The requested working directory '" + workingDir + "' does not exist.");
    }
 
+   std::string id;
    startScriptJob(ScriptLaunchSpec(
             module_context::resolveAliasedPath(filePath),
             r::sexp::safeAsString(encoding),
             module_context::resolveAliasedPath(workingDir),
             r::sexp::asLogical(importEnv),
-            r::sexp::safeAsString(exportEnv)));
+            r::sexp::safeAsString(exportEnv)), &id);
+
+   return r::sexp::create(id, &protect);
+}
+
+SEXP rs_stopScriptJob(SEXP sexpId)
+{
+   std::string id = r::sexp::safeAsString(sexpId);
+   Error error = stopScriptJob(id);
+   if (error.code() == boost::system::errc::no_such_file_or_directory)
+   {
+      r::exec::error("The script job '" + id + "' was not found.");
+   }
+   else if (error)
+   {
+      r::exec::error("Error while stopping script job: " + error.summary());
+   }
+   return R_NilValue;
+}
+
+SEXP rs_executeJobAction(SEXP sexpId, SEXP action)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(sexpId, &pJob))
+      return R_NilValue;
+
+   pJob->executeAction(r::sexp::safeAsString(action));
+
    return R_NilValue;
 }
 
@@ -263,6 +292,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    std::string encoding;
    bool importEnv;
    std::string exportEnv;
+   std::string id;
    Error error = json::readParams(request.params, &jobSpec);
    if (error)
       return error;
@@ -280,7 +310,10 @@ Error runScriptJob(const json::JsonRpcRequest& request,
             encoding,
             module_context::resolveAliasedPath(workingDir),
             importEnv,
-            exportEnv));
+            exportEnv), &id);
+
+   pResponse->setResult(id);
+
    return Success();
 }
 
@@ -316,6 +349,24 @@ Error setJobListening(const json::JsonRpcRequest& request,
    pJob->setListening(listening);
 
    return Success();
+}
+
+Error executeJobAction(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // extract params
+   std::string id;
+   std::string action;
+   Error error = json::readParams(request.params, &id, &action);
+   if (error)
+      return error;
+
+   // look up in cache
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(id, &pJob))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   return pJob->executeAction(action);
 }
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
@@ -366,6 +417,8 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
    RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
    RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
+   RS_REGISTER_CALL_METHOD(rs_stopScriptJob, 1);
+   RS_REGISTER_CALL_METHOD(rs_executeJobAction, 2);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));
@@ -380,6 +433,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
       (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
+      (bind(module_context::registerRpcMethod, "execute_job_action", executeJobAction))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 
    return initBlock.execute();

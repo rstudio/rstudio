@@ -5408,6 +5408,16 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void executeJobAction(String id, String action, 
+                                ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      params.set(1, new JSONString(action));
+      sendRequest(RPC_SCOPE, "execute_job_action", params, callback);
+   }
+
+   @Override
    public void startJob(JobLaunchSpec spec, 
                         ServerRequestCallback<Void> callback)
    {

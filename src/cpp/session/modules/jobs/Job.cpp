@@ -20,6 +20,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
+
 #include "Job.hpp"
 
 #define kJobId          "id"
@@ -55,6 +57,7 @@ Job::Job(const std::string& id,
          int max,
          JobState state,
          bool autoRemove,
+         SEXP actions,
          bool show):
    id_(id), 
    name_(name),
@@ -68,6 +71,7 @@ Job::Job(const std::string& id,
    completed_(0),
    autoRemove_(autoRemove),
    listening_(false),
+   actions_(actions),
    show_(show)
 {
    setState(state);
@@ -82,6 +86,7 @@ Job::Job():
    completed_(0),
    autoRemove_(true),
    listening_(false),
+   actions_(R_NilValue),
    show_(true)
 {
 }
@@ -123,6 +128,8 @@ JobState Job::state() const
 
 json::Object Job::toJson() const
 {
+   Error error;
+
    json::Object job;
 
    // fill out fields from local information
@@ -156,6 +163,21 @@ json::Object Job::toJson() const
 
    // amend running state description
    job["state_description"] = stateAsString(state_);
+
+   json::Array actions;
+
+   // if this job has custom actions, send the list to the client
+   if (!actions_.isNil())
+   {
+      std::vector<std::string> names;
+      error = r::sexp::getNames(actions_.get(), &names);
+      if (!error)
+      {
+         std::copy(names.begin(), names.end(), std::back_inserter(actions));
+      }
+   }
+
+   job["actions"] = actions;
 
    return job;
 }
@@ -407,6 +429,20 @@ JobState Job::stringAsState(const std::string& state)
    else if (state == kJobStateFailed)     return JobFailed;
 
    return JobInvalid;
+}
+
+Error Job::executeAction(const std::string& action)
+{
+   // find the action in the list of named actions
+   SEXP method = R_NilValue;
+   Error error = r::sexp::getNamedListSEXP(actions_.get(), action, &method);
+   if (error)
+      return error;
+
+   // ... and call it with our ID
+   r::exec::RFunction function(method);
+   function.addParam("id", id());
+   return function.call();
 }
 
 } // namepsace jobs

@@ -3,7 +3,6 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
-
 	.item
 	{
 		padding: 5px;
@@ -14,19 +13,23 @@
 	.metadata
 	{
 		width: 100%;
-		margin-bottom: 5px;
+		margin-bottom: 2px;
 		table-layout: fixed;
 	}
 	
 	.name
 	{
+		margin-top: -1px;
+		margin-left: 5px;
 		font-weight: bold;	
 	}
 	
 	.progressHost
 	{
 		width: 100%;	
+		padding: 2px;
 		margin-bottom: 3px;
+		padding-right: 12px;
 	}
 
 	.elapsed
@@ -46,6 +49,16 @@
 	.outer
 	{
 		width: 100%;
+		border-bottom: 1px solid;
+		padding-left: 10px;
+		padding-top: 8px;
+		padding-bottom: 8px;
+	}
+	
+	.panel
+	{
+		cursor: pointer;
+		outline: none;
 	}
 	
 	.select
@@ -59,33 +72,55 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	
+	.status
+	{
+		margin-left: 2px;
+	}
+	
+	.running
+	{
+		padding: 5px;
+		cursor: default;
+	}
 	</ui:style>
-	<g:FocusPanel>
-		<g:HorizontalPanel styleName="{style.outer}">
-			<g:cell width="95%">
+	<g:FocusPanel ui:field="panel_" styleName="{style.panel}">
+		<g:HorizontalPanel styleName="{style.outer}" ui:field="outer_">
+			<g:cell width="93%">
 				<g:VerticalPanel styleName="{style.item}">
 					<g:HorizontalPanel styleName="{style.metadata}">
-						<g:cell horizontalAlignment="ALIGN_LEFT" width="80%">
-							<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
-						</g:cell>
-						<g:cell horizontalAlignment="ALIGN_RIGHT" width="20%">
-							<g:Label ui:field="status_" styleName="{style.status}"></g:Label>
-						</g:cell>
-					</g:HorizontalPanel>
-					<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_">
-					</rw:ProgressBar>
-					<g:HorizontalPanel>
-						<g:cell verticalAlignment="ALIGN_MIDDLE">
+						<g:cell horizontalAlignment="ALIGN_LEFT" verticalAlignment="ALIGN_MIDDLE" width="20px">
 							<g:Image styleName="{style.state}" ui:field="state_"></g:Image>
 						</g:cell>
-						<g:cell verticalAlignment="ALIGN_MIDDLE">
+						<g:cell horizontalAlignment="ALIGN_LEFT" verticalAlignment="ALIGN_MIDDLE" width="80%">
+							<g:Label ui:field="name_" styleName="{style.name}"></g:Label>
+						</g:cell>
+						<g:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE" width="80px">
 							<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
 						</g:cell>
 					</g:HorizontalPanel>
+					<g:VerticalPanel styleName="{style.running}" ui:field="running_" width="100%">
+						<g:HorizontalPanel width="100%">
+							<g:cell verticalAlignment="ALIGN_MIDDLE" width="100%">
+								<g:VerticalPanel width="100%">
+									<g:cell>
+										<rw:ProgressBar styleName="{style.progressHost}" ui:field="progress_" height="10px">
+										</rw:ProgressBar>
+									</g:cell>
+								</g:VerticalPanel>
+							</g:cell>
+							<g:cell width="30px" horizontalAlignment="ALIGN_CENTER">
+								<rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+							</g:cell>
+						</g:HorizontalPanel>
+						<g:cell horizontalAlignment="ALIGN_LEFT" width="20%">
+							<g:Label ui:field="status_" styleName="{style.status}"></g:Label>
+						</g:cell>
+					</g:VerticalPanel>
 				</g:VerticalPanel>
 			</g:cell>
-			<g:cell width="5%" verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_RIGHT">
-				<g:Image styleName="{style.select}" ui:field="select_"></g:Image>
+			<g:cell width="7%" verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_CENTER">
+				<g:Image ui:field="select_"></g:Image>
 			</g:cell>
 		</g:HorizontalPanel>
 	</g:FocusPanel>

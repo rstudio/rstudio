@@ -16,22 +16,31 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class JobItem extends Composite
@@ -62,15 +71,33 @@ public class JobItem extends Composite
 
    public JobItem(final Job job)
    {
+      stop_ = new ToolbarButton(
+            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
+            {
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+            });
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
       select_.setResource(new ImageResource2x(RESOURCES.jobSelect()));
-      select_.addClickHandler(evt -> 
+      ClickHandler selectJob = evt -> 
       {
+         if (DomUtils.isDescendant(
+               Element.as(evt.getNativeEvent().getEventTarget()),
+               running_.getElement()))
+         {
+            // ignore clicks occurring inside the progress area
+            return;
+         }
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(
                new JobSelectionEvent(job.id, true, true));
-      });
+      };
+      select_.addClickHandler(selectJob);
+      panel_.addClickHandler(selectJob);
+      
+      running_.addStyleName("rstudio-themes-background");
+      outer_.addStyleName("rstudio-themes-border");
       
       update(job);
    }
@@ -84,12 +111,17 @@ public class JobItem extends Composite
       status_.setText(job.status);
       
       // show progress bar if the job is running
-      progress_.setVisible(
+      running_.setVisible(
             job.max > 0 && 
             job_.state == JobConstants.STATE_RUNNING);
       
+      // show stop button if job has a "stop" action, and is not completed
+      stop_.setVisible(
+            JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
+            job_.completed == 0);
+      
       // udpate progress bar if it's showing
-      if (progress_.isVisible())
+      if (running_.isVisible())
       {
          double percent = ((double)job.progress / (double)job.max) * 100.0;
          progress_.setProgress(percent);
@@ -150,4 +182,8 @@ public class JobItem extends Composite
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
+   @UiField VerticalPanel running_;
+   @UiField HorizontalPanel outer_;
+   @UiField FocusPanel panel_;
+   @UiField(provided=true) ToolbarButton stop_;
 }

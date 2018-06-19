@@ -128,3 +128,16 @@ test_that("jobs can be cleaned up", {
    expect_true(job9 %in% names(jobs))
    expect_false(job8 %in% names(jobs))
 })
+
+test_that("custom job actions are executed", {
+   mutable <- 0
+   job10 <- .rs.api.addJob(name = "job10", autoRemove = FALSE, running = TRUE,
+                           actions = list(
+                              mutate = function(id) { mutable <<- 1 }))
+   expect_equal(0, mutable)
+
+   # execute the custom action and validate that the value becomes what we want
+   .rs.api.executeJobAction(job10, "mutate")
+   expect_equal(1, mutable)
+})
+

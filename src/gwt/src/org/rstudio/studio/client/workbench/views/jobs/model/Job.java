@@ -15,6 +15,9 @@
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
 import jsinterop.annotations.JsType;
+
+import com.google.gwt.core.client.JsArrayString;
+
 import jsinterop.annotations.JsPackage;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
@@ -52,6 +55,9 @@ public class Job
    
    // the time the browser (client) received the job
    public int received;
+   
+   // the job's actions
+   public JsArrayString actions;
 
    // whether the job pane should should be shown at start
    public boolean show;

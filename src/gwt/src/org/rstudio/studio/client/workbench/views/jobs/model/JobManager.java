@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
@@ -52,6 +53,7 @@ import com.google.inject.Singleton;
 public class JobManager implements JobRefreshEvent.Handler,
                                    JobUpdatedEvent.Handler,
                                    JobRunScriptEvent.Handler,
+                                   JobExecuteActionEvent.Handler,
                                    SessionInitHandler
 {
    interface Binder extends CommandBinder<Commands, JobManager>
@@ -78,6 +80,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       events.addHandler(JobRefreshEvent.TYPE, this);
       events.addHandler(JobUpdatedEvent.TYPE, this);
       events.addHandler(JobRunScriptEvent.TYPE, this);
+      events.addHandler(JobExecuteActionEvent.TYPE, this);
    }
    
    // Event handlers ---------------------------------------------------------
@@ -128,6 +131,13 @@ public class JobManager implements JobRefreshEvent.Handler,
    public void onJobRunScript(JobRunScriptEvent event)
    {
       showJobLauncherDialog(event.path());
+   }
+
+   @Override
+   public void onJobExecuteAction(JobExecuteActionEvent event)
+   {
+      server_.executeJobAction(event.id(), event.action(), 
+            new VoidServerRequestCallback());
    }
 
    // Command handlers -------------------------------------------------------

@@ -33,6 +33,7 @@ public class ProgressBar extends Composite
    public ProgressBar()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      progress_.addStyleName("rstudio-themes-border");
    }
    
    public void setProgress(double percent)
