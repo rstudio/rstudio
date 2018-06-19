@@ -74,6 +74,7 @@
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
 * Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
+* R startup files (e.g. .Rprofile) are now always saved with trailing newlines (#3029)
 * Update embedded libclang to 5.0.2 (Windows only)
 * RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
 
