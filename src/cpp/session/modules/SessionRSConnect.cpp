@@ -90,16 +90,34 @@ public:
          const std::string& appTitle,
          const std::string& appId, 
          const std::string& contentCategory,
+         const std::string& caBundlePath,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
          bool diagnostics,
+         bool checkSslCerts,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
-      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
+      // lead command with download options and certificate check state
+      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; " 
+                      "options(rsconnect.check.certificate = " +
+                      (checkSslCerts ? "TRUE" : "FALSE") + "); ");
+
+      if (!caBundlePath.empty())
+      {
+         FilePath caBundleFile = module_context::resolveAliasedPath(caBundlePath);
+         if (caBundleFile.exists())
+         {
+            // if a valid bundle path was specified, use it
+            cmd += "options(rsconnect.ca.bundle = '" + 
+               string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
+                        caBundleFile.absolutePath())) +
+               "'); ";
+         }
+      }
 
       // create temporary file to host file manifest
       if (!fileList.empty())
@@ -272,14 +290,17 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       return error;
 
    // read publish settings
-   bool asMultiple = false, asStatic = false, diagnostics = false;
+   bool asMultiple = false, asStatic = false, diagnostics = false, checkSslCerts = true;
    json::Array deployFiles, additionalFiles, ignoredFiles;
+   std::string caBundlePath;
    error = json::readObject(settings, "deploy_files",     &deployFiles,
                                       "additional_files", &additionalFiles,
                                       "ignored_files",    &ignoredFiles,
                                       "as_multiple",      &asMultiple, 
                                       "as_static",        &asStatic,
-                                      "show_diagnostics", &diagnostics);
+                                      "show_diagnostics", &diagnostics,
+                                      "check_ssl_certs",  &checkSslCerts,
+                                      "ca_bundle_path",   &caBundlePath);
    if (error)
       return error;
 
@@ -293,10 +314,10 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       error = RSConnectPublish::create(sourceDir, deployFiles, 
                                        sourceFile, sourceDoc, 
                                        account, server, appName, appTitle, appId, 
-                                       contentCategory,
+                                       contentCategory, caBundlePath,
                                        additionalFiles,
                                        ignoredFiles, asMultiple,
-                                       asStatic, diagnostics,
+                                       asStatic, diagnostics, checkSslCerts,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;

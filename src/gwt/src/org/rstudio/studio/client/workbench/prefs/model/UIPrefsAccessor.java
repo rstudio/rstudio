@@ -581,7 +581,17 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_publish_diagnostics", false);
    }
-     
+   
+   public PrefValue<Boolean> publishCheckCertificates()
+   {
+      return bool("publish_check_certificates", true);
+   }
+   
+   public PrefValue<String> publishCABundle()
+   {
+      return string("publish_ca_bundle", "");
+   }
+   
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {
       return bool("rmd_chunk_output_inline", true);
