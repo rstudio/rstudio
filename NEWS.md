@@ -77,6 +77,7 @@
 * R startup files (e.g. .Rprofile) are now always saved with trailing newlines (#3029)
 * Update embedded libclang to 5.0.2 (Windows only)
 * RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
+* New SSL options for authenticating and publishing to RStudio Connect servers using self-signed certs or internal CAs (#3040)
 
 ### Bug Fixes
 
