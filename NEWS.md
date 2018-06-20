@@ -112,6 +112,7 @@
 * Fix issue on Windows with R dialogs showing behind RStudio window (#2901)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
+* Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
 
 ### RStudio Server Pro
 
