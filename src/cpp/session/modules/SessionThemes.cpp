@@ -53,6 +53,20 @@ const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
 // whether or not the theme is dark.
 typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
 
+bool strIsTrue(const std::string& toConvert)
+{
+   return std::regex_match(
+            std::string(toConvert),
+            std::regex("(?:1|t(?:rue)?))", std::regex_constants::icase));
+}
+
+bool strIsFalse(const std::string& toConvert)
+{
+   return std::regex_match(
+            std::string(toConvert),
+            std::regex("(?:0|f(?:alse)?))", std::regex_constants::icase));
+}
+
 /**
  * @brief Gets themes in the specified location.
  *
@@ -108,15 +122,11 @@ void getThemesInLocation(
             bool isDark = false;
             if (matches.size() >= 2)
             {
-               isDark = std::regex_match(
-                  std::string(matches[1]),
-                  std::regex("(?:1|t(?:rue)?))", std::regex_constants::icase));
+               isDark = strIsTrue(matches[1]);
             }
             if ((matches.size() < 2) ||
                 (!isDark &&
-                !std::regex_match(
-                   std::string(matches[1]),
-                   std::regex("(?:0|f(?:alse)?))", std::regex_constants::icase))))
+                !strIsFalse(matches[1])))
             {
                // TODO: warning / logging about using default isDark value.
             }
@@ -200,25 +210,83 @@ SEXP rs_getThemes()
    return rstudio::r::sexp::create(themeListBuilder, &protect);
 }
 
+FilePath getDefaultTheme(const http::Request& request)
+{
+   std::string isDarkStr = request.queryParamValue("dark");
+   bool isDark = strIsTrue(isDarkStr);
+   if (!isDark && !strIsFalse(isDarkStr))
+   {
+      // TODO: Error/warning/logging
+      // Note that this should be considered an internal error, since the request is generated
+      // by the client and without user input.
+   }
+
+   if (isDark)
+   {
+      return getDefaultThemePath().childPath("tomorrow_night.rstheme");
+   }
+   else
+   {
+      return getDefaultThemePath().childPath("textmate.rstheme");
+   }
+}
+
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
    std::string fileName = http::util::pathAfterPrefix(request, kDefaultThemeLocation);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
+   pResponse->setContentType("text/css");
 }
 
 void handleGlobalCustomThemeRequest(const http::Request& request,
                                           http::Response* pResponse)
 {
+   // Note: we probably want to return a warning code instead of success so the client has the
+   // ability to pop up a warning dialog or something to the user.
    std::string fileName = http::util::pathAfterPrefix(request, kGlobalCustomThemeLocation);
-   pResponse->setCacheableFile(getGlobalCustomThemePath().childPath(fileName), request);
+   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   pResponse->setCacheableFile(
+      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
+      request);
+   pResponse->setContentType("text/css");
 }
 
 void handleLocalCustomThemeRequest(const http::Request& request,
                                          http::Response* pResponse)
 {
+   // Note: we probably want to return a warning code instead of success so the client has the
+   // ability to pop up a warning dialog or something to the user.
    std::string fileName = http::util::pathAfterPrefix(request, kLocalCustomThemeLocation);
-   pResponse->setCacheableFile(getLocalCustomThemePath().childPath(fileName), request);
+   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   pResponse->setCacheableFile(
+      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
+      request);
+   pResponse->setContentType("text/css");
+}
+
+/**
+ * Gets the list of all the avialble themes for the client.
+ */
+Error getThemes(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   ThemeMap themes;
+   getAllThemes(themes);
+
+   // Convert the theme to a json array.
+   json::Array jsonThemeArray;
+   for (auto theme: themes)
+   {
+      json::Object jsonTheme;
+      jsonTheme["name"] = theme.first;
+      jsonTheme["url"] = theme.second.first;
+      jsonTheme["isDark"] = theme.second.second;
+      jsonThemeArray.push_back(jsonTheme);
+   }
+
+   pResponse->setResult(jsonThemeArray);
+   return Success();
 }
 
 } // anonymous namespace
@@ -233,6 +301,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionThemes.R"))
+      (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
       (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
