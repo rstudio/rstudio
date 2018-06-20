@@ -587,6 +587,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("publish_check_certificates", true);
    }
    
+   public PrefValue<Boolean> usePublishCABundle()
+   {
+      return bool("use_publish_ca_bundle", false);
+   }
+   
    public PrefValue<String> publishCABundle()
    {
       return string("publish_ca_bundle", "");

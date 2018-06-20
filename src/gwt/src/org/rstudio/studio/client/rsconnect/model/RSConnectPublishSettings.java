@@ -75,9 +75,13 @@ public class RSConnectPublishSettings
             JsArrayUtil.toJsArrayString(getIgnoredFiles()));
       obj.setBoolean("as_multiple", getAsMultiple());
       obj.setBoolean("as_static", getAsStatic());
-      obj.setBoolean("show_diagnostics", prefs.showPublishDiagnostics().getValue());
-      obj.setBoolean("check_ssl_certs", prefs.publishCheckCertificates().getValue());
-      obj.setString("ca_bundle_path", prefs.publishCABundle().getValue());
+      obj.setBoolean("show_diagnostics", 
+            prefs.showPublishDiagnostics().getValue());
+      obj.setBoolean("check_ssl_certs", 
+            prefs.publishCheckCertificates().getValue());
+      obj.setString("ca_bundle_path", 
+            prefs.usePublishCABundle().getValue() ? 
+               prefs.publishCABundle().getValue() : "");
       return obj.cast();
    }
 

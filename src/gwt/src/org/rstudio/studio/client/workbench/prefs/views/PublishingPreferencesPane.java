@@ -218,9 +218,15 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(checkboxPref("Check SSL certificates when publishing",
             uiPrefs_.publishCheckCertificates()));
       
-      caBundlePath_ = new FileChooserTextBox("Use custom CA bundle:",
-            "(none)", null, null);
+      CheckBox useCaBundle = checkboxPref("Use custom CA bundle",
+            uiPrefs_.usePublishCABundle());
+      useCaBundle.addValueChangeHandler(
+            val -> caBundlePath_.setVisible(val.getValue()));
+      add(useCaBundle);
+
+      caBundlePath_ = new FileChooserTextBox("", "(none)", null, null);
       caBundlePath_.setText(uiPrefs_.publishCABundle().getValue());
+      caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
       add(caBundlePath_);
 
       server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
