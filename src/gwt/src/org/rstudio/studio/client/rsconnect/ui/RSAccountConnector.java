@@ -139,7 +139,6 @@ public class RSAccountConnector implements
                   });
                   wizard.showModal();
                   found = true;
-                  closeAuthWindowWhenFinished(wizard);
                   break;
                }
             }
@@ -246,8 +245,6 @@ public class RSAccountConnector implements
             showingWizard_ = false;
          }
       });
-
-      closeAuthWindowWhenFinished(wizard);
    }
    
    private void processDialogResult(final NewRSConnectAccountResult input, 
@@ -388,23 +385,6 @@ public class RSAccountConnector implements
    }-*/;
    
    
-   private void closeAuthWindowWhenFinished(PopupPanel panel)
-   {
-      if (Desktop.isDesktop())
-      {
-         panel.addCloseHandler(new CloseHandler<PopupPanel>()
-         {
-            @Override
-            public void onClose(CloseEvent<PopupPanel> arg0)
-            {
-               // take down the auth window if it's still showing
-               Desktop.getFrame().closeNamedWindow(
-                     NewRSConnectAuthPage.AUTH_WINDOW_NAME);
-            }
-         });
-      }
-   }
-
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
