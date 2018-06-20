@@ -66,7 +66,12 @@ public class JobItem extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
-      name_.setHref("https://www.rstudio.com");
+
+      if (!StringUtil.isNullOrEmpty(job.url))
+      {
+         name_.setHref(job.url);
+      }
+
       select_.setResource(new ImageResource2x(RESOURCES.jobSelect()));
       select_.addClickHandler(evt -> 
       {

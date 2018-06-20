@@ -54,7 +54,8 @@ public:
        int max,
        JobState state,
        bool autoRemove,
-       bool show);
+       bool show,
+       const std::string& url);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -92,6 +93,9 @@ public:
 
    // whether the job pane should should be shown at start
    bool show() const;
+
+   // the job's details url (optional)
+   std::string url() const;
 
    // timing
    time_t recorded() const;
@@ -135,6 +139,7 @@ private:
    bool autoRemove_;
    bool listening_;
    bool show_;
+   std::string url_;
 };
 
 

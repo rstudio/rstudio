@@ -55,4 +55,7 @@ public class Job
 
    // whether the job pane should should be shown at start
    public boolean show;
+
+   // the job's details url (optional)
+   public String url;
 }

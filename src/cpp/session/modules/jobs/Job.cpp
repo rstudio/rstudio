@@ -33,6 +33,7 @@
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
 #define kJobShow        "show"
+#define kJobUrl         "url"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -55,7 +56,8 @@ Job::Job(const std::string& id,
          int max,
          JobState state,
          bool autoRemove,
-         bool show):
+         bool show,
+         const std::string& url):
    id_(id), 
    name_(name),
    status_(status),
@@ -68,7 +70,8 @@ Job::Job(const std::string& id,
    completed_(0),
    autoRemove_(autoRemove),
    listening_(false),
-   show_(show)
+   show_(show),
+   url_(url)
 {
    setState(state);
 }
@@ -82,7 +85,8 @@ Job::Job():
    completed_(0),
    autoRemove_(true),
    listening_(false),
-   show_(true)
+   show_(true),
+   url_("")
 {
 }
 
@@ -135,7 +139,8 @@ json::Object Job::toJson() const
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
-   job[kJobShow]  = static_cast<int64_t>(show_);
+   job[kJobShow]       = static_cast<int64_t>(show_);
+   job[kJobUrl]        = url_;
 
    // amend with computed elapsed time
    if (started_ >= recorded_ && started_ > completed_)
@@ -175,7 +180,8 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobStarted,   &started,
       kJobCompleted, &completed,
       kJobState,     &state,
-      kJobShow,      &pJob->show_);
+      kJobShow,      &pJob->show_,
+      kJobUrl,       &pJob->url_);
    if (error)
       return error;
 
@@ -265,6 +271,11 @@ time_t Job::completed() const
 bool Job::show() const
 {
    return show_;
+}
+
+std::string Job::url() const
+{
+   return url_;
 }
 
 FilePath Job::jobCacheFolder()

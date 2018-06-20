@@ -36,7 +36,8 @@ boost::shared_ptr<Job> addJob(
       int progress,
       JobState state,
       bool autoRemove,
-      bool show);
+      bool show,
+      const std::string& url);
 
 void removeJob(boost::shared_ptr<Job> pJob);
 
