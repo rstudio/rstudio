@@ -29,6 +29,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -65,6 +66,7 @@ public class JobItem extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
+      name_.setHref("https://www.rstudio.com");
       select_.setResource(new ImageResource2x(RESOURCES.jobSelect()));
       select_.addClickHandler(evt -> 
       {
@@ -148,6 +150,6 @@ public class JobItem extends Composite
    @UiField Image select_;
    @UiField Image state_;
    @UiField Label elapsed_;
-   @UiField Label name_;
+   @UiField Anchor name_;
    @UiField Label status_;
 }

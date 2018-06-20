@@ -755,7 +755,7 @@ public class Application implements ApplicationEventHandlers
                                            Document.get(),
                                            rootPanel_.getElement());
 
-            events_.fireEventToAllSatellites(new ThemeChangedEvent(theme));
+            events_.fireEventToAllSatellites(new ThemeChangedEvent());
          }
       };
 
