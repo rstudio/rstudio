@@ -26,7 +26,7 @@
 @external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
-@external editor_dark, editor_ligatures;
+@external editor_dark;
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
@@ -2036,10 +2036,6 @@ body.ubuntu_mono .searchBox {
    background-position: 2px center;
    background-image: ERRORDARK;
    background-size: 16px 14px;
-}
-
-.editor_ligatures .ace_editor {
-   text-rendering: optimizeLegibility;
 }
 
 .menuSubheader {

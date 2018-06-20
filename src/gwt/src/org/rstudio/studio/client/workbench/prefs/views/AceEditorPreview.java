@@ -95,11 +95,6 @@ public class AceEditorPreview extends DynamicIFrame
                         setFont(ThemeFonts.getFixedWidthFont());
                         body.appendChild(style);
 
-                        ligatureStyle_ = doc.createStyleElement();
-                        ligatureStyle_.setAttribute("type", "text/css");
-                        body.appendChild(ligatureStyle_);
-                        setUseLigatures(useLigatures_);
-
                         DivElement div = doc.createDivElement();
                         div.setId("editor");
                         div.getStyle().setWidth(100, Unit.PCT);
@@ -198,22 +193,10 @@ public class AceEditorPreview extends DynamicIFrame
          setFontSize(fontSize_);
    }
    
-   public void setUseLigatures(boolean use)
-   {
-      useLigatures_ = use;
-      if (!isFrameLoaded_)
-         return;
-
-      ligatureStyle_.setInnerText(".ace_editor { text-rendering: " +
-               (use ? "optimizeLegibility" : "auto")  + "; }");
-   }
- 
    private LinkElement currentStyleLink_;
-   private StyleElement ligatureStyle_;
    private boolean isFrameLoaded_;
    private String themeUrl_;
    private Double fontSize_;
    private Double zoomLevel_;
-   private boolean useLigatures_ = false;
    private final String code_;
 }
