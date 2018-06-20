@@ -305,6 +305,11 @@ Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTool
    std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
    FilePath buildDirRoot(systemDrive + "/RBuildTools");
 
+   // ensure it exists (may not exist if the user has not installed
+   // any copies of Rtools through RStudio yet)
+   if (!buildDirRoot.exists())
+      return Success();
+
    // find sub-directories
    std::vector<FilePath> buildDirs;
    Error error = buildDirRoot.children(&buildDirs);
