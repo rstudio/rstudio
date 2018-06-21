@@ -957,7 +957,7 @@
    
    if (apply)
    {
-      .rs.applyTheme(name)
+      .rs.applyTheme(name, .Call("rs_getThemes"))
    }
    
    name

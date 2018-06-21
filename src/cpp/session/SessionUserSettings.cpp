@@ -186,6 +186,13 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
    uiPrefs[pref] = prefValue;
    userSettings().setUiPrefs(uiPrefs);
 
+   // fire an event notifying the client that uiPrefs has changed
+   json::Object dataJson;
+   dataJson["type"] = "global";
+   dataJson["prefs"] = userSettings().uiPrefs();
+   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+   module_context::enqueClientEvent(event);
+
    return R_NilValue;
 }
 
