@@ -322,6 +322,11 @@ public class JobManager implements JobRefreshEvent.Handler,
          jobs.add(state_.getJob(id));
       return jobs;
    }
+
+   public Job getJob(String id)
+   {
+      return state_.getJob(id);
+   }
    
    public void promptForTermination(CommandWithArg<Boolean> onConfirmed)
    {
