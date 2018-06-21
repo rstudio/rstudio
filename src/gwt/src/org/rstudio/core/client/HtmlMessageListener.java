@@ -25,7 +25,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
@@ -55,11 +54,9 @@ public class HtmlMessageListener
             if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
             {
                AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-               String background = RStudioThemes.getBackground(editorTheme.getName());
-               String foreground = RStudioThemes.getForeground(editorTheme.getName());
 
                for (JavaScriptObject themeSource : themeSources_) {
-                  postThemeMessage(themeSource, themeOrigin_, background, foreground);
+                  postThemeMessage(themeSource, themeOrigin_);
                }
             }
          }
@@ -127,10 +124,7 @@ public class HtmlMessageListener
 
       AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
       if (editorTheme != null) {
-         String bakground = RStudioThemes.getBackground(editorTheme.getName());
-         String foreground = RStudioThemes.getForeground(editorTheme.getName());
-
-         postThemeMessage(source, themeOrigin_, bakground, foreground);
+         postThemeMessage(source, themeOrigin_);
       }
    }
 
@@ -164,11 +158,9 @@ public class HtmlMessageListener
       $wnd.addEventListener("message", handler, true);
    }-*/;
 
-   private native static void postThemeMessage(JavaScriptObject source, String origin, String background, String foreground) /*-{
+   private native static void postThemeMessage(JavaScriptObject source, String origin) /*-{
       source.postMessage({
-         message: "ontheme",
-         background: background,
-         foreground: foreground
+         message: "ontheme"
       }, origin);
    }-*/;
    
@@ -189,8 +181,6 @@ public class HtmlMessageListener
    private String url_;
    private boolean highlightAllowed_;
 
-   private String background_;
-   private String foreground_;
    private String themeOrigin_;
    private ArrayList<JavaScriptObject> themeSources_;
 }

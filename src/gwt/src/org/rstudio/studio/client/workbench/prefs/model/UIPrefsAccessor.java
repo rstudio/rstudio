@@ -355,7 +355,9 @@ public class UIPrefsAccessor extends Prefs
 
    public PrefValue<AceTheme> theme()
    {
-      return object("theme", AceTheme.createDefault());
+      // Prior to 1.2 this value was "theme". Since the object structure has changed, we've renamed
+      // it, and users upgrading will have to re-apply their desired theme.
+      return object("rstheme", AceTheme.createDefault());
    }
    
    public String getThemeErrorClass()

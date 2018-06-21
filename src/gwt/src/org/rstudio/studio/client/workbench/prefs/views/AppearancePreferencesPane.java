@@ -53,7 +53,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       res_ = res;
       uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
-      themeList_ = themes.getThemes();
       
       VerticalPanel leftPanel = new VerticalPanel();
       
@@ -175,7 +174,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             }
          });
          
-         // add padding beneath 
+         // add padding beneath
          useLigatures_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
 
@@ -198,12 +197,13 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
-      
-      String[] themeOptions = themeList_.keySet().toArray(new String[0]);
+   
       theme_ = new SelectWidget("Editor theme:",
-                                themeOptions,
-                                themes.getThemeNames(),
+                                new String[0],
+                                new String[0],
                                 false);
+      theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
+      theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          public void onChange(ChangeEvent event)
@@ -211,11 +211,8 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(themeList_.get(theme_.getValue()).getUrl());
          }
       });
-      theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
-      theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
       theme_.addStyleName(res.styles().themeChooser());
-      theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
-      
+   
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
 
@@ -238,6 +235,16 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(previewPanel);
 
       add(hpanel);
+   
+      
+      // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
+      // asynchronously too.
+      themes.getThemes(themeList -> {
+         themeList_ = themeList;
+         
+         theme_.setChoices(themeList_.keySet().toArray(new String[0]));
+         theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
+      });
    }
    
    

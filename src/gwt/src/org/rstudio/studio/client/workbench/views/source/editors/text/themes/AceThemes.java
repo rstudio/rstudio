@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 @Singleton
 public class AceThemes
@@ -57,11 +58,6 @@ public class AceThemes
             applyTheme(theme);
          }
       });
-   }
-
-   public String[] getThemeNames()
-   {
-      return getThemes().keySet().toArray(new String[0]);
    }
    
    private void applyTheme(Document document, final AceTheme theme)
@@ -124,34 +120,38 @@ public class AceThemes
       applyTheme(document, prefs_.get().theme().getValue());
    }
    
-   public HashMap<String, AceTheme> getThemes()
+   public void getThemes(Consumer<HashMap<String, AceTheme>> themeConsumer)
    {
-      HashMap<String, AceTheme> themes = new HashMap<>();
       themeServerOperations_.getThemes(new ServerRequestCallback<JsArray<AceTheme>>()
       {
          @Override
          public void onResponseReceived(JsArray<AceTheme> jsonThemeArray)
          {
+            HashMap<String, AceTheme> themes = new HashMap<>();
             int len = jsonThemeArray.length();
             for (int i = 0; i < len; ++i)
             {
                AceTheme theme = jsonThemeArray.get(i);
                themes.put(theme.getName(), theme);
             }
+            
+            // TODO: log a warning if len == 0?
+            themeConsumer.accept(themes);
          }
          
          @Override
          public void onError(ServerError error)
          {
+            // TODO: log a warning if possible
+            HashMap<String, AceTheme> themes = new HashMap<>();
             AceTheme defaultTheme = AceTheme.createDefault();
             themes.put(defaultTheme.getName(), defaultTheme);
+            themeConsumer.accept(themes);
          }
       });
-      
-      return themes;
    }
 
-   ThemeServerOperations themeServerOperations_;
+   private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
