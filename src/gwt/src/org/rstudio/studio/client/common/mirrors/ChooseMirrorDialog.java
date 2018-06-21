@@ -186,7 +186,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
          public void onResponseReceived(JsArray<CRANMirror> mirrors)
          {   
             // keep internal list of mirrors 
-            boolean haveInsecureMirror = false;
             mirrors_ = new ArrayList<CRANMirror>(mirrors.length());
             
             // create list box and select default item
@@ -204,8 +203,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                   mirrors_.add(mirror);
                   String item = mirrorSource_.getLabel(mirror);
                   String value = mirrorSource_.getURL(mirror);
-                  if (!value.startsWith("https"))
-                     haveInsecureMirror = true;
 
                   listBox_.addItem(item, value);
                }

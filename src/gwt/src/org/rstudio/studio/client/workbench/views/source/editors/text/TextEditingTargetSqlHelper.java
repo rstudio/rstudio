@@ -66,7 +66,6 @@ public class TextEditingTargetSqlHelper
    
    private SqlPreview parseSqlPreview()
    {
-      String code = "";
       String args = "";
       Boolean hasPreview = false;
 
@@ -90,14 +89,10 @@ public class TextEditingTargetSqlHelper
                }
             }
          }   
-         else
-         {
-            code += line + " ";
-         }
       }
       
       if (hasPreview) {
-         return new SqlPreview(args, code);
+         return new SqlPreview(args);
       } else {
          return null;
       }
@@ -106,14 +101,12 @@ public class TextEditingTargetSqlHelper
    
    private class SqlPreview 
    {
-      public SqlPreview(String args, String code)
+      public SqlPreview(String args)
       {
          this.args = args;
-         this.code = code;
       }
       
       public final String args;
-      public final String code;
    }
    
    private static final Pattern sqlPreviewPattern_ = 
