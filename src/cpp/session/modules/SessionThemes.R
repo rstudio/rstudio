@@ -818,11 +818,11 @@
 })
 
 .rs.addFunction("getThemeDirFromUrl", getThemeDirFromUrl <- function(url) {
-   if (grepl("^theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
+   if (grepl("^/theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
    {
       file.path(.rs.getThemeInstallDir(TRUE), basename(url))
    }
-   else if (grepl("^theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
+   else if (grepl("^/theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
    {
       file.path(.rs.getThemeInstallDir(FALSE), basename(url))
    }
@@ -973,7 +973,10 @@
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   themeValue <- list("name"= name, "isDark" = theme$isDark, "url" = theme$url)
+   themeValue <- list(
+      "name"= .rs.scalar(name),
+      "isDark" = .rs.scalar(theme$isDark),
+      "url" = .rs.scalar(theme$url))
    .rs.writeUiPref("rstheme", themeValue);
 })
 
