@@ -1,16 +1,11 @@
 @CHARSET "UTF-8";
 
-@external gwt-TextBox;
-
 .image {
    margin-right: 12px;
 }
 
-.grid {
-   width: 350px;
-}
-
 .label {
+   margin-bottom: 2px;
 }
 
 .invalidAPIName {
@@ -18,9 +13,5 @@
 }
 
 .apiNameTextBox {
-   width: 180px;
-}
-
-.textBox, .textBox .gwt-TextBox {
-	padding-left: 4px;
+   width: 250px;
 }
