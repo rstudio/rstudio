@@ -152,29 +152,6 @@ public class AppearancePreferencesPane extends PreferencesPane
          });
       }
 
-      // Ligatures are opt-in on desktop
-      if (Desktop.isDesktop())
-      {
-         // reduce padding on font face element to group with ligature check
-         fontFace_.getElement().getStyle().setMarginBottom(3, Unit.PX);
-         
-         // create checkbox for ligatures
-         useLigatures_ = new CheckBox("Use ligatures");
-         useLigatures_.setValue(uiPrefs.useLigatures().getValue());
-         leftPanel.add(useLigatures_);
-         useLigatures_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-         {
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> event)
-            {
-               preview_.setUseLigatures(event.getValue());
-            }
-         });
-         
-         // add padding beneath 
-         useLigatures_.getElement().getStyle().setMarginBottom(12, Unit.PX);
-      }
-
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
@@ -230,7 +207,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setWidth("278px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
-      preview_.setUseLigatures(uiPrefs.useLigatures().getValue());
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
@@ -269,14 +245,6 @@ public class AppearancePreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
-
-      if (useLigatures_ != null)
-      {
-         // restart required to re-render with ligatures
-         restartRequired |= 
-               useLigatures_.getValue() != uiPrefs_.useLigatures().getValue();
-         uiPrefs_.useLigatures().setGlobalValue(useLigatures_.getValue());
-      }
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
@@ -322,7 +290,6 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
-   private CheckBox useLigatures_;
    private final SelectWidget flatTheme_;
    private EventBus eventBus_;
    private Boolean relaunchRequired_;
