@@ -1,7 +1,7 @@
 /*
  * SessionRSConnect.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -94,12 +95,29 @@ public:
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
-         bool diagnostics,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
-      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
+      // lead command with download options and certificate check state
+      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; " 
+                      "options(rsconnect.check.certificate = " +
+                      (userSettings().publishCheckSslCerts() ? "TRUE" : "FALSE") + "); ");
+
+      if (userSettings().usePublishCABundle() && 
+          !userSettings().publishCABundlePath().empty())
+      {
+         FilePath caBundleFile = module_context::resolveAliasedPath(
+               userSettings().publishCABundlePath());
+         if (caBundleFile.exists())
+         {
+            // if a valid bundle path was specified, use it
+            cmd += "options(rsconnect.ca.bundle = '" + 
+               string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
+                        caBundleFile.absolutePath())) +
+               "'); ";
+         }
+      }
 
       // create temporary file to host file manifest
       if (!fileList.empty())
@@ -170,7 +188,7 @@ public:
                  (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
                     ignoredFiles + "'") + 
              ")" + 
-             (diagnostics ? ", logLevel = 'verbose'" : "") + 
+             (userSettings().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
              ")}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
@@ -272,14 +290,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       return error;
 
    // read publish settings
-   bool asMultiple = false, asStatic = false, diagnostics = false;
+   bool asMultiple = false, asStatic = false;
    json::Array deployFiles, additionalFiles, ignoredFiles;
    error = json::readObject(settings, "deploy_files",     &deployFiles,
                                       "additional_files", &additionalFiles,
                                       "ignored_files",    &ignoredFiles,
                                       "as_multiple",      &asMultiple, 
-                                      "as_static",        &asStatic,
-                                      "show_diagnostics", &diagnostics);
+                                      "as_static",        &asStatic);
    if (error)
       return error;
 
@@ -295,8 +312,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                                        account, server, appName, appTitle, appId, 
                                        contentCategory,
                                        additionalFiles,
-                                       ignoredFiles, asMultiple,
-                                       asStatic, diagnostics,
+                                       ignoredFiles, asMultiple, asStatic,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;
@@ -451,6 +467,55 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void applyPreferences()
+{
+   // push preference changes into rsconnect package options immediately, so that it's possible to
+   // use them without restarting R
+   r::options::setOption("rsconnect.check.certificate", userSettings().publishCheckSslCerts());
+   if (userSettings().usePublishCABundle())
+      r::options::setOption("rsconnect.ca.bundle", userSettings().publishCABundlePath());
+   else
+      r::options::setOption("rsconnect.ca.bundle", R_NilValue);
+}
+
+Error initializeOptions()
+{
+   SEXP checkSEXP = r::options::getOption("rsconnect.check.certificate");
+   if (checkSEXP == R_NilValue)
+   {
+      // no user defined setting for certificate checks; disable if requested for the session
+      if (!userSettings().publishCheckSslCerts())
+         r::options::setOption("rsconnect.check.certificate", false);
+   }
+   else
+   {
+      // the user has a setting defined; mirror it if it differs. this allows us to reflect the
+      // the current value of the option in our preferences, but also means that if you've set the
+      // option in e.g. .Rprofile then it wins over RStudio's setting in the end.
+      bool check = r::sexp::asLogical(checkSEXP);
+      if (userSettings().publishCheckSslCerts() != check)
+      {
+         userSettings().setPublishCheckSslCerts(check);
+      }
+   }
+
+   std::string caBundle = r::sexp::safeAsString(r::options::getOption("rsconnect.ca.bundle"));
+   if (caBundle.empty() && userSettings().usePublishCABundle())
+   {
+      // no user defined setting for CA bundle; inject a bundle if the user asked for one
+      r::options::setOption("rsconnect.ca.bundle", userSettings().publishCABundlePath());
+   }
+   else if (!caBundle.empty())
+   {
+      // promote user setting as above
+      userSettings().beginUpdate();
+      userSettings().setUsePublishCABundle(true);
+      userSettings().setPublishCABundlePath(caBundle);
+      userSettings().endUpdate();
+   }
+   
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -459,13 +524,16 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
+   module_context::events().onPreferencesSaved.connect(applyPreferences);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
       (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
       (bind(registerRpcMethod, "get_rmd_publish_details", getRmdPublishDetails))
-      (bind(sourceModuleRFile, "SessionRSConnect.R"));
+      (bind(sourceModuleRFile, "SessionRSConnect.R"))
+      (bind(initializeOptions));
 
    return initBlock.execute();
 }

@@ -231,6 +231,18 @@ public:
    bool reuseSessionsForProjectLinks() const;
    void setReuseSessionsForProjectLinks(bool reuse);
 
+   bool showPublishDiagnostics() const;
+   void setShowPublishDiagnostics(bool show);
+
+   bool publishCheckSslCerts() const;
+   void setPublishCheckSslCerts(bool check);
+
+   bool usePublishCABundle() const;
+   void setUsePublishCABundle(bool use);
+
+   std::string publishCABundlePath() const;
+   void setPublishCABundlePath(const std::string& path);
+
    void syncConsoleColorEnv() const;
 
 private:
@@ -279,6 +291,10 @@ private:
    mutable boost::scoped_ptr<int> pTerminalBusyMode_;
    mutable boost::scoped_ptr<core::json::Array> pTerminalBusyWhitelist_;
    mutable boost::scoped_ptr<bool> pShowRmdRenderCommand_;
+   mutable boost::scoped_ptr<bool> pShowPublishDiagnostics_;
+   mutable boost::scoped_ptr<bool> pPublishCheckSslCerts_;
+   mutable boost::scoped_ptr<bool> pPublishUseCABundle_;
+   mutable boost::scoped_ptr<std::string> pPublishCABundlePath_;
 
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;

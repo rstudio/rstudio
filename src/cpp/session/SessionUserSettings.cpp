@@ -422,6 +422,18 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool showRmdRenderCommand = readPref<bool>(prefs, "show_rmd_render_command", false);
    pShowRmdRenderCommand_.reset(new bool(showRmdRenderCommand));
 
+   bool showPublishDiagnostics = readPref<bool>(prefs, "show_publish_diagnostics", false);
+   pShowPublishDiagnostics_.reset(new bool(showPublishDiagnostics));
+
+   bool publishCheckSslCerts = readPref<bool>(prefs, "publish_check_certificates", true);
+   pPublishCheckSslCerts_.reset(new bool(publishCheckSslCerts));
+
+   bool publishUseCABundle = readPref<bool>(prefs, "use_publish_ca_bundle", true);
+   pPublishUseCABundle_.reset(new bool(publishUseCABundle));
+
+   std::string publishCABundlePath = readPref<std::string>(prefs, "publish_ca_bundle", "");
+   pPublishCABundlePath_.reset(new std::string(publishCABundlePath));
+
    core::json::Array defWhitelist;
    defWhitelist.push_back("tmux");
    defWhitelist.push_back("screen");
@@ -670,6 +682,46 @@ bool UserSettings::terminalTrackEnv() const
 bool UserSettings::showRmdRenderCommand() const
 {
    return readUiPref<bool>(pShowRmdRenderCommand_);
+}
+
+bool UserSettings::showPublishDiagnostics() const
+{
+   return readUiPref<bool>(pShowPublishDiagnostics_);
+}
+
+void UserSettings::setShowPublishDiagnostics(bool show)
+{
+   settings_.set("show_publish_diagnostics", show);
+}
+
+bool UserSettings::publishCheckSslCerts() const
+{
+   return readUiPref<bool>(pPublishCheckSslCerts_);
+}
+
+void UserSettings::setPublishCheckSslCerts(bool check)
+{
+   settings_.set("publish_check_certificates", check);
+}
+
+bool UserSettings::usePublishCABundle() const
+{
+   return readUiPref<bool>(pPublishUseCABundle_);
+}
+
+void UserSettings::setUsePublishCABundle(bool use)
+{
+   settings_.set("use_publish_ca_bundle", use);
+}
+
+std::string UserSettings::publishCABundlePath() const
+{
+   return readUiPref<std::string>(pPublishCABundlePath_);
+}
+
+void UserSettings::setPublishCABundlePath(const std::string& path)
+{
+   settings_.set("publish_ca_bundle", path);
 }
 
 core::system::busy_detection::Mode UserSettings::terminalBusyMode() const
@@ -956,7 +1008,6 @@ void UserSettings::setUseNewlineInMakefiles(bool useNewline)
    settings_.set(kUseNewlineInMakefiles, useNewline);
 }
 
-
 void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 {
    setWorkingDirectoryValue(kInitialWorkingDirectory, filePath);
@@ -967,7 +1018,6 @@ FilePath UserSettings::getWorkingDirectoryValue(const std::string& key) const
    return module_context::resolveAliasedPath(
             settings_.get(key, session::options().defaultWorkingDir()));
 }
-
 
 void UserSettings::setWorkingDirectoryValue(const std::string& key,
                                             const FilePath& filePath)
