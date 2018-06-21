@@ -32,6 +32,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -107,6 +108,7 @@ public class RStudio implements EntryPoint
    public void onModuleLoad() 
    {
       Debug.injectDebug();
+      maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
    }
    
@@ -157,9 +159,13 @@ public class RStudio implements EntryPoint
       };
    }
    
+   private static final native void maybeSetWindowName(String name)
+   /*-{
+      $wnd.name = $wnd.name || name;
+   }-*/;
+   
    private static final native void maybeDelayLoadApplication(RStudio rstudio)
    /*-{
-   	
       if ($wnd.qt)
       {
          // on the desktop main window, we may need to wait for Qt to finish
