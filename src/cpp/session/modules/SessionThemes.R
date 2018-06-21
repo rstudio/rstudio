@@ -967,12 +967,14 @@
 #
 # @param name     The name of the theme to apply.
 .rs.addFunction("applyTheme", applyTheme <- function(name, themeList) {
-   if (is.null(themeList[[name]]))
+   theme <- themeList[[name]]
+   if (is.null(theme))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   .rs.api.writePreference("theme", name);
+   themeValue <- list("name"= name, "isDark" = theme$isDark, "url" = theme$url)
+   .rs.writeUiPref("rstheme", themeValue);
 })
 
 # Removes a theme from RStudio. If the removed theme is the current theme, the current theme will be
