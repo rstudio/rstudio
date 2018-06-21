@@ -74,6 +74,7 @@ Error initialize();
 Error startup();
 Error reloadConfiguration();
 void shutdown();
+bool requireLocalR();
 
 } // namespace overlay
 } // namespace server
@@ -520,7 +521,7 @@ int main(int argc, char * const argv[])
       // happen after daemonize so that upstart script can correctly track us
       std::string errMsg;
       bool detected = r_environment::initialize(&errMsg);
-      if (!detected)
+      if (!detected && overlay::requireLocalR())
       {
          program_options::reportError(errMsg, ERROR_LOCATION);
          return EXIT_FAILURE;
