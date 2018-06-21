@@ -31,7 +31,6 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
-import org.rstudio.studio.client.plumber.model.PlumberViewerOptions;
 
 public class PlumberAPIPanel extends SatelliteFramePanel<RStudioFrame>
                              implements PlumberAPIPresenter.Display

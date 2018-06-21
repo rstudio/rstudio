@@ -16,7 +16,6 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDataActiveColumn;
 
 import com.google.gwt.core.client.JavaScriptObject;

@@ -18,8 +18,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 

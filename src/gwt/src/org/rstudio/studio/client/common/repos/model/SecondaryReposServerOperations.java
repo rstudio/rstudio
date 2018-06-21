@@ -14,10 +14,7 @@
  */
 package org.rstudio.studio.client.common.repos.model;
 
-import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-
-import com.google.gwt.core.client.JsArray;
 
 public interface SecondaryReposServerOperations
 {

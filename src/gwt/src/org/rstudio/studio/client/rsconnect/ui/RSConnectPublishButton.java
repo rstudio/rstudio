@@ -234,8 +234,6 @@ public class RSConnectPublishButton extends Composite
    
    public void setPlumberPreview(PlumberAPIParams params)
    {
-      String ext = params.getPath() == null ? "" :
-            FileSystemItem.getExtensionFromPath(params.getPath()).toLowerCase();
       setContentPath(params.getPath(), "");
       setContentType(RSConnect.CONTENT_TYPE_PLUMBER_API);
    }
