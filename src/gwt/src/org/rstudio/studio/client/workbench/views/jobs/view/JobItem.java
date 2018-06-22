@@ -67,6 +67,9 @@ public class JobItem extends Composite
 
       @Source("select_2x.png")
       ImageResource jobSelect();
+
+      @Source("info_2x.png")
+      ImageResource jobInfo();
    }
 
    public JobItem(final Job job)
@@ -80,7 +83,15 @@ public class JobItem extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
-      select_.setResource(new ImageResource2x(RESOURCES.jobSelect()));
+
+      ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobInfo());
+      if (JsArrayUtil.jsArrayStringContains(job.actions, "info"))
+      {
+         detailsImage = new ImageResource2x(RESOURCES.jobInfo());
+      }
+      
+      select_.setResource(detailsImage);
+
       ClickHandler selectJob = evt -> 
       {
          if (DomUtils.isDescendant(
