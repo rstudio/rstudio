@@ -1858,7 +1858,7 @@ test_that_wrapped("rs_getThemes gets default themes correctly", {
       expectedTheme <- defaultThemes[[themeName]]
       expect_equal(
          themeDetails$url,
-         paste0("theme/default/", expectedTheme$fileName, ".rstheme"),
+         paste0("/theme/default/", expectedTheme$fileName, ".rstheme"),
          info = infoStr)
       expect_equal(themeDetails$isDark, expectedTheme$isDark, info = infoStr)
    })
@@ -1874,8 +1874,8 @@ test_that_wrapped("rs_getThemes works correctly", {
       themeLocation <- if (isGlobal) file.path(globalInstallDir, fileName)
                        else file.path(localInstallDir, fileName)
       file.copy(file.path(inputFileLocation, "rsthemes", fileName), themeLocation)
-      addedThemes[[themeName]] <<- if (isGlobal) paste0("theme/custom/global/", fileName)
-                                   else paste0("theme/custom/local/", fileName)
+      addedThemes[[themeName]] <<- if (isGlobal) paste0("/theme/custom/global/", fileName)
+                                   else paste0("/theme/custom/local/", fileName)
       })
 
    themeList <- .Call("rs_getThemes")
@@ -1911,7 +1911,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
    dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
    expect_equal(
       dawnTheme$url,
-      paste0("theme/default/", defaultThemes[["Dawn"]]$fileName, ".rstheme"),
+      paste0("/theme/default/", defaultThemes[["Dawn"]]$fileName, ".rstheme"),
       info = "default location")
 
    # Install globally
@@ -1924,7 +1924,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
    dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
    expect_equal(
       dawnTheme$url,
-      paste0("theme/custom/global/", expectedDawn$fileName, ".rstheme"),
+      paste0("/theme/custom/global/", expectedDawn$fileName, ".rstheme"),
       info = "global location")
 
    # Install locally
@@ -1937,7 +1937,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
    dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
    expect_equal(
       dawnTheme$url,
-      paste0("theme/custom/local/", expectedDawn$fileName, ".rstheme"),
+      paste0("/theme/custom/local/", expectedDawn$fileName, ".rstheme"),
       info = "local location")
 },
 BEFORE_FUN = setThemeLocations,

@@ -803,7 +803,7 @@
          }
          else 
          {
-            installLocation <- file.path("etc", "rstudio", "themes")
+            installLocation <- file.path("/etc", "rstudio", "themes")
          }
       }
    }
@@ -859,7 +859,8 @@
       stop(
          "Unable to create the theme file in the requested location: ",
          location,
-         ". Please see above for relevant warnings.")
+         ". Please see above for relevant warnings.",
+         call. = FALSE)
    }
       
    cat(rsTheme, file = location)
@@ -870,7 +871,7 @@
    }
    else if (apply)
    {
-      stop("Invalid input: unable to apply a theme which has not been added.")
+      stop("Invalid input: unable to apply a theme which has not been added.", call. = FALSE)
    }
    
    name
@@ -920,15 +921,26 @@
       stop(
          "Unable to find a name for the new theme. Please check that the file \"",
          themePath,
-         "\" is valid.")
+         "\" is valid.",
+         call. = FALSE)
    }
    
    outputDir <- .rs.getThemeInstallDir(globally)
    if (!dir.exists(outputDir))
    {
+      if (globally)
+      {
+         stop(
+            "Unable to add the theme file. The global installation directory does not exist: \"",
+            outputDir,
+            "\".",
+            call. = FALSE)
+      }
       if (!dir.create(outputDir, recursive = TRUE))
       {
-         stop("Unable to create the theme file. Please check file system permissions.")
+         stop(
+            "Unable to add the theme file. Please check file system permissions.",
+            call. = FALSE)
       }
    }
 
@@ -938,7 +950,8 @@
       stop(
          "Unable to add the theme. A file with the same name, \"",
          fileName,
-         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.")
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
+         call. = FALSE)
    }
 
    if (!file.copy(
@@ -946,13 +959,13 @@
       addedTheme,
       overwrite = force))
    {
-      msg <- "Unable to create the theme file. Please check file system permissions"
+      msg <- "Unable to add the theme file. Please check file system permissions"
       if (!force)
       {
          msg <- paste0(msg, " or try again with `force = TRUE`.")
       }
       
-      stop(msg, ".")
+      stop(msg, ".", call. = FALSE)
    }
    
    if (apply)

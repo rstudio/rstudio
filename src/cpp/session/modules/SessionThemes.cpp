@@ -245,7 +245,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
    std::string fileName = http::util::pathAfterPrefix(request, kGlobalCustomThemeLocation);
-   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
