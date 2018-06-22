@@ -456,6 +456,15 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES "resources/CITATION"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # themes
+   file(GLOB THEME_RESOURCE_FILES "resources/themes/*.rstheme")
+   install(FILES ${THEME_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/themes)
+
+   # theme README
+   install(FILES "resources/themes/README.md"
+           DESTINATION "extras/themes/README.md")
+
    # R scripts
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")
    install(FILES ${R_MODULE_SRC_FILES}
