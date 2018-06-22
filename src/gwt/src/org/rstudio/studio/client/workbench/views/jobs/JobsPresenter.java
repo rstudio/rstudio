@@ -18,8 +18,8 @@ package org.rstudio.studio.client.workbench.views.jobs;
 import java.util.Arrays;
 import java.util.List;
 
-import org.rstudio.core.client.ArrayUtils;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -107,10 +107,10 @@ public class JobsPresenter extends BasePresenter
    public void onJobSelection(final JobSelectionEvent event)
    {
       Job job = pJobManager_.get().getJob(event.id());
-      if (ArrayUtils.contains(job.actions, "default"))
+      if (JsArrayUtil.jsArrayStringContains(job.actions, "info"))
       {
          if (event.selected())
-            eventBus_.fireEvent(new JobExecuteActionEvent(event.id(), "default"));
+            eventBus_.fireEvent(new JobExecuteActionEvent(event.id(), "info"));
       }
       else
       {
