@@ -193,7 +193,7 @@ public class FindOutputPresenter extends BasePresenter
             {
                String path = dialogState_.getPath();
                String projPath = projDir.getPath();
-               if (path.startsWith(projPath))
+               if ((path + "/").startsWith(projPath + "/"))
                {
                   object.setString("path", path.substring(projPath.length()));
                   object.setBoolean("projectRelative", true);
