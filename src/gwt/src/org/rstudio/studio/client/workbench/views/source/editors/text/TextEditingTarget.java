@@ -1439,6 +1439,13 @@ public class TextEditingTarget implements
                if (event.isSet())
                {
                   Breakpoint breakpoint = null;
+                 
+                  // don't set breakpoints in Plumber documents
+                  if (SourceDocument.isPlumberFile(extendedType_))
+                  {
+                     view_.showWarningBar("Breakpoints not supported in Plumber API files.");
+                     return;
+                  }
                   
                   // don't try to set breakpoints in unsaved code
                   if (isNewDoc())

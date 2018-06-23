@@ -757,7 +757,7 @@ public class TextEditingTargetWidget
 
    private boolean isPlumberFile()
    {
-      return extendedType_ != null && extendedType_ == SourceDocument.XT_PLUMBER_API;
+      return SourceDocument.isPlumberFile(extendedType_);
    }
 
    private boolean isTestFile()
