@@ -195,6 +195,10 @@
    cache <- .rs.explorer.getCache()
    entry <- cache[[id]]
    
+   # handle NULL entries (e.g. the cache somehow became out-of-sync)
+   if (is.null(entry))
+      return(NULL)
+   
    # get object (refreshing if requested). note that refreshes following a
    # restart may lose reference to the original object if e.g. the object lived
    # in the global environment but the global environment was not restored
