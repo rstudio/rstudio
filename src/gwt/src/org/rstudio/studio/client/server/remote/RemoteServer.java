@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -1423,7 +1424,11 @@ public class RemoteServer implements Server
    {
       if (Desktop.isDesktop())
       {
-         return "file://" + resolveAliasedPath(file);
+         String prefix = BrowseCap.isWindowsDesktop()
+               ? "file:///"
+               : "file://";
+
+         return prefix + resolveAliasedPath(file);
       }
       else if (!file.isDirectory())
       {
