@@ -25,7 +25,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerEditingTargetWidget;
@@ -90,8 +89,6 @@ public class ObjectExplorerEditingTarget
    public void onDismiss(int dismissType)
    {
       super.onDismiss(dismissType);
-      
-      server_.explorerEndInspect(getHandle().getId(), new VoidServerRequestCallback());
    }
    
    @Override
