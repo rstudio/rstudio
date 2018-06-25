@@ -174,6 +174,11 @@ public class SourceDocument extends JavaScriptObject
       return this.read_only_alternatives;
    }-*/;
    
+   public static boolean isPlumberFile(String extendedType)
+   {
+      return extendedType != null && extendedType == SourceDocument.XT_PLUMBER_API;
+   }
+   
    public final static String XT_RMARKDOWN = "rmarkdown";
    public final static String XT_SHINY_PREFIX = "shiny-";
    public final static String XT_SHINY_DIR = "shiny-dir";
