@@ -34,6 +34,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
@@ -623,28 +626,58 @@ public class DomUtils
                                boolean siblings, 
                                NodePredicate filter)
    {
+      List<Node> results = findNodes(start, 1, recursive, siblings, filter);
+      if (results.isEmpty())
+         return null;
+      return results.get(0);
+   }
+   
+   /**
+    * Finds all the nodes that match the predicate.
+    * 
+    * @param start The node from which to start.
+    * @param max The maximum number of nodes to find.
+    * @param recursive If true, recurses into child nodes.
+    * @param siblings If true, looks at the next sibling from "start".
+    * @param filter The predicate that determines a match.
+    * @return The first matching node encountered in documented order, or null.
+    */
+   public static List<Node> findNodes(Node start,
+                                      int max,
+                                      boolean recursive,
+                                      boolean siblings,
+                                      NodePredicate filter)
+   {
+      List<Node> results = new ArrayList<Node>();
+      int remaining = 0;
+      
       if (start == null)
-         return null ;
+         return results;
       
       if (filter.test(start))
-         return start ;
+      {
+         results.add(start);
+         if (results.size() >= max)
+            return results;
+      }
       
       if (recursive)
       {
-         Node result = findNode(start.getFirstChild(), true, true, filter) ;
-         if (result != null)
-            return result ;
+         remaining = max - results.size();
+         List<Node> matched = findNodes(start.getFirstChild(), remaining,
+               true, true, filter);
+         results.addAll(matched);
       }
       
-      if (siblings)
+      if (siblings && results.size() < max)
       {
-         Node result = findNode(start.getNextSibling(), recursive, true, 
-                                filter) ;
-         if (result != null)
-            return result ;
+         remaining = max - results.size();
+         List<Node> matched = findNodes(start.getNextSibling(), remaining,
+               recursive, true, filter);
+         results.addAll(matched);
       }
       
-      return null ;
+      return results;
    }
 
    /**
