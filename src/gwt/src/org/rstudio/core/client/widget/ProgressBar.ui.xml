@@ -2,11 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
-
-	@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
-
-	@external rstudio-themes-dark;
-
 	.progressHost
 	{
 		width: 100%;	
@@ -14,7 +9,7 @@
 	
 	.progress
 	{
-		border: 1px solid THEME_DEFAULT_BORDER;
+		border: 1px solid;
 		border-radius: 3px;
 		position: relative;
 		width: 100%;
@@ -29,11 +24,6 @@
 		background-color: #68C13C;
 	}
 	
-	.rstudio-themes-dark .progress
-	{
-		border: 1px solid THEME_DARKGREY_BORDER;
-	}
-
 	.rstudio-themes-dark .bar
 	{
 		background-color: #058005;

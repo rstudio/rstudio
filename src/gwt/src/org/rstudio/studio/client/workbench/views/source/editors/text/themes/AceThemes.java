@@ -79,11 +79,6 @@ public class AceThemes
          document.getBody().removeClassName("editor_dark");
          
       
-      if (prefs_.get().useLigatures().getValue())
-         document.getBody().addClassName("editor_ligatures");
-      else
-         document.getBody().removeClassName("editor_ligatures");
-      
       // Deferred so that the browser can render the styles.
       new Timer()
       {

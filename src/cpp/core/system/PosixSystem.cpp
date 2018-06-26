@@ -77,6 +77,7 @@
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/FileScanner.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixGroup.hpp>
 #include <core/system/Process.hpp>
@@ -543,7 +544,7 @@ Error closeFileDescriptorsFrom(int fdStart)
 }
 #else
 // read the file descriptors from a virtual directory listing,
-// iteratore over them and close - much faster than the above method
+// iterate over them and close - much faster than the above method
 Error closeFileDescriptorsFrom(int fdStart)
 {
    std::vector<unsigned int> fds;
@@ -566,40 +567,46 @@ Error closeFileDescriptorsFrom(int fdStart)
 
 } // anonymous namespace
 
-Error getOpenFds(std::vector<unsigned int>* pFds)
+Error getOpenFds(std::vector<uint32_t>* pFds)
 {
    return getOpenFds(getpid(), pFds);
 }
 
 #ifndef __APPLE__
-Error getOpenFds(pid_t pid, std::vector<unsigned int>* pFds)
+Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds)
 {
    std::string pidStr = safe_convert::numberToString(pid);
    boost::format fmt("/proc/%1%/fd");
-   FilePath fdDir = FilePath(boost::str(fmt % pidStr));
+   FilePath filePath(boost::str(fmt % pidStr));
 
-   std::vector<FilePath> children;
-   Error error = fdDir.children(&children);
+   // note: we use a FileScanner to list the pids instead of using boost
+   // (FilePath class), because there is a bug in boost filesystem where
+   // directory iterators can segfault under heavy load while reading the /proc filesystem
+   // there aren't many details on this, but see https://svn.boost.org/trac10/ticket/10450
+   core::system::FileScannerOptions options;
+   options.recursive = false;
+
+   tree<FileInfo> subDirs;
+   Error error = core::system::scanFiles(core::toFileInfo(filePath), options, &subDirs);
    if (error)
       return error;
 
-   for (const FilePath& child : children)
+   for (const FileInfo& info : subDirs)
    {
-      boost::optional<unsigned int> fd = safe_convert::stringTo<unsigned int>(child.filename());
+      FilePath path(info.absolutePath());
+
+      boost::optional<uint32_t> fd = safe_convert::stringTo<uint32_t>(path.filename());
       if (fd)
       {
          pFds->push_back(fd.get());
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE("Invalid fd filename: " + child.absolutePath());
       }
    }
 
    return Success();
 }
+
 #else
-Error getOpenFds(pid_t pid, std::vector<unsigned int> *pFds)
+Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
 {
    // get size of the buffer needed to hold the list of fds
    int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
@@ -634,27 +641,31 @@ Error closeNonStdFileDescriptors()
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
 
-Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, unsigned int fdStart)
+Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart)
 {
    std::size_t written;
 
-   std::vector<unsigned int> fds;
+   std::vector<uint32_t> fds;
    Error error = getOpenFds(childPid, &fds);
    if (!error)
    {
-      for (unsigned int fd : fds)
+      for (uint32_t fd : fds)
       {
-
          error = posixCall<std::size_t>(boost::bind(::write,
                                                     pipeFd,
                                                     &fd,
                                                     4),
                                         ERROR_LOCATION,
                                         &written);
+
          if (error)
+         {
             return error;
+         }
       }
    }
+   else
+      LOG_ERROR(error);
 
    // write message close (-1) even if we failed to retrieve pids above
    // this prevents the child from being stuck in limbo or interpreting its
@@ -667,8 +678,10 @@ Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, unsigned int fdS
                                              ERROR_LOCATION,
                                              &written);
 
-   if (error)
+   if (closeError)
+   {
       return error;
+   }
 
    return closeError;
 }
@@ -677,9 +690,20 @@ namespace signal_safe {
 
 namespace {
 
+void safeClose(uint32_t fd)
+{
+   while (::close(fd) == -1)
+   {
+      // keep trying the close operation if it was interrupted
+      // otherwise, the file descriptor is not open, so return
+      if (errno != EINTR)
+         break;
+   }
+}
+
 // worst case scenario - close all file descriptors possible
 // this can be EXTREMELY slow when max fd is set to a high value
-void closeFileDescriptorsFromSafe(unsigned int fdStart, rlim_t fdLimit)
+void closeFileDescriptorsFromSafe(uint32_t fdStart, rlim_t fdLimit)
 {
    // safe function is best effort - swallow all errors
    // this is necessary when invoked in a signal handler or
@@ -689,52 +713,64 @@ void closeFileDescriptorsFromSafe(unsigned int fdStart, rlim_t fdLimit)
       fdLimit = 1024; // default on linux
 
    // close file descriptors
-   for (unsigned int i = fdStart; i < fdLimit; ++i)
+   for (uint32_t i = fdStart; i < fdLimit; ++i)
    {
-      ::close(i);
+      safeClose(i);
    }
 }
 
 } // anonymous namespace
 
-void closeNonStdFileDescriptors(unsigned int fdLimit)
+void closeNonStdFileDescriptors(rlim_t fdLimit)
 {
    closeFileDescriptorsFromSafe(STDERR_FILENO+1, fdLimit);
 }
 
-void closeFileDescriptorsFromParent(int pipeFd, unsigned int fdStart, rlim_t fdLimit)
+void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit)
 {
    // read fds that we own from parent process pipe until we've read them all
    // the parent must give us this list because we cannot fetch it ourselves
    // in a signal-safe way, but we can read from the pipe safely
-   bool readDescriptors = false;
+   bool error = false;
 
-   char buffer[4];
+   int32_t buff;
    while (true)
    {
-      ssize_t bytesRead = ::read(pipeFd, buffer, 4);
+      ssize_t bytesRead = ::read(pipeFd, &buff, 4);
 
       // check for error
       if (bytesRead == -1 || bytesRead == 0)
-         break;
+      {
+         if (errno != EINTR &&
+             errno != EAGAIN)
+         {
+            error = true;
+            break;
+         }
+
+         continue;
+      }
 
       // determine which fd was just read from the parent
-      int res = static_cast<int>(*buffer);
-      if (res == -1)
+      if (buff == -1)
+      {
          break; // indicates no more fds are open by the process
+      }
 
-      readDescriptors = true;
-      unsigned int fd = static_cast<unsigned int>(res);
+      uint32_t fd = static_cast<uint32_t>(buff);
 
       // close the reported fd if it is in range
-      if (fd >= fdStart && fd < fdLimit)
-         ::close(fd);
+      if (fd >= fdStart && fd < fdLimit && buff != pipeFd)
+         safeClose(fd);
    }
 
    // if no descriptors could be read from the parent for whatever reason,
    // fall back to the slow close method detailed above
-   if (!readDescriptors)
-      closeFileDescriptorsFromSafe(fdStart, fdLimit);
+   if (error)
+   {
+      closeFileDescriptorsFromSafe(fdStart, pipeFd);
+      closeFileDescriptorsFromSafe(pipeFd + 1, fdLimit);
+   }
 }
 
 } // namespace signal_safe

@@ -1439,6 +1439,13 @@ public class TextEditingTarget implements
                if (event.isSet())
                {
                   Breakpoint breakpoint = null;
+                 
+                  // don't set breakpoints in Plumber documents
+                  if (SourceDocument.isPlumberFile(extendedType_))
+                  {
+                     view_.showWarningBar("Breakpoints not supported in Plumber API files.");
+                     return;
+                  }
                   
                   // don't try to set breakpoints in unsaved code
                   if (isNewDoc())
@@ -2652,7 +2659,15 @@ public class TextEditingTarget implements
             ? prefs_.autoAppendNewline().getValue()
             : projConfig_.ensureTrailingNewline();
             
-      if (autoAppendNewline || fileType_.isPython())
+      // auto-append newlines for commonly-used R startup files
+      String path = StringUtil.notNull(docUpdateSentinel_.getPath());
+      boolean isStartupFile =
+            path.endsWith("/.Rprofile") ||
+            path.endsWith("/.Rprofile.site") ||
+            path.endsWith("/.Renviron") ||
+            path.endsWith("/.Renviron.site");
+      
+      if (autoAppendNewline || isStartupFile || fileType_.isPython())
       {
          String lastLine = docDisplay_.getLine(lineCount - 1);
          if (lastLine.length() != 0)
@@ -4703,8 +4718,12 @@ public class TextEditingTarget implements
       executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
    }
    
-   public void executeChunks(final Position position, int which)
+   public void executeChunks(Position position, int which)
    {
+      // null implies we should use current cursor position
+      if (position == null)
+         position = docDisplay_.getSelectionStart();
+      
       if (docDisplay_.showChunkOutputInline())
       {
          executeChunksNotebookMode(position, which);
@@ -4734,6 +4753,7 @@ public class TextEditingTarget implements
       final String code = builder.toString().trim();
       if (fileType_.isRmd())
       {
+         final Position positionFinal = position;
          docUpdateSentinel_.withSavedDoc(new Command()
          {
             @Override
@@ -4749,7 +4769,7 @@ public class TextEditingTarget implements
                         {
                            // compute the language for this chunk
                            String language = "R";
-                           if (DocumentMode.isPositionInPythonMode(docDisplay_, position))
+                           if (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
                               language = "Python";
 
                            events_.fireEvent(new SendToConsoleEvent(code, language, true));

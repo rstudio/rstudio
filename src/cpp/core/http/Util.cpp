@@ -36,6 +36,10 @@
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
+#ifndef _WIN32
+#include <core/http/BoostAsioSsl.hpp>
+#endif
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -527,6 +531,26 @@ bool isWSUpgradeRequest(const Request& request)
    std::string connection = request.headerValue("Connection");
    return boost::regex_search(connection, upgrade);
 }
+
+#ifndef _WIN32
+bool isSslShutdownError(const boost::system::error_code& ec)
+{
+   // boost returns "short_read" when the peer calls SSL_shutdown()
+#ifdef SSL_R_SHORT_READ
+   // OpenSSL 1.0.0
+   return ec.category() == boost::asio::error::get_ssl_category() &&
+          ec.value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
+#else
+   // OpenSSL 1.1.0
+   return ec == boost::asio::ssl::error::stream_truncated;
+#endif
+}
+#else
+bool isSslShutdownError(const boost::system::error_code& ec)
+{
+   return false;
+}
+#endif
 
 } // namespace util
 

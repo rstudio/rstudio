@@ -27,7 +27,7 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage*
     gwtCallback_(pMainWindow, this),
     close_(CloseStageOpen)
 {
-   setAttribute(Qt::WA_QuitOnClose, false);
+   setAttribute(Qt::WA_QuitOnClose, true);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));

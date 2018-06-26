@@ -557,9 +557,14 @@ std::string sessionPort()
    return s_options.sessionPort;
 }
 
-std::string rCRANRepos()
+std::string rCRANUrl()
 {
-   return s_options.rCRANRepos;
+   return s_options.rCRANUrl;
+}
+
+std::string rCRANSecondary()
+{
+   return s_options.rCRANSecondary;
 }
 
 bool useInternet2()

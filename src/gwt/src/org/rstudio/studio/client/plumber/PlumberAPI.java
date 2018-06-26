@@ -46,7 +46,6 @@ import org.rstudio.studio.client.workbench.views.environment.events.DebugModeCha
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;

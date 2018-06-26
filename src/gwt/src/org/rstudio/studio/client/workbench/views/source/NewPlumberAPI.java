@@ -41,7 +41,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -189,25 +188,17 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       // Create individual widgets
       apiNameLabel_ = new Label("API name:");
       apiNameLabel_.addStyleName(RES.styles().label());
+      controls_.add(apiNameLabel_);
       
       apiNameTextBox_ = new TextBox();
       apiNameTextBox_.getElement().setAttribute("spellcheck", "false");
-      apiNameTextBox_.addStyleName(RES.styles().textBox());
       apiNameTextBox_.addStyleName(RES.styles().apiNameTextBox());
       apiNameTextBox_.getElement().setAttribute("placeholder", "Name");
       addTextFieldValidator(apiNameTextBox_);
+      controls_.add(apiNameTextBox_);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
       directoryChooserTextBox_.setText(defaultParentDirectory());
-      directoryChooserTextBox_.addStyleName(RES.styles().textBox());
-      
-      // Add them to parent
-      Grid apiNameTypeGrid = new Grid(2, 2);
-      apiNameTypeGrid.addStyleName(RES.styles().grid());
-      apiNameTypeGrid.setWidget(0, 0, apiNameLabel_);
-      apiNameTypeGrid.setWidget(0, 1, apiNameTextBox_);
-      
-      controls_.add(apiNameTypeGrid);
   
       controls_.add(new VerticalSpacer("12px"));
       controls_.add(directoryChooserTextBox_);
@@ -313,11 +304,9 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    public interface Styles extends CssResource
    {
       String image();
-      String grid();
       String label();
       String invalidAPIName();
       String apiNameTextBox();
-      String textBox();
    }
 
    public interface Resources extends ClientBundle

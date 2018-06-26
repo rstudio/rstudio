@@ -1,7 +1,7 @@
 #
 # FindLibR.cmake
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -116,14 +116,9 @@ else()
       set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
       set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
 
-      # set library hint path based on whether  we are doing a special session 64 build
-      if(LIBR_FIND_WINDOWS_64BIT)
-         set(LIBR_ARCH "x64")
-         set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
-      else()
-         set(LIBR_ARCH "i386")
-         set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/i386")
-      endif()
+      # set library hint path for 64-bit build
+      set(LIBR_ARCH "x64")
+      set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
 
       # call dll2lib.R to ensure export files are generated
       execute_process(

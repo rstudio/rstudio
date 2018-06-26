@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.plumber.model;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
 import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 public interface PlumberServerOperations
 {

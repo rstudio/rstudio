@@ -1940,9 +1940,12 @@ SEXP rs_addRToolsToPath()
     s_previousPath = core::system::getenv("PATH");
     std::string newPath = s_previousPath;
     std::string warningMsg;
-    module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
+    bool result = module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
+    if (!warningMsg.empty())
+       REprintf("%s\n", warningMsg.c_str());
     core::system::setenv("PATH", newPath);
-
+    r::sexp::Protect protect;
+    return r::sexp::create(result, &protect);
 #endif
     return R_NilValue;
 }

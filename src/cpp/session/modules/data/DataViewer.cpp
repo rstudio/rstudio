@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -328,7 +328,9 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
 // data items are used both as the payload for the client event that opens an
 // editor viewer tab and as a server response when duplicating that tab's
 // contents
-json::Value makeDataItem(SEXP dataSEXP, const std::string& caption, 
+json::Value makeDataItem(SEXP dataSEXP, 
+                         const std::string& expr,
+                         const std::string& caption, 
                          const std::string& objName, const std::string& envName, 
                          const std::string& cacheKey, int preview)
 {
@@ -337,6 +339,7 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
 
    // fire show data event
    json::Object dataItem;
+   dataItem["expression"] = expr;
    dataItem["caption"] = caption;
    dataItem["totalObservations"] = nrow;
    dataItem["displayedObservations"] = nrow;
@@ -353,8 +356,8 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
    return dataItem;
 }
 
-SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
-                 SEXP cacheKeySEXP, SEXP previewSEXP)
+SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP, 
+                 SEXP envSEXP, SEXP cacheKeySEXP, SEXP previewSEXP)
 {    
    try
    {
@@ -405,7 +408,9 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       int preview = r::sexp::asLogical(previewSEXP) ? 1 : 0;
 
       json::Value dataItem = makeDataItem(dataSEXP, 
-            r::sexp::asString(captionSEXP), objName, envName, cacheKey, preview);
+            r::sexp::safeAsString(exprSEXP),
+            r::sexp::safeAsString(captionSEXP), 
+            objName, envName, cacheKey, preview);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -1000,7 +1005,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
    methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 6;
+   methodDef.numArgs = 7;
    r::routines::addCallMethod(methodDef);
 
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);

@@ -63,6 +63,7 @@ const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
 const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
+const char * const kCRANMirrorRepos = "cranMirrorRepos";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
 const char * const kCRANMirrorChanged = "cranMirrorChanged";
 const char * const kBioconductorMirrorName = "bioconductorMirrorName";
@@ -95,12 +96,12 @@ T readPref(const json::Object& prefs,
    return value;
 }
 
-void setCRANReposOption(const std::string& url)
+ void setCRANReposOption(const std::string& url, const std::string& secondary)
 {
    if (!url.empty())
    {
       Error error = r::exec::RFunction(".rs.setCRANReposFromSettings",
-                                       url).call();
+                                       url, secondary).call();
       if (error)
          LOG_ERROR(error);
    }
@@ -281,7 +282,7 @@ void UserSettings::onSettingsFileChanged(
    // set underlying R repos options
    std::string cranMirrorURL = cranMirror().url;
    if (!cranMirrorURL.empty())
-      setCRANReposOption(cranMirrorURL);
+      setCRANReposOption(cranMirrorURL, cranMirror().secondary);
    std::string bioconductorMirrorURL = settings_.get(kBioconductorMirrorUrl);
    if (!bioconductorMirrorURL.empty())
       setBioconductorReposOption(bioconductorMirrorURL);
@@ -427,6 +428,18 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    bool showRmdRenderCommand = readPref<bool>(prefs, "show_rmd_render_command", false);
    pShowRmdRenderCommand_.reset(new bool(showRmdRenderCommand));
+
+   bool showPublishDiagnostics = readPref<bool>(prefs, "show_publish_diagnostics", false);
+   pShowPublishDiagnostics_.reset(new bool(showPublishDiagnostics));
+
+   bool publishCheckSslCerts = readPref<bool>(prefs, "publish_check_certificates", true);
+   pPublishCheckSslCerts_.reset(new bool(publishCheckSslCerts));
+
+   bool publishUseCABundle = readPref<bool>(prefs, "use_publish_ca_bundle", true);
+   pPublishUseCABundle_.reset(new bool(publishUseCABundle));
+
+   std::string publishCABundlePath = readPref<std::string>(prefs, "publish_ca_bundle", "");
+   pPublishCABundlePath_.reset(new std::string(publishCABundlePath));
 
    core::json::Array defWhitelist;
    defWhitelist.push_back("tmux");
@@ -600,9 +613,18 @@ void UserSettings::setShowLastDotValue(bool show)
 
 console_process::TerminalShell::TerminalShellType UserSettings::defaultTerminalShellValue() const
 {
-   return static_cast<console_process::TerminalShell::TerminalShellType>(
+   using ShellType = console_process::TerminalShell::TerminalShellType;
+   ShellType type = static_cast<ShellType>(
             settings_.getInt(kDefaultTerminalShell,
-               static_cast<int>(console_process::TerminalShell::DefaultShell)));
+            static_cast<int>(console_process::TerminalShell::DefaultShell)));
+
+   // map obsolete 32-bit shell types to their 64-bit equivalents
+   if (type == console_process::TerminalShell::Cmd32)
+      type = console_process::TerminalShell::Cmd64;
+   else if (type == console_process::TerminalShell::PS32)
+      type = console_process::TerminalShell::PS64;
+
+   return static_cast<console_process::TerminalShell::TerminalShellType>(type);
 }
 
 void UserSettings::setDefaultTerminalShellValue(
@@ -669,6 +691,46 @@ bool UserSettings::showRmdRenderCommand() const
    return readUiPref<bool>(pShowRmdRenderCommand_);
 }
 
+bool UserSettings::showPublishDiagnostics() const
+{
+   return readUiPref<bool>(pShowPublishDiagnostics_);
+}
+
+void UserSettings::setShowPublishDiagnostics(bool show)
+{
+   settings_.set("show_publish_diagnostics", show);
+}
+
+bool UserSettings::publishCheckSslCerts() const
+{
+   return readUiPref<bool>(pPublishCheckSslCerts_);
+}
+
+void UserSettings::setPublishCheckSslCerts(bool check)
+{
+   settings_.set("publish_check_certificates", check);
+}
+
+bool UserSettings::usePublishCABundle() const
+{
+   return readUiPref<bool>(pPublishUseCABundle_);
+}
+
+void UserSettings::setUsePublishCABundle(bool use)
+{
+   settings_.set("use_publish_ca_bundle", use);
+}
+
+std::string UserSettings::publishCABundlePath() const
+{
+   return readUiPref<std::string>(pPublishCABundlePath_);
+}
+
+void UserSettings::setPublishCABundlePath(const std::string& path)
+{
+   settings_.set("publish_ca_bundle", path);
+}
+
 core::system::busy_detection::Mode UserSettings::terminalBusyMode() const
 {
    return static_cast<core::system::busy_detection::Mode>(readUiPref<int>(pTerminalBusyMode_));
@@ -693,16 +755,18 @@ CRANMirror UserSettings::cranMirror() const
    mirror.name = settings_.get(kCRANMirrorName);
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
+   mirror.secondary = settings_.get(kCRANMirrorRepos);
    mirror.country = settings_.get(kCRANMirrorCountry);
    mirror.changed = settings_.getBool(kCRANMirrorChanged);
 
-   // extract primary cran repo
+   // upgrade 1.2 preview builds
    std::vector<std::string> parts;
    boost::split(parts, mirror.url, boost::is_any_of("|"));
    if (parts.size() >= 2)
-      mirror.primary = parts.at(1);
-   else
-      mirror.primary = mirror.url;
+   {
+      mirror.secondary = mirror.url;
+      mirror.url = parts.at(1);
+   }
 
    // if there is no URL then return the default RStudio mirror
    // (return the insecure version so we can rely on probing for
@@ -711,11 +775,12 @@ CRANMirror UserSettings::cranMirror() const
    if (mirror.url.empty() || (mirror.url == "/"))
    {
       // But only if not changed by the user
-      if (mirror.changed)
+      if (!mirror.changed)
       {
          mirror.name = "Global (CDN)";
          mirror.host = "RStudio";
          mirror.url = "http://cran.rstudio.com/";
+         mirror.secondary = "";
          mirror.country = "us";
          mirror.changed = false;
       }
@@ -742,6 +807,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
    settings_.set(kCRANMirrorName, mirror.name);
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
+   settings_.set(kCRANMirrorRepos, mirror.secondary);
    settings_.set(kCRANMirrorCountry, mirror.country);
    settings_.set(kCRANMirrorChanged, mirror.changed);
 
@@ -750,7 +816,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror, bool update)
    // be possible in the current code however previous releases
    // may have let this in)
    if (!mirror.url.empty() && update)
-      setCRANReposOption(mirror.url);
+      setCRANReposOption(mirror.url, mirror.secondary);
 }
 
 BioconductorMirror UserSettings::bioconductorMirror() const
@@ -949,7 +1015,6 @@ void UserSettings::setUseNewlineInMakefiles(bool useNewline)
    settings_.set(kUseNewlineInMakefiles, useNewline);
 }
 
-
 void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 {
    setWorkingDirectoryValue(kInitialWorkingDirectory, filePath);
@@ -960,7 +1025,6 @@ FilePath UserSettings::getWorkingDirectoryValue(const std::string& key) const
    return module_context::resolveAliasedPath(
             settings_.get(key, session::options().defaultWorkingDir()));
 }
-
 
 void UserSettings::setWorkingDirectoryValue(const std::string& key,
                                             const FilePath& filePath)

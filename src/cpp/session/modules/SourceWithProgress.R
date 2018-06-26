@@ -56,7 +56,7 @@ sourceWithProgress <- function(script,               # path to R script
    }
 
    # find the sections
-   lines <- readLines(con = script, encoding = encoding)
+   lines <- readLines(con = script, encoding = encoding, warn = FALSE)
    sections <- regmatches(lines, regexec("^\\s*#+ (.+) -----*$", lines))
    sectLines <- which(sapply(sections, length) > 0)
 

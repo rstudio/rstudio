@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -73,9 +72,6 @@ public class RSConnectPublishSettings
             JsArrayUtil.toJsArrayString(getIgnoredFiles()));
       obj.setBoolean("as_multiple", getAsMultiple());
       obj.setBoolean("as_static", getAsStatic());
-      obj.setBoolean("show_diagnostics", 
-            RStudioGinjector.INSTANCE.getUIPrefs()
-                            .showPublishDiagnostics().getValue());
       return obj.cast();
    }
 

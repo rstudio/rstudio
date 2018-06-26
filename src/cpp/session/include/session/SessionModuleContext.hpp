@@ -45,7 +45,6 @@ namespace core {
    class FilePath;
    class FileInfo;
    class Settings;
-   class DistributedEvent;
    namespace system {
       class ProcessSupervisor;
       struct ProcessResult;
@@ -53,6 +52,9 @@ namespace core {
    namespace shell_utils {
       class ShellCommand;
    }
+}
+namespace server_core {
+   class DistributedEvent;
 }
 }
 
@@ -341,7 +343,7 @@ struct Events : boost::noncopyable
    boost::signal<void (const std::string&)>  onPackageLoaded;
    boost::signal<void ()>                    onPackageLibraryMutated;
    boost::signal<void ()>                    onPreferencesSaved;
-   boost::signal<void (const core::DistributedEvent&)>
+   boost::signal<void (const server_core::DistributedEvent&)>
                                              onDistributedEvent;
    boost::signal<void (core::FilePath)>      onPermissionsChanged;
 

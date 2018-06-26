@@ -434,6 +434,7 @@ Error ChildProcess::run()
    int fdInput[2] = {0,0};
    int fdOutput[2] = {0,0};
    int fdError[2] = {0,0};
+   int fdCloseFd[2] = {0,0};
    int fdMaster = 0;
 
    // build args (on heap so they stay around after exec)
@@ -516,6 +517,19 @@ Error ChildProcess::run()
          closePipe(fdInput, ERROR_LOCATION);
          closePipe(fdOutput, ERROR_LOCATION);
          return error;
+      }
+
+      // close fd communication channel - only used in threadsafe mode
+      if (options_.threadSafe)
+      {
+         error = posixCall<int>(boost::bind(::pipe, fdCloseFd), ERROR_LOCATION);
+         if (error)
+         {
+            closePipe(fdInput, ERROR_LOCATION);
+            closePipe(fdOutput, ERROR_LOCATION);
+            closePipe(fdError, ERROR_LOCATION);
+            return error;
+         }
       }
 
       // fork
@@ -705,6 +719,7 @@ Error ChildProcess::run()
          ::close(fdInput[WRITE]);
          ::close(fdOutput[READ]);
          ::close(fdError[READ]);
+         ::close(fdCloseFd[WRITE]);
 
          // wire standard streams
          // if an error occurs, we exit immediately as this is a critical error
@@ -726,7 +741,8 @@ Error ChildProcess::run()
          // the child from clobbering the parent's FDs
          // and actually prevents potential missed child exits caused by
          // clobbering of FDs affecting epoll calls
-         signal_safe::closeFileDescriptorsFromParent(STDIN_FILENO, STDERR_FILENO+1, hard);
+         signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, hard);
+         ::close(fdCloseFd[READ]);
       }
 
       if (options_.environment)
@@ -773,6 +789,11 @@ Error ChildProcess::run()
          closePipe(fdOutput[WRITE], ERROR_LOCATION);
          closePipe(fdError[WRITE], ERROR_LOCATION);
 
+         if (options_.threadSafe)
+         {
+            closePipe(fdCloseFd[READ], ERROR_LOCATION);
+         }
+
          // record pipe handles
          pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
       }
@@ -783,13 +804,15 @@ Error ChildProcess::run()
       {
          // send the list of the child proc's fds to the child so
          // it can properly close its unneeded fds in a fast manner
-         Error error = closeChildFileDescriptorsFrom(pid, fdInput[WRITE], STDERR_FILENO+1);
+         Error error = closeChildFileDescriptorsFrom(pid, fdCloseFd[WRITE], STDERR_FILENO+1);
          if (error)
          {
             // we simply log the error instead of returning it because it did not prevent
             // us from spawning the process
             LOG_ERROR(error);
          }
+
+         closePipe(fdCloseFd[WRITE], ERROR_LOCATION);
       }
 
       return Success();
@@ -1089,33 +1112,54 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
         boost::asio::io_service& ioService) :
       parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
       stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
-      stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false)
+      stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false),
+      cleanedUp_(false)
    {
    }
 
-   void attachDescriptors()
+   Error attachDescriptors()
    {
-      stdOutDescriptor_.assign(parent_->pImpl_->fdStdout);
-      stdErrDescriptor_.assign(parent_->pImpl_->fdStderr);
-      stdInDescriptor_.assign(parent_->pImpl_->fdStdin);
+      boost::system::error_code error;
+      stdOutDescriptor_.assign(parent_->pImpl_->fdStdout, error);
+      if (error)
+      {
+         cleanup();
+         return Error(error, ERROR_LOCATION);
+      }
+
+      stdErrDescriptor_.assign(parent_->pImpl_->fdStderr, error);
+      if (error)
+      {
+         cleanup();
+         return Error(error, ERROR_LOCATION);
+      }
+
+      stdInDescriptor_.assign(parent_->pImpl_->fdStdin, error);
+      if (error)
+      {
+         cleanup();
+         return Error(error, ERROR_LOCATION);
+      }
+
+      return Success();
    }
 
    void beginReadStdOut()
    {
-      return stdOutDescriptor_.async_read_some(boost::asio::buffer(stdOutBuff_, 1024),
-                                               boost::bind(&Impl::stdOutCallback,
-                                                           boost::weak_ptr<Impl>(shared_from_this()),
-                                                           boost::asio::placeholders::error,
-                                                           _2));
+      stdOutDescriptor_.async_read_some(boost::asio::buffer(stdOutBuff_, 1024),
+                                        boost::bind(&Impl::stdOutCallback,
+                                                    boost::weak_ptr<Impl>(shared_from_this()),
+                                                    boost::asio::placeholders::error,
+                                                    _2));
    }
 
    void beginReadStdErr()
    {
-      return stdErrDescriptor_.async_read_some(boost::asio::buffer(stdErrBuff_, 1024),
-                                               boost::bind(&Impl::stdErrCallback,
-                                                           boost::weak_ptr<Impl>(shared_from_this()),
-                                                           boost::asio::placeholders::error,
-                                                           _2));
+      stdErrDescriptor_.async_read_some(boost::asio::buffer(stdErrBuff_, 1024),
+                                        boost::bind(&Impl::stdErrCallback,
+                                                    boost::weak_ptr<Impl>(shared_from_this()),
+                                                    boost::asio::placeholders::error,
+                                                    _2));
    }
 
 
@@ -1166,7 +1210,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    void onReadStdOut(const boost::system::error_code& ec, size_t bytesRead)
    {
-      if (ec)
+      if (ec || bytesRead == 0)
       {
          stdoutFailure_ = true;
          return handleError(ec);
@@ -1182,7 +1226,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    void onReadStdErr(const boost::system::error_code& ec, size_t bytesRead)
    {
-      if (ec)
+      if (ec || bytesRead == 0)
       {
          stderrFailure_ = true;
          return handleError(ec);
@@ -1228,7 +1272,8 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       if (eof)
       {
          // close std in stream and stop writing
-         parent_->pImpl_->closeFD(&parent_->pImpl_->fdStdin, ERROR_LOCATION);
+         boost::system::error_code ec;
+         stdInDescriptor_.close(ec);
       }
       else
       {
@@ -1419,15 +1464,25 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
    void cleanup()
    {
+      if (cleanedUp_)
+         return;
+
       // close descriptors and cancel outstanding io operations
       boost::system::error_code ec;
 
       // note: errors are swallowed - we do not care about errors when closing descriptors
       // according to boost documentation, the descriptors are guaranteed to be closed
       // even if an error occurs
-      stdOutDescriptor_.close(ec);
-      stdErrDescriptor_.close(ec);
-      stdInDescriptor_.close(ec);
+      if (stdOutDescriptor_.is_open())
+         stdOutDescriptor_.close(ec);
+
+      if (stdErrDescriptor_.is_open())
+         stdErrDescriptor_.close(ec);
+
+      if (stdInDescriptor_.is_open())
+         stdInDescriptor_.close(ec);
+
+      cleanedUp_ = true;
    }
 
    pid_t pid() const
@@ -1456,6 +1511,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    std::queue<std::pair<std::string, bool> > writeBuffer_;
 
    boost::mutex mutex_;
+   bool cleanedUp_;
 };
 
 AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
@@ -1487,7 +1543,16 @@ Error AsioAsyncChildProcess::run(const ProcessCallbacks& callbacks)
    if (error)
       return error;
 
-   pAsioImpl_->attachDescriptors();
+   error = pAsioImpl_->attachDescriptors();
+   if (error)
+   {
+      // could not attach descriptors - ensure child is terminated
+      Error terminationError = ChildProcess::terminate();
+      if (terminationError)
+         LOG_ERROR(terminationError);
+      return error;
+   }
+
    pAsioImpl_->beginReadStdOut();
    pAsioImpl_->beginReadStdErr();
 

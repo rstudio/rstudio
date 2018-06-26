@@ -499,10 +499,6 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    .rs.registerReplaceHook(name, package, unsupported)
 })
 
-.rs.addFunction( "isCRANReposList", function(repos) {
-  .rs.startsWith(repos, "CRAN|")
-})
-
 .rs.addFunction( "parseCRANReposList", function(repos) {
   parts <- strsplit(repos, "\\|")[[1]]
   indexes <- seq_len(length(parts) / 2)
@@ -514,17 +510,20 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
   r
 })
 
-.rs.addFunction( "setCRANRepos", function(repos)
+.rs.addFunction( "setCRANRepos", function(cran, secondary)
 {
   local({
-      if (.rs.isCRANReposList(repos))
+      if (nchar(secondary) > 0)
       {
-        r <- .rs.parseCRANReposList(repos)
+        r <- c(
+          list(CRAN = cran),
+          .rs.parseCRANReposList(secondary)
+        )
       }
       else
       {
         r <- getOption("repos");
-        r["CRAN"] <- repos;
+        r["CRAN"] <- cran;
       }
 
       # attribute indicating the repos was set from rstudio prefs
@@ -534,7 +533,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
     })
 })
 
-.rs.addFunction( "setCRANReposAtStartup", function(reposUrl)
+.rs.addFunction( "setCRANReposAtStartup", function(cran, secondary)
 {
    # check whether the user has already set a CRAN repository
    # in their .Rprofile
@@ -542,7 +541,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
 
    if (!cranMirrorConfigured)
-      .rs.setCRANRepos(reposUrl)
+      .rs.setCRANRepos(cran, secondary)
 })
 
 
@@ -552,13 +551,13 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 })
 
 
-.rs.addFunction( "setCRANReposFromSettings", function(reposUrl)
+.rs.addFunction( "setCRANReposFromSettings", function(cran, secondary)
 {
    # only set the repository if the repository was set by us
    # in the first place (it wouldn't be if the user defined a
    # repository in .Rprofile or called setRepositories directly)
    if (.rs.isCRANReposFromSettings())
-      .rs.setCRANRepos(reposUrl)
+      .rs.setCRANRepos(cran, secondary)
 })
 
 

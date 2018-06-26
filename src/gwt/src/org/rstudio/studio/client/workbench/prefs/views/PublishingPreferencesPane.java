@@ -33,6 +33,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -212,6 +213,22 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(checkboxPref("Show diagnostic information when publishing",
             uiPrefs_.showPublishDiagnostics()));
       
+      add(spacedBefore(headerLabel("SSL Certificates")));
+
+      add(checkboxPref("Check SSL certificates when publishing",
+            uiPrefs_.publishCheckCertificates()));
+      
+      CheckBox useCaBundle = checkboxPref("Use custom CA bundle",
+            uiPrefs_.usePublishCABundle());
+      useCaBundle.addValueChangeHandler(
+            val -> caBundlePath_.setVisible(val.getValue()));
+      add(useCaBundle);
+
+      caBundlePath_ = new FileChooserTextBox("", "(none)", null, null);
+      caBundlePath_.setText(uiPrefs_.publishCABundle().getValue());
+      caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
+      add(caBundlePath_);
+
       server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
       {
          @Override
@@ -240,6 +257,8 @@ public class PublishingPreferencesPane extends PreferencesPane
    public boolean onApply(RPrefs rPrefs)
    {
       boolean reload = super.onApply(rPrefs);
+      
+      uiPrefs_.publishCABundle().setGlobalValue(caBundlePath_.getText());
 
       return reload || reloadRequired_;
    }
@@ -390,6 +409,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
    private ThemedButton reconnectButton_;
+   private FileChooserTextBox caBundlePath_;
    private boolean reloadRequired_;
 }
 

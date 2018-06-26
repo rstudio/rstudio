@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,6 @@ target_link_libraries(rstudio-r
 )
 
 # install rules
-if (NOT RSTUDIO_SESSION_WIN64)
-   file(GLOB R_SRC_FILES "R/*.R")
-   install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
-endif()
+file(GLOB R_SRC_FILES "R/*.R")
+install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
+

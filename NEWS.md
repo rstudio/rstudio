@@ -74,7 +74,10 @@
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
 * Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
+* R startup files (e.g. .Rprofile) are now always saved with trailing newlines (#3029)
 * Update embedded libclang to 5.0.2 (Windows only)
+* RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
+* New SSL options for authenticating and publishing to RStudio Connect servers using self-signed certs or internal CAs (#3040)
 
 ### Bug Fixes
 
@@ -110,6 +113,7 @@
 * Fix issue on Windows with R dialogs showing behind RStudio window (#2901)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
+* Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
 
 ### RStudio Server Pro
 

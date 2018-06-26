@@ -19,6 +19,10 @@
 
 #include <boost/bind.hpp>
 
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/http/TcpIpBlockingClient.hpp>
+
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
@@ -257,6 +261,27 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    }
 }
 
+namespace {
+
+core::WaitResult serverReady(const std::string& host, const std::string& port)
+{
+   core::http::Request request;
+   request.setMethod("GET");
+   request.setHost("host");
+   request.setUri("/");
+   request.setHeader("Accept", "*/*");
+   request.setHeader("Connection", "close");
+   
+   core::http::Response response;
+   Error error = core::http::sendRequest(host, port, request, &response);
+   if (error)
+      return WaitResult(WaitContinue, Success());
+   else
+      return WaitResult(WaitSuccess, Success());
+}
+
+} // end anonymous namespace
+
 Error SessionLauncher::launchNextSession(bool reload)
 {
    // unset the initial project environment variable it this doesn't
@@ -297,11 +322,16 @@ Error SessionLauncher::launchNextSession(bool reload)
 
    if (reload)
    {
-      // load url -- use a delay because on occasion we've seen the
-      // mac client crash during switching of projects and this could
-      // be some type of timing related issue
+      Error error = core::waitWithTimeout(
+               boost::bind(serverReady, host.toStdString(), port.toStdString()),
+               50,
+               25,
+               10);
+      if (error)
+         LOG_ERROR(error);
+      
       nextSessionUrl_ = url;
-      QTimer::singleShot(100, this, SLOT(onReloadFrameForNextSession()));
+      QTimer::singleShot(0, this, SLOT(onReloadFrameForNextSession()));
    }
 
    return Success();

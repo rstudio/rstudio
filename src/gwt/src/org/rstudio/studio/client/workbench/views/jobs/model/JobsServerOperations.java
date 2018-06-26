@@ -25,4 +25,5 @@ public interface JobsServerOperations
                         ServerRequestCallback<JsArray<JobOutput> > output);
    void startJob(JobLaunchSpec spec, ServerRequestCallback<Void> callback); 
    void clearJobs(ServerRequestCallback<Void> callback);
+   void executeJobAction(String id, String action, ServerRequestCallback<Void> callback);
 }

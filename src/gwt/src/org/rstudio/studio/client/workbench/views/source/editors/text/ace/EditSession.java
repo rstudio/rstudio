@@ -152,6 +152,17 @@ public class EditSession extends JavaScriptObject
    }-*/;
 
    public native final void reindent(Range range) /*-{
+      
+      // ensure document re-tokenized before indent
+      var tokenizer = this.bgTokenizer;
+      if (tokenizer != null) {
+         var n = range.end.row;
+         for (var i = 0; i <= n; i++)
+           tokenizer.$tokenizeRow(i);
+         tokenizer.fireUpdateEvent(0, n);
+      }
+      
+      // now ready to re-indent
       this.reindent(range);
    }-*/;
 

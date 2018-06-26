@@ -149,7 +149,12 @@ public class EnvironmentObjects extends ResizeComposite
          objectDataProvider_.getList().add(idx, entry);
       }
       updateCategoryLeaders(true);
-      objectDisplay_.getRowElement(idx).scrollIntoView();
+      
+      // defer to give the display a chance to update + render
+      final int index = idx;
+      Scheduler.get().scheduleDeferred(() -> {
+         objectDisplay_.getRowElement(index).scrollIntoView();
+      });
    }
 
    public void removeObject(String objName)

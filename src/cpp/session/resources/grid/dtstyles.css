@@ -34,6 +34,10 @@ table.dataTable tbody td {
     border-bottom: 1px solid #cfd4d8;
     border-right: 1px solid #cfd4d8;
     font-size: 11px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .rstudio-themes-flat table.dataTable tbody td  {
@@ -301,15 +305,12 @@ th:focus {
     color: #FFF;
 }
 
-.numberCell {
-    text-align: right;
+.dataCell, .listCell {
+    padding-right: 16px;
 }
 
-.numberCell, .textCell {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    position: relative;
+.numberCell {
+    text-align: right;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
@@ -317,11 +318,13 @@ th:focus {
     color: #FFF;
 }
 
-.autoSize .numberCell, .autoSize .textCell {
+.autoSize .numberCell, .autoSize .textCell, 
+.autoSize .dataCell, .autoSize .listCell {
     max-width: 300px; 
 }
 
-.manualSize .numberCell, .manualSize .textCell {
+.manualSize .numberCell, .manualSize .textCell, 
+.manualSize .dataCell, .manualSize .listCell {
     max-width: 100%;
 }
 
@@ -333,7 +336,7 @@ th:focus {
     display: table;
 }
 
-.cell, .headerCell {
+.headerCell {
     position: relative;
 }
 
@@ -437,10 +440,6 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
     z-index: 5;
 }
 
-.cell .resizer {
-    right: -7px;
-}
-
 .headerCell .resizer {
     right: -28px;
 }
@@ -483,5 +482,15 @@ div.dataTables_scroll div.dataTables_scrollHead {
 
 .rstudio-themes-flat.editor_dark .selected .histBar {
     background-color: #79A9D9;
+}
+
+.viewerImage {
+    width: 12px;
+    height: 12px;
+}
+
+.viewerLink {
+    position: absolute;
+    right: 0px;
 }
 

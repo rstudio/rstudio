@@ -15,9 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -29,6 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
@@ -69,13 +72,15 @@ public class JobsPresenter extends BasePresenter
                         Commands commands,
                         EventBus events,
                         GlobalDisplay globalDisplay,
-                        Provider<JobManager> pJobManager)
+                        Provider<JobManager> pJobManager,
+                        EventBus eventBus)
    {
       super(display);
       display_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
       pJobManager_ = pJobManager;
+      eventBus_ = eventBus;
       binder.bind(commands, this);
    }
 
@@ -101,13 +106,22 @@ public class JobsPresenter extends BasePresenter
    @Override
    public void onJobSelection(final JobSelectionEvent event)
    {
-      if (event.selected())
+      Job job = pJobManager_.get().getJob(event.id());
+      if (JsArrayUtil.jsArrayStringContains(job.actions, "info"))
       {
-         selectJob(event.id(), event.animate());
+         if (event.selected())
+            eventBus_.fireEvent(new JobExecuteActionEvent(event.id(), "info"));
       }
       else
       {
-         unselectJob(event.id(), event.animate());
+         if (event.selected())
+         {
+            selectJob(event.id(), event.animate());
+         }
+         else
+         {
+            unselectJob(event.id(), event.animate());
+         }
       }
    }
    
@@ -201,4 +215,5 @@ public class JobsPresenter extends BasePresenter
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private final Provider<JobManager> pJobManager_;
+   private final EventBus eventBus_;
 }

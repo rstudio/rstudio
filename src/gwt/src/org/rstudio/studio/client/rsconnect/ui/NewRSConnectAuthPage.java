@@ -125,17 +125,9 @@ public class NewRSConnectAuthPage
       });
    }
 
-
    @Override
    public void onWindowClosed(WindowClosedEvent event)
    {
-      if (event.getName() == AUTH_WINDOW_NAME)
-      {
-         waitingForAuth_.setValue(false, true);
-         
-         // check to see if the user successfully authenticated
-         onAuthCompleted();
-      }
    }
    
    @Override
@@ -220,13 +212,6 @@ public class NewRSConnectAuthPage
                         result_.setAuthUser(user);
                         waitingForAuth_.setValue(false, true);
                         
-                        if (Desktop.isDesktop())
-                        {
-                           // on the desktop, we can close the window by name
-                           Desktop.getFrame().closeNamedWindow(
-                                 AUTH_WINDOW_NAME);
-                        }
-                       
                         onUserAuthVerified();
                      }
 
@@ -326,20 +311,19 @@ public class NewRSConnectAuthPage
                   contents_.showWaiting();
                   
                   // prepare a new window with the auth URL loaded
-                  if (canSpawnAuthenticationWindow())
+                  if (Desktop.isDesktop())
+                  {
+                     Desktop.getFrame().browseUrl(StringUtil.notNull(result_.getPreAuthToken().getClaimUrl()));
+                  }
+                  else
                   {
                      NewWindowOptions options = new NewWindowOptions();
-                     options.setName(AUTH_WINDOW_NAME);
                      options.setAllowExternalNavigation(true);
                      options.setShowDesktopToolbar(false);
                      display_.openWebMinimalWindow(
                            result_.getPreAuthToken().getClaimUrl(),
                            false, 
                            700, 800, options);
-                  }
-                  else
-                  {
-                     Desktop.getFrame().browseUrl(StringUtil.notNull(result_.getPreAuthToken().getClaimUrl()));
                   }
                   
                   // close the window automatically when authentication finishes
@@ -382,18 +366,6 @@ public class NewRSConnectAuthPage
       });
    }
    
-   private boolean canSpawnAuthenticationWindow()
-   {
-      if (!Desktop.isDesktop())
-         return true;
-      
-      String platform = DesktopInfo.getPlatform();
-      if (platform.contentEquals("centos") || platform.contentEquals("rhel"))
-         return false;
-      
-      return true;
-   }
-   
    private OperationWithInput<Boolean> setOkButtonVisible_;
    
    private NewRSConnectAccountResult result_;
@@ -403,6 +375,4 @@ public class NewRSConnectAuthPage
    private Value<Boolean> waitingForAuth_ = new Value<Boolean>(false);
    private boolean runningAuthCompleteCheck_ = false;
    private ProgressIndicator wizardIndicator_;
-
-   public final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
 }

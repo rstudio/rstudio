@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -1424,7 +1425,11 @@ public class RemoteServer implements Server
    {
       if (Desktop.isDesktop())
       {
-         return "file://" + resolveAliasedPath(file);
+         String prefix = BrowseCap.isWindowsDesktop()
+               ? "file:///"
+               : "file://";
+
+         return prefix + resolveAliasedPath(file);
       }
       else if (!file.isDirectory())
       {
@@ -2004,6 +2009,14 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(handleId));
       params.set(1, new JSONString(objectName));
       sendRequest(RPC_SCOPE, EXPLORER_BEGIN_INSPECT, params, requestCallback);
+   }
+   
+   public void explorerEndInspect(String handleId,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handleId));
+      sendRequest(RPC_SCOPE, EXPLORER_END_INSPECT, params, requestCallback);
    }
    
    public void createRdShell(
@@ -5401,6 +5414,16 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void executeJobAction(String id, String action, 
+                                ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      params.set(1, new JSONString(action));
+      sendRequest(RPC_SCOPE, "execute_job_action", params, callback);
+   }
+
+   @Override
    public void startJob(JobLaunchSpec spec, 
                         ServerRequestCallback<Void> callback)
    {
@@ -5661,6 +5684,7 @@ public class RemoteServer implements Server
    
    private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";
    private static final String EXPLORER_BEGIN_INSPECT = "explorer_begin_inspect";
+   private static final String EXPLORER_END_INSPECT = "explorer_end_inspect";
    
    private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
 

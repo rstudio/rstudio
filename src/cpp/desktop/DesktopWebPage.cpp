@@ -42,6 +42,13 @@ namespace {
 WindowTracker s_windowTracker;
 std::mutex s_mutex;
 
+// NOTE: This variable is static and hence shared by all of the web pages
+// created by RStudio. This is intentional as it's possible that the
+// request interceptor from one page will handle a request, and a _different_
+// page will handle the new navigation attempt -- so both pages will need
+// access to the same data.
+std::map<QUrl, int> s_subframes;
+
 void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 {
    // request directory from user
@@ -72,17 +79,12 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
    connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
+   connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted, Qt::DirectConnection);
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
 {
-   const WebProfile* pProfile = dynamic_cast<const WebProfile*>(profile());
-   if (pProfile != nullptr)
-   {
-      // if we're using our own WebProfile implementation, update its base URL
-      const_cast<WebProfile*>(pProfile)->setBaseUrl(baseUrl);
-   }
-
+   profile()->setBaseUrl(baseUrl);
    baseUrl_ = baseUrl;
 }
 
@@ -231,6 +233,14 @@ void WebPage::closeRequested()
    view()->window()->close();
 }
 
+void WebPage::onUrlIntercepted(QUrl url, int type)
+{
+   if (type == QWebEngineUrlRequestInfo::ResourceTypeSubFrame)
+   {
+      s_subframes[url] = type;
+   }
+}
+
 bool WebPage::shouldInterruptJavaScript()
 {
    return false;
@@ -265,13 +275,21 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
-   bool isLocal = host == "localhost" || host == "127.0.0.1";
+   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1";
    
    // accept Chrome Developer Tools navigation attempts
 #ifndef NDEBUG
    if (isLocal && url.port() == desktopInfo().getChromiumDevtoolsPort())
       return true;
 #endif
+   
+   // if this appears to be an attempt to load an external page within
+   // an iframe, don't load it
+   if (!isLocal && s_subframes.count(url))
+   {
+      s_subframes.erase(url);
+      return false;
+   }
 
    if ((baseUrl_.isEmpty() && isLocal) ||
        (url.scheme() == baseUrl_.scheme() &&

@@ -646,7 +646,7 @@ options(connectionObserver = list(
          withRStudioName <- paste(entryName, .rs.connectionOdbcRStudioDriver(), sep = "")
 
          if (identical(as.character(connectionList[[i]]$type), "Install") &&
-             !identical(existingDriver$installer, "RStudio") &&
+             !identical(as.character(existingDriver$installer), "RStudio") &&
              is.null(connectionNames[[withRStudioName]])) {
             connectionList[[i]]$name <- entryName <- .rs.scalar(withRStudioName)
          }

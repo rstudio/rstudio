@@ -40,6 +40,11 @@ void shutdown()
 {
 }
 
+bool requireLocalR()
+{
+   return true;
+} 
+
 } // namespace overlay
 } // namespace server
 } // namespace rstudio

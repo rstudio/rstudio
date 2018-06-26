@@ -325,11 +325,7 @@ void openUrl(const QUrl& url)
 // on Win32
 QFileDialog::Options standardFileDialogOptions()
 {
-    bool isWindowsXP = QSysInfo::windowsVersion() == QSysInfo::WV_XP;
-    if (isWindowsXP || core::system::isWin64())
-        return 0;
-    else
-        return QFileDialog::DontUseNativeDialog;
+   return 0;
 }
 
 #else

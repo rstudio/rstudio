@@ -950,7 +950,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    names <- names(DESCRIPTION)
    values <- unlist(DESCRIPTION)
    text <- paste(names, ": ", values, sep = "", collapse = "\n")
-   cat(text, file = file.path(packageDirectory, "DESCRIPTION"))
+   cat(text, file = file.path(packageDirectory, "DESCRIPTION"), sep = "\n")
    
    cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
    

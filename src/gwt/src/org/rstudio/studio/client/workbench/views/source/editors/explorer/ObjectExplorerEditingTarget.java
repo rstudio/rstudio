@@ -86,6 +86,13 @@ public class ObjectExplorerEditingTarget
    }
    
    @Override
+   public void onDismiss(int dismissType)
+   {
+      // explicitly avoid calling super method as we don't
+      // have an associated content URL to clean up
+   }
+   
+   @Override
    public String getPath()
    {
       return getHandle().getPath();
@@ -134,6 +141,8 @@ public class ObjectExplorerEditingTarget
       {
          reloadDisplay();
       }
+      
+      view_.refresh();
    }
    
    // Private methods ----

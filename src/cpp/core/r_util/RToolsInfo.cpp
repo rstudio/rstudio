@@ -13,6 +13,7 @@
  *
  */
 
+#include <core/Version.hpp>
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <boost/foreach.hpp>
@@ -229,6 +230,8 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
    return os;
 }
 
+namespace {
+
 Error scanRegistryForRTools(HKEY key,
                             bool usingMingwGcc49,
                             std::vector<RToolsInfo>* pRTools)
@@ -294,6 +297,74 @@ Error scanRegistryForRTools(bool usingMingwGcc49,
                                    pRTools);
    else
       return Success();
+}
+
+Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+{
+   // look for Rtools as installed by RStudio
+   std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
+   FilePath buildDirRoot(systemDrive + "/RBuildTools");
+
+   // ensure it exists (may not exist if the user has not installed
+   // any copies of Rtools through RStudio yet)
+   if (!buildDirRoot.exists())
+      return Success();
+
+   // find sub-directories
+   std::vector<FilePath> buildDirs;
+   Error error = buildDirRoot.children(&buildDirs);
+   if (error)
+      LOG_ERROR(error);
+
+   // infer Rtools information from each directory
+   for (const FilePath& buildDir : buildDirs)
+   {
+      RToolsInfo toolsInfo(buildDir.filename(), buildDir, usingMingwGcc49);
+      if (toolsInfo.isRecognized())
+         pRTools->push_back(toolsInfo);
+      else
+         LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.filename());
+   }
+
+   return Success();
+}
+
+} // end anonymous namespace
+
+Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+{
+   Error error;
+   std::vector<RToolsInfo> rtoolsInfo;
+
+   // scan for Rtools
+   error = scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
+   if (error)
+      return error;
+
+   error = scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
+   if (error)
+      return error;
+
+   // remove duplicates
+   std::set<FilePath> knownPaths;
+   for (const RToolsInfo& info : rtoolsInfo)
+   {
+      if (knownPaths.count(info.installPath()))
+         continue;
+      pRTools->push_back(info);
+   }
+
+   // ensure sorted by version
+   std::sort(
+            pRTools->begin(),
+            pRTools->end(),
+            [](const RToolsInfo& lhs, const RToolsInfo& rhs)
+   {
+      return Version(lhs.name()) < Version(rhs.name());
+   });
+
+   // we're done!
+   return Success();
 }
 
 } // namespace r_util

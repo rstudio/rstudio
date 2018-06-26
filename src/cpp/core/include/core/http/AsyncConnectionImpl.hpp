@@ -66,7 +66,7 @@ public:
       stream_->async_read_some(buffers, handler);
    }
 
-   virtual void asyncWrite(const rstudio_boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
+   virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
    {
       boost::asio::async_write(*stream_, buffers, handler);
    }

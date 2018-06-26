@@ -729,6 +729,18 @@ public class Source implements InsertSourceHandler,
       AceEditor editor = (AceEditor) docDisplay;
       Selection selection = editor.getNativeSelection();
       Range[] ranges = selection.getAllRanges();
+      
+      // clamp ranges to document boundaries
+      for (Range range : ranges)
+      {
+         Position start = range.getStart();
+         start.setRow(MathUtil.clamp(start.getRow(), 0, editor.getRowCount()));
+         start.setColumn(MathUtil.clamp(start.getColumn(), 0, editor.getLine(start.getRow()).length()));
+         
+         Position end = range.getEnd();
+         end.setRow(MathUtil.clamp(end.getRow(), 0, editor.getRowCount()));
+         end.setColumn(MathUtil.clamp(end.getColumn(), 0, editor.getLine(end.getRow()).length()));
+      }
 
       JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
       for (int i = 0; i < ranges.length; i++)

@@ -349,11 +349,6 @@ public class UIPrefsAccessor extends Prefs
       return dbl("font_size_points", 10.0);
    }
    
-   public PrefValue<Boolean> useLigatures()
-   {
-      return bool("use_ligatures", false);
-   }
-
    public PrefValue<AceTheme> theme()
    {
       // Prior to 1.2 this value was "theme". Since the object structure has changed, we've renamed
@@ -585,7 +580,22 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_publish_diagnostics", false);
    }
-     
+   
+   public PrefValue<Boolean> publishCheckCertificates()
+   {
+      return bool("publish_check_certificates", true);
+   }
+   
+   public PrefValue<Boolean> usePublishCABundle()
+   {
+      return bool("use_publish_ca_bundle", false);
+   }
+   
+   public PrefValue<String> publishCABundle()
+   {
+      return string("publish_ca_bundle", "");
+   }
+   
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {
       return bool("rmd_chunk_output_inline", true);

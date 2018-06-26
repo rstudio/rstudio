@@ -67,9 +67,6 @@ public:
    // If "", then use automatic detection
    QString rBinDir() const;
    void setRBinDir(QString path);
-
-   bool preferR64() const;
-   void setPreferR64(bool preferR64);
 #endif
 
    core::FilePath scriptsPath() const;

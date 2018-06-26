@@ -20,7 +20,9 @@
 
 #include <QtGui>
 #include <QWebEnginePage>
+#include <QWebEngineUrlRequestInfo>
 
+#include "DesktopWebProfile.hpp"
 #include "DesktopUtils.hpp"
 
 namespace rstudio {
@@ -94,6 +96,7 @@ public:
 public Q_SLOTS:
    bool shouldInterruptJavaScript();
    void closeRequested();
+   void onUrlIntercepted(QUrl url, int type);
 
 protected:
    QWebEnginePage* createWindow(QWebEnginePage::WebWindowType type) override;
@@ -102,6 +105,8 @@ protected:
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
    QString viewerUrl();
+   
+   inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
 
 private:
    void handleBase64Download(QUrl url);
