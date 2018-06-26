@@ -144,7 +144,7 @@ void getThemesInLocation(
                // TODO: warning / logging about using default isDark value.
             }
 
-            themeMap[name] = std::tuple<std::string, bool>(urlPrefix + themeFile.filename(), isDark);
+            themeMap[name] = std::pair<std::string, bool>(urlPrefix + themeFile.filename(), isDark);
          }
       }
    }
