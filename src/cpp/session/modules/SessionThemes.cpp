@@ -53,6 +53,12 @@ const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
 // whether or not the theme is dark.
 typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
 
+/// @brief Determines whether a string can be evaluated to logical "true". A return value of false
+///        does not indicate that the string can be evaluted to logical "false".
+///
+/// @param toConvert    The string to convert to boolean.
+///
+/// @return True if the string matches 1, TRUE, true, or any case variant of true; false otherwise.
 bool strIsTrue(const std::string& toConvert)
 {
    return std::regex_match(
@@ -60,6 +66,13 @@ bool strIsTrue(const std::string& toConvert)
             std::regex("(?:1|t(?:rue)?))", std::regex_constants::icase));
 }
 
+/// @brief Determines whether a string can be evaluated to logical "false". A return value of true
+///        does not indicate that the string can be evaluted to logical "true".
+///
+/// @param toConvert    The string to convert to boolean.
+///
+/// @return True if the string matches 0, FALSE, false, or any case variant of false; true
+///         otherwise.
 bool strIsFalse(const std::string& toConvert)
 {
    return std::regex_match(
@@ -137,11 +150,21 @@ void getThemesInLocation(
    }
 }
 
+/**
+ * @brief Gets the location of themes that are installed with RStudio.
+ *
+ * @return The location of themes that are installed with RStudio.
+ */
 FilePath getDefaultThemePath()
 {
    return session::options().rResourcesPath().childPath("themes");
 }
 
+/**
+ * @brief Gets the location of custom themes that are installed for all users.
+ *
+ * @return The location of custom themes that are installed for all users.
+ */
 FilePath getGlobalCustomThemePath()
 {
    using rstudio::core::FilePath;
@@ -159,6 +182,11 @@ FilePath getGlobalCustomThemePath()
 #endif
 }
 
+/**
+ * @brief Gets the location of custom themes that are installed for the current user.
+ *
+ * @return The location of custom themes that are installed for the current user.
+ */
 FilePath getLocalCustomThemePath()
 {
    using rstudio::core::FilePath;
@@ -175,13 +203,23 @@ FilePath getLocalCustomThemePath()
 #endif
 }
 
-void getAllThemes(ThemeMap& themeMap)
+/**
+ * @brief Gets a map of all available themes, keyed by the unique name of the theme. If a theme is
+ *        found in multiple locations, the theme in the most specific folder will be given
+ *        precedence.
+ *
+ * @return The map of all available themes.
+ */
+ThemeMap getAllThemes()
 {
    // Intentionally get global themes before getting user specific themes so that user specific
    // themes will override global ones.
+   ThemeMap themeMap;
    getThemesInLocation(getDefaultThemePath(), themeMap, kDefaultThemeLocation);
    getThemesInLocation(getGlobalCustomThemePath(), themeMap, kGlobalCustomThemeLocation);
    getThemesInLocation(getLocalCustomThemePath(), themeMap, kLocalCustomThemeLocation);
+
+   return themeMap;
 }
 
 /**
@@ -191,8 +229,7 @@ void getAllThemes(ThemeMap& themeMap)
  */
 SEXP rs_getThemes()
 {
-   ThemeMap themeMap;
-   getAllThemes(themeMap);
+   ThemeMap themeMap = getAllThemes();
 
    // Convert to an R list.
    rstudio::r::sexp::Protect protect;
@@ -210,6 +247,14 @@ SEXP rs_getThemes()
    return rstudio::r::sexp::create(themeListBuilder, &protect);
 }
 
+/**
+ * @brief Gets the default theme based on the request from the client.
+ *
+ * @param request    The request from the client.
+ *
+ * @return The default theme. "Tomorrow Night" if the request is for a dark theme; "Textmate" if
+ *         the request is for a light theme.
+ */
 FilePath getDefaultTheme(const http::Request& request)
 {
    std::string isDarkStr = request.queryParamValue("dark");
@@ -231,6 +276,12 @@ FilePath getDefaultTheme(const http::Request& request)
    }
 }
 
+/**
+ * @brief Gets a theme that is installed with RStudio.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
@@ -239,6 +290,12 @@ void handleDefaultThemeRequest(const http::Request& request,
    pResponse->setContentType("text/css");
 }
 
+/**
+ * @brief Gets a custom theme that is installed for all users.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
 void handleGlobalCustomThemeRequest(const http::Request& request,
                                           http::Response* pResponse)
 {
@@ -252,6 +309,12 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    pResponse->setContentType("text/css");
 }
 
+/**
+ * @brief Gets a custom theme that is installed for all users.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
 void handleLocalCustomThemeRequest(const http::Request& request,
                                          http::Response* pResponse)
 {
@@ -266,13 +329,17 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 }
 
 /**
- * Gets the list of all the avialble themes for the client.
+ * @brief Gets the list of all the avialble themes for the client.
+ *
+ * @param request       The JSON request from the client.
+ * @param pResponse     The JSON response, which will contain the list of themes.
+ *
+ * @return The error that occurred, if any; otherwise Success().
  */
 Error getThemes(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   ThemeMap themes;
-   getAllThemes(themes);
+   ThemeMap themes = getAllThemes();
 
    // Convert the theme to a json array.
    json::Array jsonThemeArray;
