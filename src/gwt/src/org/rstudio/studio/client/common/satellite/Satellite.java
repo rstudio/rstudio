@@ -26,7 +26,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -243,7 +242,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       RStudioGinjector.INSTANCE.getAddinsCommandManager();
       
       // get the session info and set it
-      SessionInfo sessionInfo = si.<SessionInfo>cast();
+      SessionInfo sessionInfo = si.cast();
       session_.setSessionInfo(sessionInfo);
    
       // some objects wait for SessionInit in order to initialize themselves
@@ -251,11 +250,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       events_.fireEvent(new SessionInitEvent());
   
       // ensure ui prefs initialize
-      pUIPrefs_.get().onUiPrefsChanged(
-         new UiPrefsChangedEvent(
-            UiPrefsChangedEvent.Data.create(
-               "global",
-               sessionInfo.getUiPrefs())));
+      pUIPrefs_.get();
    }
    
    // called by main window to setParams

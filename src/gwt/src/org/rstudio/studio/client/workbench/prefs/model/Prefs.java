@@ -327,10 +327,19 @@ public abstract class Prefs
       }
       return val;
    }
-
-
-   private final JsObject globalRoot_;
-   private final JsObject projectRoot_;
+   
+   // Meant to be called when the satellite window receives the sessionInfo.
+   protected void UpdatePrefs(JsObject uiPrefs, JsObject projectPrefs)
+   {
+      globalRoot_ = uiPrefs;
+      projectRoot_ = projectPrefs;
+   }
+   
+   // NOTE: globalRoot_ and projectRoot_ should generally not be changed. The are only non-final
+   // because at the time the Prefs is created in a Satellite, the sessionInfo_ has not been
+   // received, and the Prefs object (concrete UIPrefs) is a singleton, and so cannot be replaced.
+   private JsObject globalRoot_;
+   private JsObject projectRoot_;
    private final HashMap<String, PrefValue<?>> values_ =
          new HashMap<String, PrefValue<?>>();
 }

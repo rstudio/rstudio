@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -725,6 +726,13 @@ public class UIPrefsAccessor extends Prefs
       return bool("git_diff_ignore_whitespace", false);
    }
    
+   // Meant to be called when the satellite window receives the sessionInfo.
+   protected void UpdateSessionInfo(SessionInfo sessionInfo)
+   {
+      sessionInfo_ = sessionInfo;
+      UpdatePrefs(sessionInfo_.getUiPrefs(), sessionInfo_.getProjectUIPrefs());
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
@@ -749,5 +757,8 @@ public class UIPrefsAccessor extends Prefs
       }
    }
    
-   private final SessionInfo sessionInfo_;
+   // NOTE: The sessionInfo_ should generally not be changed. It's only non-final because at the
+   // time the UIPrefsAccessor is created in a Satellite the sessionInfo_ has not yet been received,
+   // and the UIPrefsAccessor is a singleton and so cannot be replaced.
+   private SessionInfo sessionInfo_;
 }
