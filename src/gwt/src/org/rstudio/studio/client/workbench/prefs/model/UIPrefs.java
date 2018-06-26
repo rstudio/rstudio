@@ -51,11 +51,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             (session.getSessionInfo() == null ? 
                JsObject.createJsObject() :
                session.getSessionInfo().getProjectUIPrefs()));
-      
+
       session_ = session;
       server_ = server;
       satelliteManager_ = satelliteManager;
-      
+
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
    }
    
@@ -94,7 +94,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    
    @Override
    public void onUiPrefsChanged(UiPrefsChangedEvent e)
-   {        
+   {
       if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
       {
          // get prefs accessor
@@ -335,8 +335,8 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
                                  newUiPrefs.defaultEncoding().getGlobalValue());
          
          // default project location
-         defaultProjectLocation().setGlobalValue(
-                        newUiPrefs.defaultProjectLocation().getGlobalValue());
+         /*defaultProjectLocation().setGlobalValue(
+                        newUiPrefs.defaultProjectLocation().getGlobalValue());*/
       
          // toolbar visible
          toolbarVisible().setGlobalValue(
