@@ -158,15 +158,49 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          protected void onInit(JsObject value)
          {
-            dialogState_ = value == null
-                           ? null
-                           : value.<FindInFilesDialog.State>cast();
+            if (value == null)
+            {
+               dialogState_ = null;
+               return;
+            }
+            
+            // convert project-relative path if needed
+            boolean relative = false;
+            if (value.hasKey("projectRelative"))
+               relative = value.getBoolean("projectRelative");
+            
+            if (relative)
+            {
+               FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
+               if (projDir != null)
+               {
+                  String projPath = projDir.getPath();
+                  value.setString("path", projPath + value.getString("path"));
+               }
+            }
+            
+            dialogState_ = value.cast();
          }
 
          @Override
          protected JsObject getValue()
          {
-            return dialogState_.cast();
+            JsObject object = dialogState_.<JsObject>cast().clone();
+            
+            // convert path to relative if path is project-relative
+            FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
+            if (projDir != null)
+            {
+               String path = dialogState_.getPath();
+               String projPath = projDir.getPath();
+               if ((path + "/").startsWith(projPath + "/"))
+               {
+                  object.setString("path", path.substring(projPath.length()));
+                  object.setBoolean("projectRelative", true);
+               }
+            }
+            
+            return object;
          }
       };
    }
