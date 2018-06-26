@@ -745,42 +745,13 @@ public class Application implements ApplicationEventHandlers
 
       return url;
    }
-   
-   private void updateTheme(String themeName)
-   {
-      RStudioThemes.initializeThemes(
-            uiPrefs_.get(),
-            Document.get(),
-            rootPanel_.getElement());
-   
-      events_.fireEvent(new ThemeChangedEvent(themeName));
-      events_.fireEventToAllSatellites(new ThemeChangedEvent(themeName));
-   }
-   
    private void initializeWorkbench()
    {
-      CommandWithArg<String> changedTheme = new CommandWithArg<String>()
-      {
-         public void execute(String theme)
-         {
-            updateTheme(theme);
-         }
-      };
-      
-      CommandWithArg<AceTheme> changedEditorTheme = new CommandWithArg<AceTheme>()
-      {
-         public void execute(AceTheme theme)
-         {
-            updateTheme(
-               RStudioThemes.suggestThemeFromAceTheme(
-                  theme,
-                  uiPrefs_.get().getFlatTheme().getGlobalValue()));
-         }
-      };
-
-      uiPrefs_.get().getFlatTheme().bind(changedTheme);
-      uiPrefs_.get().theme().bind(changedEditorTheme);
-      changedTheme.execute(uiPrefs_.get().getFlatTheme().getValue());
+      // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
+      // set the initial theme.
+      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      events_.fireEvent(new ThemeChangedEvent());
 
       pAceThemes_.get();
 

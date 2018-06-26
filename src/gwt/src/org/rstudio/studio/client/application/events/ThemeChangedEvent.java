@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ThemeChangedEvent extends CrossWindowEvent<ThemeChangedEvent.Handler>
+public class ThemeChangedEvent extends GwtEvent<ThemeChangedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -28,16 +29,6 @@ public class ThemeChangedEvent extends CrossWindowEvent<ThemeChangedEvent.Handle
 
    public ThemeChangedEvent()
    {
-   }
-   
-   public ThemeChangedEvent(String themeName)
-   {
-      themeName_ = themeName;
-   }
-
-   public String getName()
-   {
-      return themeName_;
    }
 
    @Override
@@ -52,6 +43,5 @@ public class ThemeChangedEvent extends CrossWindowEvent<ThemeChangedEvent.Handle
       handler.onThemeChanged(this);
    }
 
-   private String themeName_;
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -284,7 +284,10 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
-      uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+      if (!StringUtil.equals(theme_.getValue(), uiPrefs_.theme().getGlobalValue().getName()))
+      {
+         uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+      }
       if (Desktop.isDesktop())
       {
          if (initialFontFace_ != fontFace_.getValue())
@@ -303,10 +306,10 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       String themeName = flatTheme_.getValue();
 
-      uiPrefs_.getFlatTheme().setGlobalValue(themeName);  
-      ThemeChangedEvent themeChangedEvent = new ThemeChangedEvent(flatTheme_.getValue());
-      eventBus_.fireEvent(themeChangedEvent);
-      eventBus_.fireEventToAllSatellites(themeChangedEvent);
+      if (!StringUtil.equals(themeName, uiPrefs_.getFlatTheme().getGlobalValue()))
+      {
+         uiPrefs_.getFlatTheme().setGlobalValue(themeName);
+      }
       
       return restartRequired || relaunchRequired_;
    }
