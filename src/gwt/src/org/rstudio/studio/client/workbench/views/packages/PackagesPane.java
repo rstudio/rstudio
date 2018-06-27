@@ -460,9 +460,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(browseColumn, new TextHeader(""));
       packagesTable_.setColumnWidth(browseColumn, 20, Unit.PX);
 
-      // remove column is common
+      // remove column is common (note that we allocate extra column
+      // width to provide space for a scrollbar)
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
-      packagesTable_.setColumnWidth(removeColumn, 20, Unit.PX);
+      packagesTable_.setColumnWidth(removeColumn, 38, Unit.PX);
 
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
