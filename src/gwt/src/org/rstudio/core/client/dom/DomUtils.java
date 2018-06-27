@@ -1093,5 +1093,27 @@ public class DomUtils
       disableAutoBehavior(w.getElement());
    }
    
+   public static final native int getScrollbarWidth()
+   /*-{
+      
+      // create our scroller
+      var div = $doc.createElement("div");
+      
+      // style to place offscreen
+      div.style.width    = "100px";
+      div.style.height   = "100px";
+      div.style.overflow = "scroll";
+      div.style.position = "absolute";
+      div.style.top      = "-10000px";
+      
+      // compute scrollbar width after attaching to DOM
+      $doc.body.appendChild(div);
+      var width = div.offsetWidth - div.clientWidth;
+      $doc.body.removeChild(div);
+      
+      return width;
+      
+   }-*/;
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
 }
