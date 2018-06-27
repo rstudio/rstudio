@@ -144,6 +144,11 @@ void validationHandler(
    handler(username, pConnection);
 }
 
+bool spawnerSessionsEnabled()
+{
+   return getServerBoolOption(kSpawnerSessionsEnabled);
+}
+
 } // anonymous namespace
 
 void addHandler(const std::string &prefix,
@@ -153,6 +158,18 @@ void addHandler(const std::string &prefix,
    {
       s_pSessionRpcServer->addHandler(
                prefix, boost::bind(validationHandler, handler, _1));
+
+      if (spawnerSessionsEnabled())
+      {
+         // if we're using spawner sessions, we need to handle RPCs
+         // from within the regular http server since sessions will be
+         // on different machines - we add the handler to both because
+         // at any time, the spawner licensing field could change, and
+         // so sessions need to be able to communicate effectively in both
+         // spawner and non-spawner modes
+         server::server()->addHandler(
+                  prefix, boost::bind(validationHandler, handler, _1));
+      }
    }
 }
 
@@ -177,40 +194,29 @@ Error initialize()
 {
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
-   bool spawnerSessionsEnabled = getServerBoolOption(kSpawnerSessionsEnabled) && activation::spawnerEnabled();
 
    // currently only shared projects and spawner sessions perform session RPCs
    if (hasSharedStorage &&
-      (projectSharingEnabled || spawnerSessionsEnabled))
+      (projectSharingEnabled || spawnerSessionsEnabled()))
 
    {
-      if (spawnerSessionsEnabled)
-      {
-         // if we're using spawner sessions, we need to handle RPCs
-         // from within the regular http server since sessions will be
-         // on different machines
-         s_pSessionRpcServer = server::server();
-      }
-      else
-      {
-         // create the async server instance
-         s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
-                  "Session RPCs",
-                  std::string(),
-                  core::system::EveryoneReadWriteMode);
+      // create the async server instance
+      s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
+               "Session RPCs",
+               std::string(),
+               core::system::EveryoneReadWriteMode);
 
-         // initialize with path to our socket
-         Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
-                  FilePath(kServerRpcSocketPath));
-         if (error)
-            return error;
-      }
+      // initialize with path to our socket
+      Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
+               FilePath(kServerRpcSocketPath));
+      if (error)
+         return error;
 
       s_pSessionRpcServer->setScheduledCommandInterval(
                boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));   
 
-      // create the shared secret (if necessary)
-      Error error = key_file::readSecureKeyFile("session-rpc-key",
+      // create the shared secret
+      error = key_file::readSecureKeyFile("session-rpc-key",
                                           &s_sessionSharedSecret);
       if (error)
          return error;
