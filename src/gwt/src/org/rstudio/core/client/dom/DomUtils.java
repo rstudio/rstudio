@@ -1093,7 +1093,15 @@ public class DomUtils
       disableAutoBehavior(w.getElement());
    }
    
-   public static final native int getScrollbarWidth()
+   public static final int getScrollbarWidth()
+   {
+      if (SCROLLBAR_WIDTH == -1)
+         SCROLLBAR_WIDTH = getScrollbarWidthImpl();
+      
+      return SCROLLBAR_WIDTH;
+   }
+   
+   private static final native int getScrollbarWidthImpl()
    /*-{
       
       // create our scroller
@@ -1116,4 +1124,5 @@ public class DomUtils
    }-*/;
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
+   private static int SCROLLBAR_WIDTH = -1;
 }
