@@ -26,6 +26,7 @@ import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -71,7 +72,7 @@ public class FilesList extends Composite
                                                       dataProvider_.getList());
       
       // create cell table
-      filesDataGrid_ = new DataGrid<FileSystemItem>(
+      filesDataGrid_ = new RStudioDataGrid<FileSystemItem>(
                                           15,
                                           FilesListDataGridResources.INSTANCE,
                                           KEY_PROVIDER);
