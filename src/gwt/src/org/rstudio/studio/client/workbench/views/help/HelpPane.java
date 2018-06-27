@@ -107,19 +107,7 @@ public class HelpPane extends WorkbenchPane
 
       frame_ = new RStudioThemedFrame(
          null,
-         ".rstudio-themes-flat.editor_dark div#TOC,\n" +
-         ".rstudio-themes-flat.editor_dark h1,\n" +
-         ".rstudio-themes-flat.editor_dark h2,\n" +
-         ".rstudio-themes-flat.editor_dark h3,\n" +
-         ".rstudio-themes-flat.editor_dark h4,\n" +
-         ".rstudio-themes-flat.editor_dark table {\n" +
-         "  background: none !important;\n" +
-         "  color: white !important;\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.editor_dark ::selection {\n" +
-         "  background-color: #CCC;\n" +
-         "}\n",
+         RES.editorStyles().getText(),
          null,
          false,
          RStudioThemes.isFlat());
@@ -771,10 +759,17 @@ public class HelpPane extends WorkbenchPane
       String topicTitle();
    }
    
+   public interface EditorStyles extends CssResource
+   {
+   }
+   
    public interface Resources extends ClientBundle
    {
       @Source("HelpPane.css")
       Styles styles();
+      
+      @Source("HelpPaneEditorStyles.css")
+      EditorStyles editorStyles();
    }
 
    private static final Resources RES = GWT.create(Resources.class);
