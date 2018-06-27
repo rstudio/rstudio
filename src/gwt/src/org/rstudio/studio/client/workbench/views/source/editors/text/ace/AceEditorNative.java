@@ -218,6 +218,11 @@ public class AceEditorNative extends JavaScriptObject {
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
       
+      // We bind 'Ctrl + O' to open files on all platforms.
+      // This conflicts with the default Ace binding for splitting lines;
+      // rebind to Ctrl-J on all platforms.
+      this.commands.byName["splitline"].bindKey = {mac: "Ctrl-J", win: "Ctrl-J"};
+      
       // Don't bind 'Cmd+,'
       delete this.commands.commandKeyBinding["cmd-,"];
       
