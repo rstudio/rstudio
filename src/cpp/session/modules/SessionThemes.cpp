@@ -51,7 +51,7 @@ const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
-typedef std::map<std::string, std::pair<std::string, bool> > ThemeMap;
+typedef std::map<std::string, std::tuple<std::string, std::string, bool> > ThemeMap;
 
 /// @brief Determines whether a string can be evaluated to logical "true". A return value of false
 ///        does not indicate that the string can be evaluted to logical "false".
@@ -63,7 +63,7 @@ bool strIsTrue(const std::string& toConvert)
 {
    return std::regex_match(
             std::string(toConvert),
-            std::regex("(?:1|t(?:rue)?))", std::regex_constants::icase));
+            std::regex("(?:1|t(?:rue)?)", std::regex_constants::icase));
 }
 
 /// @brief Determines whether a string can be evaluated to logical "false". A return value of true
@@ -77,7 +77,7 @@ bool strIsFalse(const std::string& toConvert)
 {
    return std::regex_match(
             std::string(toConvert),
-            std::regex("(?:0|f(?:alse)?))", std::regex_constants::icase));
+            std::regex("(?:0|f(?:alse)?)", std::regex_constants::icase));
 }
 
 /**
@@ -144,7 +144,10 @@ void getThemesInLocation(
                // TODO: warning / logging about using default isDark value.
             }
 
-            themeMap[name] = std::pair<std::string, bool>(urlPrefix + themeFile.filename(), isDark);
+            themeMap[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
+               name,
+               urlPrefix + themeFile.filename(),
+               isDark);
          }
       }
    }
@@ -238,8 +241,9 @@ SEXP rs_getThemes()
    for (auto theme: themeMap)
    {
       rstudio::r::sexp::ListBuilder themeDetailsListBuilder(&protect);
-      themeDetailsListBuilder.add("url", theme.second.first);
-      themeDetailsListBuilder.add("isDark", theme.second.second);
+      themeDetailsListBuilder.add("name", std::get<0>(theme.second));
+      themeDetailsListBuilder.add("url", std::get<1>(theme.second));
+      themeDetailsListBuilder.add("isDark", std::get<2>(theme.second));
 
       themeListBuilder.add(theme.first, themeDetailsListBuilder);
    }
@@ -346,9 +350,9 @@ Error getThemes(const json::JsonRpcRequest& request,
    for (auto theme: themes)
    {
       json::Object jsonTheme;
-      jsonTheme["name"] = theme.first;
-      jsonTheme["url"] = theme.second.first;
-      jsonTheme["isDark"] = theme.second.second;
+      jsonTheme["name"] = std::get<0>(theme.second);
+      jsonTheme["url"] = std::get<1>(theme.second);
+      jsonTheme["isDark"] = std::get<2>(theme.second);
       jsonThemeArray.push_back(jsonTheme);
    }
 

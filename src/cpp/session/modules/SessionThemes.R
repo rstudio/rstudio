@@ -980,14 +980,14 @@
 #
 # @param name     The name of the theme to apply.
 .rs.addFunction("applyTheme", applyTheme <- function(name, themeList) {
-   theme <- themeList[[name]]
+   theme <- themeList[[tolower(name)]]
    if (is.null(theme))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
    themeValue <- list(
-      "name"= .rs.scalar(name),
+      "name"= .rs.scalar(theme$name),
       "isDark" = .rs.scalar(theme$isDark),
       "url" = .rs.scalar(theme$url))
    .rs.writeUiPref("rstheme", themeValue);
@@ -1000,7 +1000,7 @@
 .rs.addFunction("removeTheme", removeTheme <- function(name, themeList) {
    currentTheme <- .rs.api.getThemeInfo()$editor
    
-   if (is.null(themeList[[name]]))
+   if (is.null(themeList[[tolower(name)]]))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
@@ -1010,7 +1010,7 @@
       .rs.applyTheme("TextMate")
    }
 
-   filePath <- .rs.getThemeDirFromUrl(themeList[[name]]$url)
+   filePath <- .rs.getThemeDirFromUrl(themeList[[tolower(name)]]$url)
    if (is.null(filePath))
    {
       stop(

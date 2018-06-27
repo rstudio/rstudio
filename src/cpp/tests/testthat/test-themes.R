@@ -1814,7 +1814,7 @@ test_that_wrapped("addTheme works correctly with force = TRUE", {
    exLines <- readLines(f)
    close(f)
    
-   installedTheme <- .Call("rs_getThemes")[[name]]
+   installedTheme <- .Call("rs_getThemes")[[tolower(name)]]
    f <- file(.rs.getThemeDirFromUrl(installedTheme$url))
    acLines <- readLines(f)
    close(f)
@@ -1852,10 +1852,11 @@ test_that_wrapped("rs_getThemes gets default themes correctly", {
    themeList <- .Call("rs_getThemes")
    expect_equal(length(themeList), length(defaultThemes))
    .rs.enumerate(themeList, function(themeName, themeDetails) {
-      infoStr <- paste("Theme:", themeName)
-      expect_true(themeName %in% names(defaultThemes), info = infoStr)
+      infoStr <- paste("Theme:", themeDetails$name)
+      expect_true(themeDetails$name %in% names(defaultThemes), info = infoStr)
+      expect_equal(themeName, tolower(themeDetails$name))
       
-      expectedTheme <- defaultThemes[[themeName]]
+      expectedTheme <- defaultThemes[[themeDetails$name]]
       expect_equal(
          themeDetails$url,
          paste0("/theme/default/", expectedTheme$fileName, ".rstheme"),
@@ -1882,9 +1883,9 @@ test_that_wrapped("rs_getThemes works correctly", {
    .rs.enumerate(addedThemes, function(themeName, themeLocation)
    {
       infoStr <- paste("Theme:", themeName)
-      expect_true(themeName %in% names(themeList), info = infoStr)
-      expect_equal(themeList[[themeName]]$url, themeLocation, info = infoStr)
-      expect_equal(themeList[[themeName]]$isDark, themes[[themeName]]$isDark, info = infoStr)
+      expect_true(tolower(themeName) %in% names(themeList), info = infoStr)
+      expect_equal(themeList[[tolower(themeName)]]$url, themeLocation, info = infoStr)
+      expect_equal(themeList[[tolower(themeName)]]$isDark, themes[[themeName]]$isDark, info = infoStr)
    })
 },
 BEFORE_FUN = setThemeLocations,
@@ -1908,33 +1909,34 @@ AFTER_FUN = function() {
 
 test_that_wrapped("rs_getThemes location override works correctly", {
    # Nothing installed
-   dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
+   themeName <- "Dawn"
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
-      paste0("/theme/default/", defaultThemes[["Dawn"]]$fileName, ".rstheme"),
+      paste0("/theme/default/", defaultThemes[[themeName]]$fileName, ".rstheme"),
       info = "default location")
 
    # Install globally
-   expectedDawn <- themes[["Dawn"]]
+   expectedDawn <- themes[[themeName]]
    .rs.addTheme(
       file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
       FALSE,
       FALSE,
       TRUE)
-   dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("/theme/custom/global/", expectedDawn$fileName, ".rstheme"),
       info = "global location")
 
    # Install locally
-   expectedDawn <- themes[["Dawn"]]
+   expectedDawn <- themes[[themeName]]
    .rs.addTheme(
       file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
       FALSE,
       FALSE,
       FALSE)
-   dawnTheme <- .Call("rs_getThemes")[["Dawn"]]
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("/theme/custom/local/", expectedDawn$fileName, ".rstheme"),
@@ -1943,8 +1945,8 @@ test_that_wrapped("rs_getThemes location override works correctly", {
 BEFORE_FUN = setThemeLocations,
 AFTER_FUN = function() {
    # Remove the theme from the local & global locations.
-   .rs.removeTheme("Dawn", .Call("rs_getThemes"))
-   .rs.removeTheme("Dawn", .Call("rs_getThemes"))
+   .rs.removeTheme(themeName, .Call("rs_getThemes"))
+   .rs.removeTheme(themeName, .Call("rs_getThemes"))
    unsetThemeLocations()
 })
 
