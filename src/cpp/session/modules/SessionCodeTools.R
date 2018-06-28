@@ -842,36 +842,31 @@
 
 .rs.addFunction("assign", function(x, value)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
+   assign(paste(".rs.cache.", x, sep = ""), value, envir = .rs.toolsEnv())
 })
 
 .rs.addFunction("get", function(x)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      tryCatch(
-         get(paste(".rs.cache.", x, sep = ""), pos = pos),
-         error = function(e) NULL
-      )
+   tryCatch(
+      get(paste(".rs.cache.", x, sep = ""), envir = .rs.toolsEnv()),
+      error = function(e) NULL
+   )
 })
 
 .rs.addFunction("mget", function(x = NULL)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      tryCatch({
-         
+   tryCatch(
+      {
          objects <- if (is.null(x))
-            .rs.selectStartsWith(objects(pos = pos, all.names = TRUE), ".rs.cache")
+            .rs.selectStartsWith(objects(envir = .rs.toolsEnv(), all.names = TRUE), ".rs.cache")
          else
             paste(".rs.cache.", x, sep = "")
          
-         mget(objects, envir = as.environment(pos))
+         mget(objects, envir = .rs.toolsEnv())
       },
-         error = function(e) NULL
-      )
+      
+      error = function(e) NULL
+   )
 })
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)

@@ -16,7 +16,7 @@
 # Put the autocompletion types in the .rs.Env environment so they're accessible
 # everywhere (sync with RCompletionManager.java)
 assign(x = ".rs.acContextTypes",
-       pos = which(search() == "tools:rstudio"),
+       envir = as.environment("tools:rstudio"),
        value = list(
           UNKNOWN            =  0,
           FUNCTION           =  1,
@@ -37,7 +37,7 @@ assign(x = ".rs.acContextTypes",
 
 # Sync with RCompletionTypes.java
 assign(x = ".rs.acCompletionTypes",
-       pos = which(search() == "tools:rstudio"),
+       envir = as.environment("tools:rstudio"),
        value = list(
           UNKNOWN     =  0,
           VECTOR      =  1,
@@ -2524,10 +2524,9 @@ assign(x = ".rs.acCompletionTypes",
    ## could be slow
    pkgCacheName <- ".completions.attachedPackagesCache"
    helpTopicsName <- ".completions.helpTopics"
-   rsEnvPos <- which(search() == "tools:rstudio")
    
    attachedPackagesCache <- tryCatch(
-      get(pkgCacheName, pos = rsEnvPos),
+      get(pkgCacheName, envir = .rs.toolsEnv()),
       error = function(e) character()
    )
    
@@ -2538,7 +2537,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       assign(pkgCacheName,
              basename(paths),
-             pos = rsEnvPos)
+             envir = .rs.toolsEnv())
       
       # Get the set of help topics
       topics <- lapply(paths, .rs.readAliases)
@@ -2546,10 +2545,10 @@ assign(x = ".rs.acCompletionTypes",
       
       assign(helpTopicsName,
              topics,
-             pos = rsEnvPos)
+             envir = .rs.toolsEnv())
    }
    
-   aliases <- get(helpTopicsName, pos = rsEnvPos)
+   aliases <- get(helpTopicsName, envir = .rs.toolsEnv())
    
    ## If the token is of the form `<pkg>::<topic>`,
    ## then attempt to get the topic 'topic' for that
@@ -2576,7 +2575,7 @@ assign(x = ".rs.acCompletionTypes",
          if (!is.null(pkgPath))
          {
             aliases[[pkg]] <- .rs.readAliases(pkgPath)
-            assign(helpTopicsName, aliases, pos = rsEnvPos)
+            assign(helpTopicsName, aliases, envir = .rs.toolsEnv())
          }
       }
       
