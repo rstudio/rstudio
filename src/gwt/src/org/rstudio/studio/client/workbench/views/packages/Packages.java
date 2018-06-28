@@ -717,7 +717,7 @@ public class Packages
    
    public void showHelp(PackageInfo packageInfo)
    {
-      events_.fireEvent(new ShowHelpEvent(packageInfo.getUrl())) ;
+      events_.fireEvent(new ShowHelpEvent(packageInfo.getHelpUrl())) ;
    }
    
    public void onPackageStateChanged(PackageStateChangedEvent event)

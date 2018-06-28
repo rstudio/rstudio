@@ -283,63 +283,81 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
-   # calculate unique libpaths
-   uniqueLibPaths <- .rs.uniqueLibraryPaths()
-
-   # get packages
-   x <- suppressWarnings(library(lib.loc=uniqueLibPaths))
-   x <- x$results[x$results[, 1] != "base", , drop=FALSE]
+   # query info on installed packages
+   ip <- as.data.frame(installed.packages(lib.loc = .rs.uniqueLibraryPaths()), stringsAsFactors = FALSE)
    
-   # extract/compute required fields 
-   pkgs.name <- x[, 1]
-   pkgs.library <- x[, 2]
-   pkgs.desc <- x[, 3]
-   pkgs.url <- file.path("help/library",
-                         pkgs.name, 
-                         "html", 
-                         "00Index.html")
-   loaded.pkgs <- .rs.pathPackage()
-   pkgs.loaded <- !is.na(match(normalizePath(
-                                  paste(pkgs.library,pkgs.name, sep="/")),
-                               loaded.pkgs))
+   # note which packages are base R packages
+   base <- ip$Package[ip$Priority %in% "base"]
    
-
-   # build up vector of package versions
-   instPkgs <- as.data.frame(installed.packages(), stringsAsFactors=F)
-   pkgs.version <- sapply(seq_along(pkgs.name), function(i){
-     .rs.packageVersion(pkgs.name[[i]], pkgs.library[[i]], instPkgs)
-   })
-
-   pkgs.browse <- sapply(seq_along(pkgs.name), function(i){
-     repo <- getOption("repos")[[1]]
-     if (!identical(repo, NULL)) {
-       slash <- if (.rs.lastCharacterIs(repo, "/")) "" else "/"
-       .rs.scalar(paste(repo, slash, "package=", pkgs.name[[i]], sep = ""))
-     } 
-     else {
-       NULL
-     }
-   })
+   # TODO: we might like to call 'available.packages()' to learn what packages
+   # are currently available on CRAN, but this is a somewhat expensive web request
+   # that we might prefer to avoid
    
-   # alias library paths for the client
-   pkgs.library <- .rs.createAliasedPath(pkgs.library)
-
-   # return data frame sorted by name
-   packages = data.frame(name=pkgs.name,
-                         library=pkgs.library,
-                         version=pkgs.version,
-                         desc=pkgs.desc,
-                         url=pkgs.url,
-                         loaded=pkgs.loaded,
-                         check.rows = TRUE,
-                         stringsAsFactors = FALSE,
-                         browse=pkgs.browse)
-
+   # mark whether packages are loaded
+   ip$Loaded <- ip$Package %in% loadedNamespaces()
+   
+   # further augment with information from DESCRIPTION file
+   ip$DescPath <- file.path(ip$LibPath, ip$Package, "DESCRIPTION")
+   info <- .rs.rbindList(lapply(ip$DescPath, function(descPath) {
+      
+      dcf <- read.dcf(descPath, all = TRUE)
+      
+      # attempt to infer an appropriate URL for this package
+      if (dcf$Package %in% base) {
+         source <- "Base"
+         url <- ""
+      } else if (!is.null(dcf$URL)) {
+         source <- "Custom"
+         url <- strsplit(dcf$URL, "\\s*,\\s*")[[1]][[1]]
+      } else if ("biocViews" %in% names(dcf)) {
+         source <- "Bioconductor"
+         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", dcf$Package)
+      } else if (identical(dcf$Repository, "CRAN")) {
+         source <- "CRAN"
+         url <- sprintf("https://cran.r-project.org/package=%s", dcf$Package)
+      } else if (!is.null(dcf$GithubRepo)) {
+         source <- "GitHub"
+         url <- sprintf("https://github.com/%s/%s", dcf$GithubUsername, dcf$GithubRepo)
+      } else {
+         source <- "Unknown"
+         url <- sprintf("https://cran.r-project.org/package=%s", dcf$Package)
+      }
+      
+      list(
+         Package     = dcf$Package,
+         LibPath     = basename(basename(descPath)),
+         Version     = dcf$Version,
+         Title       = dcf$Title,
+         Description = dcf$Description,
+         Loaded      = dcf$Package %in% loadedNamespaces(),
+         Source      = source,
+         BrowseUrl   = url
+      )
+      
+   }))
+   
+   # combine installed package information database with what we've gleaned from
+   # description files
+   ip <- cbind(ip, info)
+   
+   # extract fields relevant to us
+   packages <- data.frame(
+      name             = ip$Package,
+      library          = .rs.createAliasedPath(ip$LibPath),
+      version          = ip$Version,
+      desc             = ip$Title,
+      loaded           = ip$Loaded,
+      source           = ip$Source,
+      browse_url       = ip$BrowseUrl,
+      check.rows       = TRUE,
+      stringsAsFactors = FALSE
+   )
+   
    # sort and return
-   packages[order(packages$name),]
+   packages[order(packages$name), ]
 })
 
-.rs.addJsonRpcHandler( "get_package_install_context", function()
+.rs.addJsonRpcHandler("get_package_install_context", function()
 {
    # cran mirror configured
    repos = getOption("repos")
