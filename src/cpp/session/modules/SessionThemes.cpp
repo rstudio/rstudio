@@ -15,7 +15,9 @@
 
 #include "SessionThemes.hpp"
 
+#include <boost/algorithm/algorithm.hpp>
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -33,7 +35,6 @@
 
 #include <fstream>
 #include <map>
-#include <regex>
 #include <string>
 
 using namespace rstudio::core;
@@ -61,9 +62,9 @@ typedef std::map<std::string, std::tuple<std::string, std::string, bool> > Theme
 /// @return True if the string matches 1, TRUE, true, or any case variant of true; false otherwise.
 bool strIsTrue(const std::string& toConvert)
 {
-   return std::regex_match(
-            std::string(toConvert),
-            std::regex("(?:1|t(?:rue)?)", std::regex_constants::icase));
+   return boost::regex_match(
+            toConvert,
+            boost::regex("(?:1|t(?:rue)?)", boost::regex::icase));
 }
 
 /// @brief Determines whether a string can be evaluated to logical "false". A return value of true
@@ -75,9 +76,9 @@ bool strIsTrue(const std::string& toConvert)
 ///         otherwise.
 bool strIsFalse(const std::string& toConvert)
 {
-   return std::regex_match(
-            std::string(toConvert),
-            std::regex("(?:0|f(?:alse)?)", std::regex_constants::icase));
+   return boost::regex_match(
+            toConvert,
+            boost::regex("(?:0|f(?:alse)?)", boost::regex::icase));
 }
 
 /**
@@ -108,11 +109,11 @@ void getThemesInLocation(
                (std::istreambuf_iterator<char>()));
             themeIFStream.close();
 
-            std::smatch matches;
-            std::regex_search(
+            boost::smatch matches;
+            boost::regex_search(
                themeContents,
                matches,
-               std::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
+               boost::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
             // If there's no name specified,use the name of the file
             std::string name;
@@ -127,10 +128,10 @@ void getThemesInLocation(
             }
 
             // Find out if the theme is dark or not.
-            std::regex_search(
+            boost::regex_search(
                      themeContents,
                      matches,
-                     std::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
+                     boost::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
             bool isDark = false;
             if (matches.size() >= 2)
@@ -141,7 +142,7 @@ void getThemesInLocation(
                 (!isDark &&
                 !strIsFalse(matches[1])))
             {
-               // TODO: warning / logging about using default isDark value.
+               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set or not convertable to boolean for theme \"" + name + "\".");
             }
 
             themeMap[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
@@ -265,9 +266,7 @@ FilePath getDefaultTheme(const http::Request& request)
    bool isDark = strIsTrue(isDarkStr);
    if (!isDark && !strIsFalse(isDarkStr))
    {
-      // TODO: Error/warning/logging
-      // Note that this should be considered an internal error, since the request is generated
-      // by the client and without user input.
+      LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
    }
 
    if (isDark)
