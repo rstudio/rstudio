@@ -16,14 +16,12 @@
 #include "ServerOffline.hpp"
 
 #include <core/Error.hpp>
-#include <core/Log.hpp>
-
+#include <core/gwt/GwtFileHandler.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-
-#include <core/gwt/GwtFileHandler.hpp>
-
 #include <core/json/JsonRpc.hpp>
+#include <core/Log.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
@@ -48,10 +46,29 @@ void handleOfflineRequest(const http::Request& request,
    // send error page for html responses
    else if (request.acceptsContentType("text/html"))
    {
-      pResponse->setStatusCode(http::status::ServiceUnavailable);
+      std::ostringstream os;
+      std::map<std::string, std::string> vars;
+      vars["request_uri"] = request.uri();
+
+      FilePath offlineTemplate = FilePath(options().wwwLocalPath()).childPath("offline.htm");
+      core::Error err = core::text::renderTemplate(offlineTemplate, vars, os);
+
+      if (err)
+      {
+         // if we cannot display the page log the error
+         // note: this should never happen in a proper deployment
+         LOG_ERROR(err);
+      }
+      else
+      {
+         std::string body = os.str();
+         pResponse->setContentType("text/html");
+         pResponse->setBodyUnencoded(body);
+      }
+
+      // set 503 status even if there was an error showing the page
       pResponse->setNoCacheHeaders();
-      FilePath wwwPath(server::options().wwwLocalPath());
-      pResponse->setFile(wwwPath.complete("offline.htm"), request);
+      pResponse->setStatusCode(core::http::status::ServiceUnavailable);
    }
    
    // other content types just get a plain 503 with no content
@@ -60,7 +77,7 @@ void handleOfflineRequest(const http::Request& request,
        pResponse->setStatusCode(http::status::ServiceUnavailable);
    }
 }
-   
+
 }
    
 Error httpServerAddHandlers()
