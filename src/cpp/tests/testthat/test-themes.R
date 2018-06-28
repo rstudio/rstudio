@@ -384,15 +384,18 @@ unsetThemeLocations <- function()
    Sys.unsetenv("RS_THEME_LOCAL_HOME")
 }
 
-makeNoPermissionDir <- function() {
+makeNoPermissionDir <- function() 
+{
    if (dir.exists(noPermissionDir))
-   {
       Sys.chmod(noPermissionDir, mode = "0555")
-   }
    else
-   {
       dir.create(noPermissionDir, mode = "0555")
-   }
+}
+
+makeGlobalThemesDir() <- function()
+{
+   if (!dir.exists(globalInstallDir))
+      dir.create(globalInstallDir, recursive = TRUE)
 }
 
 # Test getRgbColor =================================================================================
@@ -1772,7 +1775,10 @@ test_that_wrapped("addTheme works correctly with global install", {
       }
    }
 },
-BEFORE_FUN = setThemeLocations,
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
 AFTER_FUN = function() {
    unsetThemeLocations()
    if (!all(file.remove(dir(globalInstallDir))))
@@ -1888,7 +1894,10 @@ test_that_wrapped("rs_getThemes works correctly", {
       expect_equal(themeList[[tolower(themeName)]]$isDark, themes[[themeName]]$isDark, info = infoStr)
    })
 },
-BEFORE_FUN = setThemeLocations,
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
 AFTER_FUN = function() {
    toRemove <- c(
       file.path(localInstallDir, dir(localInstallDir)),
@@ -1942,7 +1951,10 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       paste0("/theme/custom/local/", expectedDawn$fileName, ".rstheme"),
       info = "local location")
 },
-BEFORE_FUN = setThemeLocations,
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
 AFTER_FUN = function() {
    # Remove the theme from the local & global locations.
    .rs.removeTheme(themeName, .Call("rs_getThemes"))
@@ -1978,6 +1990,7 @@ test_that_wrapped("removeTheme works correctly globally", {
 },
 BEFORE_FUN = function() {
    setThemeLocations()
+   makeGlobalThemeDir()
    toAdd <- paste0(themes[[22]]$fileName, ".rstheme")
    file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(globalInstallDir, toAdd))
 },
