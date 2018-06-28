@@ -296,42 +296,79 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # mark whether packages are loaded
    ip$Loaded <- ip$Package %in% loadedNamespaces()
    
-   # further augment with information from DESCRIPTION file
-   ip$DescPath <- file.path(ip$LibPath, ip$Package, "DESCRIPTION")
-   info <- .rs.rbindList(lapply(ip$DescPath, function(descPath) {
+   # helper function for extracting information from a package's
+   # DESCRIPTION file
+   readPackageInfo <- function(pkgPath) {
       
-      dcf <- read.dcf(descPath, all = TRUE)
+      # attempt to read package metadata
+      desc <- .rs.tryCatch({
+         metapath <- file.path(pkgPath, "Meta", "package.rds")
+         metadata <- readRDS(metapath)
+         as.list(metadata$DESCRIPTION)
+      })
+      
+      # if that failed, try reading the DESCRIPTION
+      if (inherits(desc, "error"))
+         desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
       
       # attempt to infer an appropriate URL for this package
-      if (dcf$Package %in% base) {
+      if (desc$Package %in% base) {
          source <- "Base"
          url <- ""
-      } else if (!is.null(dcf$URL)) {
+      } else if (!is.null(desc$URL)) {
          source <- "Custom"
-         url <- strsplit(dcf$URL, "\\s*,\\s*")[[1]][[1]]
-      } else if ("biocViews" %in% names(dcf)) {
+         url <- strsplit(desc$URL, "\\s*,\\s*")[[1]][[1]]
+      } else if ("biocViews" %in% names(desc)) {
          source <- "Bioconductor"
-         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", dcf$Package)
-      } else if (identical(dcf$Repository, "CRAN")) {
+         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
+      } else if (identical(desc$Repository, "CRAN")) {
          source <- "CRAN"
-         url <- sprintf("https://cran.r-project.org/package=%s", dcf$Package)
-      } else if (!is.null(dcf$GithubRepo)) {
+         url <- sprintf("https://cran.r-project.org/package=%s", desc$Package)
+      } else if (!is.null(desc$GithubRepo)) {
          source <- "GitHub"
-         url <- sprintf("https://github.com/%s/%s", dcf$GithubUsername, dcf$GithubRepo)
+         url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
       } else {
          source <- "Unknown"
-         url <- sprintf("https://cran.r-project.org/package=%s", dcf$Package)
+         url <- sprintf("https://cran.r-project.org/package=%s", desc$Package)
       }
       
       list(
-         Package     = dcf$Package,
-         LibPath     = basename(basename(descPath)),
-         Version     = dcf$Version,
-         Title       = dcf$Title,
-         Description = dcf$Description,
-         Loaded      = dcf$Package %in% loadedNamespaces(),
+         Package     = desc$Package,
+         LibPath     = dirname(pkgPath),
+         Version     = desc$Version,
+         Title       = desc$Title,
+         Loaded      = desc$Package %in% loadedNamespaces(),
          Source      = source,
          BrowseUrl   = url
+      )
+   }
+   
+   # to be called if our attempt to read the package DESCRIPTION file failed
+   # for some reason
+   emptyPackageInfo <- function(pkgPath) {
+      
+      package <- basename(pkgPath)
+      libPath <- dirname(pkgPath)
+      
+      list(
+         Package   = package,
+         LibPath   = libPath,
+         Version   = "[Unknown]",
+         Title     = "[Failed to read package metadata]",
+         Loaded    = package %in% loadedNamespaces(),
+         Source    = "Unknown",
+         BrowseUrl = ""
+      )
+      
+   }
+   
+   # further augment with information from DESCRIPTION file
+   ip$PkgPath <- file.path(ip$LibPath, ip$Package)
+   info <- .rs.rbindList(lapply(ip$PkgPath, function(pkgPath) {
+      
+      tryCatch(
+         readPackageInfo(pkgPath),
+         error = function(e) emptyPackageInfo(pkgPath)
       )
       
    }))
