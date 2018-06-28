@@ -33,7 +33,7 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace group {
-   
+
 namespace {
 
 const int kNotFoundError = EACCES;
@@ -112,14 +112,23 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    // get the groups for the user - we start with 100 groups which should be enough for most cases
    // if it is not, resize the buffer with the correct amount of groups and try again
    int numGroups = 100;
-   boost::shared_ptr<gid_t> pGids(new gid_t[100]);
+
+   // define a different gid type if we are on Mac vs Linux
+   // BSD expects int values, but Linux expects unsigned ints
+#ifndef __APPLE__
+   typedef gid_t GIDTYPE;
+#else
+   typedef int GIDTYPE;
+#endif
+
+   boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[100]);
    while (!getgrouplist(userName.c_str(), user.groupId, pGids.get(), &numGroups))
    {
       // defensive break out in case the OS somehow returns 0 groups for the user
       if (numGroups == 0)
          break;
 
-      pGids.reset(new gid_t[numGroups]);
+      pGids.reset(new GIDTYPE[numGroups]);
    }
 
    // create group objects for each returned group
