@@ -7,18 +7,21 @@ if (!require("highlight", quietly = TRUE)) {
    }
 }
 
-# Needed to source the file below.
-.rs.Env <- attach(NULL, name="tools:rstudio")
-# add a function to the tools:rstudio environment
-assign( envir = .rs.Env, ".rs.addFunction", function(
-   name, FN, attrs = list())
-{ 
-   fullName = paste(".rs.", name, sep="")
-   for (attrib in names(attrs))
-      attr(FN, attrib) <- attrs[[attrib]]
-   assign(fullName, FN, .rs.Env)
-   environment(.rs.Env[[fullName]]) <- .rs.Env
-})
+if (!"tools:rstudio" %in% search())
+{
+   # Needed to source the file below.
+   .rs.Env <- attach(NULL, name="tools:rstudio")
+   # add a function to the tools:rstudio environment
+   assign( envir = .rs.Env, ".rs.addFunction", function(
+      name, FN, attrs = list())
+   { 
+      fullName = paste(".rs.", name, sep="")
+      for (attrib in names(attrs))
+         attr(FN, attrib) <- attrs[[attrib]]
+      assign(fullName, FN, .rs.Env)
+      environment(.rs.Env[[fullName]]) <- .rs.Env
+   })
+}
 
 source(file.path("..", "..", "cpp", "session", "resources", "themes", "compile-themes.R"))
 
