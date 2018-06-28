@@ -14,7 +14,13 @@
 #
 
 # target environment for rstudio supplemental tools
-.rs.Env <- attach(NULL, name="tools:rstudio")
+# (guard against attempts to duplicate this environment)
+if ("tools:rstudio" %in% search()) {
+   .rs.Env <- as.environment("tools:rstudio")
+} else {
+   .rs.Env <- attach(NULL, name = "tools:rstudio")
+}
+
 assign(".rs.toolsEnv", envir = .rs.Env, function() { .rs.Env })
 
 # environment for completion hooks
