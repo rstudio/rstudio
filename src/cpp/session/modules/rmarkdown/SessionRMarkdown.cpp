@@ -202,7 +202,7 @@ std::string assignOutputUrl(const std::string& outputFile)
          websiteDir = FilePath(websiteOutputDir);
       }
    }
-   if (!websiteDir.empty() && !r_util::isWebsiteDirectory(outputPath.parent()))
+   if (!websiteDir.empty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(outputPath.parent()))
    {
       // assign website build dir as output root
       FilePath indexPath = websiteDir.childPath("index.html");
