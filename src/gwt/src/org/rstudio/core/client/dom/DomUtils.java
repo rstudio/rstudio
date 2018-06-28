@@ -1093,5 +1093,36 @@ public class DomUtils
       disableAutoBehavior(w.getElement());
    }
    
+   public static final int getScrollbarWidth()
+   {
+      if (SCROLLBAR_WIDTH == -1)
+         SCROLLBAR_WIDTH = getScrollbarWidthImpl();
+      
+      return SCROLLBAR_WIDTH;
+   }
+   
+   private static final native int getScrollbarWidthImpl()
+   /*-{
+      
+      // create our scroller
+      var div = $doc.createElement("div");
+      
+      // style to place offscreen
+      div.style.width    = "100px";
+      div.style.height   = "100px";
+      div.style.overflow = "scroll";
+      div.style.position = "absolute";
+      div.style.top      = "-10000px";
+      
+      // compute scrollbar width after attaching to DOM
+      $doc.body.appendChild(div);
+      var width = div.offsetWidth - div.clientWidth;
+      $doc.body.removeChild(div);
+      
+      return width;
+      
+   }-*/;
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
+   private static int SCROLLBAR_WIDTH = -1;
 }

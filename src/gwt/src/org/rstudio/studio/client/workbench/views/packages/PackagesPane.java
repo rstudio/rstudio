@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.LinkColumn;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -460,9 +461,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(browseColumn, new TextHeader(""));
       packagesTable_.setColumnWidth(browseColumn, 20, Unit.PX);
 
-      // remove column is common
+      // remove column is common (note that we allocate extra column
+      // width to provide space for a scrollbar if needed)
+      int scrollWidth = DomUtils.getScrollbarWidth();
+      if (scrollWidth > 0)
+         scrollWidth += 3;
+      
       packagesTable_.addColumn(removeColumn, new TextHeader(""));
-      packagesTable_.setColumnWidth(removeColumn, 20, Unit.PX);
+      packagesTable_.setColumnWidth(removeColumn, 20 + scrollWidth, Unit.PX);
 
       packagesTable_.setTableBuilder(new 
             PackageTableBuilder(packagesTable_));
