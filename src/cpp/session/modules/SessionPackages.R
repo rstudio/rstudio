@@ -296,6 +296,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # mark whether packages are loaded
    ip$Loaded <- ip$Package %in% loadedNamespaces()
    
+   # get the CRAN repository URL, and remove a trailing slash if required
+   repos <- getOption("repos")
+   cran <- if ("CRAN" %in% names(repos))
+      gsub("/*$", "", repos[["CRAN"]])
+   else
+      "https://cran.rstudio.com"
+   
    # helper function for extracting information from a package's
    # DESCRIPTION file
    readPackageInfo <- function(pkgPath) {
@@ -323,13 +330,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
       } else if (identical(desc$Repository, "CRAN")) {
          source <- "CRAN"
-         url <- sprintf("https://cran.r-project.org/package=%s", desc$Package)
+         url <- sprintf("%s/package=%s", cran, desc$Package)
       } else if (!is.null(desc$GithubRepo)) {
          source <- "GitHub"
          url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
       } else {
          source <- "Unknown"
-         url <- sprintf("https://cran.r-project.org/package=%s", desc$Package)
+         url <- sprintf("%s/package=%s", cran, desc$Package)
       }
       
       list(
