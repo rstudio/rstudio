@@ -392,7 +392,7 @@ makeNoPermissionDir <- function()
       dir.create(noPermissionDir, mode = "0555")
 }
 
-makeGlobalThemesDir() <- function()
+makeGlobalThemeDir <- function()
 {
    if (!dir.exists(globalInstallDir))
       dir.create(globalInstallDir, recursive = TRUE)
