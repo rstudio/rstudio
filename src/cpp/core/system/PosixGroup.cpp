@@ -102,6 +102,42 @@ Error groupFromId(gid_t gid, Group* pGroup)
    return groupFrom<gid_t>(::getgrgid_r, gid, pGroup);
 }
 
+Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
+{
+   user::User user;
+   Error error = user::userFromUsername(userName, &user);
+   if (error)
+      return error;
+
+   // get the groups for the user - we start with 100 groups which should be enough for most cases
+   // if it is not, resize the buffer with the correct amount of groups and try again
+   int numGroups = 100;
+   boost::shared_ptr<gid_t> pGids(new gid_t[100]);
+   while (!getgrouplist(userName.c_str(), user.groupId, pGids.get(), &numGroups))
+   {
+      // defensive break out in case the OS somehow returns 0 groups for the user
+      if (numGroups == 0)
+         break;
+
+      pGids.reset(new gid_t[numGroups]);
+   }
+
+   // create group objects for each returned group
+   for (int i = 0; i < numGroups; i++)
+   {
+      Group group;
+      error = groupFromId(*(pGids.get() + i), &group);
+      if (error)
+         return error;
+
+      // move the group into the vector
+      // (less expensive than regular copy as we do not have to copy the entire group member vector)
+      pGroups->emplace_back(std::move(group));
+   }
+
+   return Success();
+}
+
 } // namespace group
 } // namespace system
 } // namespace core
