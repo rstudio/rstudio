@@ -107,7 +107,8 @@ public class RStudioThemedFrame extends RStudioFrame
       {
          Document document = getWindow().getDocument();
          
-         if (customStyle == null) customStyle = "";
+         if (customStyle == null)
+            customStyle = "";
          
          customStyle += "\n" +
          ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
