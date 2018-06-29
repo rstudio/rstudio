@@ -283,19 +283,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
-   # query info on installed packages
-   ip <- as.data.frame(installed.packages(lib.loc = .rs.uniqueLibraryPaths()), stringsAsFactors = FALSE)
-   
-   # note which packages are base R packages
-   base <- ip$Package[ip$Priority %in% "base"]
-   
-   # TODO: we might like to call 'available.packages()' to learn what packages
-   # are currently available on CRAN, but this is a somewhat expensive web request
-   # that we might prefer to avoid
-   
-   # mark whether packages are loaded
-   ip$Loaded <- ip$Package %in% loadedNamespaces()
-   
    # get the CRAN repository URL, and remove a trailing slash if required
    repos <- getOption("repos")
    cran <- if ("CRAN" %in% names(repos))
@@ -319,7 +306,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
       
       # attempt to infer an appropriate URL for this package
-      if (desc$Package %in% base) {
+      if (identical(as.character(desc$Priority), "base")) {
          source <- "Base"
          url <- ""
       } else if (!is.null(desc$URL)) {
@@ -344,7 +331,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          LibPath     = dirname(pkgPath),
          Version     = desc$Version,
          Title       = desc$Title,
-         Loaded      = desc$Package %in% loadedNamespaces(),
          Source      = source,
          BrowseUrl   = url
       )
@@ -362,37 +348,46 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          LibPath   = libPath,
          Version   = "[Unknown]",
          Title     = "[Failed to read package metadata]",
-         Loaded    = package %in% loadedNamespaces(),
          Source    = "Unknown",
          BrowseUrl = ""
       )
       
    }
    
-   # further augment with information from DESCRIPTION file
-   ip$PkgPath <- file.path(ip$LibPath, ip$Package)
-   info <- .rs.rbindList(lapply(ip$PkgPath, function(pkgPath) {
+   # now, find packages. we'll only include packages that have
+   # a Meta folder. note that the pseudo-package 'translations'
+   # lives in the R system library, and has a DESCRIPTION file,
+   # but cannot be loaded as a regular R package.
+   packagePaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
+   hasMeta <- file.exists(file.path(packagePaths, "Meta"))
+   packagePaths <- packagePaths[hasMeta]
+   
+   # now, iterate over these to generate the requisite package
+   # information and combine into a data.frame
+   parts <- lapply(packagePaths, function(pkgPath) {
       
       tryCatch(
          readPackageInfo(pkgPath),
          error = function(e) emptyPackageInfo(pkgPath)
       )
       
-   }))
+   })
    
-   # combine installed package information database with what we've gleaned from
-   # description files
-   ip <- cbind(ip, info)
+   # combine into a data.frame
+   info <- .rs.rbindList(parts)
+   
+   # find which packages are loaded
+   info$Loaded <- info$Package %in% loadedNamespaces()
    
    # extract fields relevant to us
    packages <- data.frame(
-      name             = ip$Package,
-      library          = .rs.createAliasedPath(ip$LibPath),
-      version          = ip$Version,
-      desc             = ip$Title,
-      loaded           = ip$Loaded,
-      source           = ip$Source,
-      browse_url       = ip$BrowseUrl,
+      name             = info$Package,
+      library          = .rs.createAliasedPath(info$LibPath),
+      version          = info$Version,
+      desc             = info$Title,
+      loaded           = info$Loaded,
+      source           = info$Source,
+      browse_url       = info$BrowseUrl,
       check.rows       = TRUE,
       stringsAsFactors = FALSE
    )
