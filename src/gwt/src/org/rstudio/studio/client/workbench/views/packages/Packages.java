@@ -409,7 +409,6 @@ public class Packages
    private void doUpdatePackages(final PackageInstallContext installContext)
    {
       new CheckForUpdatesDialog(
-         globalDisplay_,
          new ServerDataSource<JsArray<PackageUpdate>>() {
             public void requestData(
                ServerRequestCallback<JsArray<PackageUpdate>> requestCallback)

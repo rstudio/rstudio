@@ -430,44 +430,71 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .rs.initDefaultUserLibrary()
 })
 
-
-.rs.addJsonRpcHandler( "check_for_package_updates", function()
+.rs.addJsonRpcHandler("check_for_package_updates", function()
 {
    # get updates writeable libraries and convert to a data frame
-   updates <- as.data.frame(utils::old.packages(lib.loc =
-                                          .rs.writeableLibraryPaths()),
-                            stringsAsFactors = FALSE)
+   updates <- as.data.frame(
+      utils::old.packages(lib.loc = .rs.writeableLibraryPaths()),
+      stringsAsFactors = FALSE
+   )
    row.names(updates) <- NULL
    
    # see which ones are from CRAN and add a news column for them
    # NOTE: defend against length-one repos with no name set
    repos <- getOption("repos")
-   if ("CRAN" %in% names(repos))
-      cranRep <- repos["CRAN"]
+   cranRep <- if ("CRAN" %in% names(repos))
+      repos["CRAN"]
    else
-      cranRep <- c(CRAN = repos[[1]])
-   cranRepLen <- nchar(cranRep)
-   isFromCRAN <- cranRep == substr(updates$Repository, 1, cranRepLen)
-   hasNEWS    <- file.exists(vapply(updates$Package, function(x) system.file("NEWS", package = x), character(1L)))
-   newsURL <- character(nrow(updates))
-   if (substr(cranRep, cranRepLen, cranRepLen) != "/")
-      cranRep <- paste(cranRep, "/", sep="")
-
-   newsURL[isFromCRAN] <- paste(cranRep,
-                                "web/packages/",
-                                updates$Package,
-                                ifelse(hasNEWS, "/NEWS", "/news.html"),
-                                sep = "")[isFromCRAN]
+      c(CRAN = repos[[1]])
    
-   updates <- data.frame(packageName = updates$Package,
-                         libPath = updates$LibPath,
-                         installed = updates$Installed,
-                         available = updates$ReposVer,
-                         newsUrl = newsURL,
-                         stringsAsFactors = FALSE)
-                       
-                       
-   return (updates)
+   data.frame(
+      packageName = updates$Package,
+      libPath     = updates$LibPath,
+      installed   = updates$Installed,
+      available   = updates$ReposVer,
+      stringsAsFactors = FALSE
+   )
+   
+})
+
+.rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
+{
+   # determine an appropriate CRAN URL
+   repos <- getOption("repos")
+   cran <- if ("CRAN" %in% names(repos))
+      repos[["CRAN"]]
+   else if (length(repos))
+      repos[[1]]
+   else
+      "https://cran.rstudio.com"
+   
+   # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
+   # to help us prioritize the order of checking.
+   #
+   # in theory, the current-installed package might not have NEWS at all, but
+   # the latest released version might have it after all, so checking the
+   # current installed package is just a heuristic and won't be accurate
+   # 100% of the time
+   pkgPath <- file.path(libraryPath, packageName)
+   candidates <- if (file.exists(file.path(pkgPath, "NEWS.md"))) {
+      c("news/news.html", "news.html", "NEWS", "ChangeLog")
+   } else if (file.exists(file.path(pkgPath, "NEWS"))) {
+      c("NEWS", "news/news.html", "news.html", "ChangeLog")
+   } else {
+      c("news/news.html", "news.html", "NEWS", "ChangeLog")
+   }
+   
+   for (candidate in candidates) {
+      url <- sprintf("%s/web/packages/%s/%s", cran, packageName, candidate)
+      status <- .rs.tryCatch(download.file(url, destfile = tempfile(), quiet = TRUE, mode = "wb"))
+      if (inherits(status, "error"))
+         next
+      
+      if (identical(status, 0L))
+         return(.rs.scalar(url))
+   }
+   
+   return(NULL)
 })
 
 .rs.addFunction("packagesLoaded", function(pkgs) {
