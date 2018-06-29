@@ -485,10 +485,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    for (candidate in candidates) {
+      
       url <- sprintf("%s/web/packages/%s/%s", cran, packageName, candidate)
-      status <- .rs.tryCatch(download.file(url, destfile = tempfile(), quiet = TRUE, mode = "wb"))
-      if (inherits(status, "error"))
+      
+      status <- .rs.withTimeLimit(5, {
+         .rs.tryCatch(download.file(url, destfile = tempfile(), quiet = TRUE, mode = "wb"))
+      })
+      
+      if (is.null(status) || inherits(status, "error"))
          next
+      
       
       if (identical(status, 0L))
          return(.rs.scalar(url))

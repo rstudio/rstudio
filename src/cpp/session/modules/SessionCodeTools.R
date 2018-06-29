@@ -29,19 +29,13 @@
    )
 })
 
-.rs.addFunction("withTimeLimit", function(time,
+.rs.addFunction("withTimeLimit", function(seconds,
                                           expr,
-                                          envir = parent.frame(),
                                           fail = NULL)
 {
-   setTimeLimit(elapsed = time, transient = TRUE)
+   setTimeLimit(elapsed = seconds, transient = TRUE)
    on.exit(setTimeLimit(), add = TRUE)
-   tryCatch(
-      eval(expr, envir = envir),
-      error = function(e) {
-         fail
-      }
-   )
+   tryCatch(expr, error = function(e) fail)
 })
 
 .rs.addFunction("startsWith", function(strings, string)
