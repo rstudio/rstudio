@@ -16,6 +16,7 @@
 #include "SessionThemes.hpp"
 
 #include <boost/algorithm/algorithm.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
 
@@ -54,44 +55,40 @@ const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
 // whether or not the theme is dark.
 typedef std::map<std::string, std::tuple<std::string, std::string, bool> > ThemeMap;
 
-/// @brief Determines whether a string can be evaluated to logical "true". A return value of false
-///        does not indicate that the string can be evaluted to logical "false".
-///
-/// @param toConvert    The string to convert to boolean.
-///
-/// @return True if the string matches 1, TRUE, true, or any case variant of true; false otherwise.
-bool strIsTrue(const std::string& toConvert)
+/**
+ * @brief Converts a string to a boolean value. Throws an bad_lexical_cast exception if the string
+ *        is not valid.
+ *
+ * @param toConvert     The string to convert to boolean.
+ *
+ * @throw bad_lexical_cast    If the string cannot be converted to boolean.
+ *
+ * @return The converted value.
+ */
+bool convertToBool(const std::string& toConvert)
 {
-   return boost::regex_match(
+   std::string preppedStr = boost::regex_replace(
             toConvert,
-            boost::regex("(?:1|t(?:rue)?)", boost::regex::icase));
-}
-
-/// @brief Determines whether a string can be evaluated to logical "false". A return value of true
-///        does not indicate that the string can be evaluted to logical "true".
-///
-/// @param toConvert    The string to convert to boolean.
-///
-/// @return True if the string matches 0, FALSE, false, or any case variant of false; true
-///         otherwise.
-bool strIsFalse(const std::string& toConvert)
-{
-   return boost::regex_match(
-            toConvert,
-            boost::regex("(?:0|f(?:alse)?)", boost::regex::icase));
+            boost::regex("true", boost::regex::icase),
+            "1");
+   preppedStr = boost::regex_replace(
+            preppedStr,
+            boost::regex("false", boost::regex::icase),
+            "0");
+   return boost::lexical_cast<bool>(preppedStr);
 }
 
 /**
  * @brief Gets themes in the specified location.
  *
  * @param location         The location in which to look for themes.
- * @param themeMap         The map which will contain all found themes after the call.
  * @param urlPrefix        The URL prefix for the theme. Must end with "/"
+ * @param themeMap         The map which will contain all found themes after the call. (NOT OWN)
  */
 void getThemesInLocation(
       const rstudio::core::FilePath& location,
-      ThemeMap& themeMap,
-      const std::string& urlPrefix = "")
+      const std::string& urlPrefix,
+      ThemeMap* themeMap)
 {
    using rstudio::core::FilePath;
    if (location.isDirectory())
@@ -136,16 +133,21 @@ void getThemesInLocation(
             bool isDark = false;
             if (matches.size() >= 2)
             {
-               isDark = strIsTrue(matches[1]);
+               try
+               {
+                  isDark = convertToBool(matches[1].str());
+               }
+               catch (boost::bad_lexical_cast)
+               {
+                  LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string for theme \"" + name + "\".");
+               }
             }
-            if ((matches.size() < 2) ||
-                (!isDark &&
-                !strIsFalse(matches[1])))
+            else
             {
-               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set or not convertable to boolean for theme \"" + name + "\".");
+               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set for theme \"" + name + "\".");
             }
 
-            themeMap[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
+            (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
                name,
                urlPrefix + themeFile.filename(),
                isDark);
@@ -219,9 +221,9 @@ ThemeMap getAllThemes()
    // Intentionally get global themes before getting user specific themes so that user specific
    // themes will override global ones.
    ThemeMap themeMap;
-   getThemesInLocation(getDefaultThemePath(), themeMap, kDefaultThemeLocation);
-   getThemesInLocation(getGlobalCustomThemePath(), themeMap, kGlobalCustomThemeLocation);
-   getThemesInLocation(getLocalCustomThemePath(), themeMap, kLocalCustomThemeLocation);
+   getThemesInLocation(getDefaultThemePath(), kDefaultThemeLocation, &themeMap);
+   getThemesInLocation(getGlobalCustomThemePath(), kGlobalCustomThemeLocation, &themeMap);
+   getThemesInLocation(getLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
 
    return themeMap;
 }
@@ -263,8 +265,12 @@ SEXP rs_getThemes()
 FilePath getDefaultTheme(const http::Request& request)
 {
    std::string isDarkStr = request.queryParamValue("dark");
-   bool isDark = strIsTrue(isDarkStr);
-   if (!isDark && !strIsFalse(isDarkStr))
+   bool isDark = false;
+   try
+   {
+      isDark = convertToBool(isDarkStr);
+   }
+   catch (boost::bad_lexical_cast)
    {
       LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
    }
@@ -290,7 +296,6 @@ void handleDefaultThemeRequest(const http::Request& request,
 {
    std::string fileName = http::util::pathAfterPrefix(request, kDefaultThemeLocation);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
-   pResponse->setContentType("text/css");
 }
 
 /**
@@ -309,7 +314,6 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
-   pResponse->setContentType("text/css");
 }
 
 /**
@@ -328,7 +332,6 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
-   pResponse->setContentType("text/css");
 }
 
 /**

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -211,18 +213,25 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(previewPanel);
 
       add(hpanel);
-   
       
       // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
-      // asynchronously too.
-      themes.getThemes(themeList -> {
-         themeList_ = themeList;
-         
-         theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-         theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
-      });
+      // asynchronously too. We also need to wait until the next event cycle so that the progress
+      // indicator will be ready.
+      Scheduler.get().scheduleDeferred(() -> updateThemes(themes));
    }
    
+   private void updateThemes(AceThemes themes)
+   {
+      themes.getThemes(
+         themeList ->
+         {
+            themeList_ = themeList;
+         
+            theme_.setChoices(themeList_.keySet().toArray(new String[0]));
+            theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
+         },
+         getProgressIndicator());
+   }
    
    private void updatePreviewZoomLevel()
    {

@@ -459,6 +459,7 @@ MimeType s_mimeTypes[] =
    { "gz",    "application/x-gzip" },
    { "tar",   "application/x-tar" },
    { "json",  "application/json" },
+   { "rstheme", "text/css" },
 
    // yet more types...
 

@@ -25,10 +25,15 @@ public abstract class DelayedProgressRequestCallback<T>
 {
    public DelayedProgressRequestCallback(String progressMessage)
    {
-      indicator_ = new GlobalProgressDelayer(
+      this(new GlobalProgressDelayer(
          RStudioGinjector.INSTANCE.getGlobalDisplay(),  
          500, 
-         progressMessage).getIndicator();
+         progressMessage).getIndicator());
+   }
+   
+   public DelayedProgressRequestCallback(ProgressIndicator indicator)
+   {
+      indicator_  = indicator;
    }
    
    @Override

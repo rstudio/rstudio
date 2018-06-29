@@ -26,12 +26,12 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.ColorUtil.RGBColor;
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
@@ -51,13 +51,7 @@ public class AceThemes
       events_ = events;
       prefs_ = prefs;
 
-      prefs.get().theme().bind(new CommandWithArg<AceTheme>()
-      {
-         public void execute(AceTheme theme)
-         {
-            applyTheme(theme);
-         }
-      });
+      prefs.get().theme().bind(theme -> applyTheme(theme));
    }
    
    private void applyTheme(Document document, final AceTheme theme)
@@ -115,12 +109,15 @@ public class AceThemes
       applyTheme(document, prefs_.get().theme().getValue());
    }
    
-   public void getThemes(Consumer<HashMap<String, AceTheme>> themeConsumer)
+   public void getThemes(
+      Consumer<HashMap<String, AceTheme>> themeConsumer,
+      ProgressIndicator indicator)
    {
-      themeServerOperations_.getThemes(new ServerRequestCallback<JsArray<AceTheme>>()
+      themeServerOperations_.getThemes(
+         new DelayedProgressRequestCallback<JsArray<AceTheme>>(indicator)
       {
          @Override
-         public void onResponseReceived(JsArray<AceTheme> jsonThemeArray)
+         public void onSuccess(JsArray<AceTheme> jsonThemeArray)
          {
             HashMap<String, AceTheme> themes = new HashMap<>();
             int len = jsonThemeArray.length();
@@ -130,17 +127,7 @@ public class AceThemes
                themes.put(theme.getName(), theme);
             }
             
-            // TODO: log a warning if len == 0?
-            themeConsumer.accept(themes);
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // TODO: log a warning if possible
-            HashMap<String, AceTheme> themes = new HashMap<>();
-            AceTheme defaultTheme = AceTheme.createDefault();
-            themes.put(defaultTheme.getName(), defaultTheme);
+            Debug.logWarning("Server was unable to find any installed themes.");
             themeConsumer.accept(themes);
          }
       });
