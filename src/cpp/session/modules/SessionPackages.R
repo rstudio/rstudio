@@ -13,6 +13,9 @@
 #
 #
 
+# cached URLs for package NEWS files
+.rs.setVar("packageNewsURLsEnv", new.env(parent = emptyenv()))
+
 # a vectorized function that takes any number of paths and aliases the home
 # directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
 # paths outside the home directory untouched
@@ -459,6 +462,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
 {
+   # first, check if we've already discovered a NEWS link
+   cache <- .rs.packageNewsURLsEnv
+   entry <- file.path(libraryPath, packageName)
+   if (exists(entry, envir = cache))
+      return(get(entry, envir = cache))
+   
    # determine an appropriate CRAN URL
    repos <- getOption("repos")
    cran <- if ("CRAN" %in% names(repos))
@@ -504,8 +513,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          next
       
       
-      if (identical(status, 0L))
+      if (identical(status, 0L)) {
+         cache[[entry]] <- .rs.scalar(url)
          return(.rs.scalar(url))
+      }
    }
    
    return(NULL)
