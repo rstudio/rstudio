@@ -468,6 +468,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else
       "https://cran.rstudio.com"
    
+   # check to see if this package was from Bioconductor. if so, we'll need
+   # to construct a more appropriate url
+   desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
+   prefix <- if (inherits(desc, "error") || !"biocViews" %in% names(desc))
+      file.path(cran, "web/packages")
+   else
+      "https://bioconductor.org/packages/release/bioc/news"
+   
    # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
    # to help us prioritize the order of checking.
    #
@@ -486,7 +494,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    for (candidate in candidates) {
       
-      url <- sprintf("%s/web/packages/%s/%s", cran, packageName, candidate)
+      url <- file.path(prefix, packageName, candidate)
       
       status <- .rs.withTimeLimit(5, {
          .rs.tryCatch(download.file(url, destfile = tempfile(), quiet = TRUE, mode = "wb"))

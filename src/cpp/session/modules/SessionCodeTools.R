@@ -2056,3 +2056,18 @@
 {
    .Call("rs_resolveAliasedPath", path, PACKAGE = "(embedding)")
 })
+
+.rs.addFunction("readPackageDescription", function(packagePath)
+{
+   # if this is an installed package with a package metafile,
+   # read from that location
+   metapath <- file.path(packagePath, "Meta/package.rds")
+   if (file.exists(metapath)) {
+      metadata <- readRDS(metapath)
+      return(as.list(metadata$DESCRIPTION))
+   }
+   
+   # otherwise, attempt to read DESCRIPTION directly
+   descPath <- file.path(packagePath, "DESCRIPTION")
+   read.dcf(descPath, all = TRUE)
+})
