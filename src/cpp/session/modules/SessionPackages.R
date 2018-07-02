@@ -335,7 +335,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          Version     = desc$Version,
          Title       = desc$Title,
          Source      = source,
-         BrowseUrl   = url
+         BrowseUrl   = utils::URLencode(url)
       )
    }
    
