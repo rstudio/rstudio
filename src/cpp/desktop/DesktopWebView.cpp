@@ -202,9 +202,9 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    }
    else if (data.linkUrl().isValid())
    {
-      menu->addAction(webPage()->action(QWebEnginePage::OpenLinkInNewWindow));
+      menu->addAction(tr("Open Link in &Browser"), [=]() { desktop::openUrl(data.linkUrl()); });
       menu->addAction(webPage()->action(QWebEnginePage::CopyLinkToClipboard));
-      menu->addAction(webPage()->action(QWebEnginePage::DownloadLinkToDisk));
+      menu->addAction(tr("&Save Link As..."), [=]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
    }
    else
    {
