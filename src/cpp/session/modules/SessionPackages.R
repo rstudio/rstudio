@@ -286,9 +286,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # get the CRAN repository URL, and remove a trailing slash if required
    repos <- getOption("repos")
    cran <- if ("CRAN" %in% names(repos))
-      gsub("/*$", "", repos[["CRAN"]])
+      repos[["CRAN"]]
    else
-      "https://cran.rstudio.com"
+      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   
+   # trim trailing slashes if necessary
+   cran <- gsub("/*", "", cran)
    
    # helper function for extracting information from a package's
    # DESCRIPTION file
