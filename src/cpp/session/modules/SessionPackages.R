@@ -283,63 +283,123 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
-   # calculate unique libpaths
-   uniqueLibPaths <- .rs.uniqueLibraryPaths()
-
-   # get packages
-   x <- suppressWarnings(library(lib.loc=uniqueLibPaths))
-   x <- x$results[x$results[, 1] != "base", , drop=FALSE]
+   # get the CRAN repository URL, and remove a trailing slash if required
+   repos <- getOption("repos")
+   cran <- if ("CRAN" %in% names(repos))
+      repos[["CRAN"]]
+   else
+      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
    
-   # extract/compute required fields 
-   pkgs.name <- x[, 1]
-   pkgs.library <- x[, 2]
-   pkgs.desc <- x[, 3]
-   pkgs.url <- file.path("help/library",
-                         pkgs.name, 
-                         "html", 
-                         "00Index.html")
-   loaded.pkgs <- .rs.pathPackage()
-   pkgs.loaded <- !is.na(match(normalizePath(
-                                  paste(pkgs.library,pkgs.name, sep="/")),
-                               loaded.pkgs))
+   # trim trailing slashes if necessary
+   cran <- gsub("/*", "", cran)
    
-
-   # build up vector of package versions
-   instPkgs <- as.data.frame(installed.packages(), stringsAsFactors=F)
-   pkgs.version <- sapply(seq_along(pkgs.name), function(i){
-     .rs.packageVersion(pkgs.name[[i]], pkgs.library[[i]], instPkgs)
+   # helper function for extracting information from a package's
+   # DESCRIPTION file
+   readPackageInfo <- function(pkgPath) {
+      
+      # attempt to read package metadata
+      desc <- .rs.tryCatch({
+         metapath <- file.path(pkgPath, "Meta", "package.rds")
+         metadata <- readRDS(metapath)
+         as.list(metadata$DESCRIPTION)
+      })
+      
+      # if that failed, try reading the DESCRIPTION
+      if (inherits(desc, "error"))
+         desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
+      
+      # attempt to infer an appropriate URL for this package
+      if (identical(as.character(desc$Priority), "base")) {
+         source <- "Base"
+         url <- ""
+      } else if (!is.null(desc$URL)) {
+         source <- "Custom"
+         url <- strsplit(desc$URL, "\\s*,\\s*")[[1]][[1]]
+      } else if ("biocViews" %in% names(desc)) {
+         source <- "Bioconductor"
+         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
+      } else if (identical(desc$Repository, "CRAN")) {
+         source <- "CRAN"
+         url <- sprintf("%s/package=%s", cran, desc$Package)
+      } else if (!is.null(desc$GithubRepo)) {
+         source <- "GitHub"
+         url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
+      } else {
+         source <- "Unknown"
+         url <- sprintf("%s/package=%s", cran, desc$Package)
+      }
+      
+      list(
+         Package     = desc$Package,
+         LibPath     = dirname(pkgPath),
+         Version     = desc$Version,
+         Title       = desc$Title,
+         Source      = source,
+         BrowseUrl   = utils::URLencode(url)
+      )
+   }
+   
+   # to be called if our attempt to read the package DESCRIPTION file failed
+   # for some reason
+   emptyPackageInfo <- function(pkgPath) {
+      
+      package <- basename(pkgPath)
+      libPath <- dirname(pkgPath)
+      
+      list(
+         Package   = package,
+         LibPath   = libPath,
+         Version   = "[Unknown]",
+         Title     = "[Failed to read package metadata]",
+         Source    = "Unknown",
+         BrowseUrl = ""
+      )
+      
+   }
+   
+   # now, find packages. we'll only include packages that have
+   # a Meta folder. note that the pseudo-package 'translations'
+   # lives in the R system library, and has a DESCRIPTION file,
+   # but cannot be loaded as a regular R package.
+   packagePaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
+   hasMeta <- file.exists(file.path(packagePaths, "Meta"))
+   packagePaths <- packagePaths[hasMeta]
+   
+   # now, iterate over these to generate the requisite package
+   # information and combine into a data.frame
+   parts <- lapply(packagePaths, function(pkgPath) {
+      
+      tryCatch(
+         readPackageInfo(pkgPath),
+         error = function(e) emptyPackageInfo(pkgPath)
+      )
+      
    })
-
-   pkgs.browse <- sapply(seq_along(pkgs.name), function(i){
-     repo <- getOption("repos")[[1]]
-     if (!identical(repo, NULL)) {
-       slash <- if (.rs.lastCharacterIs(repo, "/")) "" else "/"
-       .rs.scalar(paste(repo, slash, "package=", pkgs.name[[i]], sep = ""))
-     } 
-     else {
-       NULL
-     }
-   })
    
-   # alias library paths for the client
-   pkgs.library <- .rs.createAliasedPath(pkgs.library)
-
-   # return data frame sorted by name
-   packages = data.frame(name=pkgs.name,
-                         library=pkgs.library,
-                         version=pkgs.version,
-                         desc=pkgs.desc,
-                         url=pkgs.url,
-                         loaded=pkgs.loaded,
-                         check.rows = TRUE,
-                         stringsAsFactors = FALSE,
-                         browse=pkgs.browse)
-
+   # combine into a data.frame
+   info <- .rs.rbindList(parts)
+   
+   # find which packages are loaded
+   info$Loaded <- info$Package %in% loadedNamespaces()
+   
+   # extract fields relevant to us
+   packages <- data.frame(
+      name             = info$Package,
+      library          = .rs.createAliasedPath(info$LibPath),
+      version          = info$Version,
+      desc             = info$Title,
+      loaded           = info$Loaded,
+      source           = info$Source,
+      browse_url       = info$BrowseUrl,
+      check.rows       = TRUE,
+      stringsAsFactors = FALSE
+   )
+   
    # sort and return
-   packages[order(packages$name),]
+   packages[order(packages$name), ]
 })
 
-.rs.addJsonRpcHandler( "get_package_install_context", function()
+.rs.addJsonRpcHandler("get_package_install_context", function()
 {
    # cran mirror configured
    repos = getOption("repos")

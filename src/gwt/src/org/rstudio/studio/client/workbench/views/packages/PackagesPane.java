@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -372,29 +373,60 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             }
       };
 
-      ImageButtonColumn<PackageInfo> browseColumn = 
-        new ImageButtonColumn<PackageInfo>(
-          new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
-          new OperationWithInput<PackageInfo>() {
-            @Override
-            public void execute(PackageInfo packageInfo)
+      ImageButtonColumn<PackageInfo> browseColumn = new ImageButtonColumn<PackageInfo>(
+            new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
+            new OperationWithInput<PackageInfo>() {
+               @Override
+               public void execute(PackageInfo packageInfo)
+               {
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getBrowseUrl());
+               }
+            },
+            new TitleProvider<PackageInfo>()
             {
-               RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getBrowseUrl());        
-            }  
-          },
-          "Browse package in CRAN repo");
+               @Override
+               public String get(PackageInfo object)
+               {
+                  PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
+                  switch (source)
+                  {
+                  case Base         : return "";
+                  case Bioconductor : return "Browse package on Bioconductor";
+                  case CRAN         : return "Browse package on CRAN";
+                  case Custom       : return "Browse package [" + object.getBrowseUrl() + "]";
+                  case GitHub       : return "Browse package on GitHub";
+                  case Unknown      : return "Browse package on CRAN";
+                  default           : return "Browse package on CRAN";
+                  }
+               }
+            })
+      {
+         @Override
+         public boolean showButton(PackageInfo object)
+         {
+            PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
+            return source != PackageInfo.Source.Base;
+         }
+      };
       
-      ImageButtonColumn<PackageInfo> removeColumn = 
-        new ImageButtonColumn<PackageInfo>(
-          new ImageResource2x(ThemeResources.INSTANCE.removePackage2x()),
-          new OperationWithInput<PackageInfo>() {
-            @Override
-            public void execute(PackageInfo packageInfo)
-            {
-               observer_.removePackage(packageInfo);          
-            }  
-          },
-          "Remove package");
+      ImageButtonColumn<PackageInfo> removeColumn = new ImageButtonColumn<PackageInfo>(
+            new ImageResource2x(ThemeResources.INSTANCE.removePackage2x()),
+            new OperationWithInput<PackageInfo>() {
+               @Override
+               public void execute(PackageInfo packageInfo)
+               {
+                  observer_.removePackage(packageInfo);
+               }
+            },
+            "Remove package")
+      {
+         @Override
+         public boolean showButton(PackageInfo object)
+         {
+            PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
+            return source != PackageInfo.Source.Base;
+         }
+      };
 
       // add common columns
       packagesTable_.addColumn(loadedColumn, new TextHeader(""));
@@ -544,8 +576,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   @Override
                   public void execute(PackageInfo packageInfo)
                   {
-                     if (packageInfo.getUrl() == null || 
-                         packageInfo.getUrl().length() == 0)
+                     if (packageInfo.getHelpUrl() == null || 
+                         packageInfo.getHelpUrl().length() == 0)
                      {
                         display_.showMessage(GlobalDisplay.MSG_INFO, 
                               "Help Not Available", 
