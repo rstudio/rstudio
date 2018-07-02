@@ -23,9 +23,12 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 
@@ -34,6 +37,12 @@ public class ImageButtonColumn<T> extends Column<T, T>
    public static interface TitleProvider<U>
    {
       public String get(U object);
+   }
+   
+   public static interface RenderTemplates extends SafeHtmlTemplates
+   {
+      @Template("<span title=\"{1}\" style=\"cursor: pointer;\">{0}</span>")
+      SafeHtml render(SafeHtml image, String title);
    }
    
    private static class ImageButtonCell<U> extends AbstractCell<U>
@@ -54,10 +63,7 @@ public class ImageButtonColumn<T> extends Column<T, T>
       {
          if (value != null)
          {
-            sb.appendHtmlConstant("<span title=\"" + titleProvider_.get(value) + "\" " +
-                  "style=\"cursor: pointer;\">");
-            sb.append(image_.getSafeHtml());
-            sb.appendHtmlConstant("</span>");
+            sb.append(TEMPLATES.render(image_.getSafeHtml(), titleProvider_.get(value)));
          }
       }
       
@@ -140,4 +146,6 @@ public class ImageButtonColumn<T> extends Column<T, T>
    {
       return true;
    }
+   
+   private static final RenderTemplates TEMPLATES = GWT.create(RenderTemplates.class);
 }
