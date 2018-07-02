@@ -1,5 +1,5 @@
 #
-# test-rssconnect.R
+# test-rsconnect.R
 #
 # Copyright (C) 2009-18 by RStudio, Inc.
 #
