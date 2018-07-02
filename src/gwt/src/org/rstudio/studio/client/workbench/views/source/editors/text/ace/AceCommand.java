@@ -176,8 +176,8 @@ public class AceCommand extends JavaScriptObject
    
       $["splitline"] = "Split Line";
       $["transposeletters"] = "Transpose Letters";
-      $["touppercase"] = "To Uppercase";
-      $["tolowercase"] = "To Lowercase";
+      $["touppercase"] = "To Upper Case";
+      $["tolowercase"] = "To Lower Case";
       $["expandtoline"] = "Expand to Line";
       $["joinlines"] = "Join Lines";
    
