@@ -84,8 +84,8 @@ public class JobItem extends Composite
       
       name_.setText(job.name);
 
-      ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobInfo());
-      if (JsArrayUtil.jsArrayStringContains(job.actions, "info"))
+      ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
+      if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {
          detailsImage = new ImageResource2x(RESOURCES.jobInfo());
       }
