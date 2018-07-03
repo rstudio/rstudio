@@ -475,7 +475,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else if (length(repos))
       repos[[1]]
    else
-      "https://cran.rstudio.com"
+      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   cran <- gsub("/*$", "", cran)
    
    # check to see if this package was from Bioconductor. if so, we'll need
    # to construct a more appropriate url
