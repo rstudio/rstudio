@@ -1,5 +1,5 @@
 /*
- * PDFJsWindow.java
+ * PdfJsWindow.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -48,6 +48,11 @@ public class PdfJsWindow extends WindowEx
       
       // runs when we detect that the document has fully loaded
       var initUi = function() {
+         
+         // bail if we're already initialized
+         if (win.initialized)
+            return;
+         
          // inject our own CSS
          var rstudioCss = win.document.createElement("link");
          rstudioCss.rel = "stylesheet";
@@ -125,6 +130,8 @@ public class PdfJsWindow extends WindowEx
          win.addEventListener("click", function(evt) {
             @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
          });
+         
+         win.initialized = true;
       };
 
       // starts a timer that initializes the UI when the PDFView object appears
