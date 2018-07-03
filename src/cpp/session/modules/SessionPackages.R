@@ -543,13 +543,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if (!hasSilent)
          addons <- c(addons, "-s")
       
-      # redirect stderr
-      hasStderrRedirect <-
-         grepl("\b--stderr -\b", extra)
-      
-      if (!hasStderrRedirect)
-         addons <- c(addons, "--stderr -")
-      
       if (nzchar(extra))
          extra <- paste(extra, paste(addons, collapse = " "))
       else
