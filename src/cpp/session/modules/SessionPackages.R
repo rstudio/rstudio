@@ -502,25 +502,91 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       c("news/news.html", "news.html", "NEWS", "ChangeLog")
    }
    
+   
+   # we do some special handling for 'curl'
+   isCurl <- identical(getOption("download.file.method"), "curl")
+   if (isCurl) {
+      
+      download.file.extra <- getOption("download.file.extra")
+      on.exit(options(download.file.extra = download.file.extra), add = TRUE)
+      
+      # guard against NULL, empty extra
+      extra <- if (length(download.file.extra))
+         download.file.extra
+      else
+         ""
+      
+      # add in some extra flags for nicer download output
+      addons <- c()
+      
+      # follow redirects if necessary
+      hasLocation <-
+         grepl("\b-L\b", extra) ||
+         grepl("\b--location\b", extra)
+      
+      if (!hasLocation)
+         addons <- c(addons, "-L")
+      
+      # fail on 404
+      hasFail <-
+         grepl("\b-f\b", extra) ||
+         grepl("\b--fail\b", extra)
+      
+      if (!hasFail)
+         addons <- c(addons, "-f")
+      
+      # don't print error output to the console
+      hasSilent <-
+         grepl("\b-s\b", extra) ||
+         grepl("\b--silent\b", extra)
+      
+      if (!hasSilent)
+         addons <- c(addons, "-s")
+      
+      # redirect stderr
+      hasStderrRedirect <-
+         grepl("\b--stderr -\b", extra)
+      
+      if (!hasStderrRedirect)
+         addons <- c(addons, "--stderr -")
+      
+      if (nzchar(extra))
+         extra <- paste(extra, paste(addons, collapse = " "))
+      else
+         extra <- paste(addons, collapse = " ")
+      
+      options(download.file.extra = extra)
+   }
+   
+   # timeout a bit more quickly when forming web requests
+   timeout <- getOption("timeout")
+   on.exit(options(timeout = timeout), add = TRUE)
+   options(timeout = 4L)
+   
    for (candidate in candidates) {
       
       url <- file.path(prefix, packageName, candidate)
       
-      status <- .rs.withTimeLimit(5, {
-         .rs.tryCatch(download.file(url, destfile = tempfile(), quiet = TRUE, mode = "wb"))
-      })
+      # attempt to download the file (note that R preserves curl's printing of errors
+      # to the console with 'quiet = TRUE' so we disable it there)
+      destfile <- tempfile()
+      on.exit(unlink(destfile), add = TRUE)
+      status <- .rs.tryCatch(download.file(url, destfile = destfile, quiet = !isCurl, mode = "wb"))
       
+      # handle explicit errors
       if (is.null(status) || inherits(status, "error"))
          next
       
-      
+      # check for success status
       if (identical(status, 0L)) {
          cache[[entry]] <- .rs.scalar(url)
          return(.rs.scalar(url))
       }
    }
    
-   return(NULL)
+   # we failed to figure out the NEWS url; provide our first candidate
+   # as the best guess
+   .rs.scalar(candidates[[1]])
 })
 
 .rs.addFunction("packagesLoaded", function(pkgs) {
