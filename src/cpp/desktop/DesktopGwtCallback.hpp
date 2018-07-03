@@ -57,7 +57,7 @@ class GwtCallback : public QObject
 
 public:
    GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner);
-
+   void initialize();
    int collectPendingQuitRequest();
 
 Q_SIGNALS:
@@ -242,8 +242,8 @@ public Q_SLOTS:
    QString getDisplayDpi();
 
 private:
+   void invokeReflowComment();
    Synctex& synctex();
-
    void activateAndFocusOwner();
 
 private:

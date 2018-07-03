@@ -74,6 +74,8 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
+   initialize();
+   
 #ifdef Q_OS_LINUX
    // listen for clipboard selection change events (X11 only); allow override in options or 
    // via environment variable. clipboard monitoring enables us to support middle-click paste on
@@ -96,6 +98,17 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
       }
    }
 #endif
+}
+
+#ifndef Q_OS_MAC
+void GwtCallback::initialize()
+{
+}
+#endif
+
+void GwtCallback::invokeReflowComment()
+{
+   pMainWindow_->invokeCommand(QStringLiteral("reflowComment"));
 }
 
 Synctex& GwtCallback::synctex()

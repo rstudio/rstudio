@@ -85,7 +85,7 @@ MainWindow::MainWindow(QUrl url) :
    pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
 #endif
-
+   
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
            this, SLOT(setMenuBar(QMenuBar*)));
    connect(&menuCallback_, SIGNAL(commandInvoked(QString)),
