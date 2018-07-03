@@ -586,6 +586,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # we failed to figure out the NEWS url; provide our first candidate
    # as the best guess
+   fmt <- "Failed to infer appropriate NEWS URL: using '%s' as best-guess candidate"
+   warning(sprintf(fmt, candidates[[1]]))
+   
+   # return that URL
    .rs.scalar(candidates[[1]])
 })
 
