@@ -187,6 +187,9 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
    uiPrefs[pref] = prefValue;
    userSettings().setUiPrefs(uiPrefs);
 
+   // let other modules know we've updated the prefs
+   module_context::events().onPreferencesSaved();
+
    return R_NilValue;
 }
 
