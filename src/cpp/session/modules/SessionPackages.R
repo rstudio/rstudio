@@ -13,6 +13,9 @@
 #
 #
 
+# cached URLs for package NEWS files
+.rs.setVar("packageNewsURLsEnv", new.env(parent = emptyenv()))
+
 # a vectorized function that takes any number of paths and aliases the home
 # directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
 # paths outside the home directory untouched
@@ -490,44 +493,157 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .rs.initDefaultUserLibrary()
 })
 
-
-.rs.addJsonRpcHandler( "check_for_package_updates", function()
+.rs.addJsonRpcHandler("check_for_package_updates", function()
 {
    # get updates writeable libraries and convert to a data frame
-   updates <- as.data.frame(utils::old.packages(lib.loc =
-                                          .rs.writeableLibraryPaths()),
-                            stringsAsFactors = FALSE)
+   updates <- as.data.frame(
+      utils::old.packages(lib.loc = .rs.writeableLibraryPaths()),
+      stringsAsFactors = FALSE
+   )
    row.names(updates) <- NULL
    
    # see which ones are from CRAN and add a news column for them
    # NOTE: defend against length-one repos with no name set
    repos <- getOption("repos")
-   if ("CRAN" %in% names(repos))
-      cranRep <- repos["CRAN"]
+   cranRep <- if ("CRAN" %in% names(repos))
+      repos["CRAN"]
    else
-      cranRep <- c(CRAN = repos[[1]])
-   cranRepLen <- nchar(cranRep)
-   isFromCRAN <- cranRep == substr(updates$Repository, 1, cranRepLen)
-   hasNEWS    <- file.exists(vapply(updates$Package, function(x) system.file("NEWS", package = x), character(1L)))
-   newsURL <- character(nrow(updates))
-   if (substr(cranRep, cranRepLen, cranRepLen) != "/")
-      cranRep <- paste(cranRep, "/", sep="")
-
-   newsURL[isFromCRAN] <- paste(cranRep,
-                                "web/packages/",
-                                updates$Package,
-                                ifelse(hasNEWS, "/NEWS", "/news.html"),
-                                sep = "")[isFromCRAN]
+      c(CRAN = repos[[1]])
    
-   updates <- data.frame(packageName = updates$Package,
-                         libPath = updates$LibPath,
-                         installed = updates$Installed,
-                         available = updates$ReposVer,
-                         newsUrl = newsURL,
-                         stringsAsFactors = FALSE)
-                       
-                       
-   return (updates)
+   data.frame(
+      packageName = updates$Package,
+      libPath     = updates$LibPath,
+      installed   = updates$Installed,
+      available   = updates$ReposVer,
+      stringsAsFactors = FALSE
+   )
+   
+})
+
+.rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
+{
+   # first, check if we've already discovered a NEWS link
+   cache <- .rs.packageNewsURLsEnv
+   entry <- file.path(libraryPath, packageName)
+   if (exists(entry, envir = cache))
+      return(get(entry, envir = cache))
+   
+   # determine an appropriate CRAN URL
+   repos <- getOption("repos")
+   cran <- if ("CRAN" %in% names(repos))
+      repos[["CRAN"]]
+   else if (length(repos))
+      repos[[1]]
+   else
+      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   cran <- gsub("/*$", "", cran)
+   
+   # check to see if this package was from Bioconductor. if so, we'll need
+   # to construct a more appropriate url
+   desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
+   prefix <- if (inherits(desc, "error") || !"biocViews" %in% names(desc))
+      file.path(cran, "web/packages")
+   else
+      "https://bioconductor.org/packages/release/bioc/news"
+   
+   # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
+   # to help us prioritize the order of checking.
+   #
+   # in theory, the current-installed package might not have NEWS at all, but
+   # the latest released version might have it after all, so checking the
+   # current installed package is just a heuristic and won't be accurate
+   # 100% of the time
+   pkgPath <- file.path(libraryPath, packageName)
+   candidates <- if (file.exists(file.path(pkgPath, "NEWS.md"))) {
+      c("news/news.html", "news.html", "NEWS", "ChangeLog")
+   } else if (file.exists(file.path(pkgPath, "NEWS"))) {
+      c("NEWS", "news/news.html", "news.html", "ChangeLog")
+   } else {
+      c("news/news.html", "news.html", "NEWS", "ChangeLog")
+   }
+   
+   
+   # we do some special handling for 'curl'
+   isCurl <- identical(getOption("download.file.method"), "curl")
+   if (isCurl) {
+      
+      download.file.extra <- getOption("download.file.extra")
+      on.exit(options(download.file.extra = download.file.extra), add = TRUE)
+      
+      # guard against NULL, empty extra
+      extra <- if (length(download.file.extra))
+         download.file.extra
+      else
+         ""
+      
+      # add in some extra flags for nicer download output
+      addons <- c()
+      
+      # follow redirects if necessary
+      hasLocation <-
+         grepl("\b-L\b", extra) ||
+         grepl("\b--location\b", extra)
+      
+      if (!hasLocation)
+         addons <- c(addons, "-L")
+      
+      # fail on 404
+      hasFail <-
+         grepl("\b-f\b", extra) ||
+         grepl("\b--fail\b", extra)
+      
+      if (!hasFail)
+         addons <- c(addons, "-f")
+      
+      # don't print error output to the console
+      hasSilent <-
+         grepl("\b-s\b", extra) ||
+         grepl("\b--silent\b", extra)
+      
+      if (!hasSilent)
+         addons <- c(addons, "-s")
+      
+      if (nzchar(extra))
+         extra <- paste(extra, paste(addons, collapse = " "))
+      else
+         extra <- paste(addons, collapse = " ")
+      
+      options(download.file.extra = extra)
+   }
+   
+   # timeout a bit more quickly when forming web requests
+   timeout <- getOption("timeout")
+   on.exit(options(timeout = timeout), add = TRUE)
+   options(timeout = 4L)
+   
+   for (candidate in candidates) {
+      
+      url <- file.path(prefix, packageName, candidate)
+      
+      # attempt to download the file (note that R preserves curl's printing of errors
+      # to the console with 'quiet = TRUE' so we disable it there)
+      destfile <- tempfile()
+      on.exit(unlink(destfile), add = TRUE)
+      status <- .rs.tryCatch(download.file(url, destfile = destfile, quiet = !isCurl, mode = "wb"))
+      
+      # handle explicit errors
+      if (is.null(status) || inherits(status, "error"))
+         next
+      
+      # check for success status
+      if (identical(status, 0L)) {
+         cache[[entry]] <- .rs.scalar(url)
+         return(.rs.scalar(url))
+      }
+   }
+   
+   # we failed to figure out the NEWS url; provide our first candidate
+   # as the best guess
+   fmt <- "Failed to infer appropriate NEWS URL: using '%s' as best-guess candidate"
+   warning(sprintf(fmt, candidates[[1]]))
+   
+   # return that URL
+   .rs.scalar(candidates[[1]])
 })
 
 .rs.addFunction("packagesLoaded", function(pkgs) {

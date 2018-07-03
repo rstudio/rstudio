@@ -29,19 +29,13 @@
    )
 })
 
-.rs.addFunction("withTimeLimit", function(time,
+.rs.addFunction("withTimeLimit", function(seconds,
                                           expr,
-                                          envir = parent.frame(),
                                           fail = NULL)
 {
-   setTimeLimit(elapsed = time, transient = TRUE)
+   setTimeLimit(elapsed = seconds, transient = TRUE)
    on.exit(setTimeLimit(), add = TRUE)
-   tryCatch(
-      eval(expr, envir = envir),
-      error = function(e) {
-         fail
-      }
-   )
+   tryCatch(expr, error = function(e) fail)
 })
 
 .rs.addFunction("startsWith", function(strings, string)
@@ -2061,4 +2055,19 @@
 .rs.addFunction("resolveAliasedPath", function(path)
 {
    .Call("rs_resolveAliasedPath", path, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("readPackageDescription", function(packagePath)
+{
+   # if this is an installed package with a package metafile,
+   # read from that location
+   metapath <- file.path(packagePath, "Meta/package.rds")
+   if (file.exists(metapath)) {
+      metadata <- readRDS(metapath)
+      return(as.list(metadata$DESCRIPTION))
+   }
+   
+   # otherwise, attempt to read DESCRIPTION directly
+   descPath <- file.path(packagePath, "DESCRIPTION")
+   read.dcf(descPath, all = TRUE)
 })

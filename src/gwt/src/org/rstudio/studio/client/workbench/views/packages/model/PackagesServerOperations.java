@@ -51,4 +51,9 @@ public interface PackagesServerOperations extends PackratServerOperations
    
    void ignoreNextLoadedPackageCheck(
                         ServerRequestCallback<Void> requestCallback);
+   
+   void getPackageNewsUrl(
+                        String packageName,
+                        String libraryPath,
+                        ServerRequestCallback<String> requestCallback);
 }
