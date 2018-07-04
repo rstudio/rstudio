@@ -64,6 +64,7 @@ td.expandCol
 {
    border: 1px solid #f0f0f0;
    border-right: none;
+   border-left: none;
    width: 20px;
 }
 

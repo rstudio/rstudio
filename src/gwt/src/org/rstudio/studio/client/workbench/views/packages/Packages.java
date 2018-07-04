@@ -409,7 +409,6 @@ public class Packages
    private void doUpdatePackages(final PackageInstallContext installContext)
    {
       new CheckForUpdatesDialog(
-         globalDisplay_,
          new ServerDataSource<JsArray<PackageUpdate>>() {
             public void requestData(
                ServerRequestCallback<JsArray<PackageUpdate>> requestCallback)
@@ -717,7 +716,7 @@ public class Packages
    
    public void showHelp(PackageInfo packageInfo)
    {
-      events_.fireEvent(new ShowHelpEvent(packageInfo.getUrl())) ;
+      events_.fireEvent(new ShowHelpEvent(packageInfo.getHelpUrl())) ;
    }
    
    public void onPackageStateChanged(PackageStateChangedEvent event)

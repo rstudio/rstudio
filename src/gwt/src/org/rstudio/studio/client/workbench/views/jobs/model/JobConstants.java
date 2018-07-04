@@ -30,4 +30,5 @@ public class JobConstants
    
    // special job actions
    public final static String ACTION_STOP = "stop";
+   public final static String ACTION_INFO = "info";
 }

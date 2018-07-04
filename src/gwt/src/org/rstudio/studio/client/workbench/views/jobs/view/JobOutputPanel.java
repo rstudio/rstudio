@@ -36,6 +36,7 @@ public class JobOutputPanel extends Composite
    public JobOutputPanel()
    {
       output_ = new CompilePanel(new CompileOutputBufferWithHighlight());
+      output_.setHeight("100%");
 
       initWidget(uiBinder.createAndBindUi(this));
       

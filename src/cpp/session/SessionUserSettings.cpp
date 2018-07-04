@@ -193,7 +193,10 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
    dataJson["prefs"] = userSettings().uiPrefs();
    ClientEvent event(client_events::kUiPrefsChanged, dataJson);
    module_context::enqueClientEvent(event);
-
+   
+   // let other modules know we've updated the prefs
+   module_context::events().onPreferencesSaved();
+   
    return R_NilValue;
 }
 

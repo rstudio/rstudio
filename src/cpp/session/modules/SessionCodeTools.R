@@ -29,19 +29,13 @@
    )
 })
 
-.rs.addFunction("withTimeLimit", function(time,
+.rs.addFunction("withTimeLimit", function(seconds,
                                           expr,
-                                          envir = parent.frame(),
                                           fail = NULL)
 {
-   setTimeLimit(elapsed = time, transient = TRUE)
+   setTimeLimit(elapsed = seconds, transient = TRUE)
    on.exit(setTimeLimit(), add = TRUE)
-   tryCatch(
-      eval(expr, envir = envir),
-      error = function(e) {
-         fail
-      }
-   )
+   tryCatch(expr, error = function(e) fail)
 })
 
 .rs.addFunction("startsWith", function(strings, string)
@@ -842,36 +836,31 @@
 
 .rs.addFunction("assign", function(x, value)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
+   assign(paste(".rs.cache.", x, sep = ""), value, envir = .rs.toolsEnv())
 })
 
 .rs.addFunction("get", function(x)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      tryCatch(
-         get(paste(".rs.cache.", x, sep = ""), pos = pos),
-         error = function(e) NULL
-      )
+   tryCatch(
+      get(paste(".rs.cache.", x, sep = ""), envir = .rs.toolsEnv()),
+      error = function(e) NULL
+   )
 })
 
 .rs.addFunction("mget", function(x = NULL)
 {
-   pos <- which(search() == "tools:rstudio")
-   if (length(pos))
-      tryCatch({
-         
+   tryCatch(
+      {
          objects <- if (is.null(x))
-            .rs.selectStartsWith(objects(pos = pos, all.names = TRUE), ".rs.cache")
+            .rs.selectStartsWith(objects(envir = .rs.toolsEnv(), all.names = TRUE), ".rs.cache")
          else
             paste(".rs.cache.", x, sep = "")
          
-         mget(objects, envir = as.environment(pos))
+         mget(objects, envir = .rs.toolsEnv())
       },
-         error = function(e) NULL
-      )
+      
+      error = function(e) NULL
+   )
 })
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)
@@ -2066,4 +2055,19 @@
 .rs.addFunction("resolveAliasedPath", function(path)
 {
    .Call("rs_resolveAliasedPath", path, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("readPackageDescription", function(packagePath)
+{
+   # if this is an installed package with a package metafile,
+   # read from that location
+   metapath <- file.path(packagePath, "Meta/package.rds")
+   if (file.exists(metapath)) {
+      metadata <- readRDS(metapath)
+      return(as.list(metadata$DESCRIPTION))
+   }
+   
+   # otherwise, attempt to read DESCRIPTION directly
+   descPath <- file.path(packagePath, "DESCRIPTION")
+   read.dcf(descPath, all = TRUE)
 })

@@ -250,6 +250,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(true);
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
+         cranMirror_ = packagesPrefs.getCRANMirror();
+         
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
             cranMirror_.getHost().equals("Custom")

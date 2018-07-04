@@ -876,7 +876,7 @@ public class ObjectExplorerDataGrid
          buttonWidth = 48;
 
       // add a bit of extra padding for the scroll bar
-      buttonWidth += 12;
+      buttonWidth += DomUtils.getScrollbarWidth();
       
       int totalWidth = getOffsetWidth();
       int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;

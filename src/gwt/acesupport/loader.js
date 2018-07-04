@@ -266,8 +266,6 @@ function loadEditor(container) {
    squelch("gotoline");
    squelch("foldall");
    squelch("unfoldall");
-   squelch("touppercase");
-   squelch("tolowercase");
    return env.editor;
 }
 

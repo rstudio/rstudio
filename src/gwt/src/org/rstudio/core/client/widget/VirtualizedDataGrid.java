@@ -1,7 +1,7 @@
 /*
  * VirtualizedDataGrid.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HeaderPanel;
@@ -33,7 +32,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 // allowing the class to render large tables without overloading the DOM.
 // The main requirement is that all rows within the drawn table have the
 // same height.
-public abstract class VirtualizedDataGrid<T> extends DataGrid<T>
+public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
 {
    public class TableBuilder extends DefaultCellTableBuilder<T>
    {

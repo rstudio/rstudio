@@ -37,10 +37,4 @@ public class PackageUpdate extends JavaScriptObject
    public final native String getAvailable() /*-{
       return this.available;
    }-*/;
-   
-  
-   
-   public final native String getNewsUrl() /*-{
-      return this.newsUrl;
-   }-*/;
 }

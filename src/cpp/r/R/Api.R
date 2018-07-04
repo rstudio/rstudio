@@ -424,14 +424,19 @@
 })
 
 .rs.addApiFunction("showDialog", function(title, message, url = "") {
+   
+   # ensure URL is a string
+   if (is.null(url) || is.na(url))
+      url <- ""
+   
    .Call("rs_showDialog",
       title = title,
       message = message,
       dialogIcon = .rs.dialogIcon()$info,
       prompt = FALSE,
-      promptDefault = NULL,
-      ok = NULL,
-      cancel = NULL,
+      promptDefault = "",
+      ok = "OK",
+      cancel = "Cancel",
       url = url)
 })
 
@@ -444,18 +449,31 @@
 })
 
 .rs.addApiFunction("showPrompt", function(title, message, default = "") {
+   
+   # ensure default is a string
+   if (is.null(default) || is.na(default))
+      default <- ""
+   
    .Call("rs_showDialog",
       title = title,
       message = message,
       dialogIcon = .rs.dialogIcon()$info,
       prompt = TRUE,
       promptDefault = default,
-      ok = NULL,
-      cancel = NULL,
-      url = NULL)
+      ok = "OK",
+      cancel = "Cancel",
+      url = "")
 })
 
-.rs.addApiFunction("showQuestion", function(title, message, ok = "", cancel = "") {
+.rs.addApiFunction("showQuestion", function(title, message, ok = "OK", cancel = "Cancel") {
+   
+   # fix up ok, cancel
+   if (is.null(ok) || is.na(ok))
+      ok <- "OK"
+   
+   if (is.null(cancel) || is.na(cancel))
+      cancel <- "Cancel"
+   
    .Call("rs_showDialog",
       title = title,
       message = message,
