@@ -54,6 +54,11 @@ public class EventBus extends HandlerManager
       fireEvent(event, false);
    }
    
+   public void dispatchEvent(GwtEvent<?> event)
+   {
+      fireEvent(event, true);
+   }
+   
    private void fireEvent(GwtEvent<?> event, boolean fromOtherWindow)
    {
       // if this is a cross-window event that originated in this satellite 

@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -347,15 +349,17 @@ public class UIPrefsAccessor extends Prefs
       return dbl("font_size_points", 10.0);
    }
    
-   public PrefValue<String> theme()
+   public PrefValue<AceTheme> theme()
    {
-      return string("theme", null);
+      // Prior to 1.2 this value was "theme". Since the object structure has changed, we've renamed
+      // it, and users upgrading will have to re-apply their desired theme.
+      return object("rstheme", AceTheme.createDefault());
    }
    
    public String getThemeErrorClass()
    {    
       if ((theme().getValue() == null) ||
-          AceThemes.TEXTMATE.equals(theme().getValue()))
+          AceTheme.createDefault().equals(theme().getValue()))
          return " ace_constant";
       else  
          return " ace_constant ace_language";
@@ -732,6 +736,13 @@ public class UIPrefsAccessor extends Prefs
       return bool("git_diff_ignore_whitespace", false);
    }
    
+   // Meant to be called when the satellite window receives the sessionInfo.
+   protected void UpdateSessionInfo(SessionInfo sessionInfo)
+   {
+      sessionInfo_ = sessionInfo;
+      UpdatePrefs(sessionInfo_.getUiPrefs(), sessionInfo_.getProjectUIPrefs());
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
@@ -756,5 +767,8 @@ public class UIPrefsAccessor extends Prefs
       }
    }
    
-   private final SessionInfo sessionInfo_;
+   // NOTE: The sessionInfo_ should generally not be changed. It's only non-final because at the
+   // time the UIPrefsAccessor is created in a Satellite the sessionInfo_ has not yet been received,
+   // and the UIPrefsAccessor is a singleton and so cannot be replaced.
+   private SessionInfo sessionInfo_;
 }

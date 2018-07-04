@@ -174,6 +174,13 @@ target_link_libraries(rserver
 # install binary
 install(TARGETS rserver DESTINATION ${RSTUDIO_INSTALL_BIN})
 
+# set up to create a global theme directory for server installs.
+set (RSERVER_THEME_README "themes/README.md")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_THEME_README}"
+               "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}"
+       DESTINATION "extras/themes")
+
 if (UNIX AND NOT APPLE)
 
    # install configured admin script

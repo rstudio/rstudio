@@ -197,6 +197,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -5507,6 +5508,12 @@ public class RemoteServer implements Server
                   true,
                   callback);
    }
+   
+   @Override
+   public void getThemes(ServerRequestCallback<JsArray<AceTheme>> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_THEMES, new JSONArray(), callback);
+   }
 
    private String clientId_;
    private String clientVersion_ = "";
@@ -5948,4 +5955,6 @@ public class RemoteServer implements Server
 
    private static final String GET_SECONDARY_REPOS = "get_secondary_repos";
    private static final String VALIDATE_CRAN_REPO = "validate_cran_repo";
+   
+   private static final String GET_THEMES = "get_themes";
 }

@@ -803,7 +803,7 @@
          }
          else 
          {
-            installLocation <- file.path("etc", "rstudio", "themes")
+            installLocation <- file.path("/etc", "rstudio", "themes")
          }
       }
    }
@@ -817,6 +817,20 @@
    installLocation
 })
 
+.rs.addFunction("getThemeDirFromUrl", getThemeDirFromUrl <- function(url) {
+   if (grepl("^/theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
+   {
+      file.path(.rs.getThemeInstallDir(TRUE), basename(url))
+   }
+   else if (grepl("^/theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
+   {
+      file.path(.rs.getThemeInstallDir(FALSE), basename(url))
+   }
+   else
+   {
+      NULL
+   }
+})
 
 # Converts a tmtheme file into an rstheme file.
 # 
@@ -845,7 +859,8 @@
       stop(
          "Unable to create the theme file in the requested location: ",
          location,
-         ". Please see above for relevant warnings.")
+         ". Please see above for relevant warnings.",
+         call. = FALSE)
    }
       
    cat(rsTheme, file = location)
@@ -856,7 +871,7 @@
    }
    else if (apply)
    {
-      stop("Invalid input: unable to apply a theme which has not been added.")
+      stop("Invalid input: unable to apply a theme which has not been added.", call. = FALSE)
    }
    
    name
@@ -906,15 +921,26 @@
       stop(
          "Unable to find a name for the new theme. Please check that the file \"",
          themePath,
-         "\" is valid.")
+         "\" is valid.",
+         call. = FALSE)
    }
    
    outputDir <- .rs.getThemeInstallDir(globally)
    if (!dir.exists(outputDir))
    {
+      if (globally)
+      {
+         stop(
+            "Unable to add the theme file. The global installation directory does not exist: \"",
+            outputDir,
+            "\".",
+            call. = FALSE)
+      }
       if (!dir.create(outputDir, recursive = TRUE))
       {
-         stop("Unable to create the theme file. Please check file system permissions.")
+         stop(
+            "Unable to add the theme file. Please check file system permissions.",
+            call. = FALSE)
       }
    }
 
@@ -924,7 +950,8 @@
       stop(
          "Unable to add the theme. A file with the same name, \"",
          fileName,
-         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.")
+         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
+         call. = FALSE)
    }
 
    if (!file.copy(
@@ -932,18 +959,18 @@
       addedTheme,
       overwrite = force))
    {
-      msg <- "Unable to create the theme file. Please check file system permissions"
+      msg <- "Unable to add the theme file. Please check file system permissions"
       if (!force)
       {
          msg <- paste0(msg, " or try again with `force = TRUE`.")
       }
       
-      stop(msg, ".")
+      stop(msg, ".", call. = FALSE)
    }
    
    if (apply)
    {
-      .rs.applyTheme(name)
+      .rs.applyTheme(name, .Call("rs_getThemes"))
    }
    
    name
@@ -953,12 +980,17 @@
 #
 # @param name     The name of the theme to apply.
 .rs.addFunction("applyTheme", applyTheme <- function(name, themeList) {
-   if (is.null(themeList[[name]]))
+   theme <- themeList[[tolower(name)]]
+   if (is.null(theme))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   .rs.api.writePreference("theme", name);
+   themeValue <- list(
+      "name"= .rs.scalar(theme$name),
+      "isDark" = .rs.scalar(theme$isDark),
+      "url" = .rs.scalar(theme$url))
+   .rs.writeUiPref("rstheme", themeValue);
 })
 
 # Removes a theme from RStudio. If the removed theme is the current theme, the current theme will be
@@ -968,22 +1000,30 @@
 .rs.addFunction("removeTheme", removeTheme <- function(name, themeList) {
    currentTheme <- .rs.api.getThemeInfo()$editor
    
-   if (is.null(themeList[[name]]))
+   if (is.null(themeList[[tolower(name)]]))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   if (tolower(name) == tolower(currentTheme))
+   if (identical(tolower(name), tolower(currentTheme)))
    {
       .rs.applyTheme("TextMate")
    }
 
-   if (!file.remove(themeList[[name]]$fileName))
+   filePath <- .rs.getThemeDirFromUrl(themeList[[tolower(name)]]$url)
+   if (is.null(filePath))
    {
-      if (file.exists(themeList[[name]]$fileName))
+      stop(
+         "Unable to remove the specified theme: ",
+         name,
+         ". Please verify that the theme is installed as a custom theme.")
+   }
+   if (!file.remove(filePath))
+   {
+      if (file.exists(filePath))
       {
-         justFileName <- basename(themeList[[name]]$fileName)
-         actualPath <- normalizePath(themeList[[name]]$fileName, mustWork = FALSE, winslash = "/")
+         justFileName <- basename(filePath)
+         actualPath <- normalizePath(filePath, mustWork = FALSE, winslash = "/")
          globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE), mustWork = FALSE, winslash = "/")
          if (identical(file.path(globalPath, justFileName), actualPath))
          {
@@ -1024,10 +1064,10 @@
 
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", api.applyTheme <-  function(name) {
-   .rs.applyTheme(name)
+   .rs.applyTheme(name, .Call("rs_getThemes"))
 })
 
 # Remove a theme from RStudio.()
 .rs.addApiFunction("removeTheme", api.removeTheme <- function(name) {
-   .rs.removeTheme(name)
+   .rs.removeTheme(name, .Call("rs_getThemes"))
 })

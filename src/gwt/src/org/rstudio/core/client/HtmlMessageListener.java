@@ -25,11 +25,11 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
 public class HtmlMessageListener
@@ -53,12 +53,10 @@ public class HtmlMessageListener
          {
             if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
             {
-               String editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-               String bakground = RStudioThemes.getBackground(editorTheme);
-               String foreground = RStudioThemes.getForeground(editorTheme);
+               AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
 
                for (JavaScriptObject themeSource : themeSources_) {
-                  postThemeMessage(themeSource, themeOrigin_, bakground, foreground);
+                  postThemeMessage(themeSource, themeOrigin_);
                }
             }
          }
@@ -124,12 +122,9 @@ public class HtmlMessageListener
       themeOrigin_ = origin;
       themeSources_.add(source);
 
-      String editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-      if (!StringUtil.isNullOrEmpty(editorTheme)) {
-         String bakground = RStudioThemes.getBackground(editorTheme);
-         String foreground = RStudioThemes.getForeground(editorTheme);
-
-         postThemeMessage(source, themeOrigin_, bakground, foreground);
+      AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
+      if (editorTheme != null) {
+         postThemeMessage(source, themeOrigin_);
       }
    }
 
@@ -163,11 +158,9 @@ public class HtmlMessageListener
       $wnd.addEventListener("message", handler, true);
    }-*/;
 
-   private native static void postThemeMessage(JavaScriptObject source, String origin, String background, String foreground) /*-{
+   private native static void postThemeMessage(JavaScriptObject source, String origin) /*-{
       source.postMessage({
-         message: "ontheme",
-         background: background,
-         foreground: foreground
+         message: "ontheme"
       }, origin);
    }-*/;
    
@@ -188,8 +181,6 @@ public class HtmlMessageListener
    private String url_;
    private boolean highlightAllowed_;
 
-   private String background_;
-   private String foreground_;
    private String themeOrigin_;
    private ArrayList<JavaScriptObject> themeSources_;
 }

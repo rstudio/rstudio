@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
@@ -744,24 +745,13 @@ public class Application implements ApplicationEventHandlers
 
       return url;
    }
-   
    private void initializeWorkbench()
    {
-      CommandWithArg<String> changedTheme = new CommandWithArg<String>()
-      {
-         public void execute(String theme)
-         {
-            RStudioThemes.initializeThemes(uiPrefs_.get(),
-                                           Document.get(),
-                                           rootPanel_.getElement());
-
-            events_.fireEventToAllSatellites(new ThemeChangedEvent(theme));
-         }
-      };
-
-      uiPrefs_.get().getFlatTheme().bind(changedTheme);
-      uiPrefs_.get().theme().bind(changedTheme);
-      changedTheme.execute(uiPrefs_.get().getFlatTheme().getValue());
+      // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
+      // set the initial theme.
+      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      events_.fireEvent(new ThemeChangedEvent());
 
       pAceThemes_.get();
 

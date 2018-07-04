@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -25,134 +26,35 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.ColorUtil.RGBColor;
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.resources.StaticDataResource;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 @Singleton
 public class AceThemes
 {
-   public static final String AMBIANCE = "Ambiance";
-   public static final String CHAOS = "Chaos";
-   public static final String CHROME = "Chrome";
-   public static final String CLOUDS_MIDNIGHT = "Clouds Midnight";
-   public static final String CLOUDS = "Clouds";
-   public static final String COBALT = "Cobalt";
-   public static final String CRIMSON_EDITOR = "Crimson Editor";
-   public static final String DAWN = "Dawn";
-   public static final String DRACULA = "Dracula";
-   public static final String DREAMWEAVER = "Dreamweaver";
-   public static final String ECLIPSE = "Eclipse";
-   public static final String IDLE_FINGERS = "Idle Fingers";
-   public static final String KATZENMILCH = "Katzenmilch";
-   public static final String KR_THEME = "Kr Theme";
-   public static final String MATERIAL = "Material";
-   public static final String MERBIVORE_SOFT = "Merbivore Soft";
-   public static final String MERBIVORE = "Merbivore";
-   public static final String MONO_INDUSTRIAL = "Mono Industrial";
-   public static final String MONOKAI = "Monokai";
-   public static final String PASTEL_ON_DARK = "Pastel On Dark";
-   public static final String SOLARIZED_DARK = "Solarized Dark";
-   public static final String SOLARIZED_LIGHT = "Solarized Light";
-   public static final String TEXTMATE = "TextMate";
-   public static final String TOMORROW_NIGHT_BLUE = "Tomorrow Night Blue";
-   public static final String TOMORROW_NIGHT_BRIGHT = "Tomorrow Night Bright";
-   public static final String TOMORROW_NIGHT_EIGHTIES = "Tomorrow Night 80s";
-   public static final String TOMORROW_NIGHT = "Tomorrow Night";
-   public static final String TOMORROW = "Tomorrow";
-   public static final String TWILIGHT = "Twilight";
-   public static final String VIBRANT_INK = "Vibrant Ink";
-   public static final String XCODE = "Xcode";
-   
    @Inject
-   public AceThemes(AceThemeResources res,
+   public AceThemes(ThemeServerOperations themeServerOperations,
                     final Provider<UIPrefs> prefs,
                     EventBus events)
    {
-      themes_ = new ArrayList<String>();
-      themesByName_ = new HashMap<String, String>();
-      darkThemes_ = new HashMap<String, Boolean>();
+      themeServerOperations_ = themeServerOperations;
       events_ = events;
       prefs_ = prefs;
-      
-      addTheme(AMBIANCE, res.ambiance(), true);
-      addTheme(CHAOS, res.chaos(), true);
-      addTheme(CHROME, res.chrome(), false);
-      addTheme(CLOUDS_MIDNIGHT, res.clouds_midnight(), true);
-      addTheme(CLOUDS, res.clouds(), false);
-      addTheme(COBALT, res.cobalt(), true);
-      addTheme(CRIMSON_EDITOR, res.crimson_editor(), false);
-      addTheme(DAWN, res.dawn(), false);
-      addTheme(DRACULA, res.dracula(), true);
-      addTheme(DREAMWEAVER, res.dreamweaver(), false);
-      addTheme(ECLIPSE, res.eclipse(), false);
-      addTheme(IDLE_FINGERS, res.idle_fingers(), true);
-      addTheme(KATZENMILCH, res.katzenmilch(), false);
-      addTheme(KR_THEME, res.kr_theme(), true);
-      addTheme(MATERIAL, res.material(), true);
-      addTheme(MERBIVORE_SOFT, res.merbivore_soft(), true);
-      addTheme(MERBIVORE, res.merbivore(), true);
-      addTheme(MONO_INDUSTRIAL, res.mono_industrial(), true);
-      addTheme(MONOKAI, res.monokai(), true);
-      addTheme(PASTEL_ON_DARK, res.pastel_on_dark(), true);
-      addTheme(SOLARIZED_DARK, res.solarized_dark(), true);
-      addTheme(SOLARIZED_LIGHT, res.solarized_light(), false);
-      addTheme(TEXTMATE, res.textmate(), false);
-      addTheme(TOMORROW_NIGHT_BLUE, res.tomorrow_night_blue(), true);
-      addTheme(TOMORROW_NIGHT_BRIGHT, res.tomorrow_night_bright(), true);
-      addTheme(TOMORROW_NIGHT_EIGHTIES, res.tomorrow_night_eighties(), true);
-      addTheme(TOMORROW_NIGHT, res.tomorrow_night(), true);
-      addTheme(TOMORROW, res.tomorrow(), false);
-      addTheme(TWILIGHT, res.twilight(), true);
-      addTheme(VIBRANT_INK, res.vibrant_ink(), true);
-      addTheme(XCODE, res.xcode(), false);
 
-      prefs.get().theme().bind(new CommandWithArg<String>()
-      {
-         public void execute(String theme)
-         {
-            applyTheme(theme);
-         }
-      });
-   }
-
-   public String[] getThemeNames()
-   {
-      return themes_.toArray(new String[themes_.size()]);
-   }
-
-   public String getThemeUrl(String name)
-   {
-      String url = themesByName_.get(name);
-      return url != null ? url : themesByName_.get(defaultThemeName_);
-   }
-
-   private void addTheme(String name,
-                         StaticDataResource resource,
-                         boolean isDark)
-   {
-      themes_.add(name);
-      themesByName_.put(name, resource.getSafeUri().asString());
-      if (isDark)
-         darkThemes_.put(name, true);
+      prefs.get().theme().bind(theme -> applyTheme(theme));
    }
    
-   public boolean isDark(String themeName)
-   {
-      if (themeName == null)
-         return false;
-      else
-         return darkThemes_.containsKey(themeName);
-   }
-   
-   private void applyTheme(Document document, final String themeName)
+   private void applyTheme(Document document, final AceTheme theme)
    {
       Element oldStyleEl = document.getElementById(linkId_);
       if (oldStyleEl != null)
@@ -162,10 +64,14 @@ public class AceThemes
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
-      currentStyleEl.setHref(getThemeUrl(themeName));
+      currentStyleEl.setHref(theme.getUrl() + "?dark=" + (theme.isDark() ? "1" : "0"));
       document.getBody().appendChild(currentStyleEl);
       
-      addDarkClassIfNecessary(document, themeName);
+      if(theme.isDark())
+         document.getBody().addClassName("editor_dark");
+      else
+         document.getBody().removeClassName("editor_dark");
+         
       
       // Deferred so that the browser can render the styles.
       new Timer()
@@ -173,7 +79,7 @@ public class AceThemes
          @Override
          public void run()
          {
-            events_.fireEvent(new EditorThemeChangedEvent(themeName));
+            events_.fireEvent(new EditorThemeChangedEvent(theme));
             
             // synchronize the effective background color with the desktop
             if (Desktop.isDesktop())
@@ -193,9 +99,9 @@ public class AceThemes
       }.schedule(100);
    }
 
-   private void applyTheme(final String themeName)
+   private void applyTheme(final AceTheme theme)
    {
-      applyTheme(Document.get(), themeName);
+      applyTheme(Document.get(), theme);
    }
 
    public void applyTheme(Document document)
@@ -203,26 +109,32 @@ public class AceThemes
       applyTheme(document, prefs_.get().theme().getValue());
    }
    
-   public void addDarkClassIfNecessary(Document document, String themeName)
+   public void getThemes(
+      Consumer<HashMap<String, AceTheme>> themeConsumer,
+      ProgressIndicator indicator)
    {
-      if (isDark(themeName))
-         document.getBody().addClassName("editor_dark");
-      else
-         document.getBody().removeClassName("editor_dark");
+      themeServerOperations_.getThemes(
+         new DelayedProgressRequestCallback<JsArray<AceTheme>>(indicator)
+      {
+         @Override
+         public void onSuccess(JsArray<AceTheme> jsonThemeArray)
+         {
+            HashMap<String, AceTheme> themes = new HashMap<>();
+            int len = jsonThemeArray.length();
+            for (int i = 0; i < len; ++i)
+            {
+               AceTheme theme = jsonThemeArray.get(i);
+               themes.put(theme.getName(), theme);
+            }
+            
+            Debug.logWarning("Server was unable to find any installed themes.");
+            themeConsumer.accept(themes);
+         }
+      });
    }
 
-   public String getEffectiveThemeName(String themeName)
-   {
-      return themesByName_.containsKey(themeName)
-             ? themeName
-             : defaultThemeName_;
-   }
-
+   private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
-   private final ArrayList<String> themes_;
-   private final HashMap<String, String> themesByName_;
-   private final HashMap<String, Boolean> darkThemes_;
-   private final String defaultThemeName_ = TEXTMATE;
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
 }

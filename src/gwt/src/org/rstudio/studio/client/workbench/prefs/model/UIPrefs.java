@@ -29,14 +29,18 @@ import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
-public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
+public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, SessionInitHandler
 {
    @Inject
    public UIPrefs(Session session, 
@@ -51,12 +55,13 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             (session.getSessionInfo() == null ? 
                JsObject.createJsObject() :
                session.getSessionInfo().getProjectUIPrefs()));
-      
+
       session_ = session;
       server_ = server;
       satelliteManager_ = satelliteManager;
-      
+
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
+      eventBus.addHandler(SessionInitEvent.TYPE, this);
    }
    
    public void writeUIPrefs()
@@ -93,8 +98,30 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    }
    
    @Override
+   public void onSessionInit(SessionInitEvent e)
+   {
+      // First update the theme and flat theme so the event will trigger.
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      JsObject jsUiPrefs = sessionInfo.getUiPrefs();
+      AceTheme aceTheme = jsUiPrefs.getElement("rstheme");
+      if (null != aceTheme)
+      {
+         theme().setGlobalValue(aceTheme);
+      }
+      
+      String flatTheme = jsUiPrefs.getString("flat_theme");
+      if (null != flatTheme)
+      {
+         getFlatTheme().setGlobalValue(flatTheme);
+      }
+      
+      // The satellite window has just received the session info, so update it now.
+      UpdateSessionInfo(sessionInfo);
+   }
+   
+   @Override
    public void onUiPrefsChanged(UiPrefsChangedEvent e)
-   {        
+   {
       if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
       {
          // get prefs accessor

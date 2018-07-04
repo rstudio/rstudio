@@ -65,6 +65,39 @@ themes <- list(
    "Xcode default" = list("fileName" ="xcode_default", isDark = FALSE),
    "Zenburnesque" = list("fileName" ="zenburnesque", isDark = TRUE))
 
+defaultThemes <- list(
+   "Ambiance" = list("fileName" = "ambiance", isDark =  TRUE),
+   "Chaos" = list("fileName" = "chaos", isDark = TRUE),
+   "Chrome" = list("fileName" = "chrome", isDark = FALSE),
+   "Clouds Midnight" = list("fileName" = "clouds_midnight", isDark = TRUE),
+   "Clouds" = list("fileName" = "clouds", isDark = FALSE),
+   "Cobalt" = list("fileName" = "cobalt", isDark = TRUE),
+   "Crimson Editor" = list("fileName" = "crimson_editor", isDark = FALSE),
+   "Dawn" = list("fileName" = "dawn", isDark = FALSE),
+   "Dracula" = list("fileName" = "dracula", isDark = TRUE),
+   "Dreamweaver" = list("fileName" = "dreamweaver", isDark = FALSE),
+   "Eclipse" = list("fileName" = "eclipse", isDark = FALSE),
+   "Idle Fingers" = list("fileName" = "idle_fingers", isDark = TRUE),
+   "Katzenmilch" = list("fileName" = "katzenmilch", isDark = FALSE),
+   "Kr Theme" = list("fileName" = "kr_theme", isDark = TRUE),
+   "Material" = list("fileName" = "material", isDark = TRUE),
+   "Merbivore" = list("fileName" = "merbivore", isDark = TRUE),
+   "Merbivore Soft" = list("fileName" = "merbivore_soft", isDark = TRUE),
+   "Mono Industrial" = list("fileName" = "mono_industrial", isDark = TRUE),
+   "Monokai" = list("fileName" = "monokai", isDark = TRUE),
+   "Pastel On Dark" = list("fileName" = "pastel_on_dark", isDark = TRUE),
+   "Solarized Dark" = list("fileName" = "solarized_dark", isDark = TRUE),
+   "Solarized Light" = list("fileName" = "solarized_light", isDark = FALSE),
+   "Textmate (default)" = list("fileName" = "textmate", isDark = FALSE),
+   "Tomorrow Night Blue" = list("fileName" = "tomorrow_night_blue", isDark = TRUE),
+   "Tomorrow Night Bright" = list("fileName" = "tomorrow_night_bright", isDark = TRUE),
+   "Tomorrow Night 80s" = list("fileName" = "tomorrow_night_eighties", isDark = TRUE),
+   "Tomorrow Night" = list("fileName" = "tomorrow_night", isDark = TRUE),
+   "Tomorrow" = list("fileName" = "tomorrow", isDark = FALSE),
+   "Twilight" = list("fileName" = "twilight", isDark = TRUE),
+   "Vibrant Ink" = list("fileName" = "vibrant_ink", isDark = TRUE),
+   "Xcode" = list("fileName" = "xcode", isDark = FALSE))
+
 # Helpers ==========================================================================================
 parseCss <- function(cssLines, shouldBreak = FALSE)
 {
@@ -351,15 +384,18 @@ unsetThemeLocations <- function()
    Sys.unsetenv("RS_THEME_LOCAL_HOME")
 }
 
-makeNoPermissionDir <- function() {
+makeNoPermissionDir <- function() 
+{
    if (dir.exists(noPermissionDir))
-   {
       Sys.chmod(noPermissionDir, mode = "0555")
-   }
    else
-   {
       dir.create(noPermissionDir, mode = "0555")
-   }
+}
+
+makeGlobalThemeDir <- function()
+{
+   if (!dir.exists(globalInstallDir))
+      dir.create(globalInstallDir, recursive = TRUE)
 }
 
 # Test getRgbColor =================================================================================
@@ -1739,7 +1775,10 @@ test_that_wrapped("addTheme works correctly with global install", {
       }
    }
 },
-BEFORE_FUN = setThemeLocations,
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
 AFTER_FUN = function() {
    unsetThemeLocations()
    if (!all(file.remove(dir(globalInstallDir))))
@@ -1781,8 +1820,8 @@ test_that_wrapped("addTheme works correctly with force = TRUE", {
    exLines <- readLines(f)
    close(f)
    
-   installedTheme <- .Call("rs_getThemes")[[name]]
-   f <- file(installedTheme$fileName)
+   installedTheme <- .Call("rs_getThemes")[[tolower(name)]]
+   f <- file(.rs.getThemeDirFromUrl(installedTheme$url))
    acLines <- readLines(f)
    close(f)
    
@@ -1815,29 +1854,50 @@ BEFORE_FUN = function() {
 AFTER_FUN = unsetThemeLocations)
 
 # Test rs_getThemes ================================================================================
+test_that_wrapped("rs_getThemes gets default themes correctly", {
+   themeList <- .Call("rs_getThemes")
+   expect_equal(length(themeList), length(defaultThemes))
+   .rs.enumerate(themeList, function(themeName, themeDetails) {
+      infoStr <- paste("Theme:", themeDetails$name)
+      expect_true(themeDetails$name %in% names(defaultThemes), info = infoStr)
+      expect_equal(themeName, tolower(themeDetails$name))
+      
+      expectedTheme <- defaultThemes[[themeDetails$name]]
+      expect_equal(
+         themeDetails$url,
+         paste0("/theme/default/", expectedTheme$fileName, ".rstheme"),
+         info = infoStr)
+      expect_equal(themeDetails$isDark, expectedTheme$isDark, info = infoStr)
+   })
+},
+BEFORE_FUN = setThemeLocations,
+AFTER_FUN = unsetThemeLocations)
+
 test_that_wrapped("rs_getThemes works correctly", {
    addedThemes <- list()
    .rs.enumerate(themes, function(themeName, themeDesc) {
       fileName <- paste0(themeDesc$fileName, ".rstheme")
-      themeLocation <- if (sample.int(2, 1) > 1) file.path(globalInstallDir, fileName)
+      isGlobal <- (sample.int(2, 1) > 1)
+      themeLocation <- if (isGlobal) file.path(globalInstallDir, fileName)
                        else file.path(localInstallDir, fileName)
       file.copy(file.path(inputFileLocation, "rsthemes", fileName), themeLocation)
-      addedThemes[[themeName]] <<- themeLocation
-   })
+      addedThemes[[themeName]] <<- if (isGlobal) paste0("/theme/custom/global/", fileName)
+                                   else paste0("/theme/custom/local/", fileName)
+      })
 
    themeList <- .Call("rs_getThemes")
    .rs.enumerate(addedThemes, function(themeName, themeLocation)
    {
       infoStr <- paste("Theme:", themeName)
-      expect_true(themeName %in% names(themeList), info = infoStr)
-      expect_equal(
-         normalizePath(themeList[[themeName]]$fileName),
-         normalizePath(themeLocation),
-         info = infoStr)
-      expect_equal(themeList[[themeName]]$isDark, themes[[themeName]]$isDark, info = infoStr)
+      expect_true(tolower(themeName) %in% names(themeList), info = infoStr)
+      expect_equal(themeList[[tolower(themeName)]]$url, themeLocation, info = infoStr)
+      expect_equal(themeList[[tolower(themeName)]]$isDark, themes[[themeName]]$isDark, info = infoStr)
    })
 },
-BEFORE_FUN = setThemeLocations,
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
 AFTER_FUN = function() {
    toRemove <- c(
       file.path(localInstallDir, dir(localInstallDir)),
@@ -1856,6 +1916,51 @@ AFTER_FUN = function() {
    }
 })
 
+test_that_wrapped("rs_getThemes location override works correctly", {
+   # Nothing installed
+   themeName <- "Dawn"
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   expect_equal(
+      dawnTheme$url,
+      paste0("/theme/default/", defaultThemes[[themeName]]$fileName, ".rstheme"),
+      info = "default location")
+
+   # Install globally
+   expectedDawn <- themes[[themeName]]
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      TRUE)
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   expect_equal(
+      dawnTheme$url,
+      paste0("/theme/custom/global/", expectedDawn$fileName, ".rstheme"),
+      info = "global location")
+
+   # Install locally
+   expectedDawn <- themes[[themeName]]
+   .rs.addTheme(
+      file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
+      FALSE,
+      FALSE,
+      FALSE)
+   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   expect_equal(
+      dawnTheme$url,
+      paste0("/theme/custom/local/", expectedDawn$fileName, ".rstheme"),
+      info = "local location")
+},
+BEFORE_FUN = function() {
+   setThemeLocations()
+   makeGlobalThemeDir()
+},
+AFTER_FUN = function() {
+   # Remove the theme from the local & global locations.
+   .rs.removeTheme(themeName, .Call("rs_getThemes"))
+   .rs.removeTheme(themeName, .Call("rs_getThemes"))
+   unsetThemeLocations()
+})
 
 # Test removeTheme =================================================================================
 test_that_wrapped("removeTheme works correctly locally", {
@@ -1885,6 +1990,7 @@ test_that_wrapped("removeTheme works correctly globally", {
 },
 BEFORE_FUN = function() {
    setThemeLocations()
+   makeGlobalThemeDir()
    toAdd <- paste0(themes[[22]]$fileName, ".rstheme")
    file.copy(file.path(inputFileLocation, "rsthemes", toAdd), file.path(globalInstallDir, toAdd))
 },

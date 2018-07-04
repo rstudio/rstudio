@@ -472,11 +472,6 @@ public class SatelliteManager implements CloseHandler<Window>
       JavaScriptObject params = satelliteParams_.get(name);
       if (params != null)
          callSetParams(satelliteWnd, params);
-
-      // set themes
-      events_.fireEventToSatellite(new ThemeChangedEvent(
-         RStudioThemes.getThemeFromUiPrefs(pUIPrefs_.get())),
-         satelliteWnd);
    }
    
    // called to register child windows (not necessarily full-fledged 

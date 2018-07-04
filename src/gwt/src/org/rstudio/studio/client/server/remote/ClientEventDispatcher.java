@@ -240,314 +240,314 @@ public class ClientEventDispatcher
          if (type == ClientEvent.Busy)
          {
             boolean busy = event.<Bool>getData().getValue();
-            eventBus_.fireEvent(new BusyEvent(busy));
+            eventBus_.dispatchEvent(new BusyEvent(busy));
          }
          else if (type == ClientEvent.ConsoleOutput)
          {
             ConsoleText output = event.getData();
-            eventBus_.fireEvent(new ConsoleWriteOutputEvent(output));
+            eventBus_.dispatchEvent(new ConsoleWriteOutputEvent(output));
          }
          else if (type == ClientEvent.ConsoleError)
          {
             ConsoleText error = event.getData();
-            eventBus_.fireEvent(new ConsoleWriteErrorEvent(error));
+            eventBus_.dispatchEvent(new ConsoleWriteErrorEvent(error));
          }
          else if (type == ClientEvent.ConsoleWritePrompt)
          {
             String prompt = event.getData();
-            eventBus_.fireEvent(new ConsoleWritePromptEvent(prompt));
+            eventBus_.dispatchEvent(new ConsoleWritePromptEvent(prompt));
          }
          else if (type == ClientEvent.ConsoleWriteInput)
          {
             ConsoleText input = event.getData();
-            eventBus_.fireEvent(new ConsoleWriteInputEvent(input));
+            eventBus_.dispatchEvent(new ConsoleWriteInputEvent(input));
          }
          else if (type == ClientEvent.ConsolePrompt)
          {
             ConsolePrompt prompt = event.getData();
-            eventBus_.fireEvent(new ConsolePromptEvent(prompt));
+            eventBus_.dispatchEvent(new ConsolePromptEvent(prompt));
          }
          else if (type == ClientEvent.ShowEditor)
          {
             ShowEditorData data = event.getData();
-            eventBus_.fireEvent(new ShowEditorEvent(data));
+            eventBus_.dispatchEvent(new ShowEditorEvent(data));
          }
          else if (type == ClientEvent.FileChanged)
          {
             FileChange fileChange = event.getData();
-            eventBus_.fireEvent(new FileChangeEvent(fileChange));
+            eventBus_.dispatchEvent(new FileChangeEvent(fileChange));
          }
          else if (type == ClientEvent.WorkingDirChanged)
          {
             String path = event.getData();
-            eventBus_.fireEvent(new WorkingDirChangedEvent(path));
+            eventBus_.dispatchEvent(new WorkingDirChangedEvent(path));
          }
          else if (type == ClientEvent.ShowHelp)
          {
             String helpUrl = event.getData();
-            eventBus_.fireEvent(new ShowHelpEvent(helpUrl));
+            eventBus_.dispatchEvent(new ShowHelpEvent(helpUrl));
          }
          else if (type == ClientEvent.ShowErrorMessage)
          {
             ErrorMessage errorMessage = event.getData();
-            eventBus_.fireEvent(new ShowErrorMessageEvent(errorMessage));
+            eventBus_.dispatchEvent(new ShowErrorMessageEvent(errorMessage));
          }
          else if (type == ClientEvent.ChooseFile)
          {
             boolean newFile = event.<Bool>getData().getValue();
-            eventBus_.fireEvent(new ChooseFileEvent(newFile));
+            eventBus_.dispatchEvent(new ChooseFileEvent(newFile));
          }
          else if (type == ClientEvent.BrowseUrl)
          {
             BrowseUrlInfo urlInfo = event.getData();
-            eventBus_.fireEvent(new BrowseUrlEvent(urlInfo));
+            eventBus_.dispatchEvent(new BrowseUrlEvent(urlInfo));
          }
          else if (type == ClientEvent.PlotsStateChanged)
          {
             PlotsState plotsState = event.getData();
-            eventBus_.fireEvent(new PlotsChangedEvent(plotsState));
+            eventBus_.dispatchEvent(new PlotsChangedEvent(plotsState));
          }
          else if (type == ClientEvent.ViewData)
          {
             DataView dataView = event.getData();
-            eventBus_.fireEvent(new ViewDataEvent(dataView));
+            eventBus_.dispatchEvent(new ViewDataEvent(dataView));
          }
          else if (type == ClientEvent.PackageStateChanged)
          {
             PackageState newState = event.getData();
-            eventBus_.fireEvent(new PackageStateChangedEvent(newState));
+            eventBus_.dispatchEvent(new PackageStateChangedEvent(newState));
          }
          else if (type == ClientEvent.PackageStatusChanged)
          {
             PackageStatus status = event.getData();
-            eventBus_.fireEvent(new PackageStatusChangedEvent(status));
+            eventBus_.dispatchEvent(new PackageStatusChangedEvent(status));
          }
          else if (type == ClientEvent.Locator)
          {
-            eventBus_.fireEvent(new LocatorEvent());
+            eventBus_.dispatchEvent(new LocatorEvent());
          }
          else if (type == ClientEvent.ConsoleResetHistory)
          {
             ConsoleResetHistory reset = event.getData();
-            eventBus_.fireEvent(new ConsoleResetHistoryEvent(reset));
+            eventBus_.dispatchEvent(new ConsoleResetHistoryEvent(reset));
          }
          else if (type == ClientEvent.SessionSerialization)
          {
             SessionSerializationAction action = event.getData();
-            eventBus_.fireEvent(new SessionSerializationEvent(action));
+            eventBus_.dispatchEvent(new SessionSerializationEvent(action));
          }
          else if (type == ClientEvent.HistoryEntriesAdded)
          {
             RpcObjectList<HistoryEntry> entries = event.getData();
-            eventBus_.fireEvent(new HistoryEntriesAddedEvent(entries));
+            eventBus_.dispatchEvent(new HistoryEntriesAddedEvent(entries));
          }
          else if (type == ClientEvent.QuotaStatus)
          {
             QuotaStatus quotaStatus = event.getData();
-            eventBus_.fireEvent(new QuotaStatusEvent(quotaStatus));
+            eventBus_.dispatchEvent(new QuotaStatusEvent(quotaStatus));
          }
          else if (type == ClientEvent.FileEdit)
          {
             FileSystemItem file = event.getData();
-            eventBus_.fireEvent(new FileEditEvent(file));
+            eventBus_.dispatchEvent(new FileEditEvent(file));
          }
          else if (type == ClientEvent.ShowContent)
          {
             ContentItem content = event.getData();
-            eventBus_.fireEvent(new ShowContentEvent(content));
+            eventBus_.dispatchEvent(new ShowContentEvent(content));
          }
          else if (type == ClientEvent.ShowData)
          {
             DataItem data = event.getData();
-            eventBus_.fireEvent(new ShowDataEvent(data));
+            eventBus_.dispatchEvent(new ShowDataEvent(data));
          }
          else if (type == ClientEvent.AbendWarning)
          {            
-            eventBus_.fireEvent(new SessionAbendWarningEvent());
+            eventBus_.dispatchEvent(new SessionAbendWarningEvent());
          }
          else if (type == ClientEvent.ShowWarningBar)
          {
             WarningBarMessage message = event.getData();
-            eventBus_.fireEvent(new ShowWarningBarEvent(message));
+            eventBus_.dispatchEvent(new ShowWarningBarEvent(message));
          }
          else if (type == ClientEvent.OpenProjectError)
          {
             OpenProjectError error = event.getData();
-            eventBus_.fireEvent(new OpenProjectErrorEvent(error));
+            eventBus_.dispatchEvent(new OpenProjectErrorEvent(error));
          }
          else if (type == ClientEvent.VcsRefresh)
          {
             JsObject data = event.getData();
-            eventBus_.fireEvent(new VcsRefreshEvent(Reason.NA,
+            eventBus_.dispatchEvent(new VcsRefreshEvent(Reason.NA,
                                                     data.getInteger("delay")));
          }
          else if (type == ClientEvent.AskPass)
          {
             AskPassEvent.Data data = event.getData();
-            eventBus_.fireEvent(new AskPassEvent(data));
+            eventBus_.dispatchEvent(new AskPassEvent(data));
          }
          else if (type == ClientEvent.ConsoleProcessOutput)
          {
             ServerConsoleOutputEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ServerConsoleOutputEvent(data.getHandle(),
+            eventBus_.dispatchEvent(new ServerConsoleOutputEvent(data.getHandle(),
                                                             data.getOutput()));
          }
          else if (type == ClientEvent.ConsoleProcessPrompt)
          {
             ServerConsolePromptEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ServerConsolePromptEvent(data.getHandle(),
+            eventBus_.dispatchEvent(new ServerConsolePromptEvent(data.getHandle(),
                                                              data.getPrompt()));
          }
          else if (type == ClientEvent.ConsoleProcessCreated)
          {
             ConsoleProcessCreatedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ConsoleProcessCreatedEvent(data));
+            eventBus_.dispatchEvent(new ConsoleProcessCreatedEvent(data));
          }
          else if (type == ClientEvent.ConsoleProcessExit)
          {
             ServerProcessExitEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ServerProcessExitEvent(data.getHandle(),
+            eventBus_.dispatchEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
          }
          else if (type == ClientEvent.HTMLPreviewStartedEvent)
          {
             HTMLPreviewStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new HTMLPreviewStartedEvent(data));
+            eventBus_.dispatchEvent(new HTMLPreviewStartedEvent(data));
          }
          else if (type == ClientEvent.HTMLPreviewOutputEvent)
          {
             String output = event.getData();
-            eventBus_.fireEvent(new HTMLPreviewOutputEvent(output));
+            eventBus_.dispatchEvent(new HTMLPreviewOutputEvent(output));
          }
          else if (type == ClientEvent.HTMLPreviewCompletedEvent)
          {
             HTMLPreviewResult result = event.getData();
-            eventBus_.fireEvent(new HTMLPreviewCompletedEvent(result));
+            eventBus_.dispatchEvent(new HTMLPreviewCompletedEvent(result));
          }
          else if (type == ClientEvent.CompilePdfStartedEvent)
          {
             CompilePdfStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CompilePdfStartedEvent(data));
+            eventBus_.dispatchEvent(new CompilePdfStartedEvent(data));
          }
          else if (type == ClientEvent.CompilePdfOutputEvent)
          {
             CompileOutput output = event.getData();
-            eventBus_.fireEvent(new CompilePdfOutputEvent(output));
+            eventBus_.dispatchEvent(new CompilePdfOutputEvent(output));
          }
          else if (type == ClientEvent.CompilePdfErrorsEvent)
          {
             JsArray<SourceMarker> data = event.getData();
-            eventBus_.fireEvent(new CompilePdfErrorsEvent(data));
+            eventBus_.dispatchEvent(new CompilePdfErrorsEvent(data));
          }
          else if (type == ClientEvent.CompilePdfCompletedEvent)
          {
             CompilePdfResult result = event.getData();
-            eventBus_.fireEvent(new CompilePdfCompletedEvent(result));
+            eventBus_.dispatchEvent(new CompilePdfCompletedEvent(result));
          }
          else if (type == ClientEvent.SynctexEditFile)
          {
             SourceLocation sourceLocation = event.getData();
-            eventBus_.fireEvent(new SynctexEditFileEvent(sourceLocation));
+            eventBus_.dispatchEvent(new SynctexEditFileEvent(sourceLocation));
          }
          else if (type == ClientEvent.FindResult)
          {
             FindResultEvent.Data data = event.getData();
-            eventBus_.fireEvent(new FindResultEvent(
+            eventBus_.dispatchEvent(new FindResultEvent(
                   data.getHandle(), data.getResults().toArrayList()));
          }
          else if (type == ClientEvent.FindOperationEnded)
          {
             String data = event.getData();
-            eventBus_.fireEvent(new FindOperationEndedEvent(data));
+            eventBus_.dispatchEvent(new FindOperationEndedEvent(data));
          }
          else if (type == ClientEvent.RPubsUploadStatus)
          {
             RPubsUploadStatusEvent.Status status = event.getData();
-            eventBus_.fireEvent(new RPubsUploadStatusEvent(status));
+            eventBus_.dispatchEvent(new RPubsUploadStatusEvent(status));
          }
          else if (type == ClientEvent.BuildStarted)
          {
             BuildStartedEvent.Data buildStartedData = event.getData();
-            eventBus_.fireEvent(new BuildStartedEvent(buildStartedData));
+            eventBus_.dispatchEvent(new BuildStartedEvent(buildStartedData));
          }
          else if (type == ClientEvent.BuildOutput)
          {
             CompileOutput data = event.getData();
-            eventBus_.fireEvent(new BuildOutputEvent(data));
+            eventBus_.dispatchEvent(new BuildOutputEvent(data));
          }
          else if (type == ClientEvent.BuildCompleted)
          {
             BuildCompletedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new BuildCompletedEvent(data));
+            eventBus_.dispatchEvent(new BuildCompletedEvent(data));
          }
          else if (type == ClientEvent.BuildErrors)
          {
             BuildErrorsEvent.Data data = event.getData();
-            eventBus_.fireEvent(new BuildErrorsEvent(data));
+            eventBus_.dispatchEvent(new BuildErrorsEvent(data));
          }
          else if (type == ClientEvent.DirectoryNavigate)
          {
             DirectoryNavigateEvent.Data data = event.getData();
-            eventBus_.fireEvent(new DirectoryNavigateEvent(data));
+            eventBus_.dispatchEvent(new DirectoryNavigateEvent(data));
          }
          else if (type == ClientEvent.DeferredInitCompleted)
          {
-            eventBus_.fireEvent(new DeferredInitCompletedEvent());
+            eventBus_.dispatchEvent(new DeferredInitCompletedEvent());
          }
          else if (type == ClientEvent.PlotsZoomSizeChanged)
          {
             PlotsZoomSizeChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new PlotsZoomSizeChangedEvent(data));
+            eventBus_.dispatchEvent(new PlotsZoomSizeChangedEvent(data));
          }
          else if (type == ClientEvent.SourceCppStarted)
          {
-            eventBus_.fireEvent(new SourceCppStartedEvent());
+            eventBus_.dispatchEvent(new SourceCppStartedEvent());
          }
          else if (type == ClientEvent.SourceCppCompleted)
          {
             SourceCppState state = event.getData();
-            eventBus_.fireEvent(new SourceCppCompletedEvent(state));
+            eventBus_.dispatchEvent(new SourceCppCompletedEvent(state));
          }
          else if (type == ClientEvent.LoadedPackageUpdates)
          {
             String installCmd = event.getData();
-            eventBus_.fireEvent(new LoadedPackageUpdatesEvent(installCmd));
+            eventBus_.dispatchEvent(new LoadedPackageUpdatesEvent(installCmd));
          }
          else if (type == ClientEvent.ActivatePane)
          {
             String pane = event.getData();
-            eventBus_.fireEvent(new ActivatePaneEvent(pane));
+            eventBus_.dispatchEvent(new ActivatePaneEvent(pane));
          }
          else if (type == ClientEvent.ShowPresentationPane)
          {
             PresentationState state = event.getData();
-            eventBus_.fireEvent(new ShowPresentationPaneEvent(state));
+            eventBus_.dispatchEvent(new ShowPresentationPaneEvent(state));
          }
          else if (type == ClientEvent.EnvironmentRefresh)
          {
-            eventBus_.fireEvent(new EnvironmentRefreshEvent());
+            eventBus_.dispatchEvent(new EnvironmentRefreshEvent());
          }
          else if (type == ClientEvent.ListChanged)
          {
-            eventBus_.fireEvent(new ListChangedEvent(event.<JsObject>getData()));
+            eventBus_.dispatchEvent(new ListChangedEvent(event.<JsObject>getData()));
          }
          else if (type == ClientEvent.UiPrefsChanged)
          {
             UiPrefsChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new UiPrefsChangedEvent(data));
+            eventBus_.dispatchEvent(new UiPrefsChangedEvent(data));
          }
          else if (type == ClientEvent.ContextDepthChanged) {
             EnvironmentContextData data = event.getData();
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data, true));
+            eventBus_.dispatchEvent(new ContextDepthChangedEvent(data, true));
          }
          else if (type == ClientEvent.HandleUnsavedChanges)
          {
-            eventBus_.fireEvent(new HandleUnsavedChangesEvent());
+            eventBus_.dispatchEvent(new HandleUnsavedChangesEvent());
          }
          else if (type == ClientEvent.Quit)
          {
             QuitEvent.Data data = event.getData();
-            eventBus_.fireEvent(new QuitEvent(data));
+            eventBus_.dispatchEvent(new QuitEvent(data));
          }
          else if (type == ClientEvent.Suicide)
          {
@@ -556,458 +556,458 @@ public class ClientEventDispatcher
             
             // fire event
             String message = event.getData();
-            eventBus_.fireEvent(new SuicideEvent(message));
+            eventBus_.dispatchEvent(new SuicideEvent(message));
          }
          else if (type == ClientEvent.SaveActionChanged)
          {
             SaveAction action = event.getData();
-            eventBus_.fireEvent(new SaveActionChangedEvent(action));
+            eventBus_.dispatchEvent(new SaveActionChangedEvent(action));
          }
          else if (type == ClientEvent.EnvironmentAssigned)
          {
             RObject objectInfo = event.getData();
-            eventBus_.fireEvent(new EnvironmentObjectAssignedEvent(objectInfo));
+            eventBus_.dispatchEvent(new EnvironmentObjectAssignedEvent(objectInfo));
          }
          else if (type == ClientEvent.EnvironmentRemoved)
          {
             String objectName = event.getData();
-            eventBus_.fireEvent(new EnvironmentObjectRemovedEvent(objectName));
+            eventBus_.dispatchEvent(new EnvironmentObjectRemovedEvent(objectName));
          }
          else if (type == ClientEvent.BrowserLineChanged)
          {
             LineData lineData = event.getData();
-            eventBus_.fireEvent(new BrowserLineChangedEvent(lineData));
+            eventBus_.dispatchEvent(new BrowserLineChangedEvent(lineData));
          }
          else if (type == ClientEvent.PackageLoaded)
          {
-            eventBus_.fireEvent(new PackageLoadedEvent(
+            eventBus_.dispatchEvent(new PackageLoadedEvent(
                   (String)event.getData()));
          }
          else if (type == ClientEvent.PackageUnloaded)
          {
-            eventBus_.fireEvent(new PackageUnloadedEvent(
+            eventBus_.dispatchEvent(new PackageUnloadedEvent(
                   (String)event.getData()));
          }
          else if (type == ClientEvent.PresentationPaneRequestCompleted)
          {
-            eventBus_.fireEvent(new PresentationPaneRequestCompletedEvent());
+            eventBus_.dispatchEvent(new PresentationPaneRequestCompletedEvent());
          }
          else if (type == ClientEvent.UnhandledError)
          {
             UnhandledError err = event.getData();
-            eventBus_.fireEvent(new UnhandledErrorEvent(err));
+            eventBus_.dispatchEvent(new UnhandledErrorEvent(err));
          }
          else if (type == ClientEvent.ErrorHandlerChanged)
          {
             ErrorHandlerType handlerType = event.getData();
-            eventBus_.fireEvent(new ErrorHandlerChangedEvent(handlerType));
+            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(handlerType));
          }
          else if (type == ClientEvent.ViewerNavigate)
          {
             ViewerNavigateEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ViewerNavigateEvent(data));
+            eventBus_.dispatchEvent(new ViewerNavigateEvent(data));
          }
          else if (type == ClientEvent.SourceExtendedTypeDetected)
          {
             SourceExtendedTypeDetectedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SourceExtendedTypeDetectedEvent(data));
+            eventBus_.dispatchEvent(new SourceExtendedTypeDetectedEvent(data));
          }
          else if (type == ClientEvent.ShinyViewer)
          {
             ShinyApplicationParams data = event.getData();
-            eventBus_.fireEvent(new ShinyApplicationStatusEvent(data, true));
+            eventBus_.dispatchEvent(new ShinyApplicationStatusEvent(data, true));
          }
          else if (type == ClientEvent.DebugSourceCompleted)
          {
             DebugSourceResult result = (DebugSourceResult)event.getData();
-            eventBus_.fireEvent(new DebugSourceCompletedEvent(result));
+            eventBus_.dispatchEvent(new DebugSourceCompletedEvent(result));
          }
          else if (type == ClientEvent.RmdRenderStarted)
          {
             RmdRenderStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RmdRenderStartedEvent(data));
+            eventBus_.dispatchEvent(new RmdRenderStartedEvent(data));
          }
          else if (type == ClientEvent.RmdRenderOutput)
          {
             CompileOutput data = event.getData();
-            eventBus_.fireEvent(new RmdRenderOutputEvent(data));
+            eventBus_.dispatchEvent(new RmdRenderOutputEvent(data));
          }
          else if (type == ClientEvent.RmdRenderCompleted)
          {
             RmdRenderResult result = event.getData();
-            eventBus_.fireEvent(new RmdRenderCompletedEvent(result));
+            eventBus_.dispatchEvent(new RmdRenderCompletedEvent(result));
          }
          else if (type == ClientEvent.RmdShinyDocStarted)
          {
             RmdShinyDocInfo docInfo = event.getData();
-            eventBus_.fireEvent(new RmdShinyDocStartedEvent(docInfo));
+            eventBus_.dispatchEvent(new RmdShinyDocStartedEvent(docInfo));
          }
          else if (type == ClientEvent.RSConnectDeploymentOutput)
          {
             CompileOutput output = event.getData();
-            eventBus_.fireEvent(new RSConnectDeploymentOutputEvent(output));
+            eventBus_.dispatchEvent(new RSConnectDeploymentOutputEvent(output));
          }
          else if (type == ClientEvent.RSConnectDeploymentCompleted)
          {
             String url = event.getData();
-            eventBus_.fireEvent(new RSConnectDeploymentCompletedEvent(url));
+            eventBus_.dispatchEvent(new RSConnectDeploymentCompletedEvent(url));
          }
          else if (type == ClientEvent.RSConnectDeploymentFailed)
          {
             RSConnectDeploymentFailedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RSConnectDeploymentFailedEvent(data));
+            eventBus_.dispatchEvent(new RSConnectDeploymentFailedEvent(data));
          }
          else if (type == ClientEvent.UserPrompt)
          {
             UserPrompt prompt = event.getData();
-            eventBus_.fireEvent(new UserPromptEvent(prompt));
+            eventBus_.dispatchEvent(new UserPromptEvent(prompt));
          }
          else if (type == ClientEvent.InstallRtools)
          {
             InstallRtoolsEvent.Data data = event.getData();
-            eventBus_.fireEvent(new InstallRtoolsEvent(data));
+            eventBus_.dispatchEvent(new InstallRtoolsEvent(data));
          }
          else if (type == ClientEvent.InstallShiny)
          {
             String userAction = event.getData();
-            eventBus_.fireEvent(new InstallShinyEvent(userAction));
+            eventBus_.dispatchEvent(new InstallShinyEvent(userAction));
          }
          else if (type == ClientEvent.SuspendAndRestart)
          {
             SuspendAndRestartEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SuspendAndRestartEvent(data));
+            eventBus_.dispatchEvent(new SuspendAndRestartEvent(data));
          }
          else if (type == ClientEvent.DataViewChanged)
          {
             DataViewChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new DataViewChangedEvent(data));
+            eventBus_.dispatchEvent(new DataViewChangedEvent(data));
          }
          else if (type == ClientEvent.ViewFunction)
          {
             SearchPathFunctionDefinition data = event.getData();
-            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+            eventBus_.dispatchEvent(new CodeBrowserNavigationEvent(
                   data, null, false, true));
          }
          else if (type == ClientEvent.MarkersChanged)
          {
             MarkersChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new MarkersChangedEvent(data));
+            eventBus_.dispatchEvent(new MarkersChangedEvent(data));
          }
          else if (type == ClientEvent.EnableRStudioConnect)
          {
             EnableRStudioConnectUIEvent.Data data = event.getData();
-            eventBus_.fireEvent(new EnableRStudioConnectUIEvent(data));
+            eventBus_.dispatchEvent(new EnableRStudioConnectUIEvent(data));
          }
          else if (type == ClientEvent.UpdateGutterMarkers)
          {
             LintEvent.Data data = event.getData();
-            eventBus_.fireEvent(new LintEvent(data));
+            eventBus_.dispatchEvent(new LintEvent(data));
          }
          else if (type == ClientEvent.SnippetsChanged)
          {
             SnippetsChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SnippetsChangedEvent(data));
+            eventBus_.dispatchEvent(new SnippetsChangedEvent(data));
          }
          else if (type == ClientEvent.JumpToFunction)
          {
             JumpToFunctionEvent.Data data = event.getData();
-            eventBus_.fireEvent(new JumpToFunctionEvent(data));
+            eventBus_.dispatchEvent(new JumpToFunctionEvent(data));
          }
          else if (type == ClientEvent.CollabEditStarted)
          {
             CollabEditStartParams params = event.getData();
-            eventBus_.fireEvent(new CollabEditStartedEvent(params));
+            eventBus_.dispatchEvent(new CollabEditStartedEvent(params));
          }
          else if (type == ClientEvent.SessionCountChanged)
          {
             SessionCountChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SessionCountChangedEvent(data));
+            eventBus_.dispatchEvent(new SessionCountChangedEvent(data));
          }
          else if (type == ClientEvent.CollabEditEnded)
          {
             CollabEditEndedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CollabEditEndedEvent(data));
+            eventBus_.dispatchEvent(new CollabEditEndedEvent(data));
          }
          else if (type == ClientEvent.ProjectUsersChanged)
          {
             ProjectUserChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ProjectUserChangedEvent(data));
+            eventBus_.dispatchEvent(new ProjectUserChangedEvent(data));
          }
          else if (type == ClientEvent.RVersionsChanged)
          {
             RVersionsInfo versions = event.getData();
-            eventBus_.fireEvent(new RVersionsChangedEvent(versions));
+            eventBus_.dispatchEvent(new RVersionsChangedEvent(versions));
          }
          else if (type == ClientEvent.ShinyGadgetDialog)
          {
             ShinyGadgetDialogEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ShinyGadgetDialogEvent(data));
+            eventBus_.dispatchEvent(new ShinyGadgetDialogEvent(data));
          }
          else if (type == ClientEvent.RmdParamsReady)
          {
             String paramsFile = event.getData();
-            eventBus_.fireEvent(new RmdParamsReadyEvent(paramsFile));
+            eventBus_.dispatchEvent(new RmdParamsReadyEvent(paramsFile));
          }
          else if (type == ClientEvent.RegisterUserCommand)
          {
             RegisterUserCommandEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RegisterUserCommandEvent(data));
+            eventBus_.dispatchEvent(new RegisterUserCommandEvent(data));
          }
          else if (type == ClientEvent.SendToConsole)
          {
             SendToConsoleEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SendToConsoleEvent(data));
+            eventBus_.dispatchEvent(new SendToConsoleEvent(data));
          }
          else if (type == ClientEvent.UserFollowStarted)
          {
             ProjectUser user = event.getData();
-            eventBus_.fireEvent(new FollowUserEvent(user, true));
+            eventBus_.dispatchEvent(new FollowUserEvent(user, true));
          }
          else if (type == ClientEvent.UserFollowEnded)
          {
             ProjectUser user = event.getData();
-            eventBus_.fireEvent(new FollowUserEvent(user, false));
+            eventBus_.dispatchEvent(new FollowUserEvent(user, false));
          }
          else if (type == ClientEvent.ProjectAccessRevoked)
          {
-            eventBus_.fireEvent(new ProjectAccessRevokedEvent());
+            eventBus_.dispatchEvent(new ProjectAccessRevokedEvent());
          }
          else if (type == ClientEvent.CollabEditSaved)
          {
             CollabEditSavedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new CollabEditSavedEvent(data));
+            eventBus_.dispatchEvent(new CollabEditSavedEvent(data));
          }
          else if (type == ClientEvent.AddinRegistryUpdated)
          {
             RAddins data = event.getData();
-            eventBus_.fireEvent(new AddinRegistryUpdatedEvent(data));
+            eventBus_.dispatchEvent(new AddinRegistryUpdatedEvent(data));
          }
          else if (type == ClientEvent.ChunkOutput)
          {
             RmdChunkOutput data = event.getData();
-            eventBus_.fireEvent(new RmdChunkOutputEvent(data));
+            eventBus_.dispatchEvent(new RmdChunkOutputEvent(data));
          }
          else if (type == ClientEvent.ChunkOutputFinished)
          {
             RmdChunkOutputFinishedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RmdChunkOutputFinishedEvent(data));
+            eventBus_.dispatchEvent(new RmdChunkOutputFinishedEvent(data));
          }
          else if (type == ClientEvent.RprofStarted)
          {
-            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.START, null));
+            eventBus_.dispatchEvent(new RprofEvent(RprofEvent.RprofEventType.START, null));
          }
          else if (type == ClientEvent.RprofStopped)
          {
-            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.STOP, null));
+            eventBus_.dispatchEvent(new RprofEvent(RprofEvent.RprofEventType.STOP, null));
          }
          else if (type == ClientEvent.RprofCreated)
          {
             RprofEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
+            eventBus_.dispatchEvent(new RprofEvent(RprofEvent.RprofEventType.CREATE, data));
          }
          else if (type == ClientEvent.EditorCommand)
          {
             EditorCommandEvent.Data data = event.getData();
             EditorCommandEvent payload = new EditorCommandEvent(data);
-            eventBus_.fireEvent(new EditorCommandDispatchEvent(payload));
+            eventBus_.dispatchEvent(new EditorCommandDispatchEvent(payload));
          }
          else if (type == ClientEvent.PreviewRmd)
          {
             PreviewRmdEvent.Data data = event.getData();
-            eventBus_.fireEvent(new PreviewRmdEvent(data));
+            eventBus_.dispatchEvent(new PreviewRmdEvent(data));
          }
          else if (type == ClientEvent.WebsiteFileSaved)
          {
             FileSystemItem fsi = event.getData();
-            eventBus_.fireEvent(new WebsiteFileSavedEvent(fsi));
+            eventBus_.dispatchEvent(new WebsiteFileSavedEvent(fsi));
          }
          else if (type == ClientEvent.ChunkPlotRefreshed)
          {
             ChunkPlotRefreshedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ChunkPlotRefreshedEvent(data));
+            eventBus_.dispatchEvent(new ChunkPlotRefreshedEvent(data));
          }
          else if (type == ClientEvent.ChunkPlotRefreshFinished)
          {
             ChunkPlotRefreshFinishedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ChunkPlotRefreshFinishedEvent(data));
+            eventBus_.dispatchEvent(new ChunkPlotRefreshFinishedEvent(data));
          }
          else if (type == ClientEvent.ReloadWithLastChanceSave)
          {
-            eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
+            eventBus_.dispatchEvent(new ReloadWithLastChanceSaveEvent());
          }
          else if (type == ClientEvent.ConnectionUpdated)
          {
             ConnectionUpdatedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ConnectionUpdatedEvent(data));
+            eventBus_.dispatchEvent(new ConnectionUpdatedEvent(data));
          }
          else if (type == ClientEvent.EnableConnections)
          {
-            eventBus_.fireEvent(new EnableConnectionsEvent());
+            eventBus_.dispatchEvent(new EnableConnectionsEvent());
          }
          else if (type == ClientEvent.ConnectionListChanged)
          {
             JsArray<Connection> connections = event.getData();
-            eventBus_.fireEvent(new ConnectionListChangedEvent(connections));
+            eventBus_.dispatchEvent(new ConnectionListChangedEvent(connections));
          }
          else if (type == ClientEvent.ActiveConnectionsChanged)
          {
             JsArray<ConnectionId> connections = event.getData();
-            eventBus_.fireEvent(new ActiveConnectionsChangedEvent(connections));
+            eventBus_.dispatchEvent(new ActiveConnectionsChangedEvent(connections));
          }
          else if (type == ClientEvent.ConnectionOpened)
          {
             Connection connection = event.getData();
-            eventBus_.fireEvent(new ConnectionOpenedEvent(connection));
+            eventBus_.dispatchEvent(new ConnectionOpenedEvent(connection));
          }
          else if (type == ClientEvent.NotebookRangeExecuted)
          {
             NotebookRangeExecutedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new NotebookRangeExecutedEvent(data));
+            eventBus_.dispatchEvent(new NotebookRangeExecutedEvent(data));
          }
          else if (type == ClientEvent.ChunkExecStateChanged)
          {
             ChunkExecStateChangedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ChunkExecStateChangedEvent(data));
+            eventBus_.dispatchEvent(new ChunkExecStateChangedEvent(data));
          }
          else if (type == ClientEvent.NavigateShinyFrame)
          {
             ShinyFrameNavigatedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ShinyFrameNavigatedEvent(data));
+            eventBus_.dispatchEvent(new ShinyFrameNavigatedEvent(data));
          }
          else if (type == ClientEvent.UpdateNewConnectionDialog)
          {
             NewConnectionDialogUpdatedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new NewConnectionDialogUpdatedEvent(data));
+            eventBus_.dispatchEvent(new NewConnectionDialogUpdatedEvent(data));
          }
          else if (type == ClientEvent.ProjectTemplateRegistryUpdated)
          {
             ProjectTemplateRegistry data = event.getData();
-            eventBus_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(data));
+            eventBus_.dispatchEvent(new ProjectTemplateRegistryUpdatedEvent(data));
          }
          else if (type == ClientEvent.TerminalSubProcs)
          {
             TerminalSubprocEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TerminalSubprocEvent(data));
+            eventBus_.dispatchEvent(new TerminalSubprocEvent(data));
          }
          else if (type == ClientEvent.PackageExtensionIndexingCompleted)
          {
             PackageProvidedExtensions.Data data = event.getData();
-            eventBus_.fireEvent(new PackageExtensionIndexingCompletedEvent(data));
+            eventBus_.dispatchEvent(new PackageExtensionIndexingCompletedEvent(data));
          }
          else if (type == ClientEvent.RStudioAPIShowDialog)
          {
             RStudioAPIShowDialogEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RStudioAPIShowDialogEvent(data));
+            eventBus_.dispatchEvent(new RStudioAPIShowDialogEvent(data));
          }
          else if (type == ClientEvent.ObjectExplorerEvent)
          {
             ObjectExplorerEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ObjectExplorerEvent(data));
+            eventBus_.dispatchEvent(new ObjectExplorerEvent(data));
          }
          else if (type == ClientEvent.SendToTerminal)
          {
             SendToTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new SendToTerminalEvent(data));
+            eventBus_.dispatchEvent(new SendToTerminalEvent(data));
          }
          else if (type == ClientEvent.ClearTerminal)
          {
             ClearTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ClearTerminalEvent(data));
+            eventBus_.dispatchEvent(new ClearTerminalEvent(data));
          }
          else if (type == ClientEvent.AddTerminal)
          {
             AddTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new AddTerminalEvent(data));
+            eventBus_.dispatchEvent(new AddTerminalEvent(data));
          }
          else if (type == ClientEvent.RemoveTerminal)
          {
             RemoveTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RemoveTerminalEvent(data));
+            eventBus_.dispatchEvent(new RemoveTerminalEvent(data));
          }
          else if (type == ClientEvent.ActivateTerminal)
          {
             ActivateNamedTerminalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new ActivateNamedTerminalEvent(data));
+            eventBus_.dispatchEvent(new ActivateNamedTerminalEvent(data));
          }
          else if (type == ClientEvent.TerminalCwd)
          {
             TerminalCwdEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TerminalCwdEvent(data));
+            eventBus_.dispatchEvent(new TerminalCwdEvent(data));
          }
          else if (type == ClientEvent.AdminNotification)
          {
             AdminNotification notification = event.getData();
-            eventBus_.fireEvent(new AdminNotificationEvent(notification));
+            eventBus_.dispatchEvent(new AdminNotificationEvent(notification));
          }
          else if (type == ClientEvent.RequestDocumentSave)
          {
             RequestDocumentSaveEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RequestDocumentSaveEvent(data));
+            eventBus_.dispatchEvent(new RequestDocumentSaveEvent(data));
          }
          else if (type == ClientEvent.RequestOpenProject)
          {
             RequestOpenProjectEvent.Data data = event.getData();
-            eventBus_.fireEvent(new RequestOpenProjectEvent(data));
+            eventBus_.dispatchEvent(new RequestOpenProjectEvent(data));
          }
          else if (type == ClientEvent.OpenFileDialog)
          {
             OpenFileDialogEvent.Data data = event.getData();
-            eventBus_.fireEvent(new OpenFileDialogEvent(data));
+            eventBus_.dispatchEvent(new OpenFileDialogEvent(data));
          }
          else if (type == ClientEvent.ShowPageViewer)
          {
             HTMLPreviewParams params = event.getData();
-            eventBus_.fireEvent(new ShowPageViewerEvent(params));
+            eventBus_.dispatchEvent(new ShowPageViewerEvent(params));
          }
          else if (type == ClientEvent.AskSecret)
          {
             AskSecretEvent.Data data = event.getData();
-            eventBus_.fireEvent(new AskSecretEvent(data));
+            eventBus_.dispatchEvent(new AskSecretEvent(data));
          }
          else if (type == ClientEvent.TestsStarted)
          {
             TestsStartedEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TestsStartedEvent(data));
+            eventBus_.dispatchEvent(new TestsStartedEvent(data));
          }
          else if (type == ClientEvent.TestsOutput)
          {
             CompileOutput data = event.getData();
-            eventBus_.fireEvent(new TestsOutputEvent(data));
+            eventBus_.dispatchEvent(new TestsOutputEvent(data));
          }
          else if (type == ClientEvent.TestsCompleted)
          {
             TestsResult result = event.getData();
-            eventBus_.fireEvent(new TestsCompletedEvent(result));
+            eventBus_.dispatchEvent(new TestsCompletedEvent(result));
          }
          else if (type == ClientEvent.JobUpdated)
          {
             JobUpdate data = event.getData();
-            eventBus_.fireEvent(new JobUpdatedEvent(data));
+            eventBus_.dispatchEvent(new JobUpdatedEvent(data));
          }
          else if (type == ClientEvent.JobRefresh)
          {
             JobState data = event.getData();
-            eventBus_.fireEvent(new JobRefreshEvent(data));
+            eventBus_.dispatchEvent(new JobRefreshEvent(data));
          }
          else if (type == ClientEvent.JobOutput)
          {
             JobOutputEvent.Data output = event.getData();
-            eventBus_.fireEvent(new JobOutputEvent(output));
+            eventBus_.dispatchEvent(new JobOutputEvent(output));
          }
          else if (type == ClientEvent.DataOutputCompleted)
          {
             DataOutputResult result = event.getData();
-            eventBus_.fireEvent(new DataOutputCompletedEvent(result));
+            eventBus_.dispatchEvent(new DataOutputCompletedEvent(result));
          }
          else if (type == ClientEvent.NewDocumentWithCode)
          {
             NewDocumentWithCodeEvent.Data result = event.getData();
-            eventBus_.fireEvent(new NewDocumentWithCodeEvent(result));
+            eventBus_.dispatchEvent(new NewDocumentWithCodeEvent(result));
          }
          else if (type == ClientEvent.PlumberViewer)
          {
             PlumberAPIParams data = event.getData();
-            eventBus_.fireEvent(new PlumberAPIStatusEvent(data, true));
+            eventBus_.dispatchEvent(new PlumberAPIStatusEvent(data, true));
          }
          else
          {

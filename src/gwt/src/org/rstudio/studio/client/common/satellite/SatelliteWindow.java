@@ -17,12 +17,14 @@ package org.rstudio.studio.client.common.satellite;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.events.SatelliteWindowEventHandlers;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -33,6 +35,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Provider;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 
 public abstract class SatelliteWindow extends Composite
@@ -69,19 +72,17 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      // By default, we only apply the flat theme to match other dialogs, then
-      // specific satellites can opt in to full theming using `suportsThemes()`.
-
-      String themeName = event.getName();
-{
-      if (!supportsThemes()) 
-         themeName = event.getName() != "classic" ? "default" : "classic";
-      }
-
       RStudioThemes.initializeThemes(
-         themeName,
+         RStudioGinjector.INSTANCE.getUIPrefs(),
          Document.get(),
          mainPanel_.getElement());
+   
+      // By default, we only apply the flat theme to match other dialogs, then
+      // specific satellites can opt in to full theming using `supportsThemes()`.
+      if (supportsThemes())
+      {
+         RStudioGinjector.INSTANCE.getAceThemes().applyTheme(Document.get());
+      }
    }
 
    protected boolean allowScrolling()

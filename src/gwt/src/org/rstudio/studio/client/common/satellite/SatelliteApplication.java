@@ -29,9 +29,13 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class SatelliteApplication
@@ -39,31 +43,43 @@ public class SatelliteApplication
    public SatelliteApplication()
    {
    }
-
    public SatelliteApplication(
-                        String name,
-                        SatelliteApplicationView view,
-                        Satellite satellite,
-                        Provider<AceThemes> pAceThemes,
-                        ApplicationUncaughtExceptionHandler uncaughtExHandler,
-                        Commands commands)
+      String name,
+      SatelliteApplicationView view,
+      Satellite satellite,
+      Provider<AceThemes> pAceThemes,
+      ApplicationUncaughtExceptionHandler uncaughtExHandler,
+      Commands commands)
    {
-      initialize(name, view, satellite, pAceThemes, uncaughtExHandler, commands);
+      initialize(
+         name,
+         view,
+         satellite,
+         pAceThemes,
+         uncaughtExHandler,
+         commands);
    }
    
    public void initialize(
-                        String name,
-                        SatelliteApplicationView view,
-                        Satellite satellite,
-                        Provider<AceThemes> pAceThemes,
-                        ApplicationUncaughtExceptionHandler uncaughtExHandler,
-                        Commands commands)
+      String name,
+      SatelliteApplicationView view,
+      Satellite satellite,
+      Provider<AceThemes> pAceThemes,
+      ApplicationUncaughtExceptionHandler uncaughtExHandler,
+      Commands commands)
    {
       name_ = name;
       view_ = view;
       satellite_ = satellite;
       pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
+      
+      // Register an event handler for themes so it will be triggered after a UIPrefsChangedEvent
+      // updates the theme.
+      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
+      uiPrefs.theme().bind(theme -> events.fireEvent(new ThemeChangedEvent()));
+      uiPrefs.getFlatTheme().bind(theme -> events.fireEvent(new ThemeChangedEvent()));
       
       commands.showRequestLog().addHandler(new CommandHandler()
       {

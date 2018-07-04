@@ -21,6 +21,12 @@ then
    printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
 fi
 
+mkdir -p /etc/rstudio/themes
+if ! test -f /etc/rstudio/themes/README.md
+then
+   cp ${CMAKE_INSTALL_PREFIX}/extras/themes/README.md /etc/rstudio/themes/README.md
+fi
+
 # create var directories
 mkdir -p /var/run/rstudio-server
 mkdir -p /var/lock/rstudio-server

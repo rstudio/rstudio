@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
+
 public class EditorThemeChangedEvent extends GwtEvent<EditorThemeChangedEvent.Handler>
 {
    public interface Handler extends EventHandler
@@ -24,17 +26,17 @@ public class EditorThemeChangedEvent extends GwtEvent<EditorThemeChangedEvent.Ha
       void onEditorThemeChanged(EditorThemeChangedEvent event);
    }
    
-   public EditorThemeChangedEvent(String themeName)
+   public EditorThemeChangedEvent(AceTheme theme)
    {
-      themeName_ = themeName;
+      theme_ = theme;
    }
    
-   public String getTheme()
+   public AceTheme getTheme()
    {
-      return themeName_;
+      return theme_;
    }
    
-   private final String themeName_;
+   private final AceTheme theme_;
 
    @Override
    public Type<Handler> getAssociatedType()

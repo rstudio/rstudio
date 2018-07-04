@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.dom.client.BodyElement;
@@ -25,8 +26,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
-import com.google.gwt.regexp.shared.MatchResult;
-import com.google.gwt.regexp.shared.RegExp;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 public class RStudioThemes
 {
@@ -81,17 +81,11 @@ public class RStudioThemes
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(String aceTheme, String rstudioTheme) {
-      if (rstudioTheme == "classic") return rstudioTheme;
-
-      RegExp keyReg = RegExp.compile(
-         "ambiance|chaos|clouds midnight|cobalt|dracula|idle fingers|kr theme|" +
-         "material|merbivore soft|merbivore|mono industrial|monokai|" +
-         "pastel on dark|solarized dark|tomorrow night blue|tomorrow night bright|" +
-         "tomorrow night 80s|tomorrow night|twilight|vibrant ink", "i");
+   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme) {
+      if (StringUtil.equals(rstudioTheme, "classic") || (aceTheme == null))
+         return rstudioTheme;
       
-      MatchResult result = keyReg.exec(aceTheme);
-      return result != null ? "dark-grey" : rstudioTheme;
+      return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
    public static String getThemeFromUiPrefs(UIPrefs prefs) {
@@ -149,54 +143,6 @@ public class RStudioThemes
          body.removeClassName("rstudio-themes-dark-menus-disabled");
          body.addClassName("rstudio-themes-dark-menus");
       }
-   }
-
-   private native static String getEditorThemeProperty(String theme, String property) /*-{
-      var colors = {
-         "Ambiance"              : { background : "#202020", color : "#E6E1DC" },
-         "Chaos"                 : { background : "#161616", color : "#E6E1DC" },
-         "Chrome"                : { background : "#FFFFFF", color : "black"   },
-         "Clouds Midnight"       : { background : "#191919", color : "#929292" },
-         "Clouds"                : { background : "#FFFFFF", color : "#000000" },
-         "Cobalt"                : { background : "#002240", color : "#FFFFFF" },
-         "Crimson Editor"        : { background : "#FFFFFF", color : "rgb(64, 64, 64)" },
-         "Dawn"                  : { background : "#F9F9F9", color : "#080808" },
-         "Dracula"               : { background : "#282a36", color : "#f8f8f2" },
-         "Dreamwaver"            : { background : "#FFFFFF", color : "black" },
-         "Eclipse"               : { background : "#FFFFFF", color : "black" },
-         "Idle Fingers"          : { background : "#323232", color : "#FFFFFF" },
-         "Katzenmilch"           : { background : "#f3f2f3", color : "rgba(15, 0, 9, 1.0)" },
-         "Kr Theme"              : { background : "#0B0A09", color : "#FCFFE0" },
-         "Material"              : { background : "#263238", color : "#C5C8C6" },
-         "Merbivore Soft"        : { background : "#1C1C1C", color : "#E6E1DC" },
-         "Merbivore"             : { background : "#161616", color : "#E6E1DC" },
-         "Mono Industrial"       : { background : "#222C28", color : "#FFFFFF" },
-         "Monokai"               : { background : "#272822", color : "#F8F8F2" },
-         "Pastel On Dark"        : { background : "#2C2828", color : "#8F938F" },
-         "Solarized Dark"        : { background : "#002B36", color : "#93A1A1" },
-         "Solarized Light"       : { background : "#FDF6E3", color : "#586E75" },
-         "TextMate"              : { background : "#FFFFFF", color : "black"   },
-         "Tomorrow Night Blue"   : { background : "#002451", color : "#FFFFFF" },
-         "Tomorrow Night Bright" : { background : "#000000", color : "#DEDEDE" },
-         "Tomorrow Night 80s"    : { background : "#2D2D2D", color : "#CCCCCC" },
-         "Tomorrow Night"        : { background : "#1D1F21", color : "#C5C8C6" },
-         "Tomorrow"              : { background : "#FFFFFF", color : "#4D4D4C" },
-         "Twilight"              : { background : "#141414", color : "#F8F8F8" },
-         "Vibrant Ink"           : { background : "#0F0F0F", color : "#FFFFFF" },
-         "Xcode"                 : { background : "#FFFFFF", color : "#000000" }
-      };
-
-      return colors[theme][property];
-   }-*/;
-
-   public static String getBackground(String theme)
-   {
-      return getEditorThemeProperty(theme, "background");
-   }
-
-   public static String getForeground(String theme)
-   {
-      return getEditorThemeProperty(theme, "color");
    }
    
    private static Boolean usesScrollbars_ = null;

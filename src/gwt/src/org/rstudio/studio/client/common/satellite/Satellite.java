@@ -242,15 +242,15 @@ public class Satellite implements HasCloseHandlers<Satellite>
       RStudioGinjector.INSTANCE.getAddinsCommandManager();
       
       // get the session info and set it
-      SessionInfo sessionInfo = si.<SessionInfo>cast();
+      SessionInfo sessionInfo = si.cast();
       session_.setSessionInfo(sessionInfo);
-  
-      // ensure ui prefs initialize
-      pUIPrefs_.get();
-      
+   
       // some objects wait for SessionInit in order to initialize themselves
       // with SessionInfo
       events_.fireEvent(new SessionInitEvent());
+  
+      // ensure ui prefs initialize
+      pUIPrefs_.get();
    }
    
    // called by main window to setParams
