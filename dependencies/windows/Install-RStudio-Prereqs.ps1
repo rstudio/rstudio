@@ -16,111 +16,6 @@ function Test-Administrator
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
-function Test-Qt-Installed([String] $QtVersion)
-{
-    $Qt1 = "C:\Qt\$QtVersion"
-    $Qt2 = "C:\Qt$QtVersion"
-    $Qt3 = "C:\Qt\Qt$QtVersion"
-
-    (Test-Path -Path $Qt1) -or (Test-Path -Path $Qt2) -or (Test-Path -Path $Qt3)
-}
-
-function Install-Qt {
-    $QtInstaller = "C:\qt.exe"
-    if (-Not (Test-Path -Path $QtInstaller)) {
-        Write-Host "Downloading Qt online installer..."
-        Invoke-WebRequest https://download.qt.io/archive/online_installers/3.0/qt-unified-windows-x86-3.0.4-online.exe -OutFile $QtInstaller
-    } else {
-        Write-Host "Using previously downloaded Qt online installer"
-    }
-    $QtScript = @"
-
-function Controller() {
-    installer.autoRejectMessageBoxes();
-    installer.installationFinished.connect(function() {
-        gui.clickButton(buttons.NextButton);
-    })
-}
-
-Controller.prototype.WelcomePageCallback = function() {
-    gui.clickButton(buttons.NextButton, 4000);
-}
-
-Controller.prototype.CredentialsPageCallback = function() {
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.IntroductionPageCallback = function() {
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.TargetDirectoryPageCallback = function()
-{
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.ComponentSelectionPageCallback = function() {
-    var widget = gui.currentPageWidget();
-    widget.selectComponent("qt.qt5.5101.win64_msvc2015_64");
-    widget.selectComponent("qt.qt5.5101.qtwebengine");
-    widget.selectComponent("qt.qt5.5101.qtwebengine.win64_msvc2015_64");
-    widget.deselectComponent("qt.qt5.5101.src");
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.LicenseAgreementPageCallback = function() {
-    gui.currentPageWidget().AcceptLicenseRadioButton.setChecked(true);
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.StartMenuDirectoryPageCallback = function() {
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.ReadyForInstallationPageCallback = function()
-{
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.FinishedPageCallback = function() {
-    var checkBoxForm = gui.currentPageWidget().LaunchQtCreatorCheckBoxForm
-    if (checkBoxForm && checkBoxForm.launchQtCreatorCheckBox) {
-        checkBoxForm.launchQtCreatorCheckBox.checked = false;
-    }
-    gui.clickButton(buttons.FinishButton);
-}
-"@
-    $QtScript | Out-File -FilePath C:\qt.qs -Encoding ASCII
-    Write-Host "Starting Qt installation. Be patient, don't click on the buttons!"
-    Start-Process $QtInstaller -Wait -ArgumentList '--script c:\qt.qs'
-    if ($DeleteDownloads) { Remove-Item $QtInstaller -Force }
-    Remove-Item c:\qt.qs -Force
-}
-
-function Broadcast-SettingChange {
-
-    # broadcast WM_SETTINGCHANGE so Explorer picks up new path from registry
-    Add-Type -TypeDefinition @"
-        using System;
-        using System.Runtime.InteropServices;
-
-        public class NativeMethods
-        {
-            [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-            public static extern IntPtr SendMessageTimeout(
-                IntPtr hWnd, uint Msg, UIntPtr wParam, string lParam,
-                uint fuFlags, uint uTimeout, out UIntPtr lpdwResult);
-        }
-"@
-
-    $HWND_BROADCAST = [IntPtr] 0xffff
-    $WM_SETTINGCHANGE = 0x1a
-    $SMTO_ABORTIFHUNG = 0x2
-    $result = [UIntPtr]::Zero
-
-    [void] ([Nativemethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [UIntPtr]::Zero, 'Environment', $SMTO_ABORTIFHUNG, 5000, [ref] $result))
-}
-
 ##############################################################################
 # script execution starts here
 ##############################################################################
@@ -154,13 +49,13 @@ refreshenv
 # install some deps via chocolatey
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8 ant windows-sdk-10.1 vcbuildtools 7zip git ninja
+choco install -y jdk8 ant windows-sdk-10.1  7zip git ninja
 
-# fixups for Windows SDK
-mv "C:\Program Files (x86)\Windows Kits\10\bin\x86" "C:\Program Files (x86)\Windows Kits\10\bin\x86_orig"
-mv "C:\Program Files (x86)\Windows Kits\10\bin\x64" "C:\Program Files (x86)\Windows Kits\10\bin\x64_orig"
-cmd /c mklink /J "C:\Program Files (x86)\Windows Kits\10\bin\x86" "C:\Program Files (x86)\Windows Kits\10\bin\10.0.15063.0\x86"
-cmd /c mklink /J "C:\Program Files (x86)\Windows Kits\10\bin\x64" "C:\Program Files (x86)\Windows Kits\10\bin\10.0.15063.0\x64"
+# install Visual C++ via chocolatey
+# The workload step is failing in Docker so we're installing it via Visual Studio installer 
+# later in this file. Leaving here as a reminder to try chocolatey again in the future.
+# RUN choco install -y visualstudio2017buildtools
+# RUN choco install -y visualstudio2017-workload-vctools
 
 # install nsis (version on chocolatey is too new)
 if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
@@ -173,43 +68,35 @@ if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
     }
     Write-Host "Installing NSIS..."
     Start-Process $NSISSetup -Wait -ArgumentList '/S'
-    if ($DeleteDownloads) { Remove-Item $NSISSetup }
+    if ($DeleteDownloads) { Remove-Item $NSISSetup -Force }
 } else {
     Write-Host "NSIS already found, skipping"
+}
+
+# install visual c++
+if (-Not (Test-Path -Path "C:\Program Files (x86)\Microsoft Visual Studio\2017")) {
+    $VSSetup = "C:\vs_buildtools_2017.exe"
+    Write-Host "Downloading VS Buildtools setup..."
+    if (-Not (Test-Path $VSSetup)) {
+        Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/vs_buildtools_2017.exe -OutFile $VSSetup
+    } else {
+        Write-Host "Using previously downloaded Visual Studio installer"
+    }
+    Write-Host "Installing Visual Studio Build Tools..."
+    Start-Process $VSSetup -Wait -ArgumentList '--quiet --add Microsoft.VisualStudio.Workload.VCTools'
+    if ($DeleteDownloads) { Remove-Item $VSSetup -Force }
+} else {
+    Write-Host "Visual Studio 2017 build tools already intalled, skipping"
 }
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
-# install Qt and Qt Creator
-$QtInstallTries = 5
-if (Test-Qt-Installed("5.10.1")) {
-    Write-Host "Qt already installed, skipping"
-} else {
-    # Qt online installer has a high failure rate, so try several times
-    for ($i = 0; $i -le $QtInstallTries; $i++) {
-        Install-Qt
-        if (Test-Qt-Installed("5.10.1")) {break}
-    }        
-}
-
-# Qt installation doesn't always work (maybe a timeout?)
-if (-Not (Test-Qt-Installed("5.10.1"))) {
-    Write-Host "Qt not installed; either install yourself or re-run this script to try again" -ForegroundColor Red
-} else {
-
-    # Add QtCreator binaries to path, needed for building with JOM
-    $oldpath = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PATH).path
-    $newpath = "$oldpath;C:\Qt\Tools\QtCreator\bin"
-    Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PATH -Value $newpath
-    Broadcast-SettingChange
-
-    Write-Host "-----------------------------------------------------------"
-    Write-Host "Core dependencies successfully installed. Next steps:"
-    Write-Host "(1) Start a non-adminstrator Command Prompt"
-    Write-Host "(2) git clone https://github.com/rstudio/rstudio"
-    Write-Host "(3) change working dir to rstudio\src\dependencies\windows"
-    Write-Host "(4) install-dependencies.cmd"
-    Write-Host "(5) open Qt Creator, load rstudio\src\cpp\CMakelists.txt"
-    Write-Host "-----------------------------------------------------------"
-}
+Write-Host "-----------------------------------------------------------"
+Write-Host "Core dependencies successfully installed. Next steps:"
+Write-Host "(1) Start a non-adminstrator Command Prompt"
+Write-Host "(2) git clone https://github.com/rstudio/rstudio"
+Write-Host "(3) change working dir to rstudio\src\dependencies\windows"
+Write-Host "(4) install-dependencies.cmd"
+Write-Host "(5) open Qt Creator, load rstudio\src\cpp\CMakelists.txt"
+Write-Host "-----------------------------------------------------------"
