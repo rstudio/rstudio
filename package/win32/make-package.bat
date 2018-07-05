@@ -36,10 +36,6 @@ set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 
-REM Experiment: skip compiler test; attempt to allow building in hyper-v containers despite
-REM problem described here: https://github.com/docker/for-win/issues/829
-REM set CMAKE_C_COMPILER_WORKS=1
-
 REM perform build 
 cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
@@ -52,7 +48,6 @@ cmake -G"Visual Studio 15 2017 Win64" ^
       -DRSTUDIO_TARGET=Desktop ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
-      -DCMAKE_C_COMPILER_WORKS=%CMAKE_C_COMPILER_WORKS% ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
