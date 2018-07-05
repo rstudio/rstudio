@@ -161,5 +161,7 @@ call install-packages.cmd
 
 popd
 
-call install-qt-sdk-win.cmd
+if not defined RSTUDIO_SKIP_QT (
+  call install-qt-sdk-win.cmd
+)
 
