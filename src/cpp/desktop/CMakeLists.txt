@@ -36,10 +36,16 @@ if(NOT WIN32)
            set(QT_COMPILER "gcc")
          endif()
       endif()
+         
+      if(APPLE)
+         set(QT_CANDIDATES 5.11.1)   
+      else()
+         set(QT_CANDIDATES 5.11.1 5.10.1)
+      endif()
 
       # find the newest installed Qt version among the versions we build
       # against
-      foreach(QT_CANDIDATE 5.11.1 5.10.1)
+      foreach(QT_CANDIDATE ${QT_CANDIDATES})
          
          set(QT_VERSION_SUBDIR "${QT_CANDIDATE}")
 
@@ -91,6 +97,8 @@ endif()
 
 if(QT_QMAKE_EXECUTABLE)
    message(STATUS "Found Qt: ${QT_QMAKE_EXECUTABLE}")
+else()
+   message(FATAL_ERROR "Did not find supported Qt SDK")
 endif()
 
 # set the cmake prefix path based on the location of the qmake executable
