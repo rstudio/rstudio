@@ -23,8 +23,7 @@ if "!foundQt!" == "false" (
   echo the 64-bit Visual Studio 2017 and QtWebEngine components of
   echo %QT_VERSION%.
   exit /b 1
-)
-else (
+) else (
   echo Qt %QT_VERSION% installed.
 )
 exit /b 0
