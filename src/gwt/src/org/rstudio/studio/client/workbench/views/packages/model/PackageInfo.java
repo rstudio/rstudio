@@ -36,6 +36,14 @@ public class PackageInfo extends JavaScriptObject
    public final native String getLibrary() /*-{
       return this.library == null ? "" : this.library;
    }-*/;
+   
+   public final native String getLibraryAbsolute() /*-{
+      return this.library_absolute || "";
+   }-*/;
+   
+   public final native int getLibraryIndex() /*-{
+      return this.library_index || 0;
+   }-*/;
 
    public final native String getVersion() /*-{
       return this.version == null ? "" : this.version;

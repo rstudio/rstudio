@@ -389,6 +389,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    packages <- data.frame(
       name             = info$Package,
       library          = .rs.createAliasedPath(info$LibPath),
+      library_absolute = info$LibPath,
+      library_index    = match(info$LibPath, .libPaths(), nomatch = 0L),
       version          = info$Version,
       desc             = info$Title,
       loaded           = info$Loaded,
