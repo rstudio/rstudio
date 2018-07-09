@@ -3,7 +3,7 @@
 #
 # install-dependencies-zypper
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -56,10 +56,9 @@ cd ../linux
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
 then
-   # install Qt 5.4 SDK 
    ./install-qt-sdk
 
-   # install headers needed by Qt 5 (GL, xslt)
+   # install headers needed by Qt (GL, xslt)
    sudo zypper --non-interactive in mesa-devel
    sudo zypper --non-interactive in libxslt-devel
 fi

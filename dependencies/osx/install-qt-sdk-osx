@@ -15,28 +15,122 @@
 #
 #
 
-# This archive includes the files required to build against Qt. It
-# was created by installing Qt via an interactive installer, and
-# manually removing components not needed by RStudio.
+# Installs Qt via the online installer at the location in $QT_SDK_DIR.
+# If no location provided, checks against a set of common locations and installs if not found.
 
-QT_VERSION=5.10.1
-QT_SDK_BINARY=QtSDK-${QT_VERSION}-mac.tar.gz
+QT_VERSION=5.11.1
+QT_SDK_BINARY_BASE=qt-unified-mac-x64-3.0.5-online
+QT_SDK_BINARY=${QT_SDK_BINARY_BASE}.tar.gz
+QT_SDK_INSTALLER=${QT_SDK_BINARY_BASE}.app
+QT_SDK_INSTALLER_BIN=${QT_SDK_INSTALLER}/Contents/MacOS/${QT_SDK_BINARY_BASE}
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
+QT_SCRIPT=/tmp/qt-noninteractive-install-osx.qs 
+
+# generate script for automatic Qt installation; customizes the install location via $QT_SDK_DIR
+function write_qt_script() {
+cat << EOF > $QT_SCRIPT
+
+function Controller() {
+    installer.autoRejectMessageBoxes();
+    installer.installationFinished.connect(function() {
+        gui.clickButton(buttons.NextButton);
+    })
+    installer.setMessageBoxAutomaticAnswer("cancelInstallation", QMessageBox.Yes);
+}
+
+Controller.prototype.WelcomePageCallback = function() {
+    gui.clickButton(buttons.NextButton, 3000);
+}
+
+Controller.prototype.CredentialsPageCallback = function() {
+    var widget = gui.currentPageWidget();
+    widget.loginWidget.EmailLineEdit.setText("");
+    widget.loginWidget.PasswordLineEdit.setText("");
+    gui.clickButton(buttons.NextButton, 500);
+}
+
+Controller.prototype.IntroductionPageCallback = function() {
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.TargetDirectoryPageCallback = function()
+{
+    var widget = gui.currentPageWidget();
+    if (widget != null) {
+        widget.TargetDirectoryLineEdit.setText("$QT_SDK_DIR");
+    }
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.ComponentSelectionPageCallback = function() {
+    var widget = gui.currentPageWidget();
+     
+    widget.selectComponent("qt.qt5.5111.clang_64");
+    widget.selectComponent("qt.qt5.5111.qtwebengine");
+    widget.selectComponent("qt.qt5.5111.qtwebengine.clang_64");
+    widget.deselectComponent("qt.qt5.5111.src");
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.LicenseAgreementPageCallback = function() {
+    gui.currentPageWidget().AcceptLicenseRadioButton.setChecked(true);
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.StartMenuDirectoryPageCallback = function() {
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.ReadyForInstallationPageCallback = function()
+{
+    gui.clickButton(buttons.NextButton);
+}
+
+Controller.prototype.FinishedPageCallback = function() {
+    var checkBoxForm = gui.currentPageWidget().LaunchQtCreatorCheckBoxForm
+    if (checkBoxForm && checkBoxForm.launchQtCreatorCheckBox) {
+        checkBoxForm.launchQtCreatorCheckBox.checked = false;
+    }
+    gui.clickButton(buttons.FinishButton);
+}
+EOF
+}
 
 # set Qt SDK dir if not already defined
 if [ -z "$QT_SDK_DIR" ]; then
-  QT_SDK_DIR=~/Qt${QT_VERSION}
-  QT_SDK_DIR2=~/Qt/Qt${QT_VERSION}
-  QT_SDK_DIR3=~/Qt/${QT_VERSION}
+
+   # Qt install root if path not supplied
+   export QT_SDK_DIR=~/Qt${QT_VERSION}
+
+   # other locations checked for existing installation
+   QT_SDK_DIR2=~/Qt/Qt${QT_VERSION}
+   QT_SDK_DIR3=~/Qt/${QT_VERSION}
 fi
 
 if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
 then
    # download and install
    curl -L $QT_SDK_URL > /tmp/$QT_SDK_BINARY
-   cd `dirname $QT_SDK_DIR`
+   cd /tmp
    tar xzf /tmp/$QT_SDK_BINARY
-   rm /tmp/$QT_SDK_BINARY
+   write_qt_script   
+   
+   # online installer sometimes fails, keep trying...
+   retryCounter=0
+   while [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ] && [ $retryCounter -le 5 ] 
+   do
+      echo "Installing Qt, this will take a while."
+      echo " - Ignore warnings about QtAccount credentials."
+      echo " - Do not click on the setup interface, it is controlled by a script."
+      ./$QT_SDK_INSTALLER_BIN --script $QT_SCRIPT
+      ((retryCounter++))
+   done
+   rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
+   rm -rf /tmp/$QT_SDK_INSTALLER
+   if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]; then
+      echo "Error: Unable to install Qt, run script again or install manually." 
+      exit 1
+   fi
 else
    echo "Qt $QT_VERSION SDK already installed"
 fi

@@ -1,6 +1,6 @@
 # Put MSVC tools on the PATH.
 PATH <- Sys.getenv("PATH")
-PATH <- paste("C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin", PATH, sep = ";")
+PATH <- paste("C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.14.26428/bin/HostX64/x64", PATH, sep = ";")
 Sys.setenv(PATH = PATH)
 
 # Find R DLLs.

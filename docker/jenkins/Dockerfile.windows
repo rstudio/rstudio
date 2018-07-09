@@ -1,49 +1,66 @@
-FROM microsoft/windowsservercore
+# escape=`
+
+# Use the latest Windows Server Core image with .NET Framework 4.7.1.
+# Otherwise there are problems installing Visual Studio 2017 buildtools into containers
+# See https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container
+FROM microsoft/dotnet-framework:4.7.1
 
 # set RUN commands to use powershell
 SHELL ["powershell"]
 
+# Download the Visual Studio Build Tools bootstrapper
+ADD https://aka.ms/vs/15/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+
+# Install Build Tools excluding workloads and components with known issues
+# Return value of 3010 indicates "restart needed"
+RUN Start-Process C:\TEMP\vs_buildtools.exe -Wait -ArgumentList '--quiet --wait --norestart --nocache `
+    --add Microsoft.VisualStudio.Workload.VCTools `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+    --remove Microsoft.VisualStudio.Component.Windows81SDK' ;` 
+  if ( 3010 -eq $LastErrorCode ) { exit 0 } else { exit $LastErrorCode }
+ 
 # install chocolatey
 RUN iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output;\
-  choco install -y jdk8 ant windows-sdk-7.1 ;\
+RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; ` 
+  choco install -y jdk8 ant windows-sdk-10.1 ; `
   choco install -y 7zip
-
+  
 # install aws cli
 # awscli bug where cp65001 is not understood by internal python.
-RUN choco install -y awscli ;\
+RUN choco install -y awscli ;`
   cp 'C:\Program Files\Amazon\AWSCLI\encodings\utf_8.pyc' 'C:\Program Files\Amazon\AWSCLI\encodings\cp65001.pyc'
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
 
 # install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
-RUN $ErrorActionPreference = 'Stop' ;\
-  $ProgressPreference = 'SilentlyContinue' ;\
-  Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe -OutFile c:\R-3.0.3-win.exe ;\
-  Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;\
+RUN $ErrorActionPreference = 'Stop' ;`
+  $ProgressPreference = 'SilentlyContinue' ;`
+  Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe -OutFile c:\R-3.0.3-win.exe ;`
+  Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;`
   Remove-Item c:\R-3.0.3-win.exe -Force
 
 # add R to path
-RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;\
+RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # install nsis (version on chocolatey is too new)
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile C:\nsis-2.50-setup.exe ;\
-  Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;\
+RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile C:\nsis-2.50-setup.exe ;`
+  Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;`
   Remove-Item c:\nsis-2.50-setup.exe
 
-# install visual c++
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/visualcppbuildtools_full.exe -OutFile C:\visualcppbuildtools_full.exe ;\
-  Start-Process c:\visualcppbuildtools_full.exe -Wait -ArgumentList '/Quiet' ;\
-  Remove-Item c:\visualcppbuildtools_full.exe
-
 # install qt (note that we are using the current directory's context)
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.10.1-msvc2015.7z -OutFile c:\QtSDK-5.10.1-msvc2015.7z ;\
-  7z x c:\QtSDK-5.10.1-msvc2015.7z -oc:\ ;\
-  Remove-Item c:\QtSDK-5.10.1-msvc2015.7z -Force
+COPY dependencies\windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
+RUN $ErrorActionPreference = 'Stop'; ``
+   $ProgressPreference = 'SilentlyContinue' ;`
+   Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe -OutFile c:\qt.exe ;`
+   Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install-win.qs' ;`
+   Remove-Item c:\qt.exe -Force ;`
+   Remove-Item c:\qt-noninteractive-install-win.qs
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
@@ -54,4 +71,5 @@ RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
 RUN choco install -y git cygwin
 ENV JENKINS_SWARM_VERSION 3.3
-RUN Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;
+RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
+  Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;

@@ -7,21 +7,20 @@ installed.
 
 Bootstrap
 =============================================================================
-- Save the file `https://github.com/rstudio/rstudio/blob/master/dependencies/windows/Install-RStudio-Prereqs.ps1` to the Windows machine. 
-- Open an Administrator PowerShell and enter this command:
-    - `Set-ExecutionPolicy Unrestricted -force`
-- Execute the downloaded `Install-RStudio-Prereqs.ps1` script 
-- Wait for the script to complete (UI will be shown when installing Qt, but
-don't interact with it, the script will make the selections)
+- Open an Administrator PowerShell and execute this command:
+    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
+- Wait for the script to complete
 
 Clone the Repo and Run Batch File
 =============================================================================
 - Open Command Prompt (non-administrator); do this **after** running the 
 PowerShell bootstrapping script above to pick up environment changes
+- optional: if you will be making commits, configure git (your email address, name, ssh keys, etc.)
 - `cd` to the location you want the repo
 - Clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
 - `cd rstudio\dependencies\windows`
 - `install-dependencies.cmd`
+- Do not click buttons on the Qt installation UI; it is script-driven
 - Wait for the script to complete
 
 Build Java/Gwt

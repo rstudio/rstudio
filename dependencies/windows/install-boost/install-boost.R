@@ -30,7 +30,7 @@ PATH$prepend("../tools")
 
 # initialize variables
 boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
-output_name <- sprintf("boost-1.65.1-win-msvc14-%s-%s.zip", variant, link)
+output_name <- sprintf("boost-1.65.1-win-msvc141-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -91,7 +91,7 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
-exec("cmd.exe", "/C call bootstrap.bat vc14")
+exec("cmd.exe", "/C call bootstrap.bat vc141")
 
 # create bcp executable (so we can create Boost
 # using a private namespace)
@@ -107,7 +107,7 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat vc14")
+exec("cmd.exe", "/C call bootstrap.bat vc141")
 
 # construct common arguments for boost builds
 b2_build_args <- function(bitness) {
@@ -117,7 +117,7 @@ b2_build_args <- function(bitness) {
    
    paste(
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.0",
+      "toolset=msvc-14.1",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       "--without-python",

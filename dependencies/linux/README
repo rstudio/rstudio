@@ -6,25 +6,25 @@ RStudio requires relatively recent versions of a number of components. It is
 therefore likely to only correctly configure and build on more recent Linux
 systems. Specific version requirements for various components include:
 
-- R 2.11.1
-- CMake 2.8
+- R 3.0.1
+- CMake 2.8 (3.1.0 for Desktop)
 - Boost 1.63
-- Qt 4.8 [Required only for Desktop]
+- Qt 5.11.1 [Required only for Desktop]
+- some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
+  build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.11.1
 
-
-Installation of Qt SDK 4.8
+Installation of Qt SDK 5.11.1
 =============================================================================
 
-RStudio Desktop requires Qt 4.8 (the most recent version). Qt 4.8 is included 
-in only the most up to date Linux distros (e.g. Ubuntu 12.04, Fedora 16, 
-OpenSUSE 12.2). Therefore, the install-dependencies scripts referenced below
-install a version of the Qt 4.8 SDK into /opt/RStudio-QtSDK (the special 
-RStudio prefix on the directory is included so this installation doesn't 
-conflict with any other versions of Qt installed on the system).
+RStudio Desktop requires Qt 5.11.1. The install-dependencies scripts 
+referenced below install a version of the Qt 5.11.1 SDK into 
+/opt/RStudio-QtSDK (the special RStudio prefix on the directory is included 
+so this installation doesn't conflict with any other versions of Qt installed 
+on the system).
 
 If you are either building RStudio Server or running a Linux distribution 
-that already includes Qt 4.8 you may wish to prevent installation of the
-Qt 4.8 SDK. To do this pass the --exclude-qt-sdk flag to the install 
+that already includes Qt 5.11.1 you may wish to prevent installation of the
+Qt 5.11.1 SDK. To do this pass the --exclude-qt-sdk flag to the install 
 dependencies script, for example:
 
 ./install-dependencies-debian --exclude-qt-sdk
@@ -44,7 +44,7 @@ installing it using the system standard package management tools (apt-get,
 yum, etc).
 
 2) Run the install-dependencies script appropriate to your platform's
-package management system (to optionally exclude installation of the Qt 4.8
+package management system (to optionally exclude installation of the Qt 5.11.1
 SDK be sure to specify the --exclude-qt-sdk flag as described above).
 
    ./install-dependencies-debian  
@@ -76,14 +76,15 @@ Hunspell dictionaries, MathJax, and Boost 1.63):
          install-common
 
 3) Optionally install the Qt SDK. You should do this if you are building the
-Desktop version and don't have Qt 4.8 installed on the system:
+Desktop version and don't have Qt 5.11.1 installed on the system:
 
    dependencies
       linux
          install-qt-sdk
 
-4) If your system doesn't meet the minimum version requirements for CMake (2.8)
-you can download a Linux binary of the latest version of CMake here:
+4) If your system doesn't meet the minimum version requirements for CMake (2.8
+for Server, 3.1.0 for Desktop) you can download a Linux binary of the latest 
+version of CMake here:
 
   - https://cmake.org/download/
 
