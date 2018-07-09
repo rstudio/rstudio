@@ -54,7 +54,7 @@ RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-window
   Remove-Item c:\nsis-2.50-setup.exe
 
 # install qt (note that we are using the current directory's context)
-COPY dependencies\windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
+COPY windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
 RUN $ErrorActionPreference = 'Stop'; ``
    $ProgressPreference = 'SilentlyContinue' ;`
    Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe -OutFile c:\qt.exe ;`
