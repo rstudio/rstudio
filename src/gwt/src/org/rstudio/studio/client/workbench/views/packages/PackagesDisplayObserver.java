@@ -19,8 +19,8 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 public interface PackagesDisplayObserver
 {
    void updatePackageState(boolean showProgress, boolean manualUpdate);
-   void loadPackage(String pkgName, String libName) ;
-   void unloadPackage(String pkgName, String libName) ;
+   void loadPackage(PackageInfo info) ;
+   void unloadPackage(PackageInfo info) ;
    void showHelp(PackageInfo packageInfo) ;
    void removePackage(PackageInfo packageInfo);
    void onPackageFilterChanged(String filter);
