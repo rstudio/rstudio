@@ -15,17 +15,11 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -36,10 +30,10 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -53,18 +47,17 @@ public class AppearancePreferencesPane extends PreferencesPane
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UIPrefs uiPrefs,
                                     final AceThemes themes,
-                                    EventBus eventBus)
+                                    WorkbenchContext workbenchContext)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
-      eventBus_ = eventBus;
       
       VerticalPanel leftPanel = new VerticalPanel();
       
       relaunchRequired_ = false;
 
       // dark-grey theme used to be derived from default, now also applies to sky
-      if (uiPrefs_.getFlatTheme().getValue() == "dark-grey")
+      if (StringUtil.equals(uiPrefs_.getFlatTheme().getValue(), "dark-grey"))
         uiPrefs_.getFlatTheme().setGlobalValue("default");
 
       final String originalTheme = uiPrefs_.getFlatTheme().getValue();
@@ -75,19 +68,9 @@ public class AppearancePreferencesPane extends PreferencesPane
                                 false);
       flatTheme_.addStyleName(res.styles().themeChooser());
       flatTheme_.getListBox().setWidth("95%");
-      flatTheme_.getListBox().addChangeHandler(new ChangeHandler()
-      {
-         public void onChange(ChangeEvent event)
-         {
-            relaunchRequired_ = false;
-            
-            if (originalTheme == "classic" && flatTheme_.getValue() != "classic" ||
-                flatTheme_.getValue() == "classic" && originalTheme != "classic")
-            {
-               relaunchRequired_ = true;
-            }
-         }
-      });
+      flatTheme_.getListBox().addChangeHandler(event ->
+         relaunchRequired_ = (StringUtil.equals(originalTheme, "classic") && !StringUtil.equals(flatTheme_.getValue(), "classic")) ||
+            (StringUtil.equals(flatTheme_.getValue(), "classic") && !StringUtil.equals(originalTheme, "classic")));
 
       String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
       flatTheme_.setValue(themeAlias);
@@ -199,9 +182,16 @@ public class AppearancePreferencesPane extends PreferencesPane
    
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
       addThemeButton_ = new ThemedButton("Add...", event ->
-      {
-         // TODO: launch file browser dialog.
-      });
+         RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+            "Theme Files (*.tmTheme *.rstheme)",
+            RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+            workbenchContext.getCurrentWorkingDir(),
+            "Theme Files (*.tmTheme *.rstheme)",
+            (input, indicator) ->
+            {
+               indicator.onCompleted();
+               // TODO: convert or move the file.
+            }));
       addThemeButton_.setLeftAligned(true);
       removeThemeButton_ = new ThemedButton("Remove...", event ->
       {
@@ -290,13 +280,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       }
       if (Desktop.isDesktop())
       {
-         if (initialFontFace_ != fontFace_.getValue())
+         if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
          {
             Desktop.getFrame().setFixedWidthFont(StringUtil.notNull(fontFace_.getValue()));
             restartRequired = true;
          }
          
-         if (initialZoomLevel_ != zoomLevel_.getValue())
+         if (!StringUtil.equals(initialZoomLevel_, zoomLevel_.getValue()))
          {
             double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
             Desktop.getFrame().setZoomLevel(zoomLevel);
@@ -332,7 +322,6 @@ public class AppearancePreferencesPane extends PreferencesPane
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
    private final SelectWidget flatTheme_;
-   private EventBus eventBus_;
    private Boolean relaunchRequired_;
    private static String previewDefaultHeight_ = "498px";
    private HashMap<String, AceTheme> themeList_;

@@ -15,7 +15,6 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -24,7 +23,7 @@ import com.google.gwt.user.client.ui.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -106,7 +105,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
       context_ = context;
       operation_ = operation;
       context_.setCallbacks(this);
-      filterExtension_ = extractFilterExtension(filter);
+      filterExtensions_ = extractFilterExtensions(filter);
 
       setTitle(caption);
       setText(title);
@@ -116,34 +115,27 @@ public abstract class FileSystemDialog extends ModalDialogBase
          addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
       }
 
-      addOkButton(new ThemedButton(buttonName, new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            maybeAccept();
-         }
-      }));
-      addCancelButton(new ThemedButton("Cancel", new ClickHandler() {
-         public void onClick(ClickEvent event) {
+      addOkButton(new ThemedButton(buttonName, event -> maybeAccept()));
+      addCancelButton(
+         new ThemedButton("Cancel",
+         event -> {
             if (invokeOperationEvenOnCancel_)
             {
                operation_.execute(null, FileSystemDialog.this);
             }
             closeDialog();
-         }
-      }));
+         }));
 
-      addDomHandler(new KeyDownHandler() {
-         public void onKeyDown(KeyDownEvent event)
+      addDomHandler(event ->
          {
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-            {
-               event.stopPropagation();
-               event.preventDefault();
-               maybeAccept();
-            }
-         }
-      }, KeyDownEvent.getType());
+               if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  maybeAccept();
+               }
+         },
+         KeyDownEvent.getType());
 
       progress_ = addProgressIndicator();
    }
@@ -196,14 +188,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void showModal()
    {
       super.showModal();
-      
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            center();
-         }
-      });
+      Scheduler.get().scheduleDeferred(() -> center());
    }
 
    /**
@@ -321,18 +306,13 @@ public abstract class FileSystemDialog extends ModalDialogBase
       {
          if (items[i].isDirectory())
             filtered.add(items[i]);
-         else if (filterExtension_ == null)
+         else if (filterExtensions_.isEmpty())
             filtered.add(items[i]);
-         else if (filterExtension_.equalsIgnoreCase(items[i].getExtension()))
+         else if (extensionMatchesFilters(items[i].getExtension()))
             filtered.add(items[i]);
       }
        
-      Collections.sort(filtered, new Comparator<FileSystemItem>() {
-         public int compare(FileSystemItem o1, FileSystemItem o2)
-         {
-            return o1.compareTo(o2);
-         }
-       });
+      Collections.sort(filtered, (o1, o2) -> o1.compareTo(o2));
       FileSystemItem[] clone = new FileSystemItem[filtered.size()];
       return filtered.toArray(clone);
    }
@@ -341,26 +321,45 @@ public abstract class FileSystemDialog extends ModalDialogBase
    // desktop mode supports full multi-filetype, multi-extension filtering).
    // to support more sophisticated filtering we'd need to both add the 
    // UI as well as update this function to extract a list of filters
-   private String extractFilterExtension(String filter)
+   private List<String> extractFilterExtensions(String filter)
    {
-      if (StringUtil.isNullOrEmpty(filter))
+      List<String> filters = new ArrayList<>();
+      if (!StringUtil.isNullOrEmpty(filter))
       {
-         return null;
+         Pattern listPattern = Pattern.create("\\(([^)]+)\\)");
+         Pattern singlePattern = Pattern.create("\\*([^\\s]*)");
+         Match listMatch = listPattern.match(filter, 0);
+         while (listMatch != null)
+         {
+            Match singleMatch = singlePattern.match(listMatch.getGroup(1), 0);
+            while (singleMatch != null)
+            {
+               filters.add(singleMatch.getGroup(1));
+               singleMatch = singleMatch.nextMatch();
+            }
+            listMatch = listMatch.nextMatch();
+         }
       }
-      else
+      
+      return filters;
+   }
+   
+   private boolean extensionMatchesFilters(String extension)
+   {
+      for (String filter: filterExtensions_)
       {
-         Pattern p = Pattern.create("\\(\\*(\\.[^)]*)\\)$");
-         Match m = p.match(filter, 0);
-         if (m == null)
-            return null;
-         else
-            return m.getGroup(1);
+         if (filter.equalsIgnoreCase(extension))
+         {
+            return true;
+         }
       }
+      
+      return false;
    }
 
    protected final FileSystemContext context_;
    private final ProgressOperationWithInput<FileSystemItem> operation_;
-   private String filterExtension_;
+   private List<String> filterExtensions_;
    private boolean invokeOperationEvenOnCancel_;
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
