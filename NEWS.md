@@ -114,6 +114,7 @@
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
 * Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
+* Fix encoding issue with snippets containing non-ASCII text (#3111)
 
 ### RStudio Server Pro
 
