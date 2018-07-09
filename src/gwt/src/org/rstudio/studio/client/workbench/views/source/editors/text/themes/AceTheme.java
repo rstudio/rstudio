@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.Debug;
 
 /**
  * Represents an editor theme.
@@ -52,4 +53,10 @@ public class AceTheme extends JavaScriptObject
       return this.isDark;
    }-*/;
    
+   public final Boolean isDefaultTheme()
+   {
+      String defaultThemeRegex = "^/theme/default/.+?\\.rstheme$";
+      Debug.log("Theme " + getName() + " is " + (getUrl().matches(defaultThemeRegex) ? "default: " : "custom: ") + getUrl());
+      return getUrl().matches(defaultThemeRegex);
+   }
 }

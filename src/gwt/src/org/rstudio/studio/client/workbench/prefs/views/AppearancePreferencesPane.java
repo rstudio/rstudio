@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -33,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -187,13 +190,33 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          public void onChange(ChangeEvent event)
          {
-            preview_.setTheme(themeList_.get(theme_.getValue()).getUrl());
+            AceTheme aceTheme = themeList_.get(theme_.getValue());
+            preview_.setTheme(aceTheme.getUrl());
+            removeThemeButton_.setEnabled(!aceTheme.isDefaultTheme());
          }
       });
       theme_.addStyleName(res.styles().themeChooser());
    
+      AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+      addThemeButton_ = new ThemedButton("Add...", event ->
+      {
+         // TODO: launch file browser dialog.
+      });
+      addThemeButton_.setLeftAligned(true);
+      removeThemeButton_ = new ThemedButton("Remove...", event ->
+      {
+         // TODO: trigger theme removal.
+      });
+      removeThemeButton_.setLeftAligned(true);
+      removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+      
+      HorizontalPanel buttonPanel = new HorizontalPanel();
+      buttonPanel.add(addThemeButton_);
+      buttonPanel.add(removeThemeButton_);
+      
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
+      leftPanel.add(buttonPanel);
 
       FlowPanel previewPanel = new FlowPanel();
       
@@ -201,7 +224,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
-      preview_.setTheme(uiPrefs_.theme().getGlobalValue().getUrl());
+      preview_.setTheme(currentTheme.getUrl());
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
@@ -301,6 +324,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
+   private ThemedButton addThemeButton_;
+   private ThemedButton removeThemeButton_;
    private final AceEditorPreview preview_;
    private SelectWidget fontFace_;
    private String initialFontFace_;
