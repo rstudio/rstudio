@@ -317,11 +317,15 @@ int main(int argc, char* argv[])
       static char enableViewport[] = "--enable-viewport";
       arguments.push_back(enableViewport);
       
+#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
+      
 #ifndef NDEBUG
       // disable web security for development builds (so we can
       // get access to sourcemaps)
       static char disableWebSecurity[] = "--disable-web-security";
       arguments.push_back(disableWebSecurity);
+#endif
+      
 #endif
       
       // disable chromium renderer accessibility by default (it can cause
