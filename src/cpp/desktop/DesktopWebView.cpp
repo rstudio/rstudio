@@ -27,6 +27,8 @@
 
 #include <core/system/Environment.hpp>
 
+#include "DesktopBrowserWindow.hpp"
+
 #ifdef _WIN32
 #include <windows.h>
 #include <wingdi.h>
@@ -34,6 +36,46 @@
 
 namespace rstudio {
 namespace desktop {
+
+namespace {
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+
+class DevToolsWindow : public QMainWindow
+{
+public:
+   
+   DevToolsWindow()
+      : webPage_(new QWebEnginePage(this)),
+        webView_(new QWebEngineView(this))
+   {
+      webView_->setPage(webPage_);
+      
+      QScreen* screen = QApplication::primaryScreen();
+      QRect geometry = screen->geometry();
+      resize(geometry.width() * 0.7, geometry.height() * 0.7);
+      
+      setWindowTitle(QStringLiteral("RStudio DevTools"));
+      setAttribute(Qt::WA_DeleteOnClose, false);
+      setAttribute(Qt::WA_QuitOnClose, true);
+      
+      setUnifiedTitleAndToolBarOnMac(true);
+      setCentralWidget(webView_);
+   }
+   
+   QWebEnginePage* webPage() { return webPage_; }
+   QWebEngineView* webView() { return webView_; }
+   
+private:
+   QWebEnginePage* webPage_;
+   QWebEngineView* webView_;
+};
+
+std::map<QWebEnginePage*, DevToolsWindow*> s_devToolsWindows;
+
+#endif
+
+} // end anonymous namespace
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebEngineView(parent),
@@ -229,10 +271,43 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       menu->addAction(webPage()->action(QWebEnginePage::SelectAll));
    }
    
-#ifndef NDEBUG
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+   
+   menu->addSeparator();
+   menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
+   menu->addAction(tr("&Inspect Element"), [&]() {
+      
+      QWebEnginePage* devToolsPage = webPage()->devToolsPage();
+      if (devToolsPage == nullptr)
+      {
+         DevToolsWindow* devToolsWindow = new DevToolsWindow();
+         devToolsPage = devToolsWindow->webPage();
+         webPage()->setDevToolsPage(devToolsPage);
+         
+         s_devToolsWindows[webPage()] = devToolsWindow;
+      }
+      
+      // make sure the devtools window is showing and focused
+      DevToolsWindow* devToolsWindow = s_devToolsWindows[webPage()];
+      
+      devToolsWindow->show();
+      devToolsWindow->raise();
+      devToolsWindow->setFocus();
+      
+      // we have a window; invoke Inspect Element now
+      webPage()->triggerAction(QWebEnginePage::InspectElement);
+   });
+   
+#else
+   
+# ifndef NDEBUG
+   
    menu->addSeparator();
    menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(webPage()->action(QWebEnginePage::InspectElement));
+   
+# endif
+   
 #endif
    
    menu->setAttribute(Qt::WA_DeleteOnClose, true);

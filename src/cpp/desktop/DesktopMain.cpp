@@ -238,8 +238,13 @@ bool isNonProjectFilename(const QString &filename)
    return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
 }
 
-bool useChromiumDevtools()
+bool useRemoteDevtoolsDebugging()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+   // don't need remote debugging for newer Qt
+   return false;
+#else
+   
    // disable by default due to security concerns
    // https://bugreports.qt.io/browse/QTBUG-50725
    bool useDevtools = false;
@@ -256,6 +261,8 @@ bool useChromiumDevtools()
    }
 
    return useDevtools;
+   
+#endif
 }
 
 } // anonymous namespace
@@ -268,7 +275,7 @@ int main(int argc, char* argv[])
    {
       initializeLang();
       
-      if (useChromiumDevtools())
+      if (useRemoteDevtoolsDebugging())
       {
          // use QTcpSocket to find an open port. this is unfortunately a bit racey
          // but AFAICS there isn't a better solution for port selection
@@ -310,11 +317,15 @@ int main(int argc, char* argv[])
       static char enableViewport[] = "--enable-viewport";
       arguments.push_back(enableViewport);
       
+#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
+      
 #ifndef NDEBUG
       // disable web security for development builds (so we can
       // get access to sourcemaps)
       static char disableWebSecurity[] = "--disable-web-security";
       arguments.push_back(disableWebSecurity);
+#endif
+      
 #endif
       
       // disable chromium renderer accessibility by default (it can cause
