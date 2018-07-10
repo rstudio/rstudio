@@ -45,8 +45,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      signal (send) set=("kill") peer=unconfined,
      ptrace,
 
-     @{PROC} r,
-     @{PROC}/*/cmdline r,
+     /proc/ r,
+     /proc/** r,
 
      owner @{HOME}/** rw,
      owner /tmp/** rw,
