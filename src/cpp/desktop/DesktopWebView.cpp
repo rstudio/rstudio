@@ -300,9 +300,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    
 #else
    
+# ifndef NDEBUG
+   
    menu->addSeparator();
    menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(webPage()->action(QWebEnginePage::InspectElement));
+   
+# endif
    
 #endif
    
