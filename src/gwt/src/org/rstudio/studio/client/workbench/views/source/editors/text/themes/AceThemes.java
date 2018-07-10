@@ -136,10 +136,16 @@ public class AceThemes
       });
    }
    
-   public void addTheme(String themeLocation, Consumer<ServerError> errorConsumer)
+   public void addTheme(String themeLocation, Consumer<String> stringConsumer, Consumer<ServerError> errorConsumer)
    {
-      themeServerOperations_.addTheme(new ServerRequestCallback<Void>()
+      themeServerOperations_.addTheme(new ServerRequestCallback<String>()
       {
+         @Override
+         public void onResponseReceived(String result)
+         {
+            stringConsumer.accept(result);
+         }
+         
          @Override
          public void onError(ServerError error)
          {

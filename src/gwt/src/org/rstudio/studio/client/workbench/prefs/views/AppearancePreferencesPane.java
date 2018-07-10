@@ -29,10 +29,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -204,13 +201,11 @@ public class AppearancePreferencesPane extends PreferencesPane
                   if (theme.isLocalCustomTheme() &&
                      StringUtil.equals(theme.getFileStem(), inputStem))
                   {
-                     showThemeExistsDialog(inputStem, () -> themes.addTheme(
-                        inputPath,
-                        error -> showCantAddThemeDialog(inputPath, error)));
+                     showThemeExistsDialog(inputStem, () -> addTheme(inputPath, indicator, themes));
                   }
                   else
                   {
-                     themes.addTheme(inputPath, error -> showCantAddThemeDialog(inputPath, error));
+                     addTheme(inputPath, indicator, themes);
                   }
                }
                
@@ -257,7 +252,20 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> updateThemes(themes));
    }
    
+   private void addTheme(String inputPath, ProgressIndicator indicator, AceThemes themes)
+   {
+      themes.addTheme(
+         inputPath,
+         result -> updateThemes(themes, indicator, result),
+         error -> showCantAddThemeDialog(inputPath, error));
+   }
+   
    private void updateThemes(AceThemes themes)
+   {
+      updateThemes(themes, getProgressIndicator(), uiPrefs_.theme().getGlobalValue().getName());
+   }
+   
+   private void updateThemes(AceThemes themes, ProgressIndicator indicator, String currentThemeValue)
    {
       themes.getThemes(
          themeList ->
@@ -265,9 +273,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             themeList_ = themeList;
          
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
+            theme_.setValue(currentThemeValue);
          },
-         getProgressIndicator());
+         indicator);
    }
    
    private void updatePreviewZoomLevel()

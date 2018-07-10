@@ -5516,7 +5516,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void addTheme(ServerRequestCallback<Void> callback, String themeLocation)
+   public void addTheme(ServerRequestCallback<String> callback, String themeLocation)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(themeLocation));

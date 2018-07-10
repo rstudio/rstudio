@@ -363,6 +363,16 @@ Error getThemes(const json::JsonRpcRequest& request,
    return Success();
 }
 
+/**
+ * @brief RPC that lets the client add a theme for the current user.
+ *
+ * @param request       The request from the client to add a theme. The theme should already exist
+ *                      on the server and the only parameter on the request should be the location
+ *                      of the theme to add.
+ * @param pResponse     The response from the server. Will contain the name of the newly added theme.
+ *
+ * @return `Success` on success; an error otherwise.
+ */
 Error addTheme(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -390,9 +400,14 @@ Error addTheme(const json::JsonRpcRequest& request,
    r::exec::RFunction rfunc(funcName);
    rfunc.addParam("themePath", themeToAdd);
    rfunc.addParam("force", true);
-   error = rfunc.call();
+
+   SEXP result;
+   r::sexp::Protect protect;
+   error = rfunc.call(&result, &protect);
    if (error)
       LOG_ERROR(error);
+   else
+      pResponse->setResult(r::sexp::asString(result));
 
    return error;
 }
