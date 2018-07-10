@@ -31,6 +31,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
@@ -362,6 +363,40 @@ Error getThemes(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error addTheme(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string themeToAdd = request.params.at(0).get_str();
+
+   boost::regex rsThemeRegex(".*\\.rstheme$", boost::regex::icase);
+   boost::regex tmThemeRegex(".*\\.tmTheme$", boost::regex::icase);
+
+   Error error = Success();
+
+   // Find out whether to convert or add.
+   std::string funcName = ".rs.api.convertTheme";
+   if (boost::regex_match(themeToAdd, rsThemeRegex))
+   {
+      funcName = ".rs.api.addTheme";
+   }
+   else if (!boost::regex_match(themeToAdd, tmThemeRegex))
+   {
+      assert(false);
+      error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
+      error.addProperty("queryParam", themeToAdd);
+      LOG_ERROR(error);
+   }
+
+   r::exec::RFunction rfunc(funcName);
+   rfunc.addParam("themePath", themeToAdd);
+   rfunc.addParam("force", true);
+   error = rfunc.call();
+   if (error)
+      LOG_ERROR(error);
+
+   return error;
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -375,6 +410,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
+      (bind(registerRpcMethod, "add_theme", addTheme))
       (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
       (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));

@@ -32,6 +32,9 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
@@ -131,6 +134,18 @@ public class AceThemes
             themeConsumer.accept(themes);
          }
       });
+   }
+   
+   public void addTheme(String themeLocation, Consumer<ServerError> errorConsumer)
+   {
+      themeServerOperations_.addTheme(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            errorConsumer.accept(error);
+         }
+      }, themeLocation);
    }
 
    private ThemeServerOperations themeServerOperations_;

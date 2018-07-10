@@ -26,13 +26,18 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -43,14 +48,17 @@ import java.util.HashMap;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
+   
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UIPrefs uiPrefs,
                                     final AceThemes themes,
-                                    WorkbenchContext workbenchContext)
+                                    WorkbenchContext workbenchContext,
+                                    GlobalDisplay globalDisplay)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
+      globalDisplay_ = globalDisplay;
       
       VerticalPanel leftPanel = new VerticalPanel();
       
@@ -189,8 +197,24 @@ public class AppearancePreferencesPane extends PreferencesPane
             "Theme Files (*.tmTheme *.rstheme)",
             (input, indicator) ->
             {
+               String inputStem = input.getStem();
+               String inputPath = input.getPath();
+               for (AceTheme theme: themeList_.values())
+               {
+                  if (theme.isLocalCustomTheme() &&
+                     StringUtil.equals(theme.getFileStem(), inputStem))
+                  {
+                     showThemeExistsDialog(inputStem, () -> themes.addTheme(
+                        inputPath,
+                        error -> showCantAddThemeDialog(inputPath, error)));
+                  }
+                  else
+                  {
+                     themes.addTheme(inputPath, error -> showCantAddThemeDialog(inputPath, error));
+                  }
+               }
+               
                indicator.onCompleted();
-               // TODO: convert or move the file.
             }));
       addThemeButton_.setLeftAligned(true);
       removeThemeButton_ = new ThemedButton("Remove...", event ->
@@ -256,6 +280,32 @@ public class AppearancePreferencesPane extends PreferencesPane
       }
    }
 
+   private void showThemeExistsDialog(String inputFileName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("A theme file with the same name, '")
+         .append(inputFileName)
+         .append("', already exists. Adding the theme will cause the existing file to be ")
+         .append("overwritten. Would you like to add the theme anyways?");
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         "Theme File Already Exists",
+         msg.toString(),
+         continueOperation,
+         false);
+   }
+   
+   private void showCantAddThemeDialog(String themePath, ServerError error)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("Unable to add the theme '")
+         .append(themePath)
+         .append("'. The following error occurred: ")
+         .append(error.getMessage());
+      
+      globalDisplay_.showErrorMessage("Failed to Add Theme", msg.toString());
+   }
+   
    @Override
    public ImageResource getIcon()
    {
@@ -325,6 +375,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private Boolean relaunchRequired_;
    private static String previewDefaultHeight_ = "498px";
    private HashMap<String, AceTheme> themeList_;
+   private final GlobalDisplay globalDisplay_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

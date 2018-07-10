@@ -58,4 +58,25 @@ public class AceTheme extends JavaScriptObject
    {
       return Pattern.create("^/theme/default/.+?\\.rstheme$").test(getUrl());
    }
+   
+   public final Boolean isLocalCustomTheme()
+   {
+      return Pattern.create("^/theme/custom/local/.+?\\.rstheme$").test(getUrl());
+   }
+   
+   public final Boolean isGlobalCustonTheme()
+   {
+      return Pattern.create("^/theme/custom/global/.+?\\.rstheme$").test(getUrl());
+   }
+   
+   public final String getFileStem()
+   {
+      // We want everything between the last `/` and the `.rstheme`, but that may contain escaped
+      // `/` characters, which should look like `\/` to the OS< `\\/` in the string and `\\\\/` in
+      // the regex, because `\` is also a regex escape.
+      return Pattern
+         .create("/((?:[^/]|\\\\/)+?)\\.rstheme$")
+         .match(getUrl(), 0)
+         .getGroup(1);
+   }
 }
