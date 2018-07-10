@@ -252,6 +252,25 @@ void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel /*level*/, 
    qDebug() << message;
 }
 
+namespace {
+
+bool isSafeHost(const std::string& host)
+{
+   static const std::vector<std::string> whitelist = {
+      ".youtube.com",
+      ".vimeo.com",
+      ".c9.ms"
+   };
+   
+   for (auto entry : whitelist)
+      if (boost::algorithm::ends_with(host, entry))
+         return true;
+   
+   return false;
+}
+
+} // end anonymous namespace
+
 // NOTE: NavigationType is unreliable, as per:
 //
 //    https://bugreports.qt.io/browse/QTBUG-56805
@@ -284,11 +303,11 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
 #endif
    
    // if this appears to be an attempt to load an external page within
-   // an iframe, don't load it
+   // an iframe, check it's from a safe host
    if (!isLocal && s_subframes.count(url))
    {
       s_subframes.erase(url);
-      return false;
+      return isSafeHost(host);
    }
 
    if ((baseUrl_.isEmpty() && isLocal) ||
@@ -320,9 +339,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
          // if allowing external navigation, follow this (even if a link click)
          return true;
       }
-      else if (boost::algorithm::ends_with(host, ".youtube.com") ||
-               boost::algorithm::ends_with(host, ".vimeo.com")   ||
-               boost::algorithm::ends_with(host, ".c9.ms"))
+      else if (isSafeHost(host))
       {
          return true;
       }
