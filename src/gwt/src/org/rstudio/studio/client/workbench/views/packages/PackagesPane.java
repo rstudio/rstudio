@@ -547,11 +547,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                else
                {
                   if (value.booleanValue())
-                     observer_.loadPackage(packageInfo.getName(),
-                                           packageInfo.getSourceLibrary()) ;
+                     observer_.loadPackage(packageInfo);
                   else
-                     observer_.unloadPackage(packageInfo.getName(),
-                                             packageInfo.getSourceLibrary()) ;
+                     observer_.unloadPackage(packageInfo);
                }
             }    
          });

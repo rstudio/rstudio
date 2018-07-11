@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:xenial
 
 ARG AWS_REGION=us-east-1
 
@@ -7,7 +7,7 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu trusty/' >> /etc/apt/sources.list \
+    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu xenial/' >> /etc/apt/sources.list \
     && apt-get update
 
 # add ppa repository so we can install java 8 (not in any official repo for precise)
@@ -83,9 +83,8 @@ RUN /bin/bash /tmp/install-dependencies
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_VERSION=5.10.1 && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt${QT_VERSION} && \
-    export QT_SDK_CUSTOM=QtSDK-${QT_VERSION}-x86_64.tar.gz && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.11.1 && \
+    export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting

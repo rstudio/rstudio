@@ -71,6 +71,19 @@ std::vector<std::pair<std::string,std::string> > optionsFromJson(
    return options;
 }
 
+bool fillSetString(const Array& array, std::set<std::string>* pSet)
+{
+   for (Array::const_iterator it = array.begin();
+        it != array.end();
+        ++it)
+   {
+      if (!isType<std::string>(*it))
+         return false;
+      pSet->insert(it->get_str());
+   }
+
+   return true;
+}
 
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
 {

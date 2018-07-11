@@ -3295,6 +3295,8 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addJsonRpcHandler("transform_snippet", function(snippet)
 {
+   Encoding(snippet) <- "UTF-8"
+   
    # Extract any R code from the snippet
    reRCode <- "`[Rr]\\s+[^`]+`"
    matches <- gregexpr(reRCode, snippet, perl = TRUE)[[1]]

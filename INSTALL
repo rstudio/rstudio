@@ -50,13 +50,17 @@ b) Configure the build using cmake as appropriate, e.g.
                            Windows:             C:\Program Files\RStudio
            
              
-c) There are a couple of additional considerations on Windows. First,
-   RStudio Server is not supported on Windows so the configuration 
-   always defaults to Desktop. Second, you need to add an extra -G 
-   parameter to specify MinGW as the build toolchain, for example:
+c) There are additional considerations on Windows. First, RStudio Server 
+   is not supported on Windows so the configuration always defaults to 
+   Desktop. Second, you need to add an extra -G parameter to specify the 
+   correct build toolchain, for example:
 
-   cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-    
+   cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
+
+   To build on Windows:
+   
+   cmake --build . --config Release
+   
 
 3) Building and Installing
 ----------------------------------------------------------------------------
@@ -74,7 +78,7 @@ b) Change to the build directory where you configured RStudio
 c) Run the "make install" command:
 
    Linux & macOS:  sudo make install        OR
-   Windows:        mingw32-make install 
+   Windows:        cmake --build . --config Release --target install 
 
    NOTE: For RStudio Desktop on Linux, make install automatically creates
    an entry in the Applications -> Programming menu for RStudio.

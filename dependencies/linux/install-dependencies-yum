@@ -3,7 +3,7 @@
 #
 # install-dependencies-yum
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ sudo yum install -y bzip2-devel
 sudo yum install -y zlib-devel
 sudo yum install -y pam-devel
 
-# pandoc depenencies
+# pandoc dependencies
 sudo yum install -y libffi
 
 # boost
@@ -68,7 +68,6 @@ then
    sudo yum install -y fakeroot
    sudo yum install -y postgresql-devel
 
-   # install Qt SDK
    ./install-qt-sdk
 fi
 

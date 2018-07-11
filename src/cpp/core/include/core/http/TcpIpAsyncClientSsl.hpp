@@ -40,12 +40,15 @@ public:
    TcpIpAsyncClientSsl(boost::asio::io_service& ioService,
                        const std::string& address,
                        const std::string& port,
-                       bool verify)
+                       bool verify,
+                       const boost::posix_time::time_duration& connectionTimeout =
+                          boost::posix_time::time_duration(boost::posix_time::pos_infin))
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
        sslContext_(ioService, boost::asio::ssl::context::sslv23_client),
        address_(address),
        port_(port),
-       verify_(verify)
+       verify_(verify),
+       connectionTimeout_(connectionTimeout)
    {
       if (verify_)
       {
@@ -83,7 +86,8 @@ protected:
                         TcpIpAsyncClientSsl::sharedFromThis()),
             boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
                         TcpIpAsyncClientSsl::sharedFromThis(),
-                        _1));
+                        _1),
+            connectionTimeout_);
    }
 
 
@@ -139,6 +143,7 @@ private:
    std::string address_;
    std::string port_;
    bool verify_;
+   boost::posix_time::time_duration connectionTimeout_;
 };
    
 

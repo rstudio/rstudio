@@ -37,11 +37,14 @@ class TcpIpAsyncClient :
 public:
    TcpIpAsyncClient(boost::asio::io_service& ioService,
                     const std::string& address,
-                    const std::string& port)
+                    const std::string& port,
+                    const boost::posix_time::time_duration& connectionTimeout =
+                       boost::posix_time::time_duration(boost::posix_time::pos_infin))
      : AsyncClient<boost::asio::ip::tcp::socket>(ioService),
        socket_(ioService),
        address_(address),
-       port_(port)
+       port_(port),
+       connectionTimeout_(connectionTimeout)
    {
    }
 
@@ -66,7 +69,8 @@ private:
                         TcpIpAsyncClient::sharedFromThis()),
             boost::bind(&TcpIpAsyncClient::handleConnectionError,
                         TcpIpAsyncClient::sharedFromThis(),
-                        _1));
+                        _1),
+            connectionTimeout_);
 
    }
 
@@ -82,6 +86,7 @@ private:
    boost::asio::ip::tcp::socket socket_;
    std::string address_;
    std::string port_;
+   boost::posix_time::time_duration connectionTimeout_;
 };
 
 } // namespace http

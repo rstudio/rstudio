@@ -114,8 +114,14 @@ Error readCollectionFromFile(
       {
          // read the next line
          std::getline(*pIfs, nextLine) ;
+
          if (pIfs->eof())
-            break;
+         {
+            // only exit here if we have nothing to process
+            // otherwise, exit after we have processed the data
+            if (nextLine.empty())
+               break;
+         }
          else if (pIfs->fail())
             return systemError(io_error, ERROR_LOCATION);
 
@@ -142,6 +148,10 @@ Error readCollectionFromFile(
          {
             break; // exit read loop
          }
+
+         // if we've hit the end of the file, we're done reading
+         if (pIfs->eof())
+            break;
       }
    }
    catch(const std::exception& e)

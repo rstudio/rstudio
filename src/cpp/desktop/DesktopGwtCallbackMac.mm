@@ -279,6 +279,50 @@ int GwtCallback::showMessageBox(int type,
    return (clicked - NSAlertThirdButtonReturn) + 2;
 }
 
+QString GwtCallback::getOpenFileName(const QString& qCaption,
+                                     const QString& qLabel,
+                                     const QString& qDir,
+                                     const QString& qFilter,
+                                     bool canChooseDirectories,
+                                     bool focusOwner)
+{
+   NSString* caption = qCaption.toNSString();
+   NSString* label   = qLabel.toNSString();
+   NSString* dir     = qDir.toNSString();
+   NSString* filter  = qFilter.toNSString();
+   
+   dir = resolveAliasedPath(dir);
+   
+   NSOpenPanel *open = [NSOpenPanel openPanel];
+   [open setTitle: caption];
+   [open setPrompt: label];
+   [open setDirectoryURL: [NSURL fileURLWithPath:
+                           [dir stringByStandardizingPath]]];
+   [open setCanChooseDirectories: canChooseDirectories];
+   
+   // If the filter was specified and looks like a filter string
+   // (i.e. "R Projects (*.RProj)"), extract just the extension ("RProj") to
+   // pass to the open dialog.
+   if ([filter length] > 0 &&
+       [filter rangeOfString: @"*."].location != NSNotFound)
+   {
+      NSString* toExt = [filter substringFromIndex:
+                         [filter rangeOfString: @"*."].location + 2];
+      NSString* fromExt = [toExt substringToIndex:
+                           [toExt rangeOfString: @")"].location];
+      
+      // If we have the extension equal to 'Rproj', then use the
+      // Uniform Type Identifier (UTI) associated with it
+      if ([[fromExt lowercaseString] isEqualTo: @"rproj"])
+      {
+         fromExt = @"dyn.ah62d4rv4ge81e6dwr7za";
+      }
+      
+      [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
+   }
+   return runFileDialog(open);
+}
+
 QString GwtCallback::getSaveFileName(const QString& qCaption,
                                      const QString& qLabel,
                                      const QString& qDir,
