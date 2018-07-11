@@ -229,7 +229,6 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    QMenu* menu = new QMenu(this);
    
    const auto& data = webPage()->contextMenuData();
-   const auto& mediaFlags = data.mediaFlags();
    
    bool canNavigateHistory =
          webPage()->history()->canGoBack() ||
@@ -260,10 +259,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          
       case QWebEngineContextMenuData::MediaTypeAudio:
          
-         if (mediaFlags.testFlag(QWebEngineContextMenuData::MediaPaused))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+         if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+#endif
+         
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
@@ -274,10 +276,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          
       case QWebEngineContextMenuData::MediaTypeVideo:
          
-         if (mediaFlags.testFlag(QWebEngineContextMenuData::MediaPaused))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+         if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+#endif
+         
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
