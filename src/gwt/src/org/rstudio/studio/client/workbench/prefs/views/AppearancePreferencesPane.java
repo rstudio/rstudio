@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.*;
@@ -196,17 +195,21 @@ public class AppearancePreferencesPane extends PreferencesPane
             {
                String inputStem = input.getStem();
                String inputPath = input.getPath();
+               boolean found = false;
                for (AceTheme theme: themeList_.values())
                {
                   if (theme.isLocalCustomTheme() &&
                      StringUtil.equals(theme.getFileStem(), inputStem))
                   {
                      showThemeExistsDialog(inputStem, () -> addTheme(inputPath, indicator, themes));
+                     found = true;
+                     break;
                   }
-                  else
-                  {
-                     addTheme(inputPath, indicator, themes);
-                  }
+               }
+               
+               if (!found)
+               {
+                  addTheme(inputPath, indicator, themes);
                }
                
                indicator.onCompleted();
@@ -256,16 +259,24 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       themes.addTheme(
          inputPath,
-         result -> updateThemes(themes, indicator, result),
+         result -> themes.getThemes(
+            themeList ->
+            {
+               // Update the list of themes.
+               themeList_ = themeList;
+               
+               // Update the relevant UI pieces.
+               theme_.setChoices(themeList_.keySet().toArray(new String[0]));
+               theme_.setValue(result);
+               preview_.setTheme(themeList_.get(result).getUrl());
+               // NOTE: this will always be a custom theme - no need to check.
+               removeThemeButton_.setEnabled(true);
+            },
+            indicator),
          error -> showCantAddThemeDialog(inputPath, error));
    }
    
    private void updateThemes(AceThemes themes)
-   {
-      updateThemes(themes, getProgressIndicator(), uiPrefs_.theme().getGlobalValue().getName());
-   }
-   
-   private void updateThemes(AceThemes themes, ProgressIndicator indicator, String currentThemeValue)
    {
       themes.getThemes(
          themeList ->
@@ -273,9 +284,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             themeList_ = themeList;
          
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(currentThemeValue);
+            theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
          },
-         indicator);
+         getProgressIndicator());
    }
    
    private void updatePreviewZoomLevel()
