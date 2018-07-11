@@ -242,7 +242,6 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       back->setEnabled(webPage()->history()->canGoBack());
       forward->setEnabled(webPage()->history()->canGoForward());
       
-      menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
       menu->addSeparator();
    }
    
@@ -337,6 +336,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
    
    menu->addSeparator();
+   menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(label(tr("I&nspect element")), [&]() {
       
       QWebEnginePage* devToolsPage = webPage()->devToolsPage();
@@ -364,6 +364,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    
 # ifndef NDEBUG
    
+   menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addSeparator();
    menu->addAction(label(tr("I&nspect element")), [&]() { triggerPageAction(QWebEnginePage::InspectElement); });
    
