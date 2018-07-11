@@ -194,10 +194,42 @@ void WebView::closeEvent(QCloseEvent*)
 {
 }
 
+namespace {
+
+QString label(QString label)
+{
+#ifdef Q_OS_MAC
+   
+   static const QChar ampersand = QChar::fromLatin1('&');
+   static const QString space = QStringLiteral(" ");
+   
+   QStringList words = label.split(space);
+   for (QString& word : words)
+   {
+      int index = 0;
+      if (word[index] == ampersand)
+         index = 1;
+      
+      word[index] = word[index].toUpper();
+   }
+   
+   return words.join(space);
+   
+#else
+   
+   return label;
+   
+#endif
+}
+
+} // end anonymous namespace
+
 void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
    QMenu* menu = new QMenu(this);
+   
    const auto& data = webPage()->contextMenuData();
+   const auto& mediaFlags = data.mediaFlags();
    
    bool canNavigateHistory =
          webPage()->history()->canGoBack() ||
@@ -205,16 +237,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    
    if (data.selectedText().isEmpty() && canNavigateHistory)
    {
-      auto* back = menu->addAction(tr("&Back"), [&]() {
-         webPage()->history()->back();
-      });
+      auto* back    = menu->addAction(label(tr("&Back")),    [&]() { webPage()->history()->back(); });
+      auto* forward = menu->addAction(label(tr("&Forward")), [&]() { webPage()->history()->forward(); });
+      
       back->setEnabled(webPage()->history()->canGoBack());
-
-      auto* forward = menu->addAction(tr("&Forward"), [&]() {
-         webPage()->history()->forward();
-      });
       forward->setEnabled(webPage()->history()->canGoForward());
       
+      menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
       menu->addSeparator();
    }
    
@@ -223,30 +252,54 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       switch (data.mediaType())
       {
       case QWebEngineContextMenuData::MediaTypeImage:
-         menu->addAction(webPage()->action(QWebEnginePage::DownloadImageToDisk));
-         menu->addAction(webPage()->action(QWebEnginePage::CopyImageUrlToClipboard));
-         menu->addAction(webPage()->action(QWebEnginePage::CopyImageToClipboard));
+         
+         menu->addAction(label(tr("Sa&ve image as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadImageToDisk); });
+         menu->addAction(label(tr("Cop&y image")),         [&]() { triggerPageAction(QWebEnginePage::CopyImageToClipboard); });
+         menu->addAction(label(tr("C&opy image address")), [&]() { triggerPageAction(QWebEnginePage::CopyImageUrlToClipboard); });
          break;
+         
       case QWebEngineContextMenuData::MediaTypeAudio:
+         
+         if (mediaFlags.testFlag(QWebEngineContextMenuData::MediaPaused))
+            menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+         else
+            menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+         menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
+         menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
+         menu->addSeparator();
+         
+         menu->addAction(label(tr("Sa&ve audio as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadMediaToDisk); });
+         menu->addAction(label(tr("C&opy audio address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
+         break;
+         
       case QWebEngineContextMenuData::MediaTypeVideo:
-         menu->addAction(webPage()->action(QWebEnginePage::DownloadMediaToDisk));
-         menu->addAction(webPage()->action(QWebEnginePage::CopyMediaUrlToClipboard));
-         menu->addAction(webPage()->action(QWebEnginePage::ToggleMediaPlayPause));
-         menu->addAction(webPage()->action(QWebEnginePage::ToggleMediaLoop));
+         
+         if (mediaFlags.testFlag(QWebEngineContextMenuData::MediaPaused))
+            menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+         else
+            menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
+         menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
+         menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
+         menu->addSeparator();
+         
+         menu->addAction(label(tr("Sa&ve video as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadMediaToDisk); });
+         menu->addAction(label(tr("C&opy video address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
          break;
+         
       case QWebEngineContextMenuData::MediaTypeFile:
-         menu->addAction(webPage()->action(QWebEnginePage::DownloadLinkToDisk));
-         menu->addAction(webPage()->action(QWebEnginePage::CopyMediaUrlToClipboard));
+         menu->addAction(label(tr("Sa&ve file as...")),   [&]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
+         menu->addAction(label(tr("C&opy link address")), [&]() { triggerPageAction(QWebEnginePage::CopyMediaUrlToClipboard); });
          break;
+         
       default:
          break;
       }
    }
    else if (data.linkUrl().isValid())
    {
-      menu->addAction(tr("Open Link in &Browser"), [=]() { desktop::openUrl(data.linkUrl()); });
-      menu->addAction(webPage()->action(QWebEnginePage::CopyLinkToClipboard));
-      menu->addAction(tr("&Save Link As..."), [=]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
+      menu->addAction(label(tr("Open link in &browser")), [&]() { desktop::openUrl(data.linkUrl()); });
+      menu->addAction(label(tr("Save lin&k as...")),      [&]() { triggerPageAction(QWebEnginePage::DownloadLinkToDisk); });
+      menu->addAction(label(tr("Copy link addr&ess")),    [&]() { triggerPageAction(QWebEnginePage::CopyLinkToClipboard); });
    }
    else
    {
@@ -256,9 +309,15 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       // text may not correspond to the context menu click target -- but
       // in general users who want to copy text will right-click on the
       // selection, rather than elsewhere on the screen.
-      auto* cut   = webPage()->action(QWebEnginePage::Cut);
-      auto* copy  = webPage()->action(QWebEnginePage::Copy);
-      auto* paste = webPage()->action(QWebEnginePage::Paste);
+      auto* cut       = webPage()->action(QWebEnginePage::Cut);
+      auto* copy      = webPage()->action(QWebEnginePage::Copy);
+      auto* paste     = webPage()->action(QWebEnginePage::Paste);
+      auto* selectAll = webPage()->action(QWebEnginePage::SelectAll);
+      
+      cut->setText(label(tr("Cu&t")));
+      copy->setText(label(tr("&Copy")));
+      paste->setText(label(tr("&Paste")));
+      selectAll->setText(label(tr("Select &all")));
       
       cut->setEnabled(data.isContentEditable() && !data.selectedText().isEmpty());
       copy->setEnabled(!data.selectedText().isEmpty());
@@ -267,15 +326,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       menu->addAction(cut);
       menu->addAction(copy);
       menu->addAction(paste);
-      menu->addSeparator();
-      menu->addAction(webPage()->action(QWebEnginePage::SelectAll));
+      menu->addAction(selectAll);
    }
    
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
    
    menu->addSeparator();
-   menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
-   menu->addAction(tr("&Inspect Element"), [&]() {
+   menu->addAction(label(tr("I&nspect element")), [&]() {
       
       QWebEnginePage* devToolsPage = webPage()->devToolsPage();
       if (devToolsPage == nullptr)
@@ -303,8 +360,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 # ifndef NDEBUG
    
    menu->addSeparator();
-   menu->addAction(tr("&Reload"), [&]() { triggerPageAction(QWebEnginePage::Reload); });
-   menu->addAction(webPage()->action(QWebEnginePage::InspectElement));
+   menu->addAction(label(tr("I&nspect element")), [&]() { triggerPageAction(QWebEnginePage::InspectElement); });
    
 # endif
    
