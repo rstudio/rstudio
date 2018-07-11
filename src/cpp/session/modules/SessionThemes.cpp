@@ -384,10 +384,12 @@ Error addTheme(const json::JsonRpcRequest& request,
    Error error = Success();
 
    // Find out whether to convert or add.
-   std::string funcName = ".rs.api.convertTheme";
+   std::string funcName = ".rs.convertTheme";
+   bool isConversion = true;
    if (boost::regex_match(themeToAdd, rsThemeRegex))
    {
-      funcName = ".rs.api.addTheme";
+      funcName = ".rs.addTheme";
+      isConversion = false;
    }
    else if (!boost::regex_match(themeToAdd, tmThemeRegex))
    {
@@ -399,7 +401,15 @@ Error addTheme(const json::JsonRpcRequest& request,
 
    r::exec::RFunction rfunc(funcName);
    rfunc.addParam("themePath", themeToAdd);
+   rfunc.addParam("apply", false);
    rfunc.addParam("force", true);
+   rfunc.addParam("globally", false);
+
+   if (isConversion)
+   {
+      rfunc.addParam("add", true);
+      rfunc.addParam("outputLocation", R_NilValue);
+   }
 
    SEXP result;
    r::sexp::Protect protect;
@@ -424,8 +434,9 @@ Error addTheme(const json::JsonRpcRequest& request,
 Error removeTheme(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   r::exec::RFunction removeFunc(".rs.api.removeTheme");
+   r::exec::RFunction removeFunc(".rs.removeTheme");
    removeFunc.addParam("name", request.params.at(0).get_str());
+   removeFunc.addParam("themeList", rs_getThemes());
    return removeFunc.call();
 }
 

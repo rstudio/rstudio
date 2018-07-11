@@ -33,7 +33,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -50,11 +50,13 @@ public class AppearancePreferencesPane extends PreferencesPane
                                     UIPrefs uiPrefs,
                                     final AceThemes themes,
                                     WorkbenchContext workbenchContext,
-                                    GlobalDisplay globalDisplay)
+                                    GlobalDisplay globalDisplay,
+                                    DependencyManager dependencyManager)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
       globalDisplay_ = globalDisplay;
+      dependencyManager_ = dependencyManager;
       
       VerticalPanel leftPanel = new VerticalPanel();
       
@@ -195,13 +197,14 @@ public class AppearancePreferencesPane extends PreferencesPane
             {
                String inputStem = input.getStem();
                String inputPath = input.getPath();
+               boolean isTmTheme = StringUtil.equalsIgnoreCase(".tmTheme", input.getExtension());
                boolean found = false;
                for (AceTheme theme: themeList_.values())
                {
                   if (theme.isLocalCustomTheme() &&
                      StringUtil.equals(theme.getFileStem(), inputStem))
                   {
-                     showThemeExistsDialog(inputStem, () -> addTheme(inputPath, indicator, themes));
+                     showThemeExistsDialog(inputStem, () -> addTheme(inputPath, themes, indicator, isTmTheme));
                      found = true;
                      break;
                   }
@@ -209,7 +212,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                
                if (!found)
                {
-                  addTheme(inputPath, indicator, themes);
+                  addTheme(inputPath, themes, indicator, isTmTheme);
                }
                
                indicator.onCompleted();
@@ -251,7 +254,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       // Themes are retrieved asynchronously, so we have to update the theme list and preview panel
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
-      Scheduler.get().scheduleDeferred(() -> updateThemes(themes));
+      Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
    
    private void removeTheme(String themeName, AceThemes themes)
@@ -259,34 +262,32 @@ public class AppearancePreferencesPane extends PreferencesPane
       themes.removeTheme(
          themeName,
          errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
-      updateThemes(themes);
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
-      preview_.setTheme(currentTheme.getUrl());
-      removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+      if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
+      {
+         currentTheme = AceTheme.createDefault();
+         uiPrefs_.theme().setGlobalValue(currentTheme);
+      }
+      updateThemes(currentTheme.getName(), themes, getProgressIndicator());
    }
    
-   private void addTheme(String inputPath, ProgressIndicator indicator, AceThemes themes)
+   private void addTheme(String inputPath, AceThemes themes, ProgressIndicator indicator, boolean isTmTheme)
    {
-      themes.addTheme(
-         inputPath,
-         result -> themes.getThemes(
-            themeList ->
-            {
-               // Update the list of themes.
-               themeList_ = themeList;
-               
-               // Update the relevant UI pieces.
-               theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-               theme_.setValue(result);
-               preview_.setTheme(themeList_.get(result).getUrl());
-               // NOTE: this will always be a custom theme - no need to check.
-               removeThemeButton_.setEnabled(true);
-            },
-            indicator),
-         error -> showCantAddThemeDialog(inputPath, error));
+      if (isTmTheme)
+         dependencyManager_.withXml2(
+            "Adding a TM Theme",
+            () -> themes.addTheme(
+               inputPath,
+               result -> updateThemes(result, themes, indicator),
+               error -> showCantRemoveThemeDialog(inputPath, error)));
+      else
+         themes.addTheme(
+            inputPath,
+            result -> updateThemes(result, themes, indicator),
+            error -> showCantAddThemeDialog(inputPath, error));
    }
    
-   private void updateThemes(AceThemes themes)
+   private void setThemes(AceThemes themes)
    {
       themes.getThemes(
          themeList ->
@@ -297,6 +298,22 @@ public class AppearancePreferencesPane extends PreferencesPane
             theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
          },
          getProgressIndicator());
+   }
+   
+   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
+   {
+      themes.getThemes(
+         themeList->
+         {
+            themeList_ = themeList;
+            AceTheme currentTheme =themeList_.get(focusedThemeName);
+            
+            theme_.setChoices(themeList_.keySet().toArray(new String[0]));
+            theme_.setValue(focusedThemeName);
+            preview_.setTheme(currentTheme.getUrl());
+            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+         },
+         indicator);
    }
    
    private void updatePreviewZoomLevel()
@@ -416,7 +433,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private static String previewDefaultHeight_ = "498px";
    private HashMap<String, AceTheme> themeList_;
    private final GlobalDisplay globalDisplay_;
-
+   private final DependencyManager dependencyManager_;
+   
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
          "plot <- function (x, y, ...)\n" +

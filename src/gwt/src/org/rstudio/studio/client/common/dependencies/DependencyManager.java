@@ -127,6 +127,20 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                        onComplete);
    }
    
+   public void withXml2(String userAction, final Command command)
+   {
+      withDependencies(
+         "xml2",
+         userAction,
+         new Dependency[] { Dependency.cranPackage("xml2", "1.2.0") },
+         true,
+         succeeded ->
+         {
+            if (succeeded)
+               command.execute();
+         });
+   }
+   
    public void withR2D3(String userAction, final Command command)
    {
       withDependencies(
@@ -138,16 +152,11 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             Dependency.cranPackage("r2d3", "0.2.0", true)
          },
          true,
-         new CommandWithArg<Boolean>()
-        {
-           @Override
-           public void execute(Boolean succeeded)
-           {
-              if (succeeded)
-                 command.execute();
-           }
-        }
-      );
+         succeeded ->
+         {
+            if (succeeded)
+               command.execute();
+         });
    }
    
    public void withRPlumber(String userAction, final Command command)
