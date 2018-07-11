@@ -149,6 +149,26 @@
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
+   # special handling for commands when buffer is currently empty
+   if (buffer$empty())
+   {
+      # detect help requests, and route to Help pane
+      if (grepl("^[?]", trimmed))
+      {
+         text <- substring(trimmed, 2)
+         .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+         return(TRUE)
+      }
+      
+      reHelp <- "help\\((.*)\\)"
+      if (grepl(reHelp, trimmed))
+      {
+         text <- gsub(reHelp, "\\1", trimmed)
+         .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+         return(TRUE)
+      }
+   }
+   
    FALSE
 })
 
