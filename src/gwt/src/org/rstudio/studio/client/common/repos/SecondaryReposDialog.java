@@ -57,7 +57,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                String cranRepoUrl,
                                boolean cranIsCustom)
    {
-      super("Retrieving list of secondary repos...", operation);
+      super("Retrieving list of secondary repositories...", operation);
 
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;
@@ -110,14 +110,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       if (input == null)
       {
          globalDisplay_.showErrorMessage("Error", 
-                                         "Please select or input a CRAN repo");
+                                         "Please select or input a CRAN repository");
          return false;
       }
 
       if (excluded_.contains(input.getName()))
       {
          globalDisplay_.showErrorMessage("Error",
-               "The repo " + input.getName() + " is already included");
+               "The repository " + input.getName() + " is already included");
          return false;
       }
 
@@ -136,7 +136,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
       if (input.getHost().equals("Custom"))
       {
-         progressIndicator_.onProgress("Validating CRAN repo...");
+         progressIndicator_.onProgress("Validating CRAN repository...");
 
          mirrorOperations_.validateCranRepo(new ServerRequestCallback<Boolean>()
          {
@@ -147,7 +147,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                if (!validated)
                {
                   progressIndicator_.onError(
-                        "The given URL does not appear to be a valid CRAN repo");
+                        "The given URL does not appear to be a valid CRAN repository");
                   onValidated.execute(false);
                }
                else
@@ -200,7 +200,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       urlPanel.add(urlTextBox_);
       customPanel.add(urlPanel);
 
-      reposLabel_ = new Label("Available repos:");
+      reposLabel_ = new Label("Available repositories:");
       reposLabel_.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(reposLabel_);
 
@@ -224,7 +224,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             {
                globalDisplay_.showErrorMessage("Error",
                      result.getError());
-               setText("Add Secondary Repo");
+               setText("Add Secondary Repository");
                return;
             }
 
@@ -270,7 +270,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             
             panel_.setWidget(listBox_);
             
-            setText("Add Secondary Repo");
+            setText("Add Secondary Repository");
 
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
                @Override
