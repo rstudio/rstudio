@@ -46,7 +46,8 @@ public class CopyViewerPlotToClipboardDesktopDialog
                      viewerRect.getLeft(),
                      viewerRect.getTop(),
                      viewerRect.getWidth(),
-                     viewerRect.getHeight());
+                     viewerRect.getHeight(),
+                     onCompleted::execute);
             }
          
          },

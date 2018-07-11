@@ -65,13 +65,18 @@ public class CopyPlotToClipboardDesktopDialog
             {
                ElementEx img = images.getItem(0).cast();
                DesktopFrame frame = Desktop.getFrame();
-               frame.copyImageToClipboard(img.getClientLeft(),
-                                          img.getClientTop(),
-                                          img.getClientWidth(),
-                                          img.getClientHeight());
+               frame.copyPageRegionToClipboard(
+                     img.getClientLeft(),
+                     img.getClientTop(),
+                     img.getClientWidth(),
+                     img.getClientHeight(),
+                     onCompleted::execute);
             }
-            
-            onCompleted.execute();
+            else
+            {
+               // shouldn't happen but make sure we clean up after
+               onCompleted.execute();
+            }
          }
       });
    }
