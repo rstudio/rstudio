@@ -129,9 +129,6 @@ public Q_SLOTS:
                               bool showToolbar);
    void closeNamedWindow(QString name);
 
-   // Image coordinates are relative to the window contents
-   void copyImageToClipboard(int left, int top, int width, int height);
-
    // coordinates are relative to entire containing web page
    void copyPageRegionToClipboard(int left, int top, int width, int height);
    void exportPageRegionToFile(QString targetPath,
