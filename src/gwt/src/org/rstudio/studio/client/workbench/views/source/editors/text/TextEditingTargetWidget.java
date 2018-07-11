@@ -333,6 +333,9 @@ public class TextEditingTargetWidget
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
       toolbar.addLeftWidget(runDocumentMenuButton_);
+      runDocumentMenuButton_.addSeparator();
+      runDocumentMenuButton_.addMenuItem(commands_.shinyRecordTest().createMenuItem(false), "");
+      runDocumentMenuButton_.addMenuItem(commands_.shinyRunAllTests().createMenuItem(false), "");
       runDocumentMenuButton_.setVisible(false);
       
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
@@ -1123,7 +1126,7 @@ public class TextEditingTargetWidget
    
       String docType = isPresentation ? "Presentation" : "Document";
 
-      if (!isPresentation) {
+      if (!isPresentation && !isShinyPrerendered) {
          shinyLaunchButton_.setVisible(true);
       }
       
