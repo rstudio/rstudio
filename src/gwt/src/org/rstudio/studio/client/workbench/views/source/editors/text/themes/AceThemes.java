@@ -53,6 +53,7 @@ public class AceThemes
       themeServerOperations_ = themeServerOperations;
       events_ = events;
       prefs_ = prefs;
+      themes_ = new HashMap<>();
 
       prefs.get().theme().bind(theme -> applyTheme(theme));
    }
@@ -122,21 +123,21 @@ public class AceThemes
          @Override
          public void onSuccess(JsArray<AceTheme> jsonThemeArray)
          {
-            HashMap<String, AceTheme> themes = new HashMap<>();
+            themes_.clear();
             int len = jsonThemeArray.length();
             for (int i = 0; i < len; ++i)
             {
                AceTheme theme = jsonThemeArray.get(i);
-               themes.put(theme.getName(), theme);
+               themes_.put(theme.getName(), theme);
             }
             
             Debug.logWarning("Server was unable to find any installed themes.");
-            themeConsumer.accept(themes);
+            themeConsumer.accept(themes_);
          }
       });
    }
    
-   public void addTheme(String themeLocation, Consumer<String> stringConsumer, Consumer<ServerError> errorConsumer)
+   public void addTheme(String themeLocation, Consumer<String> stringConsumer, Consumer<String> errorMessageConsumer)
    {
       themeServerOperations_.addTheme(new ServerRequestCallback<String>()
       {
@@ -149,13 +150,39 @@ public class AceThemes
          @Override
          public void onError(ServerError error)
          {
-            errorConsumer.accept(error);
+            errorMessageConsumer.accept(error.getUserMessage());
          }
       }, themeLocation);
+   }
+   
+   public void removeTheme(String themeName, Consumer<String> errorMessageConsumer)
+   {
+      if (!themes_.containsKey(themeName))
+      {
+         errorMessageConsumer.accept("The specified theme does not exist");
+      }
+      else if (themes_.get(themeName).isDefaultTheme())
+      {
+         errorMessageConsumer.accept("The specified theme is a default RStudio theme and cannot be removed.");
+      }
+      else
+      {
+         themeServerOperations_.removeTheme(
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  errorMessageConsumer.accept(error.getUserMessage());
+               }
+            },
+            themeName);
+      }
    }
 
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
+   private HashMap<String, AceTheme> themes_;
 }

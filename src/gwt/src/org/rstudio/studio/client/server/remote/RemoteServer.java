@@ -5522,6 +5522,14 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(themeLocation));
       sendRequest(RPC_SCOPE, ADD_THEME, params, callback);
    }
+   
+   @Override
+   public void removeTheme(ServerRequestCallback<Void> callback, String themeName)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(themeName));
+      sendRequest(RPC_SCOPE, REMOVE_THEME, params, callback);
+   }
 
    private String clientId_;
    private String clientVersion_ = "";
@@ -5966,4 +5974,5 @@ public class RemoteServer implements Server
    
    private static final String GET_THEMES = "get_themes";
    private static final String ADD_THEME = "add_theme";
+   private static final String REMOVE_THEME = "remove_theme";
 }

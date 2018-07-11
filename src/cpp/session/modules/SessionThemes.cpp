@@ -412,6 +412,23 @@ Error addTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
+/**
+ * @brief An RPC allowing the client to remove a custom theme.
+ *
+ * @param request       The request to remove the theme. The first parameter should be the name of
+ *                      the theme.
+ * @param pResponse     The response. Empty if succesful; error otherwise.
+ *
+ * @return `Success` on a successful removal; an error otherwise.
+ */
+Error removeTheme(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   r::exec::RFunction removeFunc(".rs.api.removeTheme");
+   removeFunc.addParam("name", request.params.at(0).get_str());
+   return removeFunc.call();
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -426,6 +443,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))
+      (bind(registerRpcMethod, "remove_theme", removeTheme))
       (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
       (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));

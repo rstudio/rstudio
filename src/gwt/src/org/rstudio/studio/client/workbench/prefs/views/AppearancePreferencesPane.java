@@ -215,10 +215,9 @@ public class AppearancePreferencesPane extends PreferencesPane
                indicator.onCompleted();
             }));
       addThemeButton_.setLeftAligned(true);
-      removeThemeButton_ = new ThemedButton("Remove...", event ->
-      {
-         // TODO: trigger theme removal.
-      });
+      removeThemeButton_ = new ThemedButton(
+         "Remove...",
+         event -> removeTheme(theme_.getValue(), themes));
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
       
@@ -253,6 +252,17 @@ public class AppearancePreferencesPane extends PreferencesPane
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
       Scheduler.get().scheduleDeferred(() -> updateThemes(themes));
+   }
+   
+   private void removeTheme(String themeName, AceThemes themes)
+   {
+      themes.removeTheme(
+         themeName,
+         errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
+      updateThemes(themes);
+      AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+      preview_.setTheme(currentTheme.getUrl());
+      removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
    }
    
    private void addTheme(String inputPath, ProgressIndicator indicator, AceThemes themes)
@@ -314,15 +324,26 @@ public class AppearancePreferencesPane extends PreferencesPane
          false);
    }
    
-   private void showCantAddThemeDialog(String themePath, ServerError error)
+   private void showCantAddThemeDialog(String themePath, String errorMessage)
    {
       StringBuilder msg = new StringBuilder();
       msg.append("Unable to add the theme '")
          .append(themePath)
          .append("'. The following error occurred: ")
-         .append(error.getMessage());
+         .append(errorMessage);
       
       globalDisplay_.showErrorMessage("Failed to Add Theme", msg.toString());
+   }
+   
+   private void showCantRemoveThemeDialog(String themeName, String errorMessage)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("Unable to remove the theme '")
+         .append(themeName)
+         .append("': ")
+         .append(errorMessage);
+      
+      globalDisplay_.showErrorMessage("Failed to Remove Theme", msg.toString());
    }
    
    @Override

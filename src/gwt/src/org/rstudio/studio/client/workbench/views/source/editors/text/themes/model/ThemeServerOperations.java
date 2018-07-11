@@ -11,4 +11,6 @@ public interface ThemeServerOperations
    void getThemes(ServerRequestCallback<JsArray<AceTheme>> requestCallback);
    
    void addTheme(ServerRequestCallback<String> request, String themeLocation);
+   
+   void removeTheme(ServerRequestCallback<Void> request, String themeName);
 }
