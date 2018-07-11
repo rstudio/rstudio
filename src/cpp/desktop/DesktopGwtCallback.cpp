@@ -233,6 +233,8 @@ QString resolveAliasedPath(const QString& path)
 
 } // anonymous namespace
 
+#ifndef Q_OS_MAC
+
 QString GwtCallback::getOpenFileName(const QString& caption,
                                      const QString& label,
                                      const QString& dir,
@@ -265,8 +267,6 @@ QString GwtCallback::getOpenFileName(const QString& caption,
    desktop::raiseAndActivateWindow(owner);
    return createAliasedPath(result);
 }
-
-#ifndef Q_OS_MAC
 
 namespace {
 
