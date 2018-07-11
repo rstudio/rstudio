@@ -114,7 +114,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       
       if (input.getHost().equals("Custom"))
       {
-         progressIndicator_.onProgress("Validating CRAN repo...");
+         progressIndicator_.onProgress("Validating CRAN repository...");
          
          mirrorOperations_.validateCranRepo(
             new ServerRequestCallback<Boolean>()
@@ -125,7 +125,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                   
                   if (!validated)
                   {
-                     progressIndicator_.onError("The given URL does not appear to be a valid CRAN repo");
+                     progressIndicator_.onError("The given URL does not appear to be a valid CRAN repository");
                      onValidated.execute(false);
                   }
                   else
@@ -214,7 +214,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
             panel.setWidget(listBox_);
             
             // set caption
-            setText("Choose Primary Repo");
+            setText("Choose Primary Repository");
           
             // update ok button on changed
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {

@@ -72,7 +72,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       management.add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "Primary CRAN repo:",
+            "Primary CRAN repository:",
             "",
             "Change...",
             null,
@@ -122,7 +122,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
 
-      Label secondaryReposLabel = new Label("Secondary repos:");
+      Label secondaryReposLabel = new Label("Secondary repositories:");
       secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
       secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
 
