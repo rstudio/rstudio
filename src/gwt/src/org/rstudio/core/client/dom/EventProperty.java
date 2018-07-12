@@ -1,7 +1,7 @@
 /*
- * Bool.java
+ * EventProperty.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,8 @@ package org.rstudio.core.client.dom;
 
 import com.google.gwt.dom.client.NativeEvent;
 
-public class Bool extends JavaScriptObject
+public class EventProperty
 {
-   protected Bool()
-   {
-   }
-   
-   public final native boolean getValue() /*-{
-      return this.value;
-   }-*/;
+   public static final native String key(NativeEvent event) /*-{ return event.key; }-*/;
 }
 

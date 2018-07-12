@@ -16,7 +16,7 @@ package org.rstudio.studio.client.application.events;
 
 import java.util.List;
 
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.KeySequence;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

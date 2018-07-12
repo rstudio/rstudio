@@ -37,8 +37,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -449,8 +449,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       resetIgnoredKeysHandle();
       Set<KeyCombination> keySet = new HashSet<KeyCombination>();
-      keySet.add(new KeyCombination(KeyCodes.KEY_N, KeyboardShortcut.CTRL));
-      keySet.add(new KeyCombination(KeyCodes.KEY_P, KeyboardShortcut.CTRL));
+      keySet.add(new KeyCombination("n", KeyCodes.KEY_N, KeyboardShortcut.CTRL));
+      keySet.add(new KeyCombination("p", KeyCodes.KEY_P, KeyboardShortcut.CTRL));
       handle_ = ShortcutManager.INSTANCE.addIgnoredKeys(keySet);
    }
    

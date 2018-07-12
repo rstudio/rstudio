@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.command.KeySequence;
 
 import java.util.List;
 
