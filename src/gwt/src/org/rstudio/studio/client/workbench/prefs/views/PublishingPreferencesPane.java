@@ -44,7 +44,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
-import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -229,12 +228,12 @@ public class PublishingPreferencesPane extends PreferencesPane
       caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
       add(caBundlePath_);
 
-      server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
+      server_.hasOrphanedAccounts(new ServerRequestCallback<Double>()
       {
          @Override
-         public void onResponseReceived(Int numOrphans)
+         public void onResponseReceived(Double numOrphans)
          {
-            missingPkgPanel.setVisible(numOrphans.getValue() > 0);
+            missingPkgPanel.setVisible(numOrphans > 0);
          }
 
          @Override

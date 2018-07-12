@@ -136,7 +136,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
-import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -4565,7 +4564,7 @@ public class RemoteServer implements Server
   
    @Override
    public void hasOrphanedAccounts(
-         ServerRequestCallback<Int> requestCallback)
+         ServerRequestCallback<Double> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             HAS_ORPHANED_ACCOUNTS,
