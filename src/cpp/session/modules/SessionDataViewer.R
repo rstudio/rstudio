@@ -130,7 +130,7 @@
         if (length(hist_vals) > 1)
         {
           # create histogram for brushing
-          h <- hist(hist_vals, plot = FALSE)
+          h <- hist(as.numeric(hist_vals), plot = FALSE)
           col_breaks <- h$breaks
           col_counts <- h$counts
 
