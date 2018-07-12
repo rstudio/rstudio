@@ -56,7 +56,7 @@ public:
       resize(geometry.width() * 0.7, geometry.height() * 0.7);
       
       setWindowTitle(QStringLiteral("RStudio DevTools"));
-      setAttribute(Qt::WA_DeleteOnClose, false);
+      setAttribute(Qt::WA_DeleteOnClose, true);
       setAttribute(Qt::WA_QuitOnClose, true);
       
       setUnifiedTitleAndToolBarOnMac(true);
