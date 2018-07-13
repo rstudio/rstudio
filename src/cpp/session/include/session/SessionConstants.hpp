@@ -96,6 +96,9 @@
 
 #define kServerSettingsDir "/etc/rstudio"
 
+#define kSessionProxyPort          "8789"
+#define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";
