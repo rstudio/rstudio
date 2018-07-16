@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.application.Desktop;
@@ -61,6 +62,8 @@ public class EventBus extends HandlerManager
    
    private void fireEvent(GwtEvent<?> event, boolean fromOtherWindow)
    {
+      Debug.logToRConsole(event.toDebugString());
+      
       // if this is a cross-window event that originated in this satellite 
       // window (and wasn't itself forwarded from somewhere else), pass it to
       // the main window

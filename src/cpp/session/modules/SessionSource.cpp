@@ -1241,6 +1241,18 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
    return r::sexp::create(success, &protect);
 }
 
+SEXP rs_readSourceDocument(SEXP idSEXP)
+{
+   std::string id = r::sexp::asString(idSEXP);
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   Error error = source_database::get(id, pDoc);
+   if (error)
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(pDoc->contents(), &protect);
+}
+
 } // anonymous namespace
 
 Error clientInitDocuments(core::json::Array* pJsonDocs)
@@ -1298,6 +1310,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
+   RS_REGISTER_CALL_METHOD(rs_readSourceDocument, 1);
 
    // install rpc methods
    using boost::bind;

@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -91,6 +92,43 @@ public class InfoBar extends Composite
    public int getHeight()
    {
       return 19;
+   }
+   
+   public void showRequiredPackagesMissingWarning(List<String> packages,
+                                                  CommandWithArg<Boolean> onPackageInstallCompleted)
+   {
+      String message;
+      
+      int n = packages.size();
+      if (n == 1)
+      {
+         message = "Package " + packages.get(0) + " required but is not installed.";
+      }
+      else if (n == 2)
+      {
+         message = "Packages " + packages.get(0) + " and " + packages.get(1) + " required but are not installed.";
+      }
+      else if (n == 3)
+      {
+         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + packages.get(2) + " required but are not installed.";
+      }
+      else
+      {
+         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + (n - 2) + " others are required but not installed.";
+      }
+      
+      label_.setText(message);
+      
+      if (labelRight_.getWidgetCount() == 0)
+      {
+         Label anchor = new Label("Install");
+         anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
+         anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
+         anchor.getElement().getStyle().setCursor(Cursor.POINTER);
+         anchor.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
+         anchor.addClickHandler((ClickEvent event) -> { RStudioGinjector.INSTANCE.getDependencyManager().installPackages(packages, onPackageInstallCompleted); });
+         labelRight_.add(anchor);
+      }
    }
    
    public void showReadOnlyWarning(List<String> alternatives)

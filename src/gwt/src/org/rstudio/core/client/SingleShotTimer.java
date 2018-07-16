@@ -1,7 +1,7 @@
 /*
- * WarningBarDisplay.java
+ * SingleShotTimer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,16 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.core.client;
 
-import java.util.List;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
-import com.google.gwt.user.client.ui.IsWidget;
-
-public interface WarningBarDisplay extends IsWidget
+public class SingleShotTimer
 {
-   void showReadOnlyWarning(List<String> alternatives);
-   void showRequiredPackagesMissingWarning(List<String> packages);
-   void showWarningBar(String message);
-   void hideWarningBar();
+   public static void fire(final int delayMs, final Command command)
+   {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            command.execute();
+         }
+      }.schedule(delayMs);
+   }
 }

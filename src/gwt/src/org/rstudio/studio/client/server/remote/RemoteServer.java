@@ -1706,6 +1706,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_PLUMBER_API, params, requestCallback);
    }
    
+   public void discoverPackageDependencies(String docId,
+                                           String fileType,
+                                           ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(docId)
+            .add(fileType)
+            .get();
+      
+      sendRequest(RPC_SCOPE, DISCOVER_PACKAGE_DEPENDENCIES, params, requestCallback);
+            
+   }
+   
    public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
                                          ServerRequestCallback<Void> requestCallback)
    {
@@ -5618,6 +5631,7 @@ public class RemoteServer implements Server
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
    private static final String PACKAGE_SKELETON = "package_skeleton";
+   private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;

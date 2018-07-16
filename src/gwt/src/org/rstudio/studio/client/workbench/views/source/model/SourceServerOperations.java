@@ -252,4 +252,9 @@ public interface SourceServerOperations extends FilesServerOperations,
    public void createPlumberAPI(String apiName,
                                 String apiDir,
                                 ServerRequestCallback<JsArrayString> requestCallback);
+   
+   void discoverPackageDependencies(String id,
+                                    String fileType,
+                                    ServerRequestCallback<JsArrayString> requestCallback);
+   
 }

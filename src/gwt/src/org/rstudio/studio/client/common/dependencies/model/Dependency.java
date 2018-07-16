@@ -27,6 +27,11 @@ public class Dependency extends JavaScriptObject
    {
    }
    
+   public static Dependency cranPackage(String name)
+   {
+      return cranPackage(name, "", false);
+   }
+   
    public static Dependency cranPackage(String name, 
                                         String version)
    {
