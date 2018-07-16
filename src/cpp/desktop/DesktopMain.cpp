@@ -375,6 +375,13 @@ int main(int argc, char* argv[])
          std::string stdOut = processResult.stdOut;
          if (!stdOut.empty())
          {
+            // NOTE: temporarily backed out as it appears the rasterization
+            // issues do not occur anymore with Qt 5.11.1; re-enable if we
+            // receive more reports in the wild.
+            //
+            // https://github.com/rstudio/rstudio/issues/2176
+            
+            /*
             std::vector<std::string> rasterBlacklist = {
                "NVIDIA GeForce GT 650M",
                "NVIDIA GeForce GT 750M",
@@ -390,6 +397,7 @@ int main(int argc, char* argv[])
                   break;
                }
             }
+            */
             
             std::vector<std::string> gpuBlacklist = {
                "AMD FirePro"
