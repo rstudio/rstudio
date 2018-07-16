@@ -1019,8 +1019,12 @@ PackratContext packratContext()
       std::string projectPath =
          string_utils::utf8ToSystem(projectDir.absolutePath());
       
-      // a project is packified if a lockfile exists (same logic used in packrat)
-      context.packified = projectDir.complete("packrat").complete("packrat.lock").exists();
+      // check and see if the project has been packified
+      Error error = r::exec::RFunction(".rs.isPackified")
+            .addParam(projectPath)
+            .call(&context.packified);
+      if (error)
+         LOG_ERROR(error);
 
       if (context.packified)
       {
