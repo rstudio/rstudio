@@ -202,9 +202,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    if (!s_forcePackageRebuild)
    {
-      for (size_t i=0; i<events.size(); i++)
-      {
-         FilePath filePath(events[i].fileInfo().absolutePath());
+      for (const auto &event : events) {
+         FilePath filePath(event.fileInfo().absolutePath());
          onFileChanged(filePath);
       }
    }
@@ -488,13 +487,12 @@ private:
                                                    "roxygen2", "4.1.0.9001");
       if (!haveVignetteRoclet)
       {
-         std::vector<std::string>::iterator it =
-                      std::find(roclets.begin(), roclets.end(), "vignette");
+         auto it = std::find(roclets.begin(), roclets.end(), "vignette");
          if (it != roclets.end())
             roclets.erase(it);
       }
-
-      BOOST_FOREACH(std::string& roclet, roclets)
+      
+      for (std::string& roclet : roclets)
       {
          roclet = "'" + roclet + "'";
       }
@@ -1137,7 +1135,7 @@ private:
                   const std::string& type)
    {
       // normalize paths between all tests and single test
-      std::string shinyTestName = "";
+      std::string shinyTestName;
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.filename();
         shinyPath = shinyPath.parent().parent();
@@ -1458,9 +1456,7 @@ private:
    }
 
 public:
-   virtual ~Build()
-   {
-   }
+   virtual ~Build() = default;
 
    bool isRunning() const { return isRunning_; }
 
@@ -1480,7 +1476,7 @@ public:
    std::string outputAsText()
    {
       std::string output;
-      BOOST_FOREACH(const module_context::CompileOutput& compileOutput, output_)
+      for (const module_context::CompileOutput& compileOutput : output_)
       {
          output.append(compileOutput.output);
       }
@@ -1506,8 +1502,8 @@ private:
       boost::algorithm::split(lines, output,  boost::algorithm::is_any_of("\n"));
 
       // apply filter to each line
-      int size = static_cast<int>(lines.size());
-      for (int i=0; i<size; i++)
+      size_t size = lines.size();
+      for (size_t i = 0; i < size; i++)
       {
          // apply filter
          using namespace module_context;
