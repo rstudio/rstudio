@@ -237,6 +237,10 @@
 
   e <- new.env(parent = emptyenv())
   load(file = path, envir = e)
+  
+  # this works around a strange bug in R 3.5.1 on Windows
+  # where output can be mis-encoded after a save / load
+  cat(NULL, sep = "")
 
   data <- head(e$x, getOption("max.print", 1000))
   data <- if (is.null(data)) as.data.frame(list()) else data
