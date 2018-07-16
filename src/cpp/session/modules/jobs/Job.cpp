@@ -71,8 +71,8 @@ Job::Job(const std::string& id,
    completed_(0),
    autoRemove_(autoRemove),
    listening_(false),
-   actions_(actions),
-   show_(show)
+   show_(show),
+   actions_(actions)
 {
    setState(state);
 }
@@ -86,8 +86,8 @@ Job::Job():
    completed_(0),
    autoRemove_(true),
    listening_(false),
-   actions_(R_NilValue),
-   show_(true)
+   show_(true),
+   actions_(R_NilValue)
 {
 }
 
@@ -445,7 +445,7 @@ Error Job::executeAction(const std::string& action)
    return function.call();
 }
 
-} // namepsace jobs
+} // namespace jobs
 } // namespace modules
 } // namespace session
 } // namespace rstudio

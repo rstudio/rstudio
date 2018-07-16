@@ -64,7 +64,7 @@ void handleHelpHomeRequest(const core::http::Request& request,
 
 
 
-} // namepsace help
+} // namespace help
 } // namespace modules
 } // namespace session
 } // namespace rstudio

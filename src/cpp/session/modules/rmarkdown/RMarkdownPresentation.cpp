@@ -206,7 +206,7 @@ void ammendResults(const std::string& formatName,
 
 
 } // namespace presentation
-} // namepsace rmarkdown
+} // namespace rmarkdown
 } // namespace modules
 } // namespace session
 } // namespace rstudio

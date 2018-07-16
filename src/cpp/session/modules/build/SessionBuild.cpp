@@ -1256,7 +1256,7 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         // show the user the buld command
+         // show the user the build command
          enqueCommandString(checkCmd.commandString());
 
          // run the check
