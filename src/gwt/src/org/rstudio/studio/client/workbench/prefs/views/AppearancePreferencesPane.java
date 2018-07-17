@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -51,7 +52,8 @@ public class AppearancePreferencesPane extends PreferencesPane
                                     final AceThemes themes,
                                     WorkbenchContext workbenchContext,
                                     GlobalDisplay globalDisplay,
-                                    DependencyManager dependencyManager)
+                                    DependencyManager dependencyManager,
+                                    FileDialogs fileDialogs)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
@@ -177,6 +179,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
+         @Override
          public void onChange(ChangeEvent event)
          {
             AceTheme aceTheme = themeList_.get(theme_.getValue());
@@ -188,13 +191,16 @@ public class AppearancePreferencesPane extends PreferencesPane
    
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
       addThemeButton_ = new ThemedButton("Add...", event ->
-         RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+         fileDialogs.openFile(
             "Theme Files (*.tmTheme *.rstheme)",
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
             workbenchContext.getCurrentWorkingDir(),
-            "Theme Files (*.tmTheme *.rstheme)",
+            "tmTheme Files (*.tmTheme);;rstheme Files (*.rstheme)",
             (input, indicator) ->
             {
+               if (input == null)
+                  return;
+               
                String inputStem = input.getStem();
                String inputPath = input.getPath();
                boolean isTmTheme = StringUtil.equalsIgnoreCase(".tmTheme", input.getExtension());
@@ -202,7 +208,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                for (AceTheme theme: themeList_.values())
                {
                   if (theme.isLocalCustomTheme() &&
-                     StringUtil.equals(theme.getFileStem(), inputStem))
+                     StringUtil.equalsIgnoreCase(theme.getFileStem(), inputStem))
                   {
                      showThemeExistsDialog(inputStem, () -> addTheme(inputPath, themes, indicator, isTmTheme));
                      found = true;
@@ -259,27 +265,29 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private void removeTheme(String themeName, AceThemes themes)
    {
-      themes.removeTheme(
-         themeName,
-         errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
       if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
       {
-         currentTheme = AceTheme.createDefault();
-         uiPrefs_.theme().setGlobalValue(currentTheme);
+         showCantRemoveActiveThemeDialog(currentTheme.getName());
       }
-      updateThemes(currentTheme.getName(), themes, getProgressIndicator());
+      else
+      {
+         themes.removeTheme(
+            themeName,
+            errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
+         updateThemes(currentTheme, themes, getProgressIndicator());
+      }
    }
    
    private void addTheme(String inputPath, AceThemes themes, ProgressIndicator indicator, boolean isTmTheme)
    {
       if (isTmTheme)
-         dependencyManager_.withXml2(
-            "Adding a TM Theme",
+         dependencyManager_.withThemes(
+            "Converting a tmTheme to an rstheme",
             () -> themes.addTheme(
                inputPath,
                result -> updateThemes(result, themes, indicator),
-               error -> showCantRemoveThemeDialog(inputPath, error)));
+               error -> showCantAddThemeDialog(inputPath, error)));
       else
          themes.addTheme(
             inputPath,
@@ -300,20 +308,27 @@ public class AppearancePreferencesPane extends PreferencesPane
          getProgressIndicator());
    }
    
-   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
+   private void updateThemes(AceTheme focusedTheme, AceThemes themes, ProgressIndicator indicator)
    {
       themes.getThemes(
          themeList->
          {
             themeList_ = themeList;
-            AceTheme currentTheme =themeList_.get(focusedThemeName);
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(focusedThemeName);
-            preview_.setTheme(currentTheme.getUrl());
-            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
+            theme_.setValue(focusedTheme.getName());
+            preview_.setTheme(focusedTheme.getUrl());
+            removeThemeButton_.setEnabled(!focusedTheme.isDefaultTheme());
          },
          indicator);
+   }
+   
+   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
+   {
+      // The focused theme should come from the list at some point, so it shouldn't be possible to
+      // not be in the list.
+      assert(themeList_.containsKey(focusedThemeName));
+      updateThemes(themeList_.get(focusedThemeName), themes, indicator);
    }
    
    private void updatePreviewZoomLevel()
@@ -361,6 +376,17 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(errorMessage);
       
       globalDisplay_.showErrorMessage("Failed to Remove Theme", msg.toString());
+   }
+   
+   private void showCantRemoveActiveThemeDialog(String themeName)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("The theme \"")
+         .append(themeName)
+         .append("\" cannot be removed because it is currently in use. To delete this theme,")
+         .append(" please change the active theme and retry.");
+      
+      globalDisplay_.showErrorMessage("Cannot Remove Active Theme", msg.toString());
    }
    
    @Override

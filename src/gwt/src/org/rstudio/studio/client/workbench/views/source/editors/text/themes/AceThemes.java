@@ -131,7 +131,8 @@ public class AceThemes
                themes_.put(theme.getName(), theme);
             }
             
-            Debug.logWarning("Server was unable to find any installed themes.");
+            if (len == 0)
+               Debug.logWarning("Server was unable to find any installed themes.");
             themeConsumer.accept(themes_);
          }
       });

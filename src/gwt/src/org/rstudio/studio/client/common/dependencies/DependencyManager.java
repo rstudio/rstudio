@@ -127,12 +127,15 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                        onComplete);
    }
    
-   public void withXml2(String userAction, final Command command)
+   public void withThemes(String userAction, final Command command)
    {
       withDependencies(
          "xml2",
          userAction,
-         new Dependency[] { Dependency.cranPackage("xml2", "1.2.0") },
+         new Dependency[] {
+            Dependency.cranPackage("xml2", "1.2.0"),
+            Dependency.cranPackage("highlight", "0.4.7.2")
+         },
          true,
          succeeded ->
          {

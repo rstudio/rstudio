@@ -1049,9 +1049,14 @@
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
 .rs.addApiFunction("convertTheme", api.convertTheme <- function(themePath, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
    # Require XML package for parsing the tmtheme files.
+   missingLibraryMsg <- "Taking this action requires the %pkg% library. Please run 'install.packages(\"%pkg%\")' before continuing."
    if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
-      stop("Taking this action requires the xml2 library. Please run 'install.packages(\"xml2\")' before continuing.")
+      stop(gsub("%pkg%", "xml2", missingLibraryMsg, perl = TRUE))
+   }
+   if (!suppressWarnings(require("highlight", quietly = TRUE)))
+   {
+      stop(gsub("%pkg%", "highlight", missingLibraryMsg, perl = TRUE))
    }
    
    .rs.convertTheme(themePath, add, outputLocation, apply, force, globally)
