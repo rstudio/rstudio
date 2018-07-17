@@ -130,7 +130,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withThemes(String userAction, final Command command)
    {
       withDependencies(
-         "xml2",
+         "Converting Theme",
          userAction,
          new Dependency[] {
             Dependency.cranPackage("xml2", "1.2.0"),
