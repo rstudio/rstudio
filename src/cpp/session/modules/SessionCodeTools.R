@@ -2138,7 +2138,28 @@
          return(TRUE)
       }
       
-      return(FALSE)
+      FALSE
+      
+   }
+   
+   handleRequireNamespaceCall <- function(node) {
+      
+      if (!is.call(node))
+         return(FALSE)
+      
+      if (!identical(node[[1]], as.name("requireNamespace")))
+         return(FALSE)
+      
+      matched <- .rs.tryCatch(match.call(base::requireNamespace, node))
+      if (inherits(matched, "error"))
+         return(FALSE)
+      
+      if (is.character(matched$package) && length(matched$package == 1)) {
+         discoveries[[matched$package]] <<- TRUE
+         return(TRUE)
+      }
+      
+      FALSE
       
    }
    
@@ -2169,13 +2190,14 @@
       
       # all looks good; add the discovery
       discoveries[[package]] <<- TRUE
-      return(TRUE)
+      TRUE
       
    }
    
    .rs.recursiveWalk(parsed, function(node) {
       handleLibraryRequireCall(node) ||
-      handleColonCall(node)
+      handleColonCall(node) ||
+      handleRequireNamespaceCall(node)
    })
    
    packages <- ls(envir = discoveries)
