@@ -210,7 +210,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                   if (theme.isLocalCustomTheme() &&
                      StringUtil.equalsIgnoreCase(theme.getFileStem(), inputStem))
                   {
-                     showThemeExistsDialog(inputStem, () -> addTheme(inputPath, themes, indicator, isTmTheme));
+                     showThemeExistsDialog(inputStem, () -> addTheme(inputPath, themes, isTmTheme));
                      found = true;
                      break;
                   }
@@ -218,7 +218,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                
                if (!found)
                {
-                  addTheme(inputPath, themes, indicator, isTmTheme);
+                  addTheme(inputPath, themes, isTmTheme);
                }
                
                indicator.onCompleted();
@@ -275,23 +275,23 @@ public class AppearancePreferencesPane extends PreferencesPane
          themes.removeTheme(
             themeName,
             errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
-         updateThemes(currentTheme.getName(), themes, getProgressIndicator());
+         updateThemes(currentTheme.getName(), themes);
       }
    }
    
-   private void addTheme(String inputPath, AceThemes themes, ProgressIndicator indicator, boolean isTmTheme)
+   private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
    {
       if (isTmTheme)
          dependencyManager_.withThemes(
             "Converting a tmTheme to an rstheme",
             () -> themes.addTheme(
                inputPath,
-               result -> updateThemes(result, themes, indicator),
+               result -> updateThemes(result, themes),
                error -> showCantAddThemeDialog(inputPath, error)));
       else
          themes.addTheme(
             inputPath,
-            result -> updateThemes(result, themes, indicator),
+            result -> updateThemes(result, themes),
             error -> showCantAddThemeDialog(inputPath, error));
    }
    
@@ -308,7 +308,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          getProgressIndicator());
    }
    
-   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
+   private void updateThemes(String focusedThemeName, AceThemes themes)
    {
       themes.getThemes(
          themeList->
@@ -324,7 +324,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(focusedTheme.getUrl());
             removeThemeButton_.setEnabled(!focusedTheme.isDefaultTheme());
          },
-         indicator);
+         getProgressIndicator());
    }
    
    private void updatePreviewZoomLevel()
