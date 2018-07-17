@@ -195,7 +195,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             "Theme Files (*.tmTheme *.rstheme)",
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
             workbenchContext.getCurrentWorkingDir(),
-            "tmTheme Files (*.tmTheme);;rstheme Files (*.rstheme)",
+            "Theme Files (*.tmTheme *.rstheme)",
             (input, indicator) ->
             {
                if (input == null)
