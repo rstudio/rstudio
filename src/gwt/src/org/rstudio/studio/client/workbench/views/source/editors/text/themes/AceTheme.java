@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.regex.Pattern;
 
 /**
