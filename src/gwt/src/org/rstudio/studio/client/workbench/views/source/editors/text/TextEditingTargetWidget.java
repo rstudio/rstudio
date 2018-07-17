@@ -37,6 +37,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -871,10 +872,26 @@ public class TextEditingTargetWidget
    @Override
    public void showRequiredPackagesMissingWarning(List<String> packages)
    {
+      if (docUpdateSentinel_.hasProperty("disableDependencyDiscovery"))
+      {
+         String disableDependencyDiscovery = docUpdateSentinel_.getProperty("disableDependencyDiscovery");
+         if (StringUtil.equals(disableDependencyDiscovery, "1"))
+         {
+            return;
+         }
+      }
+      
+      CommandWithArg<Boolean> onInstallComplete = (Boolean success) -> {
+         hideWarningBar();
+      };
+      
+      Command onDismiss = () -> {
+         docUpdateSentinel_.setProperty("disableDependencyDiscovery", "1");
+         hideWarningBar();
+      };
+      
       showWarningImpl(() -> {
-         warningBar_.showRequiredPackagesMissingWarning(packages, (Boolean success) -> {
-            hideWarningBar();
-         });
+         warningBar_.showRequiredPackagesMissingWarning(packages, onInstallComplete, onDismiss);
       });
    }
    

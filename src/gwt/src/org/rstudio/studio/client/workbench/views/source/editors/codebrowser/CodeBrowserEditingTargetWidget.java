@@ -311,11 +311,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    @Override
    public void showRequiredPackagesMissingWarning(List<String> packages)
    {
-      showWarningImpl(() -> {
-         warningBar_.showRequiredPackagesMissingWarning(packages, (Boolean success) -> {
-            hideWarningBar();
-         });
-      });
+      // no-op for code browser targets
    }
    
    @Override

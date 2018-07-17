@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -95,7 +96,8 @@ public class InfoBar extends Composite
    }
    
    public void showRequiredPackagesMissingWarning(List<String> packages,
-                                                  CommandWithArg<Boolean> onPackageInstallCompleted)
+                                                  CommandWithArg<Boolean> onPackageInstallCompleted,
+                                                  Command onDismiss)
    {
       String message;
       
@@ -121,13 +123,13 @@ public class InfoBar extends Composite
       
       if (labelRight_.getWidgetCount() == 0)
       {
-         Label anchor = new Label("Install");
-         anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
-         anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
-         anchor.getElement().getStyle().setCursor(Cursor.POINTER);
-         anchor.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
-         anchor.addClickHandler((ClickEvent event) -> { RStudioGinjector.INSTANCE.getDependencyManager().installPackages(packages, onPackageInstallCompleted); });
-         labelRight_.add(anchor);
+         labelRight_.add(label("Install", () -> {
+            RStudioGinjector.INSTANCE.getDependencyManager().installPackages(packages, onPackageInstallCompleted);
+         }));
+         
+         labelRight_.add(label("Don't Show Again", () -> {
+            onDismiss.execute();
+         }));
       }
    }
    
@@ -142,21 +144,27 @@ public class InfoBar extends Composite
          label_.setText("This document is read only. Generated from:");
          for (String alternative : alternatives)
          {
-            Label anchor = new Label(alternative);
-            anchor.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
-            anchor.getElement().getStyle().setPaddingLeft(5, Unit.PX);
-            anchor.getElement().getStyle().setCursor(Cursor.POINTER);
-            anchor.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
-            anchor.addClickHandler((ClickEvent event) -> {
+            labelRight_.add(label(alternative, () -> {
                Session session = RStudioGinjector.INSTANCE.getSession();
                FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
                FileSystemItem projDir = session.getSessionInfo().getActiveProjectDir();
                FileSystemItem targetItem = FileSystemItem.createFile(projDir.completePath(alternative));
                registry.editFile(targetItem);
-            });
-            labelRight_.add(anchor);
+            }));
          }
       }
+   }
+   
+   private Label label(String text, Command onClick)
+   {
+      Label label = new Label(text);
+      label.getElement().getStyle().setTextDecoration(TextDecoration.UNDERLINE);
+      label.getElement().getStyle().setPaddingLeft(5, Unit.PX);
+      label.getElement().getStyle().setCursor(Cursor.POINTER);
+      label.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
+      label.addClickHandler((ClickEvent event) -> { onClick.execute(); });
+      return label;
+      
    }
 
    @UiField
