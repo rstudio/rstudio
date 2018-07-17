@@ -275,7 +275,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          themes.removeTheme(
             themeName,
             errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
-         updateThemes(currentTheme, themes, getProgressIndicator());
+         updateThemes(currentTheme.getName(), themes, getProgressIndicator());
       }
    }
    
@@ -308,12 +308,16 @@ public class AppearancePreferencesPane extends PreferencesPane
          getProgressIndicator());
    }
    
-   private void updateThemes(AceTheme focusedTheme, AceThemes themes, ProgressIndicator indicator)
+   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
    {
       themes.getThemes(
          themeList->
          {
             themeList_ = themeList;
+            
+            // Focused theme should be in the list by now.
+            assert(themeList_.containsKey(focusedThemeName));
+            AceTheme focusedTheme = themeList.get(focusedThemeName);
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(focusedTheme.getName());
@@ -321,14 +325,6 @@ public class AppearancePreferencesPane extends PreferencesPane
             removeThemeButton_.setEnabled(!focusedTheme.isDefaultTheme());
          },
          indicator);
-   }
-   
-   private void updateThemes(String focusedThemeName, AceThemes themes, ProgressIndicator indicator)
-   {
-      // The focused theme should come from the list at some point, so it shouldn't be possible to
-      // not be in the list.
-      assert(themeList_.containsKey(focusedThemeName));
-      updateThemes(themeList_.get(focusedThemeName), themes, indicator);
    }
    
    private void updatePreviewZoomLevel()
