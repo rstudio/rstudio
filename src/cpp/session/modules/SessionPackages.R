@@ -16,6 +16,13 @@
 # cached URLs for package NEWS files
 .rs.setVar("packageNewsURLsEnv", new.env(parent = emptyenv()))
 
+# cached information on available R packages
+.rs.setVar("availablePackagesEnv", new.env(parent = emptyenv()))
+
+# for asynchronous requests on available package information,
+# map the repository string to the directory containing produced output
+.rs.setVar("availablePackagesPendingEnv", new.env(parent = emptyenv()))
+
 # a vectorized function that takes any number of paths and aliases the home
 # directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
 # paths outside the home directory untouched
@@ -1356,6 +1363,120 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # delegate to 'setInternet2'
    utils::setInternet2(value)
+})
+
+.rs.addFunction("availablePackages", function()
+{
+   # figure out the current state. possibilities:
+   #
+   # - STALE:    we need to request available packages
+   # - PENDING:  another process is requesting packages
+   # - READY:    available packages ready to read
+   # - CACHED:   available packages ready in cache
+   #
+   reposString <- paste(deparse(getOption("repos")), collapse = " ")
+   state <- .rs.availablePackagesState(reposString)
+   value <- switch(
+      state,
+      STALE   = .rs.onAvailablePackagesStale(reposString),
+      PENDING = .rs.onAvailablePackagesPending(reposString),
+      READY   = .rs.onAvailablePackagesReady(reposString),
+      CACHED  = .rs.onAvailablePackagesCached(reposString),
+      NULL
+   )
+   
+   list(state = state, value = value)
+})
+
+.rs.addFunction("availablePackagesState", function(reposString)
+{
+   # do we have a cache entry? if so, we're ready to go
+   entry <- .rs.availablePackagesEnv[[reposString]]
+   if (!is.null(entry))
+      return("CACHED")
+   
+   # do we have a pending dir? if none, we're stale
+   dir <- .rs.availablePackagesPendingEnv[[reposString]]
+   if (is.null(dir))
+      return("STALE")
+   
+   # does the packages.rds file exist? if so we're done
+   packages <- file.path(dir, "packages.rds")
+   if (file.exists(packages))
+      return("READY")
+   
+   # is the directory old? if so, assume the prior R process launched
+   # to produce available.packages crashed or similar
+   info <- file.info(dir)
+   diff <- difftime(Sys.time(), info$mtime, units = "secs")
+   if (diff > 120)
+      return("STALE")
+   
+   # we have a directory, and it's not too old -- we're waiting
+   # for a new process to finish
+   return("PENDING")
+})
+
+.rs.addFunction("onAvailablePackagesStale", function(reposString)
+{
+   # prepare directory for discovery of available packages
+   dir <- tempfile("rstudio-available-packages-")
+   dir.create(dir, showWarnings = FALSE)
+   .rs.availablePackagesPendingEnv[[reposString]] <- dir
+   
+   # move there
+   owd <- setwd(dir)
+   on.exit(setwd(owd), add = TRUE)
+   
+   # save required state information
+   state <- list2env(options("pkgType", "repos"))
+   save(list = ls(envir = state), envir = state, file = "state.Rdata")
+   
+   # define our helper script that will download + save available.packages
+   script <- '
+load("state.Rdata")
+options(repos = repos, pkgType = pkgType)
+saveRDS(available.packages(), file = "packages.rds")
+'
+   writeLines(script, con = "script.R")
+   
+   # run the script
+   R <- file.path(R.home("bin"), "R")
+   args <- c("--vanilla", "--slave", "-f", "script.R")
+   system2(R, args, stdout = FALSE, stderr = FALSE, wait = FALSE)
+   
+   # NULL indicates we don't have available packages yet
+   return(NULL)
+   
+})
+
+.rs.addFunction("onAvailablePackagesPending", function(reposString)
+{
+   # nothing to do here
+   invisible(NULL)
+})
+
+.rs.addFunction("onAvailablePackagesReady", function(reposString)
+{
+   # get the directory and read packages.rds
+   dir <- .rs.availablePackagesPendingEnv[[reposString]]
+   packages <- file.path(dir, "packages.rds")
+   data <- readRDS(packages)
+   
+   # add it to the cache
+   .rs.availablePackagesEnv[[reposString]] <- data
+   
+   # remove state directory and mark as no longer pending
+   unlink(dir, recursive = TRUE)
+   .rs.availablePackagesPendingEnv[[reposString]] <- NULL
+   
+   # we're done!
+   data
+})
+
+.rs.addFunction("onAvailablePackagesCached", function(reposString)
+{
+   .rs.availablePackagesEnv[[reposString]]
 })
 
 .rs.addFunction("parseSecondaryReposIni", function(conf) {

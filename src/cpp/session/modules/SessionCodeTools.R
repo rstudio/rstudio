@@ -2080,11 +2080,18 @@
 
 .rs.addFunction("readSourceDocument", function(id)
 {
-   .Call("rs_readSourceDocument", as.character(id), PACKAGE = "(embedding)")
+   contents <- .Call("rs_readSourceDocument", as.character(id), PACKAGE = "(embedding)")
+   Encoding(contents) <- "UTF-8"
+   contents
 })
 
 .rs.addFunction("discoverPackageDependencies", function(id, type)
 {
+   # check to see if we have available packages -- if none, bail
+   available <- .rs.availablePackages()
+   if (is.null(available$value))
+      return(character())
+   
    # attempt to read the file
    contents <- .rs.tryCatch(.rs.readSourceDocument(id))
    if (inherits(contents, "error"))
@@ -2201,6 +2208,9 @@
    })
    
    packages <- ls(envir = discoveries)
+   
+   # keep only packages that are available in an active repository
+   packages <- packages[packages %in% rownames(available$value)]
    
    # figure out which packages aren't actually installed
    info <- .rs.listInstalledPackages()
