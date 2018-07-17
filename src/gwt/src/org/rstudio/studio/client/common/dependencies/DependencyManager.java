@@ -751,7 +751,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing Keyring",
         "Using keyring", 
         new Dependency[] {
-           Dependency.cranPackage("keyring", "1.0.0", true)
+           Dependency.cranPackage("keyring", "1.1.0", true)
         }, 
         true, // update keyring if needed
         new CommandWithArg<Boolean>()
