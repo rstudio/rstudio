@@ -384,7 +384,7 @@ Error addTheme(const json::JsonRpcRequest& request,
       return error;
    }
 
-   FilePath themeFile = new FilePath(themeToAdd);
+   FilePath themeFile(themeToAdd);
 
    // Find out whether to convert or add.
    std::string funcName = ".rs.convertTheme";
@@ -400,14 +400,15 @@ Error addTheme(const json::JsonRpcRequest& request,
       funcName = ".rs.addTheme";
       isConversion = false;
    }
-   else if (!themeFile.extensionLowerCase() == ".tmtheme")
+   else if (!(themeFile.extensionLowerCase() == ".tmtheme"))
    {
       assert(false);
       error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
       error.addProperty("queryParam", themeToAdd);
-      error.addProperty("details", "Invalid file type for theme.")
+      error.addProperty("details", "Invalid file type for theme.");
    }
 
+   std::string result;
    if (!error)
    {
       r::exec::RFunction rfunc(funcName);
@@ -421,16 +422,17 @@ Error addTheme(const json::JsonRpcRequest& request,
          rfunc.addParam("add", true);
          rfunc.addParam("outputLocation", R_NilValue);
       }
-
-      SEXP result;
+      SEXP sexpResult;
       r::sexp::Protect protect;
-      error = rfunc.call(&result, &protect);
+      error = rfunc.call(&sexpResult, &protect);
+      if (!error)
+         error = r::sexp::extract(sexpResult, result);
    }
 
    if (error)
       LOG_ERROR(error);
    else
-      pResponse->setResult(r::sexp::asString(result));
+      pResponse->setResult(result);
 
    return error;
 }
