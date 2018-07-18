@@ -1429,6 +1429,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("onAvailablePackagesStale", function(reposString)
 {
+   # check and see if R has already queried available packages;
+   # if so we can ask R for available packages as it will use
+   # the cache
+   paths <- sprintf(
+      "%s/repos_%s.rds",
+      tempdir(),
+      URLencode(contrib.url(getOption("repos")), TRUE)
+   )
+   
+   if (all(file.exists(paths))) {
+      
+      # request available packages
+      packages <- available.packages(max_repo_cache_age = Inf)
+      
+      # add it to the cache
+      .rs.availablePackagesEnv[[reposString]] <- packages
+      
+      # we're done!
+      packages
+   }
+   
    # prepare directory for discovery of available packages
    dir <- tempfile("rstudio-available-packages-")
    dir.create(dir, showWarnings = FALSE)
