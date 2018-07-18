@@ -376,44 +376,57 @@ Error getThemes(const json::JsonRpcRequest& request,
 Error addTheme(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string themeToAdd = request.params.at(0).get_str();
+   std::string themeToAdd;
+   Error error = json::readParams(request.params, &themeToAdd);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
 
-   boost::regex rsThemeRegex(".*\\.rstheme$", boost::regex::icase);
-   boost::regex tmThemeRegex(".*\\.tmTheme$", boost::regex::icase);
-
-   Error error = Success();
+   FilePath themeFile = new FilePath(themeToAdd);
 
    // Find out whether to convert or add.
    std::string funcName = ".rs.convertTheme";
    bool isConversion = true;
-   if (boost::regex_match(themeToAdd, rsThemeRegex))
+   if (!themeFile.exists())
+   {
+      error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
+      error.addProperty("queryParam", themeToAdd);
+      error.addProperty("details", "Theme file does not exist.");
+   }
+   else if (themeFile.extensionLowerCase() == ".rstheme")
    {
       funcName = ".rs.addTheme";
       isConversion = false;
    }
-   else if (!boost::regex_match(themeToAdd, tmThemeRegex))
+   else if (!themeFile.extensionLowerCase() == ".tmtheme")
    {
       assert(false);
       error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
       error.addProperty("queryParam", themeToAdd);
-      LOG_ERROR(error);
+      error.addProperty("details", "Invalid file type for theme.")
    }
 
-   r::exec::RFunction rfunc(funcName);
-   rfunc.addParam("themePath", themeToAdd);
-   rfunc.addParam("apply", false);
-   rfunc.addParam("force", true);
-   rfunc.addParam("globally", false);
-
-   if (isConversion)
+   if (!error)
    {
-      rfunc.addParam("add", true);
-      rfunc.addParam("outputLocation", R_NilValue);
+      r::exec::RFunction rfunc(funcName);
+      rfunc.addParam("themePath", themeToAdd);
+      rfunc.addParam("apply", false);
+      rfunc.addParam("force", true);
+      rfunc.addParam("globally", false);
+
+      if (isConversion)
+      {
+         rfunc.addParam("add", true);
+         rfunc.addParam("outputLocation", R_NilValue);
+      }
+
+      SEXP result;
+      r::sexp::Protect protect;
+      error = rfunc.call(&result, &protect);
    }
 
-   SEXP result;
-   r::sexp::Protect protect;
-   error = rfunc.call(&result, &protect);
    if (error)
       LOG_ERROR(error);
    else

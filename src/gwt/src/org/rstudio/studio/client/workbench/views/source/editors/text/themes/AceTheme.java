@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 
 /**
@@ -70,12 +71,6 @@ public class AceTheme extends JavaScriptObject
    
    public final String getFileStem()
    {
-      // We want everything between the last `/` and the `.rstheme`, but that may contain escaped
-      // `/` characters, which should look like `\/` to the OS< `\\/` in the string and `\\\\/` in
-      // the regex, because `\` is also a regex escape.
-      return Pattern
-         .create("/((?:[^/]|\\\\/)+?)\\.rstheme$")
-         .match(getUrl(), 0)
-         .getGroup(1);
+      return FileSystemItem.createFile(this.getUrl()).getStem();
    }
 }

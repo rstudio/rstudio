@@ -1052,11 +1052,11 @@
    missingLibraryMsg <- "Taking this action requires the %pkg% library. Please run 'install.packages(\"%pkg%\")' before continuing."
    if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
-      stop(gsub("%pkg%", "xml2", missingLibraryMsg, perl = TRUE))
+      stop(gsub("%pkg%", "xml2", missingLibraryMsg, fixed = TRUE))
    }
    if (!suppressWarnings(require("highlight", quietly = TRUE)))
    {
-      stop(gsub("%pkg%", "highlight", missingLibraryMsg, perl = TRUE))
+      stop(gsub("%pkg%", "highlight", missingLibraryMsg, fixed = TRUE))
    }
    
    .rs.convertTheme(themePath, add, outputLocation, apply, force, globally)
