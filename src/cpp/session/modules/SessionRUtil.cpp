@@ -283,6 +283,7 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
    
    std::string code = r::sexp::asString(codeSEXP);
    std::string workingDir = r::sexp::asString(workingDirSEXP);
+   boost::algorithm::replace_all(code, "\n", "; ");
    launchProcess(code, module_context::resolveAliasedPath(workingDir), callbacksSEXP);
    
    r::sexp::Protect protect;

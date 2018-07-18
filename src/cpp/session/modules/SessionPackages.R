@@ -1459,24 +1459,28 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    owd <- setwd(dir)
    on.exit(setwd(owd), add = TRUE)
    
-   # save required state information
-   state <- list2env(options("pkgType", "repos"))
-   save(list = ls(envir = state), envir = state, file = "state.Rdata")
-   
    # define our helper script that will download + save available.packages
-   script <- '
-load("state.Rdata")
-options(repos = repos, pkgType = pkgType)
+   template <- .rs.trimWhitespace('
+options(repos = %s, pkgType = %s)
 packages <- available.packages()
 attr(packages, "time") <- Sys.time()
 saveRDS(packages, file = "packages.rds")
-'
-   writeLines(script, con = "script.R")
+')
    
-   # run the script
-   R <- file.path(R.home("bin"), "R")
-   args <- c("--vanilla", "--slave", "-f", "script.R")
-   system2(R, args, stdout = "stdout.txt", stderr = "stderr.txt", wait = FALSE)
+   script <- sprintf(
+      template,
+      .rs.deparse(getOption("repos")),
+      .rs.deparse(getOption("pkgType"))
+   )
+   
+   # fire off the process
+   .rs.runAsyncRProcess(
+      script,
+      onCompleted = function(exitStatus) {
+         # TODO: let source documents know we're ready
+         .rs.onAvailablePackagesReady(reposString)
+      }
+   )
    
    # NULL indicates we don't have available packages yet
    return(NULL)
