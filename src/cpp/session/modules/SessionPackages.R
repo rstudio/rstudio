@@ -161,7 +161,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          .Call("rs_packageLibraryMutated")
          .rs.restorePreviousPath()
       })
-
+      
       # call original
       original(pkgs, lib, repos, ...)
    })

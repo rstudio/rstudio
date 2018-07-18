@@ -2085,20 +2085,29 @@
    contents
 })
 
-.rs.addFunction("discoverPackageDependencies", function(id, type)
+.rs.addFunction("discoverPackageDependencies", function(id, extension)
 {
    # check to see if we have available packages -- if none, bail
    available <- .rs.availablePackages()
    if (is.null(available$value))
       return(character())
    
-   # attempt to read the file
-   contents <- .rs.tryCatch(.rs.readSourceDocument(id))
-   if (inherits(contents, "error"))
-      return(character())
+   # read the associated source file
+   contents <- .rs.readSourceDocument(id)
    
-   # TODO: extract R code for multimode documents
-   code <- contents
+   code <- if (identical(extension, ".R"))
+      contents
+   else if (identical(extension, ".Rmd"))
+      .rs.extractRCode(contents,
+                       "^[\t >]*```+\\s*\\{([a-zA-Z0-9_]+.*)\\}\\s*$",
+                       "^[\t >]*```+\\s*$")
+   else if (identical(extension, ".Rnw"))
+      .rs.extractRCode(contents,
+                       "^\\s*<<(.*)>>=.*$",
+                       "^^\\s*@\\s*(%+.*|)$")
+   
+   if (is.null(code))
+      return(character())
    
    # attempt to parse extracted R code
    parsed <- .rs.tryCatch(parse(text = code, encoding = "UTF-8"))
