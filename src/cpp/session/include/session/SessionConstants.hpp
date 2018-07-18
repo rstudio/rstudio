@@ -71,6 +71,8 @@
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"
 
+#define kPackageOutputInPackageFolder     "package-output-to-package-folder"
+
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed
 #define kLocalUriLocationPrefix           "/rsession-local/"

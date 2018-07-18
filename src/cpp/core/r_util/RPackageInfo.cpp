@@ -1,7 +1,7 @@
 /*
  * RPackageInfo.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -127,6 +127,26 @@ bool isPackageDirectory(const FilePath& dir)
    else
    {
       return false;
+   }
+}
+
+std::string packageNameFromDirectory(const FilePath& dir)
+{
+   if (dir.childPath("DESCRIPTION").exists())
+   {
+      RPackageInfo pkgInfo;
+      Error error = pkgInfo.read(dir);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return "";
+      }
+
+      return pkgInfo.name(); 
+   }
+   else
+   {
+      return "";
    }
 }
 
