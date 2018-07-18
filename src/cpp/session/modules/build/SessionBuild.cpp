@@ -882,7 +882,7 @@ private:
    {
       // first build then check
 
-      // compose  the build command
+      // compose the build command
       module_context::RCommand rCmd(rBinDir);
       rCmd << "build";
 
