@@ -44,7 +44,8 @@ public class TextEditingTargetPackageDependencyHelper
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
-         discoverPackageDependencies();
+         if (!event.isAutosave())
+            discoverPackageDependencies();
       });
    }
    
