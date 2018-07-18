@@ -1455,7 +1455,7 @@ saveRDS(packages, file = "packages.rds")
    # run the script
    R <- file.path(R.home("bin"), "R")
    args <- c("--vanilla", "--slave", "-f", "script.R")
-   system2(R, args, stdout = FALSE, stderr = FALSE, wait = FALSE)
+   system2(R, args, stdout = "stdout.txt", stderr = "stderr.txt", wait = FALSE)
    
    # NULL indicates we don't have available packages yet
    return(NULL)
