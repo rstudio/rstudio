@@ -645,7 +645,7 @@ private:
       // track build type
       type_ = type;
 
-      // add testthat and shinyteset result parsers
+      // add testthat and shinytest result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.parent()));
@@ -749,25 +749,49 @@ private:
       else if (type == kBuildSourcePackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, false, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildSourcePackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kBuildBinaryPackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, true, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildBinaryPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kCheckPackage)
       {
          if (useDevtools())
+         {
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             checkPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestPackage)
@@ -799,7 +823,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -831,7 +858,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -852,7 +882,7 @@ private:
    {
       // first build then check
 
-      // compose the build command
+      // compose  the build command
       module_context::RCommand rCmd(rBinDir);
       rCmd << "build";
 
@@ -867,7 +897,10 @@ private:
          rCmd << "--no-build-vignettes";
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
