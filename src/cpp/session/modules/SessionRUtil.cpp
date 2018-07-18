@@ -18,20 +18,20 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <core/Macros.hpp>
-
 #include <core/FileSerializer.hpp>
+#include <core/Macros.hpp>
+#include <core/YamlUtil.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/regex.hpp>
-
-#include <core/YamlUtil.hpp>
 
 #include "shiny/SessionShiny.hpp"
 
@@ -195,6 +195,100 @@ SEXP rs_rResourcesPath()
    return r::sexp::create(session::options().rResourcesPath().absolutePath(), &protect);
 }
 
+class Process;
+
+std::set<boost::shared_ptr<async_r::AsyncRProcess>> s_registry;
+
+class Process : public async_r::AsyncRProcess
+{
+public:
+   
+   Process(SEXP callbacks)
+      : callbacks_(callbacks)
+   {
+   }
+   
+   ~Process()
+   {
+   }
+   
+protected:
+   void onStarted(core::system::ProcessOperations& operations)
+   {
+      invokeCallback("started");
+   }
+   
+   bool onContinue()
+   {
+      invokeCallback("continue");
+      return true;
+   }
+   
+   void onStdout(const std::string& output)
+   {
+      invokeCallback("stdout", output);
+   }
+   
+   void onStderr(const std::string& output)
+   {
+      invokeCallback("stderr", output);
+   }
+   
+   void onCompleted(int exitStatus)
+   {
+      invokeCallback("completed", exitStatus);
+      s_registry.erase(shared_from_this());
+   }
+   
+private:
+   
+   template <typename T>
+   void invokeCallback(const std::string& event, const T& output)
+   {
+      SEXP callback = R_NilValue;
+      Error error = r::sexp::getNamedListSEXP(callbacks_.get(), event, &callback);
+      if (error)
+         return;
+      
+      r::exec::RFunction(callback).addParam(output).call();
+   }
+   
+   void invokeCallback(const std::string& event)
+   {
+      SEXP callback = R_NilValue;
+      Error error = r::sexp::getNamedListSEXP(callbacks_.get(), event, &callback);
+      if (error)
+         return;
+      
+      r::exec::RFunction(callback).call();
+   }
+   
+   r::sexp::PreservedSEXP callbacks_;
+};
+
+static void launchProcess(const std::string& code,
+                          const FilePath& workingDir,
+                          SEXP callbacks)
+{
+   boost::shared_ptr<Process> process = boost::make_shared<Process>(callbacks);
+   process->start(code.c_str(), workingDir, async_r::R_PROCESS_VANILLA);
+   s_registry.insert(process);
+}
+
+SEXP rs_runAsyncRProcess(SEXP codeSEXP,
+                         SEXP workingDirSEXP,
+                         SEXP callbacksSEXP)
+{
+   using namespace async_r;
+   
+   std::string code = r::sexp::asString(codeSEXP);
+   std::string workingDir = r::sexp::asString(workingDirSEXP);
+   launchProcess(code, module_context::resolveAliasedPath(workingDir), callbacksSEXP);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(true, &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -203,6 +297,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
    RS_REGISTER_CALL_METHOD(rs_readIniFile, 1);
    RS_REGISTER_CALL_METHOD(rs_rResourcesPath, 0);
+   RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess, 3);
    
    using boost::bind;
    using namespace module_context;
