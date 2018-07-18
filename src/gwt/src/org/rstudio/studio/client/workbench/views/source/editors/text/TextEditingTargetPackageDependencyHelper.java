@@ -63,6 +63,14 @@ public class TextEditingTargetPackageDependencyHelper
       if (sentinel_ == null)
          return;
       
+      boolean canDiscoverDependencies =
+            docDisplay_.getFileType().isR() ||
+            docDisplay_.getFileType().isRmd() ||
+            docDisplay_.getFileType().isRnw();
+      
+      if (!canDiscoverDependencies)
+         return;
+      
       discoveringDependencies_ = true;
       server_.discoverPackageDependencies(
             sentinel_.getId(),
