@@ -542,6 +542,11 @@ public:
    {
       return webSocketConnectTimeout_;
    }
+   
+   bool packageOutputInPackageFolder() const
+   {
+      return packageOutputToPackageFolder_;   
+   }
 
    std::string getOverlayOption(const std::string& name)
    {
@@ -648,6 +653,7 @@ private:
    bool verifySignatures_;
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
+   bool packageOutputToPackageFolder_;
    std::string terminalPort_;
 
    // r

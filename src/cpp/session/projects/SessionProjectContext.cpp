@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -252,17 +252,36 @@ void ProjectContext::augmentRbuildignore()
    if (r_util::isPackageDirectory(directory()))
    {
       // constants
-      const char * const kIgnoreRproj = "^.*\\.Rproj$";
-      const char * const kIgnoreRprojUser = "^\\.Rproj\\.user$";
+      const char * const kIgnoreRproj = R"(^.*\.Rproj$)";
+      const char * const kIgnoreRprojUser = R"(^\.Rproj\.user$)";
+      const char * const kIgnoreRCheck = R"(\.Rcheck$)";
+      const char * const kIgnorePkgTarGz = R"(.*\.tar\.gz$)";
+      const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
+
+      std::string ignoreLines = kIgnoreRproj + newLine +
+                                kIgnoreRprojUser + newLine;
       
+      if (session::options().packageOutputInPackageFolder())
+      {
+         // if package build is writing output into the package directory,
+         // exclude those files, too
+         std::string packageName = r_util::packageNameFromDirectory(directory());
+         if (!packageName.empty())
+         {
+            packageName.insert(0, "^");
+            ignoreLines.append(packageName + kIgnoreRCheck + newLine);
+            ignoreLines.append(packageName + kIgnorePkgTarGz + newLine);
+            ignoreLines.append(packageName + kIgnorePkgTgz + newLine);
+         }
+      }
+
       // create the file if it doesn't exists
       FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
-                                         kIgnoreRproj + newLine +
-                                         kIgnoreRprojUser + newLine,
+                                         ignoreLines,
                                          string_utils::LineEndingNative);
          if (error)
             LOG_ERROR(error);
@@ -285,11 +304,9 @@ void ProjectContext::augmentRbuildignore()
 
          // NOTE: we don't search for the full kIgnoreRproj to account
          // for previous less precisely specified .Rproj entries
-         bool hasRProj = strIgnore.find("\\.Rproj$") != std::string::npos;
+         bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-
-         if (hasRProj && hasRProjUser)
-            return;
+         bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
@@ -300,6 +317,37 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
+
+         if (session::options().packageOutputInPackageFolder())
+         {
+            // if package build is writing output into the package directory,
+            // make sure we have those exclusions
+            std::string packageName = r_util::packageNameFromDirectory(directory());
+            if (!packageName.empty())
+            {
+               packageName.insert(0, "^");
+               
+               if (strIgnore.find(packageName + kIgnoreRCheck) == std::string::npos)
+               {
+                  hasAllPackageExclusions = false;
+                  strIgnore += packageName + kIgnoreRCheck + newLine;
+               }
+               if (strIgnore.find(packageName + kIgnorePkgTarGz) == std::string::npos)
+               {
+                  hasAllPackageExclusions = false;
+                  strIgnore += packageName + kIgnorePkgTarGz + newLine;
+               }
+               if (strIgnore.find(packageName + kIgnorePkgTgz) == std::string::npos)
+               {
+                  hasAllPackageExclusions = false;
+                  strIgnore += packageName + kIgnorePkgTgz + newLine;
+               }
+            }
+         }
+
+         if (hasRProj && hasRProjUser && hasAllPackageExclusions)
+            return;
+
          error = core::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
@@ -361,7 +409,7 @@ Error ProjectContext::initialize()
       // compute the default encoding
       updateDefaultEncoding();
 
-      // augmewnt .Rbuildignore if this is a package
+      // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
       // subscribe to deferred init (for initializing our file monitor)

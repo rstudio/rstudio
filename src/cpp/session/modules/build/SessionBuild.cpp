@@ -33,6 +33,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <session/SessionOptions.hpp>
 
 #ifdef _WIN32
 #include <core/r_util/RToolsInfo.hpp>
@@ -1011,7 +1012,10 @@ private:
       enqueCommandString(ostr.str() + ")");
 
       // now complete the command
-      ostr << ", check_dir = dirname(getwd()))";
+      if (session::options().packageOutputInPackageFolder())
+         ostr << ", check_dir = getwd())";
+      else
+         ostr << ", check_dir = dirname(getwd()))";
       std::string command = ostr.str();
 
       // set a success message
@@ -1224,6 +1228,9 @@ private:
       if (binary)
          args.push_back("binary = TRUE");
 
+      if (session::options().packageOutputInPackageFolder())
+         args.push_back("path = getwd()");
+
        // add R args
       std::string rArgs = binary ?  projectConfig().packageBuildBinaryArgs :
                                     projectConfig().packageBuildArgs;
@@ -1272,7 +1279,9 @@ private:
    void cleanupAfterCheck(const r_util::RPackageInfo& pkgInfo)
    {
       // compute paths
-      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
+      FilePath buildPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         buildPath = buildPath.parent();
       FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
       FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
@@ -1289,8 +1298,9 @@ private:
    {
       if (!terminationRequested_)
       {
-         FilePath buildPath = projects::projectContext()
-                                       .buildTargetPath().parent();
+         FilePath buildPath = projects::projectContext().buildTargetPath();
+         if (!session::options().packageOutputInPackageFolder())
+            buildPath = buildPath.parent();
          FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
@@ -1715,7 +1725,9 @@ private:
 
    std::string buildPackageSuccessMsg(const std::string& type)
    {
-      FilePath writtenPath = projects::projectContext().buildTargetPath().parent();
+      FilePath writtenPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         writtenPath = writtenPath.parent();
       std::string written = module_context::createAliasedPath(writtenPath);
       if (written == "~")
          written = writtenPath.absolutePath();
