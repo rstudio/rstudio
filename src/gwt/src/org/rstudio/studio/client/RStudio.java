@@ -188,10 +188,16 @@ public class RStudio implements EntryPoint
             // window)
             setTimeout(function() {
                if (typeof $wnd.rstudioDelayLoadApplication == "function") {
+                  
+                  // let the user know things might go wrong
+                  var msg = "WARNING: RStudio launched before desktop initialization known to be complete!";
+                  @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(msg);
+                  
+                  // begin load
                   $wnd.rstudioDelayLoadApplication();
                   $wnd.rstudioDelayLoadApplication = null;
                }
-            }, 5000);
+            }, 60000);
          }
       }
       else
