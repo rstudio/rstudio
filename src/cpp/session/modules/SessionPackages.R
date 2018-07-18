@@ -1390,17 +1390,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("availablePackagesState", function(reposString)
 {
-   # do we have a cache entry? if so, we're ready to go
+   # do we have a cache entry?
    entry <- .rs.availablePackagesEnv[[reposString]]
-   if (!is.null(entry))
-      return("CACHED")
+   if (!is.null(entry)) {
+      
+      # verify the cache entry is not stale
+      time <- attr(entry, "time", exact = TRUE)
+      elapsed <- difftime(Sys.time(), time, units = "secs")
+      limit <- Sys.getenv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE", 3600)
+      
+      if (elapsed > limit)
+         return("STALE")
+      else
+         return("CACHED")
+   }
    
    # do we have a pending dir? if none, we're stale
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
    if (is.null(dir))
       return("STALE")
    
-   # does the packages.rds file exist? if so we're done
+   # does the packages.rds file exist? if so we're ready to read it
    packages <- file.path(dir, "packages.rds")
    if (file.exists(packages))
       return("READY")
@@ -1436,7 +1446,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    script <- '
 load("state.Rdata")
 options(repos = repos, pkgType = pkgType)
-saveRDS(available.packages(), file = "packages.rds")
+packages <- available.packages()
+attr(packages, "time") <- Sys.time()
+saveRDS(packages, file = "packages.rds")
 '
    writeLines(script, con = "script.R")
    
@@ -1460,18 +1472,18 @@ saveRDS(available.packages(), file = "packages.rds")
 {
    # get the directory and read packages.rds
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
-   packages <- file.path(dir, "packages.rds")
-   data <- readRDS(packages)
+   rds <- file.path(dir, "packages.rds")
+   packages <- readRDS(rds)
    
    # add it to the cache
-   .rs.availablePackagesEnv[[reposString]] <- data
+   .rs.availablePackagesEnv[[reposString]] <- packages
    
    # remove state directory and mark as no longer pending
    unlink(dir, recursive = TRUE)
    .rs.availablePackagesPendingEnv[[reposString]] <- NULL
    
    # we're done!
-   data
+   packages
 })
 
 .rs.addFunction("onAvailablePackagesCached", function(reposString)
