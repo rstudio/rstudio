@@ -882,7 +882,8 @@ public class TextEditingTargetWidget
       }
       
       CommandWithArg<Boolean> onInstallComplete = (Boolean success) -> {
-         hideWarningBar();
+         if (success)
+            hideWarningBar();
       };
       
       Command onDismiss = () -> {
