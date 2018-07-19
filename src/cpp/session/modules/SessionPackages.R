@@ -1460,12 +1460,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    on.exit(setwd(owd), add = TRUE)
    
    # define our helper script that will download + save available.packages
-   template <- .rs.trimWhitespace('
-options(repos = %s, pkgType = %s)
-packages <- available.packages()
-attr(packages, "time") <- Sys.time()
-saveRDS(packages, file = "packages.rds")
-')
+   template <- .rs.trimCommonIndent('
+      options(repos = %s, pkgType = %s)
+      packages <- available.packages()
+      attr(packages, "time") <- Sys.time()
+      saveRDS(packages, file = "packages.rds")
+   ')
    
    script <- sprintf(
       template,

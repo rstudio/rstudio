@@ -1438,7 +1438,9 @@
    indents[indents == -1] <- Inf
    common <- min(indents)
    result <- paste(substring(splat, common, nchar(string)), collapse = "\n")
-   .rs.trimWhitespace(sprintf(result, ...))
+   dots <- list(...)
+   formatted <- if (length(dots)) sprintf(result, ...) else result
+   .rs.trimWhitespace(formatted)
 })
 
 .rs.addFunction("parseNamespaceImports", function(path)
