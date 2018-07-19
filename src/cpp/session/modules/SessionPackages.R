@@ -1397,7 +1397,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # verify the cache entry is not stale
       time <- attr(entry, "time", exact = TRUE)
       elapsed <- difftime(Sys.time(), time, units = "secs")
-      limit <- Sys.getenv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE", 3600)
+      limit <- as.numeric(Sys.getenv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE", 3600))
       
       if (elapsed > limit)
          return("STALE")
