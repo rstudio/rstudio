@@ -64,6 +64,16 @@ RUN mkdir -p /opt/RStudio-QtSDK && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 
+# install GnuPG 1.4 from source (needed for release signing)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
+
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
