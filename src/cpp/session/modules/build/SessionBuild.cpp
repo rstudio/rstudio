@@ -33,6 +33,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <session/SessionOptions.hpp>
 
 #ifdef _WIN32
 #include <core/r_util/RToolsInfo.hpp>
@@ -644,7 +645,7 @@ private:
       // track build type
       type_ = type;
 
-      // add testthat and shinyteset result parsers
+      // add testthat and shinytest result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.parent()));
@@ -748,25 +749,49 @@ private:
       else if (type == kBuildSourcePackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, false, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildSourcePackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kBuildBinaryPackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, true, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildBinaryPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kCheckPackage)
       {
          if (useDevtools())
+         {
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             checkPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestPackage)
@@ -798,7 +823,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -830,7 +858,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -866,7 +897,10 @@ private:
          rCmd << "--no-build-vignettes";
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
@@ -1011,7 +1045,10 @@ private:
       enqueCommandString(ostr.str() + ")");
 
       // now complete the command
-      ostr << ", check_dir = dirname(getwd()))";
+      if (session::options().packageOutputInPackageFolder())
+         ostr << ", check_dir = getwd())";
+      else
+         ostr << ", check_dir = dirname(getwd()))";
       std::string command = ostr.str();
 
       // set a success message
@@ -1224,6 +1261,9 @@ private:
       if (binary)
          args.push_back("binary = TRUE");
 
+      if (session::options().packageOutputInPackageFolder())
+         args.push_back("path = getwd()");
+
        // add R args
       std::string rArgs = binary ?  projectConfig().packageBuildBinaryArgs :
                                     projectConfig().packageBuildArgs;
@@ -1272,7 +1312,9 @@ private:
    void cleanupAfterCheck(const r_util::RPackageInfo& pkgInfo)
    {
       // compute paths
-      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
+      FilePath buildPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         buildPath = buildPath.parent();
       FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
       FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
@@ -1289,8 +1331,9 @@ private:
    {
       if (!terminationRequested_)
       {
-         FilePath buildPath = projects::projectContext()
-                                       .buildTargetPath().parent();
+         FilePath buildPath = projects::projectContext().buildTargetPath();
+         if (!session::options().packageOutputInPackageFolder())
+            buildPath = buildPath.parent();
          FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
@@ -1715,7 +1758,9 @@ private:
 
    std::string buildPackageSuccessMsg(const std::string& type)
    {
-      FilePath writtenPath = projects::projectContext().buildTargetPath().parent();
+      FilePath writtenPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         writtenPath = writtenPath.parent();
       std::string written = module_context::createAliasedPath(writtenPath);
       if (written == "~")
          written = writtenPath.absolutePath();
