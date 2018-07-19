@@ -120,7 +120,10 @@
           col_vals <- levels(val)
         }
       }
-      else if (is.numeric(val))
+      # for histograms, we support only the base R numeric class and its derivatives;
+      # is.numeric can return true for values that can only be manipulated using
+      # packages that are currently loaded (e.g. bit64's integer64)
+      else if (is.numeric(val) && inherits(x[[idx]], "numeric"))
       {
         # ignore missing and infinite values (i.e. let any filter applied
         # implicitly remove those values); if that leaves us with nothing,
@@ -130,7 +133,7 @@
         if (length(hist_vals) > 1)
         {
           # create histogram for brushing
-          h <- hist(as.numeric(hist_vals), plot = FALSE)
+          h <- hist(hist_vals, plot = FALSE)
           col_breaks <- h$breaks
           col_counts <- h$counts
 
