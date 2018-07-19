@@ -261,24 +261,37 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(compareTestButton_);
       compareTestButton_.setVisible(false);
 
-      AppCommand testCommand = extendedType_ == SourceDocument.XT_TEST_TESTTHAT ? 
-         commands_.testTestthatFile() : commands_.testShinytestFile();
-
-      testButton_ = new ToolbarButton(
+      testThatButton_ = new ToolbarButton(
             "Run Tests", 
-            testCommand.getImageResource(), 
+            commands_.testTestthatFile().getImageResource(), 
             new ClickHandler() 
             {
                @Override
                public void onClick(ClickEvent event)
                {
-                  testCommand.execute();
+                  commands_.testTestthatFile().execute();
                }
             });
-      testButton_.setTitle(testCommand.getDesc());
+      testThatButton_.setTitle(commands_.testTestthatFile().getDesc());
 
-      toolbar.addRightWidget(testButton_);
-      testButton_.setVisible(false);
+      toolbar.addRightWidget(testThatButton_);
+      testThatButton_.setVisible(false);
+
+      testShinyButton_ = new ToolbarButton(
+            "Run Tests", 
+            commands_.testShinytestFile().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  commands_.testShinytestFile().execute();
+               }
+            });
+      testShinyButton_.setTitle(commands_.testShinytestFile().getDesc());
+
+      toolbar.addRightWidget(testShinyButton_);
+      testShinyButton_.setVisible(false);
    }
 
    private Toolbar createToolbar(TextFileType fileType)
@@ -701,7 +714,8 @@ public class TextEditingTargetWidget
          chunksButton_.setVisible(false);
       }
 
-      testButton_.setVisible(false);
+      testShinyButton_.setVisible(false);
+      testThatButton_.setVisible(false);
       compareTestButton_.setVisible(false);
       if (isShinyFile())
       {
@@ -714,14 +728,14 @@ public class TextEditingTargetWidget
          shinyLaunchButton_.setVisible(false);
          plumberLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
-         testButton_.setVisible(true);
+         testThatButton_.setVisible(true);
       }
       else if (isShinyTestFile())
       {
          shinyLaunchButton_.setVisible(false);
          plumberLaunchButton_.setVisible(false);
          sourceButton_.setVisible(false);
-         testButton_.setVisible(true);
+         testShinyButton_.setVisible(true);
          compareTestButton_.setVisible(true);
       }
       else if (isPlumberFile())
@@ -1470,7 +1484,8 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceButton_;
    private ToolbarButton previewJsButton_;
    private ToolbarButton previewSqlButton_;
-   private ToolbarButton testButton_;
+   private ToolbarButton testThatButton_;
+   private ToolbarButton testShinyButton_;
    private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;
    private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
