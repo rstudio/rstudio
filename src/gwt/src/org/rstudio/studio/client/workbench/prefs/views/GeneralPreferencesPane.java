@@ -145,20 +145,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             false);
       
       reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
-      
-      if (!Desktop.isDesktop())
-      {
-         if (session_.getSessionInfo().getShowUserHomePage())
-         {
-            spaced(showServerHomePage_);
-            basic.add(showServerHomePage_);
-            lessSpaced(reuseSessionsForProjectLinks_);  
-         }
-         
-         if (session_.getSessionInfo().getMultiSession())
-            basic.add(reuseSessionsForProjectLinks_);
-      }
-      
+     
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       basic.add(restoreLastProject_);
@@ -210,6 +197,23 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       VerticalPanel advanced = new VerticalPanel();
+      
+      if (!Desktop.isDesktop())
+      {
+         if (session_.getSessionInfo().getShowUserHomePage() ||
+             session_.getSessionInfo().getMultiSession())
+         {
+            advanced.add(headerLabel("Home Page"));
+         }
+         if (session_.getSessionInfo().getShowUserHomePage())
+         {
+            spaced(showServerHomePage_);
+            advanced.add(showServerHomePage_);
+            lessSpaced(reuseSessionsForProjectLinks_);
+         }
+         if (session_.getSessionInfo().getMultiSession())
+            advanced.add(reuseSessionsForProjectLinks_);
+      }
       
       // The error handler features require source references; if this R
       // version doesn't support them, don't show these options. 
