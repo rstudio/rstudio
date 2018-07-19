@@ -128,24 +128,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
 
-      showServerHomePage_ = new SelectWidget(
-            "Show server home page:",
-            new String[] {
-                  "Multiple active sessions",
-                  "Always",
-                  "Never"
-            },
-            new String[] {
-                 "sessions",
-                 "always",
-                 "never"
-            },
-            false,
-            true,
-            false);
-      
-      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
-     
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       basic.add(restoreLastProject_);
@@ -197,19 +179,42 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       VerticalPanel advanced = new VerticalPanel();
+
+      showServerHomePage_ = new SelectWidget(
+            "Show server home page:",
+            new String[] {
+                  "Multiple active sessions",
+                  "Always",
+                  "Never"
+            },
+            new String[] {
+                 "sessions",
+                 "always",
+                 "never"
+            },
+            false,
+            true,
+            false);
       
+      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
+      lessSpaced(reuseSessionsForProjectLinks_);
+      boolean firstHeader = true;
+
       if (!Desktop.isDesktop())
       {
          if (session_.getSessionInfo().getShowUserHomePage() ||
              session_.getSessionInfo().getMultiSession())
          {
-            advanced.add(headerLabel("Home Page"));
+            Label homePageLabel = headerLabel("Home Page");
+            if (!firstHeader)
+               spacedBefore(homePageLabel);
+            advanced.add(homePageLabel);
+            firstHeader = false;
          }
          if (session_.getSessionInfo().getShowUserHomePage())
          {
-            spaced(showServerHomePage_);
+            tight(showServerHomePage_);
             advanced.add(showServerHomePage_);
-            lessSpaced(reuseSessionsForProjectLinks_);
          }
          if (session_.getSessionInfo().getMultiSession())
             advanced.add(reuseSessionsForProjectLinks_);
@@ -219,7 +224,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       // version doesn't support them, don't show these options. 
       if (session_.getSessionInfo().getHaveSrcrefAttribute())
       {
-         advanced.add(headerLabel("Debugging"));
+         Label debuggingLabel = headerLabel("Debugging");
+         if (!firstHeader)
+            spacedBefore(debuggingLabel);
+         advanced.add(debuggingLabel);
+         firstHeader = false;
          advanced.add(checkboxPref(
                "Use debug error handler only when my code contains errors", 
                prefs_.handleErrorsInUserCodeOnly()));
@@ -231,7 +240,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       if (Desktop.isDesktop())
       {
-         advanced.add(headerLabel("OS Integration (quit required)"));
+         Label osIntegrationLabel = headerLabel("OS Integration (quit required)");
+         if (!firstHeader)
+            spacedBefore(osIntegrationLabel);
+         advanced.add(osIntegrationLabel);
+         firstHeader = false;
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
          advanced.add(spaced(enableAccessibility_));
          Desktop.getFrame().getEnableAccessibility(enabled -> 
@@ -252,7 +265,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
       }
       
-      advanced.add(headerLabel("Other"));
+      Label otherLabel = headerLabel("Other");
+      if (!firstHeader)
+         spacedBefore(otherLabel);
+      advanced.add(otherLabel);
+      firstHeader = false;
       showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
       lessSpaced(showLastDotValue_);
       advanced.add(showLastDotValue_);
