@@ -1461,16 +1461,31 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # define our helper script that will download + save available.packages
    template <- .rs.trimCommonIndent('
-      options(repos = %s, pkgType = %s)
+      
+      # Variables defined from parent session
+      repos <- %s
+      pkgType <- %s
+      targetDir <- %s
+      
+      # Request available packages
+      options(repos = repos, pkgType = pkgType)
       packages <- available.packages()
+      
+      # Copy repository cache to parent session
+      cache <- list.files(tempdir(), "^repos_", full.names = TRUE)
+      file.copy(cache, targetDir, overwrite = FALSE)
+      
+      # Generate packages database
       attr(packages, "time") <- Sys.time()
       saveRDS(packages, file = "packages.rds")
+
    ')
    
    script <- sprintf(
       template,
       .rs.deparse(getOption("repos")),
-      .rs.deparse(getOption("pkgType"))
+      .rs.deparse(getOption("pkgType")),
+      .rs.deparse(tempdir())
    )
    
    # fire off the process

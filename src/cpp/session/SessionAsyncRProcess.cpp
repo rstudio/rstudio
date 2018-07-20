@@ -19,12 +19,17 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
+
+using namespace rstudio;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -86,51 +91,47 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--internet2");
 #endif
 
-   args.push_back("-e");
+   args.push_back("-f");
    
-   bool needsQuote = false;
-
-   // On Windows, we turn the vector of strings into a single
-   // string to send over the command line, so we must ensure
-   // that the arguments following '-e' are quoted, so that
-   // they are all interpretted as a single argument (rather
-   // than multiple arguments) to '-e'.
-
-#ifdef _WIN32
-   needsQuote = strlen(rCommand) > 0 && rCommand[0] != '"';
-#endif
-
-   std::stringstream command;
-   if (needsQuote)
-      command << "\"";
-
-   std::string escapedCommand = rCommand;
-
-   if (needsQuote)
-      boost::algorithm::replace_all(escapedCommand, "\"", "\\\"");
-    
-   if (rSourceFiles.size())
+   // generate path to temporary file
+   std::string path;
+   error = r::exec::RFunction("base:::tempfile")
+         .addParam("pattern", "rstudio-async-process-")
+         .addParam("tmpdir", workingDir.absolutePathNative())
+         .addParam("fileext", ".R")
+         .call(&path);
+   if (error)
    {
-      // add in the r source files requested
-      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
-           it != rSourceFiles.end();
-           ++it)
-      {
-         command << "source('" << it->absolutePath() << "');";
-      }
-      
-      command << escapedCommand;
+      LOG_ERROR(error);
+      onCompleted(EXIT_FAILURE);
+      return;
    }
-   else
+   scriptPath_ = module_context::resolveAliasedPath(path);
+   
+   // set this as the file to run
+   args.push_back(scriptPath_.absolutePathNative());
+   
+   // start generating code
+   std::stringstream ss;
+   
+   // emit source statements to the file
+   if (!rSourceFiles.empty())
    {
-      command << escapedCommand;
+      ss << "# RStudio Source Files ----" << std::endl;
+      for (const FilePath& filePath : rSourceFiles)
+         ss << "source('" << filePath.absolutePath() << "')" << std::endl;
+      ss << std::endl;
    }
-
-   if (needsQuote)
-      command << "\"";
-
-   args.push_back(command.str());
-
+   
+   // emit code
+   ss << "# Requested Code ----" << std::endl;
+   ss << rCommand << std::endl;
+   
+   // write it to file
+   error = core::writeStringToFile(scriptPath_, ss.str());
+   if (error)
+      LOG_ERROR(error);
+   
    // options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
@@ -233,6 +234,7 @@ bool AsyncRProcess::terminationRequested()
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();
+   scriptPath_.removeIfExists();
    onCompleted(exitStatus);
 }
 

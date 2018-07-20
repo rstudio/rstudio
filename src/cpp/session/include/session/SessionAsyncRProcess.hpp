@@ -84,7 +84,6 @@ protected:
    virtual bool onContinue();
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
-
    virtual void onCompleted(int exitStatus) = 0;
 
 private:
@@ -92,6 +91,7 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string input_;
+   core::FilePath scriptPath_;
 };
 
 } // namespace async_r
