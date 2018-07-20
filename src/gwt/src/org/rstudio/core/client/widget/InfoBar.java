@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -96,7 +95,7 @@ public class InfoBar extends Composite
    }
    
    public void showRequiredPackagesMissingWarning(List<String> packages,
-                                                  CommandWithArg<Boolean> onPackageInstallCompleted,
+                                                  Command onInstall,
                                                   Command onDismiss)
    {
       String message;
@@ -124,7 +123,7 @@ public class InfoBar extends Composite
       if (labelRight_.getWidgetCount() == 0)
       {
          labelRight_.add(label("Install", () -> {
-            RStudioGinjector.INSTANCE.getDependencyManager().installPackages(packages, onPackageInstallCompleted);
+            onInstall.execute();
          }));
          
          labelRight_.add(label("Don't Show Again", () -> {

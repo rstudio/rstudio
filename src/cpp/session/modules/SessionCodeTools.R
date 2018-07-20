@@ -15,7 +15,10 @@
 
 .rs.addJsonRpcHandler("discover_package_dependencies", function(docId, fileType)
 {
-   .rs.discoverPackageDependencies(docId, fileType)
+   available <- .rs.availablePackages()
+   ready <- !is.null(available$value)
+   packages <- .rs.discoverPackageDependencies(docId, fileType)
+   list(ready = .rs.scalar(ready), packages = packages)
 })
 
 .rs.addFunction("error", function(...)

@@ -169,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresent
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
+import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditSavedEvent;
@@ -1003,6 +1004,11 @@ public class ClientEventDispatcher
          {
             NewDocumentWithCodeEvent.Data result = event.getData();
             eventBus_.dispatchEvent(new NewDocumentWithCodeEvent(result));
+         }
+         else if (type == ClientEvent.AvailablePackagesReady)
+         {
+            AvailablePackagesReadyEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new AvailablePackagesReadyEvent(data));
          }
          else if (type == ClientEvent.PlumberViewer)
          {

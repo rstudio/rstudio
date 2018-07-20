@@ -1477,8 +1477,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.runAsyncRProcess(
       script,
       onCompleted = function(exitStatus) {
-         # TODO: let source documents know we're ready
-         .rs.onAvailablePackagesReady(reposString)
+         available <- .rs.onAvailablePackagesReady(reposString)
+         data <- list(ready = .rs.scalar(TRUE), packages = rownames(available))
+         .rs.enqueClientEvent("available_packages_ready", data)
       }
    )
    

@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -255,6 +256,6 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    void discoverPackageDependencies(String id,
                                     String fileType,
-                                    ServerRequestCallback<JsArrayString> requestCallback);
+                                    ServerRequestCallback<AvailablePackagesReadyEvent.Data> requestCallback);
    
 }

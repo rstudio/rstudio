@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -43,15 +45,26 @@ public class TextEditingTargetPackageDependencyHelper
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      // check package dependencies on user-requested saves
       docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
          if (!event.isAutosave())
+            discoverPackageDependencies();
+      });
+      
+      // check package dependencies whenever the set of available packages
+      // is ready if we haven't yet checked before (this allows for us
+      // to check dependencies in open files at the start of a session)
+      events_.addHandler(AvailablePackagesReadyEvent.TYPE, (AvailablePackagesReadyEvent event) -> {
+         if (waitingUntilReady_)
             discoverPackageDependencies();
       });
    }
    
    @Inject
-   private void initialize(SourceServerOperations server)
+   private void initialize(EventBus events,
+                           SourceServerOperations server)
    {
+      events_ = events;
       server_ = server;
    }
    
@@ -75,14 +88,22 @@ public class TextEditingTargetPackageDependencyHelper
       server_.discoverPackageDependencies(
             sentinel_.getId(),
             docDisplay_.getFileType().getDefaultExtension(),
-            new ServerRequestCallback<JsArrayString>()
+            new ServerRequestCallback<AvailablePackagesReadyEvent.Data>()
             {
                @Override
-               public void onResponseReceived(JsArrayString response)
+               public void onResponseReceived(AvailablePackagesReadyEvent.Data response)
                {
                   discoveringDependencies_ = false;
-                  if (response.length() > 0)
-                     target_.showRequiredPackagesMissingWarning(JsUtil.toList(response));
+                  
+                  if (!response.isReady())
+                  {
+                     waitingUntilReady_ = true;
+                     return;
+                  }
+                     
+                  JsArrayString packages = response.getPackages();
+                  if (packages.length() > 0)
+                     target_.showRequiredPackagesMissingWarning(JsUtil.toList(packages));
                }
                
                @Override
@@ -94,6 +115,7 @@ public class TextEditingTargetPackageDependencyHelper
             });
    }
    
+   boolean waitingUntilReady_ = false;
    boolean discoveringDependencies_ = false;
    
    private final TextEditingTarget target_;
@@ -101,7 +123,7 @@ public class TextEditingTargetPackageDependencyHelper
    private final DocDisplay docDisplay_;
    
    // Injected ----
+   EventBus events_;
    SourceServerOperations server_;
-   
    
 }

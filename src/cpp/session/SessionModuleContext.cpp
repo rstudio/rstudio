@@ -238,6 +238,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kDataOutputCompleted;
       else if (name == "new_document_with_code")
          type = session::client_events::kNewDocumentWithCode;
+      else if (name == "available_packages_ready")
+         type = session::client_events::kAvailablePackagesReady;
 
       if (type != -1)
       {
