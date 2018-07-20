@@ -59,9 +59,16 @@ void Options::initFromCommandLine(const QStringList& arguments)
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
-   QString key = QString::fromUtf8("mainwindow/geometry");
+   // NOTE: win->saveGeometry and win->restoreGeometry are unreliable in
+   // Qt 5.11.1 (they do not successfully restore the window size if the
+   // display bounds have changed) so we explicitly save and restore the
+   // bounds as a rectangle
+   QString key = QStringLiteral("mainwindow/bounds");
    if (settings_.contains(key))
-      win->restoreGeometry(settings_.value(key).toByteArray());
+   {
+      QRect bounds = settings_.value(key).toRect();
+      win->setGeometry(bounds);
+   }
    else
    {
       QSize size = QSize(1200, 900).boundedTo(
@@ -76,8 +83,12 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   settings_.setValue(QString::fromUtf8("mainwindow/geometry"),
-                      win->saveGeometry());
+   // NOTE: win->saveGeometry and win->restoreGeometry are unreliable in
+   // Qt 5.11.1 (they do not successfully restore the window size if the
+   // display bounds have changed) so we explicitly save and restore the
+   // bounds as a rectangle
+   QVariant bounds = win->geometry();
+   settings_.setValue(QStringLiteral("mainwindow/bounds"), bounds);
 }
 
 QString Options::portNumber() const
