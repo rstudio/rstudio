@@ -1247,7 +1247,10 @@ SEXP rs_readSourceDocument(SEXP idSEXP)
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    Error error = source_database::get(id, pDoc);
    if (error)
+   {
+      LOG_ERROR(error);
       return R_NilValue;
+   }
    
    r::sexp::Protect protect;
    return r::sexp::create(pDoc->contents(), &protect);
