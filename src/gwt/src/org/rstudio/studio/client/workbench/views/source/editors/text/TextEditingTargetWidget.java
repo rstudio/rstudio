@@ -884,7 +884,7 @@ public class TextEditingTargetWidget
       
       Command onInstall = () -> {
          StringBuilder builder = new StringBuilder();
-         builder.append("utils::install.packages(\"")
+         builder.append("install.packages(\"")
                 .append(StringUtil.join(packages, "\", \""))
                 .append("\")");
          events_.fireEvent(new SendToConsoleEvent(builder.toString(), true));
