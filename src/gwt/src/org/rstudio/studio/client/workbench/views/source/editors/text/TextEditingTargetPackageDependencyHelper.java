@@ -55,8 +55,7 @@ public class TextEditingTargetPackageDependencyHelper
       // is ready if we haven't yet checked before (this allows for us
       // to check dependencies in open files at the start of a session)
       events_.addHandler(AvailablePackagesReadyEvent.TYPE, (AvailablePackagesReadyEvent event) -> {
-         if (waitingUntilReady_)
-            discoverPackageDependencies();
+         discoverPackageDependencies();
       });
    }
    
@@ -96,10 +95,7 @@ public class TextEditingTargetPackageDependencyHelper
                   discoveringDependencies_ = false;
                   
                   if (!response.isReady())
-                  {
-                     waitingUntilReady_ = true;
                      return;
-                  }
                      
                   JsArrayString packages = response.getPackages();
                   if (packages.length() > 0)
@@ -115,7 +111,6 @@ public class TextEditingTargetPackageDependencyHelper
             });
    }
    
-   boolean waitingUntilReady_ = false;
    boolean discoveringDependencies_ = false;
    
    private final TextEditingTarget target_;

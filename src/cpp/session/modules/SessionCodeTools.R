@@ -2086,7 +2086,8 @@
 .rs.addFunction("readSourceDocument", function(id)
 {
    contents <- .Call("rs_readSourceDocument", as.character(id), PACKAGE = "(embedding)")
-   Encoding(contents) <- "UTF-8"
+   if (is.character(contents))
+      Encoding(contents) <- "UTF-8"
    contents
 })
 
