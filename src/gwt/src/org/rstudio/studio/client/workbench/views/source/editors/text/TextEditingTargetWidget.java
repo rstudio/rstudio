@@ -884,9 +884,18 @@ public class TextEditingTargetWidget
       
       Command onInstall = () -> {
          StringBuilder builder = new StringBuilder();
-         builder.append("install.packages(\"")
-                .append(StringUtil.join(packages, "\", \""))
-                .append("\")");
+         if (packages.size() == 1)
+         {
+            builder.append("install.packages(\"")
+                   .append(packages.get(0))
+                   .append("\")");
+         }
+         else
+         {
+            builder.append("install.packages(c(\"")
+                   .append(StringUtil.join(packages, "\", \""))
+                   .append("\"))");
+         }
          events_.fireEvent(new SendToConsoleEvent(builder.toString(), true));
          hideWarningBar();
       };
