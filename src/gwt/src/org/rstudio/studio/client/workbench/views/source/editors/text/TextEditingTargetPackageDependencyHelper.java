@@ -20,12 +20,15 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 public class TextEditingTargetPackageDependencyHelper
@@ -45,25 +48,43 @@ public class TextEditingTargetPackageDependencyHelper
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // check package dependencies on user-requested saves
-      docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
-         if (!event.isAutosave())
-            discoverPackageDependencies();
+      toggleHandlers(prefs_.autoDiscoverPackageDependencies().getGlobalValue());
+      prefs_.autoDiscoverPackageDependencies().addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
+         toggleHandlers(event.getValue());
       });
+   }
+   
+   private void toggleHandlers(boolean enabled)
+   {
+      // always refresh handlers, just to be safe
+      if (handlers_ != null)
+      {
+         for (HandlerRegistration handler : handlers_)
+            handler.removeHandler();
+         handlers_ = null;
+      }
       
-      // check package dependencies whenever the set of available packages
-      // is ready if we haven't yet checked before (this allows for us
-      // to check dependencies in open files at the start of a session)
-      events_.addHandler(AvailablePackagesReadyEvent.TYPE, (AvailablePackagesReadyEvent event) -> {
-         discoverPackageDependencies();
-      });
+      handlers_ = new HandlerRegistration[] {
+            
+            docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
+               if (!event.isAutosave())
+                  discoverPackageDependencies();
+            }),
+            
+            events_.addHandler(AvailablePackagesReadyEvent.TYPE, (AvailablePackagesReadyEvent event) -> {
+               discoverPackageDependencies();
+            })
+            
+      };
    }
    
    @Inject
    private void initialize(EventBus events,
+                           UIPrefs prefs,
                            SourceServerOperations server)
    {
       events_ = events;
+      prefs_  = prefs;
       server_ = server;
    }
    
@@ -73,6 +94,9 @@ public class TextEditingTargetPackageDependencyHelper
          return;
       
       if (sentinel_ == null)
+         return;
+      
+      if (!prefs_.autoDiscoverPackageDependencies().getGlobalValue())
          return;
       
       boolean canDiscoverDependencies =
@@ -112,6 +136,7 @@ public class TextEditingTargetPackageDependencyHelper
    }
    
    boolean discoveringDependencies_ = false;
+   private HandlerRegistration[] handlers_;
    
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;
@@ -119,6 +144,7 @@ public class TextEditingTargetPackageDependencyHelper
    
    // Injected ----
    EventBus events_;
+   UIPrefs prefs_;
    SourceServerOperations server_;
    
 }

@@ -418,7 +418,7 @@ public class EditingPreferencesPane extends PreferencesPane
       });
       
       diagnosticsPanel.add(rOptionsPanel);
-      
+      diagnosticsPanel.add(checkboxPref("Prompt to install missing R packages discovered in R source files", prefs.autoDiscoverPackageDependencies()));
       
       Label diagOtherLabel = headerLabel("Other Languages");
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
