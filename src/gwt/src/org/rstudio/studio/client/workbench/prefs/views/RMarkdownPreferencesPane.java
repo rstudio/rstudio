@@ -43,7 +43,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
       
       docOutlineDisplay_ = new SelectWidget(
-            "Show in Document Outline: ",
+            "Show in document outline: ",
             new String[] {
                   "Sections Only",
                   "Sections and Named Chunks",

@@ -49,7 +49,7 @@ public class SshKeyWidget extends Composite
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
-      Label sshKeyPathLabel = new Label("SSH RSA Key:");
+      Label sshKeyPathLabel = new Label("SSH RSA key:");
       captionPanel.add(sshKeyPathLabel);
       captionPanel.setCellHorizontalAlignment(
                                           sshKeyPathLabel,
