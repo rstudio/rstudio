@@ -38,7 +38,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectCompilePdfPreferencesPane()
    {
-      addHeader("Program defaults");
+      addHeader("PDF Generation");
         
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       add(defaultSweaveEngine_);  
@@ -46,7 +46,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       defaultLatexProgram_ = new LatexProgramSelectWidget();
       add(defaultLatexProgram_);
       
-      addHeader("PDF preview");
+      addHeader("PDF Preview");
       
       rootDoc_ = new RootDocumentChooser();
       nudgeRight(rootDoc_);
@@ -104,7 +104,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    {
       public RootDocumentChooser()
       {
-         super("Compile PDF root document", 
+         super("Compile PDF root document:", 
                "(Current Document)", 
                "Browse...", 
                new HelpButton("pdf_root_document"),
