@@ -191,6 +191,7 @@ const int kJobOutput = 172;
 const int kDataOutputCompleted = 173;
 const int kNewDocumentWithCode = 174;
 const int kPlumberViewer = 175;
+const int kAvailablePackagesReady = 176;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -526,6 +527,8 @@ std::string ClientEvent::typeName() const
          return "data_output_completed";
       case client_events::kNewDocumentWithCode:
          return "new_document_with_code";
+      case client_events::kAvailablePackagesReady:
+         return "available_packages_ready";
       case client_events::kPlumberViewer:
          return "plumber_viewer";
       default:

@@ -309,11 +309,17 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void showRequiredPackagesMissingWarning(List<String> packages)
+   {
+      // no-op for code browser targets
+   }
+   
+   @Override
    public void showWarningBar(final String warning)
    {
       showWarningImpl(() -> warningBar_.setText(warning));
    }
-
+   
    @Override
    public void hideWarningBar()
    {

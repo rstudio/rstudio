@@ -197,6 +197,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
+import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
@@ -1704,6 +1705,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(apiName));
       params.set(1, new JSONString(apiDir));
       sendRequest(RPC_SCOPE, CREATE_PLUMBER_API, params, requestCallback);
+   }
+   
+   public void discoverPackageDependencies(String docId,
+                                           String fileType,
+                                           ServerRequestCallback<AvailablePackagesReadyEvent.Data> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(docId)
+            .add(fileType)
+            .get();
+      
+      sendRequest(RPC_SCOPE, DISCOVER_PACKAGE_DEPENDENCIES, params, requestCallback);
+            
    }
    
    public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
@@ -5618,6 +5632,7 @@ public class RemoteServer implements Server
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
    private static final String PACKAGE_SKELETON = "package_skeleton";
+   private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;

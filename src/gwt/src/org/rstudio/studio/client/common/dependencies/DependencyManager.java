@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.PackageStateCha
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -840,6 +841,18 @@ public class DependencyManager implements InstallShinyEvent.Handler,
            }
         }
       );
+   }
+   
+   public void installPackages(List<String> packageNames,
+                               CommandWithArg<Boolean> onCompleted)
+   {
+      int n = packageNames.size();
+      JsArray<Dependency> dependencies = JavaScriptObject.createArray(n).cast();
+      for (int i = 0; i < n; i++)
+      {
+         dependencies.set(i, Dependency.cranPackage(packageNames.get(i)));
+      }
+      installDependencies(dependencies, false, onCompleted);
    }
 
    private Dependency[] connectionPackageDependenciesArray(String packageName,

@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -109,6 +110,7 @@ public class TextEditingTargetWidget
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
       extendedType_ = extendedType;
+      events_ = events;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ =
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
@@ -869,6 +871,37 @@ public class TextEditingTargetWidget
    }
    
    @Override
+   public void showRequiredPackagesMissingWarning(List<String> packages)
+   {
+      if (docUpdateSentinel_.hasProperty("disableDependencyDiscovery"))
+      {
+         String disableDependencyDiscovery = docUpdateSentinel_.getProperty("disableDependencyDiscovery");
+         if (StringUtil.equals(disableDependencyDiscovery, "1"))
+         {
+            return;
+         }
+      }
+      
+      Command onInstall = () -> {
+         StringBuilder builder = new StringBuilder();
+         builder.append("utils::install.packages('")
+                .append(StringUtil.join(packages, "', '"))
+                .append("')");
+         events_.fireEvent(new SendToConsoleEvent(builder.toString(), true));
+         hideWarningBar();
+      };
+      
+      Command onDismiss = () -> {
+         docUpdateSentinel_.setProperty("disableDependencyDiscovery", "1");
+         hideWarningBar();
+      };
+      
+      showWarningImpl(() -> {
+         warningBar_.showRequiredPackagesMissingWarning(packages, onInstall, onDismiss);
+      });
+   }
+   
+   @Override
    public void showWarningBar(final String warning)
    {
       showWarningImpl(() -> warningBar_.setText(warning));
@@ -1455,6 +1488,7 @@ public class TextEditingTargetWidget
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
+   private final EventBus events_;
    private final UIPrefs uiPrefs_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;

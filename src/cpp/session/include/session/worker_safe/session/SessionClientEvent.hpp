@@ -192,6 +192,7 @@ extern const int kJobOutput;
 extern const int kDataOutputCompleted;
 extern const int kNewDocumentWithCode;
 extern const int kPlumberViewer;
+extern const int kAvailablePackagesReady;
 }
    
 class ClientEvent
