@@ -2101,6 +2101,9 @@
    # read the associated source file
    contents <- .rs.readSourceDocument(id)
    
+   # NOTE: the following regular expressions were extracted from knitr;
+   # we pull these out here just to avoid potentially loading the knitr
+   # package without the user's consent
    code <- if (identical(extension, ".R"))
       contents
    else if (identical(extension, ".Rmd"))
@@ -2110,7 +2113,7 @@
    else if (identical(extension, ".Rnw"))
       .rs.extractRCode(contents,
                        "^\\s*<<(.*)>>=.*$",
-                       "^^\\s*@\\s*(%+.*|)$")
+                       "^\\s*@\\s*(%+.*|)$")
    
    if (is.null(code))
       return(character())
