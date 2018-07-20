@@ -45,10 +45,6 @@ sudo apt-get -y install libpam-dev
 # needed for QtWebKit >= 5
 sudo apt-get -y install libxslt1-dev
 
-# app armor dependencies no longer included in ubuntu >= 11.10
-sudo apt-get -y install libapparmor1 
-sudo apt-get -y install apparmor-utils
-
 # boost
 ## This version of libboost-all-dev is now 1.55.0.2 in the current stable version of debian (jessie) [2015-12-04].
 ## This is further along than the version installed by the install-boost script also run by install-dependencies-debian.

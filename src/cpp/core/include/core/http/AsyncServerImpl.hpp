@@ -237,6 +237,11 @@ public:
    {
       notFoundHandler_ = handler;
    }
+
+   virtual typename ProtocolType::acceptor::endpoint_type localEndpoint()
+   {
+      return acceptorService_.acceptor().local_endpoint();
+   }
    
 private:
 

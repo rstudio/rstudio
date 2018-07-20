@@ -24,8 +24,7 @@ To create a new postback handler for an action 'foo' do the following:
  
 1) Create a shell script named 'rpostback-foo' (based on rpostback-pdfviewer)
  
-2) Ensure that the shell script is included in the installation and registered
-   in the rsession apparmor profile
+2) Ensure that the shell script is included in the installation
  
 3) Call module_context::registerPostbackHandler with 'foo' as the name param
    and the function you want called during the postback. The function will

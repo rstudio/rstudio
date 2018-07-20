@@ -396,6 +396,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_open_shared_projects;
    }-*/;
    
+   public final native boolean getSpawnerSession() /*-{
+      return this.spawner_session;
+   }-*/;
+   
    public final native EnvironmentContextData getEnvironmentState() /*-{
       return this.environment_state;
    }-*/;

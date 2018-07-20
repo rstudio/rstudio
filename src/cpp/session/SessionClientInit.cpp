@@ -58,6 +58,7 @@
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionOptionsOverlay.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -347,6 +348,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_open_shared_projects"] = 
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
+
+   sessionInfo["spawner_session"] = options.getBoolOverlayOption(kSpawnerSessionOption);
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();

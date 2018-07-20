@@ -14,12 +14,6 @@ expect fork
 
 respawn
 
-pre-start script
-   # Make sure our AppArmor profile is loaded on boot
-   # (see: https://bugs.launchpad.net/ubuntu/+source/apparmor/+bug/577445)
-   ${CMAKE_INSTALL_PREFIX}/extras/apparmor/apparmor-profile-load rstudio-server
-end script
-
 # run the server
 exec ${CMAKE_INSTALL_PREFIX}/bin/rserver
 

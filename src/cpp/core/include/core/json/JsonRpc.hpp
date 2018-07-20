@@ -1146,6 +1146,9 @@ public:
    void setError(const boost::system::error_code& ec,
                  const json::Value& clientInfo = json::Value());
 
+   void setRedirectError(const core::Error& error,
+                         const std::string& redirectUrl);
+
    void setAsyncHandle(const std::string& handle);
 
    void setField(const std::string& name, const json::Value& value) 
@@ -1226,6 +1229,16 @@ void setJsonRpcError(const T& error, core::http::Response* pResponse)
 {   
    JsonRpcResponse jsonRpcResponse ;
    jsonRpcResponse.setError(error);
+   setJsonRpcResponse(jsonRpcResponse, pResponse);
+}
+
+template <typename T>
+void setJsonRpcRedirectError(const T& error,
+                             const std::string& redirectUrl,
+                             core::http::Response* pResponse)
+{
+   JsonRpcResponse jsonRpcResponse;
+   jsonRpcResponse.setRedirectError(error, redirectUrl);
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }
 

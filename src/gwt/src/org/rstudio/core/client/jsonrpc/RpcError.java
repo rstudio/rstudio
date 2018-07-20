@@ -75,6 +75,10 @@ public class RpcError extends JavaScriptObject
       return this.message;
    }-*/;
    
+   public final native String getRedirectUrl() /*-{
+      return this.redirect_url;
+   }-*/;
+   
    public final native RpcUnderlyingError getError() /*-{
       return this.error;
    }-*/;

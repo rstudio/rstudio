@@ -21,6 +21,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 
 namespace rstudio {
@@ -128,6 +129,84 @@ context("Regular Expressions")
          expect_false(result);
       }
       
+   }
+}
+
+context("LruCache")
+{
+   test_that("Can update the same value multiple times")
+   {
+      LruCache<std::string, int> cache(10);
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert("val", i);
+      }
+
+      expect_true(cache.size() == 1);
+
+      int val;
+      expect_true(cache.get("val", &val));
+      expect_true(val == 999);
+   }
+
+   test_that("Cache never grows past max size")
+   {
+      LruCache<int, int> cache(100);
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 100);
+
+      int val;
+      expect_true(cache.get(999, &val));
+      expect_true(val == 999);
+
+      expect_false(cache.get(100, &val));
+   }
+
+   test_that("Explicit cache removal works")
+   {
+      LruCache<int, int> cache(100);
+      for (int i = 0; i < 100; ++i)
+      {
+         cache.insert(5000, i);
+         cache.insert(i, i);
+      }
+
+      // expect that 0 has been kicked out
+      // this is because we added an insert for 5000 so it should have
+      // removed 0 (the oldest entry)
+      int val;
+      expect_false(cache.get(0, &val));
+
+      expect_true(cache.get(50, &val));
+      expect_true(val == 50);
+
+      cache.remove(50);
+
+      expect_false(cache.get(50, &val));
+      expect_true(cache.size() == 99);
+   }
+
+   test_that("Reads update the access time of the cache entry")
+   {
+      LruCache<int, int> cache(100);
+      cache.insert(5000, 1);
+
+      int val;
+      for (int i = 0; i < 1000; ++i)
+      {
+         expect_true(cache.get(5000, &val));
+         expect_true(val == 1);
+
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 100);
+      expect_true(cache.get(5000, &val));
+      expect_false(cache.get(900, &val));
    }
 }
 
