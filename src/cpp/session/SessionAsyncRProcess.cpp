@@ -119,7 +119,7 @@ void AsyncRProcess::start(const char* rCommand,
    {
       ss << "# RStudio Source Files ----" << std::endl;
       for (const FilePath& filePath : rSourceFiles)
-         ss << "source('" << filePath.absolutePath() << "')" << std::endl;
+         ss << "source('" << filePath.absolutePathNative() << "')" << std::endl;
       ss << std::endl;
    }
    
