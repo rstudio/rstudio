@@ -1783,7 +1783,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".ruserdata" ||
        ext == ".renviron" ||
        ext == ".httr-oauth" ||
-       ext == ".gitignore")
+       ext == ".gitignore" ||
+       ext == ".gitattributes")
    {
       return true;
    }
