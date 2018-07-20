@@ -115,7 +115,7 @@ public class InfoBar extends Composite
       }
       else
       {
-         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + (n - 2) + " others are required but not installed.";
+         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + (n - 2) + " others required but are not installed.";
       }
       
       label_.setText(message);
