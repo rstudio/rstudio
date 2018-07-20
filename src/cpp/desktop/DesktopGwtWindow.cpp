@@ -57,7 +57,6 @@ GwtWindow::GwtWindow(bool showToolbar,
 
 void GwtWindow::zoomActualSize()
 {
-   
 #if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
    if (isDuplicateZoomRequest(&lastZoomTimer_))
       return;
@@ -69,8 +68,10 @@ void GwtWindow::zoomActualSize()
 
 void GwtWindow::zoomIn()
 {
+#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
    if (isDuplicateZoomRequest(&lastZoomTimer_))
       return;
+#endif
    
    // get next greatest value
    double zoomLevel = options().zoomLevel();
@@ -84,8 +85,10 @@ void GwtWindow::zoomIn()
 
 void GwtWindow::zoomOut()
 {
+#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
    if (isDuplicateZoomRequest(&lastZoomTimer_))
       return;
+#endif
    
    // get next smallest value
    double zoomLevel = options().zoomLevel();
