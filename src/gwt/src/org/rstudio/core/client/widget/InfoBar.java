@@ -120,16 +120,15 @@ public class InfoBar extends Composite
       
       label_.setText(message);
       
-      if (labelRight_.getWidgetCount() == 0)
-      {
-         labelRight_.add(label("Install", () -> {
-            onInstall.execute();
-         }));
-         
-         labelRight_.add(label("Don't Show Again", () -> {
-            onDismiss.execute();
-         }));
-      }
+      labelRight_.clear();
+
+      labelRight_.add(label("Install", () -> {
+         onInstall.execute();
+      }));
+
+      labelRight_.add(label("Don't Show Again", () -> {
+         onDismiss.execute();
+      }));
    }
    
    public void showReadOnlyWarning(List<String> alternatives)
