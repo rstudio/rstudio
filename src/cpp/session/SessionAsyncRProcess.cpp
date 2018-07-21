@@ -260,7 +260,18 @@ void AsyncRProcess::onProcessStderr(const std::string& output)
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();
-   scriptPath_.removeIfExists();
+   
+   if (exitStatus)
+   {
+      LOG_ERROR_MESSAGE(
+               "Error executing background script " +
+               scriptPath_.absolutePath());
+   }
+   else
+   {
+      scriptPath_.removeIfExists();
+   }
+   
    onCompleted(exitStatus);
 }
 
