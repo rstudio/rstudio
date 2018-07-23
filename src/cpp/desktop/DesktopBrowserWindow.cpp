@@ -109,7 +109,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    pToolbar_->setMovable(false);
 
    setCentralWidget(pView_);
-   setUnifiedTitleAndToolBarOnMac(true);
 
    desktop::enableFullscreenMode(this, false);
 }

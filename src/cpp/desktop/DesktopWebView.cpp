@@ -59,7 +59,6 @@ public:
       setAttribute(Qt::WA_DeleteOnClose, true);
       setAttribute(Qt::WA_QuitOnClose, true);
       
-      setUnifiedTitleAndToolBarOnMac(true);
       setCentralWidget(webView_);
    }
    
