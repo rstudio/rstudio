@@ -72,15 +72,15 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(
-         RStudioGinjector.INSTANCE.getUIPrefs(),
-         Document.get(),
-         mainPanel_.getElement());
-   
       // By default, we only apply the flat theme to match other dialogs, then
       // specific satellites can opt in to full theming using `supportsThemes()`.
       if (supportsThemes())
       {
+         RStudioThemes.initializeThemes(
+            RStudioGinjector.INSTANCE.getUIPrefs(),
+            Document.get(),
+            mainPanel_.getElement());
+            
          RStudioGinjector.INSTANCE.getAceThemes().applyTheme(Document.get());
       }
    }
