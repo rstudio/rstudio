@@ -106,6 +106,8 @@ public class RStudioThemedFrame extends RStudioFrame
       if (getWindow() != null && getWindow().getDocument() != null)
       {
          Document document = getWindow().getDocument();
+         if (!isEligibleForCustomStyles(document))
+            return;
          
          if (customStyle == null)
             customStyle = "";
@@ -178,6 +180,13 @@ public class RStudioThemedFrame extends RStudioFrame
          }
       });
    }
+   
+   private static final native boolean isEligibleForCustomStyles(Document document)
+   /*-{
+      var articles = document.getElementsByTagName("article");
+      return articles.length === 0;
+   }-*/;
+   
 
    private EventBus events_;
    private String customStyle_;
