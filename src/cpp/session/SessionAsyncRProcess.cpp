@@ -94,19 +94,7 @@ void AsyncRProcess::start(const std::string& command,
    args.push_back("-f");
    
    // generate path to temporary file
-   std::string path;
-   error = r::exec::RFunction("base:::tempfile")
-         .addParam("pattern", "rstudio-async-process-")
-         .addParam("tmpdir", workingDir.absolutePathNative())
-         .addParam("fileext", ".R")
-         .call(&path);
-   if (error)
-   {
-      LOG_ERROR(error);
-      onCompleted(EXIT_FAILURE);
-      return;
-   }
-   scriptPath_ = module_context::resolveAliasedPath(path);
+   scriptPath_ = module_context::tempFile("rstudio-async-process-", ".R");
    
    // set this as the file to run
    args.push_back(scriptPath_.absolutePathNative());
@@ -119,7 +107,10 @@ void AsyncRProcess::start(const std::string& command,
    {
       ss << "# RStudio Source Files ----" << std::endl;
       for (const FilePath& filePath : rSourceFiles)
-         ss << "source('" << filePath.absolutePathNative() << "')" << std::endl;
+      {
+         std::string path = string_utils::singleQuotedStrEscape(filePath.absolutePathNative());
+         ss << "source('" << path << "')" << std::endl;
+      }
       ss << std::endl;
    }
    
