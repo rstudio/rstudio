@@ -29,7 +29,8 @@ public class Addins
                                                String title,
                                                String description,
                                                boolean interactive,
-                                               String binding)
+                                               String binding,
+                                               int ordinal)
       /*-{
          return {
             "name": name,
@@ -37,7 +38,8 @@ public class Addins
             "title": title,
             "description": description,
             "interactive": interactive,
-            "binding": binding
+            "binding": binding,
+            "ordinal": ordinal
          };
       }-*/;
       
@@ -47,6 +49,7 @@ public class Addins
       public final native String getDescription() /*-{ return this["description"]; }-*/;
       public final native boolean isInteractive() /*-{ return this["interactive"]; }-*/;
       public final native String getBinding() /*-{ return this["binding"]; }-*/;
+      public final native int getOrdinal() /*-{ return this["ordinal"] || 0; }-*/;
       
       public final String getId()
       {
@@ -62,7 +65,8 @@ public class Addins
                addin.getTitle(),
                addin.getDescription(),
                addin.isInteractive() ? "true" : "false",
-               addin.getBinding());
+               addin.getBinding(),
+               "" + addin.getOrdinal());
       }
       
       public final static RAddin decode(String decoded)
@@ -80,7 +84,8 @@ public class Addins
                splat[2],
                splat[3],
                splat[4] == "false" ? false : true,
-               splat[5]);
+               splat[5],
+               StringUtil.parseInt(splat[6], 0));
       }
    }
    
