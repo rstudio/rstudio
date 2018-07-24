@@ -153,20 +153,28 @@ public:
             {
                bool interactive;
                std::string name, package, title, description, binding;
-               int ordinal = 0;
                Error error = json::readObject(valueJson.get_obj(),
                                               "name", &name,
                                               "package", &package,
                                               "title", &title,
                                               "description", &description,
                                               "interactive", &interactive,
-                                              "binding", &binding,
-                                              "ordinal", &ordinal);
+                                              "binding", &binding);
                if (error)
                {
                   LOG_ERROR(error);
                   continue;
                }
+               
+               // attempt read to ordinal (note that this was not persisted
+               // as part of older addin databases so we read it separately
+               // and simply log errors rather than treating them as failures
+               // to read an entry from the database)
+               int ordinal = 0;
+               error = json::readObject(valueJson.get_obj(),
+                                        "ordinal", &ordinal);
+               if (error)
+                  LOG_ERROR(error);
 
                addins_[key] = AddinSpecification(name,
                                                  package,
