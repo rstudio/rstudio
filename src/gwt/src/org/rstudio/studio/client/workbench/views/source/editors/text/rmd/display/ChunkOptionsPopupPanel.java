@@ -31,10 +31,9 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
-import org.rstudio.core.client.widget.ThemedCheckBox;
-import org.rstudio.core.client.widget.TriStateCheckBox;
+import org.rstudio.core.client.widget.Toggle;
 import org.rstudio.core.client.widget.VerticalSpacer;
-import org.rstudio.core.client.widget.TriStateCheckBox.State;
+import org.rstudio.core.client.widget.Toggle.State;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -231,30 +230,30 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(nameAndOutputGrid);
       
-      showWarningsInOutputCb_ = makeTriStateCheckBox(
+      showWarningsInOutputCb_ = makeTriStateToggle(
             "Show warnings",
             "warning");
       panel_.add(showWarningsInOutputCb_);
       
-      showMessagesInOutputCb_ = makeTriStateCheckBox(
+      showMessagesInOutputCb_ = makeTriStateToggle(
             "Show messages",
             "message");
       panel_.add(showMessagesInOutputCb_);
 
-      printTableAsTextCb_ = makeTriStateCheckBox(
+      printTableAsTextCb_ = makeTriStateToggle(
             "Use paged tables",
             "paged.print");
       panel_.add(printTableAsTextCb_);
       printTableAsTextCb_.setVisible(false);
       
-      useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
+      useCustomFigureCheckbox_ = new Toggle("Use custom figure size", false);
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
-      useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Toggle.State>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
+         public void onValueChange(ValueChangeEvent<Toggle.State> event)
          {
-            boolean value = event.getValue();
+            boolean value = event.getValue() == Toggle.State.ON;
             figureDimensionsPanel_.setVisible(value);
             
             if (!value)
@@ -439,27 +438,26 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return box;
    }
    
-   private TriStateCheckBox makeTriStateCheckBox(String label, final String option)
+   private Toggle makeTriStateToggle(String label, final String option)
    {
-      TriStateCheckBox checkBox = new TriStateCheckBox(label);
-      checkBox.addValueChangeHandler(
-            new ValueChangeHandler<TriStateCheckBox.State>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<State> event)
-               {
-                  State state = event.getValue();
-                  if (state == TriStateCheckBox.STATE_INDETERMINATE)
-                     unset(option);
-                  else if (state == TriStateCheckBox.STATE_OFF)
-                     set(option, "FALSE");
-                  else if (state == TriStateCheckBox.STATE_ON)
-                     set(option, "TRUE");
-                  synchronize();
-               }
-            });
-      checkBox.getElement().getStyle().setMargin(2, Unit.PX);
-      return checkBox;
+      Toggle toggle = new Toggle(label, true);
+      toggle.addValueChangeHandler((ValueChangeEvent<State> event) -> {
+         State state = event.getValue();
+         switch (state)
+         {
+         case INDETERMINATE:
+            unset(option);
+            break;
+         case OFF:
+            set(option, "FALSE");
+            break;
+         case ON:
+            set(option, "TRUE");
+            break;
+         }
+         synchronize();
+      });
+      return toggle;
    }
    
    protected boolean has(String key)
@@ -664,10 +662,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final TextBox engineOptsBox_;
    protected final SmallButton revertButton_;
    protected final SmallButton applyButton_;
-   protected final ThemedCheckBox useCustomFigureCheckbox_;
-   protected final TriStateCheckBox showWarningsInOutputCb_;
-   protected final TriStateCheckBox showMessagesInOutputCb_;
-   protected final TriStateCheckBox printTableAsTextCb_;
+   protected final Toggle useCustomFigureCheckbox_;
+   protected final Toggle showWarningsInOutputCb_;
+   protected final Toggle showMessagesInOutputCb_;
+   protected final Toggle printTableAsTextCb_;
    
    protected String originalLine_;
    protected String chunkPreamble_;
