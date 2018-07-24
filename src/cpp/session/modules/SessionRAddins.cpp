@@ -65,10 +65,11 @@ public:
                       const std::string& title,
                       const std::string& description,
                       bool interactive,
-                      const std::string& binding)
+                      const std::string& binding,
+                      int ordinal)
       : name_(name), package_(package), title_(title),
         description_(description), interactive_(interactive),
-        binding_(binding)
+        binding_(binding), ordinal_(ordinal)
    {
    }
    
@@ -78,6 +79,7 @@ public:
    const std::string& getDescription() const { return description_; }
    bool isInteractive() const { return interactive_; }
    const std::string& getBinding() const { return binding_; }
+   int getOrdinal() const { return ordinal_; }
    
    json::Object toJson() const
    {
@@ -89,6 +91,7 @@ public:
       object["description"] = description_;
       object["interactive"] = interactive_;
       object["binding"] = binding_;
+      object["ordinal"] = ordinal_;
       
       return object;
    }
@@ -100,6 +103,7 @@ private:
    std::string description_;
    bool interactive_;
    std::string binding_;
+   int ordinal_;
 };
 
 class AddinRegistry : boost::noncopyable
@@ -145,17 +149,19 @@ public:
          BOOST_FOREACH(const std::string& key, addinsJson | boost::adaptors::map_keys)
          {
             json::Value valueJson = addinsJson.at(key);
-            if(json::isType<json::Object>(valueJson))
+            if (json::isType<json::Object>(valueJson))
             {
                bool interactive;
                std::string name, package, title, description, binding;
+               int ordinal = 0;
                Error error = json::readObject(valueJson.get_obj(),
                                               "name", &name,
                                               "package", &package,
                                               "title", &title,
                                               "description", &description,
                                               "interactive", &interactive,
-                                              "binding", &binding);
+                                              "binding", &binding,
+                                              "ordinal", &ordinal);
                if (error)
                {
                   LOG_ERROR(error);
@@ -167,7 +173,8 @@ public:
                                                  title,
                                                  description,
                                                  interactive,
-                                                 binding);
+                                                 binding,
+                                                 ordinal);
             }
          }
 
@@ -194,7 +201,8 @@ public:
             fields["Title"],
             fields["Description"],
             interactive,
-            fields["Binding"]));
+            fields["Binding"],
+            addins_.size() + 1));
    }
 
    void add(const std::string& pkgName, const FilePath& addinPath)
