@@ -1852,8 +1852,7 @@ body.ubuntu_mono .searchBox {
 
 .windows.rstudio-themes-flat input[type="checkbox"] {
   margin-right: 3px;
-  margin-top: 1px;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark input[type="checkbox"] {
