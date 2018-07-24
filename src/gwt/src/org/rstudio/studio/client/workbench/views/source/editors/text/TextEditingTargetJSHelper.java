@@ -19,6 +19,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -35,8 +36,9 @@ public class TextEditingTargetJSHelper
    }
    
    @Inject
-   void initialize(EventBus eventBus, SourceServerOperations server)
+   void initialize(GlobalDisplay display, EventBus eventBus, SourceServerOperations server)
    {
+      display_ = display;
       eventBus_ = eventBus;
       server_ = server;
    }
@@ -74,10 +76,25 @@ public class TextEditingTargetJSHelper
          else if (line.startsWith("//"))
          {
             Match match = jsPreviewPattern_.match(line, 0);
-            if (match != null)
+            if (match != null &&
+                match.hasGroup(1) &&
+                match.hasGroup(2))
             {
-               if (match.hasGroup(1) && match.hasGroup(2))
-                  return new JsPreview(match.getGroup(1), match.getGroup(2));               
+               String previewer = match.getGroup(1);
+               String options = match.getGroup(2);
+               
+               // validate that this is an understood previewer
+               if (!StringUtil.equals(previewer, "r2d3"))
+               {
+                  display_.showErrorMessage(
+                        "Error Previewing JavaScript",
+                        "'" + previewer + "' is not a known previewer for " +
+                        "JavaScript files. Did you mean 'r2d3'?");
+               }
+               else
+               {
+                  return new JsPreview(previewer, options);
+               }
             }
             
          }   
@@ -100,9 +117,10 @@ public class TextEditingTargetJSHelper
    }
    
    private static final Pattern jsPreviewPattern_ = 
-         Pattern.create("^//\\s*!preview\\s+(\\w+) (.*)$");
+         Pattern.create("^//\\s*!preview\\s+(\\w+)\\s+(.*)$", "");
    
   
+   private GlobalDisplay display_;
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
    private SourceServerOperations server_;
