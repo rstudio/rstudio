@@ -176,9 +176,17 @@ QString Options::proportionalFont() const
            QString::fromUtf8("Segoe UI") << QString::fromUtf8("Verdana") <<  // Windows
            QString::fromUtf8("Helvetica");
 #endif
-   return QString::fromUtf8("\"") +
-         findFirstMatchingFont(fontList, QString::fromUtf8("sans-serif"), false) +
-         QString::fromUtf8("\"");
+   
+   QString sansSerif = QStringLiteral("sans-serif");
+   QString selectedFont = findFirstMatchingFont(fontList, sansSerif, false);
+   
+   // NOTE: browsers will refuse to render a default font if the name is in
+   // quotes; e.g. "sans-serif" is a signal to look for a font called sans-serif
+   // rather than use the default sans-serif font!
+   if (selectedFont == sansSerif)
+      return sansSerif;
+   else
+      return QStringLiteral("\"%1\"").arg(selectedFont);
 }
 
 void Options::setFixedWidthFont(QString font)
@@ -215,9 +223,15 @@ QString Options::fixedWidthFont() const
 #endif
            ;
 
-   return detectedFont = QString::fromUtf8("\"") +
-         findFirstMatchingFont(fontList, QString::fromUtf8("monospace"), true) +
-         QString::fromUtf8("\"");
+   // NOTE: browsers will refuse to render a default font if the name is in
+   // quotes; e.g. "monospace" is a signal to look for a font called monospace
+   // rather than use the default monospace font!
+   QString monospace = QStringLiteral("monospace");
+   QString matchingFont = findFirstMatchingFont(fontList, monospace, true);
+   if (matchingFont == monospace)
+      return monospace;
+   else
+      return QStringLiteral("\"%1\"").arg(matchingFont);
 }
 
 
