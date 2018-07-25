@@ -29,7 +29,7 @@
    top: -1px;
    border: 1px solid rgb(115, 115, 115);
    border-radius: 10px 10px;
-   box-shadow: 1px 1px 1px rgba(115, 115, 115, 0.5);
+   box-shadow: 1px 1px 1px rgba(115, 115, 115, 0.25);
    background-color: white;
 }
 
