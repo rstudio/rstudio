@@ -545,6 +545,11 @@ if(RSTUDIO_BUNDLE_QT)
 endif(RSTUDIO_BUNDLE_QT)
 
 if (UNIX AND NOT APPLE)
+   # ensure themes compiled and up to date
+   execute_process(
+      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets/compile-stylesheets"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets")
+
    # add rstudio icon to root (so people installing from source or tar.gz can find it
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/icons/48x48/rstudio.png
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})

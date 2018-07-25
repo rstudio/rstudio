@@ -75,30 +75,43 @@ new QWebChannel(qt.webChannelTransport, function(channel) {
    page->scripts().insert(script);
 }
 
-static const char s_gnomeStyles[] = R"EOF(
+#ifdef Q_OS_LINUX
 
-QMenuBar::item {
-    color: rgb(48, 48, 48);
+const char s_rstudioGnomeLightStyles[] = {
+#include "stylesheets/rstudio-gnome-light.xxd"
+};
+
+const char s_rstudioGnomeDarkStyles[] = {
+#include "stylesheets/rstudio-gnome-dark.xxd"
+};
+
+#endif
+
+void initializeStyleSheets(BrowserWindow* window)
+{
+#ifdef Q_OS_LINUX
+   if (isGnomeDesktop())
+   {
+      // try to figure out if we're using a dark theme
+      core::system::ProcessResult result;
+      core::Error error = core::system::runCommand(
+               "gsettings get org.gnome.desktop.interface gtk-theme",
+               core::system::ProcessOptions(),
+               &result);
+      if (error)
+         LOG_ERROR(error);
+
+      std::string output = result.stdOut;
+      bool isDark =
+            output.find("dark") != std::string::npos ||
+            output.find("Dark") != std::string::npos;
+
+      isDark
+            ? window->setStyleSheet(QLatin1String(s_rstudioGnomeDarkStyles, sizeof(s_rstudioGnomeDarkStyles)))
+            : window->setStyleSheet(QLatin1String(s_rstudioGnomeLightStyles, sizeof(s_rstudioGnomeLightStyles)));
+   }
+#endif
 }
-
-QMenu::item {
-    color: rgb(48, 48, 48);
-}
-
-QMenu::item:enabled {
-    color: rgb(48, 48, 48);
-}
-
-QMenu::item:disabled {
-    color: rgb(160, 160, 160);
-}
-
-QMenu::item:selected {
-    background-color: rgb(48, 140, 198);
-    color: white;
-}
-
-)EOF";
 
 } // end anonymous namespace
 
@@ -122,6 +135,7 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
    
    initializeWebchannel(this);
+   initializeStyleSheets(this);
    
    // set zoom factor
    double zoomLevel = options().zoomLevel();
@@ -132,11 +146,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    // decide whether to keep this.
    pToolbar_ = showToolbar ? addToolBar(tr("Navigation")) : new QToolBar();
    pToolbar_->setMovable(false);
-
-   // set up custom styles for GNOME desktop as the menu bar
-   // contrast is a bit too high in that case
-   if (isGnomeDesktop())
-      setStyleSheet(QLatin1String(s_gnomeStyles));
 
    setCentralWidget(pView_);
 

@@ -1,0 +1,20 @@
+QMenuBar::item {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item:enabled {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item:disabled {
+    color: rgb(160, 160, 160);
+}
+
+QMenu::item:selected {
+    background-color: rgb(48, 140, 198);
+    color: white;
+}
