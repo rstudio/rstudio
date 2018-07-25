@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -72,5 +73,10 @@ public class AceTheme extends JavaScriptObject
    public final String getFileStem()
    {
       return FileSystemItem.createFile(this.getUrl()).getStem();
+   }
+   
+   public final Boolean isEqualTo(AceTheme other)
+   {
+      return StringUtil.equalsIgnoreCase(other.getName(), this.getName());
    }
 }
