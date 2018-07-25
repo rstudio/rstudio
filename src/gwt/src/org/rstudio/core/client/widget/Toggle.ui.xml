@@ -35,17 +35,17 @@
 
 .knob.knobLeft {
    margin-left: -1px;
-   transition: 500ms;
+   transition: 200ms;
 }
 
 .knob.knobMiddle {
    margin-left: 3px;
-   transition: 500ms;
+   transition: 200ms;
 }
 
 .knob.knobRight {
    margin-left: 7px;
-   transition: 500ms;
+   transition: 200ms;
 }
 
 .label {
