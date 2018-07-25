@@ -13,9 +13,9 @@
 
 .track {
    position: relative;
-   width: 16px;
+   width: 18px;
    height: 10px;
-   border: 1px solid rgb(150, 150, 150);
+   border: 1px solid rgb(115, 115, 115);
    margin-top: 1px;
    border-radius: 10px 10px;
 }
@@ -46,24 +46,24 @@
 
 .knobLeft {
    margin-left: -1px;
-   border: 1px solid rgb(150, 150, 150);
+   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
 .knobMiddle {
-   margin-left: 2px;
-   border: 1px solid rgb(150, 150, 150);
+   margin-left: 3px;
+   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
 .knobRight {
-   margin-left: 5px;
-   border: 1px solid rgb(150, 150, 150);
+   margin-left: 7px;
+   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
 .label {
-   margin-left: 5px;
+   margin-left: 6px;
 }
 
 </ui:style>
