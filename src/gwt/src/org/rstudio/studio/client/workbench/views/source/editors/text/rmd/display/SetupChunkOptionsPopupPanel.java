@@ -23,7 +23,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.widget.TriStateCheckBox;
+import org.rstudio.core.client.widget.Toggle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -93,11 +93,21 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
    
    private void addCheckboxParam(Map<String, String> options,
-                                 TriStateCheckBox checkBox,
+                                 Toggle toggle,
                                  String name)
    {
-      if (!checkBox.isIndeterminate())
-         options.put(name, trueString(checkBox.isChecked()));
+      switch (toggle.getState())
+      {
+      case INDETERMINATE:
+         options.remove(name);
+         break;
+      case OFF:
+         options.put(name, "FALSE");
+         break;
+      case ON:
+         options.put(name, "TRUE");
+         break;
+      }
    }
    
    private void addTextBoxParam(Map<String, String> options,
