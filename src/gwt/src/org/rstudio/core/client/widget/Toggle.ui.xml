@@ -15,55 +15,45 @@
    position: relative;
    width: 18px;
    height: 10px;
-   border: 1px solid rgb(115, 115, 115);
    margin-top: 1px;
+   background-color: rgb(217, 217, 217);
+   border: 1px solid rgb(115, 115, 115);
    border-radius: 10px 10px;
-}
-
-.trackLeft {
-   background-color: rgb(217, 217, 217);
-   transition: 500ms;
-}
-
-.trackMiddle {
-   background-color: rgb(217, 217, 217);
-   transition: 500ms;
-}
-
-.trackRight {
-   background-color: rgb(217, 217, 217);
-   transition: 500ms;
 }
 
 .knob {
    position: absolute;
    width: 10px;
    height: 10px;
+   margin-left: -1px;
    top: -1px;
+   border: 1px solid rgb(115, 115, 115);
    border-radius: 10px 10px;
+   box-shadow: 1px 1px 1px rgba(115, 115, 115, 0.5);
    background-color: white;
 }
 
-.knobLeft {
+.knob.knobLeft {
    margin-left: -1px;
-   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
-.knobMiddle {
+.knob.knobMiddle {
    margin-left: 3px;
-   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
-.knobRight {
+.knob.knobRight {
    margin-left: 7px;
-   border: 1px solid rgb(115, 115, 115);
    transition: 500ms;
 }
 
 .label {
    margin-left: 6px;
+}
+
+.transitionDisabled {
+   transition: none !important;
 }
 
 </ui:style>

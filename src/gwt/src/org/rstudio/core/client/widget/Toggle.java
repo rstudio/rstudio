@@ -62,29 +62,31 @@ public class Toggle
       initWidget(container_);
    }
    
-   public void setState(State state)
+   public void setState(State state, boolean animate)
    {
-      clearToggleStyles();
-      
       if (!indeterminateStateEnabled_ && state == State.INDETERMINATE)
       {
          assert false : "Attempted to set indeterminate state on binary toggle";
       }
       
+      if (animate)
+         knob_.removeStyleName(styles_.transitionDisabled());
+      else
+         knob_.addStyleName(styles_.transitionDisabled());
+      
+      clearToggleStyles();
+      
       switch (state)
       {
       case OFF:
-         track_.addStyleName(styles_.trackLeft());
          knob_.addStyleName(styles_.knobLeft());
          break;
          
       case INDETERMINATE:
-         track_.addStyleName(styles_.trackMiddle());
          knob_.addStyleName(styles_.knobMiddle());
          break;
          
       case ON:
-         track_.addStyleName(styles_.trackRight());
          knob_.addStyleName(styles_.knobRight());
          break;
       }
@@ -94,6 +96,11 @@ public class Toggle
          state_ = state;
          ValueChangeEvent.fire(this, state);
       }
+   }
+   
+   public void setState(State state)
+   {
+      setState(state, false);
    }
    
    public void setValue(boolean value)
@@ -123,25 +130,21 @@ public class Toggle
       switch (state_)
       {
       case OFF:
-         setState(indeterminateStateEnabled_ ? State.INDETERMINATE : State.ON);
+         setState(indeterminateStateEnabled_ ? State.INDETERMINATE : State.ON, true);
          break;
          
       case INDETERMINATE:
-         setState(State.ON);
+         setState(State.ON, true);
          break;
          
       case ON:
-         setState(State.OFF);
+         setState(State.OFF, true);
          break;
       }
    }
    
    private void clearToggleStyles()
    {
-      track_.removeStyleName(styles_.trackLeft());
-      track_.removeStyleName(styles_.trackMiddle());
-      track_.removeStyleName(styles_.trackRight());
-      
       knob_.removeStyleName(styles_.knobLeft());
       knob_.removeStyleName(styles_.knobMiddle());
       knob_.removeStyleName(styles_.knobRight());
@@ -166,20 +169,15 @@ public class Toggle
    static interface Binder extends UiBinder<Widget, Toggle>
    {
    }
-
+   
    public interface Styles extends CssResource
    {
       String track();
-      
-      String trackLeft();
-      String trackMiddle();
-      String trackRight();
-      
       String knob();
-      
       String knobLeft();
       String knobMiddle();
       String knobRight();
+      String transitionDisabled();
    }
 
    private static final Binder BINDER = GWT.create(Binder.class);
