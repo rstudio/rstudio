@@ -94,6 +94,11 @@ bool isCentOS()
           contents.find("Red Hat Enterprise Linux") != std::string::npos;
 }
 
+bool isGnomeDesktop()
+{
+   return core::system::getenv("DESKTOP_SESSION") == "gnome";
+}
+
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
 

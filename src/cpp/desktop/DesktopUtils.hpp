@@ -43,6 +43,7 @@ double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isOSXMavericks();
 bool isCentOS();
+bool isGnomeDesktop();
 
 void raiseAndActivateWindow(QWidget* pWindow);
 

@@ -75,6 +75,31 @@ new QWebChannel(qt.webChannelTransport, function(channel) {
    page->scripts().insert(script);
 }
 
+static const char s_gnomeStyles[] = R"EOF(
+
+QMenuBar::item {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item:enabled {
+    color: rgb(48, 48, 48);
+}
+
+QMenu::item:disabled {
+    color: rgb(160, 160, 160);
+}
+
+QMenu::item:selected {
+    background-color: rgb(48, 140, 198);
+    color: white;
+}
+
+)EOF";
+
 } // end anonymous namespace
 
 BrowserWindow::BrowserWindow(bool showToolbar,
@@ -107,6 +132,11 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    // decide whether to keep this.
    pToolbar_ = showToolbar ? addToolBar(tr("Navigation")) : new QToolBar();
    pToolbar_->setMovable(false);
+
+   // set up custom styles for GNOME desktop as the menu bar
+   // contrast is a bit too high in that case
+   if (isGnomeDesktop())
+      setStyleSheet(QLatin1String(s_gnomeStyles));
 
    setCentralWidget(pView_);
 
