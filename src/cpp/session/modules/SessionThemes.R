@@ -1056,7 +1056,7 @@
    warnings <- c()
    tryCatch(
       withCallingHandlers(
-         .rs.addTheme(themePath, apply = FALSE, force = FALSE, globally = FALSE),
+         .rs.addTheme(themePath, apply = FALSE, force = TRUE, globally = FALSE),
          warning = function(w) 
          { 
             warnings <<- conditionMessage(w)
