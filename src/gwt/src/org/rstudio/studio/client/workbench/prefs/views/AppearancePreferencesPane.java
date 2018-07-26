@@ -225,8 +225,10 @@ public class AppearancePreferencesPane extends PreferencesPane
             }));
       addThemeButton_.setLeftAligned(true);
       removeThemeButton_ = new ThemedButton(
-         "Remove...",
-         event -> removeTheme(theme_.getValue(), themes));
+         "Remove",
+         event -> showRemoveThemeWarning(
+            theme_.getValue(),
+            () -> removeTheme(theme_.getValue(), themes)));
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
       
@@ -383,6 +385,21 @@ public class AppearancePreferencesPane extends PreferencesPane
          .append(" please change the active theme and retry.");
       
       globalDisplay_.showErrorMessage("Cannot Remove Active Theme", msg.toString());
+   }
+   
+   private void showRemoveThemeWarning(String themeName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("Taking this action will delete the theme \"")
+         .append(themeName)
+         .append("\" and cannot be undone. Are you sure you wish to continue?");
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         "Remove Theme",
+         msg.toString(),
+         continueOperation,
+         false);
    }
    
    @Override
