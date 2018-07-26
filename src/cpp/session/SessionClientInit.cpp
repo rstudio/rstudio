@@ -186,7 +186,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
 
-   sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
+   std::string sessionVersion = std::string(RSTUDIO_VERSION);
+   sessionInfo["rstudio_version"] = sessionVersion;
+
+   // check to ensure the version of this rsession process matches the version
+   // of the rserver that started us
+   std::string version = core::system::getenv(kRStudioVersion);
+   if (!version.empty() && version != sessionVersion)
+   {
+      module_context::consoleWriteError("Session version " + sessionVersion +
+                                        " does not match server version " + version + " - "
+                                        " this is an unsupported configuration, and you may "
+                                        "experience unexpected issues as a result.\n\n");
+   }
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
 

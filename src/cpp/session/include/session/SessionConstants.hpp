@@ -31,6 +31,7 @@
 #define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
 #define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
 #define kRStudioSigningKey                "RSTUDIO_SIGNING_KEY"
+#define kRStudioVersion                   "RSTUDIO_VERSION"
 #define kRSessionRsaPublicKey             "RSTUDIO_SESSION_RSA_PUBLIC_KEY"
 #define kRSessionRsaPrivateKey            "RSTUDIO_SESSION_RSA_PRIVATE_KEY"
 

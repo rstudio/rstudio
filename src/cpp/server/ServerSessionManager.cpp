@@ -32,6 +32,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 
 #include "ServerREnvironment.hpp"
+#include "server-config.h"
 
 
 using namespace rstudio::core;
@@ -138,6 +139,11 @@ core::system::ProcessConfig sessionProcessConfig(
    // add monitor shared secret
    environment.push_back(std::make_pair(kMonitorSharedSecretEnvVar,
                                         options.monitorSharedSecret()));
+
+   // stamp the version number of the rserver process that is launching this session
+   // the session should log an error if its version does not match, as that is
+   // likely an unsupported configuration
+   environment.push_back({kRStudioVersion, RSTUDIO_VERSION});
 
    // build the config object and return it
    core::system::ProcessConfig config;

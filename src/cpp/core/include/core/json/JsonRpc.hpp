@@ -1092,7 +1092,7 @@ core::Error getOptionalParam(const json::Object& json, const std::string& param,
                              const T& defaultValue, T* outParam)
 {
    json::Object::const_iterator it = json.find(param);
-   if (it != json.end())
+   if (it != json.end() && it->second.type() != json::NullType)
    {
       if (!json::isType<T>(it->second))
       {

@@ -1733,16 +1733,19 @@ int main (int argc, char * const argv[])
             FilePath templatePath = FilePath(options.firstProjectTemplatePath());
             if (templatePath.exists())
             {
-               error = templatePath.copyDirectoryRecursive(options.userHomePath().childPath(templatePath.filename()));
+               error = templatePath.copyDirectoryRecursive(options.userHomePath().childPath(
+                                                              templatePath.filename()));
                if (error)
                   LOG_ERROR(error);
                else
                {
-                  FilePath firstProjPath = options.userHomePath().childPath(templatePath.filename()).childPath(templatePath.filename() + ".Rproj");
+                  FilePath firstProjPath = options.userHomePath().childPath(templatePath.filename())
+                        .childPath(templatePath.filename() + ".Rproj");
                   if (firstProjPath.exists())
                      firstProjectPath = firstProjPath.absolutePath();
                   else
-                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.absolutePath() + ". Please ensure the template contains an Rproj file.");
+                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.absolutePath() +
+                                         ". Please ensure the template contains an Rproj file.");
                }
             }
          }
@@ -1912,7 +1915,7 @@ int main (int argc, char * const argv[])
       rCallbacks.showHelp = rShowHelp;
       rCallbacks.showMessage = rShowMessage;
       rCallbacks.serialization = rSerialization;
-      
+
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks) ;
       if (error)
