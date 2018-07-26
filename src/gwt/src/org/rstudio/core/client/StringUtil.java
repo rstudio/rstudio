@@ -1299,6 +1299,21 @@ public class StringUtil
       return str1 == str2;
    }-*/;
    
+   /**
+    * Compare two strings, ignoring case. Works if one or both strings are null.
+    *
+    * @param str1
+    * @param str2
+    * @return true if non-null strings are equal, ignoring case, or both are null.
+    */
+   public static boolean equalsIgnoreCase(String str1, String str2)
+   {
+      if (str1 == null)
+         return (str2 == null);
+      
+      return str1.equalsIgnoreCase(str2);
+   }
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT

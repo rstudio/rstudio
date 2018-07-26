@@ -15,6 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 
 /**
  * Represents an editor theme.
@@ -52,4 +55,28 @@ public class AceTheme extends JavaScriptObject
       return this.isDark;
    }-*/;
    
+   public final Boolean isDefaultTheme()
+   {
+      return Pattern.create("^/theme/default/.+?\\.rstheme$").test(getUrl());
+   }
+   
+   public final Boolean isLocalCustomTheme()
+   {
+      return Pattern.create("^/theme/custom/local/.+?\\.rstheme$").test(getUrl());
+   }
+   
+   public final Boolean isGlobalCustonTheme()
+   {
+      return Pattern.create("^/theme/custom/global/.+?\\.rstheme$").test(getUrl());
+   }
+   
+   public final String getFileStem()
+   {
+      return FileSystemItem.createFile(this.getUrl()).getStem();
+   }
+   
+   public final Boolean isEqualTo(AceTheme other)
+   {
+      return StringUtil.equalsIgnoreCase(other.getName(), this.getName());
+   }
 }

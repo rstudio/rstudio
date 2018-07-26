@@ -19,7 +19,7 @@
 # @param color    The color to convert.
 #
 # Returns the RGB color.
-.rs.addFunction("getRgbColor", getRgbColor <- function(color) {
+.rs.addFunction("getRgbColor", function(color) {
    if (is.vector(color) && any(is.integer(color))) 
    {
       if (length(color) != 3) 
@@ -98,7 +98,7 @@
 # @param alpha2   The alpha of the second color.
 # 
 # Returns the mixed color in string format.
-.rs.addFunction("mixColors", mixColors <- function(color1, color2, alpha1, alpha2 = NULL) {
+.rs.addFunction("mixColors", function(color1, color2, alpha1, alpha2 = NULL) {
    c1rgb <- .rs.getRgbColor(color1)
    c2rgb <- .rs.getRgbColor(color2)
    
@@ -123,7 +123,7 @@
 # @param color    The color for which to determine the luma.
 #
 # Returns the luma of the specified color.
-.rs.addFunction("getLuma", getLuma <- function(color) {
+.rs.addFunction("getLuma", function(color) {
    # The numbers used in this calculation are taken from
    # https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js#L191. It is not entirely clear
    # why they were chosen, as there are no comments in the orginal.
@@ -136,7 +136,7 @@
 # @param color    The color to parse.
 #
 # Returns the parsed color.
-.rs.addFunction("parseColor", parseColor <- function(color) {
+.rs.addFunction("parseColor", function(color) {
    colorLen <- nchar(color)
    if (colorLen < 1)
    {
@@ -177,7 +177,7 @@
 # @param styles      The style(s) to convert.
 #
 # Returns the converted font style.
-.rs.addFunction("parseStyles", parseStyles <- function(styles) {
+.rs.addFunction("parseStyles", function(styles) {
    cssLines <- character(0)
    fontStyle <- if (is.null(styles$fontStyle)) "" else styles$fontStyle
    
@@ -210,7 +210,7 @@
 #                          value.
 # 
 # Returns a list which contains the styles and unsupportedScopes in named elements.
-.rs.addFunction("extractStyles", extractStyles <- function(theme, supportedScopes) {
+.rs.addFunction("extractStyles", function(theme, supportedScopes) {
    # Fallback Scopes
    fallbackScopes <- list(
       "keyword" = "meta",
@@ -339,7 +339,7 @@
 # @param tmTheme     The parsed tmTheme object.
 # 
 # Returns Ace css theme as a string.
-.rs.addFunction("convertTmTheme", convertTmTheme <- function(tmTheme) {
+.rs.addFunction("convertTmTheme", function(tmTheme) {
    # Helper functions 
    
    # Fills a template value with the given replacements.
@@ -372,17 +372,17 @@
    # Returns the converted string.
    hyphenate <- function(string) {
       tolower(
-            gsub("-+", "-", # Get rid of duplicate hyphens
-               sub(
-                  "^-", "", # Get rid of leading hyphen
-                  gsub(
-                     "_",
-                     "-", # Replace _ with hyphen
-                     gsub(
-                        "([^0-9A-Z])([A-Z])", # Insert hyphen before capital letters which are not immediately preceded by a digit or another capital letter
-                        "\\1-\\2",
-                        gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and antyhing encased in parantheses
-                             gsub("&","-and-", # Replace & with And
+         gsub("-+", "-", # Get rid of duplicate hyphens
+              sub(
+                 "^-", "", # Get rid of leading hyphen
+                 gsub(
+                    "_",
+                    "-", # Replace _ with hyphen
+                    gsub(
+                       "([^0-9A-Z])([A-Z])", # Insert hyphen before capital letters which are not immediately preceded by a digit or another capital letter
+                       "\\1-\\2",
+                       gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and antyhing encased in parantheses
+                            gsub("&","-and-", # Replace & with And
                                  gsub("\\s", "-", string)))))))) # Replace whitespace with hyphen
    }
    
@@ -527,12 +527,11 @@
 # @param element     The element to parse.
 #
 # Returns the text value of the element.
-.rs.addFunction("parseKeyElement", parseKeyElement <- function(element) {
-   parseError <- "Unable to convert the tmtheme to an rstheme."
+.rs.addFunction("parseKeyElement", function(element) {
    key <- xml2::xml_text(element)
    if (key == "")
    {
-      stop(parseError, " The value of a \"key\" element may not be empty.", call. = FALSE)
+      stop("The value of a \"key\" element may not be empty.", call. = FALSE)
    }
    
    key
@@ -544,8 +543,7 @@
 # @param keyName     The name of the key for this value.
 #
 # Returns the text value of the element.
-.rs.addFunction("parseStringElement", parseStringElement <- function(element, keyName) {
-   parseError <- "Unable to convert the tmtheme to an rstheme."
+.rs.addFunction("parseStringElement", function(element, keyName) {
    value <- xml2::xml_text(element)
    
    # The key can only be null if there was no <key> element immediately preceding the <string>
@@ -554,8 +552,7 @@
    if (is.null(keyName))
    {
       stop(
-         parseError,
-         " Unable to find a key for the \"string\" element with value \"",
+         "Unable to find a key for the \"string\" element with value \"",
          value,
          "\".",
          call. = FALSE)
@@ -570,11 +567,10 @@
 # @param keyName        The name of the dictionary.
 #
 # Returns a list with named values.
-.rs.addFunction("parseDictElement", parseDictElement <- function(dictElement, keyName) {
-   parseError <- "Unable to convert the tmtheme to an rstheme."
+.rs.addFunction("parseDictElement", function(dictElement, keyName) {
    if (is.null(keyName))
    {
-      stop(parseError, " Unable to find a key for the current \"dict\" element.", call. = FALSE)
+      stop("Unable to find a key for the current \"dict\" element.", call. = FALSE)
    }
    
    values <- list()
@@ -591,8 +587,7 @@
                if (!is.null(key))
                {
                   stop(
-                     parseError,
-                     " Unable to find a value for the key \"",
+                     "Unable to find a value for the key \"",
                      key,
                      "\".",
                      call. = FALSE)
@@ -619,8 +614,7 @@
             else
             {
                stop(
-                  parseError,
-                  " Encountered unexpected element as a child of the current \"dict\" element: \"",
+                  "Encountered unexpected element as a child of the current \"dict\" element: \"",
                   elName,
                   "\". Expected \"key\", \"string\", \"array\", or \"dict\".",
                   call. = FALSE)
@@ -631,8 +625,7 @@
       if (!is.null(key))
       {
          stop(
-            parseError,
-            " Unable to find a value for the key \"",
+            "Unable to find a value for the key \"",
             key,
             "\".",
             call. = FALSE)
@@ -648,22 +641,20 @@
 # @param keyName           The name of the key for this array element.
 #
 # Returns a list() of named settings.
-.rs.addFunction("parseArrayElement", parseArrayElement <- function(arrayElement, keyName) {
-   parseError <- "Unable to convert the tmtheme to an rstheme."
+.rs.addFunction("parseArrayElement", function(arrayElement, keyName) {
    if (xml2::xml_length(arrayElement) < 1)
    {
-      stop(parseError, " \"array\" element cannot be empty.", call. = FALSE)
+      stop("\"array\" element cannot be empty.", call. = FALSE)
    }
    
    if (is.null(keyName))
    {
-      stop(parseError, " Unable to find a key for array value.", call. = FALSE)
+      stop("Unable to find a key for array value.", call. = FALSE)
    }
    if (keyName != "settings")
    {
       stop(
-         parseError,
-         " Incorrect key for array element. Expected: \"settings\"; Actual: \"",
+         "Incorrect key for array element. Expected: \"settings\"; Actual: \"",
          keyName,
          "\".",
          call. = FALSE)
@@ -679,8 +670,7 @@
          if (elName != "dict")
          {
             stop(
-               parseError,
-               " Expecting \"dict\" element; found \"",
+               "Expecting \"dict\" element; found \"",
                elName,
                "\".",
                call. = FALSE)
@@ -700,9 +690,15 @@
 # @param filePath     The path of the file to parse.
 # 
 # Returns a list with named values.
-.rs.addFunction("parseTmTheme", parseTmTheme <- function(filePath) {
-   parseError <- "Unable to convert the tmtheme to an rstheme."
-   
+.rs.addFunction("parseTmTheme", function(filePath) {
+   if (!file.exists(filePath))
+   {
+      stop(
+         "The specified file, \"",
+         filePath,
+         "\", does not exist.",
+         call. = FALSE)
+   }
    xmlFile <- file(filePath)
    xmlStr <- paste0(readLines(xmlFile), collapse = "\n")
    close(xmlFile)
@@ -711,8 +707,7 @@
       xmlStr, 
       error = function(msg, code, domain, line, col, level, filename) {
          stop(
-            parseError,
-            " An error occurred while parsing ",
+            "An error occurred while parsing ",
             filename,
             " at line ",
             line,
@@ -726,8 +721,7 @@
    childrenCount <- xml2::xml_length(tmThemeDoc)
    if (childrenCount != 1)
    {
-      stop(parseError,
-         " Expected 1 non-text child of the root, found: ",
+      stop("Expected 1 non-text child of the root, found: ",
          childrenCount,
          call. = FALSE)
    }
@@ -735,9 +729,7 @@
    # Check the structure at the root is correct before continuing.
    if (xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)) != "dict")
    {
-      stop(
-         parseError,
-         " Expecting \"dict\" element; found \"",
+      stop("Expecting \"dict\" element; found \"",
          xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)),
          "\".",
          call. = FALSE)
@@ -745,8 +737,7 @@
    if (xml2::xml_length(xml2::xml_child(tmThemeDoc, 1)) < 1)
    {
       stop(
-         parseError,
-         " \"dict\" element cannot be empty.",
+         "\"dict\" element cannot be empty.",
          call. = FALSE)
    }
    
@@ -761,17 +752,14 @@
 # 
 # @param aceCss      The ace CSS to convert.
 # @param name        The name 
-.rs.addFunction("convertAceTheme", convertAceTheme <- function(name, aceCss, isDark) {
+.rs.addFunction("convertAceTheme", function(name, aceCss, isDark) {
    library("highlight")
    source(file.path(.Call("rs_rResourcesPath"), "themes", "compile-themes.R"))
    
    rsTheme <- .rs.compile_theme(aceCss, isDark)
    if (length(rsTheme) == 0)
    {
-      stop(
-         "Unable to convert \"",
-         name,
-         "\" to RStudio theme. Please see above for warnings.",
+      stop("Please see above for warnings.",
          .call = FALSE)
    }
    
@@ -788,7 +776,7 @@
 # @param global    Whether to get the global or local install dir.
 #
 # Returns the install location.
-.rs.addFunction("getThemeInstallDir", getThemeInstallDir <- function(global) 
+.rs.addFunction("getThemeInstallDir", function(global) 
 {
    # Copy the file to the correct location.
    installLocation <- ""
@@ -817,7 +805,7 @@
    installLocation
 })
 
-.rs.addFunction("getThemeDirFromUrl", getThemeDirFromUrl <- function(url) {
+.rs.addFunction("getThemeDirFromUrl", function(url) {
    if (grepl("^/theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
    {
       file.path(.rs.getThemeInstallDir(TRUE), basename(url))
@@ -842,13 +830,15 @@
 # @param globally          Whether to add the theme for all users (true) or just this user (false).
 #
 # Returns the name of the theme on success.
-.rs.addFunction("convertTheme", convertTheme <- function(themePath, add, outputLocation, apply, force, globally) {
+.rs.addFunction("convertTheme", function(themePath, add, outputLocation, apply, force, globally) {
    tmTheme <- .rs.parseTmTheme(themePath)
    name <- tmTheme$name
    fileName <- paste0(tools::file_path_sans_ext(basename(themePath)), ".rstheme")
    
+   
    aceTheme <- .rs.convertTmTheme(tmTheme)
    rsTheme <- .rs.convertAceTheme(name, aceTheme$theme, aceTheme$isDark)
+
    
    isTemp <- is.null(outputLocation)
    location <- if (is.null(outputLocation)) tempfile(pattern = fileName)
@@ -862,7 +852,7 @@
          ". Please see above for relevant warnings.",
          call. = FALSE)
    }
-      
+
    cat(rsTheme, file = location)
 
    if (add)
@@ -885,7 +875,7 @@
 # @param globally    Whether to add the theme for all users (true) or for the current user (false).
 #
 # Returns the name of the theme on success.
-.rs.addFunction("addTheme", addTheme <- function(themePath, apply, force, globally) {
+.rs.addFunction("addTheme", function(themePath, apply, force, globally) {
    # Get the name of the file without extension.
    fileName <- regmatches(
       basename(themePath),
@@ -931,7 +921,7 @@
       if (globally)
       {
          stop(
-            "Unable to add the theme file. The global installation directory does not exist: \"",
+            "The global installation directory does not exist: \"",
             outputDir,
             "\".",
             call. = FALSE)
@@ -939,7 +929,7 @@
       if (!dir.create(outputDir, recursive = TRUE))
       {
          stop(
-            "Unable to add the theme file. Please check file system permissions.",
+            "Please check file system permissions.",
             call. = FALSE)
       }
    }
@@ -948,7 +938,7 @@
    if (file.exists(addedTheme) && !force)
    {
       stop(
-         "Unable to add the theme. A file with the same name, \"",
+         "A file with the same name, \"",
          fileName,
          ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
          call. = FALSE)
@@ -959,7 +949,7 @@
       addedTheme,
       overwrite = force))
    {
-      msg <- "Unable to add the theme file. Please check file system permissions"
+      msg <- "Please check file system permissions"
       if (!force)
       {
          msg <- paste0(msg, " or try again with `force = TRUE`.")
@@ -979,11 +969,11 @@
 # Applies a theme to RStudio.
 #
 # @param name     The name of the theme to apply.
-.rs.addFunction("applyTheme", applyTheme <- function(name, themeList) {
+.rs.addFunction("applyTheme", function(name, themeList) {
    theme <- themeList[[tolower(name)]]
    if (is.null(theme))
    {
-      stop("The specified theme \"", name, "\" does not exist.")
+      stop("The specified theme \"", name, "\" does not exist.", call. = FALSE)
    }
    
    themeValue <- list(
@@ -997,7 +987,7 @@
 # set to the default theme.
 #
 # @param The name of the theme to remove.
-.rs.addFunction("removeTheme", removeTheme <- function(name, themeList) {
+.rs.addFunction("removeTheme", function(name, themeList) {
    currentTheme <- .rs.api.getThemeInfo()$editor
    
    if (is.null(themeList[[tolower(name)]]))
@@ -1013,10 +1003,7 @@
    filePath <- .rs.getThemeDirFromUrl(themeList[[tolower(name)]]$url)
    if (is.null(filePath))
    {
-      stop(
-         "Unable to remove the specified theme: ",
-         name,
-         ". Please verify that the theme is installed as a custom theme.")
+      stop("Please verify that the theme is installed as a custom theme.")
    }
    if (!file.remove(filePath))
    {
@@ -1027,47 +1014,126 @@
          globalPath <- normalizePath(.rs.getThemeInstallDir(TRUE), mustWork = FALSE, winslash = "/")
          if (identical(file.path(globalPath, justFileName), actualPath))
          {
-            stop(
-               "Unable to remove the specified theme \"",
-               name,
-               "\", which is installed for all users. Please contact your system administrator.")
+            stop("The specified theme is installed for all users. Please contact your system administrator to remove the theme.")
          }
          else
          {
-            stop(
-               "Unable to remove the specified theme \"",
-               name,
-               "\". Please check your file system permissions.")
+            stop("Please check your file system permissions.")
          }
       }
    }
 })
 
+# C++ Wrappers =====================================================================================
+.rs.addFunction("internal.convertTheme", function(themePath) {
+   warnings <- c()
+   tryCatch(
+      withCallingHandlers(
+         .rs.convertTheme(
+            themePath,
+            add = TRUE,
+            outputLocation = NULL,
+            apply = FALSE,
+            force = TRUE,
+            globally = FALSE),
+         warning = function(w) 
+         { 
+            warnings <<- conditionMessage(w)
+            invokeRestart("muffleWarning")
+         }),
+      error = function(e) 
+      { 
+         if (length(warnings) > 0)
+            e$message <- paste(
+               e$message,
+               paste0(warnings, collapse = "\n    "),
+               sep = "\nAlso, warnings:\n    ")
+         e 
+      })
+})
 
-# API Functions
+.rs.addFunction("internal.addTheme", function(themePath) {
+   warnings <- c()
+   tryCatch(
+      withCallingHandlers(
+         .rs.addTheme(themePath, apply = FALSE, force = TRUE, globally = FALSE),
+         warning = function(w) 
+         { 
+            warnings <<- conditionMessage(w)
+            invokeRestart("muffleWarning")
+         }),
+      error = function(e) 
+      {
+         if (length(warnings) > 0)
+            e$message <- paste(
+               e$message,
+               paste0(warnings, collapse = "\n    "),
+               sep = "\nAlso, warnings:\n    ")
+         e 
+      })
+})
+
+.rs.addFunction("internal.removeTheme", function(name, themeList) {
+   warnings <- c()
+   tryCatch(
+      withCallingHandlers(
+         .rs.removeTheme(name, themeList),
+         warning = function(w) 
+         { 
+            warnings <<- c(warnings, conditionMessage(w))
+            invokeRestart("muffleWarning")
+         }),
+      error = function(e) 
+      { 
+         if (length(warnings) > 0)
+            e$message <- paste(
+               e$message,
+               paste0(warnings, collapse = "\n    "),
+               sep = "\nAlso, warnings:\n    ")
+         e 
+      })
+})
+
+# API Functions ====================================================================================
 
 # Convert a tmtheme to rstheme and optionally add it to RStudio.
-.rs.addApiFunction("convertTheme", api.convertTheme <- function(themePath, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
+.rs.addApiFunction("convertTheme", function(themePath, add = TRUE, outputLocation = NULL, apply = FALSE, force = FALSE, globally = FALSE) {
    # Require XML package for parsing the tmtheme files.
+   missingLibraryMsg <- "Taking this action requires the %pkg% library. Please run 'install.packages(\"%pkg%\")' before continuing."
    if (!suppressWarnings(require("xml2", quietly = TRUE)))
    {
-      stop("Taking this action requires the xml2 library. Please run 'install.packages(\"xml2\")' before continuing.")
+      stop(gsub("%pkg%", "xml2", missingLibraryMsg, fixed = TRUE))
+   }
+   if (!suppressWarnings(require("highlight", quietly = TRUE)))
+   {
+      stop(gsub("%pkg%", "highlight", missingLibraryMsg, fixed = TRUE))
    }
    
-   .rs.convertTheme(themePath, add, outputLocation, apply, force, globally)
+   tryCatch(
+      .rs.convertTheme(themePath, add, outputLocation, apply, force, globally),
+      error = function(e) { stop("Unable to convert the tmTheme to an rstheme. ", e$message) })
 })
 
 # Add a theme to RStudio.
-.rs.addApiFunction("addTheme", api.addTheme <- function(themePath, apply = FALSE, force = FALSE, globally = FALSE) {
-   .rs.addTheme(themePath, apply, force, globally)
+.rs.addApiFunction("addTheme", function(themePath, apply = FALSE, force = FALSE, globally = FALSE) {
+   tryCatch(
+      .rs.addTheme(themePath, apply, force, globally),
+      error = function(e) 
+      {
+         stop("Unable to add the theme file \"", themePath, "\". ", e$message)
+      })
 })
 
 # Apply a theme to RStudio.
-.rs.addApiFunction("applyTheme", api.applyTheme <-  function(name) {
-   .rs.applyTheme(name, .Call("rs_getThemes"))
+.rs.addApiFunction("applyTheme", function(name) {
+   tryCatch(
+      .rs.applyTheme(name, .Call("rs_getThemes")),
+      error = function(e) { stop("Unable to apply the theme \"", name, "\". ", e$message) })
 })
 
 # Remove a theme from RStudio.()
-.rs.addApiFunction("removeTheme", api.removeTheme <- function(name) {
-   .rs.removeTheme(name, .Call("rs_getThemes"))
+.rs.addApiFunction("removeTheme", function(name) {
+   tryCatch(
+      .rs.removeTheme(name, .Call("rs_getThemes")),
+      error = function(e) { stop("Unable to remove the theme \"", name, "\". ", e$message) })
 })

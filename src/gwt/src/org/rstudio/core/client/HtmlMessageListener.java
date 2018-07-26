@@ -53,8 +53,6 @@ public class HtmlMessageListener
          {
             if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
             {
-               AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
-
                for (JavaScriptObject themeSource : themeSources_) {
                   postThemeMessage(themeSource, themeOrigin_);
                }

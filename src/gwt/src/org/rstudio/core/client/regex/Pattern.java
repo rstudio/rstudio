@@ -49,8 +49,8 @@ public class Pattern extends JavaScriptObject
          next: this.lastIndex,
          pattern: this,
          match: result
-      } ;
-   }-*/ ;
+      };
+   }-*/;
    
    public final native boolean test(String input) /*-{
       return this.test(input);
