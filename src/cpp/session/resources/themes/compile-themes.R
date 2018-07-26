@@ -1,7 +1,7 @@
 ## Default operator colors to use for light, dark themes. These should be
 ## a grey tone that remains distinctive on either dark or light backgrounds.
 
-.rs.addFunction("add_operator_color", add_operator_color <- function(content, name, isDark = FALSE, overrideMap = list()) {
+.rs.addFunction("add_operator_color", function(content, name, isDark = FALSE, overrideMap = list()) {
    color <- overrideMap[[name]]
    
    if (is.null(color))
@@ -16,7 +16,7 @@
    )
 })
 
-.rs.addFunction("add_keyword_color", add_keyword_color <- function(content, name, overrideMap) {
+.rs.addFunction("add_keyword_color", function(content, name, overrideMap) {
    add_content(
       content,
       ".ace_keyword {",
@@ -27,7 +27,7 @@
 })
 
 ## Utility colors for parsing hex colors
-.rs.addFunction("parse_css_color", parse_css_color <- function(value) {
+.rs.addFunction("parse_css_color", function(value) {
    unlist(lapply(value, function(x) {
       if (grepl("^\\s*rgb", x, perl = TRUE)) 
       {
@@ -46,19 +46,19 @@
    }))
 })
 
-.rs.addFunction("format_css_color", format_css_color <- function(color) {
+.rs.addFunction("format_css_color", function(color) {
    sprintf("rgb(%s, %s, %s)",
            color[["red"]],
            color[["green"]],
            color[["blue"]])
 })
 
-.rs.addFunction("color_as_hex", color_as_hex <- function(color) {
+.rs.addFunction("color_as_hex", function(color) {
    paste("#", paste(toupper(as.hexmode(as.integer(color))), collapse = ""), sep = "")
 })
 
 # Strip color from field
-.rs.addFunction("strip_color_from_field", strip_color_from_field <- function(css) {
+.rs.addFunction("strip_color_from_field", function(css) {
    if (grepl("rgb", css)) {
       gsub(".*rgb", "rgb", css)
    } else {
@@ -66,20 +66,20 @@
    }
 })
 
-.rs.addFunction("mix_colors", mix_colors <- function(x, y, p) {
+.rs.addFunction("mix_colors", function(x, y, p) {
    setNames(as.integer(
       (p * x) +
          ((1 - p) * y)
    ), c("red", "green", "blue"))
 })
 
-.rs.addFunction("add_content", add_content <- function(content, ..., replace)
+.rs.addFunction("add_content", function(content, ..., replace)
    c(
       content,
       do.call(sprintf, list(paste(..., sep = "\n"), replace))
    ))
 
-.rs.addFunction("create_line_marker_rule", create_line_marker_rule <- function(markerName, markerColor) {
+.rs.addFunction("create_line_marker_rule", function(markerName, markerColor) {
    sprintf(paste(sep = "\n",
                  ".ace_marker-layer %s {",
                  "  position: absolute;",
@@ -90,7 +90,7 @@
            markerColor)
 })
 
-.rs.addFunction("get_chunk_bg_color", get_chunk_bg_color <- function(themeName, isDark, overrides = list()) {
+.rs.addFunction("get_chunk_bg_color", function(themeName, isDark, overrides = list()) {
    p <- overrides[[themeName]]
    if (is.null(p))
       if (isDark) 0.9 else 0.95
@@ -98,12 +98,12 @@
       p
 })
 
-.rs.addFunction("findNext", findNext <- function(regex, content, start = 1, end = length(content)) {
+.rs.addFunction("findNext", function(regex, content, start = 1, end = length(content)) {
    matches <- grep(regex, content, perl = TRUE)
    matches[(matches > start) & (matches < end)][1]
 })
 
-.rs.addFunction("setPrintMarginColor", setPrintMarginColor <- function(content, color) {
+.rs.addFunction("setPrintMarginColor", function(content, color) {
    printMarginLoc <- grep("print-margin", content, perl = TRUE)
    bgLoc <- grep("background:", content, perl = TRUE)
    loc <- bgLoc[bgLoc > printMarginLoc][1]
@@ -111,7 +111,7 @@
    content
 })
 
-.rs.addFunction("create_terminal_cursor_rules", create_terminal_cursor_rules <- function(isDark) {
+.rs.addFunction("create_terminal_cursor_rules", function(isDark) {
    termCursorBgColorFirst <-  "#333"
    termCursorBgColorSecond <- "#CCC"
    if (isDark) {
@@ -154,7 +154,7 @@
            termCursorBgColorFirst)
 })
 
-.rs.addFunction("create_terminal_rule", create_terminal_rule <- function(background, foreground) {
+.rs.addFunction("create_terminal_rule", function(background, foreground) {
    sprintf(paste(sep = "\n",
                  ".terminal {",
                  "  background-color: %s;",
@@ -168,7 +168,7 @@
            background, foreground)
 })
 
-.rs.addFunction("create_terminal_viewport_rule", create_terminal_viewport_rule <- function(background) {
+.rs.addFunction("create_terminal_viewport_rule", function(background) {
    sprintf(paste(sep = "\n",
                  ".terminal .xterm-viewport {",
                  "  background-color: %s;",
@@ -177,7 +177,7 @@
            background)
 })
 
-.rs.addFunction("create_xterm_color_rules", create_xterm_color_rules <- function(background, foreground, isDark) {
+.rs.addFunction("create_xterm_color_rules", function(background, foreground, isDark) {
    paste(sep = "\n",
          sprintf(".xtermInvertColor { color: %s; }", background),
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
@@ -701,7 +701,7 @@
          ".xtermBgColor255 { background-color: #eeeeee; }")
 })
 
-.rs.addFunction("themes_static_rules", themes_static_rules <- function(isDark) {
+.rs.addFunction("themes_static_rules", function(isDark) {
    content <- paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
                     "   color: #FFF !important;",
                     "}",
@@ -743,7 +743,7 @@
    content
 })
 
-.rs.addFunction("compile_theme", compile_theme <- function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
+.rs.addFunction("compile_theme", function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
    library("highlight")
    
    ## Guess the theme name -- all rules should start with it.

@@ -292,36 +292,6 @@ SEXP rs_getThemes()
 }
 
 /**
- * @brief Store a warning that occurs during theme operations for later retrieval.
- *
- * @param warning    The warning to store. If it is not a string, it will be ignored.
- *
- * @return NULL
- */
-SEXP rs_addThemeWarning(SEXP warning)
-{
-   // Just ignore if the type is wrong because we're only collecting warnings here.
-   if (r::sexp::isString(warning))
-      sWarnings.push_back(r::sexp::asString(warning));
-
-   return R_NilValue;
-}
-
-/**
- * @brief Get all the warnings stored by calls to rs_addThemeWarning and clear the cache of
- *        warnings.
- *
- * @return The stored warnings as an R vector.
- */
-SEXP rs_getThemeWarnings()
-{
-   r::sexp::Protect protect;
-   SEXP warnings = r::sexp::create(sWarnings, &protect);
-   sWarnings.clear();
-   return warnings;
-}
-
-/**
  * @brief Gets the default theme based on the request from the client.
  *
  * @param request    The request from the client.
