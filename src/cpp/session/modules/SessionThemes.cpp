@@ -97,12 +97,12 @@ bool extractError(SEXP object, json::JsonRpcResponse* pResponse)
       r::sexp::fillVectorString(r::sexp::getAttrib(object, R_ClassSymbol), &classes);
       if (std::find(classes.begin(), classes.end(), "error") != classes.end())
       {
-         std::map<std::string, std::set<std::string>> errorObject;
-         r::sexp::extract(object, &errorObject);
+         std::string errorMessage;
+         r::sexp::getNamedListElement(object, "message", &errorMessage);
 
          json::Object errorDesc;
          errorDesc["code"] = json::errc::ExecutionError;
-         errorDesc["message"] = boost::algorithm::join(errorObject["message"], "\n    ");
+         errorDesc["message"] = errorMessage;
 
          json::Object error;
          error["error"] = errorDesc;

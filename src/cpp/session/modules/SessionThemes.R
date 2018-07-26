@@ -649,7 +649,7 @@
    
    if (is.null(keyName))
    {
-      stop(parseError, " Unable to find a key for array value.", call. = FALSE)
+      stop("Unable to find a key for array value.", call. = FALSE)
    }
    if (keyName != "settings")
    {
