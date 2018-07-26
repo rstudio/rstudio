@@ -77,6 +77,10 @@ GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
    initialize();
    
 #ifdef Q_OS_LINUX
+   // assume light theme on startup (theme will be dynamically updated
+   // based on editor theme chosen by user)
+   syncToEditorTheme(false);
+
    // listen for clipboard selection change events (X11 only); allow override in options or 
    // via environment variable. clipboard monitoring enables us to support middle-click paste on
    // Linux, but it causes problems on some systems.
@@ -1301,6 +1305,16 @@ void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
    
    QColor color = QColor::fromRgb(red, green, blue);
    pOwner_->webPage()->setBackgroundColor(color);
+#endif
+}
+
+void GwtCallback::syncToEditorTheme(bool isDark)
+{
+#ifdef Q_OS_LINUX
+   if (isGnomeDesktop())
+   {
+      applyDesktopTheme(pOwner_, isDark);
+   }
 #endif
 }
 

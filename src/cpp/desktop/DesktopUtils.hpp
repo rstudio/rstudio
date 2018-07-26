@@ -45,6 +45,8 @@ bool isOSXMavericks();
 bool isCentOS();
 bool isGnomeDesktop();
 
+void applyDesktopTheme(QWidget* window, bool isDark);
+
 void raiseAndActivateWindow(QWidget* pWindow);
 
 void moveWindowBeneath(QWidget* pTop, QWidget* pBottom);

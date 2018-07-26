@@ -157,6 +157,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomActualSize();
    
    void setBackgroundColor(JsArrayInteger rgbColor);
+   void syncToEditorTheme(boolean isDark);
    
    void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
