@@ -2022,10 +2022,11 @@ BEFORE_FUN = function() {
       FALSE,
       FALSE)
    Sys.chmod(noPermissionDir, mode = "0555")
+   Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0555")
 },
 AFTER_FUN = function() {
    unsetThemeLocations()
-   Sys.chmod(noPermissionDir, mode = "0777")
+   Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0777")
    file.remove(file.path(noPermissionDir, paste0(themes[[5]]$fileName, ".rstheme")))
 })
 
@@ -2044,10 +2045,10 @@ BEFORE_FUN = function() {
       FALSE,
       FALSE,
       TRUE)
-   Sys.chmod(noPermissionDir, mode = "0555")
+   Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0555")
 },
 AFTER_FUN = function() {
    unsetThemeLocations()
-   Sys.chmod(noPermissionDir, mode = "0777")
+   Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0777")
    file.remove(file.path(noPermissionDir, paste0(themes[[32]]$fileName, ".rstheme")))
 })
