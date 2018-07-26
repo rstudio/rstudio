@@ -15,6 +15,7 @@
 
 #include "SessionThemes.hpp"
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
@@ -51,6 +52,7 @@ namespace {
 const std::string kDefaultThemeLocation = "/theme/default/";
 const std::string kGlobalCustomThemeLocation = "/theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
+std::vector<std::string> sWarnings;
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -77,6 +79,40 @@ bool convertToBool(const std::string& toConvert)
             boost::regex("false", boost::regex::icase),
             "0");
    return boost::lexical_cast<bool>(preppedStr);
+}
+
+/**
+ * @brief Gets an error out of the object, if there is one, and updates pResponse.
+ *
+ * @param object        The object to check for an error.
+ * @param pResponse     The response to update.
+ *
+ * @return true if an error is found; false otherwise.
+ */
+bool extractError(SEXP object, json::JsonRpcResponse* pResponse)
+{
+   if (r::sexp::isList(object))
+   {
+      std::vector<std::string> classes;
+      r::sexp::fillVectorString(r::sexp::getAttrib(object, R_ClassSymbol), &classes);
+      if (std::find(classes.begin(), classes.end(), "error") != classes.end())
+      {
+         std::map<std::string, std::set<std::string>> errorObject;
+         r::sexp::extract(object, &errorObject);
+
+         json::Object errorDesc;
+         errorDesc["code"] = json::errc::ExecutionError;
+         errorDesc["message"] = boost::algorithm::join(errorObject["message"], "\n    ");
+
+         json::Object error;
+         error["error"] = errorDesc;
+         pResponse->setResponse(error);
+
+         return true;
+      }
+   }
+
+   return false;
 }
 
 /**
@@ -239,12 +275,12 @@ SEXP rs_getThemes()
    ThemeMap themeMap = getAllThemes();
 
    // Convert to an R list.
-   rstudio::r::sexp::Protect protect;
-   rstudio::r::sexp::ListBuilder themeListBuilder(&protect);
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder themeListBuilder(&protect);
 
    for (auto theme: themeMap)
    {
-      rstudio::r::sexp::ListBuilder themeDetailsListBuilder(&protect);
+      r::sexp::ListBuilder themeDetailsListBuilder(&protect);
       themeDetailsListBuilder.add("name", std::get<0>(theme.second));
       themeDetailsListBuilder.add("url", std::get<1>(theme.second));
       themeDetailsListBuilder.add("isDark", std::get<2>(theme.second));
@@ -253,6 +289,36 @@ SEXP rs_getThemes()
    }
 
    return rstudio::r::sexp::create(themeListBuilder, &protect);
+}
+
+/**
+ * @brief Store a warning that occurs during theme operations for later retrieval.
+ *
+ * @param warning    The warning to store. If it is not a string, it will be ignored.
+ *
+ * @return NULL
+ */
+SEXP rs_addThemeWarning(SEXP warning)
+{
+   // Just ignore if the type is wrong because we're only collecting warnings here.
+   if (r::sexp::isString(warning))
+      sWarnings.push_back(r::sexp::asString(warning));
+
+   return R_NilValue;
+}
+
+/**
+ * @brief Get all the warnings stored by calls to rs_addThemeWarning and clear the cache of
+ *        warnings.
+ *
+ * @return The stored warnings as an R vector.
+ */
+SEXP rs_getThemeWarnings()
+{
+   r::sexp::Protect protect;
+   SEXP warnings = r::sexp::create(sWarnings, &protect);
+   sWarnings.clear();
+   return warnings;
 }
 
 /**
@@ -384,10 +450,10 @@ Error addTheme(const json::JsonRpcRequest& request,
       return error;
    }
 
-   FilePath themeFile(themeToAdd);
+   FilePath themeFile = module_context::resolveAliasedPath(themeToAdd);
 
    // Find out whether to convert or add.
-   std::string funcName = ".rs.convertTheme";
+   std::string funcName = ".rs.convertThemeForCpp";
    bool isConversion = true;
    if (!themeFile.exists())
    {
@@ -397,7 +463,7 @@ Error addTheme(const json::JsonRpcRequest& request,
    }
    else if (themeFile.extensionLowerCase() == ".rstheme")
    {
-      funcName = ".rs.addTheme";
+      funcName = ".rs.addThemeForCpp";
       isConversion = false;
    }
    else if (!(themeFile.extensionLowerCase() == ".tmtheme"))
@@ -413,20 +479,16 @@ Error addTheme(const json::JsonRpcRequest& request,
    {
       r::exec::RFunction rfunc(funcName);
       rfunc.addParam("themePath", themeToAdd);
-      rfunc.addParam("apply", false);
-      rfunc.addParam("force", true);
-      rfunc.addParam("globally", false);
-
-      if (isConversion)
-      {
-         rfunc.addParam("add", true);
-         rfunc.addParam("outputLocation", R_NilValue);
-      }
       SEXP sexpResult;
       r::sexp::Protect protect;
       error = rfunc.call(&sexpResult, &protect);
       if (!error)
-         error = r::sexp::extract(sexpResult, result);
+         if (extractError(sexpResult, pResponse))
+            return error;
+
+      // Check if the result is an error
+      if (!error)
+         error = r::sexp::extract(sexpResult, &result);
    }
 
    if (error)
@@ -449,10 +511,23 @@ Error addTheme(const json::JsonRpcRequest& request,
 Error removeTheme(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   r::exec::RFunction removeFunc(".rs.removeTheme");
-   removeFunc.addParam("name", request.params.at(0).get_str());
-   removeFunc.addParam("themeList", rs_getThemes());
-   return removeFunc.call();
+   std::string themeName;
+   Error error = json::readParams(request.params, &themeName);
+
+   if (!error)
+   {
+      r::exec::RFunction removeFunc(".rs.removeTheme");
+      removeFunc.addParam("name", themeName);
+      removeFunc.addParam("themeList", rs_getThemes());
+
+      r::sexp::Protect protect;
+      SEXP result;
+      error = removeFunc.call(&result, &protect);
+      if (!error)
+         extractError(result, pResponse);
+   }
+
+   return error;
 }
 
 } // anonymous namespace
@@ -462,7 +537,9 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   RS_REGISTER_CALL_METHOD(rs_getThemes, 0);
+   RS_REGISTER_CALL_METHOD(rs_getThemes);
+   RS_REGISTER_CALL_METHOD(rs_addThemeWarning);
+   RS_REGISTER_CALL_METHOD(rs_getThemeWarnings);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

@@ -343,7 +343,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       msg.append("A theme file with the same name, '")
          .append(inputFileName)
          .append("', already exists. Adding the theme will cause the existing file to be ")
-         .append("overwritten. Would you like to add the theme anyways?");
+         .append("overwritten. Would you like to add the theme anyway?");
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_WARNING,
          "Theme File Already Exists",

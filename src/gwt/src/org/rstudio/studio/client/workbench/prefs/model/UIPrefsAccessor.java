@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.events.UpdateTabPanelsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -359,7 +358,7 @@ public class UIPrefsAccessor extends Prefs
    public String getThemeErrorClass()
    {    
       if ((theme().getValue() == null) ||
-          AceTheme.createDefault().equals(theme().getValue()))
+          AceTheme.createDefault().isEqualTo(theme().getValue()))
          return " ace_constant";
       else  
          return " ace_constant ace_language";
