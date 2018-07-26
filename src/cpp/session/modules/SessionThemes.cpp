@@ -508,8 +508,6 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_getThemes);
-   RS_REGISTER_CALL_METHOD(rs_addThemeWarning);
-   RS_REGISTER_CALL_METHOD(rs_getThemeWarnings);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
