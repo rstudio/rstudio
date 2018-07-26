@@ -423,7 +423,7 @@ Error addTheme(const json::JsonRpcRequest& request,
    FilePath themeFile = module_context::resolveAliasedPath(themeToAdd);
 
    // Find out whether to convert or add.
-   std::string funcName = ".rs.convertThemeForCpp";
+   std::string funcName = ".rs.internal.convertTheme";
    bool isConversion = true;
    if (!themeFile.exists())
    {
@@ -433,7 +433,7 @@ Error addTheme(const json::JsonRpcRequest& request,
    }
    else if (themeFile.extensionLowerCase() == ".rstheme")
    {
-      funcName = ".rs.addThemeForCpp";
+      funcName = ".rs.internal.addTheme";
       isConversion = false;
    }
    else if (!(themeFile.extensionLowerCase() == ".tmtheme"))
@@ -486,7 +486,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
 
    if (!error)
    {
-      r::exec::RFunction removeFunc(".rs.removeTheme");
+      r::exec::RFunction removeFunc(".rs.internal.removeTheme");
       removeFunc.addParam("name", themeName);
       removeFunc.addParam("themeList", rs_getThemes());
 
