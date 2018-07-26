@@ -1,7 +1,7 @@
 /*
  * RmdOutputPresenter.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -115,7 +115,7 @@ public class RmdOutputPresenter implements
    @Override
    public String getShinyUrl()
    {
-      return StringUtil.makeAbsoluteUrl(params_.getOutputUrl());
+      return DomUtils.makeAbsoluteUrl(params_.getOutputUrl());
    }
 
    @Override

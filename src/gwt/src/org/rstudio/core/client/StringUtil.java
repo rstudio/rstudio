@@ -500,28 +500,6 @@ public class StringUtil
       return result;
    }
    
-   // Given an input URL which may be relative, return an absolute URL. Has
-   // no effect on URLs which are already absolute.
-   public static String makeAbsoluteUrl(String inputUrl)
-   {
-      String url = inputUrl;
-      if (!(url.startsWith("http://") || url.startsWith("https://")))
-      {
-         String thisUrl = Window.Location.getProtocol() + "//" +
-                          Window.Location.getHost() + "/";
-         if (Window.Location.getPath().length() > 0 &&
-             !Window.Location.getPath().equals("/"))
-            thisUrl += Window.Location.getPath();
-         if (!thisUrl.endsWith("/"))
-            thisUrl += "/";
-         if (url.startsWith("/"))
-            url = url.substring(1);
-         url = thisUrl + url;
-      }
-      return url;
-      
-   }
-   
    /**
     * Given a URL, attempt to infer and return the authority (host name and
     * port) from the URL. The URL is always presumed to have a hostname (if it

@@ -1093,6 +1093,19 @@ public class DomUtils
       disableAutoBehavior(w.getElement());
    }
    
+   /**
+    * Given any URL, resolves it to an absolute URL (using the current window as
+    * the base URL), and returns the result.
+    * 
+    * @param url A relative or absolute URL.
+    * @return The same URL, in absolute form.
+    */
+   public final static native String makeAbsoluteUrl(String url) /*-{
+     var ele = document.createElement("a")
+     ele.href = url;
+     return ele.href;
+   }-*/;
+   
    public static final int getScrollbarWidth()
    {
       if (SCROLLBAR_WIDTH == -1)
