@@ -143,7 +143,7 @@ public class SecondaryReposWidget extends Composite
             globalDisplay_.showYesNoMessage(
                MessageDialog.WARNING, 
                "Confirm Remove", 
-               "Are you sure you want to remove the " + repo + " repo?",
+               "Are you sure you want to remove the " + repo + " repository?",
                new Operation() {
                   @Override
                   public void execute()

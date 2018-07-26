@@ -22,3 +22,29 @@
 {
    as.list(.Call("rs_readIniFile", filePath))
 })
+
+.rs.addFunction("runAsyncRProcess", function(
+   code,
+   workingDir  = getwd(),
+   onStarted   = function() {},
+   onContinue  = function() {},
+   onStdout    = function(output) {},
+   onStderr    = function(output) {},
+   onCompleted = function(exitStatus) {})
+{
+   callbacks <- list(
+      started   = onStarted,
+      continue  = onContinue,
+      stdout    = onStdout,
+      stderr    = onStderr,
+      completed = onCompleted
+   )
+   
+   .Call(
+      "rs_runAsyncRProcess",
+      as.character(code),
+      normalizePath(workingDir, mustWork = TRUE),
+      as.list(callbacks),
+      PACKAGE = "(embedding)"
+   )
+})

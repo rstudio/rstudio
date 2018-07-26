@@ -57,17 +57,6 @@ elif ps -p1 | grep init > /dev/null 2>&1; then
     fi
 fi
 
-# add apparmor profile (but don't for systemd as this borks up process management)
-if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/ && ! test $INIT_SYSTEM = "systemd"
-then
-   cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
-   apparmor_parser -r /etc/apparmor.d/rstudio-server 2>/dev/null
-elif test -e /etc/apparmor.d/rstudio-server
-then
-   rm -f /etc/apparmor.d/rstudio-server
-   invoke-rc.d apparmor reload 2>/dev/null
-fi
-
 # add systemd, upstart, or init.d script and start the server
 if test "$INIT_SYSTEM" = "systemd"
 then

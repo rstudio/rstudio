@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.PackageStateCha
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -292,7 +293,6 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.18"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
@@ -763,7 +763,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Preparing Keyring",
         "Using keyring", 
         new Dependency[] {
-           Dependency.cranPackage("keyring", "1.0.0", true)
+           Dependency.cranPackage("keyring", "1.1.0", true)
         }, 
         true, // update keyring if needed
         new CommandWithArg<Boolean>()
@@ -853,6 +853,18 @@ public class DependencyManager implements InstallShinyEvent.Handler,
            }
         }
       );
+   }
+   
+   public void installPackages(List<String> packageNames,
+                               CommandWithArg<Boolean> onCompleted)
+   {
+      int n = packageNames.size();
+      JsArray<Dependency> dependencies = JavaScriptObject.createArray(n).cast();
+      for (int i = 0; i < n; i++)
+      {
+         dependencies.set(i, Dependency.cranPackage(packageNames.get(i)));
+      }
+      installDependencies(dependencies, false, onCompleted);
    }
 
    private Dependency[] connectionPackageDependenciesArray(String packageName,

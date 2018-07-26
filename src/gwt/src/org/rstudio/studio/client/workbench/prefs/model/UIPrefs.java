@@ -269,6 +269,11 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
          enableStyleDiagnostics().setGlobalValue(
                newUiPrefs.enableStyleDiagnostics().getGlobalValue());
          
+         // Package Dependencies
+         
+         autoDiscoverPackageDependencies().setGlobalValue(
+               newUiPrefs.autoDiscoverPackageDependencies().getGlobalValue());
+         
          // Other diagnostics
          
          showDiagnosticsCpp().setGlobalValue(

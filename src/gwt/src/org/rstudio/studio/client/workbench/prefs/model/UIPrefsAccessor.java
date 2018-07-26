@@ -35,8 +35,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
-
 import com.google.gwt.core.client.JsArrayString;
 
 public class UIPrefsAccessor extends Prefs
@@ -256,6 +254,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> warnIfVariableDefinedButNotUsed()
    {
       return bool("warn_if_variable_defined_but_not_used", false);
+   }
+   
+   public PrefValue<Boolean> autoDiscoverPackageDependencies()
+   {
+      return bool("auto_discover_package_dependencies", true);
    }
    
    public PrefValue<Boolean> autoAppendNewline()

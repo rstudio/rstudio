@@ -491,15 +491,6 @@ public class RSConnectDeploy extends Composite
    
    public void validateResult(final OperationWithInput<Boolean> onComplete)
    {
-      // if the name isn't valid to begin with, we know the result immediately
-      if (!appName_.isValid())
-      {
-         appName_.validateAppName();
-         onComplete.execute(false);
-         focus();
-         return;
-      }
-      
       if (isUpdate())
       {
          // no need to validate names for updates
@@ -507,6 +498,15 @@ public class RSConnectDeploy extends Composite
       }
       else
       {
+         // if the name isn't valid to begin with, we know the result immediately
+         if (!appName_.isValid())
+         {
+            appName_.validateAppName();
+            onComplete.execute(false);
+            focus();
+            return;
+         }
+      
          // see if there's an app with this name before running the deploy
          checkForExistingApp(getSelectedAccount(), appName_.getName(), 
                new OperationWithInput<Boolean>()

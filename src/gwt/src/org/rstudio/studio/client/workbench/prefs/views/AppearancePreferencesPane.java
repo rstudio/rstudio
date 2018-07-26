@@ -28,7 +28,9 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -156,7 +158,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
 
-      fontSize_ = new SelectWidget("Editor Font size:",
+      fontSize_ = new SelectWidget("Editor font size:",
                                    labels,
                                    values,
                                    false);

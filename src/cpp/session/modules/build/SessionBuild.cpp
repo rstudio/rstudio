@@ -33,6 +33,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <session/SessionOptions.hpp>
 
 #ifdef _WIN32
 #include <core/r_util/RToolsInfo.hpp>
@@ -202,9 +203,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    if (!s_forcePackageRebuild)
    {
-      for (size_t i=0; i<events.size(); i++)
-      {
-         FilePath filePath(events[i].fileInfo().absolutePath());
+      for (const auto &event : events) {
+         FilePath filePath(event.fileInfo().absolutePath());
          onFileChanged(filePath);
       }
    }
@@ -488,22 +488,21 @@ private:
                                                    "roxygen2", "4.1.0.9001");
       if (!haveVignetteRoclet)
       {
-         std::vector<std::string>::iterator it =
-                      std::find(roclets.begin(), roclets.end(), "vignette");
+         auto it = std::find(roclets.begin(), roclets.end(), "vignette");
          if (it != roclets.end())
             roclets.erase(it);
       }
-
-      BOOST_FOREACH(std::string& roclet, roclets)
+      
+      for (std::string& roclet : roclets)
       {
          roclet = "'" + roclet + "'";
       }
 
       boost::format fmt;
       if (useDevtools())
-         fmt = boost::format("devtools::document(roclets=c(%1%))");
+         fmt = boost::format("devtools::document(roclets = c(%1%))");
       else
-         fmt = boost::format("roxygen2::roxygenize('.', roclets=c(%1%))");
+         fmt = boost::format("roxygen2::roxygenize('.', roclets = c(%1%))");
       std::string roxygenizeCall = boost::str(
          fmt % boost::algorithm::join(roclets, ", "));
 
@@ -646,7 +645,7 @@ private:
       // track build type
       type_ = type;
 
-      // add testthat and shinyteset result parsers
+      // add testthat and shinytest result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
          parsers.add(testthatErrorParser(packagePath.parent()));
@@ -750,25 +749,49 @@ private:
       else if (type == kBuildSourcePackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, false, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildSourcePackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kBuildBinaryPackage)
       {
          if (useDevtools())
+         {
             devtoolsBuildPackage(packagePath, true, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             buildBinaryPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kCheckPackage)
       {
          if (useDevtools())
+         {
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
+            if (session::options().packageOutputInPackageFolder())
+            {
+               pkgOptions.workingDir = packagePath;
+            }
             checkPackage(rBinDir, packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestPackage)
@@ -800,7 +823,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -832,7 +858,10 @@ private:
       rCmd << extraArgs;
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -868,7 +897,10 @@ private:
          rCmd << "--no-build-vignettes";
 
       // add filename as a FilePath so it is escaped
-      rCmd << FilePath(packagePath.filename());
+      if (session::options().packageOutputInPackageFolder())
+         rCmd << FilePath(".");
+      else
+         rCmd << FilePath(packagePath.filename());
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
@@ -1013,7 +1045,10 @@ private:
       enqueCommandString(ostr.str() + ")");
 
       // now complete the command
-      ostr << ", check_dir = dirname(getwd()))";
+      if (session::options().packageOutputInPackageFolder())
+         ostr << ", check_dir = getwd())";
+      else
+         ostr << ", check_dir = dirname(getwd()))";
       std::string command = ostr.str();
 
       // set a success message
@@ -1137,7 +1172,7 @@ private:
                   const std::string& type)
    {
       // normalize paths between all tests and single test
-      std::string shinyTestName = "";
+      std::string shinyTestName;
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.filename();
         shinyPath = shinyPath.parent().parent();
@@ -1226,6 +1261,9 @@ private:
       if (binary)
          args.push_back("binary = TRUE");
 
+      if (session::options().packageOutputInPackageFolder())
+         args.push_back("path = getwd()");
+
        // add R args
       std::string rArgs = binary ?  projectConfig().packageBuildBinaryArgs :
                                     projectConfig().packageBuildArgs;
@@ -1256,7 +1294,7 @@ private:
    {
       if (exitStatus == EXIT_SUCCESS)
       {
-         // show the user the buld command
+         // show the user the build command
          enqueCommandString(checkCmd.commandString());
 
          // run the check
@@ -1274,7 +1312,9 @@ private:
    void cleanupAfterCheck(const r_util::RPackageInfo& pkgInfo)
    {
       // compute paths
-      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
+      FilePath buildPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         buildPath = buildPath.parent();
       FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
       FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
@@ -1291,8 +1331,9 @@ private:
    {
       if (!terminationRequested_)
       {
-         FilePath buildPath = projects::projectContext()
-                                       .buildTargetPath().parent();
+         FilePath buildPath = projects::projectContext().buildTargetPath();
+         if (!session::options().packageOutputInPackageFolder())
+            buildPath = buildPath.parent();
          FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
@@ -1458,9 +1499,7 @@ private:
    }
 
 public:
-   virtual ~Build()
-   {
-   }
+   virtual ~Build() = default;
 
    bool isRunning() const { return isRunning_; }
 
@@ -1480,7 +1519,7 @@ public:
    std::string outputAsText()
    {
       std::string output;
-      BOOST_FOREACH(const module_context::CompileOutput& compileOutput, output_)
+      for (const module_context::CompileOutput& compileOutput : output_)
       {
          output.append(compileOutput.output);
       }
@@ -1506,8 +1545,8 @@ private:
       boost::algorithm::split(lines, output,  boost::algorithm::is_any_of("\n"));
 
       // apply filter to each line
-      int size = static_cast<int>(lines.size());
-      for (int i=0; i<size; i++)
+      size_t size = lines.size();
+      for (size_t i = 0; i < size; i++)
       {
          // apply filter
          using namespace module_context;
@@ -1719,7 +1758,9 @@ private:
 
    std::string buildPackageSuccessMsg(const std::string& type)
    {
-      FilePath writtenPath = projects::projectContext().buildTargetPath().parent();
+      FilePath writtenPath = projects::projectContext().buildTargetPath();
+      if (!session::options().packageOutputInPackageFolder())
+         writtenPath = writtenPath.parent();
       std::string written = module_context::createAliasedPath(writtenPath);
       if (written == "~")
          written = writtenPath.absolutePath();

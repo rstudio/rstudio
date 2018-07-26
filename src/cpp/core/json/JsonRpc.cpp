@@ -259,6 +259,20 @@ void JsonRpcResponse::setError(const boost::system::error_code& ec,
    // set error
    setField(kRpcError, error);
 }
+
+void JsonRpcResponse::setRedirectError(const Error& error,
+                                       const std::string& redirectUrl)
+{
+   // set a standard error
+   setError(error);
+
+   json::Object errorObj;
+   getField(kRpcError, &errorObj);
+
+   // extend the error with redirect information
+   errorObj["redirect_url"] = redirectUrl;
+   setField(kRpcError, errorObj);
+}
    
 void JsonRpcResponse::setAsyncHandle(const std::string& handle)
 {

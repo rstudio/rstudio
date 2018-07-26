@@ -235,6 +235,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chooser.setTextWidth(textWidth);
       nudgeRight(chooser);
       textBoxWithChooser(chooser);
+      spaced(chooser);
       add(chooser);
    }
 

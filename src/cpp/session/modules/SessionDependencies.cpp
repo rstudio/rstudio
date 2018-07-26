@@ -432,7 +432,7 @@ Error initialize()
 }
    
 
-} // namepsace dependencies
+} // namespace dependencies
 } // namespace modules
 
 namespace module_context {

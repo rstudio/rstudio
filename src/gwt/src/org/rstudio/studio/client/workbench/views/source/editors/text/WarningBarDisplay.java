@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 public interface WarningBarDisplay extends IsWidget
 {
    void showReadOnlyWarning(List<String> alternatives);
+   void showRequiredPackagesMissingWarning(List<String> packages);
    void showWarningBar(String message);
    void hideWarningBar();
 }

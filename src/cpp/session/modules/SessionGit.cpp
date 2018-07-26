@@ -1,7 +1,7 @@
 /*
  * SessionGit.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2973,12 +2973,27 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
       FilePath gitIgnoreParent = gitIgnoreFile.parent();
-      if (gitIgnoreParent.childPath("DESCRIPTION").exists() &&
-          gitIgnoreParent.childPath("src").exists())
+      if (gitIgnoreParent.childPath("DESCRIPTION").exists())
       {
-         filesToIgnore.push_back("src/*.o");
-         filesToIgnore.push_back("src/*.so");
-         filesToIgnore.push_back("src/*.dll");
+         if (gitIgnoreParent.childPath("src").exists())
+         {
+            filesToIgnore.push_back("src/*.o");
+            filesToIgnore.push_back("src/*.so");
+            filesToIgnore.push_back("src/*.dll");
+         }
+         
+         // if option set to output package check/build files into the
+         // project directory, ignore them
+         if (session::options().packageOutputInPackageFolder())
+         {
+            std::string packageName = r_util::packageNameFromDirectory(gitIgnoreParent);
+            if (!packageName.empty())
+            {
+               filesToIgnore.push_back(packageName + ".Rcheck/");
+               filesToIgnore.push_back(packageName + "*.tar.gz");
+               filesToIgnore.push_back(packageName + "*.tgz");
+            }
+         }
       }
 
       return addFilesToGitIgnore(gitIgnoreFile, filesToIgnore, false);
@@ -2992,14 +3007,34 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       if (error)
          return error;
 
-      if (regex_utils::search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
+      std::vector<std::string> filesToIgnore;
+      
+      if (!regex_utils::search(strIgnore, boost::regex(R"(^\.Rproj\.user$)")))
+         filesToIgnore.push_back(".Rproj.user");
+      
+      if (session::options().packageOutputInPackageFolder())
+      {
+         // add any missing exclusions for package build/check output
+         std::string packageName = r_util::packageNameFromDirectory(gitIgnoreFile.parent());
+         if (!packageName.empty())
+         {
+            std::string packageNameRegex = "^";
+            packageNameRegex += packageName;
+            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(\.Rcheck/$)")))
+               filesToIgnore.push_back(packageName + ".Rcheck/");
+            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tar\.gz$)")))
+               filesToIgnore.push_back(packageName + "*.tar.gz");
+            if (!regex_utils::search(strIgnore, boost::regex(packageNameRegex + R"(.*\.tgz$)")))
+               filesToIgnore.push_back(packageName + "*.tgz");
+         }
+      }
+      
+      if (filesToIgnore.size() == 0)
          return Success();
-
+      
       bool addExtraNewline = strIgnore.size() > 0
                              && strIgnore[strIgnore.size() - 1] != '\n';
 
-      std::vector<std::string> filesToIgnore;
-      filesToIgnore.push_back(".Rproj.user");
       return addFilesToGitIgnore(gitIgnoreFile,
                                  filesToIgnore,
                                  addExtraNewline);

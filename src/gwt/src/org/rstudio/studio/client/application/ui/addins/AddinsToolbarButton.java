@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui.addins;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +160,15 @@ public class AddinsToolbarButton extends ToolbarButton
                }
             });
             menu_.addSeparator();
+            
+            addins.sort(new Comparator<RAddin>()
+            {
+               @Override
+               public int compare(RAddin o1, RAddin o2)
+               {
+                  return Integer.compare(o1.getOrdinal(), o2.getOrdinal());
+               }
+            });
             
             for (RAddin addin : addins)
                menu_.addItem(menuItem(addin));

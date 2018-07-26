@@ -243,7 +243,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "WebSocket keep-alive ping interval (seconds)")
       (kWebSocketConnectTimeout,
        value<int>(&webSocketConnectTimeout_)->default_value(3),
-       "WebSocket initial connection timeout (seconds)");
+       "WebSocket initial connection timeout (seconds)")
+      (kPackageOutputInPackageFolder,
+         value<bool>(&packageOutputToPackageFolder_)->default_value(false),
+         "devtools check and devtools build output to package project folder");
 
    // allow options
    options_description allow("allow");

@@ -50,8 +50,10 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <session/SessionConstants.hpp>
+#include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
+
+#include <session/SessionConstants.hpp>
 #include <session/SessionInvalidScope.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -833,7 +835,7 @@ void proxyLocalhostRequest(
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
-      new LocalhostAsyncClient(ptrConnection->ioService(), address, port));
+      new server_core::http::LocalhostAsyncClient(ptrConnection->ioService(), address, port));
    pClient->request().assign(request);
 
    // execute request

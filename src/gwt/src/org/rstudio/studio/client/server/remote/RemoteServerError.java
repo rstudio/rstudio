@@ -28,6 +28,8 @@ class RemoteServerError implements ServerError
    {
       code_ = codeFromRpcErrorCode(rpcError.getCode());
       message_ = rpcError.getMessage();
+      redirectUrl_ = rpcError.getRedirectUrl();
+      
       RpcUnderlyingError rpcErrorCause = rpcError.getError();
       if (rpcErrorCause != null)
       {
@@ -60,6 +62,11 @@ class RemoteServerError implements ServerError
    public String getMessage() 
    {
       return message_ ;
+   }
+   
+   public String getRedirectUrl()
+   {
+	  return redirectUrl_;
    }
    
    public ServerErrorCause getCause()
@@ -123,6 +130,7 @@ class RemoteServerError implements ServerError
    
    private int code_ ;
    private String message_ ;
+   private String redirectUrl_;
    private ServerErrorCause cause_ ;
    private JSONValue clientInfo_;
 }

@@ -344,6 +344,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
+   private boolean showButtonImpl(PackageInfo object)
+   {
+      if (object.getPackageSource() == null)
+         return false;
+      
+      PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
+      return source != PackageInfo.Source.Base;
+   }
+   
    private void initPackagesTable()
    {
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
@@ -387,6 +396,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
+                  if (object.getPackageSource() == null)
+                     return "Browse package on CRAN";
+                  
                   PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
                   switch (source)
                   {
@@ -404,8 +416,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public boolean showButton(PackageInfo object)
          {
-            PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-            return source != PackageInfo.Source.Base;
+            return showButtonImpl(object);
          }
       };
       
@@ -423,8 +434,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public boolean showButton(PackageInfo object)
          {
-            PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-            return source != PackageInfo.Source.Base;
+            return showButtonImpl(object);
          }
       };
 

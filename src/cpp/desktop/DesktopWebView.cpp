@@ -56,10 +56,9 @@ public:
       resize(geometry.width() * 0.7, geometry.height() * 0.7);
       
       setWindowTitle(QStringLiteral("RStudio DevTools"));
-      setAttribute(Qt::WA_DeleteOnClose, false);
+      setAttribute(Qt::WA_DeleteOnClose, true);
       setAttribute(Qt::WA_QuitOnClose, true);
       
-      setUnifiedTitleAndToolBarOnMac(true);
       setCentralWidget(webView_);
    }
    
@@ -242,7 +241,6 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       back->setEnabled(webPage()->history()->canGoBack());
       forward->setEnabled(webPage()->history()->canGoForward());
       
-      menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
       menu->addSeparator();
    }
    
@@ -337,6 +335,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
    
    menu->addSeparator();
+   menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(label(tr("I&nspect element")), [&]() {
       
       QWebEnginePage* devToolsPage = webPage()->devToolsPage();
@@ -364,6 +363,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    
 # ifndef NDEBUG
    
+   menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addSeparator();
    menu->addAction(label(tr("I&nspect element")), [&]() { triggerPageAction(QWebEnginePage::InspectElement); });
    

@@ -1050,7 +1050,7 @@ Error initialize()
 }
 
 
-} // namepsace files
+} // namespace files
 } // namespace modules
 } // namespace session
 } // namespace rstudio

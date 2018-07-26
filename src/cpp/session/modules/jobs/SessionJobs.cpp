@@ -439,7 +439,7 @@ core::Error initialize()
    return initBlock.execute();
 }
 
-} // namepsace jobs
+} // namespace jobs
 } // namespace modules
 } // namespace session
 } // namespace rstudio

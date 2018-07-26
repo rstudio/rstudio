@@ -31,6 +31,7 @@
 #define kRStudioRequiredUserGroup         "RSTUDIO_REQUIRED_USER_GROUP"
 #define kRStudioMinimumUserId             "RSTUDIO_MINIMUM_USER_ID"
 #define kRStudioSigningKey                "RSTUDIO_SIGNING_KEY"
+#define kRStudioVersion                   "RSTUDIO_VERSION"
 #define kRSessionRsaPublicKey             "RSTUDIO_SESSION_RSA_PUBLIC_KEY"
 #define kRSessionRsaPrivateKey            "RSTUDIO_SESSION_RSA_PRIVATE_KEY"
 
@@ -71,6 +72,8 @@
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"
 
+#define kPackageOutputInPackageFolder     "package-output-to-package-folder"
+
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed
 #define kLocalUriLocationPrefix           "/rsession-local/"
@@ -95,6 +98,9 @@
 #define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
 
 #define kServerSettingsDir "/etc/rstudio"
+
+#define kSessionProxyDefaultPort   "8789"
+#define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;

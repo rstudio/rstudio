@@ -219,7 +219,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 }
 
 
-} // namepsace files
+} // namespace files
 } // namespace modules
 } // namespace session
 } // namespace rstudio

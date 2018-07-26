@@ -616,7 +616,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       private ClickableScrollPanel()
       {
          super();
-         getElement().setTabIndex(-1);
       }
 
       public HandlerRegistration addClickHandler(ClickHandler handler)

@@ -42,7 +42,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
    
-      add(headerLabel("Program defaults (when not in a project)"));
+      add(headerLabel("PDF Generation"));
      
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
@@ -64,7 +64,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
        
-      add(headerLabel("LaTeX editing and compilation"));
+      add(headerLabel("LaTeX Editing and Compilation"));
       chkCleanTexi2DviOutput_ = new CheckBox(
                                      "Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
@@ -78,7 +78,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
             "Insert numbered sections and subsections",
             prefs_.insertNumberedLatexSections(), false /*defaultSpace*/)));
             
-      Label previewingOptionsLabel = headerLabel("PDF preview");
+      Label previewingOptionsLabel = headerLabel("PDF Preview");
       previewingOptionsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       add(previewingOptionsLabel);
      

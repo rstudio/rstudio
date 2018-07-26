@@ -314,6 +314,8 @@ options(connectionObserver = list(
 })
 
 .rs.addFunction("connectionReadInstallers", function() {
+   if (!.rs.isDesktop()) return(list())
+   
    installerPaths <- .rs.connectionFiles("\\.dcf$", .rs.connectionOdbcInstallerPath())
 
    installers <- lapply(installerPaths, function(fullPath) {
@@ -871,6 +873,8 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("update_odbc_installers", function() {
    installerUrl <- getOption("connections-installer")
    connectionsWarning <- NULL
+
+   if (!.rs.isDesktop()) return(list())
 
    # once per session, attempt to download driver updates
    if (!is.null(installerUrl)) {

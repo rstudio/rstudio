@@ -1398,8 +1398,10 @@ var RCodeModel = function(session, tokenizer,
    // we wish to reindent.
    this.getNextLineIndent = function(state, line, tab, row)
    {
+      // If we're within a multi-line string, preserve the indent
+      // of the current line.
       if (Utils.endsWith(state, "qstring"))
-         return "";
+         return this.$getIndent(line);
 
       // NOTE: Pressing enter will already have moved the cursor to
       // the next row, so we need to push that back a single row.

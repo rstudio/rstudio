@@ -1,7 +1,7 @@
 /*
- * Int.java
+ * SingleShotTimer.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,18 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.server;
+package org.rstudio.core.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
-public class Int extends JavaScriptObject
+public class SingleShotTimer
 {
-   protected Int()
+   public static void fire(final int delayMs, final Command command)
    {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            command.execute();
+         }
+      }.schedule(delayMs);
    }
-   
-   // workaround for GWT failures to auto-box native types returned from RPCs
-   public final native int getValue() /*-{
-      return this;
-   }-*/;
 }

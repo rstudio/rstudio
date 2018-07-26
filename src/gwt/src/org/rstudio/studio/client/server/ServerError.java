@@ -31,7 +31,7 @@ public interface ServerError
    // unauthorized (method did not execute)
    public static final int UNAUTHORIZED = 3;
    
-   // protocol (method did not executne)
+   // protocol (method did not execute)
    public static final int PROTOCOL = 4 ;
    
    // error during processing (method failed in known state)
@@ -47,7 +47,10 @@ public interface ServerError
    int getCode() ;
    
    // error message 
-   String getMessage(); 
+   String getMessage();
+   
+   // optional redirect url
+   String getRedirectUrl();
    
    // underlying error
    ServerErrorCause getCause() ;

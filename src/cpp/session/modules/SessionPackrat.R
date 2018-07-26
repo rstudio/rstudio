@@ -39,6 +39,10 @@
    }
 })
 
+.rs.addFunction("isPackified", function(project) {
+   packrat:::checkPackified(project = project, quiet = TRUE)
+})
+
 .rs.addJsonRpcHandler("get_packrat_status", function(dir) {
    .rs.quietPackratStatus(dir)
 })

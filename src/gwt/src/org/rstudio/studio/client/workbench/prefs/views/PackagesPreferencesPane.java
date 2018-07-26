@@ -69,10 +69,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       VerticalPanel management = new VerticalPanel();
       VerticalPanel development = new VerticalPanel();
     
-      management.add(headerLabel("Package management"));
+      management.add(headerLabel("Package Management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "Primary CRAN repo:",
+            "Primary CRAN repository:",
             "",
             "Change...",
             null,
@@ -122,7 +122,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
 
-      Label secondaryReposLabel = new Label("Secondary repos:");
+      Label secondaryReposLabel = new Label("Secondary repositories:");
       secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
       secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
 
@@ -175,7 +175,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       management.add(spacedBefore(new HelpLink("Managing Packages", "managing_packages")));
       
-      development.add(headerLabel("Package development"));
+      development.add(headerLabel("Package Development"));
       
       useDevtools_ = new CheckBox("Use devtools package functions if available");
       lessSpaced(useDevtools_);

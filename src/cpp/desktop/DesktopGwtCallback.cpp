@@ -754,21 +754,10 @@ void GwtCallback::activateSatelliteWindow(QString name)
    pOwner_->webPage()->activateWindow(name);
 }
 
-void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
-{
-   // TODO: 'updatePositionDependentActions()' is no longer available;
-   // we might only be able to copy the currently selected image?
-   pOwner_->triggerPageAction(QWebEnginePage::CopyImageToClipboard);
-}
-
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
 {
-   QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
-                                        left,
-                                        top,
-                                        width,
-                                        height);
-
+   auto* view = pMainWindow_->webView();
+   QPixmap pixmap = view->grab(QRect(left, top, width, height));
    QApplication::clipboard()->setPixmap(pixmap);
 }
 

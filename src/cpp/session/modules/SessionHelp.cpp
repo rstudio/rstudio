@@ -982,7 +982,7 @@ Error initialize()
 }
 
 
-} // namepsace help
+} // namespace help
 } // namespace modules
 } // namespace session
 } // namespace rstudio

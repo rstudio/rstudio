@@ -88,14 +88,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
          boolean showDesktopToolbar, Command onPrepared);
    void closeNamedWindow(String name);
    
-   // interface for plot export where coordinates are specified relative to
-   // the iframe where the image is located within
-   void copyImageToClipboard(int clientLeft,
-                             int clientTop,
-                             int clientWidth,
-                             int clientHeight);
-   
-   void copyPageRegionToClipboard(int left, int top, int width, int height);
+   void copyPageRegionToClipboard(int left, int top, int width, int height,
+                                  Command onCopied);
    
    void exportPageRegionToFile(String targetPath, 
                                String format, 

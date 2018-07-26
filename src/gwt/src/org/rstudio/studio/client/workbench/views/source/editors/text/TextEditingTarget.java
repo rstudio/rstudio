@@ -465,7 +465,7 @@ public class TextEditingTarget implements
                                          docDisplay_, 
                                          events_, 
                                          this);
-       
+      
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -1246,6 +1246,11 @@ public class TextEditingTarget implements
       view_.showWarningBar(message);
    }
    
+   public void showRequiredPackagesMissingWarning(List<String> packages)
+   {
+      view_.showRequiredPackagesMissingWarning(packages);
+   }
+   
    private void jumpToPreviousFunction()
    {
       Scope jumpTo = scopeHelper_.getPreviousFunction(
@@ -1302,6 +1307,7 @@ public class TextEditingTarget implements
                                           server_);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
+      packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
       
       // create notebook and forward resize events
       chunks_ = new TextEditingTargetChunks(this);
@@ -1338,6 +1344,9 @@ public class TextEditingTarget implements
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
       docDisplay_.setCode(contents, false);
+      
+      // Discover dependencies on file first open.
+      packageDependencyHelper_.discoverPackageDependencies();
       
       // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
@@ -7252,6 +7261,7 @@ public class TextEditingTarget implements
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
+   private TextEditingTargetPackageDependencyHelper packageDependencyHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
    private TextEditingTargetChunks chunks_;

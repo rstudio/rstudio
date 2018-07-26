@@ -13,6 +13,14 @@
 #
 #
 
+.rs.addJsonRpcHandler("discover_package_dependencies", function(docId, fileType)
+{
+   available <- .rs.availablePackages()
+   ready <- !is.null(available$value)
+   packages <- .rs.discoverPackageDependencies(docId, fileType)
+   list(ready = .rs.scalar(ready), packages = packages)
+})
+
 .rs.addFunction("error", function(...)
 {
    list(
@@ -1401,9 +1409,10 @@
 
 .rs.addFunction("recursiveSearch", function(`_node`, fn, ...)
 {
-   if (fn(`_node`, ...)) return(TRUE)
+   if (fn(`_node`, ...))
+      return(TRUE)
    
-   if (is.call(`_node`))
+   if (is.recursive(`_node`))
       for (i in seq_along(`_node`))
          if (.rs.recursiveSearch(`_node`[[i]], fn, ...))
             return(TRUE)
@@ -1415,7 +1424,7 @@
 {
    fn(`_node`, ...)
    
-   if (is.call(`_node`))
+   if (is.recursive(`_node`))
       for (i in seq_along(`_node`))
          .rs.recursiveWalk(`_node`[[i]], fn, ...)
 })
@@ -1432,7 +1441,9 @@
    indents[indents == -1] <- Inf
    common <- min(indents)
    result <- paste(substring(splat, common, nchar(string)), collapse = "\n")
-   .rs.trimWhitespace(sprintf(result, ...))
+   dots <- list(...)
+   formatted <- if (length(dots)) sprintf(result, ...) else result
+   .rs.trimWhitespace(formatted)
 })
 
 .rs.addFunction("parseNamespaceImports", function(path)
@@ -2071,3 +2082,161 @@
    descPath <- file.path(packagePath, "DESCRIPTION")
    read.dcf(descPath, all = TRUE)
 })
+
+.rs.addFunction("readSourceDocument", function(id)
+{
+   contents <- .Call("rs_readSourceDocument", as.character(id), PACKAGE = "(embedding)")
+   if (is.character(contents))
+      Encoding(contents) <- "UTF-8"
+   contents
+})
+
+.rs.addFunction("discoverPackageDependencies", function(id, extension)
+{
+   # check to see if we have available packages -- if none, bail
+   available <- .rs.availablePackages()
+   if (is.null(available$value))
+      return(character())
+   
+   # read the associated source file
+   contents <- .rs.readSourceDocument(id)
+   
+   # NOTE: the following regular expressions were extracted from knitr;
+   # we pull these out here just to avoid potentially loading the knitr
+   # package without the user's consent
+   code <- if (identical(extension, ".R"))
+      contents
+   else if (identical(extension, ".Rmd"))
+      .rs.extractRCode(contents,
+                       "^[\t >]*```+\\s*\\{([a-zA-Z0-9_]+.*)\\}\\s*$",
+                       "^[\t >]*```+\\s*$")
+   else if (identical(extension, ".Rnw"))
+      .rs.extractRCode(contents,
+                       "^\\s*<<(.*)>>=.*$",
+                       "^\\s*@\\s*(%+.*|)$")
+   
+   if (is.null(code))
+      return(character())
+   
+   # attempt to parse extracted R code
+   parsed <- .rs.tryCatch(parse(text = code, encoding = "UTF-8"))
+   if (inherits(parsed, "error"))
+      return(character())
+   
+   discoveries <- new.env(parent = emptyenv())
+   
+   handleLibraryRequireCall <- function(node) {
+      
+      # make sure this is a call to the 'library' or 'require' function
+      if (!is.call(node))
+         return(FALSE)
+      
+      isLibraryOrRequire <-
+         identical(node[[1]], as.name("library")) ||
+         identical(node[[1]], as.name("require"))
+      
+      if (!isLibraryOrRequire)
+         return(FALSE)
+      
+      # attempt to match the call
+      matched <- .rs.tryCatch(match.call(base::library, node))
+      if (inherits(matched, "error"))
+         return(FALSE)
+      
+      # if the 'package' argument is a character vector of length one, we're done
+      isPackageArgumentString <- 
+         is.character(matched$package) &&
+         length(matched$package) == 1
+         
+      if (isPackageArgumentString) {
+         discoveries[[matched$package]] <<- TRUE
+         return(TRUE)
+      }
+      
+      # if it's a symbol, double check character.only argument
+      isSafeSymbolLibraryCall <-
+         is.symbol(matched$package) &&
+         (is.null(matched$character.only) || identical(matched$character.only, FALSE))
+      
+      if (isSafeSymbolLibraryCall) {
+         discoveries[[as.character(matched$package)]] <<- TRUE
+         return(TRUE)
+      }
+      
+      FALSE
+      
+   }
+   
+   handleRequireNamespaceCall <- function(node) {
+      
+      if (!is.call(node))
+         return(FALSE)
+      
+      if (!identical(node[[1]], as.name("requireNamespace")))
+         return(FALSE)
+      
+      matched <- .rs.tryCatch(match.call(base::requireNamespace, node))
+      if (inherits(matched, "error"))
+         return(FALSE)
+      
+      if (is.character(matched$package) && length(matched$package == 1)) {
+         discoveries[[matched$package]] <<- TRUE
+         return(TRUE)
+      }
+      
+      FALSE
+      
+   }
+   
+   handleColonCall <- function(node) {
+      
+      # make sure this is a call to the 'library' or 'require' function
+      if (!is.call(node))
+         return(FALSE)
+      
+      isColonCall <-
+         length(node) == 3 &&
+         (identical(node[[1]], as.name("::")) || identical(node[[1]], as.name(":::")))
+      
+      if (!isColonCall)
+         return(FALSE)
+      
+      # extract package used. note that one can specify the package as
+      # both a symbol and as a character string; e.g. this is legal R code
+      #
+      #   "dplyr"::"mutate"
+      #
+      # so guard against such usages
+      package <- node[[2L]]
+      if (is.symbol(package))
+         package <- as.character(package)
+      if (!is.character(package) || length(package) != 1)
+         return(FALSE)
+      
+      # all looks good; add the discovery
+      discoveries[[package]] <<- TRUE
+      TRUE
+      
+   }
+   
+   .rs.recursiveWalk(parsed, function(node) {
+      handleLibraryRequireCall(node) ||
+      handleColonCall(node) ||
+      handleRequireNamespaceCall(node)
+   })
+   
+   packages <- ls(envir = discoveries)
+   
+   # keep only packages that are available in an active repository
+   packages <- packages[packages %in% rownames(available$value)]
+   
+   # figure out which packages aren't actually installed
+   info <- .rs.listInstalledPackages()
+   missing <- setdiff(packages, info$name)
+   
+   # return that list
+   missing
+   
+})
+
+
