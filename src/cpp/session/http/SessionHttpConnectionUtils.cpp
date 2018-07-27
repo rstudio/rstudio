@@ -16,6 +16,11 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
+#ifndef _WIN32
+#include <signal.h>
+#include <unistd.h>
+#endif
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
@@ -23,13 +28,14 @@
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
 
-
 #include <core/http/Response.hpp>
 #include <core/http/Request.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
+
+#include <r/RExec.hpp>
 
 #include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
@@ -167,9 +173,15 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
 
 // on windows we allow suspend_session to be handled on the foreground
 // thread since we don't have a way to ::kill on that that platform
+// (ditto for interrupts)
 #ifdef _WIN32
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   return false;
+}
+
+bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
 {
    return false;
 }
@@ -210,6 +222,62 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       return false;
    }
 }
+
+bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   using namespace rstudio::core::json;
+   if (isMethod(ptrConnection, "interrupt"))
+   {
+      JsonRpcRequest jsonRpcRequest;
+      core::Error error = parseJsonRpcRequest(
+               ptrConnection->request().body(),
+               &jsonRpcRequest);
+      if (error)
+      {
+         ptrConnection->sendJsonRpcError(error);
+      }
+      else
+      {
+         using namespace core::system;
+         
+         // check to see if R is running a child process -- if so, forward
+         // the interrupt to that process; otherwise, just let R interrupt
+         // next time the event loop gets focus.
+         //
+         // TODO: should we be more forceful (SIGTERM?) to ensure that
+         // subprocesses which ignored our interrupt request can still
+         // be stopped?
+         auto children = getSubprocesses(currentProcessId());
+         if (!children.empty())
+         {
+            // interrupt each child process
+            for (auto child : children)
+            {
+               // TODO: Win32 analog?
+               ::kill(child.pid, SIGINT);
+            }
+            
+            // acknowledge request
+            ptrConnection->sendJsonRpcResponse();
+         }
+         else
+         {
+            // let R know we're waiting for interrupts
+            r::exec::setInterruptsPending(true);
+            
+            // acknowledge request
+            ptrConnection->sendJsonRpcResponse();
+         }
+      }
+
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 #endif
 
 bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
