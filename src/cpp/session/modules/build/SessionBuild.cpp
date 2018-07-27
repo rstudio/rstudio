@@ -1146,7 +1146,7 @@ private:
       std::vector<std::string> rSourceCommands;
       
       boost::format fmt(
-         "if (nchar('%1%')) library('%1%');"
+         "if (nzchar('%1%')) devtools::load_all('%1%');"
          "testthat::test_file('%2%')"
       );
 

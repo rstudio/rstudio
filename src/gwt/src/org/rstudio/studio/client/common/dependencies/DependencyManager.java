@@ -809,7 +809,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
 
       if (useTestThat) {
          dependencies = new Dependency[] {
-            Dependency.cranPackage("testthat", "2.0.0")
+            Dependency.cranPackage("testthat", "2.0.0"),
+            Dependency.cranPackage("devtools", "1.11.1")
          };
 
          message = "Using testthat";
