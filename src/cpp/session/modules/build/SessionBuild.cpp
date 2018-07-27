@@ -15,6 +15,8 @@
 
 #include "SessionBuild.hpp"
 
+#include "session-config.h"
+
 #include <vector>
 
 #include <boost/utility.hpp>
@@ -341,6 +343,10 @@ private:
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
             core::system::setenv(&environment, "R_LIBS", rLibs);
+
+         // pass along RSTUDIO_VERSION
+         core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
+
          options.environment = environment;
          
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
