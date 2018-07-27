@@ -118,11 +118,15 @@ void applyDesktopTheme(QWidget* window, bool isDark)
          ? "rstudio-windows-dark.qss"
          : "rstudio-gnome-dark.qss";
 
-   FilePath stylePath = isDark
-         ? options().scriptsPath().complete("resources/stylesheets").complete(darkSheetName)
-         : options().scriptsPath().complete("resources/stylesheets").complete(lightSheetName);
+   // support both debug, release configurations
+   FilePath supportingPath = options().supportingFilePath();
+   FilePath resourcesPath = supportingPath.complete("desktop").exists()
+         ? supportingPath.complete("desktop")
+         : supportingPath;
 
-   fprintf(stderr, "Theme path: %s\n", stylePath.absolutePathNative().c_str());
+   FilePath stylePath = isDark
+         ? resourcesPath.complete("resources/stylesheets").complete(darkSheetName)
+         : resourcesPath.complete("resources/stylesheets").complete(lightSheetName);
 
    std::string stylesheet;
    Error error = core::readStringFromFile(stylePath, &stylesheet);
