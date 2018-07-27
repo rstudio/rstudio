@@ -47,6 +47,7 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.MouseDragHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -574,6 +575,23 @@ public class TextEditingTargetWidget
       
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
+      
+      showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace characters");
+      showWhitespaceCharactersCheckbox_.setVisible(false);
+      showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
+      showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
+         editor_.setShowInvisibles(event.getValue());
+      });
+      
+      if (docUpdateSentinel_ != null && docUpdateSentinel_.getPath() != null)
+      {
+         FileSystemItem item = FileSystemItem.createFile(docUpdateSentinel_.getPath());
+         String ext = item.getExtension();
+         if (".csv".contentEquals(ext) || ".tsv".equals(ext))
+            showWhitespaceCharactersCheckbox_.setVisible(true);
+      }
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
    }
@@ -1537,6 +1555,7 @@ public class TextEditingTargetWidget
    private ToolbarButton plumberLaunchButton_;
    private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
+   private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private ToolbarPopupMenuButton runDocumentMenuButton_;
    private RSConnectPublishButton publishButton_;
