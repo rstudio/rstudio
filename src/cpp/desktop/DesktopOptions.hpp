@@ -69,11 +69,20 @@ public:
    void setRBinDir(QString path);
 #endif
 
+   // Resolves to 'desktop' sub-directory in development builds.
+   // Resolves to 'bin' directory in release builds.
    core::FilePath scriptsPath() const;
    void setScriptsPath(const core::FilePath& scriptsPath);
 
    core::FilePath executablePath() const;
+
+   // Resolves to 'root' install directory in both development
+   // and release builds. On macOS, points to 'Resources' directory.
    core::FilePath supportingFilePath() const;
+
+   // Resolves to 'desktop/resources' sub-directory in development builds.
+   // Resolves to 'resources' sub-directory in release builds.
+   core::FilePath resourcesPath() const;
 
    core::FilePath wwwDocsPath() const;
 
@@ -103,6 +112,7 @@ private:
    core::FilePath scriptsPath_;
    mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;
+   mutable core::FilePath resourcesPath_;
    mutable QString portNumber_;
    mutable std::string localPeer_;
    bool runDiagnostics_;

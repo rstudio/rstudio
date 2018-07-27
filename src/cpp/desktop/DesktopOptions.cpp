@@ -176,10 +176,10 @@ QString Options::proportionalFont() const
            QString::fromUtf8("Segoe UI") << QString::fromUtf8("Verdana") <<  // Windows
            QString::fromUtf8("Helvetica");
 #endif
-   
+
    QString sansSerif = QStringLiteral("sans-serif");
    QString selectedFont = findFirstMatchingFont(fontList, sansSerif, false);
-   
+
    // NOTE: browsers will refuse to render a default font if the name is in
    // quotes; e.g. "sans-serif" is a signal to look for a font called sans-serif
    // rather than use the default sans-serif font!
@@ -321,6 +321,27 @@ FilePath Options::supportingFilePath() const
 #endif
    }
    return supportingFilePath_;
+}
+
+FilePath Options::resourcesPath() const
+{
+   if (resourcesPath_.empty())
+   {
+      if (scriptsPath().complete("resources").exists())
+      {
+         // developer configuration: the 'resources' folder is
+         // a sibling of the RStudio executable
+         resourcesPath_ = scriptsPath().complete("resources");
+      }
+      else
+      {
+         // release configuration: the 'resources' folder is
+         // part of the supporting files folder
+         resourcesPath_ = supportingFilePath().complete("resources");
+      }
+   }
+
+   return resourcesPath_;
 }
 
 FilePath Options::wwwDocsPath() const
