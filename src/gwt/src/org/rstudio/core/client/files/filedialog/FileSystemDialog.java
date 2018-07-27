@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.Desktop;
 
 public abstract class FileSystemDialog extends ModalDialogBase
       implements SelectionCommitHandler<FileSystemItem>, 
@@ -297,7 +298,22 @@ public abstract class FileSystemDialog extends ModalDialogBase
    @Override
    public FileSystemItem[] ls()
    {
-      FileSystemItem[] items = context_.ls();
+      return listFilesWithExtensions(context_, filterExtensions_);
+   }
+   
+   public static FileSystemItem[] listFilesWithExtension(
+         FileSystemContext context, String extension)
+   {
+      List<String> filterExtensions = new ArrayList<>();
+      if (StringUtil.isNullOrEmpty(extension))
+         filterExtensions.add(extension);
+      return listFilesWithExtensions(context, filterExtensions);
+   }
+   
+   private static FileSystemItem[] listFilesWithExtensions(
+         FileSystemContext context, List<String> filterExtensions)
+   {
+      FileSystemItem[] items = context.ls();
       if (items == null)
          return new FileSystemItem[0];
       
@@ -306,9 +322,9 @@ public abstract class FileSystemDialog extends ModalDialogBase
       {
          if (items[i].isDirectory())
             filtered.add(items[i]);
-         else if (filterExtensions_.isEmpty())
+         else if (filterExtensions.isEmpty())
             filtered.add(items[i]);
-         else if (extensionMatchesFilters(items[i].getExtension()))
+         else if (extensionMatchesFilters(items[i].getExtension(), filterExtensions))
             filtered.add(items[i]);
       }
        
@@ -335,18 +351,22 @@ public abstract class FileSystemDialog extends ModalDialogBase
             while (singleMatch != null)
             {
                filters.add(singleMatch.getGroup(1));
+               if (!Desktop.isDesktop())
+               {
+                  // only extract first extension
+                  return filters;
+               }
                singleMatch = singleMatch.nextMatch();
             }
             listMatch = listMatch.nextMatch();
          }
       }
-      
       return filters;
    }
-   
-   private boolean extensionMatchesFilters(String extension)
+
+   private static boolean extensionMatchesFilters(String extension, List<String> filterExtensions)
    {
-      for (String filter: filterExtensions_)
+      for (String filter: filterExtensions)
       {
          if (filter.equalsIgnoreCase(extension))
          {
