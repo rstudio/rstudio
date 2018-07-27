@@ -552,7 +552,7 @@ if(NOT APPLE)
       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
 
    install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stylesheets
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/stylesheets
       DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
 endif()
