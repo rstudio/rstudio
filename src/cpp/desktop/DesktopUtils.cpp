@@ -34,22 +34,6 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
-namespace {
-
-#ifdef Q_OS_LINUX
-
-const char s_rstudioGnomeLightStyles[] = {
-#include "stylesheets/rstudio-gnome-light.xxd"
-};
-
-const char s_rstudioGnomeDarkStyles[] = {
-#include "stylesheets/rstudio-gnome-dark.xxd"
-};
-
-#endif
-
-} // end anonymous namespace
-
 #ifdef Q_OS_WIN
 
 void reattachConsoleIfNecessary()
@@ -117,9 +101,18 @@ bool isGnomeDesktop()
 
 void applyDesktopTheme(QWidget* window, bool isDark)
 {
-   isDark
-         ? window->setStyleSheet(QLatin1String(s_rstudioGnomeDarkStyles, sizeof(s_rstudioGnomeDarkStyles)))
-         : window->setStyleSheet(QLatin1String(s_rstudioGnomeLightStyles, sizeof(s_rstudioGnomeLightStyles)));
+   FilePath stylePath = isDark
+         ? options().scriptsPath().complete("resources/stylesheets/rstudio-dark.qss")
+         : options().scriptsPath().complete("resources/stylesheets/rstudio-light.qss");
+
+   fprintf(stderr, "Stylesheet path: %s\n", stylePath.absolutePathNative().c_str());
+
+   std::string stylesheet;
+   Error error = core::readStringFromFile(stylePath, &stylesheet);
+   if (error)
+      LOG_ERROR(error);
+
+   window->setStyleSheet(QString::fromStdString(stylesheet));
 }
 
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
