@@ -1310,12 +1310,10 @@ void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
 
 void GwtCallback::syncToEditorTheme(bool isDark)
 {
-#ifdef Q_OS_LINUX
-   if (isGnomeDesktop())
+   if (isGnomeDesktop() || isWindows())
    {
       applyDesktopTheme(pOwner_, isDark);
    }
-#endif
 }
 
 bool GwtCallback::getEnableAccessibility()

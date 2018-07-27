@@ -41,6 +41,7 @@ core::FilePath userLogPath();
 
 double devicePixelRatio(QMainWindow* pMainWindow);
 
+bool isWindows();
 bool isOSXMavericks();
 bool isCentOS();
 bool isGnomeDesktop();

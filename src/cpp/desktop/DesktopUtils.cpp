@@ -67,6 +67,15 @@ FilePath userLogPath()
    return logPath;
 }
 
+bool isWindows()
+{
+#ifdef Q_OS_WIN
+   return true;
+#else
+   return false;
+#endif
+}
+
 #ifndef Q_OS_MAC
 double devicePixelRatio(QMainWindow* pMainWindow)
 {
@@ -101,11 +110,19 @@ bool isGnomeDesktop()
 
 void applyDesktopTheme(QWidget* window, bool isDark)
 {
-   FilePath stylePath = isDark
-         ? options().scriptsPath().complete("resources/stylesheets/rstudio-dark.qss")
-         : options().scriptsPath().complete("resources/stylesheets/rstudio-light.qss");
+   std::string lightSheetName = isWindows()
+         ? "rstudio-windows-light.qss"
+         : "rstudio-gnome-light.qss";
 
-   fprintf(stderr, "Stylesheet path: %s\n", stylePath.absolutePathNative().c_str());
+   std::string darkSheetName = isWindows()
+         ? "rstudio-windows-dark.qss"
+         : "rstudio-gnome-dark.qss";
+
+   FilePath stylePath = isDark
+         ? options().scriptsPath().complete("resources/stylesheets").complete(darkSheetName)
+         : options().scriptsPath().complete("resources/stylesheets").complete(lightSheetName);
+
+   fprintf(stderr, "Theme path: %s\n", stylePath.absolutePathNative().c_str());
 
    std::string stylesheet;
    Error error = core::readStringFromFile(stylePath, &stylesheet);
