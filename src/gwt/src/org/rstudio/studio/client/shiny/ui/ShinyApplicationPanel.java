@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationPanel.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
@@ -114,7 +114,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    public String getAbsoluteUrl()
    {
-      return StringUtil.makeAbsoluteUrl(appParams_.getUrl());
+      return DomUtils.makeAbsoluteUrl(appParams_.getUrl());
    }
    
    @Override

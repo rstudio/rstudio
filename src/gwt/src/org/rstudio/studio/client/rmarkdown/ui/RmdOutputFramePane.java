@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.ScrollUtil;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -80,7 +80,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
          if (params.isShinyDocument())
          {
             shinyFrame_.initialize(
-               StringUtil.makeAbsoluteUrl(params.getOutputUrl()),
+               DomUtils.makeAbsoluteUrl(params.getOutputUrl()),
                new Operation() {
                   @Override
                   public void execute()

@@ -1,7 +1,7 @@
 /*
  * RmdOutputPanel.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ScrollUtil;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -101,7 +101,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       {
          fileLabel_.setVisible(false);
          fileLabelSeparator_.setVisible(false);
-         shinyUrl_ = StringUtil.makeAbsoluteUrl(params.getOutputUrl());
+         shinyUrl_ = DomUtils.makeAbsoluteUrl(params.getOutputUrl());
          isShiny_ = true;
       }
       else

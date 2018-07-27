@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -223,7 +224,7 @@ public class NewConnectionShinyHost extends Composite
       if (Desktop.isDesktop())
          Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url));
 
-      frame_.setUrl(StringUtil.makeAbsoluteUrl(url));
+      frame_.setUrl(DomUtils.makeAbsoluteUrl(url));
       appendStyleOnLoad(frame_);
    }
    

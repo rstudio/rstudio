@@ -50,4 +50,17 @@ public class DomUtilsTests extends GWTTestCase
       Assert.assertEquals("Line3\n", pre.getInnerText());
       Assert.assertEquals(trimmed, 2);
    }
+   
+   public void testMakeAbsoluteUrl()
+   {
+      // test prefixing relative URLs
+      String url1 = "path/to/file";
+      String absolute1 = DomUtils.makeAbsoluteUrl(url1);
+      Assert.assertEquals(absolute1.substring(0, 4), "http");
+      
+      // already-absolute URLs should be untouched
+      String url2 = "https://hostname:port/endpoint?query=yes";
+      String absolute2 = DomUtils.makeAbsoluteUrl(url2);
+      Assert.assertEquals(url2, absolute2);
+   }
 }

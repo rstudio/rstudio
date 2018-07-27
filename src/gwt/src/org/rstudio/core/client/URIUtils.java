@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.http.client.URL;
 
 public class URIUtils
@@ -52,7 +54,7 @@ public class URIUtils
    public static boolean isLocalUrl(String url)
    {
       // ensure URL is absolute
-      String absolute = StringUtil.makeAbsoluteUrl(url);
+      String absolute = DomUtils.makeAbsoluteUrl(url);
       
       // extract host and see if it's on the whitelist of loopback hosts
       String host = StringUtil.getHostFromUrl(absolute);
