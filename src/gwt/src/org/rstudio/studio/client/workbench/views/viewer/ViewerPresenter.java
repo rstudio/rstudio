@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.HtmlMessageListener;
+import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -219,12 +220,15 @@ public class ViewerPresenter extends BasePresenter
       if (event.getParams().getViewerType() == PlumberViewerType.PLUMBER_VIEWER_PANE &&
           event.getParams().getState() == PlumberAPIParams.STATE_STARTED)
       {
-         manageCommands(true);
-         display_.bringToFront();
-         if (Desktop.isDesktop())
-            Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
-         display_.previewPlumber(event.getParams());
-         runningPlumberAPIParams_ = event.getParams();
+         // time out a bit to wait for swagger server to initialize
+         SingleShotTimer.fire(100, () -> {
+            manageCommands(true);
+            display_.bringToFront();
+            if (Desktop.isDesktop())
+               Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
+            display_.previewPlumber(event.getParams());
+            runningPlumberAPIParams_ = event.getParams();
+         });
       }
    }
    
