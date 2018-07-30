@@ -103,6 +103,8 @@ bool isCentOS()
           contents.find("Red Hat Enterprise Linux") != std::string::npos;
 }
 
+#endif
+
 bool isGnomeDesktop()
 {
    return core::system::getenv("DESKTOP_SESSION") == "gnome";
@@ -110,6 +112,7 @@ bool isGnomeDesktop()
 
 void applyDesktopTheme(QWidget* window, bool isDark)
 {
+#ifndef Q_OS_MAC
    std::string lightSheetName = isWindows()
          ? "rstudio-windows-light.qss"
          : "rstudio-gnome-light.qss";
@@ -128,7 +131,10 @@ void applyDesktopTheme(QWidget* window, bool isDark)
       LOG_ERROR(error);
 
    window->setStyleSheet(QString::fromStdString(stylesheet));
+#endif
 }
+
+#ifndef Q_OS_MAC
 
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
