@@ -79,6 +79,7 @@
 * Update embedded libclang to 5.0.2 (Windows only)
 * RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
 * New SSL options for authenticating and publishing to RStudio Connect servers using self-signed certs or internal CAs (#3040)
+* Added option to show whitespace characters for .tsv, .csv files
 
 ### Bug Fixes
 
