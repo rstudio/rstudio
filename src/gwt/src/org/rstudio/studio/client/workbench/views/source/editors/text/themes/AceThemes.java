@@ -98,6 +98,7 @@ public class AceThemes
                colors.set(1, parsed.green());
                colors.set(2, parsed.blue());
                Desktop.getFrame().setBackgroundColor(colors);
+               Desktop.getFrame().syncToEditorTheme(theme.isDark());
             }
          }
       }.schedule(100);

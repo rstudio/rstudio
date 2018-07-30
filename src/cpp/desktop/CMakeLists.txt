@@ -544,7 +544,21 @@ if(RSTUDIO_BUNDLE_QT)
           
 endif(RSTUDIO_BUNDLE_QT)
 
+# install stylesheets
+if(NOT APPLE)
+
+   file(
+      COPY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
+
+   install(
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/stylesheets
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+endif()
+
 if (UNIX AND NOT APPLE)
+
    # add rstudio icon to root (so people installing from source or tar.gz can find it
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/icons/48x48/rstudio.png
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})

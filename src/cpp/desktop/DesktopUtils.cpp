@@ -67,6 +67,15 @@ FilePath userLogPath()
    return logPath;
 }
 
+bool isWindows()
+{
+#ifdef Q_OS_WIN
+   return true;
+#else
+   return false;
+#endif
+}
+
 #ifndef Q_OS_MAC
 double devicePixelRatio(QMainWindow* pMainWindow)
 {
@@ -92,6 +101,33 @@ bool isCentOS()
 
    return contents.find("CentOS") != std::string::npos ||
           contents.find("Red Hat Enterprise Linux") != std::string::npos;
+}
+
+bool isGnomeDesktop()
+{
+   return core::system::getenv("DESKTOP_SESSION") == "gnome";
+}
+
+void applyDesktopTheme(QWidget* window, bool isDark)
+{
+   std::string lightSheetName = isWindows()
+         ? "rstudio-windows-light.qss"
+         : "rstudio-gnome-light.qss";
+
+   std::string darkSheetName = isWindows()
+         ? "rstudio-windows-dark.qss"
+         : "rstudio-gnome-dark.qss";
+
+   FilePath stylePath = isDark
+         ? options().resourcesPath().complete("stylesheets").complete(darkSheetName)
+         : options().resourcesPath().complete("stylesheets").complete(lightSheetName);
+
+   std::string stylesheet;
+   Error error = core::readStringFromFile(stylePath, &stylesheet);
+   if (error)
+      LOG_ERROR(error);
+
+   window->setStyleSheet(QString::fromStdString(stylesheet));
 }
 
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
