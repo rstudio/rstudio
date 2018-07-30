@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -309,7 +309,8 @@ SEXP rs_rstudioProgramMode()
 // get rstudio edition
 SEXP rs_rstudioEdition()
 {
-   return R_NilValue;
+   r::sexp::Protect rProtect;
+   return r::sexp::create("Open Source", &rProtect);
 }
 
 // get version
