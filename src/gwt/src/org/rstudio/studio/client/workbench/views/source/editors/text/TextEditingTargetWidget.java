@@ -576,7 +576,7 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
       
-      showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace characters");
+      showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
@@ -587,7 +587,7 @@ public class TextEditingTargetWidget
       {
          FileSystemItem item = FileSystemItem.createFile(docUpdateSentinel_.getPath());
          String ext = item.getExtension();
-         if (".csv".contentEquals(ext) || ".tsv".equals(ext))
+         if (".csv".equals(ext) || ".tsv".equals(ext))
             showWhitespaceCharactersCheckbox_.setVisible(true);
       }
       toolbar.addRightSeparator();

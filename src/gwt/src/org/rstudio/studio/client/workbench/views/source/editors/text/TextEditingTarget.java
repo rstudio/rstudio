@@ -6479,12 +6479,17 @@ public class TextEditingTarget implements
       if (item == null)
          return false;
       
-      if ("Makefile".equals(item.getName()) ||
-          "Makevars".equals(item.getName()) ||
-          ".tsv".equals(item.getExtension()))
-      {
+      String[] requiresHardTabs = new String[] {
+            "Makefile", "Makefile.in", "Makefile.win",
+            "Makevars", "Makevars.in", "Makevars.win"
+      };
+      
+      for (String file : requiresHardTabs)
+         if (file.equals(item.getName()))
+            return true;
+      
+      if (".tsv".equals(item.getExtension()))
          return true;
-      }
       
       return false;
    }
