@@ -424,7 +424,6 @@ Error addTheme(const json::JsonRpcRequest& request,
 
    // Find out whether to convert or add.
    std::string funcName = ".rs.internal.convertTheme";
-   bool isConversion = true;
    if (!themeFile.exists())
    {
       error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
@@ -434,7 +433,6 @@ Error addTheme(const json::JsonRpcRequest& request,
    else if (themeFile.extensionLowerCase() == ".rstheme")
    {
       funcName = ".rs.internal.addTheme";
-      isConversion = false;
    }
    else if (!(themeFile.extensionLowerCase() == ".tmtheme"))
    {
