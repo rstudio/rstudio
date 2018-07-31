@@ -2230,9 +2230,11 @@
    # keep only packages that are available in an active repository
    packages <- packages[packages %in% rownames(available$value)]
    
-   # figure out which packages aren't actually installed
-   info <- .rs.listInstalledPackages()
-   missing <- setdiff(packages, info$name)
+   # figure out which packages aren't actually installed. note that we avoid
+   # calling 'installed.packages()' explicitly here as this can be very slow
+   # on some NFSes; a plain `list.files()` is fine
+   installed <- list.files(.libPaths())
+   missing <- setdiff(packages, installed)
    
    # return that list
    missing
