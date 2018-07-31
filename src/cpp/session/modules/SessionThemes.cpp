@@ -331,7 +331,7 @@ FilePath getDefaultTheme(const http::Request& request)
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
-   std::string fileName = http::util::pathAfterPrefix(request, kDefaultThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kDefaultThemeLocation);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
 }
 
@@ -346,7 +346,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, kGlobalCustomThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kGlobalCustomThemeLocation);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -364,7 +364,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, kLocalCustomThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kLocalCustomThemeLocation);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -513,9 +513,9 @@ Error initialize()
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))
       (bind(registerRpcMethod, "remove_theme", removeTheme))
-      (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
-      (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
+      (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
+      (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
+      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
 
    return initBlock.execute();
 }

@@ -806,11 +806,11 @@
 })
 
 .rs.addFunction("getThemeDirFromUrl", function(url) {
-   if (grepl("^/theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
+   if (grepl("^theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
    {
       file.path(.rs.getThemeInstallDir(TRUE), basename(url))
    }
-   else if (grepl("^/theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
+   else if (grepl("^theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
    {
       file.path(.rs.getThemeInstallDir(FALSE), basename(url))
    }
@@ -1056,7 +1056,7 @@
    warnings <- c()
    tryCatch(
       withCallingHandlers(
-         .rs.addTheme(themePath, apply = FALSE, force = TRUE, globally = FALSE),
+         .rs.addTheme(themePath, apply = FALSE, force = FALSE, globally = FALSE),
          warning = function(w) 
          { 
             warnings <<- conditionMessage(w)
