@@ -49,9 +49,9 @@ namespace themes {
 
 namespace {
 
-const std::string kDefaultThemeLocation = "/theme/default/";
-const std::string kGlobalCustomThemeLocation = "/theme/custom/global/";
-const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
+const std::string kDefaultThemeLocation = "theme/default/";
+const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
+const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 std::vector<std::string> sWarnings;
 
 // A map from the name of the theme to the location of the file and a boolean representing
