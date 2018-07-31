@@ -132,8 +132,10 @@
         hist_vals <- x[[idx]][is.finite(x[[idx]])]
         if (length(hist_vals) > 1)
         {
-          # create histogram for brushing
-          h <- hist(hist_vals, plot = FALSE)
+          # create histogram for brushing -- suppress warnings as in rare cases
+          # an otherwise benign integer overflow can occurs; see
+          # https://github.com/rstudio/rstudio/issues/3232
+          h <- suppressWarnings(hist(hist_vals, plot = FALSE))
           col_breaks <- h$breaks
           col_counts <- h$counts
 
