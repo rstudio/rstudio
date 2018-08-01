@@ -247,6 +247,7 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 @if user.agent safari {
 .macintosh .forceMacScrollbars ::-webkit-scrollbar { 
    -webkit-appearance: none; 
+   -moz-appearance: none;
    width: 12px; 
    height: 12px; 
 }
@@ -1836,6 +1837,7 @@ body.ubuntu_mono .searchBox {
 .windows-highdpi .gwt-RadioButton input[type="radio"],
 .rstudio-themes-flat input[type="checkbox"] {
   -webkit-appearance: none;
+  -moz-appearance: none;
   outline: none;
   width: 13px;
   height: 13px;
