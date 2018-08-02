@@ -76,10 +76,15 @@ void SatelliteWindow::closeSatellite(QCloseEvent *event)
 
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
-   // the source window has special close semantics; if we're not currently
-   // closing, then invoke custom close handlers
+   // the source window has special close semantics; if we're not currently closing, then invoke
+   // custom close handlers. 
+   //
+   // we only do this for spontaneous (user-initiated) closures; when the window gets shut down by
+   // its parent or by the OS, we don't prompt since in those cases unsaved document accumulation
+   // and prompting is handled by the parent.
    if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)) &&
-       close_ == CloseStageOpen)
+       close_ == CloseStageOpen &&
+       event->spontaneous())
    {
       // ignore this event; we need to make sure the window can be
       // closed ourselves

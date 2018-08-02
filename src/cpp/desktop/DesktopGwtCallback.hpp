@@ -191,6 +191,7 @@ public Q_SLOTS:
    void zoomActualSize();
    
    void setBackgroundColor(QJsonArray rgbColor);
+   void syncToEditorTheme(bool isDark);
 
    bool getEnableAccessibility();
    void setEnableAccessibility(bool enable);

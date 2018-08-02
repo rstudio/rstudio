@@ -15,6 +15,7 @@
 
 #include "SessionThemes.hpp"
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
@@ -31,6 +32,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
@@ -47,9 +49,10 @@ namespace themes {
 
 namespace {
 
-const std::string kDefaultThemeLocation = "/theme/default/";
-const std::string kGlobalCustomThemeLocation = "/theme/custom/global/";
-const std::string kLocalCustomThemeLocation = "/theme/custom/local/";
+const std::string kDefaultThemeLocation = "theme/default/";
+const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
+const std::string kLocalCustomThemeLocation = "theme/custom/local/";
+std::vector<std::string> sWarnings;
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -76,6 +79,40 @@ bool convertToBool(const std::string& toConvert)
             boost::regex("false", boost::regex::icase),
             "0");
    return boost::lexical_cast<bool>(preppedStr);
+}
+
+/**
+ * @brief Gets an error out of the object, if there is one, and updates pResponse.
+ *
+ * @param object        The object to check for an error.
+ * @param pResponse     The response to update.
+ *
+ * @return true if an error is found; false otherwise.
+ */
+bool extractError(SEXP object, json::JsonRpcResponse* pResponse)
+{
+   if (r::sexp::isList(object))
+   {
+      std::vector<std::string> classes;
+      r::sexp::fillVectorString(r::sexp::getAttrib(object, R_ClassSymbol), &classes);
+      if (std::find(classes.begin(), classes.end(), "error") != classes.end())
+      {
+         std::string errorMessage;
+         r::sexp::getNamedListElement(object, "message", &errorMessage);
+
+         json::Object errorDesc;
+         errorDesc["code"] = json::errc::ExecutionError;
+         errorDesc["message"] = errorMessage;
+
+         json::Object error;
+         error["error"] = errorDesc;
+         pResponse->setResponse(error);
+
+         return true;
+      }
+   }
+
+   return false;
 }
 
 /**
@@ -238,12 +275,12 @@ SEXP rs_getThemes()
    ThemeMap themeMap = getAllThemes();
 
    // Convert to an R list.
-   rstudio::r::sexp::Protect protect;
-   rstudio::r::sexp::ListBuilder themeListBuilder(&protect);
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder themeListBuilder(&protect);
 
    for (auto theme: themeMap)
    {
-      rstudio::r::sexp::ListBuilder themeDetailsListBuilder(&protect);
+      r::sexp::ListBuilder themeDetailsListBuilder(&protect);
       themeDetailsListBuilder.add("name", std::get<0>(theme.second));
       themeDetailsListBuilder.add("url", std::get<1>(theme.second));
       themeDetailsListBuilder.add("isDark", std::get<2>(theme.second));
@@ -294,7 +331,7 @@ FilePath getDefaultTheme(const http::Request& request)
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
-   std::string fileName = http::util::pathAfterPrefix(request, kDefaultThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kDefaultThemeLocation);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
 }
 
@@ -309,7 +346,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, kGlobalCustomThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kGlobalCustomThemeLocation);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -327,7 +364,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, kLocalCustomThemeLocation);
+   std::string fileName = http::util::pathAfterPrefix(request, "/" + kLocalCustomThemeLocation);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -362,6 +399,105 @@ Error getThemes(const json::JsonRpcRequest& request,
    return Success();
 }
 
+/**
+ * @brief RPC that lets the client add a theme for the current user.
+ *
+ * @param request       The request from the client to add a theme. The theme should already exist
+ *                      on the server and the only parameter on the request should be the location
+ *                      of the theme to add.
+ * @param pResponse     The response from the server. Will contain the name of the newly added theme.
+ *
+ * @return `Success` on success; an error otherwise.
+ */
+Error addTheme(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string themeToAdd;
+   Error error = json::readParams(request.params, &themeToAdd);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   FilePath themeFile = module_context::resolveAliasedPath(themeToAdd);
+
+   // Find out whether to convert or add.
+   std::string funcName = ".rs.internal.convertTheme";
+   if (!themeFile.exists())
+   {
+      error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
+      error.addProperty("queryParam", themeToAdd);
+      error.addProperty("details", "Theme file does not exist.");
+   }
+   else if (themeFile.extensionLowerCase() == ".rstheme")
+   {
+      funcName = ".rs.internal.addTheme";
+   }
+   else if (!(themeFile.extensionLowerCase() == ".tmtheme"))
+   {
+      assert(false);
+      error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
+      error.addProperty("queryParam", themeToAdd);
+      error.addProperty("details", "Invalid file type for theme.");
+   }
+
+   std::string result;
+   if (!error)
+   {
+      r::exec::RFunction rfunc(funcName);
+      rfunc.addParam("themePath", themeToAdd);
+      SEXP sexpResult;
+      r::sexp::Protect protect;
+      error = rfunc.call(&sexpResult, &protect);
+      if (!error)
+         if (extractError(sexpResult, pResponse))
+            return error;
+
+      // Check if the result is an error
+      if (!error)
+         error = r::sexp::extract(sexpResult, &result);
+   }
+
+   if (error)
+      LOG_ERROR(error);
+   else
+      pResponse->setResult(result);
+
+   return error;
+}
+
+/**
+ * @brief An RPC allowing the client to remove a custom theme.
+ *
+ * @param request       The request to remove the theme. The first parameter should be the name of
+ *                      the theme.
+ * @param pResponse     The response. Empty if succesful; error otherwise.
+ *
+ * @return `Success` on a successful removal; an error otherwise.
+ */
+Error removeTheme(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string themeName;
+   Error error = json::readParams(request.params, &themeName);
+
+   if (!error)
+   {
+      r::exec::RFunction removeFunc(".rs.internal.removeTheme");
+      removeFunc.addParam("name", themeName);
+      removeFunc.addParam("themeList", rs_getThemes());
+
+      r::sexp::Protect protect;
+      SEXP result;
+      error = removeFunc.call(&result, &protect);
+      if (!error)
+         extractError(result, pResponse);
+   }
+
+   return error;
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -369,15 +505,17 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   RS_REGISTER_CALL_METHOD(rs_getThemes, 0);
+   RS_REGISTER_CALL_METHOD(rs_getThemes);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
-      (bind(registerUriHandler, kDefaultThemeLocation, handleDefaultThemeRequest))
-      (bind(registerUriHandler, kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
+      (bind(registerRpcMethod, "add_theme", addTheme))
+      (bind(registerRpcMethod, "remove_theme", removeTheme))
+      (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
+      (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
+      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
 
    return initBlock.execute();
 }

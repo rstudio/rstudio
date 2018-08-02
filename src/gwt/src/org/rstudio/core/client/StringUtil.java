@@ -500,28 +500,6 @@ public class StringUtil
       return result;
    }
    
-   // Given an input URL which may be relative, return an absolute URL. Has
-   // no effect on URLs which are already absolute.
-   public static String makeAbsoluteUrl(String inputUrl)
-   {
-      String url = inputUrl;
-      if (!(url.startsWith("http://") || url.startsWith("https://")))
-      {
-         String thisUrl = Window.Location.getProtocol() + "//" +
-                          Window.Location.getHost() + "/";
-         if (Window.Location.getPath().length() > 0 &&
-             !Window.Location.getPath().equals("/"))
-            thisUrl += Window.Location.getPath();
-         if (!thisUrl.endsWith("/"))
-            thisUrl += "/";
-         if (url.startsWith("/"))
-            url = url.substring(1);
-         url = thisUrl + url;
-      }
-      return url;
-      
-   }
-   
    /**
     * Given a URL, attempt to infer and return the authority (host name and
     * port) from the URL. The URL is always presumed to have a hostname (if it
@@ -1298,6 +1276,21 @@ public class StringUtil
    public static native boolean equals(String str1, String str2) /*-{
       return str1 == str2;
    }-*/;
+   
+   /**
+    * Compare two strings, ignoring case. Works if one or both strings are null.
+    *
+    * @param str1
+    * @param str2
+    * @return true if non-null strings are equal, ignoring case, or both are null.
+    */
+   public static boolean equalsIgnoreCase(String str1, String str2)
+   {
+      if (str1 == null)
+         return (str2 == null);
+      
+      return str1.equalsIgnoreCase(str2);
+   }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

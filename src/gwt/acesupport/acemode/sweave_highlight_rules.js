@@ -37,28 +37,63 @@ var SweaveHighlightRules = function() {
         regex: "^\\s*@(?:\\s.*)?$"
     });
 
+    // embed R highlight rules within \Sexpr{}
     this.$rules["start"].unshift({
-        token : "string", // single line
-        regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
-    });
-
-    this.$rules["start"].unshift({
-        token : "string", // single line
-        regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+        regex: "(\\\\Sexpr)([{])",
+        next: "r-start",
+        onMatch: function(value, state, stack, line) {
+            stack.length = 2;
+            stack[0] = state;
+            stack[1] = 1;
+            return [
+                { type: "keyword", value: "\\Sexpr" },
+                { type: "paren.keyword.operator", value: "{" }
+            ];
+        }
     });
 
     var rRules = new RHighlightRules().getRules();
     this.addRules(rRules, "r-");
+
+    // special handling for '{' and '}', for Sexpr
+    // embeds
+    this.$rules["r-start"].unshift({
+        token : "paren.keyword.operator",
+        regex : "[{]",
+        onMatch: function(value, state, stack, line) {
+            if (stack.length)
+                stack[1] += 1;
+            return this.token;
+        }
+    });
+
+    this.$rules["r-start"].unshift({
+        token : "paren.keyword.operator",
+        regex : "[}]",
+        onMatch: function(value, state, stack, line) {
+            this.next = "r-start";
+            if (stack.length) {
+                stack[1] -= 1;
+                if (stack[1] == 0) {
+                    this.next = stack[0];
+                    stack.splice(0);
+                }
+            }
+            return this.token;
+        }
+    });
+
     this.$rules["r-start"].unshift({
         token: "comment.codeend",
         regex: "^\\s*@(?:\\s.*)?$",
         next: "start"
     });
-   this.$rules["r-start"].unshift({
-       token: "comment.codebegin",
-       regex: "^\\<\\<.*\\>\\>=.*$",
-       next: "r-start"
-   });
+
+    this.$rules["r-start"].unshift({
+        token: "comment.codebegin",
+        regex: "^\\<\\<.*\\>\\>=.*$",
+        next: "r-start"
+    });
 };
 
 oop.inherits(SweaveHighlightRules, TextHighlightRules);

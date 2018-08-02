@@ -15,6 +15,8 @@
 
 #include "SessionBuild.hpp"
 
+#include "session-config.h"
+
 #include <vector>
 
 #include <boost/utility.hpp>
@@ -341,6 +343,10 @@ private:
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
             core::system::setenv(&environment, "R_LIBS", rLibs);
+
+         // pass along RSTUDIO_VERSION
+         core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
+
          options.environment = environment;
          
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
@@ -1146,7 +1152,7 @@ private:
       std::vector<std::string> rSourceCommands;
       
       boost::format fmt(
-         "if (nchar('%1%')) library('%1%');"
+         "if (nzchar('%1%')) devtools::load_all('%1%');"
          "testthat::test_file('%2%')"
       );
 

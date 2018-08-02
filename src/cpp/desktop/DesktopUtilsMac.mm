@@ -202,6 +202,9 @@ void initializeLang()
 
 void finalPlatformInitialize(MainWindow* pMainWindow)
 {
+   // https://bugreports.qt.io/browse/QTBUG-61707
+   [NSWindow setAllowsAutomaticWindowTabbing: NO];
+   
    if (!s_pDockMenu)
    {
       s_pDockMenu = new DockMenu(pMainWindow);

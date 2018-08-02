@@ -1329,15 +1329,9 @@ public class TextEditingTarget implements
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            if ("Makefile".equals(event.getValue()) ||
-                "Makefile.in".equals(event.getValue()) ||
-                "Makefile.win".equals(event.getValue()) ||
-                "Makevars".equals(event.getValue()) ||
-                "Makevars.in".equals(event.getValue()) ||
-                "Makevars.win".equals(event.getValue()))
-            {
+            FileSystemItem item = FileSystemItem.createFile(event.getValue());
+            if (shouldEnforceHardTabs(item))
                docDisplay_.setUseSoftTabs(false);
-            }
          }
       });
       
@@ -6480,6 +6474,26 @@ public class TextEditingTarget implements
       return docUpdateSentinel_.getPath() == null;
    }
    
+   private static boolean shouldEnforceHardTabs(FileSystemItem item)
+   {
+      if (item == null)
+         return false;
+      
+      String[] requiresHardTabs = new String[] {
+            "Makefile", "Makefile.in", "Makefile.win",
+            "Makevars", "Makevars.in", "Makevars.win"
+      };
+      
+      for (String file : requiresHardTabs)
+         if (file.equals(item.getName()))
+            return true;
+      
+      if (".tsv".equals(item.getExtension()))
+         return true;
+      
+      return false;
+   }
+   
    private CppCompletionContext cppCompletionContext_ = 
                                           new CppCompletionContext() {
       @Override
@@ -6613,12 +6627,7 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs.useSpacesForTab().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  // Makefile always uses tabs
-                  FileSystemItem file = context.getActiveFile();
-                  if ((file != null) && 
-                     ("Makefile".equals(file.getName()) ||
-                      "Makevars".equals(file.getName()) ||
-                      "Makevars.win".equals(file.getName())))
+                  if (shouldEnforceHardTabs(context.getActiveFile()))
                   {
                      docDisplay.setUseSoftTabs(false);
                   }

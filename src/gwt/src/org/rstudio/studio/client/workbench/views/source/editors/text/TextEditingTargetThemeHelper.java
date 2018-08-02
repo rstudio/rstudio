@@ -91,8 +91,7 @@ public class TextEditingTargetThemeHelper
       currentContent_ = content;
       
       // call all registered handlers
-      handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, 
-            currentStyle_));
+      handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, currentStyle_));
    }
    
    private HandlerManager handlers_ = new HandlerManager(this);

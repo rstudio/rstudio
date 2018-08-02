@@ -176,6 +176,40 @@ bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
    return true;
 }
 
+NSArray* parseFileNameFilters(NSString* fileNameFilters)
+{
+    NSArray* splitArr = [fileNameFilters componentsSeparatedByString:@";;"];
+    NSMutableArray* allFilters = [[NSMutableArray alloc] init];
+    for (id splitItem in splitArr)
+    {
+        // Get inside the brackets
+        NSRange start = [splitItem rangeOfString:@"("];
+        NSRange end = [splitItem rangeOfString:@")"];
+        NSArray* filterSubset =
+        [[splitItem substringWithRange:NSMakeRange(start.location + 1, end.location - start.location - 1)]
+         componentsSeparatedByString:@" "];
+        for (id filter in filterSubset)
+        {
+            // Strip the *. from the start of the extension
+            NSRange toStrip = [filter rangeOfString:@"*."];
+            if (([filter length] > 0) && (toStrip.location != NSNotFound))
+            {
+                filter = [filter substringFromIndex:(toStrip.location + 2)];
+                // If we have the extension equal to 'Rproj', then use the
+                // Uniform Type Identifier (UTI) associated with it
+                if ([[filter lowercaseString] isEqualTo: @"rproj"])
+                {
+                    filter = @"dyn.ah62d4rv4ge81e6dwr7za";
+                }
+                
+                [allFilters addObject:filter];
+            }
+        }
+    }
+    
+    return [allFilters copy];
+}
+
 RS_END_NAMESPACE()
 
 void GwtCallback::initialize()
@@ -306,19 +340,7 @@ QString GwtCallback::getOpenFileName(const QString& qCaption,
    if ([filter length] > 0 &&
        [filter rangeOfString: @"*."].location != NSNotFound)
    {
-      NSString* toExt = [filter substringFromIndex:
-                         [filter rangeOfString: @"*."].location + 2];
-      NSString* fromExt = [toExt substringToIndex:
-                           [toExt rangeOfString: @")"].location];
-      
-      // If we have the extension equal to 'Rproj', then use the
-      // Uniform Type Identifier (UTI) associated with it
-      if ([[fromExt lowercaseString] isEqualTo: @"rproj"])
-      {
-         fromExt = @"dyn.ah62d4rv4ge81e6dwr7za";
-      }
-      
-      [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
+      [open setAllowedFileTypes: parseFileNameFilters(filter)];
    }
    return runFileDialog(open);
 }

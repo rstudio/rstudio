@@ -279,7 +279,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
                   QStringLiteral("window.desktopHooks.quitR()"),
                   [&](QVariant ignored)
          {
-            closeAllSatellites(this);
+            // don't close all the satellites here since the user hasn't confirmed quit yet
          });
       }
    });

@@ -17,6 +17,9 @@ if [ ! -f /etc/redhat-release ]; then
     npm install -g grunt-cli
 fi
 
+# see errors in console
+echo "log-stderr=1" >> /etc/rstudio/rsession.conf
+
 # perform remainder of the install script as regular user
 sudo --login --set-home -u vagrant /rstudio/vagrant/provision-primary-user.sh
 

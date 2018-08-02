@@ -1477,8 +1477,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.runAsyncRProcess(
       script,
       onCompleted = function(exitStatus) {
+         
+         # bail on error (don't log since this might occur
+         # for reasons not actionable by the user; e.g. restarting
+         # the R session while a lookup is happening)
+         if (exitStatus)
+            return()
+         
          available <- .rs.onAvailablePackagesReady(reposString)
-         data <- list(ready = .rs.scalar(TRUE), packages = rownames(available))
+         data <- list(
+            ready = .rs.scalar(TRUE),
+            packages = rownames(available)
+         )
          .rs.enqueClientEvent("available_packages_ready", data)
       }
    )
