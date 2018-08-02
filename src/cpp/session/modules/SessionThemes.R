@@ -1131,9 +1131,16 @@
       error = function(e) { stop("Unable to apply the theme \"", name, "\". ", e$message) })
 })
 
-# Remove a theme from RStudio.()
+# Remove a theme from RStudio.
 .rs.addApiFunction("removeTheme", function(name) {
    tryCatch(
       .rs.removeTheme(name, .Call("rs_getThemes")),
       error = function(e) { stop("Unable to remove the theme \"", name, "\". ", e$message) })
+})
+
+# Get the list of installed themes.
+.rs.addApiFunction("getThemes", function() {
+   lapply(.Call("rs_getThemes"), function(theme) {
+      theme[-which(names(theme) == "url")]
+   })
 })
