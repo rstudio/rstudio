@@ -482,7 +482,7 @@
    
    # Read the template files
    conn <- file(
-      description = file.path(.Call("rs_rResourcesPath"), "templates", "ace_theme_template.css"),
+      description = file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "templates", "ace_theme_template.css"),
       open = "rt")
    cssTemplate <- paste0(readLines(conn), collapse ="\n")
    close(conn)
@@ -754,7 +754,7 @@
 # @param name        The name 
 .rs.addFunction("convertAceTheme", function(name, aceCss, isDark) {
    library("highlight")
-   source(file.path(.Call("rs_rResourcesPath"), "themes", "compile-themes.R"))
+   source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
    
    rsTheme <- .rs.compile_theme(aceCss, isDark)
    if (length(rsTheme) == 0)
@@ -960,7 +960,7 @@
    
    if (apply)
    {
-      .rs.applyTheme(name, .Call("rs_getThemes"))
+      .rs.applyTheme(name, .Call("rs_getThemes"), PACKAGE = "(embedding)")
    }
    
    name
@@ -1127,20 +1127,20 @@
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", function(name) {
    tryCatch(
-      .rs.applyTheme(name, .Call("rs_getThemes")),
+      .rs.applyTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)")),
       error = function(e) { stop("Unable to apply the theme \"", name, "\". ", e$message) })
 })
 
 # Remove a theme from RStudio.
 .rs.addApiFunction("removeTheme", function(name) {
    tryCatch(
-      .rs.removeTheme(name, .Call("rs_getThemes")),
+      .rs.removeTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)")),
       error = function(e) { stop("Unable to remove the theme \"", name, "\". ", e$message) })
 })
 
 # Get the list of installed themes.
 .rs.addApiFunction("getThemes", function() {
-   lapply(.Call("rs_getThemes"), function(theme) {
-      theme[-which(names(theme) == "url")]
+   lapply(.Call("rs_getThemes", PACKAGE = "(embedding)"), function(theme) {
+      theme[names(theme) != "url"]
    })
 })
