@@ -454,7 +454,7 @@ install(FILES "resources/CITATION"
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
 # themes
-file(GLOB THEME_RESOURCE_FILES "resources/themes/*.rstheme")
+file(GLOB THEME_RESOURCE_FILES "resources/themes/*.rstheme" "resources/themes/*.R")
 install(FILES ${THEME_RESOURCE_FILES}
    DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/themes)
 
