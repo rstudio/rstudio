@@ -101,6 +101,7 @@ AdvisoryFileLock::~AdvisoryFileLock()
 
 Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 {
+   using namespace boost::system;
    using namespace boost::interprocess;
 
    // make sure the lock file exists
@@ -128,8 +129,9 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       else
       {
          LOG("Failed to acquire lock: " << lockFilePath.absolutePath());
-         return systemError(boost::system::errc::no_lock_available,
-                            ERROR_LOCATION);
+         Error error = systemError(errc::no_lock_available, ERROR_LOCATION);
+         error.addProperty("lock-file", lockFilePath);
+         return error;
       }
    }
    catch(interprocess_exception& e)
@@ -145,12 +147,14 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 Error AdvisoryFileLock::release()
 {
    using namespace boost::interprocess;
+   using namespace boost::system;
 
    // make sure the lock file exists
    if (!pImpl_->lockFilePath.exists())
    {
-      return systemError(boost::system::errc::no_lock_available,
-                         ERROR_LOCATION);
+      Error error = systemError(errc::no_lock_available, ERROR_LOCATION);
+      error.addProperty("lock-file", pImpl_->lockFilePath);
+      return error;
    }
 
    // always cleanup the lock file on exit
