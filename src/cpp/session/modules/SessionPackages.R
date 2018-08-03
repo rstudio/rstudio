@@ -1443,6 +1443,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # request available packages
       packages <- available.packages(max_repo_cache_age = Inf)
       
+      # note accessed time
+      attr(packages, "time") <- Sys.time()
+      
       # add it to the cache
       .rs.availablePackagesEnv[[reposString]] <- packages
       
