@@ -317,7 +317,9 @@ Error writeLockFile(const FilePath& lockFilePath)
              std::endl << "Attempted to open:" << std::endl << " - " <<
              "'" << lockFilePath.absolutePathNative() << "'");
          
-         return systemError(errorNumber, ERROR_LOCATION);
+         Error error = systemError(errorNumber, ERROR_LOCATION);
+         error.addProperty("lock-file", lockFilePath);
+         return error;
       }
       
       // acquired file descriptor -- now try writing our pid to the file
@@ -330,7 +332,11 @@ Error writeLockFile(const FilePath& lockFilePath)
       
       // report if an error occurred during write
       if (status)
-         return systemError(errorNumber, ERROR_LOCATION);
+      {
+         Error error = systemError(errorNumber, ERROR_LOCATION);
+         error.addProperty("lock-file", lockFilePath);
+         return error;
+      }
       
       return Success();
    }
@@ -401,6 +407,8 @@ bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath) const
 
 Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
 {
+   using namespace boost::system;
+   
    // if the lock file exists...
    if (lockFilePath.exists())
    {
@@ -420,8 +428,9 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       else
       {
          LOG("No lock available: " << lockFilePath.absolutePath());
-         return systemError(boost::system::errc::no_lock_available,
-                            ERROR_LOCATION);
+         Error error = systemError(errc::no_lock_available, ERROR_LOCATION);
+         error.addProperty("lock-file", lockFilePath);
+         return error;
       }
    }
    
@@ -432,13 +441,16 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
 
    // write the lock file -- this step _must_ be atomic and so only one
    // competing process should be able to succeed here
-   error = writeLockFile(lockFilePath);
-   if (error)
+   Error writeError = writeLockFile(lockFilePath);
+   if (writeError)
    {
       LOG("Failed to acquire lock: " << lockFilePath.absolutePath());
-      return systemError(boost::system::errc::no_lock_available,
-                         error,
-                         ERROR_LOCATION);
+      Error error = systemError(
+               errc::no_lock_available,
+               writeError,
+               ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      return error;
    }
 
    // clean any other stale lockfiles in that directory
