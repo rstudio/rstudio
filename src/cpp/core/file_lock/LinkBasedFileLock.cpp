@@ -442,7 +442,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // write the lock file -- this step _must_ be atomic and so only one
    // competing process should be able to succeed here
    Error writeError = writeLockFile(lockFilePath);
-   if (error)
+   if (writeError)
    {
       LOG("Failed to acquire lock: " << lockFilePath.absolutePath());
       Error error = systemError(
