@@ -5,9 +5,9 @@
 @external rstudio-themes-scrollbars;
 @external editor_dark;
 @external ace_editor_theme;
-@external sourceLine
-@external odd
-@external even
+@external sourceLine;
+@external odd;
+@external even;
 
 .rstudio-themes-flat.editor_dark div#TOC,
 .rstudio-themes-flat.editor_dark h1,
@@ -15,7 +15,14 @@
 .rstudio-themes-flat.editor_dark h3,
 .rstudio-themes-flat.editor_dark h4,
 .rstudio-themes-flat.editor_dark table {
+   color: white !important;
    background: none !important;
+}
+
+.rstudio-themes-flat.editor_dark.ace_editor_theme p,
+.rstudio-themes-flat.editor_dark.ace_editor_theme a,
+.rstudio-themes-dark.editor_dark.ace_editor_theme div {
+   color: white !important;
 }
 
 .rstudio-themes-flat.editor_dark h1,
