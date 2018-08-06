@@ -203,10 +203,7 @@ public class RSConnect implements SessionInitHandler,
             (event.getContentType() == CONTENT_TYPE_DOCUMENT && 
                   !supportedRPubsDocExtension(event.getHtmlFile())))
       {
-         display_.showErrorMessage("Unsupported Document Format",
-               "Only documents rendered to HTML can be published to RPubs. " +
-               "To publish this document, click Knit or Preview to render it to HTML, then " +
-               "click the Publish button above the rendered document.");
+         showUnsupportedRPubsFormatMessage();
          return;         
       }
 
@@ -816,20 +813,35 @@ public class RSConnect implements SessionInitHandler,
    }
    
    // Private methods ---------------------------------------------------------
-   
+   private void showUnsupportedRPubsFormatMessage()
+   {
+      display_.showErrorMessage("Unsupported Document Format",
+            "Only documents rendered to HTML can be published to RPubs. " +
+            "To publish this document, click Knit or Preview to render it to HTML, then " +
+            "click the Publish button above the rendered document.");         
+   }
+
    private void uploadToRPubs(RSConnectPublishInput input, 
          RSConnectPublishResult result,
          final ProgressIndicator indicator)
    {
-      if (input.getContentType() == CONTENT_TYPE_DOCUMENT && 
-            (!input.hasDocOutput() || !supportedRPubsDocExtension(input.getDocOutput())))
+      if (input.getContentType() == CONTENT_TYPE_DOCUMENT)
       {
-         display_.showErrorMessage("Publish Document",
-               "Only rendered R Markdown documents can be published to RPubs. " +
-               "To publish this document, click Knit to render it to HTML, then " +
-               "click the Publish button above the rendered document.");
-         indicator.onCompleted();
-         return;
+         if (!input.hasDocOutput())
+         {
+            display_.showErrorMessage("Publish Document",
+                  "Only rendered documents can be published to RPubs. " +
+                  "To publish this document, click Knit or Preview to render it to HTML, then " +
+                  "click the Publish button above the rendered document.");
+            indicator.onCompleted();
+            return;
+         }
+         else if (!supportedRPubsDocExtension(input.getDocOutput()))
+         {
+            showUnsupportedRPubsFormatMessage();
+            indicator.onCompleted();
+            return;
+         }
       }
       
       RPubsUploader uploader = new RPubsUploader(rpubsServer_, display_, 

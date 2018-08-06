@@ -874,6 +874,9 @@ public class RSConnectPublishButton extends Composite
                   public void onError(ServerError error)
                   {
                      Debug.logError(error);
+                     display_.showErrorMessage("Content Publish Failed",
+                           "Unable to determine file to be published. Click Knit or Preview " +
+                           "to render it again, then click the Publish button above the rendered document.");
                      rmdInfoPending_ = false;
                   }
                });
