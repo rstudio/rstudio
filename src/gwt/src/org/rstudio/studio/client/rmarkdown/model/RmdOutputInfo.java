@@ -1,7 +1,7 @@
 /*
  * RmdOutputInfo.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,19 +15,13 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-public class RmdOutputInfo extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class RmdOutputInfo
 {
-   protected RmdOutputInfo()
-   {
-   }
-   
-   public final native boolean isCurrent() /*-{
-      return this.is_current;
-   }-*/;
-
-   public final native String getOutputFile() /*-{
-      return this.output_file;
-   }-*/;
+   public boolean is_current;
+   public String output_file;
+   public boolean output_file_exists;
 }

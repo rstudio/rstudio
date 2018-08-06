@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -33,6 +34,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -133,6 +136,7 @@ public class RSConnectPublishButton extends Composite
    
    @Inject
    public void initialize(RSConnectServerOperations server,
+         RMarkdownServerOperations rmdServer,
          EventBus events, 
          Commands commands,
          GlobalDisplay display,
@@ -141,6 +145,7 @@ public class RSConnectPublishButton extends Composite
          PlotPublishMRUList plotMru)
    {
       server_ = server;
+      rmdServer_ = rmdServer;
       events_ = events;
       commands_ = commands;
       display_ = display;
@@ -496,8 +501,7 @@ public class RSConnectPublishButton extends Composite
                   "before publishing it.");
             break;
          }
-         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-               docPreview_, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
+         fireDeployDocEvent(contentPath_, docPreview_, previous);
          break;
       case RSConnect.CONTENT_TYPE_WEBSITE:
             events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
@@ -840,6 +844,46 @@ public class RSConnectPublishButton extends Composite
          }
       });
    }
+
+   // fetch render output info if necessary and then fire deployment event
+   private void fireDeployDocEvent(final String target,
+                                   final RenderedDocPreview docPreview,
+                                   final RSConnectDeploymentRecord previous)
+   {
+      // prevent re-entrancy
+      if (rmdInfoPending_)
+         return;
+      
+      if (StringUtil.isNullOrEmpty(docPreview.getOutputFile()))
+      {
+         rmdInfoPending_ = true;
+         rmdServer_.getRmdOutputInfo(target,
+               new ServerRequestCallback<RmdOutputInfo>()
+               {
+                  @Override
+                  public void onResponseReceived(RmdOutputInfo response)
+                  {
+                     RenderedDocPreview preview = new RenderedDocPreview( target,
+                           response.output_file_exists ? response.output_file : "", true);
+                     events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+                           preview, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
+                     rmdInfoPending_ = false;
+                  }
+            
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     rmdInfoPending_ = false;
+                  }
+               });
+      }
+      else
+      {
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+               docPreview, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
+      }
+   }
    
    public final static String HOST_EDITOR = "editor";
    public final static String HOST_PLOTS = "plots_pane";
@@ -856,6 +900,7 @@ public class RSConnectPublishButton extends Composite
    private ToolbarButton publishMenuButton_;
 
    private RSConnectServerOperations server_;
+   private RMarkdownServerOperations rmdServer_;
    private EventBus events_;
    private Commands commands_;
    private GlobalDisplay display_;
@@ -874,6 +919,7 @@ public class RSConnectPublishButton extends Composite
    private String caption_;
    private boolean manuallyHidden_ = false;
    private boolean visible_ = false;
+   private boolean rmdInfoPending_ = false;
    
    private final AppCommand boundCommand_;
    private Command onPublishInvoked_;

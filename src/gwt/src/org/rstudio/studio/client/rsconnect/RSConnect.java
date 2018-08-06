@@ -170,9 +170,46 @@ public class RSConnect implements SessionInitHandler,
             }
          });  
    }
-   
+
+   private boolean supportedRPubsDocExtension(String filename)
+   {
+      if (StringUtil.isNullOrEmpty(filename))
+         return false;
+      
+      String extension = FileSystemItem.getExtensionFromPath(filename).toLowerCase();
+      return StringUtil.equals(extension, ".html") || StringUtil.equals(extension, ".htm");
+   }
+
    private void publishAsRPubs(RSConnectActionEvent event)
    {
+      // If previously published but the rendered file is now missing, give a warning instead
+      // of trying to republish.
+      if (event.getFromPrevious() != null && 
+            !StringUtil.isNullOrEmpty(event.getFromPrevious().getBundleId()) &&
+            StringUtil.isNullOrEmpty(event.getHtmlFile()))
+      {
+         display_.showErrorMessage("Republish Document",
+               "Only rendered documents can be republished to RPubs. " +
+               "To republish this document, click Knit or Preview to render it to HTML, then " +
+               "click the Republish button above the rendered document.");
+         return;
+      }
+      
+      // If we don't have an html file, can't publish to RPubs, e.g. create a generic markdown
+      // file (.md), don't preview it, and try to publish it to RPubs. Also, prevent publishing
+      // unsupported output formats; relatively easy to get in this state; e.g. Knit and
+      // publish HTML to RPubs, then Knit as PDF and try to republish.
+      if (StringUtil.isNullOrEmpty(event.getHtmlFile()) ||
+            (event.getContentType() == CONTENT_TYPE_DOCUMENT && 
+                  !supportedRPubsDocExtension(event.getHtmlFile())))
+      {
+         display_.showErrorMessage("Unsupported Document Format",
+               "Only documents rendered to HTML can be published to RPubs. " +
+               "To publish this document, click Knit or Preview to render it to HTML, then " +
+               "click the Publish button above the rendered document.");
+         return;         
+      }
+
       String ctx = "Publish " + contentTypeDesc(event.getContentType());
       RPubsUploadDialog dlg = new RPubsUploadDialog(
             "Publish Wizard", 
@@ -330,18 +367,9 @@ public class RSConnect implements SessionInitHandler,
          {
             if (input.isConnectUIEnabled())
             {
-               if (input.hasDocOutput() || 
-                   (input.isMultiRmd() && !input.isWebsiteRmd()))
-               {
-                  // need to disambiguate between code/output and/or
-                  // single/multi page
-                  publishWithWizard(input);
-               }
-               else
-               {
-                  // we don't have output, always publish the code
-                  publishAsCode(event, input.getWebsiteDir(), false);
-               }
+               // need to disambiguate between code/output and/or
+               // single/multi page
+               publishWithWizard(input);
             }
             else if (!input.isSelfContained())
             {
@@ -350,14 +378,7 @@ public class RSConnect implements SessionInitHandler,
                      "Only self-contained documents can currently be " + 
                      "published to RPubs.");
             }
-            else if (!input.hasDocOutput())
-            {
-               display_.showErrorMessage("Publish Document", 
-                     "Only rendered R Markdown documents can be published to RPubs. " +
-                     "To publish this document, click Knit to render it, then click " +
-                     "the Publish button above the rendered document.");
-            }
-            else if (input.isSelfContained() && input.hasDocOutput())
+            else
             {
                // RStudio Connect is disabled, go straight to RPubs
                publishAsRPubs(event);
@@ -800,6 +821,17 @@ public class RSConnect implements SessionInitHandler,
          RSConnectPublishResult result,
          final ProgressIndicator indicator)
    {
+      if (input.getContentType() == CONTENT_TYPE_DOCUMENT && 
+            (!input.hasDocOutput() || !supportedRPubsDocExtension(input.getDocOutput())))
+      {
+         display_.showErrorMessage("Publish Document",
+               "Only rendered R Markdown documents can be published to RPubs. " +
+               "To publish this document, click Knit to render it to HTML, then " +
+               "click the Publish button above the rendered document.");
+         indicator.onCompleted();
+         return;
+      }
+      
       RPubsUploader uploader = new RPubsUploader(rpubsServer_, display_, 
             events_, "rpubs-" + rpubsCount_++);
       String contentType = contentTypeDesc(input.getContentType());
