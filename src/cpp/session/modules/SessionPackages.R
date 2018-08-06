@@ -1441,7 +1441,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (all(file.exists(paths))) {
       
       # request available packages
-      packages <- available.packages(max_repo_cache_age = Inf)
+      packages <- if (getRversion() >= "3.5")
+         available.packages(max_repo_cache_age = Inf)
+      else
+         available.packages()
       
       # note accessed time
       attr(packages, "time") <- Sys.time()
