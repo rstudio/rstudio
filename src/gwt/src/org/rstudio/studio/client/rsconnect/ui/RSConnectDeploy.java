@@ -828,6 +828,15 @@ public class RSConnectDeploy extends Composite
       if (source_.isSelfContained() && source_.isStatic() && 
           !source_.isWebsiteRmd())
       {
+         if (StringUtil.isNullOrEmpty(source_.getDeployFile()))
+         {
+            indicator.onError(
+                  "Only rendered documents can be published to RStudio Connect. " +
+                  "To publish this document, click Knit to render it, then click " +
+                  "the Publish button above the rendered document.");
+            indicator.onCompleted(); 
+            return; 
+         }
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
                      source_.getDeployFile());
