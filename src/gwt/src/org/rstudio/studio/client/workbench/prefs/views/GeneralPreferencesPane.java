@@ -248,12 +248,14 @@ public class GeneralPreferencesPane extends PreferencesPane
          advanced.add(engineLabel);
          firstHeader = false;
          
-         RadioButton desktopButton = graphicsButton("OpenGL (recommended)", ENGINE_DESKTOP);
+         RadioButton defaultButton = graphicsButton("Auto-detect (recommended)", ENGINE_AUTO);
+         RadioButton desktopButton = graphicsButton("OpenGL", ENGINE_DESKTOP);
          RadioButton angleD3D11Button = graphicsButton("ANGLE (Direct3D 11)", ENGINE_ANGLE_D3D11);
          RadioButton angleD3D9Button = graphicsButton("ANGLE (Direct3D 9)", ENGINE_ANGLE_D3D9);
          RadioButton angleWarpButton = graphicsButton("ANGLE (Direct3D WARP)", ENGINE_ANGLE_WARP);
          RadioButton softwareButton = graphicsButton("Software", ENGINE_SOFTWARE);
          
+         advanced.add(defaultButton);
          advanced.add(desktopButton);
          if (BrowseCap.isWindows())
          {
@@ -263,11 +265,14 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
          advanced.add(softwareButton);
          
+         defaultButton.setValue(true);
          Desktop.getFrame().desktopRenderingEngine((String engine) -> {
             if (StringUtil.isNullOrEmpty(engine))
                return;
             
-            if (engine.equals(ENGINE_DESKTOP))
+            if (engine.equals(ENGINE_AUTO))
+               defaultButton.setValue(true);
+            else if (engine.equals(ENGINE_DESKTOP))
                desktopButton.setValue(true);
             else if (engine.equals(ENGINE_ANGLE_D3D11))
                angleD3D11Button.setValue(true);
@@ -511,6 +516,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
+   private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
    private static final String ENGINE_ANGLE_D3D11 = "angle_d3d11";
    private static final String ENGINE_ANGLE_D3D9  = "angle_d3d9";

@@ -272,7 +272,13 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
       return;
    
    using namespace core::system;
-   if (engine == QStringLiteral("desktop"))
+   
+   if (engine == QStringLiteral("auto"))
+   {
+      // nothing to do -- let Qt + Chromium try to figure out the most
+      // appropriate rendering engine
+   }
+   else if (engine == QStringLiteral("desktop"))
    {
       static char useGlDesktop[] = "--use-gl=desktop";
       setenv("QT_OPENGL", "desktop");
