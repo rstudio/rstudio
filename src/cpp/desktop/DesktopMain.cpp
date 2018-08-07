@@ -265,6 +265,42 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
+void initializeRenderingEngine()
+{
+   QString engine = desktop::options().desktopRenderingEngine();
+   if (engine.isEmpty())
+      return;
+   
+   using namespace core::system;
+   if (engine == QStringLiteral("desktop"))
+   {
+      setenv("QT_OPENGL", "desktop");
+   }
+   
+#ifdef Q_OS_WIN32
+   else if (engine == QStringLiteral("angle_d3d11"))
+   {
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "d3d11");
+   }
+   else if (engine == QStringLiteral("angle_d3d9"))
+   {
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "d3d9");
+   }
+   else if (engine == QStringLiteral("angle_warp"))
+   {
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "warp");
+   }
+#endif
+   
+   else if (engine == QStringLiteral("software"))
+   {
+      setenv("QT_OPENGL", "software");
+   }
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -274,6 +310,7 @@ int main(int argc, char* argv[])
    try
    {
       initializeLang();
+      initializeRenderingEngine();
       
       if (useRemoteDevtoolsDebugging())
       {

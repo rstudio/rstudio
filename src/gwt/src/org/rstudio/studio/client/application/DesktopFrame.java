@@ -123,6 +123,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
+   
+   void desktopRenderingEngine(CommandWithArg<String> callback);
+   void setDesktopRenderingEngine(String engine);
 
    // R version selection currently Win32 only
    void getRVersion(CommandWithArg<String> callback);
