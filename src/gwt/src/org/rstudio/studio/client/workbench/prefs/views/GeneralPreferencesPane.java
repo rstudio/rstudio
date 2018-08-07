@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -48,7 +47,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -242,51 +240,31 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       if (Desktop.isDesktop())
       {
-         Label engineLabel = headerLabel("Rendering Engine (quit required)");
+         Label osLabel = headerLabel("OS Integration (quit required)");
          if (!firstHeader)
-            spacedBefore(engineLabel);
-         advanced.add(engineLabel);
+            spacedBefore(osLabel);
+         advanced.add(osLabel);
          firstHeader = false;
          
-         RadioButton defaultButton = graphicsButton("Auto-detect (recommended)", ENGINE_AUTO);
-         RadioButton desktopButton = graphicsButton("OpenGL", ENGINE_DESKTOP);
-         RadioButton angleD3D11Button = graphicsButton("ANGLE (Direct3D 11)", ENGINE_ANGLE_D3D11);
-         RadioButton angleD3D9Button = graphicsButton("ANGLE (Direct3D 9)", ENGINE_ANGLE_D3D9);
-         RadioButton angleWarpButton = graphicsButton("ANGLE (Direct3D WARP)", ENGINE_ANGLE_WARP);
-         RadioButton softwareButton = graphicsButton("Software", ENGINE_SOFTWARE);
-         
-         advanced.add(defaultButton);
-         advanced.add(desktopButton);
+         renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
+         renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
+         renderingEngineWidget_.addChoice("OpenGL", ENGINE_DESKTOP);
          if (BrowseCap.isWindows())
          {
-            advanced.add(angleD3D11Button);
-            advanced.add(angleD3D9Button);
-            advanced.add(angleWarpButton);
+            renderingEngineWidget_.addChoice("ANGLE (Direct3D 11)", ENGINE_ANGLE_D3D11);
+            renderingEngineWidget_.addChoice("ANGLE (Direct3D 9)", ENGINE_ANGLE_D3D9);
+            renderingEngineWidget_.addChoice("ANGLE (WARP)", ENGINE_ANGLE_WARP);
          }
-         advanced.add(softwareButton);
+         renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
+         advanced.add(spaced(renderingEngineWidget_));
          
-         defaultButton.setValue(true);
          Desktop.getFrame().desktopRenderingEngine((String engine) -> {
             if (StringUtil.isNullOrEmpty(engine))
                return;
-            
-            if (engine.equals(ENGINE_AUTO))
-               defaultButton.setValue(true);
-            else if (engine.equals(ENGINE_DESKTOP))
-               desktopButton.setValue(true);
-            else if (engine.equals(ENGINE_ANGLE_D3D11))
-               angleD3D11Button.setValue(true);
-            else if (engine.equals(ENGINE_ANGLE_D3D9))
-               angleD3D9Button.setValue(true);
-            else if (engine.equals(ENGINE_ANGLE_WARP))
-               angleWarpButton.setValue(true);
-            else if (engine.equals(ENGINE_SOFTWARE))
-               softwareButton.setValue(true);
-            
-            initialRenderingEngine_ = engine;
+            renderingEngineWidget_.setValue(engine);
+            renderingEngine_ = engine;
          });
          
-         advanced.add(spacedBefore(headerLabel("OS Integration (quit required)")));
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
          advanced.add(spaced(enableAccessibility_));
          Desktop.getFrame().getEnableAccessibility(enabled -> 
@@ -422,20 +400,27 @@ public class GeneralPreferencesPane extends PreferencesPane
           desktopAccessibility_ != enableAccessibility_.getValue())
       {
          // set accessibility property if changed
-         Desktop.getFrame().setEnableAccessibility(enableAccessibility_.getValue());
+         boolean desktopAccessibility = enableAccessibility_.getValue();
+         desktopAccessibility_ = desktopAccessibility;
+         Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
       }
       
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
          // set monitoring property if changed
-         Desktop.getFrame().setClipboardMonitoring(clipboardMonitoring_.getValue());
+         boolean desktopMonitoring = clipboardMonitoring_.getValue();
+         desktopMonitoring_ = desktopMonitoring;
+         Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
       }
       
-      if (renderingEngine_ != null && !StringUtil.equals(renderingEngine_, initialRenderingEngine_))
+      if (renderingEngineWidget_ != null &&
+          !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
          // set desktop renderer when changed
-         Desktop.getFrame().setDesktopRenderingEngine(renderingEngine_);
+         String renderingEngine = renderingEngineWidget_.getValue();
+         renderingEngine_ = renderingEngine;
+         Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
  
       if (saveWorkspace_.isEnabled())
@@ -489,17 +474,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
    
-   private RadioButton graphicsButton(final String label, final String engine)
-   {
-      RadioButton button = new RadioButton("desktopRenderingEngine", label);
-      button.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
-         if (event.getValue())
-            renderingEngine_ = engine;
-      });
-      button.getElement().getStyle().setMarginBottom(4, Unit.PX);
-      return button;
-   }
-
    private RVersionSpec getDefaultRVersion()
    {
       if (rServerRVersion_ != null)
@@ -533,7 +507,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
-   private String initialRenderingEngine_ = null;
+   private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
