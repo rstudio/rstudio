@@ -213,6 +213,10 @@ select {
 }
 }
 
+input[type="radio"] + label {
+   margin-left: 2px;
+}
+
 input[type=text] {
    font-family: proportionalFont;
 }

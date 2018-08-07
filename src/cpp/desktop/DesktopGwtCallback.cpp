@@ -221,12 +221,16 @@ FilePath userHomePath()
    return core::system::userHomePath("R_USER|HOME");
 }
 
+#ifndef Q_OS_MAC
+
 QString createAliasedPath(const QString& path)
 {
    std::string aliased = FilePath::createAliasedPath(
          FilePath(path.toUtf8().constData()), userHomePath());
    return QString::fromUtf8(aliased.c_str());
 }
+
+#endif
 
 QString resolveAliasedPath(const QString& path)
 {
@@ -956,6 +960,16 @@ void GwtCallback::bringMainFrameToFront()
 void GwtCallback::bringMainFrameBehindActive()
 {
    desktop::moveWindowBeneath(QApplication::activeWindow(), pMainWindow_);
+}
+
+QString GwtCallback::desktopRenderingEngine()
+{
+   return desktop::options().desktopRenderingEngine();
+}
+
+void GwtCallback::setDesktopRenderingEngine(QString engine)
+{
+   desktop::options().setDesktopRenderingEngine(engine);
 }
 
 QString GwtCallback::filterText(QString text)

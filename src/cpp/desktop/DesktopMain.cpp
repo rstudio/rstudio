@@ -265,6 +265,60 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
+void initializeRenderingEngine(std::vector<char*>* pArguments)
+{
+   QString engine = desktop::options().desktopRenderingEngine();
+   if (engine.isEmpty())
+      return;
+   
+   using namespace core::system;
+   
+   if (engine == QStringLiteral("auto"))
+   {
+      // nothing to do -- let Qt + Chromium try to figure out the most
+      // appropriate rendering engine
+   }
+   else if (engine == QStringLiteral("desktop"))
+   {
+      static char useGlDesktop[] = "--use-gl=desktop";
+      setenv("QT_OPENGL", "desktop");
+      pArguments->push_back(useGlDesktop);
+   }
+   
+#ifdef Q_OS_WIN32
+   
+   else if (engine == QStringLiteral("angle_d3d11"))
+   {
+      static char useAngleD3D11[] = "--use-angle=d3d11";
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "d3d11");
+      pArguments->push_back(useAngleD3D11);
+   }
+   
+   else if (engine == QStringLiteral("angle_d3d9"))
+   {
+      static char useAngleD3D9[] = "--use-angle=d3d9";
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "d3d9");
+      pArguments->push_back(useAngleD3D9);
+   }
+   
+   else if (engine == QStringLiteral("angle_warp"))
+   {
+      static char useAngleWarp[] = "--use-angle=warp";
+      setenv("QT_OPENGL", "angle");
+      setenv("QT_ANGLE_PLATFORM", "warp");
+      pArguments->push_back(useAngleWarp);
+   }
+   
+#endif
+   
+   else if (engine == QStringLiteral("software"))
+   {
+      setenv("QT_OPENGL", "software");
+   }
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -273,7 +327,10 @@ int main(int argc, char* argv[])
 
    try
    {
+      static std::vector<char*> arguments(argv, argv + argc);
+      
       initializeLang();
+      initializeRenderingEngine(&arguments);
       
       if (useRemoteDevtoolsDebugging())
       {
@@ -308,9 +365,6 @@ int main(int argc, char* argv[])
 
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-      
-      // prepare command line arguments
-      static std::vector<char*> arguments(argv, argv + argc);
       
       // enable viewport meta (allows us to control / restrict
       // certain touch gestures)

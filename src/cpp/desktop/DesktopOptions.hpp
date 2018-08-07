@@ -49,6 +49,9 @@ public:
    QString portNumber() const;
    QString newPortNumber();
    std::string localPeer() const; // derived from portNumber
+   
+   QString desktopRenderingEngine() const;
+   void setDesktopRenderingEngine(QString engine);
 
    QString proportionalFont() const;
    QString fixedWidthFont() const;

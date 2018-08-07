@@ -125,6 +125,15 @@ std::string Options::localPeer() const
    return localPeer_;
 }
 
+QString Options::desktopRenderingEngine() const
+{
+   return settings_.value(QStringLiteral("desktop.renderingEngine")).toString();
+}
+
+void Options::setDesktopRenderingEngine(QString engine)
+{
+   settings_.setValue(QStringLiteral("desktop.renderingEngine"), engine);
+}
 
 namespace {
 QString findFirstMatchingFont(const QStringList& fonts,

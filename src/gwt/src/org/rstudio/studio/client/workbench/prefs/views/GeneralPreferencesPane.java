@@ -240,11 +240,31 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       if (Desktop.isDesktop())
       {
-         Label osIntegrationLabel = headerLabel("OS Integration (quit required)");
+         Label osLabel = headerLabel("OS Integration (quit required)");
          if (!firstHeader)
-            spacedBefore(osIntegrationLabel);
-         advanced.add(osIntegrationLabel);
+            spacedBefore(osLabel);
+         advanced.add(osLabel);
          firstHeader = false;
+         
+         renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
+         renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
+         renderingEngineWidget_.addChoice("OpenGL", ENGINE_DESKTOP);
+         if (BrowseCap.isWindows())
+         {
+            renderingEngineWidget_.addChoice("ANGLE (Direct3D 11)", ENGINE_ANGLE_D3D11);
+            renderingEngineWidget_.addChoice("ANGLE (Direct3D 9)", ENGINE_ANGLE_D3D9);
+            renderingEngineWidget_.addChoice("ANGLE (WARP)", ENGINE_ANGLE_WARP);
+         }
+         renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
+         advanced.add(spaced(renderingEngineWidget_));
+         
+         Desktop.getFrame().desktopRenderingEngine((String engine) -> {
+            if (StringUtil.isNullOrEmpty(engine))
+               return;
+            renderingEngineWidget_.setValue(engine);
+            renderingEngine_ = engine;
+         });
+         
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
          advanced.add(spaced(enableAccessibility_));
          Desktop.getFrame().getEnableAccessibility(enabled -> 
@@ -264,6 +284,8 @@ public class GeneralPreferencesPane extends PreferencesPane
             });
          }
       }
+      
+      
       
       Label otherLabel = headerLabel("Other");
       if (!firstHeader)
@@ -378,14 +400,27 @@ public class GeneralPreferencesPane extends PreferencesPane
           desktopAccessibility_ != enableAccessibility_.getValue())
       {
          // set accessibility property if changed
-         Desktop.getFrame().setEnableAccessibility(enableAccessibility_.getValue());
+         boolean desktopAccessibility = enableAccessibility_.getValue();
+         desktopAccessibility_ = desktopAccessibility;
+         Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
       }
       
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
          // set monitoring property if changed
-         Desktop.getFrame().setClipboardMonitoring(clipboardMonitoring_.getValue());
+         boolean desktopMonitoring = clipboardMonitoring_.getValue();
+         desktopMonitoring_ = desktopMonitoring;
+         Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
+      }
+      
+      if (renderingEngineWidget_ != null &&
+          !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
+      {
+         // set desktop renderer when changed
+         String renderingEngine = renderingEngineWidget_.getValue();
+         renderingEngine_ = renderingEngine;
+         Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
  
       if (saveWorkspace_.isEnabled())
@@ -438,7 +473,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    {
       return "General";
    }
-
+   
    private RVersionSpec getDefaultRVersion()
    {
       if (rServerRVersion_ != null)
@@ -455,6 +490,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
+   private static final String ENGINE_AUTO        = "auto";
+   private static final String ENGINE_DESKTOP     = "desktop";
+   private static final String ENGINE_ANGLE_D3D11 = "angle_d3d11";
+   private static final String ENGINE_ANGLE_D3D9  = "angle_d3d9";
+   private static final String ENGINE_ANGLE_WARP  = "angle_warp";
+   private static final String ENGINE_SOFTWARE    = "software";
+   
    private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
    
@@ -465,6 +507,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
+   private SelectWidget renderingEngineWidget_ = null;
+   private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;

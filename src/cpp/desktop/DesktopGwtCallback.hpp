@@ -163,6 +163,9 @@ public Q_SLOTS:
 
    void bringMainFrameToFront();
    void bringMainFrameBehindActive();
+   
+   QString desktopRenderingEngine();
+   void setDesktopRenderingEngine(QString engine);
 
    QString filterText(QString text);
 
