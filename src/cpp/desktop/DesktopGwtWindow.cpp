@@ -66,6 +66,12 @@ void GwtWindow::zoomActualSize()
    webView()->setZoomFactor(1);
 }
 
+void GwtWindow::setZoomLevel(double zoomLevel)
+{
+   options().setZoomLevel(zoomLevel);
+   webView()->setZoomFactor(zoomLevel);
+}
+
 void GwtWindow::zoomIn()
 {
 #if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10

@@ -37,7 +37,9 @@ public:
 
 public Q_SLOTS:
    void onCloseWindowShortcut();
+
    void zoomActualSize();
+   void setZoomLevel(double zoomLevel);
    void zoomIn();
    void zoomOut();
 

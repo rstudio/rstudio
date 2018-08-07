@@ -426,19 +426,22 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
       }
+      
       if (Desktop.isDesktop())
       {
          if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
          {
-            Desktop.getFrame().setFixedWidthFont(StringUtil.notNull(fontFace_.getValue()));
+            String fontFace = fontFace_.getValue();
+            initialFontFace_ = fontFace;
+            Desktop.getFrame().setFixedWidthFont(fontFace);
             restartRequired = true;
          }
          
          if (!StringUtil.equals(initialZoomLevel_, zoomLevel_.getValue()))
          {
             double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
+            initialZoomLevel_ = zoomLevel_.getValue();
             Desktop.getFrame().setZoomLevel(zoomLevel);
-            restartRequired = true;
          }
       }
 

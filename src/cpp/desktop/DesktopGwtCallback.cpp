@@ -1274,8 +1274,7 @@ double GwtCallback::getZoomLevel()
 
 void GwtCallback::setZoomLevel(double zoomLevel)
 {
-   options().setZoomLevel(zoomLevel);
-   desktopInfo().setZoomLevel(zoomLevel);
+   pOwner_->setZoomLevel(zoomLevel);
 }
 
 void GwtCallback::zoomIn()
