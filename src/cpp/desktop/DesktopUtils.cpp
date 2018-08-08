@@ -110,6 +110,20 @@ bool isGnomeDesktop()
    return core::system::getenv("DESKTOP_SESSION") == "gnome";
 }
 
+#ifndef Q_OS_MAC
+
+QString getFixedWidthFontList()
+{
+   QFontDatabase db;
+   QStringList fonts;
+   for (const QString& family : db.families())
+      if (db.isFixedPitch(family))
+         fonts.append(family);
+   return fonts.join(QStringLiteral("\n"));
+}
+
+#endif
+
 void applyDesktopTheme(QWidget* window, bool isDark)
 {
 #ifndef Q_OS_MAC

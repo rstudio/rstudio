@@ -44,12 +44,7 @@ double  s_zoomLevel            = 1.0;
 
 QString getFixedWidthFontList()
 {
-   QFontDatabase db;
-   QStringList fonts;
-   for (const QString& family : db.families())
-      if (db.isFixedPitch(family))
-         fonts.append(family);
-   return fonts.join(QStringLiteral("\n"));
+   return desktop::getFixedWidthFontList();
 }
 
 QString& fixedWidthFontList()

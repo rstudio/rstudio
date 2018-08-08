@@ -20,6 +20,7 @@
 #include <core/system/Environment.hpp>
 
 #import <Foundation/NSString.h>
+#import <AppKit/NSFontManager.h>
 #import <AppKit/NSView.h>
 #import <AppKit/NSWindow.h>
 
@@ -29,6 +30,13 @@ using namespace rstudio;
 
 namespace rstudio {
 namespace desktop {
+
+QString getFixedWidthFontList()
+{
+   NSArray* fonts = [[NSFontManager sharedFontManager]
+                         availableFontNamesWithTraits: NSFixedPitchFontMask];
+   return QString::fromNSString([fonts componentsJoinedByString: @"\n"]);
+}
 
 namespace {
 

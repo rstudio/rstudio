@@ -46,6 +46,8 @@ bool isOSXMavericks();
 bool isCentOS();
 bool isGnomeDesktop();
 
+QString getFixedWidthFontList();
+
 void applyDesktopTheme(QWidget* window, bool isDark);
 
 void raiseAndActivateWindow(QWidget* pWindow);
