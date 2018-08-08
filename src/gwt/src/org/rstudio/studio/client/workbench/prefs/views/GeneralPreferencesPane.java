@@ -248,7 +248,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          
          renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
          renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
-         renderingEngineWidget_.addChoice("OpenGL", ENGINE_DESKTOP);
+         renderingEngineWidget_.addChoice("Desktop OpenGL", ENGINE_DESKTOP);
+         if (BrowseCap.isLinuxDesktop())
+         {
+            renderingEngineWidget_.addChoice("OpenGL for Embedded Systems", ENGINE_GLES);
+         }
          renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
          advanced.add(spaced(renderingEngineWidget_));
          
@@ -486,6 +490,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
+   private static final String ENGINE_GLES        = "gles";
    private static final String ENGINE_SOFTWARE    = "software";
    
    private boolean desktopAccessibility_ = false;

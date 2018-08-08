@@ -274,20 +274,13 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    using namespace core::system;
    
    if (engine == QStringLiteral("auto"))
-   {
-      // nothing to do -- let Qt + Chromium try to figure out the most
-      // appropriate rendering engine
-   }
+      /* nothing to do */;
    else if (engine == QStringLiteral("desktop"))
-   {
-      static char useGlDesktop[] = "--use-gl=desktop";
-      setenv("QT_OPENGL", "desktop");
-      pArguments->push_back(useGlDesktop);
-   }
+      QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+   else if (engine == QStringLiteral("gles"))
+      QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
    else if (engine == QStringLiteral("software"))
-   {
-      setenv("QT_OPENGL", "software");
-   }
+      QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
 }
 
 } // anonymous namespace
