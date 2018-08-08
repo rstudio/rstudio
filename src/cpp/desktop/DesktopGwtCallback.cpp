@@ -1350,6 +1350,16 @@ void GwtCallback::setClipboardMonitoring(bool monitoring)
    options().setClipboardMonitoring(monitoring);
 }
 
+bool GwtCallback::getIgnoreGpuBlacklist()
+{
+   return options().ignoreGpuBlacklist();
+}
+
+void GwtCallback::setIgnoreGpuBlacklist(bool ignore)
+{
+   options().setIgnoreGpuBlacklist(ignore);
+}
+
 void GwtCallback::showLicenseDialog()
 {
    activation().showLicenseDialog(false /*showQuitButton*/);

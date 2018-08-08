@@ -201,6 +201,9 @@ public Q_SLOTS:
 
    bool getClipboardMonitoring();
    void setClipboardMonitoring(bool monitoring);
+   
+   bool getIgnoreGpuBlacklist();
+   void setIgnoreGpuBlacklist(bool ignore);
 
    void showLicenseDialog();
    QString getInitMessages();

@@ -263,6 +263,13 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
          
+         ignoreGpuBlacklist_ = new CheckBox("Ignore GPU Blacklist");
+         advanced.add(spaced(ignoreGpuBlacklist_));
+         Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
+            desktopGpuBlacklist_ = ignore;
+            ignoreGpuBlacklist_.setValue(ignore);
+         });
+         
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
          advanced.add(spaced(enableAccessibility_));
          Desktop.getFrame().getEnableAccessibility(enabled -> 
@@ -420,6 +427,14 @@ public class GeneralPreferencesPane extends PreferencesPane
          renderingEngine_ = renderingEngine;
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
+      
+      if (ignoreGpuBlacklist_ != null &&
+          desktopGpuBlacklist_ != ignoreGpuBlacklist_.getValue())
+      {
+         boolean ignore = ignoreGpuBlacklist_.getValue();
+         desktopGpuBlacklist_ = ignore;
+         Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
+      }
  
       if (saveWorkspace_.isEnabled())
       {
@@ -495,6 +510,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
+   private boolean desktopGpuBlacklist_ = false;
    
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
@@ -503,6 +519,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
+   private CheckBox ignoreGpuBlacklist_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;

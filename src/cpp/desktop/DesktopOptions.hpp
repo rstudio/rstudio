@@ -65,6 +65,9 @@ public:
 
    bool clipboardMonitoring() const;
    void setClipboardMonitoring(bool monitoring);
+   
+   bool ignoreGpuBlacklist() const;
+   void setIgnoreGpuBlacklist(bool ignore);
 
 #ifdef _WIN32
    // If "", then use automatic detection

@@ -271,8 +271,7 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    if (engine.isEmpty())
       return;
    
-   using namespace core::system;
-   
+   // tell Qt which rendering engine to use
    if (engine == QStringLiteral("auto"))
       /* nothing to do */;
    else if (engine == QStringLiteral("desktop"))
@@ -281,6 +280,14 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
       QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
    else if (engine == QStringLiteral("software"))
       QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+   
+   // tell Chromium to ignore the GPU blacklist if requested
+   bool ignore = desktop::options().ignoreGpuBlacklist();
+   if (ignore)
+   {
+      static char ignoreGpuBlacklist[] = "--ignore-gpu-blacklist";
+      pArguments->push_back(ignoreGpuBlacklist);
+   }
 }
 
 } // anonymous namespace

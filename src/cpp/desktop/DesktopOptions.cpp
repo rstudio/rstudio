@@ -278,6 +278,17 @@ void Options::setClipboardMonitoring(bool monitoring)
    settings_.setValue(QString::fromUtf8("clipboard.monitoring"), monitoring);
 }
 
+bool Options::ignoreGpuBlacklist() const
+{
+   QVariant ignore = settings_.value(QStringLiteral("general.ignoreGpuBlacklist"), false);
+   return ignore.toBool();
+}
+
+void Options::setIgnoreGpuBlacklist(bool ignore)
+{
+   settings_.setValue(QStringLiteral("general.ignoreGpuBlacklist"), ignore);
+}
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {

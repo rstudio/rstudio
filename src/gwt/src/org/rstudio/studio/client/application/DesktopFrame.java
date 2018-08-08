@@ -168,6 +168,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
    void setClipboardMonitoring(boolean monitoring);
    
+   void getIgnoreGpuBlacklist(CommandWithArg<Boolean> callback);
+   void setIgnoreGpuBlacklist(boolean ignore);
+   
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);
    void getLicenseStatusMessage(CommandWithArg<String> callback);
