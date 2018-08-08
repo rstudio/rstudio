@@ -249,12 +249,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
          renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
          renderingEngineWidget_.addChoice("OpenGL", ENGINE_DESKTOP);
-         if (BrowseCap.isWindows())
-         {
-            renderingEngineWidget_.addChoice("ANGLE (Direct3D 11)", ENGINE_ANGLE_D3D11);
-            renderingEngineWidget_.addChoice("ANGLE (Direct3D 9)", ENGINE_ANGLE_D3D9);
-            renderingEngineWidget_.addChoice("ANGLE (WARP)", ENGINE_ANGLE_WARP);
-         }
          renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
          advanced.add(spaced(renderingEngineWidget_));
          
@@ -492,9 +486,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
-   private static final String ENGINE_ANGLE_D3D11 = "angle_d3d11";
-   private static final String ENGINE_ANGLE_D3D9  = "angle_d3d9";
-   private static final String ENGINE_ANGLE_WARP  = "angle_warp";
    private static final String ENGINE_SOFTWARE    = "software";
    
    private boolean desktopAccessibility_ = false;
