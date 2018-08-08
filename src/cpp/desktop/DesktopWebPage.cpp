@@ -282,6 +282,9 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
 {
    if (url.toString() == QStringLiteral("about:blank"))
       return true;
+   
+   if (url.toString() == QStringLiteral("chrome://gpu/"))
+      return true;
 
    if (url.scheme() != QStringLiteral("http") &&
        url.scheme() != QStringLiteral("https") &&

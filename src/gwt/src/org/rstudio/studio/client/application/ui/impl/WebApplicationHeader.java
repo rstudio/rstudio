@@ -88,6 +88,7 @@ public class WebApplicationHeader extends Composite
       overlay_ = new WebApplicationHeaderOverlay();
       
       // remove some desktop-only commands
+      commands.showGpuDiagnostics().remove();
       commands.reloadUi().remove();
       commands.openDeveloperConsole().remove();
       

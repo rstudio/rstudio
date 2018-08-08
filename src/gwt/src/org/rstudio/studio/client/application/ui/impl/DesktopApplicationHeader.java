@@ -285,6 +285,12 @@ public class DesktopApplicationHeader implements ApplicationHeader
    }
    
    @Handler
+   void onShowGpuDiagnostics()
+   {
+      globalDisplay_.openMinimalWindow("chrome://gpu", 500, 400);
+   }
+   
+   @Handler
    void onReloadUi()
    {
       WindowEx.get().reload();
