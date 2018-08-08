@@ -263,7 +263,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
          
-         ignoreGpuBlacklist_ = new CheckBox("Ignore GPU Blacklist");
+         ignoreGpuBlacklist_ = new CheckBox("Ignore GPU blacklist");
          advanced.add(lessSpaced(ignoreGpuBlacklist_));
          Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
             desktopGpuBlacklist_ = ignore;
