@@ -215,6 +215,23 @@ std::string gitBin()
 }
 #endif
 
+std::string gitText(const ShellArgs& args)
+{
+   std::stringstream ss;
+
+   ss << ">>> ";
+
+   if (s_gitExePath.empty())
+      ss << "git ";
+   else
+      ss << s_gitExePath << " ";
+
+   std::string arguments = core::algorithm::join(args, " ");
+   ss << arguments << "\n";
+
+   return ss.str();
+}
+
 bool waitForIndexLock(const FilePath& workingDir)
 {
    using namespace boost::posix_time;
@@ -296,6 +313,10 @@ Error gitExec(const ShellArgs& args,
    options.detachProcess = true;
 #endif
 
+   std::string log = core::system::getenv("RSTUDIO_GIT_LOG");
+   if (!log.empty())
+      std::cout << gitText(args);
+
 #ifdef _WIN32
       return runProgram(gitBin(),
                         args.args(),
@@ -308,23 +329,6 @@ Error gitExec(const ShellArgs& args,
                         options,
                         pResult);
 #endif
-}
-
-std::string gitText(const ShellArgs& args)
-{
-   std::stringstream ss;
-   
-   ss << ">>> ";
-   
-   if (s_gitExePath.empty())
-      ss << "git ";
-   else
-      ss << s_gitExePath << " ";
-   
-   std::string arguments = core::algorithm::join(args, " ");
-   ss << arguments << "\n";
-   
-   return ss.str();
 }
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
