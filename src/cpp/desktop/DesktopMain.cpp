@@ -16,6 +16,7 @@
 #include <QtGui>
 #include <QDebug>
 #include <QPushButton>
+#include <QQuickWindow>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -275,11 +276,20 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    if (engine == QStringLiteral("auto"))
       /* nothing to do */;
    else if (engine == QStringLiteral("desktop"))
+   {
       QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGL);
+   }
    else if (engine == QStringLiteral("gles"))
+   {
       QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGL);
+   }
    else if (engine == QStringLiteral("software"))
+   {
       QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+      QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+   }
    
    // tell Chromium to ignore the GPU blacklist if requested
    bool ignore = desktop::options().ignoreGpuBlacklist();
