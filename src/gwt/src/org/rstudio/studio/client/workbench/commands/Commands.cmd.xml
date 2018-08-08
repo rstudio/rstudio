@@ -504,17 +504,15 @@ well as menu structures (for main menu and popup menus).
          <menu label="Dia_gnostics">
             <cmd refid="showRequestLog"/>
             <cmd refid="showLogFiles"/>
+            <cmd refid="showGpuDiagnostics"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
             <cmd refid="openDeveloperConsole"/>
             <cmd refid="reloadUi"/>
             <separator/>
-            <cmd refid="showGpuDiagnostics"/>
-            <separator/>
-            <cmd refid="toggleEditorTokenInfo"/>
-            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
+            <cmd refid="toggleEditorTokenInfo"/>
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
          </menu>
