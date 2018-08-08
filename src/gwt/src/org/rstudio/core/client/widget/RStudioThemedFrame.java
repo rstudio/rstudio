@@ -15,18 +15,20 @@
 
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 public class RStudioThemedFrame extends RStudioFrame
@@ -112,29 +114,7 @@ public class RStudioThemedFrame extends RStudioFrame
          if (customStyle == null)
             customStyle = "";
          
-         customStyle += "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {\n" +
-         "   background: #FFF;\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb {\n" +
-         "   -webkit-border-radius: 10px;\n" +
-         "   background: " + ThemeColors.darkGreyBackground + ";\n" +
-         "}\n" +
-         "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-track,\n" + 
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-track,\n" + 
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-corner,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-corner {\n" +
-         "   background: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
-         "}\n" + 
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb{\n" +
-         "   border: solid 3px " + ThemeColors.darkGreyMostInactiveBackground + ";" +
-         "}\n";
-         
+         customStyle += RES.styles().getText();
          StyleElement style = document.createStyleElement();
          style.setInnerHTML(customStyle);
          document.getHead().appendChild(style);
@@ -187,7 +167,25 @@ public class RStudioThemedFrame extends RStudioFrame
       return articles.length === 0;
    }-*/;
    
+   // Resources ----
+   public interface Resources extends ClientBundle
+   {
+      @Source("RStudioThemedFrame.css")
+      Styles styles();
+   }
 
+   public interface Styles extends CssResource
+   {
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
+
+   // Private members ----
+   
    private EventBus events_;
    private String customStyle_;
    private String urlStyle_;
