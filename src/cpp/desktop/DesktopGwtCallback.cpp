@@ -1360,6 +1360,16 @@ void GwtCallback::setIgnoreGpuBlacklist(bool ignore)
    options().setIgnoreGpuBlacklist(ignore);
 }
 
+bool GwtCallback::getDisableGpuDriverBugWorkarounds()
+{
+   return options().disableGpuDriverBugWorkarounds();
+}
+
+void GwtCallback::setDisableGpuDriverBugWorkarounds(bool disable)
+{
+   options().setDisableGpuDriverBugWorkarounds(disable);
+}
+
 void GwtCallback::showLicenseDialog()
 {
    activation().showLicenseDialog(false /*showQuitButton*/);

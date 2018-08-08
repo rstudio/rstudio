@@ -288,6 +288,14 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
       static char ignoreGpuBlacklist[] = "--ignore-gpu-blacklist";
       pArguments->push_back(ignoreGpuBlacklist);
    }
+   
+   // also disable driver workarounds if requested
+   bool disable = desktop::options().disableGpuDriverBugWorkarounds();
+   if (disable)
+   {
+      static char disableGpuDriverBugWorkarounds[] = "--disable-gpu-driver-bug-workarounds";
+      pArguments->push_back(disableGpuDriverBugWorkarounds);
+   }
 }
 
 } // anonymous namespace

@@ -171,6 +171,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getIgnoreGpuBlacklist(CommandWithArg<Boolean> callback);
    void setIgnoreGpuBlacklist(boolean ignore);
    
+   void getDisableGpuDriverBugWorkarounds(CommandWithArg<Boolean> callback);
+   void setDisableGpuDriverBugWorkarounds(boolean disable);
+   
    void showLicenseDialog();
    void getInitMessages(CommandWithArg<String> callback);
    void getLicenseStatusMessage(CommandWithArg<String> callback);

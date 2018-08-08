@@ -289,6 +289,17 @@ void Options::setIgnoreGpuBlacklist(bool ignore)
    settings_.setValue(QStringLiteral("general.ignoreGpuBlacklist"), ignore);
 }
 
+bool Options::disableGpuDriverBugWorkarounds() const
+{
+   QVariant disable = settings_.value(QStringLiteral("general.disableGpuDriverBugWorkarounds"), false);
+   return disable.toBool();
+}
+
+void Options::setDisableGpuDriverBugWorkarounds(bool disable)
+{
+   settings_.setValue(QStringLiteral("general.disableGpuDriverBugWorkarounds"), disable);
+}
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {

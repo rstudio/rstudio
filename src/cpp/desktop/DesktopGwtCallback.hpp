@@ -204,6 +204,9 @@ public Q_SLOTS:
    
    bool getIgnoreGpuBlacklist();
    void setIgnoreGpuBlacklist(bool ignore);
+   
+   bool getDisableGpuDriverBugWorkarounds();
+   void setDisableGpuDriverBugWorkarounds(bool disable);
 
    void showLicenseDialog();
    QString getInitMessages();

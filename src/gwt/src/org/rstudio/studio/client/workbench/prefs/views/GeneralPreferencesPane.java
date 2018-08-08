@@ -264,14 +264,21 @@ public class GeneralPreferencesPane extends PreferencesPane
          });
          
          ignoreGpuBlacklist_ = new CheckBox("Ignore GPU Blacklist");
-         advanced.add(spaced(ignoreGpuBlacklist_));
+         advanced.add(lessSpaced(ignoreGpuBlacklist_));
          Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
             desktopGpuBlacklist_ = ignore;
             ignoreGpuBlacklist_.setValue(ignore);
          });
          
+         disableGpuDriverBugWorkarounds_ = new CheckBox("Disable GPU driver bug workarounds");
+         advanced.add(lessSpaced(disableGpuDriverBugWorkarounds_));
+         Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
+            desktopDisableGpuDriverBugWorkarounds_ = disable;
+            disableGpuDriverBugWorkarounds_.setValue(disable);
+         });
+         
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
-         advanced.add(spaced(enableAccessibility_));
+         advanced.add(lessSpaced(enableAccessibility_));
          Desktop.getFrame().getEnableAccessibility(enabled -> 
          {
             desktopAccessibility_ = enabled;
@@ -281,7 +288,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (BrowseCap.isLinuxDesktop())
          {
             clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
-            advanced.add(clipboardMonitoring_);
+            advanced.add(lessSpaced(clipboardMonitoring_));
             Desktop.getFrame().getClipboardMonitoring(monitoring ->
             {
                desktopMonitoring_ = monitoring;
@@ -435,6 +442,14 @@ public class GeneralPreferencesPane extends PreferencesPane
          desktopGpuBlacklist_ = ignore;
          Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
       }
+      
+      if (disableGpuDriverBugWorkarounds_ != null &&
+          desktopDisableGpuDriverBugWorkarounds_ != disableGpuDriverBugWorkarounds_.getValue())
+      {
+         boolean disable = disableGpuDriverBugWorkarounds_.getValue();
+         desktopDisableGpuDriverBugWorkarounds_ = disable;
+         Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
+      }
  
       if (saveWorkspace_.isEnabled())
       {
@@ -511,6 +526,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
    private boolean desktopGpuBlacklist_ = false;
+   private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
    
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
@@ -520,6 +536,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox ignoreGpuBlacklist_ = null;
+   private CheckBox disableGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;

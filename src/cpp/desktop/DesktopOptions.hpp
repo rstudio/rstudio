@@ -68,6 +68,9 @@ public:
    
    bool ignoreGpuBlacklist() const;
    void setIgnoreGpuBlacklist(bool ignore);
+   
+   bool disableGpuDriverBugWorkarounds() const;
+   void setDisableGpuDriverBugWorkarounds(bool disable);
 
 #ifdef _WIN32
    // If "", then use automatic detection
