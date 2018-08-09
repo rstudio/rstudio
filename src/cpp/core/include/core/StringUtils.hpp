@@ -50,6 +50,8 @@ private:
    std::string needle_;
 };
 
+bool isTruthy(const std::string& string);
+
 bool isSubsequence(std::string const& self,
                    std::string const& other);
 

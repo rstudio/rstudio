@@ -44,6 +44,21 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
+bool isTruthy(const std::string& string)
+{
+   // empty strings are 'falsy'
+   if (string.empty())
+      return false;
+   
+   // check for special 'falsy' values
+   std::string lower = toLower(string);
+   if (lower == "0" || lower == "false")
+      return false;
+   
+   // assume all other values are 'truthy'
+   return true;
+}
+
 bool isSubsequence(std::string const& self,
                    std::string const& other,
                    std::string::size_type other_n)

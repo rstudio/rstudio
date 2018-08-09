@@ -314,7 +314,7 @@ Error gitExec(const ShellArgs& args,
 #endif
 
    std::string log = core::system::getenv("RSTUDIO_GIT_LOG");
-   if (!log.empty())
+   if (string_utils::isTruthy(log))
       std::cout << gitText(args);
 
 #ifdef _WIN32
