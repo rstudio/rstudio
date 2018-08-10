@@ -694,8 +694,10 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql() )
+      if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql())
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
+      else if (hasCustomSource())
+         srcOnSaveLabel_.setText("Custom Action on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
@@ -814,6 +816,11 @@ public class TextEditingTargetWidget
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_TEST_SHINYTEST);
    }
+
+   private boolean hasCustomSource()
+   {
+      return SourceDocument.hasCustomSource(extendedType_);
+   }
    
    @Override
    public void setNotebookUIVisible(boolean visible)
@@ -854,13 +861,20 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || 
-          editor_.getFileType().isSql() ||editor_.getFileType().canPreviewFromR())
+          editor_.getFileType().isSql())
       {
          String preview = editor_.getFileType().getPreviewButtonText();
          srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
       }
+      else if (hasCustomSource())
+      {
+         srcOnSaveLabel_.setText(width < 450 ? "Custom" : "Custom Action on Save");
+      }
       else
+      {
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
+      }
+
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
    }
    

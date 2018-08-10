@@ -127,6 +127,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorId
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
@@ -190,6 +191,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(TextEditingTargetCppHelper cppHelper);
    void injectMembers(TextEditingTargetJSHelper jsHelper);
+   void injectMembers(TextEditingTargetRHelper rHelper);
    void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(TextEditingTargetPackageDependencyHelper packageDependencyHelper);
