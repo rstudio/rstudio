@@ -1942,7 +1942,8 @@ well as menu structures (for main menu and popup menus).
         desc="Sync PDF view to editor location (Ctrl+Click)"/>
 
    <cmd id="checkSpelling"
-        menuLabel="Check _Spelling..."/>
+	    menuLabel="Check _Spelling..."
+	    desc="Check spelling in document"/>
 
    <cmd id="newFolder"
         label="Create a New Folder..."
