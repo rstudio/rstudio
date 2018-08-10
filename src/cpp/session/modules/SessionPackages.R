@@ -1429,13 +1429,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("onAvailablePackagesStale", function(reposString)
 {
+   # defend against '@CRAN@' within the repositories, as this will
+   # cause R to present the user with an interactive prompt when
+   # invoking 'contrib.url()'
+   repos <- getOption("repos")
+   repos <- repos[repos != "@CRAN@"]
+   
    # check and see if R has already queried available packages;
    # if so we can ask R for available packages as it will use
    # the cache
    paths <- sprintf(
       "%s/repos_%s.rds",
       tempdir(),
-      URLencode(contrib.url(getOption("repos")), TRUE)
+      URLencode(contrib.url(repos), TRUE)
    )
    
    if (all(file.exists(paths))) {
