@@ -697,7 +697,7 @@ public class TextEditingTargetWidget
       if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql())
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else if (hasCustomSource())
-         srcOnSaveLabel_.setText("Custom Action on Save");
+         srcOnSaveLabel_.setText("Function on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
@@ -868,7 +868,7 @@ public class TextEditingTargetWidget
       }
       else if (hasCustomSource())
       {
-         srcOnSaveLabel_.setText(width < 450 ? "Custom" : "Custom Action on Save");
+         srcOnSaveLabel_.setText(width < 450 ? "Function" : "Function on Save");
       }
       else
       {
