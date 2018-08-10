@@ -196,7 +196,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       module_context::consoleWriteError("Session version " + sessionVersion +
                                         " does not match server version " + version + " - "
-                                        " this is an unsupported configuration, and you may "
+                                        "this is an unsupported configuration, and you may "
                                         "experience unexpected issues as a result.\n\n");
    }
 
