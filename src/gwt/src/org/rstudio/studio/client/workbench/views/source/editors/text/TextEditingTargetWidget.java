@@ -696,8 +696,6 @@ public class TextEditingTargetWidget
       srcOnSaveLabel_.setVisible(canSourceOnSave);
       if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql())
          srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
-      else if (hasCustomSource())
-         srcOnSaveLabel_.setText("Function on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
@@ -861,14 +859,10 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || 
-          editor_.getFileType().isSql())
+          editor_.getFileType().isSql() || editor_.getFileType().canPreviewFromR())
       {
          String preview = editor_.getFileType().getPreviewButtonText();
          srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
-      }
-      else if (hasCustomSource())
-      {
-         srcOnSaveLabel_.setText(width < 450 ? "Function" : "Function on Save");
       }
       else
       {
