@@ -36,4 +36,6 @@ public class ServerErrorCause
    private final int code_;
    private final String category_;
    private final String message_;
+   
+   public static final int FILE_NOT_FOUND = 2;
 }

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.ValueChangeHandlerManager;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
@@ -66,9 +67,10 @@ public class DocUpdateSentinel
       {
       }
       
-      public ReopenFileCallback(Command onCompleted)
+      public ReopenFileCallback(Command onCompleted, boolean ignoreDeletes)
       {
          onCompleted_ = onCompleted;
+         ignoreDeletes_ = ignoreDeletes;
       }
       
       @Override
@@ -91,7 +93,16 @@ public class DocUpdateSentinel
       {
          if (progress_ != null)
          {
-            progress_.onError(error.getUserMessage());
+            if (ignoreDeletes_)
+            {
+               ServerErrorCause cause = error.getCause();
+               if (cause.getCode() != ServerErrorCause.FILE_NOT_FOUND)
+                  progress_.onError(error.getUserMessage());
+            }
+            else
+            {
+               progress_.onError(error.getUserMessage());
+            }
          }
          
          if (onCompleted_ != null)
@@ -99,6 +110,7 @@ public class DocUpdateSentinel
       }
       
       private Command onCompleted_ = null;
+      private boolean ignoreDeletes_ = false;
    }
 
    public DocUpdateSentinel(SourceServerOperations server,
@@ -733,15 +745,15 @@ public class DocUpdateSentinel
 
    public void revert()
    {
-      revert(null);
+      revert(null, false);
    }
    
-   public void revert(Command onCompleted)
+   public void revert(Command onCompleted, boolean ignoreDeletes)
    {
       server_.revertDocument(
             sourceDoc_.getId(),
             sourceDoc_.getType(),
-            new ReopenFileCallback(onCompleted));
+            new ReopenFileCallback(onCompleted, ignoreDeletes));
    }
 
    public void reopenWithEncoding(String encoding)
