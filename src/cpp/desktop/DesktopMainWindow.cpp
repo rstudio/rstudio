@@ -245,7 +245,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       ::UnhookWinEvent(eventHook_);
 #endif
 
-   if (!geometrySaved_)
+   if (!geometrySaved_ && !isMaximized())
    {
       desktop::options().saveMainWindowBounds(this);
       geometrySaved_ = true;
