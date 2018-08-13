@@ -236,6 +236,14 @@ bool waitForIndexLock(const FilePath& workingDir)
 {
    using namespace boost::posix_time;
    
+   // allow user to opt-out (primarily for debugging issues that may be due
+   // to erroneous attempts to wait for a lockfile)
+   bool wait = string_utils::isTruthy(
+            core::system::getenv("RSTUDIO_GIT_WAIT_FOR_INDEX_LOCK"),
+            true);
+   if (!wait)
+      return true;
+   
    // count the number of retries (avoid getting stuck in wait loops when
    // an index.lock file exists and is never cleaned up)
    static int retryCount = 0;
