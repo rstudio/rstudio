@@ -2,8 +2,8 @@
 on run argv
   set dir to quoted form of (first item of argv)
   tell app "Terminal"
-     activate
      do script "cd " & dir
+     activate
   end tell
 end run
 
