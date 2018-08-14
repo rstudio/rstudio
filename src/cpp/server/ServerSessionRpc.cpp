@@ -195,11 +195,10 @@ Error initialize()
 {
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
-   bool loadBalancedAuthForwarding = getServerBoolOption(kAuthPamSessionsUsePassword) &&
-         load_balancer::isLoadBalanced();
 
+   // rpc socket only needed if project sharing, load balancing, or spawner sessions are in use
    if (hasSharedStorage &&
-      (projectSharingEnabled || loadBalancedAuthForwarding || spawnerSessionsEnabled()))
+      (projectSharingEnabled || load_balancer::isLoadBalanced() || spawnerSessionsEnabled()))
 
    {
       // create the async server instance
