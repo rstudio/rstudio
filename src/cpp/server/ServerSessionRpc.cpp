@@ -31,6 +31,7 @@
 
 #include <session/projects/SessionProjectSharing.hpp>
 
+#include "load_balancer/LoadBalancer.hpp"
 #include "ServerActivation.hpp"
 #include "ServerSessionRpc.hpp"
 
@@ -194,10 +195,11 @@ Error initialize()
 {
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
+   bool loadBalancedAuthForwarding = getServerBoolOption(kAuthPamSessionsUsePassword) &&
+         load_balancer::isLoadBalanced();
 
-   // currently only shared projects and spawner sessions perform session RPCs
    if (hasSharedStorage &&
-      (projectSharingEnabled || spawnerSessionsEnabled()))
+      (projectSharingEnabled || loadBalancedAuthForwarding || spawnerSessionsEnabled()))
 
    {
       // create the async server instance
