@@ -217,7 +217,7 @@ std::string FilePath::createAliasedPath(
 FilePath FilePath::resolveAliasedPath(const std::string& aliasedPath,
                             const FilePath& userHomePath)
 {
-   // Special case for  empty string or "~"
+   // Special case for empty string or "~"
    if (aliasedPath.empty() || (aliasedPath.compare(kHomePathLeafAlias) == 0))
       return userHomePath;
 

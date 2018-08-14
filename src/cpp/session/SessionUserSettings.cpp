@@ -870,13 +870,29 @@ void UserSettings::setVcsEnabled(bool enabled)
    settings_.set("vcsEnabled", enabled);
 }
 
+namespace {
+
+FilePath settingPath(const std::string& dir)
+{
+   if (dir.empty())
+      return FilePath();
+
+   FilePath resolved = module_context::resolveAliasedPath(dir);
+
+   // fix an issue introduced where the home directory
+   // would be serialized as the setting path when it should
+   // have been empty
+   if (resolved == module_context::userHomePath())
+      return FilePath();
+   else
+      return resolved;
+}
+
+} // end anonymous namespace
+
 FilePath UserSettings::gitExePath() const
 {
-   std::string dir = settings_.get("vcsGitExePath");
-   if (!dir.empty())
-      return module_context::resolveAliasedPath(dir);
-   else
-      return FilePath();
+   return settingPath(settings_.get("vcsGitExePath"));
 }
 
 void UserSettings::setGitExePath(const FilePath& gitExePath)
@@ -886,11 +902,7 @@ void UserSettings::setGitExePath(const FilePath& gitExePath)
 
 FilePath UserSettings::svnExePath() const
 {
-   std::string dir = settings_.get("vcsSvnExePath");
-   if (!dir.empty())
-      return module_context::resolveAliasedPath(dir);
-   else
-      return FilePath();
+   return settingPath(settings_.get("vcsSvnExePath"));
 }
 
 void UserSettings::setSvnExePath(const FilePath& svnExePath)
@@ -900,11 +912,7 @@ void UserSettings::setSvnExePath(const FilePath& svnExePath)
 
 FilePath UserSettings::vcsTerminalPath() const
 {
-   std::string dir = settings_.get("vcsTerminalPath");
-   if (!dir.empty())
-      return module_context::resolveAliasedPath(dir);
-   else
-      return FilePath();
+   return settingPath(settings_.get("vcsTerminalPath"));
 }
 
 void UserSettings::setVcsTerminalPath(const FilePath& terminalPath)
