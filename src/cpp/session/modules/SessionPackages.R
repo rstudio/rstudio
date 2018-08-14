@@ -1429,6 +1429,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("onAvailablePackagesStale", function(reposString)
 {
+   # evict a stale cache entry (if any)
+   .rs.availablePackagesEnv[[reposString]] <- NULL
+   
    # defend against '@CRAN@' within the repositories, as this will
    # cause R to present the user with an interactive prompt when
    # invoking 'contrib.url()'
