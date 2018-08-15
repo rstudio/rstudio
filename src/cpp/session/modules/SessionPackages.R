@@ -1371,7 +1371,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    #
    # - STALE:    we need to request available packages
    # - PENDING:  another process is requesting packages
-   # - READY:    available packages ready to read
    # - CACHED:   available packages ready in cache
    #
    reposString <- paste(deparse(getOption("repos")), collapse = " ")
@@ -1380,7 +1379,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       state,
       STALE   = .rs.onAvailablePackagesStale(reposString),
       PENDING = .rs.onAvailablePackagesPending(reposString),
-      READY   = .rs.onAvailablePackagesReady(reposString),
       CACHED  = .rs.onAvailablePackagesCached(reposString),
       NULL
    )
@@ -1409,11 +1407,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
    if (is.null(dir))
       return("STALE")
-   
-   # does the packages.rds file exist? if so we're ready to read it
-   packages <- file.path(dir, "packages.rds")
-   if (file.exists(packages))
-      return("READY")
    
    # is the directory old? if so, assume the prior R process launched
    # to produce available.packages crashed or similar
