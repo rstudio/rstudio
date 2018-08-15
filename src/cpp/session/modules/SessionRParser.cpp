@@ -1475,6 +1475,29 @@ bool closesArgumentList(const RTokenCursor& cursor,
    }
 }
 
+// Used to check for variable assignments that occur within
+// argument lists, e.g.
+//
+//    list(a = 1, b <- 2)
+//                ^^^^^^
+//
+// Most likely, the user intended to write 'b = 2' but accidentally
+// used '<-' instead.
+void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
+                                           ParseStatus& status)
+{
+   if (!cursor.isType(RToken::ID))
+      return;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return;
+   
+   if (!cursor.contentEquals(L"<-"))
+      return;
+   
+   status.lint().unexpectedAssignmentInArgumentList(cursor);
+}
+
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
                                    ParseStatus& status)
 {
@@ -2450,6 +2473,8 @@ ARGUMENT_START:
          }
       }
       
+      checkVariableAssignmentInArgumentList(cursor, status);
+      
       if (closesArgumentList(cursor, status))
       {
          // TODO: we previously warned about commas found before a closing
@@ -2563,8 +2588,12 @@ FUNCTION_START:
 FUNCTION_ARGUMENT_START:
       
       DEBUG("** Function argument start");
+      
+      checkVariableAssignmentInArgumentList(cursor, status);
+      
       if (cursor.isType(RToken::ID) &&
-          cursor.nextSignificantToken().contentEquals(L"="))
+          (cursor.nextSignificantToken().contentEquals(L"=") ||
+           cursor.nextSignificantToken().contentEquals(L"<-")))
       {
          status.node()->addDefinedSymbol(cursor, status.node()->position());
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
