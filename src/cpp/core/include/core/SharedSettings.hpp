@@ -1,7 +1,7 @@
 /*
  * SharedSettings.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,10 +38,11 @@ public:
          LOG_ERROR(error);
    }
 
-   std::string readSetting(const char * const settingName) const
+   // read setting from a folder
+   static std::string readSettingFromPath(const core::FilePath& settingsPath, const std::string& settingName)
    {
       using namespace rstudio::core;
-      FilePath readPath = settingsPath_.complete(settingName);
+      FilePath readPath = settingsPath.complete(settingName);
       if (readPath.exists())
       {
          std::string value;
@@ -60,14 +61,27 @@ public:
       }
    }
 
-   void writeSetting(const char * const settingName,
-                     const std::string& value)
+   // write setting to a folder
+   static void writeSettingToPath(const core::FilePath& settingsPath,
+                                  const std::string& settingName,
+                                  const std::string& value)
    {
       using namespace rstudio::core;
-      FilePath writePath = settingsPath_.complete(settingName);
+      FilePath writePath = settingsPath.complete(settingName);
       Error error = core::writeStringToFile(writePath, value);
       if (error)
          LOG_ERROR(error);
+   }
+
+   std::string readSetting(const char * const settingName) const
+   {
+      return readSettingFromPath(settingsPath_, settingName);
+   }
+
+   void writeSetting(const char * const settingName,
+                     const std::string& value)
+   {
+      writeSettingToPath(settingsPath_, settingName, value);
    }
 
 private:
