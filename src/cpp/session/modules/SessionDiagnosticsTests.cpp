@@ -274,6 +274,8 @@ context("Diagnostics")
       EXPECT_NO_LINT("foo(!!! abc)");
       
       EXPECT_NO_LINT("function() { i <- 1; function() { data[i] } }");
+      
+      EXPECT_LINT("list(a <- 1, b <- 2)");
    }
    
    lintRStudioRFiles();

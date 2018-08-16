@@ -451,6 +451,14 @@ public:
                   "no definition for '" + rToken.contentAsUtf8() + "' in scope");
    }
    
+   void unexpectedAssignmentInArgumentList(const RToken& rToken)
+   {
+      addLintItem(
+               rToken,
+               LintTypeWarning,
+               "unexpected assignment in argument list; did you mean to use '='?");
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
