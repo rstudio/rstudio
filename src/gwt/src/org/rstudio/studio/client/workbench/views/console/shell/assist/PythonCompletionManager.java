@@ -22,10 +22,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
@@ -74,28 +71,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 // of the completion class) was to just fork and change the bits we need.
 public class PythonCompletionManager implements CompletionManager
 {  
-   // globally suppress F1 and F2 so no default browser behavior takes those
-   // keystrokes (e.g. Help in Chrome)
-   static
-   {
-      Event.addNativePreviewHandler(new NativePreviewHandler() {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
-         {
-            if (event.getTypeInt() == Event.ONKEYDOWN)
-            {
-               int keyCode = event.getNativeEvent().getKeyCode();
-               if ((keyCode == 112 || keyCode == 113) &&
-                   KeyboardShortcut.NONE ==
-                      KeyboardShortcut.getModifierValue(event.getNativeEvent()))
-               {
-                 event.getNativeEvent().preventDefault();
-               }
-            }
-         }
-      });
-   }
-   
    @Override
    public void onPaste(PasteEvent event)
    {
