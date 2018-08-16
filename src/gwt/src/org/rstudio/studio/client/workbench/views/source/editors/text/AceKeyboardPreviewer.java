@@ -30,6 +30,13 @@ public class AceKeyboardPreviewer
       boolean previewKeyPress(JavaScriptObject data, char charCode) ;
    }
    
+   // NOTE: The 'previewKeyDown()' handler exposed here wraps a 'true' DOM
+   // KeyDown event, while the 'previewKeyPress()' handler handles a synthetic
+   // Ace event used for text input. In particular, 'previewKeyPress()' can be
+   // used to figure out the 'true' character input by the user; for example, if
+   // the user were olding Alt and pressed 'A' on macOS, they would get the
+   // 'å' character inserted. Nowadays, most browsers provide these keys
+   // as part of the 'key' attribute of the event, but that was not always the case.
    public AceKeyboardPreviewer(final CompletionManager completionManager)
    {
       addHandler(new Handler() {
