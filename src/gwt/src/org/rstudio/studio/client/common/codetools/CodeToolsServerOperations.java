@@ -93,4 +93,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          int column,
          ServerRequestCallback<Boolean> requestCallback);
    
+   void stanGetCompletions(
+         String line,
+         ServerRequestCallback<Completions> requestCallback);
+   
 }

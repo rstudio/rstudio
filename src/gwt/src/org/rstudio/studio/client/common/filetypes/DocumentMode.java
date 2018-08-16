@@ -25,6 +25,7 @@ public class DocumentMode
       PYTHON,
       C_CPP,
       MARKDOWN,
+      STAN,
       TEX,
       UNKNOWN
    }
@@ -42,6 +43,8 @@ public class DocumentMode
          return Mode.MARKDOWN;
       else if (isPositionInTexMode(docDisplay, position))
          return Mode.TEX;
+      else if (isPositionInStanMode(docDisplay, position))
+         return Mode.STAN;
       else
          return Mode.UNKNOWN;
    }
@@ -199,5 +202,31 @@ public class DocumentMode
              isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
    }
    
+   // Stan Mode
+   public static boolean isPositionInStanMode(DocDisplay docDisplay,
+                                              Position position)
+   {
+      if (docDisplay.getFileType().isStan())
+         return true;
+      
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.STAN_LANG_MODE);
+      
+   }
+   
+   public static boolean isCursorInStanMode(DocDisplay docDisplay)
+   {
+      return isPositionInStanMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+   
+   public static boolean isSelectionInStanMode(DocDisplay docDisplay)
+   {
+      return isPositionInStanMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInStanMode(docDisplay, docDisplay.getSelectionEnd());
+   }
 
 }
