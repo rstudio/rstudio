@@ -1,7 +1,7 @@
 /*
  * RVersionSettings.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@
 #define kRestoreProjectRVersion        "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
+#define kRVersionProjectFile           "RVersion"
 
 namespace rstudio {
 namespace session {
@@ -71,6 +72,7 @@ public:
    }
 
    void setProjectLastRVersion(const std::string& projectDir,
+                               const core::FilePath& sharedProjectScratchPath,
                                const std::string& version,
                                const std::string& versionHome)
    {
@@ -84,9 +86,17 @@ public:
       writeProjectSetting(projectId.asString(), kRVersionSuffix, version);
       writeProjectSetting(projectId.asString(), kRVersionHomeSuffix,
                           versionHome);
+
+      // save R version in the project itself; used as a hint on preferred R version
+      // when opening a project for the first time on a different machine/container
+      if (!sharedProjectScratchPath.empty())
+      {
+         writeSettingToPath(sharedProjectScratchPath, kRVersionProjectFile, version);
+      }
    }
 
    void readProjectLastRVersion(const std::string& projectDir,
+                                const core::FilePath& sharedProjectScratchPath,
                                 std::string* pVersion,
                                 std::string* pVersionHome)
    {
@@ -100,6 +110,13 @@ public:
                                      kRVersionSuffix);
       *pVersionHome = readProjectSetting(projectId.asString(),
                                          kRVersionHomeSuffix);
+
+      // if no local setting for R version, check for hint in .Rproj.user
+      if ((pVersion->empty() || pVersionHome->empty()) && !sharedProjectScratchPath.empty())
+      {
+         *pVersion = readSettingFromPath(sharedProjectScratchPath, kRVersionProjectFile);
+         pVersionHome->clear();
+      }
    }
 
 private:
