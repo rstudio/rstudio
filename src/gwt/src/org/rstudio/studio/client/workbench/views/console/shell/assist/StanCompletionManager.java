@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
-import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-
-import com.google.gwt.dom.client.NativeEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
@@ -36,9 +42,6 @@ public class StanCompletionManager extends CompletionManagerBase
       popup_ = popup;
       server_ = server;
       context_ = context;
-      
-      invalidation_ = new Invalidation();
-      completionCache_ = new CompletionCache();
    }
    
    @Override
@@ -48,31 +51,36 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
-   public boolean previewKeyDown(NativeEvent event)
+   protected void addExtraCompletions(String token,
+                                      List<QualifiedName> completions)
    {
-      if (!DocumentMode.isCursorInStanMode(docDisplay_))
-         return false;
+      Set<String> discoveredIdentifiers = new HashSet<String>();
       
-      Boolean status = onKeyDown(event);
-      if (status != null)
-         return status;
-      
-      return false;
+      TokenIterator it = docDisplay_.createTokenIterator();
+      for (Token t = it.getCurrentToken();
+           t != null;
+           t = it.stepForward())
+      {
+         if (!t.hasType("identifier"))
+            continue;
+         
+         String value = t.getValue();
+         if (discoveredIdentifiers.contains(value))
+            continue;
+         
+         if (!StringUtil.isSubsequence(value, token))
+            continue;
+         
+         QualifiedName name = new QualifiedName(
+               t.getValue(),
+               "[identifier]",
+               false,
+               RCompletionType.CONTEXT);
+         discoveredIdentifiers.add(value);
+         completions.add(name);
+      }
    }
-
-   @Override
-   public boolean previewKeyPress(char ch)
-   {
-      if (!DocumentMode.isCursorInStanMode(docDisplay_))
-         return false;
-      
-      Boolean status = onKeyPress(ch);
-      if (status != null)
-         return status;
-      
-      return false;
-   }
-
+   
    @Override
    public void goToHelp()
    {
@@ -97,7 +105,4 @@ public class StanCompletionManager extends CompletionManagerBase
    private final CompletionPopupDisplay popup_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
-   
-   private final Invalidation invalidation_;
-   private final CompletionCache completionCache_;
 }

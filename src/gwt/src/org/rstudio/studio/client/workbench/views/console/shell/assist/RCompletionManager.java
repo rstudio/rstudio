@@ -121,7 +121,6 @@ public class RCompletionManager implements CompletionManager
       sigTipManager_ = new SignatureToolTipManager(docDisplay_);
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
-      popupPresenter_ = new CompletionPopupPresenter(popup_);
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
@@ -430,9 +429,6 @@ public class RCompletionManager implements CompletionManager
       
       if (isDisabled())
          return false;
-      
-      if (popupPresenter_.handleKeyDown(event))
-         return true;
       
       /**
        * KEYS THAT MATTER
@@ -2195,7 +2191,6 @@ public class RCompletionManager implements CompletionManager
    private final InputEditorDisplay input_ ;
    private final NavigableSourceEditor navigableSourceEditor_;
    private final CompletionPopupDisplay popup_ ;
-   private final CompletionPopupPresenter popupPresenter_;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;
    

@@ -33,7 +33,7 @@ Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "stan/SessionStan.R"));
+         (bind(sourceModuleRFile, "SessionStan.R"));
    return initBlock.execute();
 }
 

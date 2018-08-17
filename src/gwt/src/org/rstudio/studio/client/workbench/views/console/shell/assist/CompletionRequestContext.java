@@ -21,27 +21,55 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class CompletionRequestContext extends ServerRequestCallback<Completions>
 {
+   public static class Data
+   {
+      public Data(String line,
+                  boolean isTabTriggeredCompletion,
+                  boolean autoAcceptSingleCompletionResult)
+      {
+         line_ = line;
+         isTabTriggeredCompletion_ = isTabTriggeredCompletion;
+         autoAcceptSingleCompletionResult_ = autoAcceptSingleCompletionResult;
+      }
+      
+      public String getLine()
+      {
+         return line_;
+      }
+      
+      public boolean isTabTriggeredCompletion()
+      {
+         return isTabTriggeredCompletion_;
+      }
+      
+      public boolean autoAcceptSingleCompletionResult()
+      {
+         return autoAcceptSingleCompletionResult_;
+      }
+      
+      private final String line_;
+      private final boolean isTabTriggeredCompletion_;
+      private final boolean autoAcceptSingleCompletionResult_;
+   }
+   
    public interface Host
    {
-      public void onCompletionResponseReceived(String line, boolean canAutoAccept, Completions completions);
+      public Invalidation.Token getInvalidationToken();
+      public void onCompletionResponseReceived(Data data, Completions completions);
       public void onCompletionRequestError(String message);
    }
    
-   public CompletionRequestContext(Host host,
-                                   String line,
-                                   boolean canAutoAccept,
-                                   Invalidation.Token token)
+   public CompletionRequestContext(Host host, Data data)
    {
       host_ = host;
-      line_ = line;
-      canAutoAccept_ = canAutoAccept;
-      invalidationToken_ = token;
+      token_ = host.getInvalidationToken();
+      data_ = data;
    }
 
    @Override
    public void onError(ServerError error)
    {
-      if (invalidationToken_.isInvalid())
+      if (token_.isInvalid())
          return;
 
       host_.onCompletionRequestError(error.getUserMessage());
@@ -50,14 +78,13 @@ public class CompletionRequestContext extends ServerRequestCallback<Completions>
    @Override
    public void onResponseReceived(Completions completions)
    {
-      if (invalidationToken_.isInvalid())
+      if (token_.isInvalid())
          return;
       
-      host_.onCompletionResponseReceived(line_, canAutoAccept_, completions);
+      host_.onCompletionResponseReceived(data_, completions);
    }
 
    private final Host host_;
-   private final String line_;
-   private final boolean canAutoAccept_;
-   private final Invalidation.Token invalidationToken_;
+   private final Invalidation.Token token_;
+   private final Data data_;
 }

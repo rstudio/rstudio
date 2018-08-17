@@ -727,16 +727,20 @@ public class AceEditor implements DocDisplay,
             protected void initialize(Map<Mode, CompletionManager> managers)
             {
                // R completion manager
-               managers.put(DocumentMode.Mode.R, new RCompletionManager(
-                     editor,
-                     editor,
-                     new CompletionPopupPanel(),
-                     server_,
-                     new Filter(),
-                     context_,
-                     fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     editor,
-                     false));
+               if (fileType_.isR() || fileType_.isRmd() || fileType_.isCpp() ||
+                   fileType_.isRhtml() || fileType_.isRnw())
+               {
+                  managers.put(DocumentMode.Mode.R, new RCompletionManager(
+                        editor,
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        new Filter(),
+                        context_,
+                        fileType_.canExecuteChunks() ? rnwContext_ : null,
+                           editor,
+                           false));
+               }
                
                // Python completion manager
                if (fileType_.isPython() || fileType_.isRmd())
@@ -3638,8 +3642,9 @@ public class AceEditor implements DocDisplay,
    public TokenIterator createTokenIterator(Position position)
    {
       TokenIterator it = TokenIterator.create(getSession());
-      if (position != null)
-         it.moveToPosition(position);
+      if (position == null)
+         position = Position.create(0, 0);
+      it.moveToPosition(position);
       return it;
    }
 

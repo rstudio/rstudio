@@ -2241,4 +2241,20 @@
    
 })
 
-
+# like strsplit, but doesn't omit a trailing last entry as in e.g.
+#
+#    > strsplit("a.b.", ".", fixed = TRUE)
+#    [[1]]
+#    [1] "a" "b"
+#
+# also unlists the string by default (as the most common usage is to
+# split a single string)
+.rs.addFunction("strsplit", function(x, pattern, simplify = TRUE)
+{
+   m <- gregexpr(pattern, x, perl = TRUE)
+   matches <- regmatches(x, m, invert = TRUE)
+   if (simplify && length(matches) == 1)
+      matches[[1]]
+   else
+      matches
+})

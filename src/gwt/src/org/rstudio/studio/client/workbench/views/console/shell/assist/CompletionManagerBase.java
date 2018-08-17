@@ -14,12 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.UnicodeLetters;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.NativeEventProperty;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -41,9 +48,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -65,7 +70,6 @@ public abstract class CompletionManagerBase
       helpTimer_ = new HelpTimer();
       
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
-      popupPresenter_ = new CompletionPopupPresenter(popup);
       
       init();
    }
@@ -110,7 +114,7 @@ public abstract class CompletionManagerBase
             }),
             
             events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
-               popup_.hide();
+               invalidatePendingRequests();
             })
             
       };
@@ -131,32 +135,36 @@ public abstract class CompletionManagerBase
    }
    
    @Override
-   public void onCompletionResponseReceived(String line,
-                                            boolean canAutoAccept,
+   public void onCompletionResponseReceived(CompletionRequestContext.Data data,
                                             Completions completions)
    {
+      String line = data.getLine();
       if (completions.isCacheable())
          completionCache_.store(line, completions);
       
-      // translate to array of qualified names
       int n = completions.getCompletions().length();
-      QualifiedName[] results = new QualifiedName[n];
+      List<QualifiedName> names = new ArrayList<QualifiedName>();
       for (int i = 0; i < n; i++)
       {
-         results[i] = new QualifiedName(
+         names.add(new QualifiedName(
                completions.getCompletions().get(i),
                completions.getPackages().get(i),
                false,
                completions.getType().get(i),
                completions.getHelpHandler(),
-               completions.getLanguage());
+               completions.getLanguage()));
       }
+      
+      addExtraCompletions(completions.getToken(), names);
+      
+      QualifiedName[] results = new QualifiedName[names.size()];
+      results = names.toArray(results);
       
       if (results.length == 0)
       {
          popup_.clearCompletions();
          
-         if (canAutoAccept)
+         if (data.autoAcceptSingleCompletionResult())
          {
             popup_.showErrorMessage(
                   "(No matches)",
@@ -170,6 +178,8 @@ public abstract class CompletionManagerBase
          return;
       }
       
+      // if we receive a single completion result whose completion
+      // is the same as the input token, we should implicitly accept
       boolean shouldImplicitlyAccept =
             results.length == 1 &&
             StringUtil.equals(completions.getToken(), results[0].name);
@@ -177,10 +187,18 @@ public abstract class CompletionManagerBase
       if (shouldImplicitlyAccept)
       {
          QualifiedName completion = results[0];
-         if (canAutoAccept && completion.type == RCompletionType.SNIPPET)
+         if (data.autoAcceptSingleCompletionResult() && completion.type == RCompletionType.SNIPPET)
             snippets_.applySnippet(completions.getToken(), completion.name);
          else
             popup_.placeOffscreen();
+         
+         // because we swallow tab keypresses for displaying completion popups,
+         // if the user tried to press tab and the completion engine returned
+         // only a single completion with the same value as the token, we need
+         // to insert a literal tab to 'play' the tab key back into the document
+         if (data.isTabTriggeredCompletion())
+            docDisplay_.insertCode("\t");
+         
          return;
       }
       
@@ -188,7 +206,7 @@ public abstract class CompletionManagerBase
       
       boolean shouldAutoAccept =
             results.length == 1 &&
-            canAutoAccept &&
+            data.autoAcceptSingleCompletionResult() &&
             results[0].type != RCompletionType.DIRECTORY;
       
       if (shouldAutoAccept)
@@ -204,7 +222,6 @@ public abstract class CompletionManagerBase
             results,
             new PopupPositioner(tokenBounds, popup_),
             false);
-      
    }
    
    @Override
@@ -213,35 +230,47 @@ public abstract class CompletionManagerBase
       
    }
    
+   public void onCompletionCommit()
+   {
+      QualifiedName value = popup_.getSelectedValue();
+      if (value == null)
+         return;
+      
+      onPopupSelectionCommit(value);
+   }
+   
+   public boolean beginSuggest()
+   {
+      return beginSuggest(true, false, true);
+   }
+   
    public boolean beginSuggest(boolean flushCache,
-                               boolean implicit,
-                               boolean canAutoInsert)
+                               boolean isTabTriggered,
+                               boolean canAutoAccept)
    {
       invalidatePendingRequests(flushCache, false);
       
       // TODO: handle comments
       // TODO: handle multi-line strings
-      String line = docDisplay_.getCurrentLineUpToCursor();
-      
-      // don't auto-complete with tab on lines with only whitespace
-      // (unless the user has opted in)
-      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
-      {
-         Event event = Event.getCurrentEvent();
-         boolean isTabInsertionOnBlankLine =
-               event.getKeyCode() == KeyCodes.KEY_TAB &&
-               line.matches("^\\s*$");
-         if (isTabInsertionOnBlankLine)
-            return false;
-      }
-      
+      // TODO: handle Tab completion preference
       // TODO: can auto accept
-      context_ = new CompletionRequestContext(this, line, false, invalidation_.getInvalidationToken());
+      String line = docDisplay_.getCurrentLineUpToCursor();
+      CompletionRequestContext.Data data = new CompletionRequestContext.Data(
+            line,
+            isTabTriggered,
+            canAutoAccept);
+            
+      context_ = new CompletionRequestContext(this, data);
       if (completionCache_.satisfyRequest(line, context_))
          return true;
       
       getCompletions(line, context_);
       return true;
+   }
+   
+   public Invalidation.Token getInvalidationToken()
+   {
+      return invalidation_.getInvalidationToken();
    }
    
    public void invalidatePendingRequests()
@@ -252,12 +281,26 @@ public abstract class CompletionManagerBase
    public void invalidatePendingRequests(boolean flushCache,
                                          boolean hidePopup)
    {
+      invalidation_.invalidate();
       
+      if (hidePopup && popup_.isShowing())
+      {
+         popup_.hide();
+         popup_.clearHelp(false);
+      }
+      
+      if (flushCache)
+         completionCache_.flush();
    }
    
    public abstract void goToHelp();
    public abstract void goToDefinition();
    public abstract void getCompletions(String line, CompletionRequestContext context);
+   
+   // Subclasses should override this to provide extra (e.g. context) completions.
+   protected void addExtraCompletions(String token, List<QualifiedName> completions)
+   {
+   }
    
    public void onPaste(PasteEvent event)
    {
@@ -288,66 +331,135 @@ public abstract class CompletionManagerBase
       return Character.isSpace(ch);
    }
    
-   protected Boolean onKeyDown(NativeEvent event)
+   public boolean previewKeyDown(NativeEvent event)
    {
       suggestTimer_.cancel();
       
       if (isDisabled())
          return false;
       
-      if (popupPresenter_.handleKeyDown(event))
-         return true;
-      
       int keyCode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
+      if (KeyboardHelper.isModifierKey(keyCode))
+         return false;
       
-      switch (modifier)
+      if (popup_.isShowing())
       {
-      
-      case KeyboardShortcut.NONE:
-      {
-         switch (keyCode)
+         switch (modifier)
          {
-         case KeyCodes.KEY_F1:
-            goToHelp();
-            return true;
+         
+         case KeyboardShortcut.CTRL:
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_P: popup_.selectPrev(); return true;
+            case KeyCodes.KEY_N: popup_.selectNext(); return true;
+            }
             
-         case KeyCodes.KEY_F2:
-            goToDefinition();
-            return true;
+            break;
          }
-      }
-      
-      case KeyboardShortcut.SHIFT:
-      {
-         switch (keyCode)
+         
+         case KeyboardShortcut.NONE:
          {
-         case KeyCodes.KEY_TAB:
-            return snippets_.attemptSnippetInsertion(true);
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_UP:        popup_.selectPrev();         return true;
+            case KeyCodes.KEY_DOWN:      popup_.selectNext();         return true;
+            case KeyCodes.KEY_LEFT:      invalidatePendingRequests(); return true;
+            case KeyCodes.KEY_RIGHT:     invalidatePendingRequests(); return true;
+            case KeyCodes.KEY_PAGEUP:    popup_.selectPrevPage();     return true;
+            case KeyCodes.KEY_PAGEDOWN:  popup_.selectNextPage();     return true;
+            case KeyCodes.KEY_HOME:      popup_.selectFirst();        return true;
+            case KeyCodes.KEY_END:       popup_.selectLast();         return true;
+            case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests(); return true;
+            case KeyCodes.KEY_ENTER:     return onPopupEnter();
+            case KeyCodes.KEY_TAB:       return onPopupTab();
+            case KeyCodes.KEY_BACKSPACE: return onPopupBackspace();
+            }
+            
+            break;
+         }
+         }
+         
+         // if we're inserting something alphanumeric, then we can continue
+         // with our completions
+         String key = NativeEventProperty.key(event);
+         if (key.isEmpty())
+            return false;
+         
+         char ch = key.charAt(0);
+         if (UnicodeLetters.isLetter(ch))
+            return false;
+         
+         // unhandled key -- close the popup and end the current completion session
+         invalidatePendingRequests();
+         return false;
+      }
+      else
+      {
+         switch (modifier)
+         {
+
+         case KeyboardShortcut.NONE:
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_F1:  goToHelp();       return true;
+            case KeyCodes.KEY_F2:  goToDefinition(); return true;
+            case KeyCodes.KEY_TAB: return onTab();
+            }
+            
+            break;
+         }
+         
+         case KeyboardShortcut.CTRL:
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_SPACE:
+               if (docDisplay_.isEmacsModeOn())
+                  return false;
+               
+               beginSuggest();
+               return true;
+            }
+            
+            break;
+         }
+
+         case KeyboardShortcut.SHIFT:
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_TAB:
+               return snippets_.attemptSnippetInsertion(true);
+            }
+            
+            break;
+         }
+
          }
       }
       
-      }
-      
-      return null;
+      return false;
    }
    
-   protected Boolean onKeyPress(char charCode)
+   public boolean previewKeyPress(char charCode)
    {
       if (isDisabled())
          return false;
       
       if (popup_.isShowing())
       {
-         Scheduler.get().scheduleDeferred(() -> beginSuggest(false, true, false));
+         Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
       }
       else
       {
          if (canAutoPopup(charCode, uiPrefs_.alwaysCompleteCharacters().getValue() - 1))
-            suggestTimer_.schedule(true, true, false);
+            suggestTimer_.schedule(true, false);
       }
       
-      return null;
+      return false;
    }
    
    protected boolean isDisabled()
@@ -430,6 +542,76 @@ public abstract class CompletionManagerBase
       docDisplay_.setFocus(true);
    }
    
+   private boolean onPopupEnter()
+   {
+      if (popup_.isOffscreen())
+         return false;
+      
+      QualifiedName completion = popup_.getSelectedValue();
+      if (completion == null)
+      {
+         popup_.hide();
+         return false;
+      }
+      
+      onPopupSelectionCommit(completion);
+      return true;
+   }
+   
+   private boolean onPopupTab()
+   {
+      if (popup_.isOffscreen())
+         return false;
+      
+      QualifiedName completion = popup_.getSelectedValue();
+      if (completion == null)
+      {
+         popup_.hide();
+         return false;
+      }
+      
+      onPopupSelectionCommit(completion);
+      return true;
+   }
+   
+   private boolean onPopupBackspace()
+   {
+      if (docDisplay_.inMultiSelectMode())
+         return false;
+      
+      int cursorColumn = docDisplay_.getCursorPosition().getColumn();
+      if (cursorColumn < 2)
+      {
+         invalidatePendingRequests();
+         return false;
+      }
+      
+      String line = docDisplay_.getCurrentLine();
+      char ch = line.charAt(cursorColumn - 2);
+      if (!UnicodeLetters.isLetter(ch))
+      {
+         invalidatePendingRequests();
+         return false;
+      }
+      
+      return false;
+   }
+   
+   private boolean onTab()
+   {
+      // if the line is blank, don't request completions unless
+      // the user has explicitly opted in
+      String line = docDisplay_.getCurrentLineUpToCursor();
+      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
+      {
+         if (line.matches("^\\s*"))
+            return false;
+      }
+      
+      beginSuggest(true, true, true);
+      return true;
+   }
+   
    private void showPopupHelp(QualifiedName completion)
    {
       if (completion.type == RCompletionType.SNIPPET)
@@ -458,17 +640,15 @@ public abstract class CompletionManagerBase
             @Override
             public void run()
             {
-               beginSuggest(flushCache_, implicit_, canAutoInsert_);
+               beginSuggest(flushCache_, false, canAutoInsert_);
             }
          };
       }
       
       public void schedule(boolean flushCache,
-                           boolean implicit,
                            boolean canAutoInsert)
       {
          flushCache_ = flushCache;
-         implicit_ = implicit;
          canAutoInsert_ = canAutoInsert;
          
          timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
@@ -482,7 +662,6 @@ public abstract class CompletionManagerBase
       private final Timer timer_;
       
       private boolean flushCache_;
-      private boolean implicit_;
       private boolean canAutoInsert_;
    }
    
@@ -527,7 +706,6 @@ public abstract class CompletionManagerBase
    private String token_;
    
    private final SnippetHelper snippets_;
-   private final CompletionPopupPresenter popupPresenter_;
    
    private CompletionRequestContext context_;
    private HandlerRegistration[] handlers_;
