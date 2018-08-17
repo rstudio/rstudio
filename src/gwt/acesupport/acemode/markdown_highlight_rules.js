@@ -91,22 +91,22 @@ var MarkdownHighlightRules = function() {
     // handle highlighting for *abc*, _abc_ separately, as pandoc's
     // parser is a bit more strict about where '_' can appear
     var strongUnderscore = {
-        token: ["text", "constant.numeric"],
+        token: ["text", "constant.numeric.text"],
         regex: "(\\s+|^)(__\\S.+?\\S__)\\b"
     };
 
     var emphasisUnderscore = {
-        token: ["text", "constant.language.boolean"],
+        token: ["text", "constant.language.boolean.text"],
         regex: "(\\s+|^)(_(?=[^\\s_])(?:(?:\\\\.)|(?:[^\\s_\\\\]))*?_)\\b"
     };
 
     var strongStars = {
-        token: ["constant.numeric"],
+        token: ["constant.numeric.text"],
         regex: "([*][*]\\S.+?\\S[*][*])"
     };
 
     var emphasisStars = {
-        token: ["constant.language.boolean"],
+        token: ["constant.language.boolean.text"],
         regex: "([*](?=[^\\s*])(?:(?:\\\\.)|(?:[^\\s*\\\\]))*?[*])"
     };
 
@@ -286,7 +286,7 @@ var MarkdownHighlightRules = function() {
            regex: "-->",
            next: "start"
         }, {
-           defaultToken: "comment"
+           defaultToken: "comment.text"
         }],
        
         // code block

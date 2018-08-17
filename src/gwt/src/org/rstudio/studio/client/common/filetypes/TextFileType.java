@@ -450,8 +450,12 @@ public class TextFileType extends EditableFileType
          @Override
          public boolean test(Token token, int row, int column)
          {
-            return reTextType_.match(token.getType(), 0) != null
-                  && reNospellType_.match(token.getType(), 0) == null;
+            if (reNospellType_.match(token.getType(), 0) != null) {
+               return false;
+            }
+
+            return reTextType_.match(token.getType(), 0) != null ||
+               reHeaderType_.match(token.getType(), 0) != null;
          }
       };
    }
@@ -504,5 +508,6 @@ public class TextFileType extends EditableFileType
    private final String defaultExtension_;
 
    private static Pattern reTextType_ = Pattern.create("\\btext\\b");
+   private static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
    private static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
 }
