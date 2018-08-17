@@ -218,7 +218,7 @@ public class TextEditingTarget implements
       void findPrevious();
       void findSelectAll();
       void findFromSelection();
-      void replaceAndFind();
+      void findAndReplace();
       
       StatusBar getStatusBar();
 
@@ -5993,9 +5993,9 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onReplaceAndFind()
+   void onfindAndReplace()
    {
-      view_.replaceAndFind();
+      view_.findAndReplace();
    }
    
    @Override

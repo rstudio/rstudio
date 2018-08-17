@@ -129,7 +129,7 @@ public abstract class
    public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
    public abstract AppCommand findAll();
-   public abstract AppCommand replaceAndFind();
+   public abstract AppCommand findAndReplace();
    public abstract AppCommand findInFiles();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();

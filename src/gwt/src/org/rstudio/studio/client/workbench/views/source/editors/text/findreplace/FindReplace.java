@@ -177,7 +177,7 @@ public class FindReplace
       find(FindType.Reverse);
    }
    
-   public void replaceAndFind()
+   public void findAndReplace()
    {
       replace();
    }
