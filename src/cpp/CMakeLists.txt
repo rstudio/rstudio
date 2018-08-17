@@ -145,6 +145,10 @@ else()
       -DBOOST_USE_WINDOWS_H)
 endif()
 
+if(RSTUDIO_PACKAGE_BUILD)
+   add_definitions(-DRSTUDIO_PACKAGE_BUILD)
+endif()
+
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
 # boost dynamic libraries are presumed to be installed on the system ldpath)
