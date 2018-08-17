@@ -34,7 +34,7 @@ public class AceKeyboardPreviewer
    // KeyDown event, while the 'previewKeyPress()' handler handles a synthetic
    // Ace event used for text input. In particular, 'previewKeyPress()' can be
    // used to figure out the 'true' character input by the user; for example, if
-   // the user were olding Alt and pressed 'A' on macOS, they would get the
+   // the user were holding Alt and pressed 'A' on macOS, they would get the
    // 'å' character inserted. Nowadays, most browsers provide these keys
    // as part of the 'key' attribute of the event, but that was not always the case.
    public AceKeyboardPreviewer(final CompletionManager completionManager)

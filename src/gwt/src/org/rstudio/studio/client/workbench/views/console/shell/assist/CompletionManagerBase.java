@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import org.apache.commons.lang3.StringUtils;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -173,7 +172,7 @@ public abstract class CompletionManagerBase
       
       boolean shouldImplicitlyAccept =
             results.length == 1 &&
-            StringUtils.equals(completions.getToken(), results[0].name);
+            StringUtil.equals(completions.getToken(), results[0].name);
       
       if (shouldImplicitlyAccept)
       {
@@ -206,42 +205,6 @@ public abstract class CompletionManagerBase
             new PopupPositioner(tokenBounds, popup_),
             false);
       
-   }
-   
-   private void onSelection(String completionToken,
-                            QualifiedName completion)
-   {
-      suggestTimer_.cancel();
-      
-      String insertion = completion.name;
-      int type = completion.type;
-      
-      if (type == RCompletionType.SNIPPET)
-      {
-         snippets_.applySnippet(completionToken, completion.name);
-         return;
-      }
-      
-      if (type == RCompletionType.DIRECTORY)
-         insertion += "/";
-      
-      // TODO: Handle automatic paren insertion
-      
-      Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
-      for (Range range : ranges)
-      {
-         Position replaceStart = range.getEnd().movedLeft(completionToken.length());
-         Position replaceEnd = range.getEnd();
-         docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), insertion);
-      }
-      
-      // TODO: Move cursor back within parentheses
-      // TODO: Display tooltip
-      
-      popup_.hide();
-      popup_.clearHelp(false);
-      popup_.setHelpVisible(false);
-      docDisplay_.setFocus(true);
    }
    
    @Override
@@ -298,6 +261,20 @@ public abstract class CompletionManagerBase
    
    public void onPaste(PasteEvent event)
    {
+      popup_.hide();
+   }
+   
+   public void close()
+   {
+      popup_.hide();
+   }
+   
+   public void detach()
+   {
+      for (HandlerRegistration handler : handlers_)
+         handler.removeHandler();
+      
+      snippets_.detach();
       popup_.hide();
    }
    
@@ -415,6 +392,42 @@ public abstract class CompletionManagerBase
       }
       
       return true;
+   }
+   
+   private void onSelection(String completionToken,
+                            QualifiedName completion)
+   {
+      suggestTimer_.cancel();
+      
+      String insertion = completion.name;
+      int type = completion.type;
+      
+      if (type == RCompletionType.SNIPPET)
+      {
+         snippets_.applySnippet(completionToken, completion.name);
+         return;
+      }
+      
+      if (type == RCompletionType.DIRECTORY)
+         insertion += "/";
+      
+      // TODO: Handle automatic paren insertion
+      
+      Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
+      for (Range range : ranges)
+      {
+         Position replaceStart = range.getEnd().movedLeft(completionToken.length());
+         Position replaceEnd = range.getEnd();
+         docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), insertion);
+      }
+      
+      // TODO: Move cursor back within parentheses
+      // TODO: Display tooltip
+      
+      popup_.hide();
+      popup_.clearHelp(false);
+      popup_.setHelpVisible(false);
+      docDisplay_.setFocus(true);
    }
    
    private void showPopupHelp(QualifiedName completion)

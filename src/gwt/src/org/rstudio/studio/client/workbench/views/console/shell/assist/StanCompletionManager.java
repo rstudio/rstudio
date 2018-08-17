@@ -17,11 +17,9 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 
 public class StanCompletionManager extends CompletionManagerBase
@@ -95,19 +93,6 @@ public class StanCompletionManager extends CompletionManagerBase
       
    }
 
-   @Override
-   public void close()
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public void detach()
-   {
-      // TODO Auto-generated method stub
-   }
-   
    private final DocDisplay docDisplay_;
    private final CompletionPopupDisplay popup_;
    private final CodeToolsServerOperations server_;
