@@ -921,6 +921,7 @@ assign(x = ".rs.acCompletionTypes",
                                             packages = character(),
                                             quote = logical(),
                                             type = numeric(),
+                                            meta = character(),
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE,
@@ -940,6 +941,7 @@ assign(x = ".rs.acCompletionTypes",
    packages <- .rs.formCompletionVector(packages, "", n)
    quote    <- .rs.formCompletionVector(quote, FALSE, n)
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
+   meta     <- .rs.formCompletionVector(meta, "", n)
    
    # Favor completions starting with a letter
    if (orderStartsWithAlnumFirst)
@@ -954,6 +956,7 @@ assign(x = ".rs.acCompletionTypes",
       packages <- packages[order]
       quote    <- quote[order]
       type     <- type[order]
+      meta     <- meta[order]
    }
    
    # Avoid generating too many completions
@@ -967,6 +970,7 @@ assign(x = ".rs.acCompletionTypes",
       packages <- packages[idx]
       quote    <- quote[idx]
       type     <- type[idx]
+      meta     <- meta[idx]
    }
    
    list(token = token,
@@ -974,6 +978,7 @@ assign(x = ".rs.acCompletionTypes",
         packages = packages,
         quote = quote,
         type = type,
+        meta = meta,
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
@@ -992,7 +997,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("appendCompletions", function(old, new)
 {
-   for (name in c("results", "packages", "quote", "type"))
+   for (name in c("results", "packages", "quote", "type", "meta"))
       old[[name]] <- c(old[[name]], new[[name]])
    
    # resolve duplicates -- a completion is duplicated if its result
@@ -1004,7 +1009,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(drop))
    {
-      for (name in c("results", "packages", "quote", "type"))
+      for (name in c("results", "packages", "quote", "type", "meta"))
          old[[name]] <- old[[name]][-c(drop)]
    }
    

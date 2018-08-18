@@ -21,6 +21,7 @@
 .rs.addFunction("stan.getCompletions", function(line)
 {
    Encoding(line) <- "UTF-8"
+   completions <- .rs.emptyCompletions()
    
    # extract token from line
    parts <- .rs.strsplit(line, "\\W+")
@@ -30,20 +31,40 @@
    if (!nzchar(token))
       return(.rs.emptyCompletions(language = "Stan"))
    
-   # TODO: different types for each of these?
-   completionSources <- list(
-      keywords = list(type = "[keyword]", candidates = .rs.stan.keywords()), 
-      types    = list(type = "[type]", candidates = .rs.stan.types()),
-      blocks   = list(type = "[block]", candidates = .rs.stan.blocks())
+   # construct keyword completions
+   keywords <- c(
+      .rs.stan.keywords(),
+      .rs.stan.types(),
+      .rs.stan.blocks()
    )
    
-   completions <- lapply(completionSources, function(source) {
-      matches <- .rs.selectFuzzyMatches(source$candidates, token)
-      .rs.makeCompletions(token, matches, source$type, type = .rs.acCompletionTypes$KEYWORD)
-   })
+   completions <- .rs.appendCompletions(
+      completions,
+      .rs.makeCompletions(
+         token   = token,
+         results = .rs.selectFuzzyMatches(keywords, token),
+         type = .rs.acCompletionTypes$KEYWORD
+      )
+   )
+   
+   # construct function completions
+   rosetta <- .rs.stan.rosetta()
+   matches <- .rs.fuzzyMatches(rosetta$StanFunction, token)
+   
+   completions <- .rs.appendCompletions(
+      completions,
+      .rs.makeCompletions(
+         token    = token,
+         results  = rosetta$StanFunction[matches],
+         packages = "function",
+         type     = .rs.acCompletionTypes$FUNCTION,
+         meta     = rosetta$Arguments[matches]
+      )
+   )
+   
+   fnNames <- .rs.stan.functionNames()
    
    result <- Reduce(.rs.appendCompletions, completions)
-   result$language <- "Stan"
    result
    
 })
@@ -54,11 +75,7 @@
       return(NULL)
    
    rstan <- asNamespace("rstan")
-   keywords <- rstan[[key]]
-   if (!is.character(keywords))
-      return(NULL)
-   
-   keywords
+   rstan[[key]]
 })
 
 .rs.addFunction("stan.keywords", function()
@@ -90,4 +107,19 @@
    
    c("model", "data", "parameters",
      "quantities", "transformed",  "generated")
+})
+
+.rs.addFunction("stan.rosetta", function()
+{
+   rosetta <- .rs.stan.extractFromNamespace("rosetta")
+   if (!is.data.frame(rosetta))
+      return(data.frame())
+   
+   # remove operator functions
+   rosetta <- rosetta[grep("^operator", rosetta$StanFunction, invert = TRUE), ]
+   
+   # remove duplicates
+   rosetta <- rosetta[!duplicated(rosetta$StanFunction), ]
+   
+   rosetta
 })

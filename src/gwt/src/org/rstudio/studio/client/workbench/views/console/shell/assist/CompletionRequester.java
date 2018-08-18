@@ -705,6 +705,7 @@ public class CompletionRequester
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<Boolean>(result.completions.length())),
                   JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
+                  JsUtil.toJsArrayString(new ArrayList<String>(result.completions.length())),
                   "",
                   false,
                   false,

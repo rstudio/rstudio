@@ -594,6 +594,7 @@ public abstract class CompletionManagerBase
          return false;
       }
       
+      Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
       return false;
    }
    
