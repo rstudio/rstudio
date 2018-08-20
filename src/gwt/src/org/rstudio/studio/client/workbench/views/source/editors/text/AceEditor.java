@@ -2575,6 +2575,12 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public void removeLines()
+   {
+      widget_.getEditor().removeLines();
+   }
+
+   @Override
    public void splitIntoLines()
    {
       widget_.getEditor().splitIntoLines();
@@ -3164,6 +3170,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().moveCursorRight(times);
    }
 
+   public void selectMoreAfter()
+   {
+      widget_.getEditor().selectMoreAfter();
+   }
+
    public void expandSelectionLeft(int times)
    {
       widget_.getEditor().expandSelectionLeft(times);
@@ -3628,6 +3639,11 @@ public class AceEditor implements DocDisplay,
    public int getLastVisibleRow()
    {
       return widget_.getEditor().getLastVisibleRow();
+   }
+
+   public void blockIndent()
+   {
+      widget_.getEditor().blockIndent();
    }
 
    public void blockOutdent()

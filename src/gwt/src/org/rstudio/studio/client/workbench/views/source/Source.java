@@ -671,6 +671,8 @@ public class Source implements InsertSourceHandler,
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
       else if (uiPrefs_.enableEmacsKeybindings().getGlobalValue())
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else if (uiPrefs_.enableSublimeKeybindings().getGlobalValue())
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
       

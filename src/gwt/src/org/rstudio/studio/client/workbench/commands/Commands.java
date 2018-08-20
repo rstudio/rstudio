@@ -130,6 +130,7 @@ public abstract class
    public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
    public abstract AppCommand findAll();
+   public abstract AppCommand findUnderExpand();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
    public abstract AppCommand fold();
@@ -141,6 +142,7 @@ public abstract class
    public abstract AppCommand expandToMatching();
    public abstract AppCommand addCursorAbove();
    public abstract AppCommand addCursorBelow();
+   public abstract AppCommand removeLines();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();
@@ -155,6 +157,8 @@ public abstract class
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
+   public abstract AppCommand blockIndent();
+   public abstract AppCommand blockOutdent();
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();

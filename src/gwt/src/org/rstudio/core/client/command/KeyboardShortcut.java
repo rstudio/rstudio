@@ -473,4 +473,5 @@ public class KeyboardShortcut
    public static final int MODE_DEFAULT = 1;
    public static final int MODE_VIM = 2;
    public static final int MODE_EMACS = 4;
+   public static final int MODE_SUBLIME = 8;
 }

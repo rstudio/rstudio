@@ -140,6 +140,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    boolean moveSelectionToBlankLine(); 
    
+   void selectMoreAfter();
    void expandSelection();
    void shrinkSelection();
    void clearSelectionHistory();
@@ -389,6 +390,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    long getLastModifiedTime();
    long getLastCursorChangedTime();
    
+   void removeLines();
+
+   void blockIndent();
    void blockOutdent();
    void splitIntoLines();
    

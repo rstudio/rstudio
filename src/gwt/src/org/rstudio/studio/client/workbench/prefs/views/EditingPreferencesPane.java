@@ -109,12 +109,14 @@ public class EditingPreferencesPane extends PreferencesPane
             new String[] {
                   "Default",
                   "Vim",
-                  "Emacs"
+                  "Emacs",
+                  "Sublime Text"
             },
             new String[] {
                   UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
                   UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME,
             },
             false,
             true,
@@ -499,6 +501,8 @@ public class EditingPreferencesPane extends PreferencesPane
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
       else if (prefs_.enableEmacsKeybindings().getValue())
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      else if (prefs_.enableSublimeKeybindings().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME);
       else
          editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
       
@@ -525,14 +529,18 @@ public class EditingPreferencesPane extends PreferencesPane
       String editorMode = editorMode_.getValue();
       boolean isVim = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
       boolean isEmacs = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
+      boolean isSublime = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME;
       
       prefs_.useVimMode().setGlobalValue(isVim);
       prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      prefs_.enableSublimeKeybindings().setGlobalValue(isSublime);
       
       if (isVim)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
       else if (isEmacs)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else if (isSublime)
+         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
            

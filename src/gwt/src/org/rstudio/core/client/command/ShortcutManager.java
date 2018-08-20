@@ -300,6 +300,8 @@ public class ShortcutManager implements NativePreviewHandler,
             mode |= KeyboardShortcut.MODE_VIM;
          else if (item == "emacs")
             mode |= KeyboardShortcut.MODE_EMACS;
+         else if (item == "sublime")
+            mode |= KeyboardShortcut.MODE_SUBLIME;
          else
             assert false: "Unrecognized 'disableModes' value '" + item + "'";
       }

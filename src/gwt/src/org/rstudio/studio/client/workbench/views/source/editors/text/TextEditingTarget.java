@@ -3284,6 +3284,12 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onRemoveLines()
+   {
+      docDisplay_.removeLines();
+   }
+
+   @Handler
    void onSplitIntoLines()
    {
       docDisplay_.splitIntoLines();
@@ -3593,9 +3599,16 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onReindent()
+   void onBlockIndent()
    {
-      docDisplay_.reindent();
+      docDisplay_.blockIndent();
+      docDisplay_.focus();
+   }
+
+   @Handler
+   void onBlockOutdent()
+   {
+      docDisplay_.blockOutdent();
       docDisplay_.focus();
    }
 
@@ -5997,6 +6010,17 @@ public class TextEditingTarget implements
       view_.findSelectAll();
    }
    
+   @Handler
+   void onFindUnderExpand()
+   {
+      Range selRange = docDisplay_.getSelectionRange();
+      if (selRange.isEmpty()) {
+        docDisplay_.expandSelection();
+      } else {
+        docDisplay_.selectMoreAfter();
+      }
+   }
+
    @Handler
    void onFindFromSelection()
    {

@@ -295,6 +295,8 @@ public class AceEditorNative extends JavaScriptObject {
       this.centerSelection();
    }-*/;
 
+   public final native void removeLines() /*-{ this.removeLines(); }-*/;
+
    public final native void scrollToLine(int line, boolean center) /*-{
       this.scrollToLine(line, center);
    }-*/;
@@ -416,10 +418,18 @@ public class AceEditorNative extends JavaScriptObject {
       return this.getCursorPositionScreen();
    }-*/;
    
+   public final native void blockIndent() /*-{
+      return this.blockIndent();
+   }-*/;
+
    public final native void blockOutdent() /*-{
       return this.blockOutdent();
    }-*/;
    
+   public final native void selectMoreAfter() /*-{
+      return this.selectMore(1);
+   }-*/;
+
    public final native void expandSelection() /*-{
       return this.$expandSelection();
    }-*/;
