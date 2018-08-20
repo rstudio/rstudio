@@ -23,6 +23,11 @@
    .rs.stan.getArguments(f)
 })
 
+.rs.addJsonRpcHandler("stan_run_diagnostics", function(file)
+{
+   .rs.stan.runDiagnostics(file)
+})
+
 .rs.addFunction("stan.getCompletions", function(line)
 {
    Encoding(line) <- "UTF-8"
@@ -98,6 +103,57 @@
    }
    
    .rs.scalar(arguments)
+})
+
+.rs.addFunction("stan.runDiagnostics", function(file)
+{
+   if (!requireNamespace("rstan", quietly = TRUE))
+      return(list())
+   
+   # invoke stan compiler and capture messages
+   messages <- c()
+   result <- tryCatch(
+      withCallingHandlers(
+         rstan::stanc_builder(file),
+         message = function(m) {
+            messages <<- c(messages, conditionMessage(m))
+            invokeRestart("muffleMessage")
+         }
+      ),
+      error = identity
+   )
+   if (!inherits(result, "error"))
+      return(list())
+   
+   # search for relevant information
+   pattern <- "^\\s*error in '([^']+)' at line (\\d+), column (\\d+)"
+   line <- grep(pattern, messages, value = TRUE)
+   if (length(line) != 1)
+      return(list())
+   
+   m <- regexec(pattern, line)
+   matches <- regmatches(line, m)[[1]]
+   if (length(matches) != 4)
+      return(list())
+   
+   # keep all lines without indent for messages
+   lines <- grep("^\\s+", messages, value = TRUE, invert = TRUE)
+   message <- paste(tail(lines, n = -1), collapse = "")
+   
+   # TODO: although we only ever get one error now, return a vector of
+   # error objects in anticipation of that changing in the future
+   errors <- list(
+      list(
+         row    = as.numeric(matches[[3]]) - 1,
+         column = as.numeric(matches[[4]]),
+         type   = "error",
+         text   = message
+      )
+   )
+   
+   # make all entries scalar
+   rapply(errors, .rs.scalar, how = "replace")
+   
 })
 
 .rs.addFunction("stan.extractFromNamespace", function(key)

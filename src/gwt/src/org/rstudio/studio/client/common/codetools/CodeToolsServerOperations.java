@@ -21,8 +21,10 @@ import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
@@ -100,5 +102,9 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void stanGetArguments(
          String function,
          ServerRequestCallback<String> requestCallback);
+   
+   void stanRunDiagnostics(
+         String filename,
+         ServerRequestCallback<JsArray<AceAnnotation>> requestCallback);
    
 }

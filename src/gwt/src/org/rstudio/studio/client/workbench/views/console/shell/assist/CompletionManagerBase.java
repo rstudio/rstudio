@@ -20,10 +20,8 @@ import java.util.List;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.UnicodeLetters;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.dom.NativeEventProperty;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -426,8 +424,6 @@ public abstract class CompletionManagerBase
             {
             case KeyCodes.KEY_UP:        popup_.selectPrev();         return true;
             case KeyCodes.KEY_DOWN:      popup_.selectNext();         return true;
-            case KeyCodes.KEY_LEFT:      invalidatePendingRequests(); return true;
-            case KeyCodes.KEY_RIGHT:     invalidatePendingRequests(); return true;
             case KeyCodes.KEY_PAGEUP:    popup_.selectPrevPage();     return true;
             case KeyCodes.KEY_PAGEDOWN:  popup_.selectNextPage();     return true;
             case KeyCodes.KEY_HOME:      popup_.selectFirst();        return true;
@@ -442,18 +438,13 @@ public abstract class CompletionManagerBase
          }
          }
          
-         // if we're inserting something alphanumeric, then we can continue
-         // with our completions
-         String key = NativeEventProperty.key(event);
-         if (key.isEmpty())
-            return false;
+         switch (keyCode)
+         {
+         case KeyCodes.KEY_LEFT:
+         case KeyCodes.KEY_RIGHT:
+            invalidatePendingRequests();
+         }
          
-         char ch = key.charAt(0);
-         if (UnicodeLetters.isLetter(ch))
-            return false;
-         
-         // unhandled key -- close the popup and end the current completion session
-         invalidatePendingRequests();
          return false;
       }
       else
@@ -644,7 +635,7 @@ public abstract class CompletionManagerBase
       
       String line = docDisplay_.getCurrentLine();
       char ch = line.charAt(cursorColumn - 2);
-      if (!UnicodeLetters.isLetter(ch))
+      if (isBoundaryCharacter(ch))
       {
          invalidatePendingRequests();
          return false;

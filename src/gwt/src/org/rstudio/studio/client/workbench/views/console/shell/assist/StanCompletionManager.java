@@ -26,11 +26,18 @@ import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
@@ -43,7 +50,6 @@ public class StanCompletionManager extends CompletionManagerBase
       super(popup, docDisplay, context);
       
       docDisplay_ = docDisplay;
-      popup_ = popup;
       server_ = server;
       context_ = context;
       
@@ -71,6 +77,10 @@ public class StanCompletionManager extends CompletionManagerBase
             });
          }
       };
+      
+      docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
+         runDiagnostics();
+      });
    }
    
    @Override
@@ -149,18 +159,54 @@ public class StanCompletionManager extends CompletionManagerBase
    public void goToDefinition()
    {
       // TODO Auto-generated method stub
-      
    }
 
    @Override
    public void codeCompletion()
    {
-      // TODO Auto-generated method stub
-      
+      beginSuggest(true, false, true);
+   }
+   
+   private void runDiagnostics()
+   {
+      server_.stanRunDiagnostics(
+            context_.getPath(),
+            new ServerRequestCallback<JsArray<AceAnnotation>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<AceAnnotation> response)
+               {
+                  JsArray<LintItem> lintItems = JavaScriptObject.createArray(response.length()).cast();
+                  for (int i = 0; i < response.length(); i++)
+                     lintItems.set(i, createLintItem(response.get(i)));
+                  docDisplay_.showLint(lintItems);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   private LintItem createLintItem(AceAnnotation annotation)
+   {
+      TokenIterator it = docDisplay_.createTokenIterator();
+      Token token = it.moveToPosition(
+            Position.create(annotation.row(), annotation.column()),
+            true);
+
+      return LintItem.create(
+            annotation.row(),
+            token.getColumn(),
+            annotation.row(),
+            token.getColumn() + token.getValue().length(),
+            annotation.text(),
+            annotation.type());
    }
 
    private final DocDisplay docDisplay_;
-   private final CompletionPopupDisplay popup_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
    
