@@ -47,7 +47,7 @@ void handleDefaultThemeRequest(const core::http::Request& request,
 void handleGlobalCustomThemeRequest(const core::http::Request& request,
                                           core::http::Response* pResponse);
 
-void handleGlobalCustomThemeRequest(const core::http::Request& request,
+void handleLocalCustomThemeRequest(const core::http::Request& request,
                                           core::http::Response* pResponse);
 
 core::Error initialize();
