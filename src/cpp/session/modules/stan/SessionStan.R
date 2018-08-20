@@ -18,6 +18,11 @@
    .rs.stan.getCompletions(line)
 })
 
+.rs.addJsonRpcHandler("stan_get_arguments", function(f)
+{
+   .rs.stan.getArguments(f)
+})
+
 .rs.addFunction("stan.getCompletions", function(line)
 {
    Encoding(line) <- "UTF-8"
@@ -64,6 +69,35 @@
    
    completions
    
+})
+
+.rs.addFunction("stan.getArguments", function(f)
+{
+   none <- .rs.scalar("")
+   
+   rosetta <- .rs.stan.rosetta()
+   if (is.null(rosetta))
+      return(none)
+   
+   idx <- match(f, rosetta$StanFunction)
+   if (is.na(idx))
+      return(none)
+   
+   arguments <- rosetta$Arguments[idx]
+   
+   # if this is a distribution function, borrow arguments from the
+   # corresponding '_lpdf' function
+   if (identical(arguments, "~"))
+   {
+      lpdf <- paste(f, "lpdf", sep = "_")
+      idx <- match(lpdf, rosetta$StanFunction)
+      if (is.na(idx))
+         return(none)
+      
+      arguments <- rosetta$Arguments[idx]
+   }
+   
+   .rs.scalar(arguments)
 })
 
 .rs.addFunction("stan.extractFromNamespace", function(key)

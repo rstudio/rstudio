@@ -97,4 +97,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String line,
          ServerRequestCallback<Completions> requestCallback);
    
+   void stanGetArguments(
+         String function,
+         ServerRequestCallback<String> requestCallback);
+   
 }

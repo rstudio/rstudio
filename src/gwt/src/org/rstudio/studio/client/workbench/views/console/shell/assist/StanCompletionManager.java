@@ -18,14 +18,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
+
+import com.google.gwt.core.client.Scheduler;
 
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
@@ -41,6 +48,31 @@ public class StanCompletionManager extends CompletionManagerBase
       popup_ = popup;
       server_ = server;
       context_ = context;
+      
+      sigTips_ = new SignatureToolTipManager(docDisplay)
+      {
+         @Override
+         protected void getFunctionArguments(final String name,
+                                             final String source,
+                                             final String helpHandler,
+                                             final CommandWithArg<String> onReady)
+         {
+            server_.stanGetArguments(name, new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  onReady.execute(response);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
+      };
    }
    
    @Override
@@ -100,12 +132,14 @@ public class StanCompletionManager extends CompletionManagerBase
       {
          String meta = completion.meta;
          
-         boolean isZeroArityFunction =
-               meta.equals("()") ||
-               meta.equals("~");
-         
+         boolean isZeroArityFunction = meta.equals("()");
          if (!isZeroArityFunction)
+         {
             docDisplay_.moveCursorBackward();
+            Scheduler.get().scheduleDeferred(() -> {
+               sigTips_.resolveActiveFunctionAndDisplayToolTip();
+            });
+         }
       }
    }
    
@@ -133,4 +167,6 @@ public class StanCompletionManager extends CompletionManagerBase
    private final CompletionPopupDisplay popup_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
+   
+   private final SignatureToolTipManager sigTips_;
 }
