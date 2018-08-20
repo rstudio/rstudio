@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -269,11 +270,24 @@ public abstract class CompletionManagerBase
    {
       invalidatePendingRequests(flushCache, false);
       
-      // TODO: handle comments
-      // TODO: handle multi-line strings
-      // TODO: handle Tab completion preference
-      // TODO: can auto accept
       String line = docDisplay_.getCurrentLineUpToCursor();
+      
+      // don't complete within comments
+      Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (token.hasType("comment"))
+         return false;
+      
+      // don't complete within multi-line strings
+      if (token.hasType("string"))
+      {
+         String cursorTokenValue = token.getValue();
+         boolean isSingleLineString =
+               cursorTokenValue.startsWith("'") ||
+               cursorTokenValue.startsWith("\"");
+         if (!isSingleLineString)
+            return false;
+      }
+      
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
             line,
             isTabTriggered,

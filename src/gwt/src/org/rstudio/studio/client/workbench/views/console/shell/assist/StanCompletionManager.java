@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
@@ -41,6 +42,8 @@ public class StanCompletionManager extends CompletionManagerBase
       popup_ = popup;
       server_ = server;
       context_ = context;
+      
+      sigTips_ = new SignatureToolTipManager(docDisplay);
    }
    
    @Override
@@ -133,4 +136,6 @@ public class StanCompletionManager extends CompletionManagerBase
    private final CompletionPopupDisplay popup_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
+   
+   private final SignatureToolTipManager sigTips_;
 }

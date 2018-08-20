@@ -43,7 +43,37 @@ public class TokenIterator extends JavaScriptObject
    public native final Token stepBackward() /*-{
       return this.stepBackward();
    }-*/;
+   
+   public final boolean moveToNextToken()
+   {
+      Token token = stepForward();
+      return token != null;
+   }
+   
+   public final boolean moveToPreviousToken()
+   {
+      Token token = stepBackward();
+      return token != null;
+   }
+   
+   public native final Token peekFwd(int offset) /*-{
+      return this.peekFwd(offset);
+   }-*/;
+   
+   public final Token peekFwd()
+   {
+      return peekFwd(1);
+   }
+   
+   public native final Token peekBwd(int offset) /*-{
+      return this.peekBwd(offset);
+   }-*/;
 
+   public final Token peekBwd()
+   {
+      return peekBwd(1);
+   }
+   
    public native final Token getCurrentToken() /*-{
       return this.getCurrentToken();
    }-*/;
@@ -58,6 +88,16 @@ public class TokenIterator extends JavaScriptObject
 
    public native final int getCurrentTokenColumn() /*-{
       return this.getCurrentTokenColumn();
+   }-*/;
+   
+   public native final boolean findTokenBwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenBwd(token, skipMatching);
+   }-*/;
+   
+   public native final boolean findTokenFwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenFwd(token, skipMatching);
    }-*/;
    
    public native final boolean fwdToMatchingToken() /*-{
@@ -84,4 +124,14 @@ public class TokenIterator extends JavaScriptObject
    public final native Token moveToEndOfRow() /*-{
       return this.moveToEndOfRow();
    }-*/;
+   
+   public final boolean valueEquals(String value)
+   {
+      Token token = getCurrentToken();
+      if (token == null)
+         return false;
+      
+      return token.valueEquals(value);
+   }
+   
 }
