@@ -117,7 +117,7 @@ typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 // as such errors are generally transient and benign
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,
-                        bool suppressErrors = false,
+                        bool suppressErrors = true,
                         ProcessFilter filter = ProcessFilter());
 
 // get process info for the specific process specified by pid

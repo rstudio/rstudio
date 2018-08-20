@@ -262,6 +262,7 @@ private:
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;
+   bool serverAppArmorEnabled_;
    bool serverSetUmask_;
    bool serverOffline_;
    std::string wwwAddress_ ;

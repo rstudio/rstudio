@@ -135,7 +135,9 @@ public class RSConnectPublishSource
    public boolean isDocument()
    {
       return isSourceExt("rmd") || isSourceExt("md") || isSourceExt("html") ||
-             isSourceExt("htm") || isSourceExt("rpres");
+             isSourceExt("htm") || isSourceExt("rpres") || isSourceExt("pdf") ||
+             isSourceExt("docx") || isSourceExt("odt") || isSourceExt("rtf") ||
+             isSourceExt("pptx");
    }
    
    public String getDeployKey()

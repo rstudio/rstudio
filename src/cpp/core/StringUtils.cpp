@@ -44,11 +44,12 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
-bool isTruthy(const std::string& string)
+bool isTruthy(const std::string& string,
+              bool valueIfEmpty)
 {
-   // empty strings are 'falsy'
+   // allow user-configurable behavior for empty strings
    if (string.empty())
-      return false;
+      return valueIfEmpty;
    
    // check for special 'falsy' values
    std::string lower = toLower(string);

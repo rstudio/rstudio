@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
 
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -89,6 +89,7 @@ core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();
 core::FilePath sharedScratchPath();
+core::FilePath sharedProjectScratchPath();
 core::FilePath sessionScratchPath();
 core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);

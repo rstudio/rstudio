@@ -434,19 +434,22 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setVcsEnabled(vcsEnabled);
 
    FilePath gitExePath = module_context::resolveAliasedPath(gitExe);
-   if (gitExePath == git::detectedGitExePath())
+   if (gitExePath == git::detectedGitExePath() ||
+       gitExePath == module_context::userHomePath())
       userSettings().setGitExePath(FilePath());
    else
       userSettings().setGitExePath(gitExePath);
 
    FilePath svnExePath = module_context::resolveAliasedPath(svnExe);
-   if (svnExePath == svn::detectedSvnExePath())
+   if (svnExePath == svn::detectedSvnExePath() ||
+       svnExePath == module_context::userHomePath())
       userSettings().setSvnExePath(FilePath());
    else
       userSettings().setSvnExePath(svnExePath);
 
    FilePath terminalFilePath = module_context::resolveAliasedPath(terminalPath);
-   if (terminalFilePath == detectedTerminalPath())
+   if (terminalFilePath == detectedTerminalPath() ||
+       terminalFilePath == module_context::userHomePath())
       userSettings().setVcsTerminalPath(FilePath());
    else
       userSettings().setVcsTerminalPath(terminalFilePath);

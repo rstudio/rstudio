@@ -358,18 +358,15 @@ FilePath Options::resourcesPath() const
 {
    if (resourcesPath_.empty())
    {
-      if (scriptsPath().complete("resources").exists())
-      {
-         // developer configuration: the 'resources' folder is
-         // a sibling of the RStudio executable
-         resourcesPath_ = scriptsPath().complete("resources");
-      }
-      else
-      {
-         // release configuration: the 'resources' folder is
-         // part of the supporting files folder
-         resourcesPath_ = supportingFilePath().complete("resources");
-      }
+#ifdef RSTUDIO_PACKAGE_BUILD
+      // release configuration: the 'resources' folder is
+      // part of the supporting files folder
+      resourcesPath_ = supportingFilePath().complete("resources");
+#else
+      // developer configuration: the 'resources' folder is
+      // a sibling of the RStudio executable
+      resourcesPath_ = scriptsPath().complete("resources");
+#endif
    }
 
    return resourcesPath_;

@@ -1209,9 +1209,16 @@ void GwtCallback::openTerminal(QString terminalPath,
       break;
    }
 
-   QProcess::startDetached(terminalPath,
-                           args,
-                           resolveAliasedPath(workingDirectory));
+   QProcess process;
+   process.setProgram(terminalPath);
+   process.setArguments(args);
+   process.setWorkingDirectory(resolveAliasedPath(workingDirectory));
+   process.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* cpa)
+   {
+      cpa->flags |= CREATE_NEW_CONSOLE;
+      cpa->startupInfo->dwFlags &= ~STARTF_USESTDHANDLES;
+   });
+   process.startDetached();
 
    // revert to previous home
    core::system::setenv("HOME", previousHome);

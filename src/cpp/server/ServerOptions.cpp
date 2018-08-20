@@ -195,6 +195,9 @@ ProgramStatus Options::read(int argc,
          value<bool>(&serverDaemonize_)->default_value(
                                       core::system::effectiveUserIsRoot()),
          "run program as daemon")
+      ("server-app-armor-enabled",
+        value<bool>(&serverAppArmorEnabled_)->default_value(0),
+        "is app armor enabled for this session")
       ("server-set-umask",
          value<bool>(&serverSetUmask_)->default_value(1),
          "set the umask to 022 on startup");

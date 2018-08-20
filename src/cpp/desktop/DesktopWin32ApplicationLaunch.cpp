@@ -182,7 +182,13 @@ bool ApplicationLaunch::nativeEvent(const QByteArray & eventType,
                                     void * msg,
                                     long * result)
 {
-   MSG* message = (MSG*)msg;
+#if QT_VERSION == QT_VERSION_CHECK(5, 11, 1)
+   // https://bugreports.qt.io/browse/QTBUG-69074
+   MSG* message = *reinterpret_cast<MSG**>(msg);
+#else
+   MSG* message = reinterpret_cast<MSG*>(msg);
+#endif
+
    if (message->message == WM_COPYDATA)
    {
       COPYDATASTRUCT* cds = reinterpret_cast<COPYDATASTRUCT*>(message->lParam);
