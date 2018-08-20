@@ -118,7 +118,8 @@
          message = function(m) {
             messages <<- c(messages, conditionMessage(m))
             invokeRestart("muffleMessage")
-         }
+         },
+         warning = function(w) invokeRestart("muffleWarning")
       ),
       error = identity
    )

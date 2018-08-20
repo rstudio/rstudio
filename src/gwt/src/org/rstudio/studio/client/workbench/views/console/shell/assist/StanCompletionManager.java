@@ -38,6 +38,8 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
@@ -78,8 +80,11 @@ public class StanCompletionManager extends CompletionManagerBase
          }
       };
       
-      docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
-         runDiagnostics();
+      docDisplay_.addAttachHandler((AttachEvent event) -> {
+         if (event.isAttached())
+            attachHandlers();
+         else
+            detachHandlers();
       });
    }
    
@@ -195,7 +200,7 @@ public class StanCompletionManager extends CompletionManagerBase
       TokenIterator it = docDisplay_.createTokenIterator();
       Token token = it.moveToPosition(
             Position.create(annotation.row(), annotation.column()),
-            true);
+            false);
 
       return LintItem.create(
             annotation.row(),
@@ -205,10 +210,33 @@ public class StanCompletionManager extends CompletionManagerBase
             annotation.text(),
             annotation.type());
    }
+   
+   private void attachHandlers()
+   {
+      detachHandlers();
+      
+      handlers_ = new HandlerRegistration[] {
+            docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
+               runDiagnostics();
+            })
+      };
+   }
+   
+   private void detachHandlers()
+   {
+      if (handlers_ != null)
+      {
+         for (HandlerRegistration handler : handlers_)
+            handler.removeHandler();
+         handlers_ = null;
+      }
+   }
 
    private final DocDisplay docDisplay_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
    
    private final SignatureToolTipManager sigTips_;
+   
+   private HandlerRegistration[] handlers_;
 }
