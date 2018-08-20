@@ -113,7 +113,11 @@ public class TokenIterator extends JavaScriptObject
    }-*/;
    
    public native final Token moveToPosition(Position pos) /*-{
-      return this.moveToPosition(pos);
+      return this.moveToPosition(pos, false);
+   }-*/;
+   
+   public native final Token moveToPosition(Position pos, boolean seekForward) /*-{
+      return this.moveToPosition(pos, seekForward);
    }-*/;
    
    public final Token moveToPosition(int row, int column)

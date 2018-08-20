@@ -32,8 +32,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 
-import com.google.gwt.core.client.Scheduler;
-
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
 {
@@ -136,9 +134,7 @@ public class StanCompletionManager extends CompletionManagerBase
          if (!isZeroArityFunction)
          {
             docDisplay_.moveCursorBackward();
-            Scheduler.get().scheduleDeferred(() -> {
-               sigTips_.resolveActiveFunctionAndDisplayToolTip();
-            });
+            sigTips_.displayToolTip(completion.name, completion.source, completion.helpHandler);
          }
       }
    }

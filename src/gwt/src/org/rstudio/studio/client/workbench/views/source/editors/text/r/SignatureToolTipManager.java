@@ -245,10 +245,15 @@ public class SignatureToolTipManager
             }
             else if (preview.getTypeInt() == Event.ONKEYDOWN)
             {
+               if (toolTip_.isShowing() && preview.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+               {
+                  toolTip_.hide();
+                  preview.cancel();
+                  return;
+               }
+               
                coordinates_ = null;
                ready_ = true;
-               if (preview.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
-                  suppressed_ = true;
             }
          }
       });
@@ -395,12 +400,6 @@ public class SignatureToolTipManager
    
    public void resolveActiveFunctionAndDisplayToolTip()
    {
-      if (suppressed_)
-      {
-         suppressed_ = false;
-         return;
-      }
-      
       if (docDisplay_.isPopupVisible())
          return;
       
@@ -433,7 +432,7 @@ public class SignatureToolTipManager
          toolTip_.hide();
       
       TokenIterator cursor = docDisplay_.createTokenIterator();
-      Token token = cursor.moveToPosition(position);
+      Token token = cursor.moveToPosition(position, true);
       if (token == null)
          return;
       
@@ -581,7 +580,6 @@ public class SignatureToolTipManager
    
    private final Timer monitor_;
    private boolean monitoring_;
-   private boolean suppressed_;
    
    private HandlerRegistration preview_;
    private MouseCoordinates coordinates_;
