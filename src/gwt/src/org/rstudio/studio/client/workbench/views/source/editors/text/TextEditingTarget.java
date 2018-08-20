@@ -3613,6 +3613,13 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onReindent()
+   {
+      docDisplay_.reindent();
+      docDisplay_.focus();
+   }
+
+   @Handler
    void onReflowComment()
    {
       if (DocumentMode.isSelectionInRMode(docDisplay_) ||
