@@ -426,10 +426,6 @@ public class AceEditorNative extends JavaScriptObject {
       return this.blockOutdent();
    }-*/;
    
-   public final native void selectMoreAfter() /*-{
-      return this.selectMore(1);
-   }-*/;
-
    public final native void expandSelection() /*-{
       return this.$expandSelection();
    }-*/;

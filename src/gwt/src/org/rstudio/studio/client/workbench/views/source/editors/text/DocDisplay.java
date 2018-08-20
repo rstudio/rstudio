@@ -140,7 +140,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    boolean moveSelectionToBlankLine(); 
    
-   void selectMoreAfter();
    void expandSelection();
    void shrinkSelection();
    void clearSelectionHistory();

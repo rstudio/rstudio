@@ -6011,17 +6011,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onFindUnderExpand()
-   {
-      Range selRange = docDisplay_.getSelectionRange();
-      if (selRange.isEmpty()) {
-        docDisplay_.expandSelection();
-      } else {
-        docDisplay_.selectMoreAfter();
-      }
-   }
-
-   @Handler
    void onFindFromSelection()
    {
       view_.findFromSelection();

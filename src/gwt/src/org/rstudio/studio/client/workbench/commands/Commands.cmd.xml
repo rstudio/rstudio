@@ -569,7 +569,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Alt+Down" title="Move Lines Down" />
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
-         <shortcut refid="findUnderExpand" value="Cmd+D" title="Find Under Expansion" disableModes="default,vim,emacs" />
+         <shortcut refid="quickAddNext" value="Cmd+D" title="Find and Add Next" disableModes="default,vim,emacs" />
          <shortcut refid="removeLines" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
          <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim,sublime"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>

@@ -3170,11 +3170,6 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().moveCursorRight(times);
    }
 
-   public void selectMoreAfter()
-   {
-      widget_.getEditor().selectMoreAfter();
-   }
-
    public void expandSelectionLeft(int times)
    {
       widget_.getEditor().expandSelectionLeft(times);
