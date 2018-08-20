@@ -148,7 +148,9 @@ public:
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
          std::string extension = docFile.extensionLowerCase();
-         if (extension == ".rmd" || extension == ".html" || extension == ".r") 
+         if (extension == ".rmd" || extension == ".html" || extension == ".r" ||
+             extension == ".pdf" || extension == ".docx" || extension == ".rtf" || 
+             extension == ".odt" || extension == ".pptx") 
          {
             primaryDoc = string_utils::utf8ToSystem(file);
          }
