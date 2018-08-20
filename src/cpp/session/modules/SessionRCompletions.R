@@ -862,13 +862,14 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 
-.rs.addFunction("emptyCompletions", function(excludeOtherCompletions = FALSE,
+.rs.addFunction("emptyCompletions", function(token = "",
+                                             excludeOtherCompletions = FALSE,
                                              overrideInsertParens = FALSE,
                                              orderStartsWithAlnumFirst = TRUE,
                                              language = "R")
 {
    .rs.makeCompletions(
-      token = "",
+      token = token,
       results = character(),
       packages = character(),
       quote = logical(),
@@ -1012,6 +1013,9 @@ assign(x = ".rs.acCompletionTypes",
       for (name in c("results", "packages", "quote", "type", "meta"))
          old[[name]] <- old[[name]][-c(drop)]
    }
+   
+   if (length(new$token) && new$token != "")
+      old$token <- new$token
    
    if (length(new$fguess) && new$fguess != "")
       old$fguess <- new$fguess

@@ -150,8 +150,4 @@ exports.snippetText = utils.toSnippetText(snippets);
 
 SnippetManager.register(snippets, "stan");
 
-// This ensures Ace won't attempt a GET request to
-// load stan snippets from disk.
-SnippetManager.files["mode/stan"] = true;
-
 });

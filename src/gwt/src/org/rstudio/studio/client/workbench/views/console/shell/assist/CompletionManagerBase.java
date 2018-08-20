@@ -131,7 +131,10 @@ public abstract class CompletionManagerBase
    
    protected void onPopupSelectionCommit(QualifiedName completion)
    {
-      onSelection(token_, completion);
+      if (completion.type == RCompletionType.SNIPPET)
+         onSelection(snippetToken_, completion);
+      else
+         onSelection(completionToken_, completion);
    }
    
    @Override
@@ -151,8 +154,19 @@ public abstract class CompletionManagerBase
                completions.getPackages().get(i),
                false,
                completions.getType().get(i),
+               completions.getMeta().get(i),
                completions.getHelpHandler(),
                completions.getLanguage()));
+      }
+      
+      if (uiPrefs_.enableSnippets().getValue())
+      {
+         String[] parts = line.split("\\s+");
+         snippetToken_ = parts[parts.length - 1];
+         ArrayList<String> snippets = snippets_.getAvailableSnippets();
+         for (String snippet : snippets)
+            if (snippet.startsWith(snippetToken_))
+               names.add(QualifiedName.createSnippet(snippet));
       }
       
       addExtraCompletions(completions.getToken(), names);
@@ -188,9 +202,14 @@ public abstract class CompletionManagerBase
       {
          QualifiedName completion = results[0];
          if (data.autoAcceptSingleCompletionResult() && completion.type == RCompletionType.SNIPPET)
+         {
             snippets_.applySnippet(completions.getToken(), completion.name);
+            popup_.hide();
+         }
          else
+         {
             popup_.placeOffscreen();
+         }
          
          // because we swallow tab keypresses for displaying completion popups,
          // if the user tried to press tab and the completion engine returned
@@ -217,7 +236,7 @@ public abstract class CompletionManagerBase
       
       Position tokenPos = docDisplay_.getSelectionStart().movedLeft(token.length());
       Rectangle tokenBounds = docDisplay_.getPositionBounds(tokenPos);
-      token_ = token;
+      completionToken_ = token;
       popup_.showCompletionValues(
             results,
             new PopupPositioner(tokenBounds, popup_),
@@ -299,6 +318,34 @@ public abstract class CompletionManagerBase
    
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
+   {
+   }
+   
+   // Subclasses can override this if they want different behavior in
+   // amending completions appropriate to their type
+   protected String onCompletionSelected(QualifiedName requestedCompletion)
+   {
+      String value = requestedCompletion.name;
+      int type = requestedCompletion.type;
+      
+      // add trailing '/' for directory completions
+      if (type == RCompletionType.DIRECTORY)
+         value += "/";
+      
+      // add '()' for function completions
+      boolean insertParensAfterCompletion =
+            RCompletionType.isFunctionType(type) &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+      
+      if (insertParensAfterCompletion)
+         value += "()";
+      
+      return value;
+   }
+   
+   // Subclasses can override to perform post-completion-insertion actions,
+   // e.g. displaying a tooltip or similar
+   protected void onCompletionInserted(QualifiedName requestedCompletion)
    {
    }
    
@@ -511,30 +558,25 @@ public abstract class CompletionManagerBase
    {
       suggestTimer_.cancel();
       
-      String insertion = completion.name;
       int type = completion.type;
-      
       if (type == RCompletionType.SNIPPET)
       {
          snippets_.applySnippet(completionToken, completion.name);
-         return;
       }
-      
-      if (type == RCompletionType.DIRECTORY)
-         insertion += "/";
-      
-      // TODO: Handle automatic paren insertion
-      
-      Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
-      for (Range range : ranges)
+      else
       {
-         Position replaceStart = range.getEnd().movedLeft(completionToken.length());
-         Position replaceEnd = range.getEnd();
-         docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), insertion);
+         String value = onCompletionSelected(completion);
+
+         Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
+         for (Range range : ranges)
+         {
+            Position replaceStart = range.getEnd().movedLeft(completionToken.length());
+            Position replaceEnd = range.getEnd();
+            docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), value);
+         }
+
+         onCompletionInserted(completion);
       }
-      
-      // TODO: Move cursor back within parentheses
-      // TODO: Display tooltip
       
       popup_.hide();
       popup_.clearHelp(false);
@@ -704,7 +746,9 @@ public abstract class CompletionManagerBase
    private final CompletionCache completionCache_;
    private final SuggestionTimer suggestTimer_;
    private final HelpTimer helpTimer_;
-   private String token_;
+   
+   private String completionToken_;
+   private String snippetToken_;
    
    private final SnippetHelper snippets_;
    

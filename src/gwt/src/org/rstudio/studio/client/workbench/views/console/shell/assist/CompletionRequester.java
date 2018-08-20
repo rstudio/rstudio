@@ -294,10 +294,11 @@ public class CompletionRequester
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
       JsArrayInteger type = response.getType();
+      JsArrayString meta = response.getMeta();
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
       }
 
       CompletionResult result = new CompletionResult(
@@ -379,12 +380,13 @@ public class CompletionRequester
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
             JsArrayInteger type = response.getType();
+            JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
                if (comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
             
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
@@ -403,7 +405,7 @@ public class CompletionRequester
             // Get other server completions
             for (int i = 0; i < comp.length(); i++)
                if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler(), response.getLanguage()));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
             
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
@@ -769,19 +771,21 @@ public class CompletionRequester
                            boolean shouldQuote,
                            int type)
       {
-         this(name, source, shouldQuote, type, null, "R");
+         this(name, source, shouldQuote, type, "", null, "R");
       }
       
       
-      public QualifiedName(String name, String source)
+      public QualifiedName(String name,
+                           String source)
       {
-         this(name, source, false, RCompletionType.UNKNOWN, null, "R");
+         this(name, source, false, RCompletionType.UNKNOWN, "", null, "R");
       }
       
       public QualifiedName(String name,
                            String source,
                            boolean shouldQuote,
                            int type,
+                           String meta,
                            String helpHandler,
                            String language)
       {
@@ -789,6 +793,7 @@ public class CompletionRequester
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
+         this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
       }
@@ -800,6 +805,7 @@ public class CompletionRequester
                "snippet",
                false,
                RCompletionType.SNIPPET,
+               "",
                null,
                "R");
       }
@@ -1009,6 +1015,7 @@ public class CompletionRequester
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
+      public final String meta ;
       public final String helpHandler ;
       public final String language ;
       

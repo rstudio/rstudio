@@ -929,6 +929,7 @@ public class PythonCompletionManager implements CompletionManager
                   completions.getPackages().get(i),
                   false,
                   completions.getType().get(i),
+                  completions.getMeta().get(i),
                   completions.getHelpHandler(),
                   completions.getLanguage());
          }

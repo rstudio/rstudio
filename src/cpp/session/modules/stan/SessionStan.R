@@ -62,10 +62,7 @@
       )
    )
    
-   fnNames <- .rs.stan.functionNames()
-   
-   result <- Reduce(.rs.appendCompletions, completions)
-   result
+   completions
    
 })
 
@@ -106,7 +103,7 @@
       return(blocks)
    
    c("model", "data", "parameters",
-     "quantities", "transformed",  "generated")
+     "quantities", "transformed", "generated")
 })
 
 .rs.addFunction("stan.rosetta", function()

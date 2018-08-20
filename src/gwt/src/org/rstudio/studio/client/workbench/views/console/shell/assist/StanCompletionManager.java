@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -56,9 +55,10 @@ public class StanCompletionManager extends CompletionManagerBase
    {
       Set<String> discoveredIdentifiers = new HashSet<String>();
       
+      Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       TokenIterator it = docDisplay_.createTokenIterator();
       for (Token t = it.getCurrentToken();
-           t != null;
+           t != null && t != cursorToken;
            t = it.stepForward())
       {
          if (!t.hasType("identifier"))
@@ -75,9 +75,37 @@ public class StanCompletionManager extends CompletionManagerBase
                t.getValue(),
                "[identifier]",
                false,
-               RCompletionType.CONTEXT);
+               RCompletionType.CONTEXT,
+               "",
+               null,
+               "Stan");
+         
          discoveredIdentifiers.add(value);
          completions.add(name);
+      }
+   }
+   
+   @Override
+   protected void onCompletionInserted(QualifiedName completion)
+   {
+      int type = completion.type;
+      if (!RCompletionType.isFunctionType(type))
+         return;
+      
+      boolean insertParensAfterCompletion =
+            RCompletionType.isFunctionType(type) &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+      
+      if (insertParensAfterCompletion)
+      {
+         String meta = completion.meta;
+         
+         boolean isZeroArityFunction =
+               meta.equals("()") ||
+               meta.equals("~");
+         
+         if (!isZeroArityFunction)
+            docDisplay_.moveCursorBackward();
       }
    }
    
