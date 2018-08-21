@@ -118,7 +118,14 @@
    
    # update the file path if we're using the source database
    if (useSourceDatabase)
-      file <- .rs.stan.copySourceDatabaseToTempfile(file)
+   {
+      candidate <- .rs.stan.copySourceDatabaseToTempfile(file)
+      if (!is.null(candidate))
+      {
+         file <- candidate
+         on.exit(unlink(dirname(candidate), recursive = TRUE), add = TRUE)
+      }
+   }
    
    # invoke stan compiler and capture messages
    messages <- c()
@@ -226,11 +233,11 @@
 {
    properties <- .rs.getSourceDocumentProperties(file, includeContents = TRUE)
    if (is.null(properties) || is.null(properties$contents))
-      return(file)
+      return(NULL)
    
    dir <- tempfile("rstudio-stan-diagnostics-")
    if (!dir.create(dir, showWarnings = FALSE))
-      return(file)
+      return(NULL)
    
    newPath <- file.path(dir, basename(file))
    status <- tryCatch(
@@ -239,7 +246,7 @@
    )
    
    if (inherits(status, "error") || !file.exists(newPath))
-      return(file)
+      return(NULL)
    
    newPath
 })
