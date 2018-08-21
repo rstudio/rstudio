@@ -3284,6 +3284,18 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onMoveLinesUp()
+   {
+      docDisplay_.moveLinesUp();
+   }
+
+   @Handler
+   void onMoveLinesDown()
+   {
+      docDisplay_.moveLinesDown();
+   }
+
+   @Handler
    void onRemoveLine()
    {
       docDisplay_.removeLine();
