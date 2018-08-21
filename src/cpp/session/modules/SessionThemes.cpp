@@ -15,6 +15,7 @@
 
 #include "SessionThemes.hpp"
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/lexical_cast.hpp>
@@ -47,12 +48,13 @@ namespace session {
 namespace modules {
 namespace themes {
 
-namespace {
-
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
-std::vector<std::string> sWarnings;
+
+namespace {
+
+const std::string kGridResourcePrefix = "grid_resource/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -323,55 +325,6 @@ FilePath getDefaultTheme(const http::Request& request)
 }
 
 /**
- * @brief Gets a theme that is installed with RStudio.
- *
- * @param request       The HTTP request from the client.
- * @param pResponse     The HTTP response, which will contain the theme CSS.
- */
-void handleDefaultThemeRequest(const http::Request& request,
-                                     http::Response* pResponse)
-{
-   std::string fileName = http::util::pathAfterPrefix(request, "/" + kDefaultThemeLocation);
-   pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
-}
-
-/**
- * @brief Gets a custom theme that is installed for all users.
- *
- * @param request       The HTTP request from the client.
- * @param pResponse     The HTTP response, which will contain the theme CSS.
- */
-void handleGlobalCustomThemeRequest(const http::Request& request,
-                                          http::Response* pResponse)
-{
-   // Note: we probably want to return a warning code instead of success so the client has the
-   // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, "/" + kGlobalCustomThemeLocation);
-   FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
-   pResponse->setCacheableFile(
-      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
-}
-
-/**
- * @brief Gets a custom theme that is installed for all users.
- *
- * @param request       The HTTP request from the client.
- * @param pResponse     The HTTP response, which will contain the theme CSS.
- */
-void handleLocalCustomThemeRequest(const http::Request& request,
-                                         http::Response* pResponse)
-{
-   // Note: we probably want to return a warning code instead of success so the client has the
-   // ability to pop up a warning dialog or something to the user.
-   std::string fileName = http::util::pathAfterPrefix(request, "/" + kLocalCustomThemeLocation);
-   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
-   pResponse->setCacheableFile(
-      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
-}
-
-/**
  * @brief Gets the list of all the avialble themes for the client.
  *
  * @param request       The JSON request from the client.
@@ -500,6 +453,67 @@ Error removeTheme(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+/**
+ * @brief Gets a theme that is installed with RStudio.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
+void handleDefaultThemeRequest(const http::Request& request,
+                                     http::Response* pResponse)
+{
+   std::string prefix =
+         "/" +
+         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         kDefaultThemeLocation;
+   std::string fileName = http::util::pathAfterPrefix(request, prefix);
+   pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
+}
+
+/**
+ * @brief Gets a custom theme that is installed for all users.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
+void handleGlobalCustomThemeRequest(const http::Request& request,
+                                          http::Response* pResponse)
+{
+   // Note: we probably want to return a warning code instead of success so the client has the
+   // ability to pop up a warning dialog or something to the user.
+   std::string prefix =
+         "/" +
+         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         kGlobalCustomThemeLocation;
+   std::string fileName = http::util::pathAfterPrefix(request, prefix);
+   FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
+   pResponse->setCacheableFile(
+      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
+      request);
+}
+
+/**
+ * @brief Gets a custom theme that is installed for all users.
+ *
+ * @param request       The HTTP request from the client.
+ * @param pResponse     The HTTP response, which will contain the theme CSS.
+ */
+void handleLocalCustomThemeRequest(const http::Request& request,
+                                         http::Response* pResponse)
+{
+   // Note: we probably want to return a warning code instead of success so the client has the
+   // ability to pop up a warning dialog or something to the user.
+   std::string prefix =
+         "/" +
+         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         kLocalCustomThemeLocation;
+   std::string fileName = http::util::pathAfterPrefix(request, prefix);
+   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   pResponse->setCacheableFile(
+      requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
+      request);
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -507,6 +521,8 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_getThemes);
 
+   // We need to register our URI handlers twice to cover the data viewer grid document because those
+   // links have a different prefix.
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionThemes.R"))
