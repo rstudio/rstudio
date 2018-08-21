@@ -1053,10 +1053,12 @@ public class RemoteServer implements Server
    }
    
    public void stanRunDiagnostics(String filename,
+                                  boolean useSourceDatabase,
                                   ServerRequestCallback<JsArray<AceAnnotation>> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(filename)
+            .add(useSourceDatabase)
             .get();
       
       sendRequest(RPC_SCOPE, STAN_RUN_DIAGNOSTICS, params, requestCallback);

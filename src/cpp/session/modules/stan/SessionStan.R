@@ -23,9 +23,9 @@
    .rs.stan.getArguments(f)
 })
 
-.rs.addJsonRpcHandler("stan_run_diagnostics", function(file)
+.rs.addJsonRpcHandler("stan_run_diagnostics", function(file, useSourceDatabase)
 {
-   .rs.stan.runDiagnostics(file)
+   .rs.stan.runDiagnostics(file, useSourceDatabase)
 })
 
 .rs.addFunction("stan.getCompletions", function(line)
@@ -105,10 +105,14 @@
    .rs.scalar(arguments)
 })
 
-.rs.addFunction("stan.runDiagnostics", function(file)
+.rs.addFunction("stan.runDiagnostics", function(file, useSourceDatabase)
 {
    if (!requireNamespace("rstan", quietly = TRUE))
       return(list())
+   
+   # update the file path if we're using the source database
+   if (useSourceDatabase)
+      file <- .rs.stan.copySourceDatabaseToTempfile(file)
    
    # invoke stan compiler and capture messages
    messages <- c()
@@ -211,3 +215,26 @@
    
    rosetta
 })
+
+.rs.addFunction("stan.copySourceDatabaseToTempfile", function(file)
+{
+   properties <- .rs.getSourceDocumentProperties(file, includeContents = TRUE)
+   if (is.null(properties) || is.null(properties$contents))
+      return(file)
+   
+   dir <- tempfile("rstudio-stan-diagnostics-")
+   if (!dir.create(dir, showWarnings = FALSE))
+      return(file)
+   
+   newPath <- file.path(dir, basename(file))
+   status <- tryCatch(
+      writeLines(properties$contents, con = newPath, useBytes = TRUE),
+      error = identity
+   )
+   
+   if (inherits(status, "error") || !file.exists(newPath))
+      return(file)
+   
+   newPath
+})
+

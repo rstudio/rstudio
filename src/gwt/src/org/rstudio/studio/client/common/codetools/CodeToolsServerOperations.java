@@ -105,6 +105,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void stanRunDiagnostics(
          String filename,
+         boolean useSourceDatabase,
          ServerRequestCallback<JsArray<AceAnnotation>> requestCallback);
    
 }

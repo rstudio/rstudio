@@ -172,10 +172,11 @@ public class StanCompletionManager extends CompletionManagerBase
       beginSuggest(true, false, true);
    }
    
-   private void runDiagnostics()
+   private void runDiagnostics(boolean useSourceDatabase)
    {
       server_.stanRunDiagnostics(
             context_.getPath(),
+            useSourceDatabase,
             new ServerRequestCallback<JsArray<AceAnnotation>>()
             {
                @Override
@@ -183,7 +184,11 @@ public class StanCompletionManager extends CompletionManagerBase
                {
                   JsArray<LintItem> lintItems = JavaScriptObject.createArray(response.length()).cast();
                   for (int i = 0; i < response.length(); i++)
-                     lintItems.set(i, createLintItem(response.get(i)));
+                  {
+                     LintItem item = createLintItem(response.get(i));
+                     if (item != null)
+                        lintItems.set(i, item);
+                  }
                   docDisplay_.showLint(lintItems);
                }
 
@@ -201,6 +206,16 @@ public class StanCompletionManager extends CompletionManagerBase
       Token token = it.moveToPosition(
             Position.create(annotation.row(), annotation.column()),
             false);
+      if (token == null)
+         return null;
+      
+      // If we landed on a text token for some reason, move backwards
+      if (token.hasType("text"))
+      {
+         token = it.stepBackward();
+         if (token == null)
+            return null;
+      }
 
       return LintItem.create(
             annotation.row(),
@@ -217,7 +232,8 @@ public class StanCompletionManager extends CompletionManagerBase
       
       handlers_ = new HandlerRegistration[] {
             docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
-               runDiagnostics();
+               boolean useSourceDatabase = event.isAutosave();
+               runDiagnostics(useSourceDatabase);
             })
       };
    }
