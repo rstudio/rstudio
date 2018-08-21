@@ -547,10 +547,12 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="cutDummy" value="Cmd+X"/>
          <!-- <shortcut refid="pasteDummy" value="Cmd+V"/> -->
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
-         <shortcut refid="insertSection" value="Cmd+Shift+R"/>
+         <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
+         <shortcut refid="insertSection" value="Ctrl+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="extractFunction" value="Cmd+Alt+X"/>
          <shortcut refid="extractLocalVariable" value="Cmd+Alt+V"/>
          <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
+         <shortcut refid="commentUncomment" value="Cmd+/" disableModes="default,vim,emacs"/>
          <shortcut refid="blockOutdent" value="Meta+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="blockIndent" value="Meta+]" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="reindent" value="Cmd+I"/>
@@ -571,7 +573,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Alt+Down" title="Move Lines Down" />
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
-         <shortcut refid="quickAddNext" value="Cmd+D" title="Find and Add Next" disableModes="default,vim,emacs" />
          <shortcut refid="removeLine" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
          <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim,sublime"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>
@@ -579,7 +580,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="pasteLastYank" value="Ctrl+Y" title="Insert Yanked Text" />
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="insertAssignmentOperator" value="Alt+-" title="Insert Assignment Operator"/>
-         <shortcut refid="insertPipeOperator" value="Cmd+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertPipeOperator" value="Meta+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet" handlesEventPropagation="true" />
@@ -587,26 +589,34 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
          <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
+         <shortcut refid="quickAddNext" value="Cmd+D" title="Find and Add Next" disableModes="default,vim,emacs" />
          <shortcut refid="findUsages" value="Cmd+Alt+U"/>
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F"/>
          <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
          <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
-         <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs"/>
+         <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs,sublime"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
+         <shortcut refid="goToFileFunction" value="Cmd+P" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToFileFunction" value="Meta+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToFileFunction" value="Ctrl+Shift+R" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim,sublime"/>
+         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim,sublime"/>
+         <shortcut refid="goToLine" value="Ctrl+G" disableModes="default,vim,emacs"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs,sublime"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+M" disableModes="default,vim,emacs"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+M" disableModes="default,vim,emacs"/>
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut refid="addCursorAbove" value="Ctrl+Alt+Up"/>
          <shortcut refid="addCursorBelow" value="Ctrl+Alt+Down"/>
@@ -616,8 +626,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
-         <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs,sublime"/>
-         <shortcut refid="splitIntoLines" value="Cmd+Shift+L" disableModes="default,vim,emacs"/>
+         <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
+         <shortcut refid="splitIntoLines" value="Meta+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="splitIntoLines" value="Ctrl+Shift+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim,sublime"/>
          <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim,sublime"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
