@@ -172,7 +172,7 @@ public class StanCompletionManager extends CompletionManagerBase
       beginSuggest(true, false, true);
    }
    
-   private void runDiagnostics(boolean useSourceDatabase)
+   private void runDiagnostics(final boolean useSourceDatabase)
    {
       server_.stanRunDiagnostics(
             context_.getPath(),
@@ -185,7 +185,7 @@ public class StanCompletionManager extends CompletionManagerBase
                   JsArray<LintItem> lintItems = JavaScriptObject.createArray(response.length()).cast();
                   for (int i = 0; i < response.length(); i++)
                   {
-                     LintItem item = createLintItem(response.get(i));
+                     LintItem item = createLintItem(response.get(i), useSourceDatabase);
                      if (item != null)
                         lintItems.set(i, item);
                   }
@@ -200,7 +200,8 @@ public class StanCompletionManager extends CompletionManagerBase
             });
    }
    
-   private LintItem createLintItem(AceAnnotation annotation)
+   private LintItem createLintItem(AceAnnotation annotation,
+                                   boolean didUseSourceDatabase)
    {
       TokenIterator it = docDisplay_.createTokenIterator();
       Token token = it.moveToPosition(
@@ -209,11 +210,22 @@ public class StanCompletionManager extends CompletionManagerBase
       if (token == null)
          return null;
       
-      // If we landed on a text token for some reason, move backwards
-      if (token.hasType("text"))
+      // for some reason, stan often marks the point _after_ an error
+      // occurs rather than the location of the error itself, so try
+      // moving backwards one token in those cases
+      if (!token.hasType("identifier"))
       {
          token = it.stepBackward();
          if (token == null)
+            return null;
+      }
+      
+      // if this token is the same one at the cursor position,
+      // don't use it
+      if (didUseSourceDatabase)
+      {
+         Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+         if (token.equals(cursorToken))
             return null;
       }
 
