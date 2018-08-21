@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -243,10 +244,16 @@ public class StanCompletionManager extends CompletionManagerBase
       detachHandlers();
       
       handlers_ = new HandlerRegistration[] {
+            
+            docDisplay_.addFocusHandler((FocusEvent event) -> {
+               runDiagnostics(true);
+            }),
+            
             docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
                boolean useSourceDatabase = event.isAutosave();
                runDiagnostics(useSourceDatabase);
             })
+            
       };
    }
    
