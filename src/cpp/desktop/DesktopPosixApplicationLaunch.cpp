@@ -62,22 +62,6 @@ protected:
             QCoreApplication::postEvent(pObject, pTabEvent);
             return true;
          }
-         
-         // fix up modifiers
-         if (modifiers.testFlag(Qt::MetaModifier) &&
-             !modifiers.testFlag(Qt::ControlModifier))
-         {
-            modifiers |= Qt::ControlModifier;
-            modifiers &= ~Qt::MetaModifier;
-            pKeyEvent->setModifiers(modifiers);
-         }
-         else if (modifiers.testFlag(Qt::ControlModifier) &&
-                  !modifiers.testFlag(Qt::MetaModifier))
-         {
-            modifiers |= Qt::MetaModifier;
-            modifiers &= ~Qt::ControlModifier;
-            pKeyEvent->setModifiers(modifiers);
-         }
       }
       
       return QObject::eventFilter(pObject, pEvent);
