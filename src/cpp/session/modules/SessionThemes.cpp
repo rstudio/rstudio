@@ -54,7 +54,7 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 
 namespace {
 
-const std::string kGridResourcePrefix = "grid_resource";
+const std::string kGridResourcePrefix = "grid_resource/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
