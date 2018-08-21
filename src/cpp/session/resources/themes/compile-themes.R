@@ -905,13 +905,16 @@
    )
    
    ## Generate a color used for 'debugging' backgrounds.
-   debugPrimary <- .rs.parse_css_color("#FFDE38")
-   debugBg <- .rs.color_as_hex(.rs.mix_colors(backgroundRgb, debugPrimary, 0.5))
+   if (!any(grepl(".ace_active_debug_line", content, fixed = TRUE)))
+   {
+      debugPrimary <- .rs.parse_css_color("#FFDE38")
+      debugBg <- .rs.color_as_hex(.rs.mix_colors(backgroundRgb, debugPrimary, 0.5))
    
-   content <- c(
-      content,
-      .rs.create_line_marker_rule(".ace_active_debug_line", debugBg)
-   )
+      content <- c(
+         content,
+         .rs.create_line_marker_rule(".ace_active_debug_line", debugBg)
+      )
+   }
    
    ## Generate a background color used for console errors, as well as
    ## 'find_line' (used for highlighting e.g. 'sourceCpp' errors).

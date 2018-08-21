@@ -480,6 +480,9 @@
    # Collaborators
    supportedScopes[["collab.user1"]] <- "collab.user1"
    
+   # RStudio Supported Scopes
+   supportedScopes[["active.debug.line"]] <- "active_debug_line"
+   
    # Read the template files
    conn <- file(
       description = file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "templates", "ace_theme_template.css"),
