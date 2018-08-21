@@ -91,11 +91,17 @@
    arguments <- rosetta$Arguments[idx]
    
    # if this is a distribution function, borrow arguments from the
-   # corresponding '_lpdf' function
+   # corresponding '_lpdf' or '_lpmf' function
    if (identical(arguments, "~"))
    {
-      lpdf <- paste(f, "lpdf", sep = "_")
-      idx <- match(lpdf, rosetta$StanFunction)
+      for (suffix in c("lpdf", "lpmf"))
+      {
+         method <- paste(f, suffix, sep = "_")
+         idx <- match(method, rosetta$StanFunction)
+         if (!is.na(idx))
+            break
+      }
+      
       if (is.na(idx))
          return(none)
       
