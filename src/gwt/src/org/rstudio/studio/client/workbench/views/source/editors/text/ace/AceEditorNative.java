@@ -295,8 +295,6 @@ public class AceEditorNative extends JavaScriptObject {
       this.centerSelection();
    }-*/;
 
-   public final native void removeLines() /*-{ this.removeLines(); }-*/;
-
    public final native void scrollToLine(int line, boolean center) /*-{
       this.scrollToLine(line, center);
    }-*/;

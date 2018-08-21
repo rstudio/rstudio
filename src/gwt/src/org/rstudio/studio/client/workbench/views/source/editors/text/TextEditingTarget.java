@@ -3284,9 +3284,9 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onRemoveLines()
+   void onRemoveLine()
    {
-      docDisplay_.removeLines();
+      docDisplay_.removeLine();
    }
 
    @Handler

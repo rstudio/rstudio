@@ -2575,9 +2575,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void removeLines()
+   public void removeLine()
    {
-      widget_.getEditor().removeLines();
+      widget_.getEditor().execCommand("removeline");
    }
 
    @Override

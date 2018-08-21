@@ -141,7 +141,7 @@ public abstract class
    public abstract AppCommand expandToMatching();
    public abstract AppCommand addCursorAbove();
    public abstract AppCommand addCursorBelow();
-   public abstract AppCommand removeLines();
+   public abstract AppCommand removeLine();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();

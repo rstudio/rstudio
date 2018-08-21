@@ -239,7 +239,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                int row = session.getSelection().getRange().getStart().getRow();
                String text = session.getLine(row) + "\n";
                Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
-               editor.removeLines();
+               editor.execCommand("removeline");
          }
          return;
       }
