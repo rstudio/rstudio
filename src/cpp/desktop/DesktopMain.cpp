@@ -317,6 +317,16 @@ int main(int argc, char* argv[])
    try
    {
       static std::vector<char*> arguments(argv, argv + argc);
+
+#ifndef RSTUDIO_PACKAGE_BUILD
+      // fix-up for development builds run from 'desktop' folder
+      QDir pwd = QDir::current();
+      if (pwd.path().endsWith(QStringLiteral("/desktop")))
+      {
+         pwd.cdUp();
+         QDir::setCurrent(pwd.path());
+      }
+#endif
       
       initializeLang();
       initializeRenderingEngine(&arguments);
