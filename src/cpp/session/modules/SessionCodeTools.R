@@ -2249,9 +2249,9 @@
 #
 # also unlists the string by default (as the most common usage is to
 # split a single string)
-.rs.addFunction("strsplit", function(x, pattern, simplify = TRUE)
+.rs.addFunction("strsplit", function(x, pattern, ..., simplify = TRUE)
 {
-   m <- gregexpr(pattern, x, perl = TRUE)
+   m <- gregexpr(pattern, x, ...)
    matches <- regmatches(x, m, invert = TRUE)
    if (simplify && length(matches) == 1)
       matches[[1]]
