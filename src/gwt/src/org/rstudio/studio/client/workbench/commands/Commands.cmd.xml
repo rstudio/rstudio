@@ -570,7 +570,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Alt+Up" title="Move Lines Up" />
+         <shortcut value="Meta+Ctrl+Up" title="Move Lines Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut value="Ctrl+Shift+Up" title="Move Lines Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut value="Alt+Down" title="Move Lines Down" />
+         <shortcut value="Meta+Ctrl+Down" title="Move Lines Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut value="Ctrl+Shift+Down" title="Move Lines Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
          <shortcut refid="removeLine" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
@@ -620,8 +624,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut refid="addCursorAbove" value="Ctrl+Alt+Up"/>
          <shortcut refid="addCursorBelow" value="Ctrl+Alt+Down"/>
-         <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
+         <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
