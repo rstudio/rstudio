@@ -20,8 +20,6 @@
 #include <core/system/Environment.hpp>
 #include <core/r_util/RUserData.hpp>
 
-#include <boost/foreach.hpp>
-
 #include <QKeyEvent>
 
 namespace rstudio {
@@ -39,18 +37,17 @@ PosixApplication* app()
 class MacEventFilter : public QObject
 {
 public:
-   MacEventFilter(QObject* parent)
+   explicit MacEventFilter(QObject* parent)
       : QObject(parent)
    {
    }
    
 protected:
-   bool eventFilter(QObject* pObject, QEvent* pEvent)
+   bool eventFilter(QObject* pObject, QEvent* pEvent) override
    {
       if (pEvent->type() == QEvent::KeyPress)
       {
          auto* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
-         auto modifiers = pKeyEvent->modifiers();
          
          // translate backtab to regular tab
          if (pKeyEvent->key() == Qt::Key_Backtab)
@@ -87,11 +84,10 @@ void ApplicationLaunch::init(QString appName,
                              boost::scoped_ptr<ApplicationLaunch>* ppAppLaunch)
 {
    // Immediately stuffed into scoped_ptr
-   PosixApplication* pSingleApplication = new PosixApplication(appName,
-                                                               argc,
-                                                               argv);
+   auto* pSingleApplication = new PosixApplication(appName, argc, argv);
+
    // create app launch instance
-   pSingleApplication->setApplicationName(appName);
+   PosixApplication::setApplicationName(appName);
    ppApp->reset(pSingleApplication);
 
    ppAppLaunch->reset(new ApplicationLaunch());
@@ -139,7 +135,7 @@ void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
                                       const std::string& initialDir)
 {
    QStringList argList;
-   BOOST_FOREACH(const std::string& arg, args)
+   for (const std::string& arg : args)
    {
       argList.append(QString::fromStdString(arg));
    }
