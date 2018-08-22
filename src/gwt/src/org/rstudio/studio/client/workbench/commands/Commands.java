@@ -143,6 +143,7 @@ public abstract class
    public abstract AppCommand addCursorBelow();
    public abstract AppCommand moveLinesUp();
    public abstract AppCommand moveLinesDown();
+   public abstract AppCommand expandToLine();
    public abstract AppCommand removeLine();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand toggleDocumentOutline();

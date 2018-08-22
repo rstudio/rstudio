@@ -3296,6 +3296,12 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onExpandToLine()
+   {
+      docDisplay_.expandToLine();
+   }
+
+   @Handler
    void onRemoveLine()
    {
       docDisplay_.removeLine();

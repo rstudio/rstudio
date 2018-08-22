@@ -391,6 +391,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void moveLinesUp();
    void moveLinesDown();
+   void expandToLine();
    void removeLine();
 
    void blockIndent();
