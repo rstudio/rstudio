@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.user.client.Command;
 
 public class CopyPlotToClipboardDesktopDialog 
       extends CopyPlotToClipboardDesktopDialogBase
@@ -45,8 +46,20 @@ public class CopyPlotToClipboardDesktopDialog
    }
    
    protected void copyAsBitmap(final Operation onCompleted)
-   {  
+   {
       final ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      
+      final Command completed = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            sizeEditor.setGripperVisible(true);
+            onCompleted.execute();
+         }
+      };
+      
+      sizeEditor.setGripperVisible(false);
       
       sizeEditor.prepareForExport(() -> {
          if (BrowseCap.isMacintoshDesktop())
@@ -54,7 +67,7 @@ public class CopyPlotToClipboardDesktopDialog
             clipboard_.copyPlotToCocoaPasteboard(
                   sizeEditor.getImageWidth(),
                   sizeEditor.getImageHeight(),
-                  onCompleted::execute);
+                  completed);
          }
          else
          {
@@ -70,12 +83,12 @@ public class CopyPlotToClipboardDesktopDialog
                      img.getClientTop(),
                      img.getClientWidth(),
                      img.getClientHeight(),
-                     onCompleted::execute);
+                     completed);
             }
             else
             {
                // shouldn't happen but make sure we clean up after
-               onCompleted.execute();
+               completed.execute();
             }
          }
       });
