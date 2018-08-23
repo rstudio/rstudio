@@ -15,6 +15,8 @@
 
 #include "DesktopUtils.hpp"
 
+#include <set>
+
 #include <QPushButton>
 #include <QTimer>
 #include <QDesktopServices>
@@ -118,8 +120,24 @@ QString getFixedWidthFontList()
    QStringList fonts;
    for (const QString& family : db.families())
    {
-      if (db.isBitmapScalable(family))
+#ifdef _WIN32
+      // screen out annoying Qt warnings when attempting to
+      // initialize incompatible fonts
+      static std::set<std::string> blacklist = {
+         "Fixedsys",
+         "Modern",
+         "MS Sans Serif",
+         "MS Serif",
+         "Roman",
+         "Script",
+         "Small Fonts",
+         "System",
+         "Terminal"
+      };
+
+      if (blacklist.count(family.toStdString()))
          continue;
+#endif
 
       if (isFixedWidthFont(QFont(family, 12)))
          fonts.append(family);
