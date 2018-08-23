@@ -574,7 +574,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="moveLinesDown" value="Ctrl+Shift+Down" title="Move Lines Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
-         <shortcut refid="expandToLine" value="Cmd+L" title="Expand Selection to line" disableModes="default,vim,emacs" />
+         <shortcut refid="expandToLine" value="Meta+L" title="Expand Selection to line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" />
+         <!-- Ctrl+L to be handled by ShortcutManager -->
+         <!-- <shortcut refid="expandToLine" value="Ctrl+L" title="Expand Selection to line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" /> -->
          <shortcut refid="removeLine" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
          <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim,sublime"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>
@@ -784,9 +786,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
-         <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs,sublime"/>
-         <shortcut refid="consoleClear" value="Ctrl+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="emacs"/>
-         <shortcut value="Cmd+Up" title="Popup Command History"/>
+         <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>

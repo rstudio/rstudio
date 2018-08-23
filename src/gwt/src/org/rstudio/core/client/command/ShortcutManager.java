@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -473,6 +475,28 @@ public class ShortcutManager implements NativePreviewHandler,
       
       keyBuffer_.add(keyCombination);
       
+      // we handle `Ctrl+L` for the sublime mode here
+      // because it is conflicted with `consoleClear`
+      if (editorMode_ == KeyboardShortcut.MODE_SUBLIME)
+         {
+            if (keyCombination.getKeyCode() == KeyCodes.KEY_L &&
+                keyCombination.getModifier() == KeyboardShortcut.CTRL)
+         {
+            Element target = Element.as(event.getEventTarget());
+            AceEditor editor = AceEditor.getEditor(target);
+            AceEditorNative nativeEditor = AceEditorNative.getEditor(target);
+            if (editor != null && nativeEditor != null &&
+                  nativeEditor == editor.getWidget().getEditor() &&
+                  editor.getWidget().getElement().getId() ==
+                     ElementIds.getElementId(ElementIds.SOURCE_TEXT_EDITOR))
+            {
+               keyBuffer_.clear();
+               commands_.expandToLine().execute();
+               return true;
+            }
+         }
+      }
+
       // Loop through all active key maps, and attempt to find an active
       // binding. 'pending' is used to indicate whether there are any bindings
       // following the current state of the keybuffer.
