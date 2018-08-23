@@ -4,56 +4,44 @@
   background: #00204b;
   color: #7388b5
 }
-
 .ace_print-margin {
   width: 1px;
-  background: #333 ;
+  background: #333;
 }
-
 .ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   background-color: #002451;
   color: #FFFFFF
 }
-
 .ace_constant.ace_other,
 .ace_cursor {
   color: #FFFFFF
 }
-
 .ace_marker-layer .ace_selection {
   background: #003F8E
 }
-
 .ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #002451;
   border-radius: 2px
 }
-
 .ace_marker-layer .ace_step {
   background: rgb(127, 111, 19)
 }
-
 .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
   border: 1px solid #404F7D
 }
-
 .ace_marker-layer .ace_active-line {
   background: #00346E
 }
-
 .ace_gutter-active-line {
   background-color: #022040
 }
-
 .ace_marker-layer .ace_selected-word {
   border: 1px solid #003F8E
 }
-
 .ace_invisible {
   color: #404F7D
 }
-
 .ace_keyword,
 .ace_meta,
 .ace_storage,
@@ -61,11 +49,9 @@
 .ace_support.ace_type {
   color: #EBBBFF
 }
-
 .ace_keyword.ace_operator {
   color: #99FFFF
 }
-
 .ace_constant.ace_character,
 .ace_constant.ace_language,
 .ace_constant.ace_numeric,
@@ -74,39 +60,32 @@
 .ace_variable.ace_parameter {
   color: #FFC58F
 }
-
 .ace_invalid {
   color: #FFFFFF;
   background-color: #F99DA5
 }
-
 .ace_invalid.ace_deprecated {
   color: #FFFFFF;
   background-color: #EBBBFF
 }
-
 .ace_fold {
   background-color: #BBDAFF;
   border-color: #FFFFFF
 }
-
 .ace_entity.ace_name.ace_function,
 .ace_support.ace_function,
 .ace_variable {
   color: #BBDAFF
 }
-
 .ace_support.ace_class,
 .ace_support.ace_type {
   color: #FFEEAD
 }
-
 .ace_heading,
 .ace_markup.ace_heading,
 .ace_string {
   color: #D1F1A9
 }
-
 .ace_entity.ace_name.ace_tag,
 .ace_entity.ace_other.ace_attribute-name,
 .ace_meta.ace_tag,
@@ -114,11 +93,9 @@
 .ace_variable {
   color: #FF9DA4
 }
-
 .ace_comment {
   color: #7285B7
 }
-
 .ace_indent-guide {
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGBgYJDzqfwPAANXAeNsiA+ZAAAAAElFTkSuQmCC) right repeat-y
 }

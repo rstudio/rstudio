@@ -33,6 +33,7 @@ themes <- list(
    "Clouds" = list("fileName" ="clouds", isDark = FALSE),
    "Cobalt" = list("fileName" ="cobalt", isDark = TRUE),
    "Dawn" = list("fileName" ="dawn", isDark = FALSE),
+   "Debug Line" = list("fileName" = "DebugLine", isDark = TRUE),
    "Dreamweaver" = list("fileName" ="dreamweaver", isDark = FALSE),
    "Eiffel" = list("fileName" ="eiffel", isDark = FALSE),
    "Espresso Libre" = list("fileName" ="espresso_libre", isDark = TRUE),
@@ -1646,11 +1647,11 @@ test_that_wrapped("convertTheme works correctly", {
       expect_equal(getRsIsDark(actualCssLines), themeDesc$isDark, info = infoStr)
    })
 },
-BEFORE_FUN = function(){
+BEFORE_FUN = function() {
    # Make an output location.
    dir.create(tempOutputDir)
 },
-AFTER_FUN = function(){
+AFTER_FUN = function() {
    # Clean up the output location.
    if (unlink(tempOutputDir, recursive = TRUE, force = TRUE) != 0)
    {

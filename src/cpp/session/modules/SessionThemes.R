@@ -480,6 +480,9 @@
    # Collaborators
    supportedScopes[["collab.user1"]] <- "collab.user1"
    
+   # RStudio Supported Scopes
+   supportedScopes[["marker-layer.active_debug_line"]] <- "marker-layer .active_debug_line"
+   
    # Read the template files
    conn <- file(
       description = file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "templates", "ace_theme_template.css"),
@@ -503,15 +506,32 @@
    {
       if (!is.null(styles[[scope]]))
       {
-         css = paste0(
-            css,
-            "\n\n.",
-            styles$cssClass,
-            " ",
-            gsub("^|\\.", ".ace_", scope),
-            " {\n  ",
-            gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
-            "}")
+         if (grepl("active_debug_line", scope, fixed = TRUE))
+         {
+            css = paste0(
+               css,
+               "\n\n.",
+               styles$cssClass,
+               " ",
+               gsub("^|\\.", ".ace_", scope),
+               " {\n  ",
+               gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
+               "\n  position: absolute;",
+               "\n  z-index: -1;",
+               "\n}")
+         }
+         else
+         {
+            css = paste0(
+               css,
+               "\n\n.",
+               styles$cssClass,
+               " ",
+               gsub("^|\\.", ".ace_", scope),
+               " {\n  ",
+               gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
+               "\n}")
+         }
       }
    }
    
