@@ -612,7 +612,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="goToFileFunction" value="Meta+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="goToFileFunction" value="Ctrl+Shift+R" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim,sublime"/>
-         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim,sublime"/>
          <shortcut refid="goToLine" value="Ctrl+G" disableModes="default,vim,emacs"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -790,6 +789,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
+         <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
