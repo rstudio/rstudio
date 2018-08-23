@@ -7,7 +7,7 @@
    if (is.null(color))
       color <- if (isDark) "#AAAAAA" else "#888888"
    
-   add_content(
+   .rs.add_content(
       content,
       ".ace_keyword.ace_operator {",
       "  color: %s !important;",
@@ -17,7 +17,7 @@
 })
 
 .rs.addFunction("add_keyword_color", function(content, name, overrideMap) {
-   add_content(
+   .rs.add_content(
       content,
       ".ace_keyword {",
       "  color: %s !important;",
@@ -103,12 +103,25 @@
    matches[(matches > start) & (matches < end)][1]
 })
 
-.rs.addFunction("setPrintMarginColor", function(content, color) {
-   printMarginLoc <- grep("print-margin", content, perl = TRUE)
-   bgLoc <- grep("background:", content, perl = TRUE)
-   loc <- bgLoc[bgLoc > printMarginLoc][1]
-   content[loc] <- paste("  background:", color, ";")
+.rs.addFunction("updateSetting", function(content, newValue, cssClass, settingName) {
+   settingName <- paste0(settingName, ":")
+   blockLoc <- grep(paste0("\\.", cssClass, "( *){"), content, perl = TRUE)
+   settingLoc <- grep(paste0("(^| )",settingName),  content, perl = TRUE)
+   
+   print(paste(cssClass, settingName))
+   print(blockLoc)
+   print(settingLoc)
+   loc <- settingLoc[settingLoc > blockLoc][1]
+   content[loc] <- paste0("  ", settingName, " ", newValue, ";")
    content
+})
+
+.rs.addFunction("setPrintMarginColor", function(content, color) {
+   .rs.updateSetting(content, color, "ace_print-margin", "background")
+})
+
+.rs.addFunction("setActiveDebugLineColor", function(content, color) {
+   .rs.updateSetting(content, color, "ace_active_debug_line", "background-color")
 })
 
 .rs.addFunction("create_terminal_cursor_rules", function(isDark) {
@@ -827,14 +840,14 @@
    parsed <- suppressWarnings(highlight::css.parser(lines = modified))
    
    if (!any(grepl("^ace_keyword", names(parsed)))) {
-      warning("No field 'ace_keyword' in file '", basename(file), "'; skipping", call. = FALSE)
+      warning("No field 'ace_keyword' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
    key <- grep("^ace_keyword", names(parsed), value = TRUE)[[1]]
    keywordColor <- parsed[[key]]$color
    if (is.null(keywordColor)) {
-      warning("No keyword color available for file '", basename(file), "'", call. = FALSE)
+      warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)
       return(c())
    }
    
@@ -850,13 +863,13 @@
    ## on highlight.
    layerName <- "ace_marker-layer .ace_bracket"
    if (!(layerName %in% names(parsed))) {
-      warning("Expected rule for '", layerName, "' in file '", basename(file), "'; skipping", call. = FALSE)
+      warning("Expected rule for '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
    borderField <- parsed[[layerName]]$border
    if (is.null(borderField)) {
-      warning("No field for layer '", layerName, "' in file '", basename(file), "'; skipping", call. = FALSE)
+      warning("No field for layer '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
@@ -940,7 +953,7 @@
    
    ## Add operator colors if necessary.
    if (name %in% names(operatorOverrideMap))
-      content <- .rs.add_operator_color(content, name, operatorOverrideMap)
+      content <- .rs.add_operator_color(content, name, isDark, operatorOverrideMap)
    
    ## Add keyword colors if necessary.
    if (name %in% names(keywordOverrideMap))
