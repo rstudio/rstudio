@@ -43,25 +43,53 @@ public:
    }
    
 protected:
-   bool eventFilter(QObject* pObject, QEvent* pEvent) override
+   bool eventFilter(QObject* object, QEvent* event) override
    {
-      if (pEvent->type() == QEvent::KeyPress)
+      if (event->type() == QEvent::KeyPress)
       {
-         auto* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
+         auto* keyEvent = static_cast<QKeyEvent*>(event);
+         auto modifiers = keyEvent->modifiers();
          
-         // translate backtab to regular tab
-         if (pKeyEvent->key() == Qt::Key_Backtab)
+         // Through a series of unfortunate events, Qt fails to translate
+         // Ctrl keypresses to Meta, and vice versa. pressing Ctrl, therefore,
+         // sends a key event where the 'ctrlKey' property is true, but the
+         // associated keyCode is 91, and the key pressed is 'Meta'. Ace fails
+         // to discover a printable key with keycode 91, so tries calling
+         // String.fromCharCode() to figure out what character should be used
+         // instead; this key happens to be '['. This leads to Ace receiving the
+         // equivalent of a Ctrl+[ keypress, which Ace then interprets as an
+         // outdent request (with the default keybindings).
+         //
+         // We'll just swallow bare modifier keypresses since we don't actually
+         // use these for anything (they're only ever handled in conjunction
+         // with other keypresses; ie, as modifiers)
+         if (keyEvent->key() == Qt::Key_Meta &&
+             modifiers == Qt::META)
          {
-            auto* pTabEvent = new QKeyEvent(
-                     pKeyEvent->type(),
-                     Qt::Key_Tab,
-                     pKeyEvent->modifiers() | Qt::ShiftModifier);
-            QCoreApplication::postEvent(pObject, pTabEvent);
             return true;
          }
+         else if (keyEvent->key() == Qt::Key_Control &&
+                  modifiers == Qt::CTRL)
+         {
+            return true;
+         }
+         
+         // convert Backtab into Shift+Tab -- this is necessary for focus
+         // switching as the default browser behavior doesn't understand
+         // the Qt 'Backtab' key event
+         if (keyEvent->key() == Qt::Key_Backtab)
+         {
+            auto* event = new QKeyEvent(
+                     QEvent::KeyPress,
+                     Qt::Key_Tab,
+                     modifiers | Qt::ShiftModifier);
+            QCoreApplication::postEvent(object, event);
+            return true;
+         }
+         
       }
       
-      return QObject::eventFilter(pObject, pEvent);
+      return QObject::eventFilter(object, event);
    }
 };
 
