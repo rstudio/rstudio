@@ -163,7 +163,7 @@
    errors <- list(
       list(
          row    = as.numeric(matches[[3]]) - 1,
-         column = as.numeric(matches[[4]]),
+         column = as.numeric(matches[[4]]) - 1,
          type   = "error",
          text   = message
       )
