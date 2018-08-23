@@ -29,7 +29,6 @@
   background-color: #161616;
   color: #E6E1DC;
 }
-
 .ace_cursor {
   border-left: 2px solid #FFFFFF;
 }
@@ -114,11 +113,9 @@
 .ace_fold-widget {
   text-align: center;
 }
-
 .ace_fold-widget:hover {
   color: #777;
 }
-
 .ace_fold-widget.ace_start,
 .ace_fold-widget.ace_end,
 .ace_fold-widget.ace_closed{
@@ -126,24 +123,19 @@
   border: none;
   box-shadow: none;
 }
-
 .ace_fold-widget.ace_start:after {
   content: '▾'
 }
-
 .ace_fold-widget.ace_end:after {
   content: '▴'
 }
-
 .ace_fold-widget.ace_closed:after {
   content: '‣'
 }
-
 .ace_indent-guide {
   border-right:1px dotted #333;
   margin-right:-1px;
 }
-
 .ace_fold { 
   background: #222; 
   border-radius: 3px; 
@@ -161,9 +153,6 @@
   margin: 0 !important;
   border: 0 !important;
   background-color: rgba(128, 128, 128, 0.5);
-}
-.ace_print-margin {
-  width: 0px;
 }
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
@@ -759,4 +748,7 @@
 .rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {
    background: rgba(255, 255, 255, 0.15);
    border: none
+}
+.ace_print-margin {
+  width: 0px;
 }
