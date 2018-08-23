@@ -40,11 +40,7 @@ class MainWindow : public GwtWindow
 public:
    explicit MainWindow(QUrl url=QUrl());
 
-private:
-   static MainWindow *instance;
-
 public:
-   static MainWindow *getInstance();
    QString getSumatraPdfExePath();
    void launchSession(bool reload);
    void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),

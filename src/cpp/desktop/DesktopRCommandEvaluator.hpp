@@ -1,5 +1,5 @@
 /*
- * ScriptCommand.h
+ * DesktopRCommandEvaluator.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,10 +13,25 @@
  *
  */
 
-#import <Foundation/Foundation.h>
+#ifndef DESKTOP_R_COMMAND_EVALUATOR_HPP
+#define DESKTOP_R_COMMAND_EVALUATOR_HPP
 
-@interface evaluateRCmdCommand : NSScriptCommand
+#include "DesktopMainWindow.hpp"
 
--(id) performDefaultImplementation;
+namespace rstudio {
+namespace desktop {
 
-@end
+class RCommandEvaluator
+{
+    public:
+        static void setMainWindow(MainWindow* window);
+        static void evaluate(std::string rCmd);
+
+    private:
+        static MainWindow* window_;
+};
+
+} // namespace desktop
+} // namespace rstudio
+
+#endif

@@ -28,6 +28,7 @@
 #include "DesktopSessionLauncher.hpp"
 #include "DockTileView.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopRCommandEvaluator.hpp"
 
 using namespace rstudio::core;
 
@@ -56,7 +57,7 @@ MainWindow::MainWindow(QUrl url) :
       pSessionLauncher_(nullptr),
       pCurrentSessionProcess_(nullptr)
 {
-   instance = this;
+   RCommandEvaluator::setMainWindow(this);
    pToolbar_->setVisible(false);
 
 #ifdef _WIN32
@@ -118,13 +119,6 @@ MainWindow::MainWindow(QUrl url) :
 #endif
 
    desktop::enableFullscreenMode(this, true);
-}
-
-MainWindow * MainWindow::instance;
-
-MainWindow *MainWindow::getInstance()
-{
-   return instance;
 }
 
 QString MainWindow::getSumatraPdfExePath()
@@ -211,6 +205,7 @@ void MainWindow::loadUrl(const QUrl& url)
 
 void MainWindow::quit()
 {
+   RCommandEvaluator::setMainWindow(nullptr);
    quitConfirmed_ = true;
    close();
 }

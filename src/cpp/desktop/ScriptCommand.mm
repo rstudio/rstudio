@@ -14,32 +14,10 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "DesktopRCommandEvaluator.hpp"
 #import "ScriptCommand.h"
-#include "DesktopMainWindow.hpp"
-#include <boost/algorithm/string/replace.hpp>
 
-
-std::string jsEscape(std::string str)
-{
-   boost::algorithm::replace_all(str, "\\", "\\\\");
-   boost::algorithm::replace_all(str, "\"", "\\\"");
-   boost::algorithm::replace_all(str, "\n", "\\n");
-   return str;
-}
-
-
-// evaluate R command
-void evaluateRCommand(std::string rCmd)
-{
-   rCmd = jsEscape(rCmd);
-   std::string js = "window.desktopHooks.evaluateRCmd(\"" + rCmd + "\")";
-   rstudio::desktop::MainWindow::getInstance()->webPage()->runJavaScript(QString::fromUtf8(js.c_str()));
-}
-
-
-@implementation evaluateRScriptCommand
-
-
+@implementation evaluateRCmdCommand: NSScriptCommand
 
 -(id) performDefaultImplementation
 {
@@ -47,7 +25,7 @@ void evaluateRCommand(std::string rCmd)
    if (!script || [script isEqualToString:@""])
       return [NSNumber numberWithBool:NO];
 
-   evaluateRCommand([script UTF8String]);
+   rstudio::desktop::RCommandEvaluator::evaluate([script UTF8String]);
 
    return [NSNumber numberWithBool:YES];
 }

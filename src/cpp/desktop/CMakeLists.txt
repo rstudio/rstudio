@@ -216,6 +216,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopWebView.cpp
   DesktopWebProfile.cpp
   DesktopWindowTracker.cpp
+  DesktopRCommandEvaluator.cpp
   DesktopSatelliteWindow.cpp
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp

@@ -3,8 +3,8 @@
 
 <dictionary title="RStudio">
     <suite name="RStudio Suite" code="MApN" description="RStudio Scripts">
-        <command name="cmd" code="dorstrng" description="Evaluate R code.">
-            <cocoa class="evaluateRScriptCommand"/>
+        <command name="cmd" code="rcommand" description="Evaluate R code.">
+            <cocoa class="evaluateRCmdCommand"/>
             <direct-parameter description="R code to evaluate.">
                 <type type="text"/>
             </direct-parameter>
