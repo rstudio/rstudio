@@ -410,7 +410,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setDragEnabled(boolean enabled);
    
    boolean isSnippetsTabStopManagerActive();
-   boolean onInsertSnippet();
 
    void addLineWidget(LineWidget widget);
    void removeLineWidget(LineWidget widget);
