@@ -2593,6 +2593,18 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public void copyLinesDown()
+   {
+      widget_.getEditor().execCommand("copylinesdown");
+   }
+
+   @Override
+   public void joinLines()
+   {
+      widget_.getEditor().execCommand("joinlines");
+   }
+
+   @Override
    public void removeLine()
    {
       widget_.getEditor().execCommand("removeline");

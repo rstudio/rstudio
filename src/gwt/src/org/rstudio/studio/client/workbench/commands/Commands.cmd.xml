@@ -577,6 +577,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="expandToLine" value="Meta+L" title="Expand Selection to line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" />
          <!-- Ctrl+L to be handled by ShortcutManager -->
          <!-- <shortcut refid="expandToLine" value="Ctrl+L" title="Expand Selection to line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" /> -->
+         <shortcut refid="copyLinesDown" value="Cmd+Shift+D" title="Copy Lines Down" disableModes="default,vim,emacs" />
+         <shortcut refid="joinLines" value="Cmd+J" title="Join Lines" disableModes="default,vim,emacs" />
          <shortcut refid="removeLine" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
          <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim,sublime"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>
@@ -722,7 +724,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
          <shortcut refid="testPackage" value="Cmd+Shift+T" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="testPackage" value="Cmd+Alt+F7" if="!org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
+         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D" disableModes="sublime"/>
+         <shortcut refid="roxygenizePackage" value="Ctrl+Shift+D" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Execute">
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>

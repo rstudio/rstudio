@@ -3302,6 +3302,18 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onCopyLinesDown()
+   {
+      docDisplay_.copyLinesDown();
+   }
+
+   @Handler
+   void onJoinLines()
+   {
+      docDisplay_.joinLines();
+   }
+
+   @Handler
    void onRemoveLine()
    {
       docDisplay_.removeLine();
