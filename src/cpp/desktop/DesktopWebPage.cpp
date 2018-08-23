@@ -49,6 +49,17 @@ std::mutex s_mutex;
 // access to the same data.
 std::map<QUrl, int> s_subframes;
 
+// NOTE: To work around a bug where Qt thinks that attempts to click a link
+// are attempts to open that link within a sub-frame, monitor which link was
+// last hovered and allow navigation to links in that case. This terrible hack
+// works around https://bugreports.qt.io/browse/QTBUG-56805.
+QString s_hoveredUrl;
+
+void onLinkHovered(const QString& url)
+{
+   s_hoveredUrl = url;
+}
+
 void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 {
    // request directory from user
@@ -78,6 +89,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
+   connect(this, &QWebEnginePage::linkHovered, onLinkHovered);
    connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
    connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted, Qt::DirectConnection);
 }
@@ -233,9 +245,10 @@ void WebPage::closeRequested()
    view()->window()->close();
 }
 
-void WebPage::onUrlIntercepted(QUrl url, int type)
+void WebPage::onUrlIntercepted(const QUrl& url, int type)
 {
-   if (type == QWebEngineUrlRequestInfo::ResourceTypeSubFrame)
+   if (type == QWebEngineUrlRequestInfo::ResourceTypeSubFrame &&
+       url != s_hoveredUrl)
    {
       s_subframes[url] = type;
    }

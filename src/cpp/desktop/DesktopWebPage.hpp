@@ -96,7 +96,7 @@ public:
 public Q_SLOTS:
    bool shouldInterruptJavaScript();
    void closeRequested();
-   void onUrlIntercepted(QUrl url, int type);
+   void onUrlIntercepted(const QUrl& url, int type);
 
 protected:
    QWebEnginePage* createWindow(QWebEnginePage::WebWindowType type) override;
