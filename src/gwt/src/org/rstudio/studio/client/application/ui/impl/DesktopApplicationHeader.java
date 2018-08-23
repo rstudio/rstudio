@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -59,7 +57,6 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
 import com.google.gwt.core.client.GWT;
@@ -226,48 +223,15 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCutDummy()
    {
-      Element activeElement = DomUtils.getActiveElement();
-      AceEditorNative editor = AceEditorNative.getEditor(activeElement);
-      if (editor != null)
-      {
-         // cut the whole line if sublime mode
-         Selection selection = editor.getSession().getSelection();
-         if (selection.isEmpty()) {
-            if (ShortcutManager.INSTANCE.getEditorMode() == KeyboardShortcut.MODE_SUBLIME)
-            {
-               EditSession session = editor.getSession();
-               int row = session.getSelection().getRange().getStart().getRow();
-               String text = session.getLine(row) + "\n";
-               Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
-               editor.execCommand("removeline");
-         }
-         return;
-      }
-      }
-      fireEditEvent(EditEvent.TYPE_COPY);
+      if (isSelectionEmpty()) return;
+      fireEditEvent(EditEvent.TYPE_CUT);
       Desktop.getFrame().clipboardCut();
    }
 
    @Handler
    void onCopyDummy()
    {
-      Element activeElement = DomUtils.getActiveElement();
-      AceEditorNative editor = AceEditorNative.getEditor(activeElement);
-      if (editor != null)
-      {
-         // copy the whole line if sublime mode
-         Selection selection = editor.getSession().getSelection();
-         if (selection.isEmpty()) {
-            if (ShortcutManager.INSTANCE.getEditorMode() == KeyboardShortcut.MODE_SUBLIME)
-            {
-               EditSession session = editor.getSession();
-               int row = session.getSelection().getRange().getStart().getRow();
-               String text = session.getLine(row) + "\n";
-               Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
-            }
-               return;
-            }
-         }
+      if (isSelectionEmpty()) return;
       fireEditEvent(EditEvent.TYPE_COPY);
       Desktop.getFrame().clipboardCopy();
    }
