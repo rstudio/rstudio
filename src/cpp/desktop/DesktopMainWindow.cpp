@@ -56,6 +56,7 @@ MainWindow::MainWindow(QUrl url) :
       pSessionLauncher_(nullptr),
       pCurrentSessionProcess_(nullptr)
 {
+   instance = this;
    pToolbar_->setVisible(false);
 
 #ifdef _WIN32
@@ -117,6 +118,13 @@ MainWindow::MainWindow(QUrl url) :
 #endif
 
    desktop::enableFullscreenMode(this, true);
+}
+
+MainWindow * MainWindow::instance;
+
+MainWindow *MainWindow::getInstance()
+{
+   return instance;
 }
 
 QString MainWindow::getSumatraPdfExePath()
