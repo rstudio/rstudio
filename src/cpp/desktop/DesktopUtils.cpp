@@ -117,8 +117,13 @@ QString getFixedWidthFontList()
    QFontDatabase db;
    QStringList fonts;
    for (const QString& family : db.families())
-      if (db.isFixedPitch(family))
+   {
+      if (db.isBitmapScalable(family))
+         continue;
+
+      if (isFixedWidthFont(QFont(family, 12)))
          fonts.append(family);
+   }
    return fonts.join(QStringLiteral("\n"));
 }
 
