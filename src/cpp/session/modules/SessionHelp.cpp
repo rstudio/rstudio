@@ -858,14 +858,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();
-   if (tempFilePath.mimeContentType() == "text/html")
-   {
-      pResponse->setCacheableFile(tempFilePath, request);
-   }
-   else
-   {
-      pResponse->setCacheableFile(tempFilePath, request);
-   }
+   pResponse->setCacheableFile(tempFilePath, request);
 }
 
 void handlePythonHelpRequest(const http::Request& request,
