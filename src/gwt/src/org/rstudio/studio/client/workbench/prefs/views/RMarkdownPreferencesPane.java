@@ -172,6 +172,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
       latexPreviewWidget_.setValue(prefs_.showLatexPreviewOnCursorIdle().getValue().toString());
+      if (knitWorkingDir_ != null)
+         knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
    }
    
    @Override
