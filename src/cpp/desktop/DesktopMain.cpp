@@ -42,6 +42,10 @@
 #include "DesktopNetworkProxyFactory.hpp"
 #include "DesktopActivationOverlay.hpp"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 QProcess* pRSessionProcess;
 QString sharedSecret;
 
@@ -266,16 +270,51 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
+QString inferDefaultRenderingEngine()
+{
+#ifndef _WIN32
+   return QStringLiteral("auto");
+#else
+
+   // prefer software rendering for certain graphics cards
+   std::vector<std::string> blacklist = {
+      "Intel HD Graphics 520",
+      "Intel HD Graphics 530",
+      "Intel HD Graphics 620",
+      "Intel HD Graphics 630",
+   };
+
+   DISPLAY_DEVICE device;
+   device.cb = sizeof(DISPLAY_DEVICE);
+
+   DWORD i = 0;
+   while (::EnumDisplayDevices(NULL, i++, &device, 0))
+   {
+      // skip non-primary device
+      if ((device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) == 0)
+         continue;
+
+      // check for unsupported device
+      std::string deviceString(device.DeviceString);
+      for (auto&& item : blacklist)
+         if (deviceString.find(item) != std::string::npos)
+            return QStringLiteral("software");
+   }
+
+   return QStringLiteral("auto");
+#endif
+}
+
 void initializeRenderingEngine(std::vector<char*>* pArguments)
 {
    QString engine = desktop::options().desktopRenderingEngine();
-   if (engine.isEmpty())
-      return;
-   
-   // tell Qt which rendering engine to use
-   if (engine == QStringLiteral("auto"))
-      /* nothing to do */;
-   else if (engine == QStringLiteral("desktop"))
+
+   if (engine.isEmpty() || engine == QStringLiteral("auto"))
+   {
+      engine = inferDefaultRenderingEngine();
+   }
+
+   if (engine == QStringLiteral("desktop"))
    {
       QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
       QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGL);
