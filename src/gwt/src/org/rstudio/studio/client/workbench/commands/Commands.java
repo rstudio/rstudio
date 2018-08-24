@@ -34,6 +34,7 @@ public abstract class
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
    public abstract AppCommand newPythonDoc();
+   public abstract AppCommand newStanDoc();
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();

@@ -1262,6 +1262,20 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewStanDoc()
+   {
+      newSourceDocWithTemplate(
+            FileTypeRegistry.STAN,
+            "",
+            "stan.stan",
+            Position.create(5, 0),
+            (EditingTarget target) ->
+            {
+               
+            });
+   }
+   
+   @Handler
    public void onNewD3Doc()
    {
       newSourceDocWithTemplate(
