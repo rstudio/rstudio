@@ -90,6 +90,16 @@ public class Position extends JavaScriptObject
       this.column = position.column;
    }-*/;
    
+   public final Position movedLeft(int columns)
+   {
+      return Position.create(getRow(), Math.max(0, getColumn() - columns));
+   }
+   
+   public final Position movedRight(int columns)
+   {
+      return Position.create(getRow(), getColumn() + columns);
+   }
+   
    public final String asString()
    {
       return "[" + getRow() + ", " + getColumn() + "]";

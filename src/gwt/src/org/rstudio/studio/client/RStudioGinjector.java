@@ -104,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSni
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowserModel;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
@@ -167,6 +168,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(WebApplicationHeader webApplicationHeader);
    void injectMembers(AceEditor aceEditor);
    void injectMembers(DesktopFileDialogs desktopFileDialogs);
+   void injectMembers(CompletionManagerBase completionManagerBase);
    void injectMembers(RCompletionManager rCompletionManager);
    void injectMembers(PythonCompletionManager pythonCompletionManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);

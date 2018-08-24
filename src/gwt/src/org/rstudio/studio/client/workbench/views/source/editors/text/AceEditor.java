@@ -85,6 +85,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Delegating
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -726,16 +727,20 @@ public class AceEditor implements DocDisplay,
             protected void initialize(Map<Mode, CompletionManager> managers)
             {
                // R completion manager
-               managers.put(DocumentMode.Mode.R, new RCompletionManager(
-                     editor,
-                     editor,
-                     new CompletionPopupPanel(),
-                     server_,
-                     new Filter(),
-                     context_,
-                     fileType_.canExecuteChunks() ? rnwContext_ : null,
-                     editor,
-                     false));
+               if (fileType_.isR() || fileType_.isRmd() || fileType_.isCpp() ||
+                   fileType_.isRhtml() || fileType_.isRnw())
+               {
+                  managers.put(DocumentMode.Mode.R, new RCompletionManager(
+                        editor,
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        new Filter(),
+                        context_,
+                        fileType_.canExecuteChunks() ? rnwContext_ : null,
+                           editor,
+                           false));
+               }
                
                // Python completion manager
                if (fileType_.isPython() || fileType_.isRmd())
@@ -758,6 +763,16 @@ public class AceEditor implements DocDisplay,
                         editor,
                         new Filter(),
                         cppContext_));
+               }
+               
+               // Stan completion manager
+               if (fileType_.isStan() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.STAN, new StanCompletionManager(
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        context_));
                }
             }
          };
@@ -3627,8 +3642,9 @@ public class AceEditor implements DocDisplay,
    public TokenIterator createTokenIterator(Position position)
    {
       TokenIterator it = TokenIterator.create(getSession());
-      if (position != null)
-         it.moveToPosition(position);
+      if (position == null)
+         position = Position.create(0, 0);
+      it.moveToPosition(position);
       return it;
    }
 

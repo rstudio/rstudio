@@ -184,6 +184,7 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobLaunchSpec;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
@@ -1029,6 +1030,38 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, PYTHON_GO_TO_HELP, params, requestCallback);
+   }
+   
+   public void stanGetCompletions(String line,
+                                  ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .get();
+      
+      sendRequest(RPC_SCOPE, STAN_GET_COMPLETIONS, params, requestCallback);
+   }
+   
+   public void stanGetArguments(String function,
+                                ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(function)
+            .get();
+      
+      sendRequest(RPC_SCOPE, STAN_GET_ARGUMENTS, params, requestCallback);
+   }
+   
+   public void stanRunDiagnostics(String filename,
+                                  boolean useSourceDatabase,
+                                  ServerRequestCallback<JsArray<AceAnnotation>> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(filename)
+            .add(useSourceDatabase)
+            .get();
+      
+      sendRequest(RPC_SCOPE, STAN_RUN_DIAGNOSTICS, params, requestCallback);
    }
    
    public void getHelpAtCursor(String line, int cursorPos,
@@ -5851,6 +5884,10 @@ public class RemoteServer implements Server
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
    private static final String PYTHON_GO_TO_HELP = "python_go_to_help";
+   
+   private static final String STAN_GET_COMPLETIONS = "stan_get_completions";
+   private static final String STAN_GET_ARGUMENTS = "stan_get_arguments";
+   private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";

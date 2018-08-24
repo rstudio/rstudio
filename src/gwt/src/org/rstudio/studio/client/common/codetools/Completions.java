@@ -26,6 +26,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString packages,
                                                       JsArrayBoolean quote,
                                                       JsArrayInteger type,
+                                                      JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
                                                       boolean overrideInsertParens,
@@ -39,6 +40,7 @@ public class Completions extends JavaScriptObject
          packages: packages,
          quote: quote,
          type: type,
+         meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
          overrideInsertParens: overrideInsertParens,
@@ -102,6 +104,9 @@ public class Completions extends JavaScriptObject
       return this.type;
    }-*/;
    
+   public final native JsArrayString getMeta() /*-{
+      return this.meta;
+   }-*/;
 
    public final native boolean getSuggestOnAccept() /*-{
       return !!this.suggestOnAccept;

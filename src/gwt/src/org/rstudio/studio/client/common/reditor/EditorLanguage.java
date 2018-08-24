@@ -51,7 +51,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
    public static final EditorLanguage LANG_STAN = new EditorLanguage(
-         "mode/stan", false, true);
+         "mode/stan", true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
          "mode/yaml", false, true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(

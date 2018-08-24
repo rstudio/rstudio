@@ -30,6 +30,9 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -549,8 +552,28 @@ public class WebApplicationHeader extends Composite
       ImageResource signOut2x();
    }
    
-   private static final Resources RESOURCES =  
-                              (Resources) GWT.create(Resources.class);
+   private static final Resources RESOURCES =  (Resources) GWT.create(Resources.class);
+   
+   // globally suppress F1 and F2 so no default browser behavior takes those
+   // keystrokes (e.g. Help in Chrome)
+   static
+   {
+      Event.addNativePreviewHandler(new NativePreviewHandler() {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN)
+            {
+               int keyCode = event.getNativeEvent().getKeyCode();
+               int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+               if (modifier == KeyboardShortcut.NONE && (keyCode == 112 || keyCode == 113))
+               {
+                 event.getNativeEvent().preventDefault();
+               }
+            }
+         }
+      });
+   }
   
    private int preferredHeight_;
    private FlowPanel outerPanel_;
