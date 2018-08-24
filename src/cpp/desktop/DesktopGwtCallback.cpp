@@ -1325,9 +1325,8 @@ void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
    
    QColor color = QColor::fromRgb(red, green, blue);
    pOwner_->webPage()->setBackgroundColor(color);
+   changeTitleBarColor(red, green, blue);
 #endif
-
-    changeTitleBarColor(red, green, blue);
 }
 
 #ifndef Q_OS_MAC
