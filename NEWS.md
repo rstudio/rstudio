@@ -56,6 +56,7 @@
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
+* The macOS title bar is now also styled for dark themes (#3365)
 * Add ability to search for displayed database objects in Connections tab (#1549)
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
