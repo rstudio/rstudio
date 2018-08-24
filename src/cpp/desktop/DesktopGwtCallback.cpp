@@ -1326,6 +1326,10 @@ void GwtCallback::setBackgroundColor(QJsonArray rgbColor)
    QColor color = QColor::fromRgb(red, green, blue);
    pOwner_->webPage()->setBackgroundColor(color);
 #endif
+
+#if defined(Q_OS_MAC)
+    changeTitleBarColor(red, green, blue);
+#endif
 }
 
 void GwtCallback::syncToEditorTheme(bool isDark)

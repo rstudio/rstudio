@@ -23,6 +23,7 @@
 #import <AppKit/NSSavePanel.h>
 #import <AppKit/NSButton.h>
 #import <AppKit/NSImage.h>
+#import <Cocoa/Cocoa.h>
 
 #include <core/FilePath.hpp>
 #include <core/Macros.hpp>
@@ -460,7 +461,26 @@ void GwtCallback::showPptPresentation(QString qPath)
    }
 }
 
+void GwtCallback::changeTitleBarColor(int red, int green, int blue) {
+    WId winId = pOwner_->asWidget()->effectiveWinId();
+    if (winId == 0) return;
+    NSView* view = (NSView*)winId;
+    NSWindow* window = [view window];
+    if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) < 48387) {
+        window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantDark];
+    } else {
+        window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantLight];
+    }
+    if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) > 150000) {
+       // do not change title bar color if the background is very light
+        window.titlebarAppearsTransparent = NO;
+        window.backgroundColor = [NSColor clearColor];
+    } else {
+        window.titlebarAppearsTransparent = YES;
+        window.backgroundColor = [NSColor colorWithRed:red/255. green:green/255. blue:blue/255. alpha:1.];
+    }
+}
+
 
 RS_END_NAMESPACE(desktop)
 RS_END_NAMESPACE(rstudio)
-
