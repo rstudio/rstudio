@@ -175,6 +175,10 @@ public class StanCompletionManager extends CompletionManagerBase
    
    private void runDiagnostics(final boolean useSourceDatabase)
    {
+      // TODO: can we enable this in R Markdown documents using Stan?
+      if (!docDisplay_.getFileType().isStan())
+         return;
+      
       server_.stanRunDiagnostics(
             context_.getPath(),
             useSourceDatabase,
