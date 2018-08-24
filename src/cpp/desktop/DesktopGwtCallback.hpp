@@ -194,6 +194,7 @@ public Q_SLOTS:
    void zoomActualSize();
    
    void setBackgroundColor(QJsonArray rgbColor);
+   void changeTitleBarColor(int red, int green, int blue);
    void syncToEditorTheme(bool isDark);
 
    bool getEnableAccessibility();
