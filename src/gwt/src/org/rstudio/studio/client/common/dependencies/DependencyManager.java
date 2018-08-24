@@ -437,6 +437,20 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             });
    }
    
+   public void withStan(final String progressCaption,
+                        final String userPrompt,
+                        final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            new Dependency[] {
+                  Dependency.cranPackage("rstan", "2.15.1")
+            },
+            true,
+            (Boolean success) -> { if (success) command.execute(); });
+   }
+   
    @Override
    public void onPackageStateChanged(PackageStateChangedEvent event)
    {

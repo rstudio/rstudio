@@ -1264,15 +1264,23 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewStanDoc()
    {
-      newSourceDocWithTemplate(
-            FileTypeRegistry.STAN,
-            "",
-            "stan.stan",
-            Position.create(5, 0),
-            (EditingTarget target) ->
-            {
-               
-            });
+      final Command onStanInstalled = () -> {
+         newSourceDocWithTemplate(
+               FileTypeRegistry.STAN,
+               "",
+               "stan.stan",
+               Position.create(31, 0),
+               (EditingTarget target) ->
+               {
+
+               });
+      };
+            
+            
+      dependencyManager_.withStan(
+            "Creating Stan script",
+            "Creating Stan scripts",
+            onStanInstalled);
    }
    
    @Handler
