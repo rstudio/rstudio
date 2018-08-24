@@ -405,16 +405,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    result
 })
 
-# SessionSourceDatabase.cpp
-.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
-{
-   if (!file.exists(path))
-      return(NULL)
-   
-   path <- normalizePath(path, winslash = "/", mustWork = TRUE)
-   .Call("rs_getDocumentProperties", path, includeContents)
-})
-   
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
                                                         inputFile,
                                                         outputFile = NULL,
