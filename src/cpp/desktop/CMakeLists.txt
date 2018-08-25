@@ -216,6 +216,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopWebView.cpp
   DesktopWebProfile.cpp
   DesktopWindowTracker.cpp
+  DesktopRCommandEvaluator.cpp
   DesktopSatelliteWindow.cpp
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp
@@ -264,6 +265,7 @@ if(APPLE)
     DesktopGwtCallbackMac.mm
     DockMenu.cpp
     DockTileView.mm
+    ScriptCommand.mm
   )
 else()
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
@@ -436,6 +438,9 @@ if(APPLE)
   set_target_properties(RStudio PROPERTIES
      MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   install(TARGETS RStudio BUNDLE DESTINATION .)
+
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/RStudio.sdef
+                   DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
 else()
   install(TARGETS rstudio DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()

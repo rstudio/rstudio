@@ -28,6 +28,7 @@
 #include "DesktopSessionLauncher.hpp"
 #include "DockTileView.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopRCommandEvaluator.hpp"
 
 using namespace rstudio::core;
 
@@ -56,6 +57,7 @@ MainWindow::MainWindow(QUrl url) :
       pSessionLauncher_(nullptr),
       pCurrentSessionProcess_(nullptr)
 {
+   RCommandEvaluator::setMainWindow(this);
    pToolbar_->setVisible(false);
 
 #ifdef _WIN32
@@ -203,6 +205,7 @@ void MainWindow::loadUrl(const QUrl& url)
 
 void MainWindow::quit()
 {
+   RCommandEvaluator::setMainWindow(nullptr);
    quitConfirmed_ = true;
    close();
 }
