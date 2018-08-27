@@ -633,38 +633,43 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   }
                }
 
+               // update project and working dir
+               using namespace module_context;
+               if (switchToProject == kProjectNone)
+               {
+                  // update the project and working dir
+                  activeSession().setProject(kProjectNone);
+                  activeSession().setWorkingDir(
+                    createAliasedPath(dirs::getDefaultWorkingDirectory()));
+               }
+               else
+               {
+                  FilePath projFile = module_context::resolveAliasedPath(switchToProject);
+                  std::string projDir = createAliasedPath(projFile.parent());
+                  activeSession().setProject(projDir);
+                  activeSession().setWorkingDir(projDir);
+               }
+
                if (options().switchProjectsWithUrl())
                {
-                  using namespace module_context;
-
-                  std::string projDir;
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
                      scope = r_util::SessionScope::projectNone(
                                           options().sessionScope().id());
-
-                     // update the project and working dir
-                     activeSession().setProject(kProjectNone);
-                     activeSession().setWorkingDir(
-                       createAliasedPath(dirs::getDefaultWorkingDirectory()));
                   }
                   else
                   {
                      // extract the directory (aliased)
                      using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                     projDir = createAliasedPath(projFile.parent());
+                     std::string projDir = createAliasedPath(projFile.parent());
                      scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),
                               filePathToProjectId(options().userScratchPath(),
                                    FilePath(options().getOverlayOption(
                                                kSessionSharedStoragePath))));
-
-                     // update the project and working dir
-                     activeSession().setProject(projDir);
-                     activeSession().setWorkingDir(projDir);
                   }
 
                   // set next session url
