@@ -283,7 +283,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentSection();
    ScopeFunction getFunctionAtPosition(Position position, boolean allowAnonymous);
    Scope getSectionAtPosition(Position position);
-   boolean hasScopeTree();
+   boolean hasCodeModelScopeTree();
    JsArray<Scope> getScopeTree();
    InsertChunkInfo getInsertChunkInfo();
 

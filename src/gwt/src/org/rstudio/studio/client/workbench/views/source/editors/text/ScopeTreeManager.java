@@ -78,6 +78,22 @@ public abstract class ScopeTreeManager
       };
    }
    
+   public Scope getScopeAt(Position position)
+   {
+      return scopeManager_.getScopeAt(position);
+   }
+   
+   public JsArray<Scope> getScopeTree()
+   {
+      return scopeManager_.getScopeList();
+   }
+   
+   public boolean isReady(int row)
+   {
+      Position parsePosition = scopeManager_.getParsePosition();
+      return parsePosition.getRow() > row;
+   }
+   
    public void detach()
    {
       for (HandlerRegistration handler : handlers_)
@@ -105,7 +121,7 @@ public abstract class ScopeTreeManager
          work();
       }
       
-      private void work()
+      private int work()
       {
          Position position = Position.create(startRow_ - 1, 0);
          
@@ -133,7 +149,7 @@ public abstract class ScopeTreeManager
                docDisplay_.fireEvent(event);
                
                // we're done!
-               return;
+               return docDisplay_.getRowCount();
             }
             
             // if we've walked past the end row, bail
@@ -157,6 +173,8 @@ public abstract class ScopeTreeManager
             endRow_ = Math.min(docDisplay_.getRowCount(), startRow_ + ROWS_TOKENIZED_PER_ITERATION);
             timer_.schedule(DELAY_MS);
          }
+         
+         return it.getCurrentTokenRow();
       }
       
       private int startRow_;

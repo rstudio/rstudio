@@ -2248,17 +2248,22 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
    
-   public Scope getCurrentScope()
-   {
-      return getSession().getMode().getCodeModel().getCurrentScope(
-            getCursorPosition());
-   }
-   
    public Scope getScopeAtPosition(Position position)
    {
-      return getSession().getMode().getCodeModel().getCurrentScope(position);
+      if (hasCodeModelScopeTree())
+         return getSession().getMode().getCodeModel().getCurrentScope(position);
+      
+      if (scopes_ != null)
+         return scopes_.getScopeAt(position);
+      
+      return null;
    }
 
+   public Scope getCurrentScope()
+   {
+      return getScopeAtPosition(getCursorPosition());
+   }
+   
    @Override
    public String getNextLineIndent()
    {
@@ -2456,7 +2461,7 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().hasCodeModel();
    }
 
-   public boolean hasScopeTree()
+   public boolean hasCodeModelScopeTree()
    {
       return hasCodeModel() && getCodeModel().hasScopes();
    }
@@ -2464,13 +2469,13 @@ public class AceEditor implements DocDisplay,
    public void buildScopeTree()
    {
       // Builds the scope tree as a side effect
-      if (hasScopeTree())
+      if (hasCodeModelScopeTree())
          getScopeTree();
    }
    
    public int buildScopeTreeUpToRow(int row)
    {
-      if (!hasScopeTree())
+      if (!hasCodeModelScopeTree())
          return 0;
       
       return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
@@ -2478,7 +2483,13 @@ public class AceEditor implements DocDisplay,
 
    public JsArray<Scope> getScopeTree()
    {
-      return getSession().getMode().getCodeModel().getScopeTree();
+      if (hasCodeModelScopeTree())
+         return getSession().getMode().getCodeModel().getScopeTree();
+      
+      if (scopes_ != null)
+         return scopes_.getScopeTree();
+      
+      return null;
    }
 
    @Override
@@ -2817,7 +2828,14 @@ public class AceEditor implements DocDisplay,
    
    public boolean isScopeTreeReady(int row)
    {
-      return hasScopeTree() && backgroundTokenizer_.isReady(row);
+      // NOTE: 'hasScopeTree()' implies JavaScript-side scope tree
+      if (hasCodeModelScopeTree())
+         return backgroundTokenizer_.isReady(row);
+      
+      if (scopes_ == null)
+         return false;
+      
+      return scopes_.isReady(row);
    }
    
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
@@ -3921,7 +3939,7 @@ public class AceEditor implements DocDisplay,
             @Override
             public void onDocumentChanged(DocumentChangedEvent event)
             {
-               if (editor_.hasScopeTree())
+               if (editor_.hasCodeModelScopeTree())
                {
                   row_ = event.getEvent().getRange().getStart().getRow();
                   timer_.schedule(DELAY_MS);
