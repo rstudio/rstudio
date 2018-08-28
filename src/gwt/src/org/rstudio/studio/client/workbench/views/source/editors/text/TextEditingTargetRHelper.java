@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -56,12 +57,35 @@ public class TextEditingTargetRHelper
                public void onResponseReceived(String path)
                {
                   String argsString = "";
-                  if (customSource.args.length() > 0)
+                  
+                  if (customSource.args.length > 0)
                   {
-                     argsString = ", " + customSource.args;
+                     boolean implicitPath = true;
+
+                     for (int idxOpt = 0; idxOpt < customSource.args.length; idxOpt++)
+                     {
+                        if (customSource.args[idxOpt].equals(".file"))
+                        {
+                           implicitPath = false;
+                           customSource.args[idxOpt] = StringUtil.ensureQuoted(path);
+                        }
+                        else if (customSource.args[idxOpt].equals(".code"))
+                        {
+                           implicitPath = false;
+                           String code = docDisplay_.getCode().replaceAll("\\\\", "\\\\\\\\");
+                           customSource.args[idxOpt] = StringUtil.ensureQuoted(code);
+                        }
+                     }
+
+                     if (implicitPath)
+                     {
+                        argsString = StringUtil.ensureQuoted(path) + ", ";
+                     }
+
+                     argsString += StringUtil.join(customSource.args, ", ");
                   }
 
-                  String command = customSource.function + "(\"" + path + "\"" + argsString + ")";
+                  String command = customSource.function + "(" + argsString + ")";
                   eventBus_.fireEvent(new SendToConsoleEvent(command, true));
                }
             });
@@ -90,8 +114,19 @@ public class TextEditingTargetRHelper
 
                // Support for explicit function calls
                options = options.replaceAll("^\\(|\\)$", "");
+
+               // Split parameters
+               String[] optionsArr = new String[] {};
+               if (options.trim().length() > 0)
+               {
+                  optionsArr = JsUtil.toStringArray(StringUtil.split(options, ","));
+                  for (int idxOpt = 0; idxOpt < optionsArr.length; idxOpt++)
+                  {
+                     optionsArr[idxOpt] = optionsArr[idxOpt].trim();
+                  }
+               }
                
-               return new CustomSource(function, options);
+               return new CustomSource(function, optionsArr);
             }
             
          }   
@@ -102,14 +137,14 @@ public class TextEditingTargetRHelper
    
    private class CustomSource 
    {
-      public CustomSource(String function, String args)
+      public CustomSource(String function, String[] args)
       {
          this.function = function;
          this.args = args;
       }
       
       public final String function;
-      public final String args;
+      public final String[] args;
    }
    
    private static final Pattern customSourcePattern_ = 
