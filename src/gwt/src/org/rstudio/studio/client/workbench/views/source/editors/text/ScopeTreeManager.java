@@ -109,6 +109,9 @@ public abstract class ScopeTreeManager
       {
          Position position = Position.create(startRow_ - 1, 0);
          
+         // if editing near the start of the document, the token iterator may fail
+         // to find any initial token. in that case, just step forward (this should
+         // walk to the first token in the document)
          TokenIterator it = docDisplay_.createTokenIterator();
          Token token = it.moveToPosition(position);
          if (token == null)
@@ -116,29 +119,44 @@ public abstract class ScopeTreeManager
          
          while (true)
          {
+            // if we don't have a token, that implies we've reached the end of the document.
+            // notify listeners that we're done building the scope tree
             if (token == null)
             {
+               // save the parse position (needed when invalidating rows as the document mutates)
                scopeManager_.setParsePosition(Position.create(it.getCurrentTokenRow(), -1));
+               
+               // notify listeners that we have a scope tree + the current scope
                JsArray<Scope> scopeTree = scopeManager_.getScopeList();
                Scope currentScope = scopeManager_.getScopeAt(docDisplay_.getCursorPosition());
                ScopeTreeReadyEvent event = new ScopeTreeReadyEvent(scopeTree, currentScope);
                docDisplay_.fireEvent(event);
+               
+               // we're done!
                return;
             }
             
+            // if we've walked past the end row, bail
             int row = it.getCurrentTokenRow();
             if (row >= endRow_)
                break;
             
+            // let subclass respond to current token, and move forward
             onToken(token, it.getCurrentTokenPosition(), scopeManager_);
-            
             token = it.stepForward();
          }
          
+         // save the parse position (needed when invalidating rows as the document mutates)
          scopeManager_.setParsePosition(Position.create(it.getCurrentTokenRow(), -1));
-         startRow_ = it.getCurrentTokenRow();
-         if (startRow_ < endRow_)
+         
+         // if there are still rows to be tokenized in the document,
+         // schedule more work
+         if (startRow_ < docDisplay_.getRowCount())
+         {
+            startRow_ = it.getCurrentTokenRow();
+            endRow_ = Math.min(docDisplay_.getRowCount(), startRow_ + ROWS_TOKENIZED_PER_ITERATION);
             timer_.schedule(DELAY_MS);
+         }
       }
       
       private int startRow_;
