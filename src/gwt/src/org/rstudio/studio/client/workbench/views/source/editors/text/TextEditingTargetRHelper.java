@@ -87,6 +87,9 @@ public class TextEditingTargetRHelper
             {
                String function = match.getGroup(1);
                String options = match.getGroup(2);
+
+               // Support for explicit function calls
+               options = options.replaceAll("^\\(|\\)$", "");
                
                return new CustomSource(function, options);
             }
