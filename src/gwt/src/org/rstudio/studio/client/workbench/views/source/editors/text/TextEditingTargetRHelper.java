@@ -19,6 +19,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -47,109 +48,24 @@ public class TextEditingTargetRHelper
 
    public void customSource(EditingTarget editingTarget)
    {
-      CustomSource customSource = parseCustomSource();
-      if (customSource != null)
-      {
-         server_.getMinimalSourcePath(
-            editingTarget.getPath(), 
-            new SimpleRequestCallback<String>() {
-               @Override
-               public void onResponseReceived(String path)
-               {
-                  String argsString = "";
-                  
-                  if (customSource.args.length > 0)
-                  {
-                     boolean implicitPath = true;
+      TextEditingTargetCommentHeaderHelper customSource = new TextEditingTargetCommentHeaderHelper(
+         docDisplay_.getCode(),
+         "source"
+      );
 
-                     for (int idxOpt = 0; idxOpt < customSource.args.length; idxOpt++)
-                     {
-                        if (customSource.args[idxOpt].equals(".file"))
-                        {
-                           implicitPath = false;
-                           customSource.args[idxOpt] = StringUtil.ensureQuoted(path);
-                        }
-                        else if (customSource.args[idxOpt].equals(".code"))
-                        {
-                           implicitPath = false;
-                           String code = docDisplay_.getCode().replaceAll("\\\\", "\\\\\\\\");
-                           customSource.args[idxOpt] = StringUtil.ensureQuoted(code);
-                        }
-                     }
-
-                     if (implicitPath)
-                     {
-                        argsString = StringUtil.ensureQuoted(path) + ", ";
-                     }
-
-                     argsString += StringUtil.join(customSource.args, ", ");
-                  }
-
-                  String command = customSource.function + "(" + argsString + ")";
-                  eventBus_.fireEvent(new SendToConsoleEvent(command, true));
-               }
-            });
-      }
-   }
-
-   private CustomSource parseCustomSource()
-   {
-      Iterable<String> lines = StringUtil.getLineIterator(docDisplay_.getCode());
-      for (String line : lines)
-      {
-         line = line.trim();
-         if (line.length() == 0)
+      customSource.buildCommand(
+         editingTarget.getPath(),
+         new OperationWithInput<String>() 
          {
-            continue;
-         }
-         else if (line.startsWith("#"))
-         {
-            Match match = customSourcePattern_.match(line, 0);
-            if (match != null &&
-                match.hasGroup(1) &&
-                match.hasGroup(2))
+            @Override
+            public void execute(String command)
             {
-               String function = match.getGroup(1);
-               String options = match.getGroup(2);
-
-               // Support for explicit function calls
-               options = options.replaceAll("^\\(|\\)$", "");
-
-               // Split parameters
-               String[] optionsArr = new String[] {};
-               if (options.trim().length() > 0)
-               {
-                  optionsArr = JsUtil.toStringArray(StringUtil.split(options, ","));
-                  for (int idxOpt = 0; idxOpt < optionsArr.length; idxOpt++)
-                  {
-                     optionsArr[idxOpt] = optionsArr[idxOpt].trim();
-                  }
-               }
-               
-               return new CustomSource(function, optionsArr);
+               eventBus_.fireEvent(new SendToConsoleEvent(command, true));
             }
-            
-         }   
-      }
-      
-      return null;
+         }
+      );
    }
-   
-   private class CustomSource 
-   {
-      public CustomSource(String function, String[] args)
-      {
-         this.function = function;
-         this.args = args;
-      }
-      
-      public final String function;
-      public final String[] args;
-   }
-   
-   private static final Pattern customSourcePattern_ = 
-         Pattern.create("^#\\s*!source\\s+([.a-zA-Z]+[.a-zA-Z0-9:_]*)\\s*(.*)$", "");
-   
+
    private GlobalDisplay display_;
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
