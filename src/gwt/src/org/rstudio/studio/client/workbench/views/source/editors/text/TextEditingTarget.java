@@ -6179,7 +6179,7 @@ public class TextEditingTarget implements
    
    boolean useScopeTreeFolding()
    {
-      return docDisplay_.hasScopeTree();
+      return docDisplay_.hasCodeModelScopeTree();
    }
 
    void handlePdfCommand(final String completedAction,

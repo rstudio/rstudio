@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -257,6 +258,8 @@ public class AceEditor implements DocDisplay,
                               {
                                  public void onLoaded()
                                  {
+                                    AceSupport.initialize();
+                                    
                                     if (command != null)
                                        command.execute();
                                  }
@@ -687,7 +690,7 @@ public class AceEditor implements DocDisplay,
                            CompletionManager completionManager)
    {
       fileType_ = fileType;
-      updateLanguage(completionManager);
+      updateLanguage(completionManager, null);
    }
 
    @Override
@@ -781,11 +784,19 @@ public class AceEditor implements DocDisplay,
       {
          completionManager = new NullCompletionManager();
       }
+      
+      ScopeTreeManager scopeTreeManager = null;
+      
+      if (fileType_.isStan())
+      {
+         scopeTreeManager = new StanScopeTreeManager(this);
+      }
 
-      updateLanguage(completionManager);
+      updateLanguage(completionManager, scopeTreeManager);
    }
 
-   private void updateLanguage(CompletionManager completionManager)
+   private void updateLanguage(CompletionManager completionManager,
+                               ScopeTreeManager scopeTreeManager)
    {
       clearLint();
       if (fileType_ == null)
@@ -797,7 +808,14 @@ public class AceEditor implements DocDisplay,
          completionManager_ = null;
       }
       
+      if (scopes_ != null)
+      {
+         scopes_.detach();
+         scopes_ = null;
+      }
+      
       completionManager_ = completionManager;
+      scopes_ = scopeTreeManager;
 
       updateKeyboardHandlers();
       syncCompletionPrefs();
@@ -2233,17 +2251,22 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
    
-   public Scope getCurrentScope()
-   {
-      return getSession().getMode().getCodeModel().getCurrentScope(
-            getCursorPosition());
-   }
-   
    public Scope getScopeAtPosition(Position position)
    {
-      return getSession().getMode().getCodeModel().getCurrentScope(position);
+      if (hasCodeModelScopeTree())
+         return getSession().getMode().getCodeModel().getCurrentScope(position);
+      
+      if (scopes_ != null)
+         return scopes_.getScopeAt(position);
+      
+      return null;
    }
 
+   public Scope getCurrentScope()
+   {
+      return getScopeAtPosition(getCursorPosition());
+   }
+   
    @Override
    public String getNextLineIndent()
    {
@@ -2441,7 +2464,7 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().hasCodeModel();
    }
 
-   public boolean hasScopeTree()
+   public boolean hasCodeModelScopeTree()
    {
       return hasCodeModel() && getCodeModel().hasScopes();
    }
@@ -2449,13 +2472,13 @@ public class AceEditor implements DocDisplay,
    public void buildScopeTree()
    {
       // Builds the scope tree as a side effect
-      if (hasScopeTree())
+      if (hasCodeModelScopeTree())
          getScopeTree();
    }
    
    public int buildScopeTreeUpToRow(int row)
    {
-      if (!hasScopeTree())
+      if (!hasCodeModelScopeTree())
          return 0;
       
       return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
@@ -2463,7 +2486,13 @@ public class AceEditor implements DocDisplay,
 
    public JsArray<Scope> getScopeTree()
    {
-      return getSession().getMode().getCodeModel().getScopeTree();
+      if (hasCodeModelScopeTree())
+         return getSession().getMode().getCodeModel().getScopeTree();
+      
+      if (scopes_ != null)
+         return scopes_.getScopeTree();
+      
+      return null;
    }
 
    @Override
@@ -2802,7 +2831,14 @@ public class AceEditor implements DocDisplay,
    
    public boolean isScopeTreeReady(int row)
    {
-      return backgroundTokenizer_.isReady(row);
+      // NOTE: 'hasScopeTree()' implies JavaScript-side scope tree
+      if (hasCodeModelScopeTree())
+         return backgroundTokenizer_.isReady(row);
+      
+      if (scopes_ == null)
+         return false;
+      
+      return scopes_.isReady(row);
    }
    
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
@@ -2810,6 +2846,11 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
    }
 
+   public HandlerRegistration addActiveScopeChangedHandler(ActiveScopeChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(ActiveScopeChangedEvent.TYPE, handler);
+   }
+   
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
       return widget_.addHandler(handler, RenderFinishedEvent.TYPE);
@@ -3901,8 +3942,11 @@ public class AceEditor implements DocDisplay,
             @Override
             public void onDocumentChanged(DocumentChangedEvent event)
             {
-               row_ = event.getEvent().getRange().getStart().getRow();
-               timer_.schedule(DELAY_MS);
+               if (editor_.hasCodeModelScopeTree())
+               {
+                  row_ = event.getEvent().getRange().getStart().getRow();
+                  timer_.schedule(DELAY_MS);
+               }
             }
          });
       }
@@ -3974,6 +4018,7 @@ public class AceEditor implements DocDisplay,
    private final SnippetHelper snippets_;
    private ScrollAnimator scrollAnimator_;
    private CompletionManager completionManager_;
+   private ScopeTreeManager scopes_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
    private CollabEditor collab_;
