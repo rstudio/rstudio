@@ -115,7 +115,7 @@ public class TextEditingTargetCommentHeaderHelper
                String options = match.getGroup(2);
 
                // Support for explicit function calls
-               if (options.startsWith("\\")) {
+               if (options.startsWith("(")) {
                   options = options.replaceAll("^\\(|\\)$", "");
                }
 
