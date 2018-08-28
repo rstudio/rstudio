@@ -50,7 +50,8 @@ public class TextEditingTargetRHelper
    {
       TextEditingTargetCommentHeaderHelper customSource = new TextEditingTargetCommentHeaderHelper(
          docDisplay_.getCode(),
-         "source"
+         "source",
+         "#"
       );
 
       customSource.buildCommand(

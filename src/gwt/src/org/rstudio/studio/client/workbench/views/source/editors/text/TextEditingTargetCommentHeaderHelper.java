@@ -86,12 +86,12 @@ public class TextEditingTargetCommentHeaderHelper
          });
    }
 
-   public TextEditingTargetCommentHeaderHelper(String code, String keyword)
+   public TextEditingTargetCommentHeaderHelper(String code, String keyword, String comment)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       customHeaderPattern_ = Pattern.create(
-         "^#\\s*!" + keyword + "\\s+([.a-zA-Z]+[.a-zA-Z0-9:_]*)\\s*(.*)$",
+         "^" + comment + "\\s*!" + keyword + "\\s+([.a-zA-Z]+[.a-zA-Z0-9:_]*)\\s*(.*)$",
          ""
       );
 
@@ -104,7 +104,7 @@ public class TextEditingTargetCommentHeaderHelper
          {
             continue;
          }
-         else if (line.startsWith("#"))
+         else if (line.startsWith(comment))
          {
             Match match = customHeaderPattern_.match(line, 0);
             if (match != null &&
@@ -115,7 +115,9 @@ public class TextEditingTargetCommentHeaderHelper
                String options = match.getGroup(2);
 
                // Support for explicit function calls
-               options = options.replaceAll("^\\(|\\)$", "");
+               if (options.startsWith("\\")) {
+                  options = options.replaceAll("^\\(|\\)$", "");
+               }
 
                // Split parameters
                String[] optionsArr = new String[] {};
@@ -135,6 +137,16 @@ public class TextEditingTargetCommentHeaderHelper
       }
    }
 
+   public String getFunction()
+   {
+      return commentHeader_.function;
+   }
+
+   public void setFunction(String name)
+   {
+      commentHeader_.function = name;
+   }
+
    private boolean hasHeader()
    {
       return commentHeader_ != null;
@@ -148,8 +160,8 @@ public class TextEditingTargetCommentHeaderHelper
          this.args = args;
       }
       
-      public final String function;
-      public final String[] args;
+      public String function;
+      public String[] args;
    }
    
    private Pattern customHeaderPattern_;
