@@ -19,6 +19,11 @@
 // compilation problem
 #include <boost/asio/io_service.hpp>
 
+#ifndef _WIN32
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <queue>
@@ -278,6 +283,28 @@ bool s_destroySession = false;
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
 
+#ifdef _WIN32
+
+BOOL CALLBACK handleConsoleCtrl(DWORD type)
+{
+   switch (type)
+   {
+   case CTRL_C_EVENT:
+   case CTRL_BREAK_EVENT:
+      rstudio::r::exec::setInterruptsPending(true);
+      return true;
+   default:
+      return false;
+   }
+}
+
+#endif
+
+void handleINT(int)
+{
+   rstudio::r::exec::setInterruptsPending(true);
+}
+
 void detectChanges(module_context::ChangeSource source)
 {
    module_context::events().onDetectChanges(source);
@@ -333,24 +360,36 @@ Error registerSignalHandlers()
    using boost::bind;
    using namespace rstudio::core::system;
 
+   ExecBlock registerBlock;
+
+#ifdef _WIN32
+   // accept Ctrl + C interrupts
+   ::SetConsoleCtrlHandler(NULL, FALSE);
+
+   // register console control handler
+   ::SetConsoleCtrlHandler(handleConsoleCtrl, TRUE);
+#endif
+   
+   // SIGINT: set interrupt flag on R session
+   registerBlock.addFunctions()
+         (bind(handleSignal, SigInt, handleINT));
+   
    // USR1 and USR2: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
-      ExecBlock registerBlock ;
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, suspend::handleUSR1))
          (bind(handleSignal, SigUsr2, suspend::handleUSR2));
-      return registerBlock.execute();
    }
    // USR1 and USR2: ignore in desktop mode
    else
    {
-      ExecBlock registerBlock ;
       registerBlock.addFunctions()
          (bind(ignoreSignal, SigUsr1))
          (bind(ignoreSignal, SigUsr2));
-      return registerBlock.execute();
    }
+   
+   return registerBlock.execute();
 }
 
 
@@ -1561,6 +1600,11 @@ int main (int argc, char * const argv[])
       Error error = core::system::ignoreSignal(core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
+      
+      // move to own process group
+#ifndef _WIN32
+      ::setpgrp();
+#endif
 
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
