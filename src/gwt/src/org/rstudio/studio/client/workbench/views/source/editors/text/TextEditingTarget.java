@@ -2387,7 +2387,7 @@ public class TextEditingTarget implements
    
    public void revertChanges(Command onCompleted)
    {
-      docUpdateSentinel_.revert(onCompleted);
+      docUpdateSentinel_.revert(onCompleted, ignoreDeletes_);
    }
 
    public void saveThenExecute(String encodingOverride, final Command command)
