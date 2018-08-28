@@ -4,7 +4,7 @@
 cp /rstudio/vagrant/build.motd.tail /etc/motd
 
 # add repo for R 
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9
 echo "deb https://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list
 
 # bring apt database up to date with R packages
