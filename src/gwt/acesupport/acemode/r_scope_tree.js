@@ -136,6 +136,12 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          ));
       };
 
+      /**
+       * @param chunkLabel The actual label associated with the chunk.
+       * @param label An alternate label with more information (e.g. used in the status bar)
+       * @param chunkStartPos The start position of the chunk header.
+       * @param chunkPos The start position of the chunk, excluding the chunk header.
+       */
       this.onChunkStart = function(chunkLabel, label, chunkStartPos, chunkPos) {
          // Starting a chunk means closing the previous chunk, if any
          var prev = this.$root.closeScope(chunkStartPos, ScopeNode.TYPE_CHUNK);
@@ -332,9 +338,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.isBrace = function() { return this.scopeType == ScopeNode.TYPE_BRACE; };
       this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
       this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
-      this.isFunction = function() {
-         return this.isBrace() && !!this.label;
-      };
+      this.isFunction = function() { return this.isBrace() && !!this.attributes.args; };
 
       this.equals = function(node) {
          if (this.scopeType !== node.scopeType ||

@@ -132,6 +132,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
@@ -171,6 +172,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CompletionManagerBase completionManagerBase);
    void injectMembers(RCompletionManager rCompletionManager);
    void injectMembers(PythonCompletionManager pythonCompletionManager);
+   void injectMembers(ScopeTreeManager scopeTreeManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);

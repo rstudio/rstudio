@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -257,6 +258,17 @@ public class DocumentOutlineWidget extends Composite
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
          {
             rebuildScopeTree(event.getScopeTree(), event.getCurrentScope());
+            resetTreeStyles();
+         }
+      }));
+      
+      handlers_.add(target_.getDocDisplay().addActiveScopeChangedHandler(new ActiveScopeChangedEvent.Handler()
+      {
+         @Override
+         public void onActiveScopeChanged(ActiveScopeChangedEvent event)
+         {
+            currentScope_ = event.getScope();
+            currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
             resetTreeStyles();
          }
       }));

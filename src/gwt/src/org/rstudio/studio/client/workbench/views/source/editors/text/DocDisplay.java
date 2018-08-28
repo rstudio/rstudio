@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
@@ -229,6 +230,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
+   HandlerRegistration addActiveScopeChangedHandler(ActiveScopeChangedEvent.Handler handler);
    
    Position getCursorPosition();
    void setCursorPosition(Position position);

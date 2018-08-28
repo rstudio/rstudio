@@ -687,7 +687,7 @@ public class AceEditor implements DocDisplay,
                            CompletionManager completionManager)
    {
       fileType_ = fileType;
-      updateLanguage(completionManager);
+      updateLanguage(completionManager, null);
    }
 
    @Override
@@ -781,11 +781,19 @@ public class AceEditor implements DocDisplay,
       {
          completionManager = new NullCompletionManager();
       }
+      
+      ScopeTreeManager scopeTreeManager = null;
+      
+      if (fileType_.isStan())
+      {
+         scopeTreeManager = new StanScopeTreeManager(this);
+      }
 
-      updateLanguage(completionManager);
+      updateLanguage(completionManager, scopeTreeManager);
    }
 
-   private void updateLanguage(CompletionManager completionManager)
+   private void updateLanguage(CompletionManager completionManager,
+                               ScopeTreeManager scopeTreeManager)
    {
       clearLint();
       if (fileType_ == null)
@@ -797,7 +805,14 @@ public class AceEditor implements DocDisplay,
          completionManager_ = null;
       }
       
+      if (scopes_ != null)
+      {
+         scopes_.detach();
+         scopes_ = null;
+      }
+      
       completionManager_ = completionManager;
+      scopes_ = scopeTreeManager;
 
       updateKeyboardHandlers();
       syncCompletionPrefs();
@@ -2802,7 +2817,7 @@ public class AceEditor implements DocDisplay,
    
    public boolean isScopeTreeReady(int row)
    {
-      return backgroundTokenizer_.isReady(row);
+      return hasScopeTree() && backgroundTokenizer_.isReady(row);
    }
    
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
@@ -2810,6 +2825,11 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
    }
 
+   public HandlerRegistration addActiveScopeChangedHandler(ActiveScopeChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(ActiveScopeChangedEvent.TYPE, handler);
+   }
+   
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
       return widget_.addHandler(handler, RenderFinishedEvent.TYPE);
@@ -3901,8 +3921,11 @@ public class AceEditor implements DocDisplay,
             @Override
             public void onDocumentChanged(DocumentChangedEvent event)
             {
-               row_ = event.getEvent().getRange().getStart().getRow();
-               timer_.schedule(DELAY_MS);
+               if (editor_.hasScopeTree())
+               {
+                  row_ = event.getEvent().getRange().getStart().getRow();
+                  timer_.schedule(DELAY_MS);
+               }
             }
          });
       }
@@ -3974,6 +3997,7 @@ public class AceEditor implements DocDisplay,
    private final SnippetHelper snippets_;
    private ScrollAnimator scrollAnimator_;
    private CompletionManager completionManager_;
+   private ScopeTreeManager scopes_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
    private CollabEditor collab_;
