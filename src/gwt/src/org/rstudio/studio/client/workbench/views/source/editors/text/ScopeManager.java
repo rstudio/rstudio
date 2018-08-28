@@ -16,86 +16,28 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class ScopeManager extends JavaScriptObject
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsType;
+
+@JsType(isNative = true, namespace = "AceSupport")
+public class ScopeManager
 {
-   protected ScopeManager()
-   {
-   }
+   public final native Position getParsePosition();
+   public final native void setParsePosition(Position position);
+   public final native void onSectionStart(String label, Position position);
+   public final native void onSectionEnd(Position position);
+   public final native void onChunkStart(String chunkLabel, String label, Position chunkStartPos, Position chunkPos);
+   public final native void onChunkEnd(Position position);
+   public final native void onNamedScopeStart(String label, Position position);
+   public final native void onScopeStart(Position position);
+   public final native void onScopeEnd(Position position);
+   public final native JsArray<Scope> getActiveScopes(Position position);
+   public final native JsArray<Scope> getScopeList();
+   public final native void invalidateFrom(Position position);
    
-   public static final native ScopeManager create()
-   /*-{
-      var module = $wnd.require("mode/r_scope_tree");
-      var ScopeManager = module.ScopeManager;
-      var ScopeNode    = module.ScopeNode;
-      return new ScopeManager(ScopeNode);
-   }-*/;
-   
-   public final native Position getParsePosition()
-   /*-{
-      return this.parsePos;
-   }-*/;
-   
-   public final native void setParsePosition(Position position)
-   /*-{
-      this.parsePos = position;
-   }-*/;
-   
-   public final native void onSectionStart(String label, Position position)
-   /*-{
-      this.onSectionHead(label, position);
-   }-*/;
-   
-   public final native void onSectionEnd(Position position)
-   /*-{
-      this.onSectionEnd(position);
-   }-*/;
-   
-   public final native void onChunkStart(String chunkLabel,
-                                         String label,
-                                         Position chunkStartPos,
-                                         Position chunkPos)
-   /*-{
-      this.onChunkStart(chunkLabel, label, chunkStartPos, chunkPos);
-   }-*/;
-   
-   public final native void onChunkEnd(Position position)
-   /*-{
-      this.onChunkEnd(position);
-   }-*/;
-   
-   public final native void onNamedScopeStart(String label, Position position)
-   /*-{
-      this.onNamedScopeStart(label, position);
-   }-*/;
-   
-   public final native void onScopeStart(Position position)
-   /*-{
-      this.onScopeStart(position);
-   }-*/;
-   
-   public final native void onScopeEnd(Position position)
-   /*-{
-      this.onScopeEnd(position);
-   }-*/;
-   
-   public final native JsArray<Scope> getActiveScopes(Position position)
-   /*-{
-      return this.getActiveScopes(position);
-   }-*/;
-   
-   public final native JsArray<Scope> getScopeList()
-   /*-{
-      return this.getScopeList();
-   }-*/;
-   
-   public final native void invalidateFrom(Position position)
-   /*-{
-      this.invalidateFrom(position);
-   }-*/;
-   
+   @JsOverlay
    public final Scope getScopeAt(Position position)
    {
       JsArray<Scope> scopes = getActiveScopes(position);

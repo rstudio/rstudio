@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -257,6 +258,8 @@ public class AceEditor implements DocDisplay,
                               {
                                  public void onLoaded()
                                  {
+                                    AceSupport.initialize();
+                                    
                                     if (command != null)
                                        command.execute();
                                  }

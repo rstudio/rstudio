@@ -915,7 +915,7 @@ var RCodeModel = function(session, tokenizer,
                label = label.replace(/\s*[#=-]+\s*$/, "");
             }
 
-            this.$scopes.onSectionHead(label, position);
+            this.$scopes.onSectionStart(label, position);
          }
 
          // Sweave
@@ -967,7 +967,7 @@ var RCodeModel = function(session, tokenizer,
          else if (/\bcodebegin\b/.test(type) && value === "---")
          {
             var title = $extractYamlTitle(this.$session);
-            this.$scopes.onSectionHead(title, position, {isYaml: true});
+            this.$scopes.onSectionStart(title, position, {isYaml: true});
          }
 
          else if (/\bcodeend\b/.test(type) && value === "---")
@@ -983,7 +983,7 @@ var RCodeModel = function(session, tokenizer,
                   /\bcodebegin\b/.test(type) &&
                   value.trim().indexOf("/***") === 0)
          {
-            this.$scopes.onSectionHead("(R Code Chunk)", position);
+            this.$scopes.onSectionStart("(R Code Chunk)", position);
          }
 
          else if (modeId === "mode/rmarkdown" &&

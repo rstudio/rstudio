@@ -48,7 +48,7 @@ public abstract class ScopeTreeManager
       
       docDisplay_ = docDisplay;
       worker_ = new Worker();
-      scopeManager_ = ScopeManager.create();
+      scopeManager_ = new ScopeManager();
       
       handlers_ = new HandlerRegistration[] {
             
