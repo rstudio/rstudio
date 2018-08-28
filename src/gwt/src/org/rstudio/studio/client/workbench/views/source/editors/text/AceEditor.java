@@ -2492,7 +2492,7 @@ public class AceEditor implements DocDisplay,
       if (scopes_ != null)
          return scopes_.getScopeTree();
       
-      return null;
+      return JavaScriptObject.createArray().cast();
    }
 
    @Override
@@ -2835,10 +2835,10 @@ public class AceEditor implements DocDisplay,
       if (hasCodeModelScopeTree())
          return backgroundTokenizer_.isReady(row);
       
-      if (scopes_ == null)
-         return false;
+      if (scopes_ != null)
+         return scopes_.isReady(row);
       
-      return scopes_.isReady(row);
+      return false;
    }
    
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
