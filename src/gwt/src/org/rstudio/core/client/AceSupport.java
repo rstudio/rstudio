@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client;
 
+// This class is used primarily to export the Ace support classes we define
+// for inter-operation with GWT JsInterop. See ScopeManager.java for an example.
 public class AceSupport
 {
    public static final native void initialize()
