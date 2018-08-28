@@ -16,7 +16,7 @@ data {
 }
 
 // The parameters accepted by the model. Our model
-// accepts two paramters 'mu' and 'sigma'.
+// accepts two parameters 'mu' and 'sigma'.
 parameters {
   real mu;
   real<lower=0> sigma;

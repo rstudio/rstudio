@@ -465,7 +465,7 @@ json::Value getCols(SEXP dataSEXP)
 }
 
 // given an object from which to return data, and a description of the data to
-// return via URL-encoded paramters supplied by the DataTables API, returns the
+// return via URL-encoded parameters supplied by the DataTables API, returns the
 // data requested by the parameters. 
 //
 // the shape of the API is described here:
