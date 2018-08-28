@@ -91,7 +91,7 @@ public class TextEditingTargetCommentHeaderHelper
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       customHeaderPattern_ = Pattern.create(
-         "^" + comment + "\\s*!" + keyword + "\\s+([.a-zA-Z]+[.a-zA-Z0-9:_]*)\\s*(.*)$",
+         "^" + comment + "\\s*!" + keyword + "\\s*([.a-zA-Z]+[.a-zA-Z0-9:_]*)?\\s*(\\s+|\\()(.*)$",
          ""
       );
 
@@ -108,15 +108,19 @@ public class TextEditingTargetCommentHeaderHelper
          {
             Match match = customHeaderPattern_.match(line, 0);
             if (match != null &&
-                match.hasGroup(1) &&
-                match.hasGroup(2))
+                match.hasGroup(2) &&
+                match.hasGroup(3))
             {
-               String function = match.getGroup(1);
-               String options = match.getGroup(2);
+               String function = match.hasGroup(1) ? match.getGroup(1) : "";
+               String options = match.getGroup(3);
+               String parenthesis = match.hasGroup(2) ? match.getGroup(2) : "";
 
                // Support for explicit function calls
                if (options.startsWith("(")) {
                   options = options.replaceAll("^\\(|\\)$", "");
+               }
+               else if (parenthesis.startsWith("(")) {
+                  options = options.replaceAll("\\)$", "");
                }
 
                // Split parameters

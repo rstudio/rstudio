@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -41,77 +42,29 @@ public class TextEditingTargetSqlHelper
    
    public void previewSql(EditingTarget editingTarget)
    {
-      SqlPreview sqlPreview = parseSqlPreview();
-      if (sqlPreview != null)
+      TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
+         docDisplay_.getCode(),
+         "preview",
+         "--"
+      );
+
+      if (previewSource.getFunction().length() == 0)
       {
-         String statement = "";
-         
-         if (editingTarget.dirtyState().getValue() || editingTarget.getPath() == null)
-         {
-            statement = docDisplay_.getCode();
-         }
-         else
-         {
-            statement = editingTarget.getPath();
-         }
-
-         String statementEscaped = statement.replaceAll("\\\"", "\\\\\"");
-         String command = "previewSql(statement = \"" + statementEscaped + "\"," +
-            sqlPreview.args +
-            ")";
-
-         eventBus_.fireEvent(new SendToConsoleEvent(command, true));
+         previewSource.setFunction("previewSql");
       }
-   }
-   
-   private SqlPreview parseSqlPreview()
-   {
-      String args = "";
-      Boolean hasPreview = false;
 
-      Iterable<String> lines = StringUtil.getLineIterator(docDisplay_.getCode());
-
-      for (String line : lines)
-      {
-         line = line.trim();
-         if (line.length() == 0)
+      previewSource.buildCommand(
+         editingTarget.getPath(),
+         new OperationWithInput<String>() 
          {
-            continue;
-         }
-         else if (!hasPreview && line.startsWith("--"))
-         {
-            Match match = sqlPreviewPattern_.match(line, 0);
-            if (match != null)
+            @Override
+            public void execute(String command)
             {
-               if (match.hasGroup(1)) {
-                  hasPreview = true;
-                  args = match.getGroup(1);
-               }
+               eventBus_.fireEvent(new SendToConsoleEvent(command, true));
             }
-         }   
-      }
-      
-      if (hasPreview) {
-         return new SqlPreview(args);
-      } else {
-         return null;
-      }
+         }
+      );
    }
-   
-   
-   private class SqlPreview 
-   {
-      public SqlPreview(String args)
-      {
-         this.args = args;
-      }
-      
-      public final String args;
-   }
-   
-   private static final Pattern sqlPreviewPattern_ = 
-         Pattern.create("^--\\s*!preview\\s+(.*)$");
-   
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
 }
