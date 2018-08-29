@@ -584,7 +584,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             restoreFocus_ = true;
             processCommandEntry();
          }
-         else if (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0)
+         else if (
+               (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0) ||
+               (!BrowseCap.isWindows() && (keyCode == KeyCodes.KEY_C && modifiers == KeyboardShortcut.CTRL)))
          {
             event.preventDefault();
 
