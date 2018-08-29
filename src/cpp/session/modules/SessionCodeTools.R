@@ -2262,21 +2262,24 @@
 .rs.addJsonRpcHandler("replace_comment_header", function(command, path, code)
 {
    .rs.scalar(
-      deparse(
-         do.call(
-            "substitute",
-            args = list(
-               eval(
-                  parse(
-                     text = paste("quote(", command, ")", sep = "")
+      paste(
+         deparse(
+            do.call(
+               "substitute",
+               args = list(
+                  eval(
+                     parse(
+                        text = paste("quote(", command, ")", sep = "")
+                     )
+                  ),
+                  list(
+                     .code = code,
+                     .file = path
                   )
-               ),
-               list(
-                  .code = code,
-                  .file = path
                )
             )
-         )
+         ),
+         collapse = ""
       )
    )
 })
