@@ -44,29 +44,12 @@ public class TextEditingTargetCommentHeaderHelper
       
       if (commentHeader_.args.length > 0)
       {
-         boolean implicitPath = true;
-
-         for (int idxOpt = 0; idxOpt < commentHeader_.args.length; idxOpt++)
-         {
-            if (commentHeader_.args[idxOpt].equals(".file"))
-            {
-               implicitPath = false;
-               commentHeader_.args[idxOpt] = StringUtil.ensureQuoted(path);
-            }
-            else if (commentHeader_.args[idxOpt].equals(".code"))
-            {
-               implicitPath = false;
-               String quotedCode = code_.replaceAll("\\\\", "\\\\\\\\");
-               commentHeader_.args[idxOpt] = StringUtil.ensureQuoted(quotedCode);
-            }
-         }
-
-         if (implicitPath)
-         {
-            argsString = StringUtil.ensureQuoted(path) + ", ";
-         }
-
          argsString += StringUtil.join(commentHeader_.args, ", ");
+      }
+
+      if (!argsString.contains(".file") && !argsString.contains(".code"))
+      {
+         argsString = StringUtil.ensureQuoted(path) + ", " + argsString;
       }
 
       return commentHeader_.function + "(" + argsString + ")";
@@ -81,7 +64,25 @@ public class TextEditingTargetCommentHeaderHelper
             public void onResponseReceived(String path)
             {
                String command = buildCommand(path);
-               operation.execute(command);
+               if (command.contains(".file") || command.contains(".code"))
+               {
+                  server_.replaceCommentHeader(
+                     command,
+                     path,
+                     code_,
+                     new SimpleRequestCallback<String>() {
+                        @Override
+                        public void onResponseReceived(String replacedCommand)
+                        {
+                           operation.execute(replacedCommand);
+                        }
+                     }
+                  );
+               }
+               else
+               {
+                  operation.execute(command);
+               }
             }
          });
    }
@@ -133,7 +134,7 @@ public class TextEditingTargetCommentHeaderHelper
                      optionsArr[idxOpt] = optionsArr[idxOpt].trim();
                   }
                }
-               
+
                commentHeader_ = new CommentHeader(function, optionsArr);
             }
             

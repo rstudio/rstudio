@@ -2289,7 +2289,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "get_minimal_source_path", path, callback);
    }
-
    
    @Override
    public void getShinyCapabilities(
@@ -5577,6 +5576,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_THEME, params, callback);
    }
 
+   @Override
+   public void replaceCommentHeader(String command,
+                                    String path,
+                                    String code,
+                                    ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      params.set(1, new JSONString(path));
+      params.set(2, new JSONString(code));
+      sendRequest(RPC_SCOPE, REPLACE_COMMENT_HEADER, params, callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private String userHomePath_;
@@ -6026,4 +6038,6 @@ public class RemoteServer implements Server
    private static final String GET_THEMES = "get_themes";
    private static final String ADD_THEME = "add_theme";
    private static final String REMOVE_THEME = "remove_theme";
+
+   private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
 }
