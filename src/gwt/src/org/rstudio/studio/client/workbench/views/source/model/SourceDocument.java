@@ -178,6 +178,11 @@ public class SourceDocument extends JavaScriptObject
    {
       return extendedType != null && extendedType == SourceDocument.XT_PLUMBER_API;
    }
+
+   public static boolean hasCustomSource(String extendedType)
+   {
+      return extendedType != null && extendedType == SourceDocument.XT_R_CUSTOM_SOURCE;
+   }
    
    public final static String XT_RMARKDOWN = "rmarkdown";
    public final static String XT_SHINY_PREFIX = "shiny-";
@@ -191,4 +196,5 @@ public class SourceDocument extends JavaScriptObject
    public final static String XT_JS_PREVIEWABLE = "js-previewable";
    public final static String XT_SQL_PREVIEWABLE = "sql-previewable";
    public final static String XT_PLUMBER_API = "plumber-api";
+   public final static String XT_R_CUSTOM_SOURCE = "r-custom-source";
 }

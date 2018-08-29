@@ -153,6 +153,7 @@
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
+#include "modules/customsource/SessionCustomSource.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/jobs/SessionJobs.hpp"
@@ -524,6 +525,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::tests::initialize)
       (modules::jobs::initialize)
       (modules::themes::initialize)
+      (modules::customsource::initialize)
 
       // workers
       (workers::web_request::initialize)
