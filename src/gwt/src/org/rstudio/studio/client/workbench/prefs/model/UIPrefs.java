@@ -260,6 +260,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
          checkArgumentsToRFunctionCalls().setGlobalValue(
                newUiPrefs.checkArgumentsToRFunctionCalls().getGlobalValue());
          
+         checkUnexpectedAssignmentInFunctionCall().setGlobalValue(
+               newUiPrefs.checkUnexpectedAssignmentInFunctionCall().getGlobalValue());
+         
          warnIfNoSuchVariableInScope().setGlobalValue(
                newUiPrefs.warnIfNoSuchVariableInScope().getGlobalValue());
          

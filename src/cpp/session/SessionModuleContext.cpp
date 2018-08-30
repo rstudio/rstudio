@@ -1805,6 +1805,10 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
+   else if (name == ".gitlab-ci.yml")
+   {
+      return true;
+   }
    else if (userSettings().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")

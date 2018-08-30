@@ -405,6 +405,7 @@ public class EditingPreferencesPane extends PreferencesPane
       final VerticalPanel rOptionsPanel = new VerticalPanel();
       rOptionsPanel.add(checkboxPref("Enable diagnostics within R function calls", prefs.diagnosticsInRFunctionCalls()));
       rOptionsPanel.add(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref("Check usage of '<-' in function call", prefs.checkUnexpectedAssignmentInFunctionCall()));
       rOptionsPanel.add(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope()));
       rOptionsPanel.add(checkboxPref("Warn if variable is defined but not used", prefs.warnIfVariableDefinedButNotUsed()));
       rOptionsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics()));

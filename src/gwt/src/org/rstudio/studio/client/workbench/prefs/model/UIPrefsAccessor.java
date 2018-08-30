@@ -246,6 +246,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("check_arguments_to_r_function_calls", false);
    }
    
+   public PrefValue<Boolean> checkUnexpectedAssignmentInFunctionCall()
+   {
+      return bool("check_unexpected_assignment_in_function_call", false);
+   }
+   
    public PrefValue<Boolean> warnIfNoSuchVariableInScope()
    {
       return bool("warn_if_no_such_variable_in_scope", false);
