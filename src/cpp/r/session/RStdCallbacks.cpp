@@ -363,7 +363,8 @@ int RReadConsole (const char *pmt,
       }
       else
       {
-         return 0; // terminate
+         // buffer not ready
+         return 0;
       }
    }
    catch(r::exec::InterruptException&)
@@ -377,8 +378,8 @@ int RReadConsole (const char *pmt,
       r::exec::checkUserInterrupt();
 #endif
 
-      // return success
-      return 1;
+      // buffer not ready
+      return 0;
    }
    catch(const std::exception& e)
    {
@@ -393,7 +394,7 @@ int RReadConsole (const char *pmt,
       rSuicide(msg);
    }
       
-   return 0 ; // keep compiler happy
+   return 0; // keep compiler happy
 }
    
 void RShowMessage(const char* msg)

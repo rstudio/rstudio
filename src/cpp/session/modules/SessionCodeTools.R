@@ -2258,3 +2258,28 @@
    else
       matches
 })
+
+.rs.addJsonRpcHandler("replace_comment_header", function(command, path, code)
+{
+   .rs.scalar(
+      paste(
+         deparse(
+            do.call(
+               "substitute",
+               args = list(
+                  eval(
+                     parse(
+                        text = paste("quote(", command, ")", sep = "")
+                     )
+                  ),
+                  list(
+                     .code = code,
+                     .file = path
+                  )
+               )
+            )
+         ),
+         collapse = ""
+      )
+   )
+})

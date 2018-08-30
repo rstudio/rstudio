@@ -23,6 +23,7 @@ public class MermaidFileType extends PreviewableFromRFileType
    public MermaidFileType()
    {
       super("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
-            new ImageResource2x(FileIconResources.INSTANCE.iconMermaid2x()), "DiagrammeR::mermaid");
+            new ImageResource2x(FileIconResources.INSTANCE.iconMermaid2x()), "DiagrammeR::mermaid",
+            false);
    }
 }

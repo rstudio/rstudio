@@ -455,6 +455,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
+      rHelper_ = new TextEditingTargetRHelper(docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -2387,7 +2388,7 @@ public class TextEditingTarget implements
    
    public void revertChanges(Command onCompleted)
    {
-      docUpdateSentinel_.revert(onCompleted);
+      docUpdateSentinel_.revert(onCompleted, ignoreDeletes_);
    }
 
    public void saveThenExecute(String encodingOverride, final Command command)
@@ -5457,6 +5458,11 @@ public class TextEditingTarget implements
          }
       }); 
    }
+
+   void customSource()
+   {
+      rHelper_.customSource(TextEditingTarget.this);
+   }
    
    void renderRmd()
    {
@@ -6179,7 +6185,7 @@ public class TextEditingTarget implements
    
    boolean useScopeTreeFolding()
    {
-      return docDisplay_.hasScopeTree();
+      return docDisplay_.hasCodeModelScopeTree();
    }
 
    void handlePdfCommand(final String completedAction,
@@ -6280,6 +6286,11 @@ public class TextEditingTarget implements
                else if (fileType_.canPreviewFromR())
                {
                   previewFromR();
+               }
+               else if (fileType_.isR())
+               {
+                  if (extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
+                     customSource();
                }
                else
                {
@@ -7264,6 +7275,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
+   private final TextEditingTargetRHelper rHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;

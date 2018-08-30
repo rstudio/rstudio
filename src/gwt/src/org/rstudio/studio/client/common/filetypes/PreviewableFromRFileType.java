@@ -29,11 +29,12 @@ public class PreviewableFromRFileType extends TextFileType
                                    EditorLanguage editorLanguage,
                                    String defaultExtension,
                                    ImageResource icon,
-                                   String previewFunction)
+                                   String previewFunction,
+                                   boolean canShowScopeTree)
    {
       super(id, label, editorLanguage, defaultExtension, icon,
             true, true, false, false, false, false, 
-            false, false, false, false, false, false, true);
+            false, false, false, false, false, canShowScopeTree, true);
       
       previewFunction_ = previewFunction;
    }

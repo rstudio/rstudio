@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetJSHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,13 +17,13 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.inject.Inject;
 
@@ -36,93 +36,48 @@ public class TextEditingTargetJSHelper
    }
    
    @Inject
-   void initialize(GlobalDisplay display, EventBus eventBus, SourceServerOperations server)
+   void initialize(GlobalDisplay display, EventBus eventBus)
    {
       display_ = display;
       eventBus_ = eventBus;
-      server_ = server;
    }
    
    
    public void previewJS(EditingTarget editingTarget)
    {
-      JsPreview jsPreview = parseJSPreview();
-      if (jsPreview != null && jsPreview.pkg.equals("r2d3"))
+      TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
+         docDisplay_.getCode(),
+         "preview",
+         "//"
+      );
+
+      if (!previewSource.getFunction().equals("r2d3"))
       {
-         server_.getMinimalSourcePath(
-            editingTarget.getPath(), 
-            new SimpleRequestCallback<String>() {
+         display_.showErrorMessage(
+                        "Error Previewing JavaScript",
+                        "'" + previewSource.getFunction() + "' is not a known previewer for " +
+                        "JavaScript files. Did you mean 'r2d3'?");
+      }
+      else
+      {
+         previewSource.setFunction("r2d3::r2d3");
+
+         previewSource.buildCommand(
+            editingTarget.getPath(),
+            new OperationWithInput<String>() 
+            {
                @Override
-               public void onResponseReceived(String path)
+               public void execute(String command)
                {
-                  String command = "r2d3::r2d3(" + jsPreview.args + 
-                        ", script=\"" + path + "\")";
                   eventBus_.fireEvent(new SendToConsoleEvent(command, true));
                }
-            });
-      }
-   }
-   
-   private JsPreview parseJSPreview()
-   {
-      Iterable<String> lines = StringUtil.getLineIterator(docDisplay_.getCode());
-      for (String line : lines)
-      {
-         line = line.trim();
-         if (line.length() == 0)
-         {
-            continue;
-         }
-         else if (line.startsWith("//"))
-         {
-            Match match = jsPreviewPattern_.match(line, 0);
-            if (match != null &&
-                match.hasGroup(1) &&
-                match.hasGroup(2))
-            {
-               String previewer = match.getGroup(1);
-               String options = match.getGroup(2);
-               
-               // validate that this is an understood previewer
-               if (!StringUtil.equals(previewer, "r2d3"))
-               {
-                  display_.showErrorMessage(
-                        "Error Previewing JavaScript",
-                        "'" + previewer + "' is not a known previewer for " +
-                        "JavaScript files. Did you mean 'r2d3'?");
-               }
-               else
-               {
-                  return new JsPreview(previewer, options);
-               }
             }
-            
-         }   
+         );
       }
-      
-      return null;
    }
    
-   
-   private class JsPreview 
-   {
-      public JsPreview(String pkg, String args)
-      {
-         this.pkg = pkg;
-         this.args = args;
-      }
-      
-      public final String pkg;
-      public final String args;
-   }
-   
-   private static final Pattern jsPreviewPattern_ = 
-         Pattern.create("^//\\s*!preview\\s+(\\w+)\\s+(.*)$", "");
-   
-  
    private GlobalDisplay display_;
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
-   private SourceServerOperations server_;
   
 }

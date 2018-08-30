@@ -23,6 +23,7 @@ public class GraphvizFileType extends PreviewableFromRFileType
    public GraphvizFileType()
    {
       super("graphviz", "GraphViz", EditorLanguage.LANG_GRAPHVIZ, ".gv",
-            new ImageResource2x(FileIconResources.INSTANCE.iconGraphviz2x()), "DiagrammeR::grViz");
+            new ImageResource2x(FileIconResources.INSTANCE.iconGraphviz2x()), "DiagrammeR::grViz",
+            false);
    }
 }

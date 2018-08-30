@@ -125,13 +125,16 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.Ob
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorIdleCommands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
@@ -171,6 +174,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CompletionManagerBase completionManagerBase);
    void injectMembers(RCompletionManager rCompletionManager);
    void injectMembers(PythonCompletionManager pythonCompletionManager);
+   void injectMembers(ScopeTreeManager scopeTreeManager);
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
@@ -188,8 +192,10 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
+   void injectMembers(TextEditingTargetCommentHeaderHelper commentHeaderHelper);
    void injectMembers(TextEditingTargetCppHelper cppHelper);
    void injectMembers(TextEditingTargetJSHelper jsHelper);
+   void injectMembers(TextEditingTargetRHelper rHelper);
    void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(TextEditingTargetPackageDependencyHelper packageDependencyHelper);

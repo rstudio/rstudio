@@ -345,7 +345,7 @@ var CppCodeModel = function(session, tokenizer,
             if (label.length > 50)
                label = label.substring(0, 50) + "...";
 
-            this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
+            this.$scopes.onSectionStart(label, tokenCursor.currentPosition());
          }
          
          else if (/\bcodebegin\b/.test(tokenType))

@@ -258,4 +258,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                     String fileType,
                                     ServerRequestCallback<AvailablePackagesReadyEvent.Data> requestCallback);
    
+   public void replaceCommentHeader(String command,
+                                    String path,
+                                    String code,
+                                    ServerRequestCallback<String> requestCallback);
 }

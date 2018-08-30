@@ -1,5 +1,5 @@
 /*
- * SessionPreview.cpp
+ * SessionCustomSource.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionPreview.hpp"
+#include "SessionCustomSource.hpp"
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -36,33 +36,22 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace modules { 
-namespace preview {
+namespace customsource {
 
 namespace {
 
-#define kJSPreviewable "js-previewable"
-#define kSqlPreviewable "sql-previewable"
+#define kRCustomSource "r-custom-source"
 
 std::string onDetectSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeJS))
+   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeRSource))
    {
-      static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+( |\\().*$");
+      static const boost::regex reCustomSourceComment("^#\\s*!source\\s+\\w+.*$");
       std::string contents = pDoc->contents();
-      if (regex_utils::search(contents.begin(), contents.end(), rePreviewComment))
+      if (regex_utils::search(contents.begin(), contents.end(), reCustomSourceComment))
       {
-         return kJSPreviewable;
-      }
-   }
-
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeSQL))
-   {
-      static const boost::regex rePreviewComment("^--\\s*!preview\\s+\\w+.*$");
-      std::string contents = pDoc->contents();
-      if (regex_utils::search(contents.begin(), contents.end(), rePreviewComment))
-      {
-         return kSqlPreviewable;
+         return kRCustomSource;
       }
    }
 
@@ -82,7 +71,7 @@ Error initialize()
 }
 
 
-} // namespace preview
+} // namespace customsource
 } // namespace modules
 } // namespace session
 } // namespace rstudio

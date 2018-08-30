@@ -168,6 +168,7 @@ set (SESSION_SOURCE_FILES
    modules/connections/ConnectionHistory.cpp
    modules/connections/ConnectionsIndexer.cpp
    modules/connections/SessionConnections.cpp
+   modules/customsource/SessionCustomSource.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp
