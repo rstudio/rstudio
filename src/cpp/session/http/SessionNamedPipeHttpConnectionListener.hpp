@@ -371,6 +371,9 @@ private:
       // to also initiate a suspend (e.g. an admin/supervisor process)
       if (connection::checkForSuspend(ptrHttpConnection))
          return;
+      
+      if (connection::checkForInterrupt(ptrHttpConnection))
+         return;
 
       // place the connection on the correct queue
       if (connection::isGetEvents(ptrHttpConnection))

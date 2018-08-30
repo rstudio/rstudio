@@ -31,6 +31,10 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <core/system/Interrupts.hpp>
+
+#include <r/RExec.hpp>
+
 #include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
@@ -211,6 +215,34 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
    }
 }
 #endif
+
+bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   using namespace rstudio::core;
+   using namespace rstudio::core::json;
+   
+   if (!isMethod(ptrConnection, "interrupt"))
+      return false;
+   
+   JsonRpcRequest request;
+   Error error = parseJsonRpcRequest(
+            ptrConnection->request().body(),
+            &request);
+   if (error)
+   {
+      ptrConnection->sendJsonRpcError(error);
+   }
+   else
+   {
+      // interrupt the session
+      core::system::interrupt();
+
+      // acknowledge request
+      ptrConnection->sendJsonRpcResponse();
+   }
+
+   return true;
+}
 
 bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
                   const std::string& secret)

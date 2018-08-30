@@ -240,6 +240,7 @@ if (UNIX)
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
+      system/PosixInterrupts.cpp
       system/PosixLibraryLoader.cpp
       system/PosixNfs.cpp
       system/PosixParentProcessMonitor.cpp
@@ -288,6 +289,7 @@ else()
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32Environment.cpp
+      system/Win32Interrupts.cpp
       system/Win32LibraryLoader.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32Pty.cpp

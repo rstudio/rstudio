@@ -51,13 +51,21 @@ void launchProcess(const std::string& absPath,
                    const QStringList& argList,
                    QProcess** ppProc)
 {
-   auto* pProcess = new QProcess();
+   QProcess* process = new QProcess();
+   process->setProgram(QString::fromStdString(absPath));
+   process->setArguments(argList);
    if (options().runDiagnostics())
-      pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-   else
-      pProcess->setProcessChannelMode(QProcess::SeparateChannels);
-   pProcess->start(QString::fromUtf8(absPath.c_str()), argList);
-   *ppProc = pProcess;
+      process->setProcessChannelMode(QProcess::ForwardedChannels);
+
+#ifdef _WIN32
+   process->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* cpa)
+   {
+      cpa->flags |= CREATE_NEW_PROCESS_GROUP;
+   });
+#endif
+
+   process->start();
+   *ppProc = process;
 }
 
 FilePath abendLogPath()
