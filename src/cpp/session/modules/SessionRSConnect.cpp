@@ -32,6 +32,7 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #define kFinishedMarker "Deployment completed: "
 #define kRSConnectFolder "rsconnect/"
@@ -91,6 +92,7 @@ public:
          const std::string& appTitle,
          const std::string& appId, 
          const std::string& contentCategory,
+         const std::string& websiteDir,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
@@ -156,6 +158,16 @@ public:
          }
       }
       
+      // for static website deployments, store the publish record in the 
+      // website root instead of the appDir; this prevents record from being blown
+      // away when the static content is cleaned and regenerated, thus permitting
+      // iterative republishing of static content
+      std::string recordDir;
+      if (asStatic && contentCategory == "site" && !websiteDir.empty())
+      {
+         recordDir = string_utils::utf8ToSystem(websiteDir);
+      }
+      
       std::string appDir = string_utils::utf8ToSystem(dir);
       if (appDir == "~")
          appDir = "~/";
@@ -163,6 +175,8 @@ public:
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
+             (recordDir.empty() ? "" : "recordDir = '" + 
+                string_utils::singleQuotedStrEscape(recordDir) + "',") + 
              (pDeploy->manifestPath_.empty() ? "" : "appFileManifest = '" + 
                 string_utils::singleQuotedStrEscape(
                    pDeploy->manifestPath_.absolutePath()) + "', ") +
@@ -283,11 +297,12 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       return error;
 
    // read publish source information
-   std::string sourceDir, sourceDoc, sourceFile, contentCategory;
+   std::string sourceDir, sourceDoc, sourceFile, contentCategory, websiteDir;
    error = json::readObject(source, "deploy_dir",       &sourceDir,
                                     "deploy_file",      &sourceFile,
                                     "source_file",      &sourceDoc,
-                                    "content_category", &contentCategory);
+                                    "content_category", &contentCategory,
+                                    "website_dir",      &websiteDir);
    if (error)
       return error;
 
@@ -313,6 +328,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                                        sourceFile, sourceDoc, 
                                        account, server, appName, appTitle, appId, 
                                        contentCategory,
+                                       websiteDir,
                                        additionalFiles,
                                        ignoredFiles, asMultiple, asStatic,
                                        &s_pRSConnectPublish_);
@@ -459,8 +475,21 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    if (path.exists() && (path.hasExtensionLowerCase(".rmd") || 
                          path.hasExtensionLowerCase(".md")))
    {
+      // check to see if this is a website directory
       if (r_util::isWebsiteDirectory(path.parent()))
          websiteDir = path.parent().absolutePath();
+      else
+      {
+         // if the folder containing the R Markdown or Markdown file wasn't itself
+         // a website folder, then see if this is a project, and the project-root 
+         // is a website; this supports source files stored in subfolders of a 
+         // website project
+         projects::ProjectContext& context = session::projects::projectContext();
+         if (context.hasProject() && !context.directory().empty() && r_util::isWebsiteDirectory(context.directory()))
+         {
+            websiteDir = context.directory().absolutePath();
+         }
+      } 
    }
    result["website_dir"] = websiteDir;
 

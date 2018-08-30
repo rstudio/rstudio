@@ -209,6 +209,7 @@ public class RSConnectPublishSource
                getSourceFile() : "");
       obj.setString("content_category", StringUtil.notNull(
             getContentCategory()));
+      obj.setString("website_dir", StringUtil.notNull(getWebsiteDir()));
       return obj.cast();
    }
    

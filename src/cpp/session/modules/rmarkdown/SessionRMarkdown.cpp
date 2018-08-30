@@ -641,6 +641,16 @@ private:
          // check to see if this is a website directory
          if (r_util::isWebsiteDirectory(targetFile_.parent()))
             websiteDir = createAliasedPath(targetFile_.parent());
+         else
+         {
+            // see if this is a project, and the project-root is a website; this is to
+            // support source files stored in subfolders of a website project
+            projects::ProjectContext& context = session::projects::projectContext();
+            if (context.hasProject() && !context.directory().empty() && r_util::isWebsiteDirectory(context.directory()))
+            {
+               websiteDir = createAliasedPath(context.directory());
+            }
+         }
       }
       else
       {
