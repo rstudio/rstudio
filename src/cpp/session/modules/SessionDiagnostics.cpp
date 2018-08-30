@@ -648,6 +648,9 @@ ParseResults parse(const std::wstring& rCode,
    options.setCheckArgumentsToRFunctionCalls(
             userSettings().checkArgumentsToRFunctionCalls());
    
+   options.setCheckUnexpectedAssignmentInFunctionCall(
+            userSettings().checkUnexpectedAssignmentInFunctionCall());
+   
    options.setWarnIfVariableIsDefinedButNotUsed(
             isExplicit && userSettings().warnIfVariableDefinedButNotUsed());
    

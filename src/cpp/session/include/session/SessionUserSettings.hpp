@@ -213,6 +213,9 @@ public:
    bool checkArgumentsToRFunctionCalls() const;
    void setCheckArgumentsToRFunctionCalls(bool check);
    
+   bool checkUnexpectedAssignmentInFunctionCall() const;
+   void setCheckUnexpectedAssignmentInFunctionCall(bool check);
+   
    bool warnIfNoSuchVariableInScope() const;
    void setWarnIfNoSuchVariableInScope(bool enable);
    
@@ -299,6 +302,7 @@ private:
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;
    mutable boost::scoped_ptr<bool> pCheckArgumentsToRFunctionCalls_;
+   mutable boost::scoped_ptr<bool> pCheckUnexpectedAssignmentInFunctionCall_;
    mutable boost::scoped_ptr<bool> pWarnIfNoSuchVariableInScope_;
    mutable boost::scoped_ptr<bool> pWarnIfVariableDefinedButNotUsed_;
    mutable boost::scoped_ptr<bool> pEnableStyleDiagnostics_;

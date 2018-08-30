@@ -60,11 +60,13 @@ public:
    
    explicit ParseOptions(bool lintRFunctions = false,
                          bool checkArgumentsToRFunctionCalls = false,
+                         bool checkUnexpectedAssignmentInFunctionCall = false,
                          bool warnIfNoSuchVariableInScope = false,
                          bool warnIfVariableIsDefinedButNotUsed = false,
                          bool recordStyleLint = false)
       : lintRFunctions_(lintRFunctions),
         checkArgumentsToRFunctionCalls_(checkArgumentsToRFunctionCalls),
+        checkUnexpectedAssignmentInFunctionCall_(checkUnexpectedAssignmentInFunctionCall),
         warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),
         warnIfVariableIsDefinedButNotUsed_(warnIfVariableIsDefinedButNotUsed),
         recordStyleLint_(recordStyleLint)
@@ -100,6 +102,16 @@ public:
       checkArgumentsToRFunctionCalls_ = checkArgumentsToRFunctionCalls;
    }
    
+   bool checkUnexpectedAssignmentInFunctionCall() const
+   {
+      return checkUnexpectedAssignmentInFunctionCall_;
+   }
+   
+   void setCheckUnexpectedAssignmentInFunctionCall(bool checkUnexpectedAssignmentInFunctionCall)
+   {
+      checkUnexpectedAssignmentInFunctionCall_ = checkUnexpectedAssignmentInFunctionCall;
+   }
+   
    bool warnIfNoSuchVariableInScope() const
    {
       return warnIfNoSuchVariableInScope_;
@@ -124,6 +136,7 @@ public:
    {
       lintRFunctions_ = false;
       checkArgumentsToRFunctionCalls_ = false;
+      checkUnexpectedAssignmentInFunctionCall_ = false;
       warnIfNoSuchVariableInScope_ = false;
       warnIfVariableIsDefinedButNotUsed_ = false;
    }
@@ -132,6 +145,7 @@ public:
    {
       lintRFunctions_ = true;
       checkArgumentsToRFunctionCalls_ = false;
+      checkUnexpectedAssignmentInFunctionCall_ = false;
       warnIfNoSuchVariableInScope_ = false;
       warnIfVariableIsDefinedButNotUsed_ = false;
    }
@@ -140,6 +154,7 @@ public:
    {
       lintRFunctions_ = true;
       checkArgumentsToRFunctionCalls_ = true;
+      checkUnexpectedAssignmentInFunctionCall_ = true;
       warnIfNoSuchVariableInScope_ = true;
       warnIfVariableIsDefinedButNotUsed_ = true;
    }
@@ -150,6 +165,7 @@ public:
 private:
    bool lintRFunctions_;
    bool checkArgumentsToRFunctionCalls_;
+   bool checkUnexpectedAssignmentInFunctionCall_;
    bool warnIfNoSuchVariableInScope_;
    bool warnIfVariableIsDefinedButNotUsed_;
    bool recordStyleLint_;

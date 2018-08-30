@@ -2473,7 +2473,8 @@ ARGUMENT_START:
          }
       }
       
-      checkVariableAssignmentInArgumentList(cursor, status);
+      if (status.parseOptions().checkUnexpectedAssignmentInFunctionCall())
+         checkVariableAssignmentInArgumentList(cursor, status);
       
       if (closesArgumentList(cursor, status))
       {

@@ -405,6 +405,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool checkArgumentsToRFunctionCalls = readPref<bool>(prefs, "check_arguments_to_r_function_calls", false);
    pCheckArgumentsToRFunctionCalls_.reset(new bool(checkArgumentsToRFunctionCalls));
 
+   bool checkUnexpectedAssignmentInFunctionCall = readPref<bool>(prefs, "check_unexpected_assignment_in_function_call", false);
+   pCheckUnexpectedAssignmentInFunctionCall_.reset(new bool(checkUnexpectedAssignmentInFunctionCall));
+   
    bool warnIfNoSuchVariableInScope = readPref<bool>(prefs, "warn_if_no_such_variable_in_scope", false);
    pWarnIfNoSuchVariableInScope_.reset(new bool(warnIfNoSuchVariableInScope));
 
@@ -531,6 +534,11 @@ bool UserSettings::lintRFunctionCalls() const
 bool UserSettings::checkArgumentsToRFunctionCalls() const
 {
    return readUiPref<bool>(pCheckArgumentsToRFunctionCalls_);
+}
+
+bool UserSettings::checkUnexpectedAssignmentInFunctionCall() const
+{
+   return readUiPref<bool>(pCheckUnexpectedAssignmentInFunctionCall_);
 }
 
 bool UserSettings::warnIfNoSuchVariableInScope() const
