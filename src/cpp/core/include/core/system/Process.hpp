@@ -128,8 +128,11 @@ struct ProcessOptions
    // results in a call to ::setpgid(0,0) to create a new process group
    // and the specification of -pid to kill so as to kill the child and
    // all of its subprocesses
+   //
    // NOTE: to support the same behavior on Win32 we'll need to use
-   // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
+   // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect;
+   // currently this implies CREATE_NEW_PROCESS_GROUP on Windows to get
+   // the same semantics around interruptions
    bool terminateChildren;
 
    // Use kSmartTerm as terminal type and disable canonical line-by-line

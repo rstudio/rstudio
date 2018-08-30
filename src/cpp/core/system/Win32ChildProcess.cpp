@@ -508,7 +508,7 @@ Error ChildProcess::run()
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
    }
-   else if (options_.detachProcess)
+   else if (options_.detachProcess || options_.terminateChildren)
    {
       dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
       si.dwFlags |= STARTF_USESHOWWINDOW;
