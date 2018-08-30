@@ -51,6 +51,7 @@
 
 ### Miscellaneous
 
+* Subprocesses launched by 'system()' are now interruptible
 * Automatically discover packages used in R code and prompt for installation when missing
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
