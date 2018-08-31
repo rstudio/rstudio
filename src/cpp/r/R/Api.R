@@ -798,3 +798,17 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("previewSql", function(conn, statement, ...) {
    .rs.previewSql(conn, statement, ...)
 })
+
+.rs.addApiFunction("buildToolsCheck", function() {
+   .Call("rs_canBuildCpp", PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("buildToolsInstall", function(action) {
+   
+   # skip prompt if requested explicitly
+   if (is.null(action) || !nzchar(action))
+      return(.Call("rs_installBuildTools", PACKAGE = "(embedding)"))
+   
+   # otherwise, call prompting version
+   .rs.installBuildTools(action)
+})
