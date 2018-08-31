@@ -980,7 +980,7 @@
    
    if (apply)
    {
-      .rs.applyTheme(name, .Call("rs_getThemes"), PACKAGE = "(embedding)")
+      .rs.applyTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)"))
    }
    
    name

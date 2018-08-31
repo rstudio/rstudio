@@ -270,7 +270,7 @@
 
   # we have a list of lint results; convert them to markers and emit them to
   # the Markers pane
-  rsconnect:::showRstudioSourceMarkers(basePath = basePath, results = results)
+  rsconnect:::showRstudioSourceMarkers(basePath = basePath, results)
   
   # return the result to the client
   list(
