@@ -1112,14 +1112,26 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    # TODO: should we maintain our cache of help topics
    # within a session state directory, so they can be
    # reloaded when RStudio is restarted?
-   name <- "<unknown>"
-   if (reticulate::py_has_attr(resolved, "__module__") &&
-       reticulate::py_has_attr(resolved, "__name__"))
-   {
+   module <- "<unknown>"
+   if (reticulate::py_has_attr(resolved, "__module__"))
       module <- resolved[["__module__"]]
-      name   <- resolved[["__name__"]]
-      if (!is.null(module) && !is.null(name))
-         path <- file.path(dir, sprintf("%s.%s.html", module, name))
+   
+   name <- "<unknown>"
+   if (reticulate::py_has_attr(resolved, "__name__"))
+      name <- resolved[["__name__"]]
+   
+   # if we don't know the module, try to guess based on the class
+   if (identical(module, "<unknown>") &&
+       reticulate::py_has_attr(resolved, "__class__"))
+   {
+      builtins <- reticulate::import_builtins(convert = TRUE)
+      output <- builtins$repr(resolved[["__class__"]])
+      if (grepl("<type '(.*)'>", output))
+      {
+         class <- gsub("<type '(.*)'>", "\\1", output)
+         splat <- .rs.strsplit(class, ".", fixed = TRUE)
+         module <- paste(head(splat, n = 1), collapse = ".")
+      }
    }
    
    # we have a Python object: generate HTML help for it. we
@@ -1147,7 +1159,11 @@ html.heading = _heading
 ", local = TRUE)
    
    html <- objects$html
-   page <- html$page(pydoc$describe(resolved), html$document(resolved, name))
+   
+   if (inherits(resolved, "numpy.ufunc"))
+      page <- html$page(paste("numpy function", name), html$docroutine(resolved, name))
+   else
+      page <- html$page(pydoc$describe(resolved), html$document(resolved, name))
    
    # remove hard-coded background colors for rows
    page <- gsub("\\s?bgcolor=\"#[0-9a-fA-F]{6}\"", "", page, perl = TRUE)

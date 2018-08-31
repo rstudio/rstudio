@@ -115,6 +115,9 @@ var MarkdownHighlightRules = function() {
         "basic" : [{
             token : "constant.language.escape",
             regex : /\\[\\`*_{}\[\]()#+\-.!]/
+        }, { // latex-style inverted question mark
+            token : "text",
+            regex : /[?]`/
         }, { // inline r code
             token : "support.function.inline_r_chunk",
             regex : "`r (?:.*?[^`])`"
@@ -153,6 +156,9 @@ var MarkdownHighlightRules = function() {
            token : "empty_line",
            regex : '^\\s*$',
            next: "allowBlock"
+        }, { // latex-style inverted question mark
+            token : "text",
+            regex : /[?]`/
         }, { // inline r code
             token : "support.function.inline_r_chunk",
             regex : "`r (?:.*?[^`])`"
@@ -341,6 +347,9 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "constant.language.escape",
             regex : /\\[\\`*_{}\[\]()#+\-.!]/
+        }, { // latex-style inverted question mark
+            token : "text",
+            regex : /[?]`/
         }, { // inline r code
             token : "support.function.inline_r_chunk",
             regex : "`r (?:.*?[^`])`"
