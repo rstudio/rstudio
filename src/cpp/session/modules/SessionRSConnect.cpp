@@ -472,14 +472,26 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    // augment with website project information
    FilePath path = module_context::resolveAliasedPath(target);
    std::string websiteDir;
+   std::string websiteOutputDir;
    if (path.exists() && (path.hasExtensionLowerCase(".rmd") || 
                          path.hasExtensionLowerCase(".md")))
    {
       FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(path);
       if (!webPath.empty())
+      {
          websiteDir = webPath.absolutePath();
+         
+         // also get build output dir
+         if (!module_context::websiteOutputDir().empty())
+         {
+            FilePath websiteOutputPath = 
+                  module_context::resolveAliasedPath(module_context::websiteOutputDir());
+            websiteOutputDir = websiteOutputPath.absolutePath();
+         }
+      }
    }
    result["website_dir"] = websiteDir;
+   result["website_output_dir"] = websiteOutputDir;
 
    pResponse->setResult(result);
       

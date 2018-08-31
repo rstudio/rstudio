@@ -42,12 +42,12 @@ public class RSConnectPublishSource
          boolean isSelfContained, boolean isStatic, boolean isShiny, 
          String description, int type)
    {
-      this(sourceFile, sourceFile, websiteDir, isSelfContained, isStatic, 
+      this(sourceFile, sourceFile, websiteDir, null, isSelfContained, isStatic, 
             isShiny, description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
-         String websiteDir, boolean isSelfContained, boolean isStatic, 
+         String websiteDir, String websiteOutputDir, boolean isSelfContained, boolean isStatic, 
          boolean isShiny, String description, int type)
    {
       deployFile_ = outputFile;
@@ -74,7 +74,10 @@ public class RSConnectPublishSource
       }
       contentCategory_ = category;
 
-      deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
+      if (type == RSConnect.CONTENT_TYPE_WEBSITE && isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
+         deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
+      else
+         deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 

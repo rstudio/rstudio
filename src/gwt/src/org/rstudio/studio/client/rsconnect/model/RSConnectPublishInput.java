@@ -146,7 +146,17 @@ public class RSConnectPublishInput
    {
       return !StringUtil.isNullOrEmpty(websiteDir_);
    }
-
+   
+   public String getWebsiteOutputDir()
+   {
+      return websiteOutputDir_;
+   }
+   
+   public void setWebsiteOutputDir(String dir)
+   {
+      websiteOutputDir_ = dir;
+   }
+ 
    public boolean isStaticDocInput()
    {
       // plots and presentations are always static
@@ -172,4 +182,5 @@ public class RSConnectPublishInput
    private RSConnectActionEvent originatingEvent_;
    private String description_ = null;
    private String websiteDir_;
+   private String websiteOutputDir_;
 }

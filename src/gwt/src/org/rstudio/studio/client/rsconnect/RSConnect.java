@@ -265,6 +265,7 @@ public class RSConnect implements SessionInitHandler,
                               new RSConnectPublishSource(event.getPath(), 
                                     event.getHtmlFile(), 
                                     arg.getWebsiteDir(),
+                                    arg.getWebsiteOutputDir(),
                                     arg.isSelfContained(), 
                                     true,
                                     arg.isShiny(),
@@ -1093,19 +1094,19 @@ public class RSConnect implements SessionInitHandler,
                @Override
                public void onResponseReceived(RmdPublishDetails details)
                {
-                  input.setIsMultiRmd(details.isMultiRmd());
-                  input.setIsShiny(details.isShinyRmd());
-                  input.setIsSelfContained(details.isSelfContained());
-                  input.setHasConnectAccount(details.hasConnectAccount());
-                  input.setWebsiteDir(details.websiteDir());
+                  input.setIsMultiRmd(details.is_multi_rmd);
+                  input.setIsShiny(details.is_shiny_rmd);
+                  input.setIsSelfContained(details.is_self_contained);
+                  input.setHasConnectAccount(details.has_connect_account);
+                  input.setWebsiteDir(details.website_dir);
+                  input.setWebsiteOutputDir(details.website_output_dir);
                   if (StringUtil.isNullOrEmpty(input.getDescription()))
                   {
-                     if (details.getTitle() != null && 
-                         !details.getTitle().isEmpty())
+                     if (!StringUtil.isNullOrEmpty(details.title))
                      {
                         // set the description from the document title, if we
                         // have it
-                        input.setDescription(details.getTitle());
+                        input.setDescription(details.title);
                      }
                      else
                      {
