@@ -55,6 +55,7 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 namespace {
 
 const std::string kGridResourcePrefix = "grid_resource/";
+const std::string kPythonPrefix = "python/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -465,6 +466,7 @@ void handleDefaultThemeRequest(const http::Request& request,
    std::string prefix =
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
          kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
@@ -484,6 +486,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    std::string prefix =
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
          kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
@@ -506,6 +509,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    std::string prefix =
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
+         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
          kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);

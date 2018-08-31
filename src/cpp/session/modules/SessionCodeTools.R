@@ -676,12 +676,17 @@
 
 .rs.addJsonRpcHandler("execute_r_code", function(code)
 {
-   .envir <- parent.frame(2)
-   result <- .rs.withTimeLimit(2, fail = "", envir = .envir, {
+   # allow 2 seconds to execute code
+   setTimeLimit(elapsed = 2, transient = TRUE)
+   on.exit(setTimeLimit(), add = TRUE)
    
+   # evaluate requested code
+   envir <- parent.frame(2)
+   result <- .rs.tryCatch({
+      
       output <- capture.output(
          evaled <- suppressWarnings(
-            eval(parse(text = code), envir = .envir)
+            eval(parse(text = code), envir = envir)
          )
       )
       
@@ -690,9 +695,12 @@
       else
          deparse(evaled)
       
-      paste(as.character(object), collapse = "\n")
    })
-   .rs.scalar(result)
+   
+   if (inherits(result, "error"))
+      return(.rs.scalar(""))
+   
+   .rs.scalar(paste(as.character(object), collapse = "\n"))
 })
 
 .rs.addJsonRpcHandler("is_function", function(nameString, envString)

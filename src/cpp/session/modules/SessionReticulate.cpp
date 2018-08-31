@@ -15,6 +15,8 @@
 
 #include "SessionReticulate.hpp"
 
+#include "SessionThemes.hpp"
+
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
@@ -46,7 +48,7 @@ Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionReticulate.R"));
+      (bind(sourceModuleRFile, "SessionReticulate.R"));
    
    return initBlock.execute();
 }
