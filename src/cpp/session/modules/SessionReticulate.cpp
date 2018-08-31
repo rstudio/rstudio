@@ -33,10 +33,6 @@ namespace session {
 namespace modules {
 namespace reticulate {
 
-namespace  {
-   const std::string kPythonPrefix = "/python";
-}
-
 bool isReplActive()
 {
    bool active = false;
@@ -52,9 +48,6 @@ Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerUriHandler, kPythonPrefix + themes::kDefaultThemeLocation, themes::handleDefaultThemeRequest))
-      (bind(registerUriHandler, kPythonPrefix + themes::kGlobalCustomThemeLocation, themes::handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, kPythonPrefix + themes::kLocalCustomThemeLocation, themes::handleLocalCustomThemeRequest))
       (bind(sourceModuleRFile, "SessionReticulate.R"));
    
    return initBlock.execute();
