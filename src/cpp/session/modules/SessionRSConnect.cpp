@@ -475,21 +475,9 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    if (path.exists() && (path.hasExtensionLowerCase(".rmd") || 
                          path.hasExtensionLowerCase(".md")))
    {
-      // check to see if this is a website directory
-      if (r_util::isWebsiteDirectory(path.parent()))
-         websiteDir = path.parent().absolutePath();
-      else
-      {
-         // if the folder containing the R Markdown or Markdown file wasn't itself
-         // a website folder, then see if this is a project, and the project-root 
-         // is a website; this supports source files stored in subfolders of a 
-         // website project
-         projects::ProjectContext& context = session::projects::projectContext();
-         if (context.hasProject() && !context.directory().empty() && r_util::isWebsiteDirectory(context.directory()))
-         {
-            websiteDir = context.directory().absolutePath();
-         }
-      } 
+      FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(path);
+      if (!webPath.empty())
+         websiteDir = webPath.absolutePath();
    }
    result["website_dir"] = websiteDir;
 
