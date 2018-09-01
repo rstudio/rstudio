@@ -81,11 +81,6 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
    }
    
-   private String trueString(boolean value)
-   {
-      return value ? "TRUE" : "FALSE";
-   }
-   
    private void addParam(Map<String, String> options, String name)
    {
       if (has(name))

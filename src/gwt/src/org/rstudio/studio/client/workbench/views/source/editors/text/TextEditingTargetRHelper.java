@@ -15,19 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-
 import com.google.inject.Inject;
 
 public class TextEditingTargetRHelper
@@ -39,11 +31,9 @@ public class TextEditingTargetRHelper
    }
 
    @Inject
-   void initialize(GlobalDisplay display, EventBus eventBus, SourceServerOperations server)
+   void initialize(EventBus eventBus)
    {
-      display_ = display;
       eventBus_ = eventBus;
-      server_ = server;
    }
 
    public void customSource(EditingTarget editingTarget)
@@ -67,8 +57,6 @@ public class TextEditingTargetRHelper
       );
    }
 
-   private GlobalDisplay display_;
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
-   private SourceServerOperations server_;
 }

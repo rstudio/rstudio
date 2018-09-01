@@ -24,7 +24,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.events.SatelliteWindowEventHandlers;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,7 +34,6 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Provider;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 
 public abstract class SatelliteWindow extends Composite

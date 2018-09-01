@@ -17,7 +17,6 @@ package org.rstudio.core.client;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.user.client.Window;
 
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomMetrics;

@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.Value;

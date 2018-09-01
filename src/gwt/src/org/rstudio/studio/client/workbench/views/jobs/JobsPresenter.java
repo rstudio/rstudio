@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
