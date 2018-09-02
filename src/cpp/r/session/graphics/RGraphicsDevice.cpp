@@ -18,6 +18,7 @@
 #include <cstdlib>
 
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -243,6 +244,23 @@ void GD_MetricInfo(int c,
    TRACE_GD_CALL
 
    handler::metricInfo(c, gc, ascent, descent, width, dev);
+   
+   // in some rare cases, attempts to retrieve metric info can fail
+   // (this seems to occur if the request occurs immediately after the
+   // device is deactivated and then activated). detect these cases and
+   // re-request metric info.
+   //
+   // https://github.com/tidyverse/ggplot2/issues/2252
+#ifdef Q_OS_MAC
+   if (*ascent == R_PosInf)
+   {
+      for (int i = 0; i < 10; i++)
+      {
+         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+         handler::metricInfo(c, gc, ascent, descent, width, dev);
+      }
+   }
+#endif
 }
 
 double GD_StrWidth(const char *str, const pGEcontext gc, pDevDesc dev)
