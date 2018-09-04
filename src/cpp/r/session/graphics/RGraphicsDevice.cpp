@@ -251,14 +251,14 @@ void GD_MetricInfo(int c,
    // re-request metric info.
    //
    // https://github.com/tidyverse/ggplot2/issues/2252
-#ifdef Q_OS_MAC
-   if (*ascent == R_PosInf)
+#ifdef __APPLE__
+   for (int i = 0; i < 10; i++)
    {
-      for (int i = 0; i < 10; i++)
-      {
-         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-         handler::metricInfo(c, gc, ascent, descent, width, dev);
-      }
+      if (*ascent != R_PosInf)
+         break;
+
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+      handler::metricInfo(c, gc, ascent, descent, width, dev);
    }
 #endif
 }
