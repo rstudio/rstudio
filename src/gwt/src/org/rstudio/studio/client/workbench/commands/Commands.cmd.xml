@@ -188,7 +188,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findNext"/>
          <cmd refid="findPrevious"/>
          <cmd refid="findFromSelection"/>
-         <cmd refid="replaceAndFind"/>
+         <cmd refid="findAndReplace"/>
          <separator/>
          <cmd refid="findInFiles"/>
          <separator/>
@@ -590,7 +590,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
-         <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
+         <shortcut refid="findAndReplace" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
          <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -1405,10 +1405,10 @@ well as menu structures (for main menu and popup menus).
         desc="Find and select all matches"
         rebindable="false"/>
         
-   <cmd id="replaceAndFind"
+   <cmd id="findAndReplace"
         buttonLabel="Replace"
-        menuLabel="_Replace and Find"
-        desc="Replace and find next occurrence"
+        menuLabel="Find and _Replace"
+        desc="Find and replace next occurrence"
         rebindable="false"/>
         
    <cmd id="findInFiles"

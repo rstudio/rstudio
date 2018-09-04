@@ -975,9 +975,9 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void replaceAndFind()
+   public void findAndReplace()
    {
-      findReplace_.replaceAndFind();
+      findReplace_.findAndReplace();
    }
 
    public void onActivate()

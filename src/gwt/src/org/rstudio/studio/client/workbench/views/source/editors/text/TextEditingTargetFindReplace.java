@@ -168,7 +168,7 @@ public class TextEditingTargetFindReplace
       }
    }
    
-   public void replaceAndFind()
+   public void findAndReplace()
    {
       if (findReplace_ == null)
       {
@@ -182,7 +182,7 @@ public class TextEditingTargetFindReplace
       }
       else
       {
-         findReplace_.replaceAndFind();
+         findReplace_.findAndReplace();
       }
    }
   
