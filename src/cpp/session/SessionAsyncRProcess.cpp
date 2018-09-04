@@ -19,12 +19,17 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
+
+using namespace rstudio;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -36,7 +41,7 @@ AsyncRProcess::AsyncRProcess():
 {
 }
 
-void AsyncRProcess::start(const char* rCommand,
+void AsyncRProcess::start(const std::string& command,
                           core::system::Options environment,
                           const core::FilePath& workingDir,
                           AsyncRProcessOptions rOptions,
@@ -86,51 +91,38 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--internet2");
 #endif
 
-   args.push_back("-e");
+   args.push_back("-f");
    
-   bool needsQuote = false;
-
-   // On Windows, we turn the vector of strings into a single
-   // string to send over the command line, so we must ensure
-   // that the arguments following '-e' are quoted, so that
-   // they are all interpretted as a single argument (rather
-   // than multiple arguments) to '-e'.
-
-#ifdef _WIN32
-   needsQuote = strlen(rCommand) > 0 && rCommand[0] != '"';
-#endif
-
-   std::stringstream command;
-   if (needsQuote)
-      command << "\"";
-
-   std::string escapedCommand = rCommand;
-
-   if (needsQuote)
-      boost::algorithm::replace_all(escapedCommand, "\"", "\\\"");
-    
-   if (rSourceFiles.size())
+   // generate path to temporary file
+   scriptPath_ = module_context::tempFile("rstudio-async-process-", ".R");
+   
+   // set this as the file to run
+   args.push_back(scriptPath_.absolutePathNative());
+   
+   // start generating code
+   std::stringstream ss;
+   
+   // emit source statements to the file
+   if (!rSourceFiles.empty())
    {
-      // add in the r source files requested
-      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
-           it != rSourceFiles.end();
-           ++it)
+      ss << "# RStudio Source Files ----" << std::endl;
+      for (const FilePath& filePath : rSourceFiles)
       {
-         command << "source('" << it->absolutePath() << "');";
+         std::string path = string_utils::singleQuotedStrEscape(filePath.absolutePathNative());
+         ss << "source('" << path << "')" << std::endl;
       }
-      
-      command << escapedCommand;
+      ss << std::endl;
    }
-   else
-   {
-      command << escapedCommand;
-   }
-
-   if (needsQuote)
-      command << "\"";
-
-   args.push_back(command.str());
-
+   
+   // emit code
+   ss << "# Script ----" << std::endl;
+   ss << command << std::endl;
+   
+   // write it to file
+   error = core::writeStringToFile(scriptPath_, ss.str());
+   if (error)
+      LOG_ERROR(error);
+   
    // options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
@@ -161,20 +153,20 @@ void AsyncRProcess::start(const char* rCommand,
 
    core::system::ProcessCallbacks cb;
    using namespace module_context;
-   cb.onContinue = boost::bind(&AsyncRProcess::onContinue,
+   cb.onStarted = boost::bind(&AsyncRProcess::onProcessStarted,
+                              AsyncRProcess::shared_from_this(),
+                              _1);
+   cb.onContinue = boost::bind(&AsyncRProcess::onProcessContinue,
                                AsyncRProcess::shared_from_this());
-   cb.onStdout = boost::bind(&AsyncRProcess::onStdout,
+   cb.onStdout = boost::bind(&AsyncRProcess::onProcessStdout,
                              AsyncRProcess::shared_from_this(),
                              _2);
-   cb.onStderr = boost::bind(&AsyncRProcess::onStderr,
+   cb.onStderr = boost::bind(&AsyncRProcess::onProcessStderr,
                              AsyncRProcess::shared_from_this(),
                              _2);
    cb.onExit =  boost::bind(&AsyncRProcess::onProcessCompleted,
                              AsyncRProcess::shared_from_this(),
                              _1);
-   cb.onStarted = boost::bind(&AsyncRProcess::onStarted,
-                              AsyncRProcess::shared_from_this(),
-                              _1);
 
    // forward input if requested
    input_ = input;
@@ -197,6 +189,32 @@ void AsyncRProcess::start(const char* rCommand,
 
 void AsyncRProcess::onStarted(core::system::ProcessOperations& operations)
 {
+}
+
+void AsyncRProcess::onStdout(const std::string& output)
+{
+}
+
+void AsyncRProcess::onStderr(const std::string& output)
+{
+}
+
+bool AsyncRProcess::onContinue()
+{
+   return true;
+}
+
+void AsyncRProcess::onCompleted(int exitStatus)
+{
+}
+
+bool AsyncRProcess::terminationRequested()
+{
+   return terminationRequested_;
+}
+
+void AsyncRProcess::onProcessStarted(system::ProcessOperations& operations)
+{
    if (!input_.empty())
    {
       core::Error error = operations.writeToStdin(input_, true);
@@ -208,31 +226,43 @@ void AsyncRProcess::onStarted(core::system::ProcessOperations& operations)
             LOG_ERROR(error);
       }
    }
+   
+   onStarted(operations);
 }
 
-void AsyncRProcess::onStdout(const std::string& output)
+bool AsyncRProcess::onProcessContinue()
 {
-   // no-op stub for optional implementation by derived classees
+   if (terminationRequested())
+      return false;
+   
+   return onContinue();
 }
 
-void AsyncRProcess::onStderr(const std::string& output)
+void AsyncRProcess::onProcessStdout(const std::string& output)
 {
-   // no-op stub for optional implementation by derived classees
+   onStdout(output);
 }
 
-bool AsyncRProcess::onContinue()
+void AsyncRProcess::onProcessStderr(const std::string& output)
 {
-   return !terminationRequested_;
-}
-
-bool AsyncRProcess::terminationRequested()
-{
-   return terminationRequested_;
+   onStderr(output);
 }
 
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();
+   
+   if (exitStatus)
+   {
+      LOG_ERROR_MESSAGE(
+               "Error executing background script " +
+               scriptPath_.absolutePath());
+   }
+   else
+   {
+      scriptPath_.removeIfExists();
+   }
+   
    onCompleted(exitStatus);
 }
 

@@ -479,24 +479,15 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsInstallPackages", function(token)
 {
-   contrib.url <- contrib.url(getOption("repos"), getOption("pkgType"))
+   # request available packages, but don't pause the session
+   # with a request if they aren't yet available
+   state <- .rs.availablePackages()
+   packages <- if (is.null(state$value))
+      character()
+   else
+      rownames(state$value)
    
-   packages <- Reduce(union, lapply(contrib.url, function(url) {
-      
-      # Try to get a package list from the cache
-      result <- .rs.getCachedAvailablePackages(url)
-      
-      # If it's null, there were no packages available
-      if (is.null(result))
-         .rs.downloadAvailablePackages(url)
-      
-      # Try again
-      result <- .rs.getCachedAvailablePackages(url)
-      
-      # And return
-      result
-   }))
-   
+   # produce completions
    .rs.makeCompletions(token = token,
                        results = .rs.selectFuzzyMatches(packages, token),
                        quote = TRUE,
