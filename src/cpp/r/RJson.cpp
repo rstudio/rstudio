@@ -292,7 +292,14 @@ Error jsonObjectFromList(SEXP listSEXP, core::json::Value* pValue)
 // and returned true for this list (validates a name for each element)
 //   
 Error jsonObjectArrayFromDataFrame(SEXP listSEXP, core::json::Value* pValue)
-{      
+{
+   // handle empty-list case up-front
+   if (Rf_length(listSEXP) == 0)
+   {
+      *pValue = core::json::Array();
+      return Success();
+   }
+   
    // get the names of the list elements
    std::vector<std::string> fieldNames ;
    Error error = sexp::getNames(listSEXP, &fieldNames);
