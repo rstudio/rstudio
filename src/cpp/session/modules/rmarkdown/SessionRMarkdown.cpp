@@ -638,9 +638,9 @@ private:
          resultJson["rpubs_published"] =
                !module_context::previousRpubsUploadId(outputFile_).empty();
 
-         // check to see if this is a website directory
-         if (r_util::isWebsiteDirectory(targetFile_.parent()))
-            websiteDir = createAliasedPath(targetFile_.parent());
+         FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(targetFile_);
+         if (!webPath.empty())
+            websiteDir = createAliasedPath(webPath);
       }
       else
       {
