@@ -815,11 +815,6 @@ public class TextEditingTargetWidget
              extendedType_.startsWith(SourceDocument.XT_TEST_SHINYTEST);
    }
 
-   private boolean hasCustomSource()
-   {
-      return SourceDocument.hasCustomSource(extendedType_);
-   }
-   
    @Override
    public void setNotebookUIVisible(boolean visible)
    {
