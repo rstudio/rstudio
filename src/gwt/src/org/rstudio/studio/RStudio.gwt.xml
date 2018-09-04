@@ -105,7 +105,7 @@
    <set-property name="compiler.stackMode" value="emulated,native"/>
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
 
-   <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
+   <set-configuration-property name="CssResource.style" value="stable" />
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 
    <!-- work around incompatibility between GWT 2.8 and Gin 2.1.2 -->
