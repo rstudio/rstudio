@@ -586,7 +586,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          }
          else if (
                (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0) ||
-               (!BrowseCap.isWindows() && (keyCode == KeyCodes.KEY_C && modifiers == KeyboardShortcut.CTRL)))
+               (BrowseCap.isMacintoshDesktop() && (
+                     modifiers == KeyboardShortcut.CTRL &&
+                     keyCode == KeyCodes.KEY_C)))
          {
             event.preventDefault();
 
