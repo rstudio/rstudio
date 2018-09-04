@@ -55,24 +55,22 @@ public:
    AsyncRProcess();
    virtual ~AsyncRProcess();
 
-   void start(const char* rCommand,
+   void start(const std::string& rCommand,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = 
-                 std::vector<core::FilePath>(),
-              const std::string &input = std::string())
+              std::vector<core::FilePath> rSourceFiles = {},
+              const std::string &input = {})
    {
       start(rCommand, core::system::Options(), workingDir, rOptions, 
             rSourceFiles, input);
    }
 
-   void start(const char* rCommand,
+   void start(const std::string& command,
               core::system::Options environment,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = 
-                 std::vector<core::FilePath>(),
-              const std::string& input = std::string());
+              std::vector<core::FilePath> rSourceFiles = {},
+              const std::string& input = {});
 
    bool isRunning();
    void terminate();
@@ -80,18 +78,25 @@ public:
    bool terminationRequested();
 
 protected:
+   // NOTE: implementing these methods is optional; deriving classes
+   // do not need to call the associated base-class method
    virtual void onStarted(core::system::ProcessOperations& operations);
    virtual bool onContinue();
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
-
-   virtual void onCompleted(int exitStatus) = 0;
+   virtual void onCompleted(int exitStatus);
 
 private:
+   void onProcessStarted(core::system::ProcessOperations& operations);
+   bool onProcessContinue();
+   void onProcessStdout(const std::string& output);
+   void onProcessStderr(const std::string& output);
    void onProcessCompleted(int exitStatus);
+   
    bool isRunning_;
    bool terminationRequested_;
    std::string input_;
+   core::FilePath scriptPath_;
 };
 
 } // namespace async_r
