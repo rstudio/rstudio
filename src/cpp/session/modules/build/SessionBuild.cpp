@@ -297,7 +297,10 @@ private:
    {
       // options
       core::system::ProcessOptions options;
+
+#ifndef _WIN32
       options.terminateChildren = true;
+#endif
 
       // notify build process of build-pane width
       core::system::Options environment;
