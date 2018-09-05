@@ -78,8 +78,9 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 #   DependencyManager.java: "Dependency.embeddedPackage" vs. ".cranPackage"
 
 # we often embed these packages but are not currently
-# install rsconnect master rstudio
 # install rmarkdown master rstudio
+
+install rsconnect master rstudio
 
 # back to install-dir
 cd $INSTALL_DIR

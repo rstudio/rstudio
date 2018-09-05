@@ -1,7 +1,7 @@
 /*
  * SessionProjects.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,6 +109,11 @@ public:
    }
 
    core::FilePath oldScratchPath() const;
+   core::FilePath websitePath() const;
+
+   // return website path containing given file, or empty path if not
+   // part of a website
+   core::FilePath fileUnderWebsitePath(const core::FilePath& file) const;
 
    const core::r_util::RProjectConfig& config() const { return config_; }
    void setConfig(const core::r_util::RProjectConfig& config)

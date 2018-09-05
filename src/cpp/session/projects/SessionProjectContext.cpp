@@ -152,6 +152,28 @@ FilePath ProjectContext::oldScratchPath() const
       return FilePath();
 }
 
+FilePath ProjectContext::websitePath() const
+{
+   if (hasProject() && !buildTargetPath().empty() && r_util::isWebsiteDirectory(buildTargetPath()))
+      return buildTargetPath();
+   else
+      return FilePath();
+}
+
+FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
+{
+   // first check same folder; this will catch building simple R Markdown websites 
+   // even without an RStudio project in play
+   if (r_util::isWebsiteDirectory(file.parent()))
+      return file.parent();
+   
+   // otherwise see if this file is under a website project
+   if (!websitePath().empty() && file.isWithin(websitePath()))
+      return websitePath();            
+   
+   return FilePath();
+}
+
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.
 // specifically, it can rely on userSettings() being available, but can
