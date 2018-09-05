@@ -49,7 +49,7 @@
       
       .rs.makeCompletions(
          token = token,
-         results = .rs.selectFuzzyMatches(keywords, token),
+         results = .rs.selectFuzzyMatches(keywords, if (nzchar(token)) token else "!"),
          packages = "keyword",
          quote = FALSE,
          type = .rs.acCompletionTypes$KEYWORD,
@@ -60,7 +60,8 @@
          token = token,
          results = .rs.selectFuzzyMatches(names(fields), token),
          packages = "table",
-         type = .rs.acCompletionTypes$DATASET
+         type = .rs.acCompletionTypes$DATASET,
+         language = "SQL"
       ),
       
       
@@ -68,7 +69,8 @@
          token = token,
          results = .rs.selectFuzzyMatches(unlist(fields, use.names = FALSE), token),
          packages = "field",
-         type = .rs.acCompletionTypes$VECTOR
+         type = .rs.acCompletionTypes$VECTOR,
+         language = "SQL"
       )
 
    ))

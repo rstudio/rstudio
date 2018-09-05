@@ -69,16 +69,42 @@ public class SqlCompletionManager extends CompletionManagerBase
    
    private boolean preferLowercaseKeywords()
    {
-      TokenIterator it = docDisplay_.createTokenIterator();
+      // for multi-mode documents, try to find start of the
+      // current chunk; otherwise, just start at beginning of
+      // document
+      int row = 0;
+      if (!docDisplay_.getFileType().isSql())
+      {
+         row = docDisplay_.getCursorPosition().getRow();
+         for (; row >= 0; row--)
+         {
+            JsArray<Token> tokens = docDisplay_.getTokens(row);
+            if (tokens.length() == 0)
+               continue;
+            
+            Token token = tokens.get(0);
+            if (token.hasType("support.function.codebegin"))
+            {
+               row += 1;
+               break;
+            }
+         }
+      }
       
-      Token token = it.moveToPosition(0, 0);
-      while (token != null)
+      TokenIterator it = docDisplay_.createTokenIterator();
+      for (Token token = it.moveToPosition(row, 0);
+           token != null;
+           token = it.stepForward())
       {
          if (token.hasType("keyword"))
          {
             String value = token.getValue();
             return value.contentEquals(value.toLowerCase());
          }
+         
+         if (token.hasType("support.function.codebegin") ||
+             token.hasType("support.function.codeend"))
+            break;
          
          token = it.stepForward();
       }
