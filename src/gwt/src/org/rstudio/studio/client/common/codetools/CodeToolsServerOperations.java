@@ -108,4 +108,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          boolean useSourceDatabase,
          ServerRequestCallback<JsArray<AceAnnotation>> requestCallback);
    
+   void sqlGetCompletions(
+         String line,
+         ServerRequestCallback<Completions> requestCallback);
+   
 }

@@ -137,6 +137,10 @@ oop.inherits(Mode, MarkdownMode);
          return "YAML";
       else if (mode === "python")
          return "Python";
+      else if (mode == "sql")
+         return "SQL";
+      else if (mode === "stan")
+         return "Stan";
       else
          return "Markdown";
    };

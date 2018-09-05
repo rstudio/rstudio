@@ -25,6 +25,7 @@ public class DocumentMode
       PYTHON,
       C_CPP,
       MARKDOWN,
+      SQL,
       STAN,
       TEX,
       UNKNOWN
@@ -43,6 +44,8 @@ public class DocumentMode
          return Mode.MARKDOWN;
       else if (isPositionInTexMode(docDisplay, position))
          return Mode.TEX;
+      else if (isPositionInSqlMode(docDisplay, position))
+         return Mode.SQL;
       else if (isPositionInStanMode(docDisplay, position))
          return Mode.STAN;
       else
@@ -200,6 +203,15 @@ public class DocumentMode
    {
       return isPositionInPythonMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+   
+   public static boolean isPositionInSqlMode(DocDisplay docDisplay,
+                                             Position position)
+   {
+      if (docDisplay.getFileType().isSql())
+         return true;
+      
+      return isPositionInMode(docDisplay, position, FileType.SQL_LANG_MODE);
    }
    
    // Stan Mode

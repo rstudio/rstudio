@@ -85,10 +85,15 @@ public abstract class CompletionManagerBase
    
    private void init()
    {
-      handlers_ = new HandlerRegistration[] {
+      HandlerRegistration[] handlers = new HandlerRegistration[] {
             
             popup_.addAttachHandler((AttachEvent event) -> {
                docDisplay_.setPopupVisible(event.isAttached());
+               
+               if (event.isAttached())
+                  attachHandlers();
+               else
+                  removeHandlers();
             }),
             
             popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
@@ -107,16 +112,15 @@ public abstract class CompletionManagerBase
                invalidatePendingRequests();
             }),
             
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-                  removeHandlers();
-            }),
-            
             events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
                invalidatePendingRequests();
             })
             
       };
+      
+      handlers_ = new ArrayList<HandlerRegistration>();
+      for (HandlerRegistration handler : handlers)
+         handlers_.add(handler);
    }
    
    protected void onPopupSelection(QualifiedName completion)
@@ -324,6 +328,8 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
+   protected abstract HandlerRegistration[] handlers();
+   
    public abstract void goToHelp();
    public abstract void goToDefinition();
    public abstract void getCompletions(String line, CompletionRequestContext context);
@@ -359,6 +365,11 @@ public abstract class CompletionManagerBase
    // e.g. displaying a tooltip or similar
    protected void onCompletionInserted(QualifiedName requestedCompletion)
    {
+   }
+   
+   public void codeCompletion()
+   {
+      beginSuggest(true, false, true);
    }
    
    public void onPaste(PasteEvent event)
@@ -673,6 +684,12 @@ public abstract class CompletionManagerBase
       helpTimer_.schedule(completion);
    }
    
+   private void attachHandlers()
+   {
+      for (HandlerRegistration handler : handlers())
+         handlers_.add(handler);
+   }
+   
    private void removeHandlers()
    {
       for (HandlerRegistration handler : handlers_)
@@ -758,7 +775,7 @@ public abstract class CompletionManagerBase
    private final SnippetHelper snippets_;
    
    private CompletionRequestContext context_;
-   private HandlerRegistration[] handlers_;
+   private List<HandlerRegistration> handlers_;
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;

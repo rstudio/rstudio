@@ -27,6 +27,7 @@ public abstract class FileType
    public static final String MARKDOWN_LANG_MODE = "Markdown";
    public static final String C_CPP_LANG_MODE = "C_CPP";
    public static final String TEX_LANG_MODE = "TeX";
+   public static final String SQL_LANG_MODE = "SQL";
    public static final String STAN_LANG_MODE = "Stan";
    public static final String PYTHON_LANG_MODE = "Python";
    

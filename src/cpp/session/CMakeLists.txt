@@ -217,6 +217,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
    modules/shiny/SessionShiny.cpp
+   modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
