@@ -40,6 +40,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -68,6 +69,15 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
+         {
+            hideAll();
+         }
+      });
+      
+      WindowEx.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
          {
             hideAll();
          }
