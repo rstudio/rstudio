@@ -90,14 +90,24 @@ public class TokenIterator extends JavaScriptObject
       return this.getCurrentTokenColumn();
    }-*/;
    
-   public native final boolean findTokenBwd(String token, boolean skipMatching)
+   public native final boolean findTokenTypeBwd(String token, boolean skipMatching)
    /*-{
-      return this.findTokenBwd(token, skipMatching);
+      return this.findTokenTypeBwd(token, skipMatching);
    }-*/;
    
-   public native final boolean findTokenFwd(String token, boolean skipMatching)
+   public native final boolean findTokenTypeFwd(String token, boolean skipMatching)
    /*-{
-      return this.findTokenFwd(token, skipMatching);
+      return this.findTokenTypeFwd(token, skipMatching);
+   }-*/;
+   
+   public native final boolean findTokenValueBwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenValueBwd(token, skipMatching);
+   }-*/;
+   
+   public native final boolean findTokenValueFwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenValueFwd(token, skipMatching);
    }-*/;
    
    public native final boolean fwdToMatchingToken() /*-{

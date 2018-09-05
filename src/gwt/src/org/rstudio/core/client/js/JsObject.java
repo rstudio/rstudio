@@ -166,6 +166,10 @@ public class JsObject extends JavaScriptObject
       this[key] = value;
    }-*/;
    
+   public final native void setJSO(String key, JavaScriptObject value) /*-{
+      this[key] = value;
+   }-*/;
+   
    public final native void setJsArrayString(String key, JsArrayString value) /*-{
       this[key] = value;
    }-*/;

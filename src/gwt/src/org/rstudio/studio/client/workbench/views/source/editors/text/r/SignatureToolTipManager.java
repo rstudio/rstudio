@@ -446,7 +446,7 @@ public class SignatureToolTipManager
           uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue() &&
           !cursor.valueEquals("("))
       {
-         cursor.findTokenBwd("(", true);
+         cursor.findTokenValueBwd("(", true);
       }
       
       Token lookahead = cursor.peekFwd(1);

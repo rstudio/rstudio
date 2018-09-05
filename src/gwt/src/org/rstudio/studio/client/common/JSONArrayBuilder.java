@@ -14,11 +14,14 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
@@ -69,6 +72,12 @@ public class JSONArrayBuilder
          array.set(i, fromString(value.get(i)));
       append(array);
       
+      return this;
+   }
+   
+   public final JSONArrayBuilder add(JsObject value)
+   {
+      append(new JSONObject(value));
       return this;
    }
    

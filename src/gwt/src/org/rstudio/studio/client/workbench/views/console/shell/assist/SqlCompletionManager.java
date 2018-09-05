@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import org.rstudio.core.client.JsVectorString;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -26,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SqlCompletionManager extends CompletionManagerBase
@@ -58,7 +61,7 @@ public class SqlCompletionManager extends CompletionManagerBase
                               CompletionRequestContext context)
    {
       String connection = discoverAssociatedConnectionString();
-      server_.sqlGetCompletions(line, connection, preferLowercaseKeywords(), context);
+      server_.sqlGetCompletions(line, connection, completionContext(), context);
    }
    
    @Override
@@ -67,32 +70,54 @@ public class SqlCompletionManager extends CompletionManagerBase
       return new HandlerRegistration[] {};
    }
    
-   private boolean preferLowercaseKeywords()
+   private JsObject completionContext()
    {
-      // for multi-mode documents, try to find start of the
-      // current chunk; otherwise, just start at beginning of
-      // document
-      int row = 0;
-      if (!docDisplay_.getFileType().isSql())
+      JsObject context = JsObject.createJsObject();
+      context.setJSO("tables", discoverKnownTables());
+      context.setBoolean("preferLowercaseKeywords", preferLowercaseKeywords());
+      return context;
+   }
+   
+   private JsArrayString discoverKnownTables()
+   {
+      JsVectorString tables = JsVectorString.createVector().cast();
+      
+      TokenIterator it = fromChunkStart();
+      for (Token token = it.getCurrentToken();
+           token != null;
+           token = it.stepForward())
       {
-         row = docDisplay_.getCursorPosition().getRow();
-         for (; row >= 0; row--)
+         if (token.hasType("keyword"))
          {
-            JsArray<Token> tokens = docDisplay_.getTokens(row);
-            if (tokens.length() == 0)
-               continue;
-            
-            Token token = tokens.get(0);
-            if (token.hasType("support.function.codebegin"))
+            String value = token.getValue().toLowerCase();
+            if (value.contentEquals("from") || value.contentEquals("join"))
             {
-               row += 1;
-               break;
+               // whitespace
+               token = it.stepForward();
+               if (token == null || !token.hasType("text"))
+                  continue;
+               
+               // table name
+               token = it.stepForward();
+               if (token == null || !token.hasType("identifier"))
+                  continue;
+               
+               tables.push(token.getValue());
             }
          }
+         
+         if (token.hasType("support.function.codeend"))
+            break;
       }
       
-      TokenIterator it = docDisplay_.createTokenIterator();
-      for (Token token = it.moveToPosition(row, 0);
+      
+      return tables.cast();
+   }
+   
+   private boolean preferLowercaseKeywords()
+   {
+      TokenIterator it = fromChunkStart();
+      for (Token token = it.getCurrentToken();
            token != null;
            token = it.stepForward())
       {
@@ -102,11 +127,8 @@ public class SqlCompletionManager extends CompletionManagerBase
             return value.contentEquals(value.toLowerCase());
          }
          
-         if (token.hasType("support.function.codebegin") ||
-             token.hasType("support.function.codeend"))
+         if (token.hasType("support.function.codeend"))
             break;
-         
-         token = it.stepForward();
       }
       
       return false;
@@ -147,6 +169,17 @@ public class SqlCompletionManager extends CompletionManagerBase
          
          return chunkOptions.get("connection");
       }
+   }
+   
+   private TokenIterator fromChunkStart()
+   {
+      TokenIterator it = docDisplay_.createTokenIterator();
+      if (docDisplay_.getFileType().isSql())
+         return it;
+      
+      it.moveToPosition(docDisplay_.getCursorPosition());
+      it.findTokenTypeBwd("support.function.codebegin", false);
+      return it;
    }
    
    private static final Pattern RE_SQL_PREVIEW = Pattern.create("^-{2,}\\s*!preview\\s+conn\\s*=\\s*(.*)$", "");
