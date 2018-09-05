@@ -13,38 +13,114 @@
 #
 #
 
-.rs.addJsonRpcHandler("sql_get_completions", function(line)
+.rs.addJsonRpcHandler("sql_get_completions", function(
+   line,
+   conn,
+   preferLowerCaseKeywords)
 {
-   .rs.sql.getCompletions(line)
+   .rs.sql.getCompletions(line, conn, preferLowerCaseKeywords)
 })
 
-.rs.addFunction("sql.getCompletions", function(line)
+.rs.addFunction("sql.getCompletions", function(
+   line,
+   conn,
+   preferLowerCaseKeywords)
 {
-   # TODO: harvest completion results from associated SQL connection
-   # - handle for mixed-mode documents (request chunk options)
-   # - handle for SQL scripts (look for preview line)
-   # TODO: completion keywords on per-database case
-   # TODO: options for casing
-   # - smart (prefer upper)
-   # - smart (prefer lower)
-   # - upper
-   # - lower
-   
    # extract token
    parts <- .rs.strsplit(line, "\\s+")
    token <- tail(parts, n = 1L)
    
-   # match against keywords
-   keywords <- .rs.sql.keywords()
-   if (identical(token, tolower(token)))
-      keywords <- tolower(keywords)
+   # collect keywords (convert to lowercase to match token when appropriate)
+   useLowerCaseKeywords <-
+      (nzchar(token) && identical(token, tolower(token))) ||
+      preferLowerCaseKeywords
+    
+   keywords <- .rs.sql.keywords(conn)
+   keywords <- if (useLowerCaseKeywords)
+      tolower(keywords)
+   else
+      toupper(keywords)
    
-   results <- .rs.selectFuzzyMatches(keywords, token)
-   .rs.makeCompletions(token = token, results = results)
+   # collect table fields
+   fields <- .rs.sql.listTableFields(conn)
+   
+   # now start building completions
+   completions <- Reduce(.rs.appendCompletions, list(
+      
+      .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(keywords, token),
+         packages = "keyword",
+         quote = FALSE,
+         type = .rs.acCompletionTypes$KEYWORD,
+         language = "SQL"
+      ),
+      
+      .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(names(fields), token),
+         packages = "table",
+         type = .rs.acCompletionTypes$DATASET
+      ),
+      
+      
+      .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(unlist(fields, use.names = FALSE), token),
+         packages = "field",
+         type = .rs.acCompletionTypes$VECTOR
+      )
+
+   ))
+   
+   completions
 })
 
-.rs.addFunction("sql.keywords", function()
+.rs.addFunction("sql.listTableFields", function(conn)
 {
+   if (!requireNamespace("DBI", quietly = TRUE))
+      return(character())
+   
+   if (is.character(conn))
+   {
+      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
+      if (inherits(conn, "error"))
+         return(character())
+   }
+   
+   # TODO: it will likely be expensive to query all table names + associated fields
+   # for large databases -- can we do something smarter here? learn more about the
+   # context from the user's SQL script?
+   .rs.withTimeLimit(1L, {
+      tables <- DBI::dbListTables(conn)
+      fields <- lapply(tables, function(table) DBI::dbListFields(conn, table))
+      names(fields) <- tables
+      fields
+   })
+   
+})
+
+.rs.addFunction("sql.keywords", function(conn)
+{
+   # allow users to define their own set of keywords if preferred
+   keywords <- getOption("sql.keywords")
+   if (is.function(keywords))
+   {
+      if (length(formals(keywords)))
+         return(keywords(conn))
+      else
+         return(keywords())
+   }
+   else if (is.character(keywords))
+   {
+      return(keywords)
+   }
+   
+   # try to see if we can figure out the set of keywords from
+   # the conn itself
+   if (is.character(conn))
+      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
+   
    # NOTE: these are the keywords understood by SQLite, as per
    # https://www.sqlite.org/lang_keywords.html
    c(

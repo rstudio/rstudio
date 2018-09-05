@@ -1065,10 +1065,14 @@ public class RemoteServer implements Server
    }
    
    public void sqlGetCompletions(String line,
+                                 String connection,
+                                 boolean preferLowercaseKeywords,
                                  ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(line)
+            .add(connection)
+            .add(preferLowercaseKeywords)
             .get();
       
       sendRequest(RPC_SCOPE, SQL_GET_COMPLETIONS, params, requestCallback);

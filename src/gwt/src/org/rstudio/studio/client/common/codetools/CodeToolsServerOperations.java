@@ -110,6 +110,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void sqlGetCompletions(
          String line,
+         String connection,
+         boolean preferLowercaseKeywords,
          ServerRequestCallback<Completions> requestCallback);
    
 }

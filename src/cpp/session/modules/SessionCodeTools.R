@@ -2291,3 +2291,14 @@
       )
    )
 })
+
+.rs.addFunction("withCache", function(name, expr)
+{
+   cache <- .rs.getVar(name)
+   if (!is.null(cache))
+      return(cache)
+   
+   result <- force(expr)
+   .rs.setVar(name, result)
+   result
+})

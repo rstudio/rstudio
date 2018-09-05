@@ -274,20 +274,23 @@ public abstract class CompletionManagerBase
       
       String line = docDisplay_.getCurrentLineUpToCursor();
       
-      // don't complete within comments
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
-      if (token.hasType("comment"))
-         return false;
-      
-      // don't complete within multi-line strings
-      if (token.hasType("string"))
+      if (token != null)
       {
-         String cursorTokenValue = token.getValue();
-         boolean isSingleLineString =
-               cursorTokenValue.startsWith("'") ||
-               cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         // don't complete within comments
+         if (token.hasType("comment"))
             return false;
+
+         // don't complete within multi-line strings
+         if (token.hasType("string"))
+         {
+            String cursorTokenValue = token.getValue();
+            boolean isSingleLineString =
+                  cursorTokenValue.startsWith("'") ||
+                  cursorTokenValue.startsWith("\"");
+            if (!isSingleLineString)
+               return false;
+         }
       }
       
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
