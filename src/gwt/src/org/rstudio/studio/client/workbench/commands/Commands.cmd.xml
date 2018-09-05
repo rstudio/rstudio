@@ -1478,6 +1478,30 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Add Cursor Below Current Cursor"
         context="editor"/>
         
+   <cmd id="moveLinesUp"
+        menuLabel="Move Lines Up"
+        context="editor"/>
+      
+   <cmd id="moveLinesDown"
+        menuLabel="Move Lines Down"
+        context="editor"/>
+
+   <cmd id="expandToLine"
+        menuLabel="Expand Selection to Line"
+        context="editor"/>
+
+   <cmd id="copyLinesDown"
+        menuLabel="Copy Lines Down"
+        context="editor"/>
+
+   <cmd id="joinLines"
+        menuLabel="Join Lines"
+        context="editor"/>
+
+   <cmd id="removeLine"
+        menuLabel="Remove Line"
+        context="editor"/>
+
    <cmd id="splitIntoLines"
         menuLabel="Split Into Lines"
         desc="Create a new cursor on each line in current selection"
