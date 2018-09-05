@@ -29,12 +29,11 @@
    if (grepl(".", token, fixed = TRUE))
       return(.rs.sql.getCompletionsFields(token, conn, context))
    
-   # if we're requesting completions following 'from' or 'join',
-   # then provide table names as completions
+   # check if we're explicitly requesting table name completions
    if (length(parts) > 1)
    {
       previous <- parts[[length(parts) - 1L]]
-      if (tolower(previous) %in% c("from", "join"))
+      if (tolower(previous) %in% c("from", "into", "join", "update"))
          return(.rs.sql.getCompletionsTables(token, conn, context))
    }
    

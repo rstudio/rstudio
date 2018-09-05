@@ -90,7 +90,8 @@ public class SqlCompletionManager extends CompletionManagerBase
          if (token.hasType("keyword"))
          {
             String value = token.getValue().toLowerCase();
-            if (value.contentEquals("from") || value.contentEquals("join"))
+            if (value.contentEquals("from") || value.contentEquals("into") ||
+                value.contentEquals("join") || value.contentEquals("update"))
             {
                // whitespace
                token = it.stepForward();
