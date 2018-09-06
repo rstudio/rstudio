@@ -29,7 +29,7 @@ if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.5.0-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
         Write-Host "Downloading R 3.5.0..."
-        Invoke-WebRequest https://cran.r-project.org/bin/windows/base/old/3.5.0/R-3.5.0-win.exe -OutFile $RSetupPackage
+        Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.5.0/R-3.5.0-win.exe -OutFile $RSetupPackage
     } else {
         Write-Host "Using previously downloaded R installer"
     }
