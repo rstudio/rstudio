@@ -1,30 +1,17 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
+REM **************************************************************************
 REM Build Windows docker image containing tools to build RStudio IDE
 REM **************************************************************************
 REM Currently this goes as far as creating an image, but doesn't 
 REM run the build itself. See TODO's at end of this file.
 REM **************************************************************************
-REM Dependencies installed via install-dependencies.cmd must be present
-REM in rstudio\dependencies\windows for the container to build RStudio.
-REM 
-REM The dockerfile does not currently handle this, so the machine hosting 
-REM the container and the source tree must have install-dependencies.cmd 
-REM run first. This needs to be cleaned up to work like the Linux builds, 
-REM where everything needed is installed via the dockerfile and the cmake
-REM scripts can discover them in the alternative location.
+REM Build this image and run the build using it on Windows Server 2016,
+REM where Docker can be run in process-isolation mode. Building RStudio in
+REM a container using Hyper-V will not work due to:
+REM     https://github.com/docker/for-win/issues/829
 REM **************************************************************************
-REM Ideally, build this image and run the build using it on Windows Server 2016,
-REM using a physical server, not a VM.
-REM **************************************************************************
-REM It is possible to create the image on Windows-10 Pro VM using Hyper-V, but you
-REM cannot currently build RStudio using the image on Win-10 due to:
-REM https://github.com/docker/for-win/issues/829
-REM **************************************************************************
-REM Running Docker in Windows Server in some configurations (such as a virtual
-REM machine on Google Compute) causes Chocolately to fail to install. See
-REM https://stackoverflow.com/questions/50689574/diagnosing-download-timeout-from-chocolatey-org-in-a-windows-docker-build
 
 set IMAGE=windows
 set FLAVOR=desktop
@@ -82,8 +69,8 @@ set CONTAINER_ID=build-%REPO%-%IMAGE%
 echo Cleaning up container %CONTAINER_ID% if it exists...
 docker rm %CONTAINER_ID%
 
-REM Startup the container, to build, run "make-package" inside it as you would on a
-REM Windows dev box.
+REM Startup the container. To build, run "install-dependencies.cmd" then "make-package" inside 
+REM it as you would on a Windows dev box.
 for %%A in ("%cd%") do set HOSTPATH=%%~sA
 docker run -it --isolation process --name %CONTAINER_ID% -v %HOSTPATH%:c:/src %REPO%:%IMAGE%
 
