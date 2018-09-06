@@ -8,41 +8,22 @@ FROM microsoft/dotnet-framework:4.7.1
 # set RUN commands to use powershell
 SHELL ["powershell"]
 
-# Download the Visual Studio Build Tools bootstrapper
-ADD https://aka.ms/vs/15/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+# Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
+# between dev machines and the build machine.
 
-# Install Build Tools excluding workloads and components with known issues
-# Return value of 3010 indicates "restart needed"
-RUN Start-Process C:\TEMP\vs_buildtools.exe -Wait -ArgumentList '--quiet --wait --norestart --nocache `
-    --add Microsoft.VisualStudio.Workload.VCTools `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
-    --remove Microsoft.VisualStudio.Component.Windows81SDK' ;` 
-  if ( 3010 -eq $LastErrorCode ) { exit 0 } else { exit $LastErrorCode }
- 
 # install chocolatey
-#
-# work around issues installing inside Docker running on Google compute and possibly other 
-# environments
-# https://stackoverflow.com/questions/50689574/diagnosing-download-timeout-from-chocolatey-org-in-a-windows-docker-build 
-$securityProtocolSettingsOriginal = [System.Net.ServicePointManager]::SecurityProtocol
-try { 
-    # Set TLS 1.2 (3072), then TLS 1.1 (768), then TLS 1.0 (192), finally SSL 3.0 (48) 
-    # Use integers because the enumeration values for TLS 1.2 and TLS 1.1 won't 
-    # exist in .NET 4.0, even though they are addressable if .NET 4.5+ is 
-    # installed (.NET 4.5 is an in-place upgrade).
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48
-} catch {
-    Write-Warning 'Unable to set PowerShell to use TLS 1.2 and TLS 1.1 due to old .NET Framework installed. If you see underlying connection closed or trust errors, you may need to do one or more of the following: (1) upgrade to .NET Framework 4.5 and PowerShell v3, (2) specify internal Chocolatey package location (set $env:chocolateyDownloadUrl prior to install or host the package internally), (3) use the Download + PowerShell method of install. See https://chocolatey.org/install for all install options.' 
-}
-iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-[System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
+RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; ` 
-  choco install -y jdk8 ant windows-sdk-10.1 ; `
-  choco install -y 7zip
+RUN choco install -y cmake --version 3.12.1 --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; ` 
+  choco install -y jdk8 --version 8.0.181; `
+  choco install -y ant --version 1.10.5; `
+  choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
+  choco install -y 7zip --version 18.5.0.20180730
+  
+#  choco install -y visualstudio2017buildtools --version 15.8.2.0; `
+#  choco install -y visualstudio2017-workload-vctools --version 1.3.0; `
   
 # install aws cli
 # awscli bug where cp65001 is not understood by internal python.
@@ -54,8 +35,8 @@ RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
 
 # install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
 RUN $ErrorActionPreference = 'Stop' ;`
-  $ProgressPreference = 'SilentlyContinue' ;`
-  Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe -OutFile c:\R-3.0.3-win.exe ;`
+  [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
+  (New-Object System.Net.WebClient).DownloadFile('https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe' -OutFile 'c:\R-3.0.3-win.exe') ;`
   Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;`
   Remove-Item c:\R-3.0.3-win.exe -Force
 
@@ -64,15 +45,15 @@ RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # install nsis (version on chocolatey is too new)
-RUN Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile C:\nsis-2.50-setup.exe ;`
+RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe' -OutFile 'C:\nsis-2.50-setup.exe');`
   Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;`
   Remove-Item c:\nsis-2.50-setup.exe
 
 # install qt (note that we are using the current directory's context)
 COPY windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
 RUN $ErrorActionPreference = 'Stop'; ``
-   $ProgressPreference = 'SilentlyContinue' ;`
-   Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe -OutFile c:\qt.exe ;`
+   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe' -OutFile 'c:\qt.exe');`
    Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install-win.qs' ;`
    Remove-Item c:\qt.exe -Force ;`
    Remove-Item c:\qt-noninteractive-install-win.qs
