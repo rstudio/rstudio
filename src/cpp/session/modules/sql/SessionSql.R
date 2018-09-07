@@ -50,7 +50,8 @@
    
    Reduce(.rs.appendCompletions, list(
       .rs.sql.getCompletionsKeywords(token, conn, context),
-      .rs.sql.getCompletionsFields(token, conn, context)
+      .rs.sql.getCompletionsFields(token, conn, context),
+      .rs.sql.getCompletionsTables(token, conn, context)
    ))
 })
 
