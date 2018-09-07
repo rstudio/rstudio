@@ -26,6 +26,12 @@
 
 * Author SQL queries in RStudio and preview in the SQL Results pane
 
+### Stan
+
+* Improved autocompletion support in Stan files / chunks
+* Implemented document outline for Stan files
+* Local Stan workers can now be interrupted
+
 ### Testing
 
 * *Run Tests* command in [testthat](https://github.com/r-lib/testthat) R scripts for direct running
