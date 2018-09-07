@@ -143,6 +143,29 @@ public class TokenIterator extends JavaScriptObject
       return this.moveToEndOfRow();
    }-*/;
    
+   public final boolean moveToNextSignificantToken()
+   {
+      if (!moveToNextToken())
+         return false;
+      
+      return skipWhitespaceAndComments();
+   }
+   
+   public final boolean skipWhitespaceAndComments()
+   {
+      Token token = getCurrentToken();
+      
+      for (; token != null; token = stepForward())
+      {
+         if (token.hasType("comment") || token.valueMatches("\\s*"))
+            continue;
+         
+         break;
+      }
+      
+      return token != null;
+   }
+   
    public final boolean valueEquals(String value)
    {
       Token token = getCurrentToken();

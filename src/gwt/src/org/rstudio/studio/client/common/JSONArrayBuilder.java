@@ -14,8 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
-import org.rstudio.core.client.js.JsObject;
-
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONBoolean;
@@ -75,9 +74,16 @@ public class JSONArrayBuilder
       return this;
    }
    
-   public final JSONArrayBuilder add(JsObject value)
+   public final JSONArrayBuilder add(JavaScriptObject object)
    {
-      append(new JSONObject(value));
+      append(new JSONObject(object));
+      return this;
+   }
+   
+   public final JSONArrayBuilder add(Object object)
+   {
+      JavaScriptObject jso = cast(object);
+      append(new JSONObject(jso));
       return this;
    }
    
@@ -98,6 +104,11 @@ public class JSONArrayBuilder
    {
       array_.set(index_++, value);
    }
+   
+   private static final native JavaScriptObject cast(Object object)
+   /*-{
+      return object;
+   }-*/;
    
    private final JSONArray array_;
    private int index_;

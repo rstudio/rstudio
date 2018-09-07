@@ -18,7 +18,7 @@
    .rs.sql.getCompletions(...)
 })
 
-.rs.addFunction("sql.getCompletions", function(line, conn, context)
+.rs.addFunction("sql.getCompletions", function(line, conn, ctx)
 {
    # extract token
    parts <- .rs.strsplit(line, "\\s+")
@@ -27,40 +27,40 @@
    # if we have a '.' in the token, assume that we're
    # attempting to complete field names from a table
    if (grepl(".", token, fixed = TRUE))
-      return(.rs.sql.getCompletionsFields(token, conn, context))
+      return(.rs.sql.getCompletionsFields(token, conn, ctx))
    
    # check if we're explicitly requesting table name completions
    if (length(parts) > 1)
    {
       previous <- parts[[length(parts) - 1L]]
       if (tolower(previous) %in% c("from", "into", "join", "update"))
-         return(.rs.sql.getCompletionsTables(token, conn, context))
+         return(.rs.sql.getCompletionsTables(token, conn, ctx))
    }
    
-   # collect keywords (convert to lowercase to match token when appropriate)
-   useLowerCaseKeywords <-
-      (nzchar(token) && identical(token, tolower(token))) ||
-      context$preferLowercaseKeywords
-    
-   keywords <- .rs.sql.keywords(conn)
-   keywords <- if (useLowerCaseKeywords)
-      tolower(keywords)
-   else
-      toupper(keywords)
-   
+   # otherwise, gather completions from other sources
    Reduce(.rs.appendCompletions, list(
-      .rs.sql.getCompletionsKeywords(token, conn, context),
-      .rs.sql.getCompletionsFields(token, conn, context),
-      .rs.sql.getCompletionsTables(token, conn, context)
+      .rs.sql.getCompletionsKeywords(token, conn, ctx),
+      .rs.sql.getCompletionsFields(token, conn, ctx),
+      .rs.sql.getCompletionsTables(token, conn, ctx)
    ))
 })
 
-.rs.addFunction("sql.getCompletionsKeywords", function(token, conn, context)
+.rs.addFunction("sql.getCompletionsKeywords", function(token, conn, ctx)
 {
    if (!nzchar(token))
       return(.rs.emptyCompletions(language = "SQL"))
    
-   keywords <- .rs.sql.keywords(conn)
+   # collect keywords (convert to lowercase to match token when appropriate)
+   lowercase <- if (nzchar(token))
+      identical(token, tolower(token))
+   else
+      ctx$preferLowercaseKeywords
+    
+   keywords <- if (lowercase)
+      tolower(.rs.sql.keywords(conn))
+   else
+      toupper(.rs.sql.keywords(conn))
+   
    results <- .rs.selectFuzzyMatches(keywords, token)
    .rs.makeCompletions(
       token = token,
@@ -71,7 +71,7 @@
    )
 })
 
-.rs.addFunction("sql.getCompletionsTables", function(token, conn, context)
+.rs.addFunction("sql.getCompletionsTables", function(token, conn, ctx)
 {
    if (!requireNamespace("DBI", quietly = TRUE))
       return(.rs.emptyCompletions(language = "SQL"))
@@ -87,6 +87,10 @@
    if (inherits(tables, "error"))
       return(.rs.emptyCompletions(language = "SQL"))
    
+   # add in alias names since the user might want to use those in lieu
+   # of the 'real' table name in certain ctxs
+   tables <- c(tables, names(ctx$aliases))
+   
    results <- .rs.selectFuzzyMatches(tables, token)
    .rs.makeCompletions(
       token = token,
@@ -96,7 +100,7 @@
    )
 })
 
-.rs.addFunction("sql.getCompletionsFields", function(token, conn, context)
+.rs.addFunction("sql.getCompletionsFields", function(token, conn, ctx)
 {
    if (!requireNamespace("DBI", quietly = TRUE))
       return(.rs.emptyCompletions(language = "SQL"))
@@ -110,7 +114,7 @@
    
    # if we have a '.' in the token, then only retrieve
    # completions from the requested table
-   tables <- context$tables
+   tables <- ctx$tables
    if (grepl(".", token, fixed = TRUE))
    {
       parts <- .rs.strsplit(token, ".", fixed = TRUE)
@@ -119,6 +123,10 @@
    }
    
    Reduce(.rs.appendCompletions, lapply(tables, function(table) {
+      
+      # if this table is an alias, find the 'true' table name
+      if (table %in% names(ctx$aliases))
+         table <- ctx$aliases[[table]]
       
       fields <- .rs.tryCatch(DBI::dbListFields(conn, table))
       if (inherits(fields, "error"))

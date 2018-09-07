@@ -169,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -1066,7 +1067,7 @@ public class RemoteServer implements Server
    
    public void sqlGetCompletions(String line,
                                  String connection,
-                                 JsObject context,
+                                 SqlCompletionParseContext context,
                                  ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()

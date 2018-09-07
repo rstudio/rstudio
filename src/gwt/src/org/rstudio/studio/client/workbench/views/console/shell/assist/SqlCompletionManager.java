@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
-import org.rstudio.core.client.JsVectorString;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -28,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SqlCompletionManager extends CompletionManagerBase
@@ -70,53 +67,15 @@ public class SqlCompletionManager extends CompletionManagerBase
       return new HandlerRegistration[] {};
    }
    
-   private JsObject completionContext()
+   private SqlCompletionParseContext completionContext()
    {
-      JsObject context = JsObject.createJsObject();
-      context.setJSO("tables", discoverKnownTables());
-      context.setBoolean("preferLowercaseKeywords", preferLowercaseKeywords());
-      return context;
-   }
-   
-   private JsArrayString discoverKnownTables()
-   {
-      JsVectorString tables = JsVectorString.createVector().cast();
+      SqlCompletionParseContext ctx = new SqlCompletionParseContext();
       
-      TokenIterator it = fromChunkStart();
-      for (Token token = it.getCurrentToken();
-           token != null;
-           token = it.stepForward())
-      {
-         if (token.hasType("keyword"))
-         {
-            String value = token.getValue().toLowerCase();
-            if (value.contentEquals("from") || value.contentEquals("into") ||
-                value.contentEquals("join") || value.contentEquals("update"))
-            {
-               // whitespace
-               token = it.stepForward();
-               if (token == null || !token.hasType("text"))
-                  continue;
-               
-               // table name
-               token = it.stepForward();
-               if (token == null || !token.hasType("identifier"))
-                  continue;
-               
-               tables.push(token.getValue());
-            }
-         }
-         
-         if (token.hasType("support.function.codeend"))
-            break;
-      }
+      int lowercaseKeywordCount = 0;
+      int uppercaseKeywordCount = 0;
       
-      
-      return tables.cast();
-   }
-   
-   private boolean preferLowercaseKeywords()
-   {
+      // TODO: The framework of 'for each token in chunk' would be
+      // worth off-loading somewhere re-usable
       TokenIterator it = fromChunkStart();
       for (Token token = it.getCurrentToken();
            token != null;
@@ -125,14 +84,122 @@ public class SqlCompletionManager extends CompletionManagerBase
          if (token.hasType("keyword"))
          {
             String value = token.getValue();
-            return value.contentEquals(value.toLowerCase());
+            if (value.contentEquals(value.toLowerCase()))
+               lowercaseKeywordCount += 1;
+            else if (value.contentEquals(value.toUpperCase()))
+               uppercaseKeywordCount += 1;
          }
+         
+         if (parseSqlFrom(it, ctx))
+            continue;
+         
+         if (parseSqlInto(it, ctx))
+            continue;
+         
+         if (parseSqlJoin(it, ctx))
+            continue;
+         
+         if (parseSqlUpdate(it, ctx))
+            continue;
+         
+         if (parseSqlIdentifier(it, ctx))
+            continue;
          
          if (token.hasType("support.function.codeend"))
             break;
       }
       
-      return false;
+      ctx.preferLowercaseKeywords = (lowercaseKeywordCount >= uppercaseKeywordCount);
+      
+      return ctx;
+   }
+   
+   private boolean parseSqlFrom(TokenIterator it, SqlCompletionParseContext ctx)
+   {
+      if (!consumeKeyword(it, "from"))
+         return false;
+      
+      if (!it.getCurrentToken().hasType("identifier"))
+         return false;
+      
+      String table = it.getCurrentToken().getValue();
+      ctx.tables.push(table);
+      
+      // move forward and look for alias
+      TokenIterator clone = it.clone();
+      if (!clone.moveToNextSignificantToken())
+         return false;
+      
+      // if this is an 'as' keyword, move to next
+      if (clone.getCurrentToken().getValue().equalsIgnoreCase("as"))
+      {
+         if (!clone.moveToNextSignificantToken())
+            return false;
+      }
+      
+      // if this is an identifier, add alias
+      if (clone.getCurrentToken().hasType("identifier"))
+      {
+         String alias = clone.getCurrentToken().getValue();
+         ctx.aliases.set(alias, table);
+      }
+      
+      return true;
+   }
+   
+   private boolean parseSqlInto(TokenIterator it, SqlCompletionParseContext ctx)
+   {
+      return parseSqlTableScopedKeyword("into", it, ctx);
+   }
+   
+   private boolean parseSqlJoin(TokenIterator it, SqlCompletionParseContext ctx)
+   {
+      return parseSqlTableScopedKeyword("into", it, ctx);
+   }
+   
+   private boolean parseSqlUpdate(TokenIterator it, SqlCompletionParseContext ctx)
+   {
+      return parseSqlTableScopedKeyword("into", it, ctx);
+   }
+   
+   private boolean parseSqlIdentifier(TokenIterator it, SqlCompletionParseContext ctx)
+   {
+      Token token = it.getCurrentToken();
+      if (!token.hasType("identifier"))
+         return false;
+      
+      String value = token.getValue();
+      ctx.identifiers.push(value);
+      return it.moveToNextSignificantToken();
+   }
+   
+   private boolean parseSqlTableScopedKeyword(String keyword,
+                                              TokenIterator it,
+                                              SqlCompletionParseContext ctx)
+   {
+      if (!consumeKeyword(it, keyword))
+         return false;
+      
+      Token token = it.getCurrentToken();
+      if (!token.hasType("identifier"))
+         return false;
+      
+      String table = token.getValue();
+      ctx.tables.push(table);
+      return it.moveToNextSignificantToken();
+   }
+   
+   private boolean consumeKeyword(TokenIterator it, String expectedValue)
+   {
+      Token token = it.getCurrentToken();
+      if (!token.hasType("keyword"))
+         return false;
+      
+      String tokenValue = token.getValue();
+      if (!expectedValue.equalsIgnoreCase(tokenValue))
+         return false;
+      
+      return it.moveToNextSignificantToken();
    }
    
    private String discoverAssociatedConnectionString()
