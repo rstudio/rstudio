@@ -198,7 +198,8 @@ class RemoteServerEventListener
         //   2) the user navigates Back within a Frame 
         //
         // can only imagine that it could happen in other scenarios!
-        watchdog_.schedule(kWatchdogIntervalMs);
+        if (!watchdog_.isRunning())
+           watchdog_.schedule(kWatchdogIntervalMs);
      }
    }
    
