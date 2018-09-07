@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishDetails.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,35 +15,17 @@
 
 package org.rstudio.studio.client.rsconnect.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-public class RmdPublishDetails extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class RmdPublishDetails
 {
-   protected RmdPublishDetails()
-   {
-   }
-   
-   public final native boolean isMultiRmd() /*-{
-      return this.is_multi_rmd;
-   }-*/;
-
-   public final native boolean isShinyRmd() /*-{
-      return this.is_shiny_rmd;
-   }-*/;
-
-   public final native boolean isSelfContained() /*-{
-      return this.is_self_contained;
-   }-*/;
-   
-   public final native String getTitle() /*-{
-      return this.title;
-   }-*/;
-   
-   public final native boolean hasConnectAccount() /*-{
-      return this.has_connect_account;
-   }-*/;
-   
-   public final native String websiteDir() /*-{
-      return this.website_dir;
-   }-*/;
+   public boolean is_multi_rmd;
+   public boolean is_shiny_rmd;
+   public boolean is_self_contained;
+   public String title;
+   public boolean has_connect_account;
+   public String website_dir;
+   public String website_output_dir;
 }

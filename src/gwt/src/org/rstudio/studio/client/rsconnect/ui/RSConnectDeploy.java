@@ -1077,7 +1077,7 @@ public class RSConnectDeploy extends Composite
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
-      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
          illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());

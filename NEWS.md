@@ -26,6 +26,12 @@
 
 * Author SQL queries in RStudio and preview in the SQL Results pane
 
+### Stan
+
+* Improved autocompletion support in Stan files / chunks
+* Implemented document outline for Stan files
+* Local Stan workers can now be interrupted
+
 ### Testing
 
 * *Run Tests* command in [testthat](https://github.com/r-lib/testthat) R scripts for direct running
@@ -48,6 +54,12 @@
 * Create [Plumber APIs](https://www.rplumber.io/) in RStudio
 * Execute Plumber APIs within RStudio to view Swagger documentation and make test calls to the APIs
 * Publish Plumber APIs to [RStudio Connect](https://www.rstudio.com/products/connect/)
+
+### Theming
+
+* Support for user-defined editor color schemes
+* Themes now are stored in easily installed, edited, and managed plain-text `.rstheme` files 
+* Import your favorite `.tmtheme` files as RStudio themes
 
 ### Miscellaneous
 
@@ -72,7 +84,7 @@
 * New command 'Pull with Rebase' to pull and rebase a branch in a single step (#2151)
 * Click on promises in the Environment pane now calls `force` on the promise
 * Add Rename command to File menu for quick rename of current file (#2199)
-* Numeric filtering in data viewer shows value distribution and supports user-entered values (#2230)
+* Numeric filtering in data viewer shows histogram/value distribution and supports user-entered values (#2230)
 * Improved support for custom `knitr` engines in R Notebooks (#2401)
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
@@ -81,7 +93,9 @@
 * Update embedded libclang to 5.0.2 (Windows only)
 * RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
 * New SSL options for authenticating and publishing to RStudio Connect servers using self-signed certs or internal CAs (#3040)
-* Added option to show whitespace characters for .tsv, .csv files
+* Added option to show whitespace characters for .tsv, .csv files (#3236)
+* The *Source* command can now be customized using magic `!source` comments (#3257)
+* Added linter rule to catch usage of `<-` in some situations where `=` is intended (#3289)
 
 ### Bug Fixes
 
@@ -99,6 +113,7 @@
 * Fix incorrect truncation of some R object descriptions in Environment pane (#1703)
 * Fix duplicate prompts in each window when using RStudio API `showPrompt` (#1706)
 * Fix proxy timeouts with the websocket used for the Terminal, via keepalive messages (#1860)
+* Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
 * Fix `file.edit` failures with Chinese filenames on Windows (#1868)
 * Fix errors when importing non-ASCII filenames in base Import Dataset (#1910)
 * Fix `rserver` crash that can occur when proxying websockets to Shiny apps (#2061)
@@ -117,8 +132,9 @@
 * Fix issue on Windows with R dialogs showing behind RStudio window (#2901)
 * Fix incorrect insertion of mousewheel handler into HTML widget JavaScript (#2634)
 * Fix unresponsive buttons in Connections pane when connection deletion is cancelled (#2644)
-* Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
+* Fix incorrect NEWS links in Packages pane (#3082)
 * Fix encoding issue with snippets containing non-ASCII text (#3111)
+* Fix persistence of Evaluate Chunks in Directory global option (#3356)
 
 ### RStudio Server Pro
 

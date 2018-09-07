@@ -792,10 +792,22 @@ public class RSConnectPublishButton extends Composite
           StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) 
          parent = true;
       
-      // if this is a document in a website, use the parent path
       if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
-         parent = true;
-      
+      {
+         if (docPreview_ != null && 
+               docPreview_.isStatic() && 
+               !StringUtil.isNullOrEmpty(docPreview_.getWebsiteDir()))
+         {
+            // preview of a static website, use the website path to search for deployments
+            contentPath = docPreview_.getWebsiteDir(); 
+         }
+         else
+         {
+            // if this is a document in website, use the parent path
+            parent = true;
+         }
+      }
+
       // apply parent path if needed
       if (parent)
       {
