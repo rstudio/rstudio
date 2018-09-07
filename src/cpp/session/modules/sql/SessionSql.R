@@ -40,8 +40,9 @@
    # otherwise, gather completions from other sources
    Reduce(.rs.appendCompletions, list(
       .rs.sql.getCompletionsKeywords(token, conn, ctx),
+      .rs.sql.getCompletionsTables(token, conn, ctx),
       .rs.sql.getCompletionsFields(token, conn, ctx),
-      .rs.sql.getCompletionsTables(token, conn, ctx)
+      .rs.sql.getCompletionsIdentifiers(token, conn, ctx)
    ))
 })
 
@@ -141,6 +142,18 @@
       
    }))
    
+})
+
+.rs.addFunction("sql.getCompletionsIdentifiers", function(token, conn, ctx)
+{
+   identifiers <- as.character(ctx$identifiers)
+   results <- .rs.selectFuzzyMatches(identifiers, token)
+   .rs.makeCompletions(
+      token = token,
+      results = results,
+      type = .rs.acCompletionTypes$CONTEXT,
+      language = "SQL"
+   )
 })
 
 .rs.addFunction("sql.listTableFields", function(conn, tables)
