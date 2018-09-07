@@ -51,13 +51,11 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
   Remove-Item c:\nsis-2.50-setup.exe
 
 # install qt (note that we are using the current directory's context)
-COPY windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
-RUN $ErrorActionPreference = 'Stop'; ``
-   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe', 'c:\qt.exe');`
-   Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install-win.qs' ;`
-   Remove-Item c:\qt.exe -Force ;`
-   Remove-Item c:\qt-noninteractive-install-win.qs
-
+RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; ` 
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.11.1-msvc2017_64.7z, c:\QtSDK-5.11.1-msvc2017_64.7z ; `
+  7z x c:\QtSDK-5.11.1-msvc2017_64.7z -oc:\ ; `
+  Remove-Item c:\QtSDK-5.11.1-msvc2017_64.7z -Force
+    
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
