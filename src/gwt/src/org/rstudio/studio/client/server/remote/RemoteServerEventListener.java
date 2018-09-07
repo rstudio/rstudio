@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
@@ -197,9 +198,8 @@ class RemoteServerEventListener
         //   2) the user navigates Back within a Frame 
         //
         // can only imagine that it could happen in other scenarios!
-   
         if (!watchdog_.isRunning())
-          watchdog_.run(kWatchdogIntervalMs);
+           watchdog_.schedule(kWatchdogIntervalMs);
      }
    }
    
@@ -254,7 +254,7 @@ class RemoteServerEventListener
          public void onResponseReceived(JsArray<ClientEvent> events)
          {
             // keep watchdog appraised of successful receipt of events
-            watchdog_.notifyResponseReceived();
+            watchdog_.cancel();
             
             try
             {
@@ -349,6 +349,10 @@ class RemoteServerEventListener
          }
       };
       
+      // bump the watchdog timer if it's running
+      if (watchdog_.isRunning())
+         watchdog_.schedule(kWatchdogIntervalMs);
+      
       // send request
       activeRequest_ = server_.getEvents(lastEventId_, 
                                          activeRequestCallback_,
@@ -406,51 +410,23 @@ class RemoteServerEventListener
    // were already delivered and subsequently assumes that the service
    // needs to be restarted
    
-   private class Watchdog
+   private class Watchdog extends Timer
    {  
-      public void run(int waitMs)
+      @Override
+      public void run()
       {
-         isRunning_ = true;
-         responseReceived_ = false ;
-         
-         Timer timer = new Timer() {
-            public void run()
-            {
-               try
-               {
-                  if (!responseReceived_)
-                  {
-                     // ensure that the workbench wasn't closed while we
-                     // were waiting for the timer to run
-                     if (!sessionWasQuit_) 
-                        restart();
-                  }
-               }
-               catch(Throwable e)
-               {
-                  GWT.log("Error restarting event source", e);
-               }
-               
-               isRunning_ = false;
-               responseReceived_ = false ;
-            }
-          
-         };
-         timer.schedule(waitMs);
+         try
+         {
+            // ensure that the workbench wasn't closed while we
+            // were waiting for the timer to run
+            if (!sessionWasQuit_)
+               restart();
+         }
+         catch(Throwable e)
+         {
+            GWT.log("Error restarting event source", e);
+         }
       }
-      
-      public boolean isRunning()
-      {
-         return isRunning_ ;
-      }
-      
-      public void notifyResponseReceived()
-      {
-         responseReceived_ = true;
-      }
-      
-      private boolean isRunning_ = false;
-      private boolean responseReceived_ = false;
    }
 
    public void registerAsyncHandle(String asyncHandle,
