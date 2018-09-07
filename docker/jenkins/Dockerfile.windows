@@ -36,7 +36,7 @@ RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
 # install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
 RUN $ErrorActionPreference = 'Stop' ;`
   [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
-  (New-Object System.Net.WebClient).DownloadFile('https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe' -OutFile 'c:\R-3.0.3-win.exe') ;`
+  (New-Object System.Net.WebClient).DownloadFile('https://cran.rstudio.com/bin/windows/base/old/3.0.3/R-3.0.3-win.exe', 'c:\R-3.0.3-win.exe') ;`
   Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;`
   Remove-Item c:\R-3.0.3-win.exe -Force
 
@@ -46,14 +46,14 @@ RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;`
 
 # install nsis (version on chocolatey is too new)
 RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
-  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe' -OutFile 'C:\nsis-2.50-setup.exe');`
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe', 'C:\nsis-2.50-setup.exe');`
   Start-Process c:\nsis-2.50-setup.exe -Wait -ArgumentList '/S' ;`
   Remove-Item c:\nsis-2.50-setup.exe
 
 # install qt (note that we are using the current directory's context)
 COPY windows\qt-noninteractive-install-win.qs c:\qt-noninteractive-install-win.qs
 RUN $ErrorActionPreference = 'Stop'; ``
-   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe' -OutFile 'c:\qt.exe');`
+   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/qt-unified-windows-x86-3.0.5-online.exe', 'c:\qt.exe');`
    Start-Process c:\qt.exe -Wait -ArgumentList '--script c:\qt-noninteractive-install-win.qs' ;`
    Remove-Item c:\qt.exe -Force ;`
    Remove-Item c:\qt-noninteractive-install-win.qs
