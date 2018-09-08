@@ -146,7 +146,7 @@
 
 .rs.addFunction("sql.getCompletionsIdentifiers", function(token, conn, ctx)
 {
-   identifiers <- as.character(ctx$identifiers)
+   identifiers <- setdiff(as.character(ctx$identifiers), token)
    results <- .rs.selectFuzzyMatches(identifiers, token)
    .rs.makeCompletions(
       token = token,

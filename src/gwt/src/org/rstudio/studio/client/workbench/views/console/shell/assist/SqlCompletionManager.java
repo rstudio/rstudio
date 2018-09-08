@@ -116,32 +116,47 @@ public class SqlCompletionManager extends CompletionManagerBase
    
    private boolean parseSqlFrom(TokenIterator it, SqlCompletionParseContext ctx)
    {
+      // consume initial from
       if (!consumeKeyword(it, "from"))
          return false;
       
-      if (!it.getCurrentToken().hasType("identifier"))
-         return false;
-      
-      String table = it.getCurrentToken().getValue();
-      ctx.tables.push(table);
-      
-      // move forward and look for alias
       TokenIterator clone = it.clone();
-      if (!clone.moveToNextSignificantToken())
-         return false;
-      
-      // if this is an 'as' keyword, move to next
-      if (clone.getCurrentToken().getValue().equalsIgnoreCase("as"))
+      while (true)
       {
+         // consume table name
+         if (!clone.getCurrentToken().hasType("identifier"))
+            break;
+         
+         String table = clone.getCurrentToken().getValue();
+         ctx.tables.push(table);
+         
          if (!clone.moveToNextSignificantToken())
-            return false;
-      }
-      
-      // if this is an identifier, add alias
-      if (clone.getCurrentToken().hasType("identifier"))
-      {
+            break;
+         
+         // consume optional 'as'
+         consumeKeyword(clone, "as");
+         
+         // check for identifier -- if we have one, it's
+         // the alias name
+         if (!clone.getCurrentToken().hasType("identifier"))
+            break;
+         
          String alias = clone.getCurrentToken().getValue();
          ctx.aliases.set(alias, table);
+         
+         if (!clone.moveToNextSignificantToken())
+            break;
+         
+         // continue parsing if we find a comma
+         if (clone.getCurrentToken().valueMatches("\\s*,\\s*"))
+         {
+            if (!clone.moveToNextSignificantToken())
+               break;
+            
+            continue;
+         }
+         
+         break;
       }
       
       return true;
@@ -170,7 +185,7 @@ public class SqlCompletionManager extends CompletionManagerBase
       
       String value = token.getValue();
       ctx.identifiers.push(value);
-      return it.moveToNextSignificantToken();
+      return true;
    }
    
    private boolean parseSqlTableScopedKeyword(String keyword,
@@ -186,7 +201,7 @@ public class SqlCompletionManager extends CompletionManagerBase
       
       String table = token.getValue();
       ctx.tables.push(table);
-      return it.moveToNextSignificantToken();
+      return true;
    }
    
    private boolean consumeKeyword(TokenIterator it, String expectedValue)

@@ -450,9 +450,12 @@ public class SignatureToolTipManager
       }
       
       Token lookahead = cursor.peekFwd(1);
-      if (lookahead.valueEquals("::") || lookahead.valueEquals(":::"))
-         if (!cursor.moveToNextToken())
-            return;
+      if (lookahead != null)
+      {
+         if (lookahead.valueEquals("::") || lookahead.valueEquals(":::"))
+            if (!cursor.moveToNextToken())
+               return;
+      }
       
       if (cursor.valueEquals("::") || cursor.valueEquals(":::"))
          if (!cursor.moveToNextToken())
