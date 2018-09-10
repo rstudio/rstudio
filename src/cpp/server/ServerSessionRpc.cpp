@@ -145,9 +145,9 @@ void validationHandler(
    handler(username, pConnection);
 }
 
-bool spawnerSessionsEnabled()
+bool launcherSessionsEnabled()
 {
-   return getServerBoolOption(kSpawnerSessionsEnabled);
+   return getServerBoolOption(kLauncherSessionsEnabled);
 }
 
 } // anonymous namespace
@@ -160,14 +160,14 @@ void addHandler(const std::string &prefix,
       s_pSessionRpcServer->addHandler(
                prefix, boost::bind(validationHandler, handler, _1));
 
-      if (spawnerSessionsEnabled())
+      if (launcherSessionsEnabled())
       {
-         // if we're using spawner sessions, we need to handle RPCs
+         // if we're using job launcher sessions, we need to handle RPCs
          // from within the regular http server since sessions will be
          // on different machines - we add the handler to both because
-         // at any time, the spawner licensing field could change, and
+         // at any time, the launcher licensing field could change, and
          // so sessions need to be able to communicate effectively in both
-         // spawner and non-spawner modes
+         // launcher and non-launcher modes
          server::server()->addHandler(
                   prefix, boost::bind(validationHandler, handler, _1));
       }
@@ -196,9 +196,9 @@ Error initialize()
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
 
-   // rpc socket only needed if project sharing, load balancing, or spawner sessions are in use
+   // rpc socket only needed if project sharing, load balancing, or launcher sessions are in use
    if (hasSharedStorage &&
-      (projectSharingEnabled || load_balancer::isLoadBalanced() || spawnerSessionsEnabled()))
+      (projectSharingEnabled || load_balancer::isLoadBalanced() || launcherSessionsEnabled()))
 
    {
       // create the async server instance
