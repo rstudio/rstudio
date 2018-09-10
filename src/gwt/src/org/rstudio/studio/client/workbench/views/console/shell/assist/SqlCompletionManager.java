@@ -169,12 +169,12 @@ public class SqlCompletionManager extends CompletionManagerBase
    
    private boolean parseSqlJoin(TokenIterator it, SqlCompletionParseContext ctx)
    {
-      return parseSqlTableScopedKeyword("into", it, ctx);
+      return parseSqlTableScopedKeyword("join", it, ctx);
    }
    
    private boolean parseSqlUpdate(TokenIterator it, SqlCompletionParseContext ctx)
    {
-      return parseSqlTableScopedKeyword("into", it, ctx);
+      return parseSqlTableScopedKeyword("update", it, ctx);
    }
    
    private boolean parseSqlIdentifier(TokenIterator it, SqlCompletionParseContext ctx)
