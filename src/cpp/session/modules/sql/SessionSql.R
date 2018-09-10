@@ -88,13 +88,12 @@
          tables <- listedTables
    }
    
-   # if we didn't get any tables, user context completions
-   if (!length(tables))
-      tables <- ctx$tables
-   
    # add in alias names since the user might want to use those in lieu
    # of the 'real' table name in certain contexts
    tables <- c(tables, names(ctx$aliases))
+   
+   # remove current token as candidate
+   tables <- setdiff(tables, token)
    
    results <- .rs.selectFuzzyMatches(tables, token)
    .rs.makeCompletions(
@@ -130,6 +129,8 @@
       fields <- .rs.tryCatch(DBI::dbListFields(conn, table))
       if (inherits(fields, "error"))
          return(.rs.emptyCompletions(language = "SQL"))
+      
+      fields <- setdiff(fields, token)
       
       .rs.makeCompletions(
          token = token,
