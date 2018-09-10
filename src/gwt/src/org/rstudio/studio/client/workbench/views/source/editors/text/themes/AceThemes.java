@@ -173,6 +173,12 @@ public class AceThemes
             new ServerRequestCallback<Void>()
             {
                @Override
+               public void onResponseReceived(Void response)
+               {
+                  themes_.remove(themeName);
+               }
+               
+               @Override
                public void onError(ServerError error)
                {
                   errorMessageConsumer.accept(error.getUserMessage());
