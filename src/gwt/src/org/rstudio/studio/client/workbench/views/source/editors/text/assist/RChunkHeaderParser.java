@@ -48,6 +48,8 @@ public class RChunkHeaderParser
       
       String extracted = match.getGroup(1);
       String chunkLabel = extractChunkLabel(extracted);
+      if (!StringUtil.isNullOrEmpty(chunkLabel))
+         options.put("label", chunkLabel);
       
       // if we had a chunk label, then we want to navigate our cursor to
       // the first comma in the chunk header; otherwise, we start at the
