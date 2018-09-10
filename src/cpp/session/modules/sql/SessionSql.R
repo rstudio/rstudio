@@ -13,6 +13,8 @@
 #
 #
 
+.rs.setVar("sql.connectionBlacklist", new.env(parent = emptyenv()))
+
 .rs.addJsonRpcHandler("sql_get_completions", function(...)
 {
    .rs.sql.getCompletions(...)
@@ -74,22 +76,17 @@
 
 .rs.addFunction("sql.getCompletionsTables", function(token, conn, ctx)
 {
-   if (!requireNamespace("DBI", quietly = TRUE))
-      return(.rs.emptyCompletions(language = "SQL"))
+   # attempt to derive table names from connection
+   conn <- .rs.sql.asConnectionObject(conn)
+   tables <- if (!is.null(conn))
+      .rs.sql.listTables(conn)
    
-   if (is.character(conn))
-   {
-      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
-      if (inherits(conn, "error"))
-         return(.rs.emptyCompletions(language = "SQL"))
-   }
-   
-   tables <- .rs.tryCatch(DBI::dbListTables(conn))
-   if (inherits(tables, "error"))
-      return(.rs.emptyCompletions(language = "SQL"))
+   # if we didn't get any tables, user context completions
+   if (!length(tables))
+      tables <- ctx$tables
    
    # add in alias names since the user might want to use those in lieu
-   # of the 'real' table name in certain ctxs
+   # of the 'real' table name in certain contexts
    tables <- c(tables, names(ctx$aliases))
    
    results <- .rs.selectFuzzyMatches(tables, token)
@@ -103,15 +100,9 @@
 
 .rs.addFunction("sql.getCompletionsFields", function(token, conn, ctx)
 {
-   if (!requireNamespace("DBI", quietly = TRUE))
+   conn <- .rs.sql.asConnectionObject(conn)
+   if (is.null(conn))
       return(.rs.emptyCompletions(language = "SQL"))
-   
-   if (is.character(conn))
-   {
-      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
-      if (inherits(conn, "error"))
-         return(.rs.emptyCompletions(language = "SQL"))
-   }
    
    # if we have a '.' in the token, then only retrieve
    # completions from the requested table
@@ -156,25 +147,40 @@
    )
 })
 
-.rs.addFunction("sql.listTableFields", function(conn, tables)
+.rs.addFunction("sql.listTables", function(conn)
 {
-   if (!requireNamespace("DBI", quietly = TRUE))
+   conn <- .rs.sql.asConnectionObject(conn)
+   if (is.null(conn))
       return(character())
    
-   if (is.character(conn))
+   # purge any disconnected connections (avoid keeping a live reference)
+   keys <- ls(envir = .rs.sql.connectionBlacklist)
+   for (key in keys)
+      if (!DBI::dbIsValid(.rs.sql.connectionBlacklist[[key]]))
+         rm(key, envir = .rs.sql.connectionBlacklist)
+   
+   # if the user has opted out of completions altogether
+   # then just use context completions
+   timeout <- as.numeric(getOption("sql.completion.timeout", 2))
+   if (timeout == 0)
+      return(character())
+   
+   # check and see whether we've blacklisted this connection
+   id <- digest::digest(conn)
+   if (!is.null(.rs.sql.connectionBlacklist[[id]]))
+      return(character())
+   
+   # request completions; if we take too long then blacklist further
+   # attempts to get completions
+   time <- system.time(tables <- .rs.tryCatch(DBI::dbListTables(conn)))
+   if (time[["user.self"]] > timeout)
    {
-      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
-      if (inherits(conn, "error"))
-         return(character())
+      .rs.sql.connectionBlacklist[[id]] <- conn
+      return(character())
    }
    
-   names(tables) <- tables
-   lapply(tables, function(table) {
-      tryCatch(
-         DBI::dbListFields(conn, table),
-         error = function(e) character()
-      )
-   })
+   # we got completions in time; use them
+   tables
 })
 
 .rs.addFunction("sql.keywords", function(conn)
@@ -219,4 +225,22 @@
       "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL",
       "WHEN", "WHERE", "WITH", "WITHOUT"
    )
+})
+
+.rs.addFunction("sql.asConnectionObject", function(conn)
+{
+   if (inherits(conn, "DBIConnection"))
+      return(conn)
+   
+   if (is.character(conn))
+   {
+      if (!requireNamespace("DBI", quietly = TRUE))
+         return(NULL)
+      
+      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
+      if (inherits(conn, "error"))
+         return(NULL)
+   }
+   
+   conn
 })
