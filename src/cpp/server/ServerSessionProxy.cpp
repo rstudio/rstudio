@@ -44,6 +44,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
+#include <core/http/ChunkProxy.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -615,19 +616,22 @@ void proxyRequest(
    // create client
    // if the user is available on the system pass in the uid for validation to ensure
    // that we only connect to the socket if it was created by the user
-    boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
-                                                     ptrConnection->ioService(),
-                                                     streamPath, false, validateUid));
+   boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
+                                                    ptrConnection->ioService(),
+                                                    streamPath, false, validateUid));
 
-    // setup retry context
-    if (!connectionRetryProfile.empty())
-       pClient->setConnectionRetryProfile(connectionRetryProfile);
+   // setup retry context
+   if (!connectionRetryProfile.empty())
+      pClient->setConnectionRetryProfile(connectionRetryProfile);
 
-    // assign request
-    pClient->request().assign(*pRequest);
+   // assign request
+   pClient->request().assign(*pRequest);
 
-    pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
-                     errorHandler);
+   // proxy the request
+   boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
+   chunkProxy->proxy(pClient);
+   pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
+                    errorHandler);
 }
 
 // function used to periodically validate that the user is valid (has an

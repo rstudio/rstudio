@@ -16,6 +16,8 @@
 #include <ios>
 #include <sstream>
 
+#include <boost/make_shared.hpp>
+
 #include <core/http/ChunkParser.hpp>
 
 namespace rstudio {
@@ -23,7 +25,8 @@ namespace core {
 namespace http {
 
 
-bool ChunkParser::parse(const char* buffer, size_t len, std::vector<std::string>* pOutChunks)
+bool ChunkParser::parse(const char* buffer, size_t len,
+                        std::deque<boost::shared_ptr<std::string> >* pOutChunks)
 {
    const char* end = buffer + len;
 
@@ -69,8 +72,11 @@ bool ChunkParser::parse(const char* buffer, size_t len, std::vector<std::string>
             break;
 
          case Chunk:
-            chunk_.append(1, curChar);
-            if (chunk_.size() == chunkSize_)
+            if (!chunk_)
+               chunk_ = boost::make_shared<std::string>();
+
+            chunk_->append(1, curChar);
+            if (chunk_->size() == chunkSize_)
             {
                pOutChunks->push_back(chunk_);
                state_ = ChunkCRLF;
@@ -82,7 +88,7 @@ bool ChunkParser::parse(const char* buffer, size_t len, std::vector<std::string>
             {
                state_ = HeaderSize;
                chunkHeader_.clear();
-               chunk_.clear();
+               chunk_.reset();
                chunkSize_ = 0;
             }
             break;

@@ -743,7 +743,7 @@ void setAttachmentResponse(const http::Request& request,
                         "attachment; filename*=UTF-8''"
                         + http::util::urlEncode(filename, false));
    pResponse->setHeader("Content-Type", "application/octet-stream");
-   pResponse->setBody(attachmentPath);
+   pResponse->setStreamFile(attachmentPath, request);
 }
    
 void handleMultipleFileExportRequest(const http::Request& request, 

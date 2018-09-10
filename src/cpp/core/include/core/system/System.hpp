@@ -24,6 +24,7 @@ typedef DWORD PidType;
 #include <sys/types.h>
 #include <sys/resource.h>
 typedef pid_t PidType;
+typedef uid_t UidType;
 #endif
 
 #include <string>

@@ -773,6 +773,16 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
    }
 }
 
+int permanentlyDropPriv(UidType newUid)
+{
+   return ::setuid(newUid);
+}
+
+int restoreRoot()
+{
+   return ::setuid(0);
+}
+
 } // namespace signal_safe
 
 void closeStdFileDescriptors()
@@ -2586,7 +2596,6 @@ Error temporarilyDropPriv(const std::string& newUsername)
    // success
    return Success();
 }
-
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
