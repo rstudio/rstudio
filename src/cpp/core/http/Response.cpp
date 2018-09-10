@@ -29,10 +29,11 @@
 #include <core/http/Cookie.hpp>
 #include <core/Hash.hpp>
 #include <core/RegexUtils.hpp>
-
-#include "zlib.h"
-
 #include <core/FileSerializer.hpp>
+
+#ifndef _WIN32
+#include "zlib.h"
+#endif
 
 namespace rstudio {
 namespace core {
@@ -121,6 +122,8 @@ enum class CompressionType
    Deflate
 };
 
+#ifndef _WIN32
+// we currently do not support direct usage of zlib on windows
 class ZlibCompressionStreamResponse : public StreamResponse
 {
 public:
@@ -250,6 +253,7 @@ private:
    boost::shared_ptr<StreamBuffer> fileBuffer_;
    bool finished_;
 };
+#endif
 
 } // anonymous namespace
 
@@ -753,6 +757,7 @@ void Response::setStreamFile(const FilePath& filePath,
    boost::shared_ptr<FileStreamResponse> fileStream(
             new FileStreamResponse(filePath, buffSize, usePadding(request, filePath)));
 
+#ifndef _WIN32
    if (compressionType)
    {
       streamResponse_.reset(
@@ -762,6 +767,9 @@ void Response::setStreamFile(const FilePath& filePath,
    {
       streamResponse_ = fileStream;
    }
+#else
+   streamResponse_ = fileStream;
+#endif
 
    Error error = streamResponse_->initialize();
    if (error)
