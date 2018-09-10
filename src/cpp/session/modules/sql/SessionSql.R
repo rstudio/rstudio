@@ -76,10 +76,17 @@
 
 .rs.addFunction("sql.getCompletionsTables", function(token, conn, ctx)
 {
+   # use context-completed tables by default
+   tables <- ctx$tables
+   
    # attempt to derive table names from connection
-   conn <- .rs.sql.asConnectionObject(conn)
-   tables <- if (!is.null(conn))
-      .rs.sql.listTables(conn)
+   conn <- .rs.sql.asDBIConnection(conn)
+   if (!is.null(conn))
+   {
+      listedTables <- .rs.sql.listTables(conn)
+      if (length(listedTables))
+         tables <- listedTables
+   }
    
    # if we didn't get any tables, user context completions
    if (!length(tables))
@@ -100,7 +107,7 @@
 
 .rs.addFunction("sql.getCompletionsFields", function(token, conn, ctx)
 {
-   conn <- .rs.sql.asConnectionObject(conn)
+   conn <- .rs.sql.asDBIConnection(conn)
    if (is.null(conn))
       return(.rs.emptyCompletions(language = "SQL"))
    
@@ -149,7 +156,7 @@
 
 .rs.addFunction("sql.listTables", function(conn)
 {
-   conn <- .rs.sql.asConnectionObject(conn)
+   conn <- .rs.sql.asDBIConnection(conn)
    if (is.null(conn))
       return(character())
    
@@ -227,7 +234,7 @@
    )
 })
 
-.rs.addFunction("sql.asConnectionObject", function(conn)
+.rs.addFunction("sql.asDBIConnection", function(conn)
 {
    if (inherits(conn, "DBIConnection"))
       return(conn)
