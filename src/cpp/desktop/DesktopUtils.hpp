@@ -92,6 +92,7 @@ void showFileError(const QString& action,
 
 bool isFixedWidthFont(const QFont& font);
 
+void openFile(const QString& file);
 void openUrl(const QUrl& url);
 
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary);

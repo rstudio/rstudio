@@ -25,6 +25,7 @@
 #include "DesktopInfo.hpp"
 #include "DesktopDownloadItemHelper.hpp"
 #include "DesktopMainWindow.hpp"
+#include "DesktopOptions.hpp"
 #include "DesktopSatelliteWindow.hpp"
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopWebProfile.hpp"
@@ -60,8 +61,57 @@ void onLinkHovered(const QString& url)
    s_hoveredUrl = url;
 }
 
+void handlePdfDownload(QWebEngineDownloadItem* downloadItem,
+                       const QString& downloadPath)
+{
+   QObject::connect(
+            downloadItem, &QWebEngineDownloadItem::finished,
+            [=]()
+   {
+      desktop::openFile(downloadPath);
+   });
+   
+   downloadItem->setPath(downloadPath);
+   downloadItem->accept();
+}
+
+void onPdfDownloadRequested(QWebEngineDownloadItem* downloadItem)
+{
+   QString scratchDir =
+         QString::fromStdString(options().scratchTempDir().absolutePath());
+   
+   // if we're requesting the download of a file with a '.pdf' extension,
+   // re-use that file name (since most desktop applications will display the
+   /// associated filename somewhere visible)
+   QString fileName = downloadItem->url().fileName();
+   if (fileName.endsWith(QStringLiteral(".pdf")))
+   {
+      QTemporaryDir tempDir(QStringLiteral("%1/").arg(scratchDir));
+      tempDir.setAutoRemove(false);
+      if (tempDir.isValid())
+      {
+         QString downloadPath = QStringLiteral("%1/%2")
+               .arg(tempDir.path())
+               .arg(fileName);
+         
+         return handlePdfDownload(downloadItem, downloadPath);
+      }
+   }
+   
+   // otherwise, create a temporary file
+   QString fileTemplate = QStringLiteral("%1/RStudio-XXXXXX.pdf").arg(scratchDir);
+   QTemporaryFile tempFile(fileTemplate);
+   tempFile.setAutoRemove(false);
+   if (tempFile.open())
+      return handlePdfDownload(downloadItem, tempFile.fileName());
+}
+
 void onDownloadRequested(QWebEngineDownloadItem* downloadItem)
 {
+   // download and then open PDF files requested by the user
+   if (downloadItem->mimeType() == QStringLiteral("application/pdf"))
+      return onPdfDownloadRequested(downloadItem);
+   
    // request directory from user
    QString downloadPath = QFileDialog::getSaveFileName(
             nullptr,

@@ -409,6 +409,11 @@ QFileDialog::Options standardFileDialogOptions()
 
 #else
 
+void openFile(const QString& file)
+{
+   QDesktopServices::openUrl(QUrl::fromLocalFile(file));
+}
+
 void openUrl(const QUrl& url)
 {
    QDesktopServices::openUrl(url);
