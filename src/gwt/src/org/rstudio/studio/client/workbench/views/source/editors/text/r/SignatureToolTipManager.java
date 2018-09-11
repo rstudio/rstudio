@@ -385,7 +385,9 @@ public class SignatureToolTipManager
       Position endPos = endCursor.getCurrentTokenPosition();
       TokenIterator startCursor = cursor.clone();
       Token lookbehind = startCursor.peekBwd(1);
-      if (lookbehind.valueEquals("::") || lookbehind.valueEquals(":::"))
+      if (lookbehind != null && (
+            lookbehind.valueEquals("::") ||
+            lookbehind.valueEquals(":::")))
       {
          if (!startCursor.moveToPreviousToken())
             return;
@@ -521,7 +523,9 @@ public class SignatureToolTipManager
       
       // If this is a namespaced function call, then append that context.
       Token lookbehind = cursor.peekBwd(1);
-      if (lookbehind.valueEquals("::") || lookbehind.valueEquals(":::"))
+      if (lookbehind != null && (
+            lookbehind.valueEquals("::") ||
+            lookbehind.valueEquals(":::")))
       {
          // Do-while loop just to allow 'break' for control flow
          do
