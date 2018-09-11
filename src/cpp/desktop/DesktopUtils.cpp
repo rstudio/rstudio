@@ -362,6 +362,11 @@ double getDpiZoomScaling()
 
 #ifdef _WIN32
 
+void openFile(const QString& file)
+{
+   return openUrl(QUrl::fromLocalFile(file));
+}
+
 // on Win32 open urls using our special urlopener.exe -- this is
 // so that the shell exec is made out from under our windows "job"
 void openUrl(const QUrl& url)
