@@ -905,12 +905,23 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
 {
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
+      // for files in the temporary directory, show as content
+      //
+      // (perform this check first to handle case where
+      // tempdir lives within the user's home directory)
+      if (filePath.isWithin(module_context::tempDir()))
+      {
+         module_context::showContent(title, filePath);
+      }
+      
       // for files in the user's home directory and pdfs use an external browser
-      if (module_context::isVisibleUserFile(filePath) ||
+      else if (module_context::isVisibleUserFile(filePath) ||
           (filePath.extensionLowerCase() == ".pdf"))
       {
          module_context::showFile(filePath);
       }
+      
+      // otherwise, show as content
       else
       {
          module_context::showContent(title, filePath);
