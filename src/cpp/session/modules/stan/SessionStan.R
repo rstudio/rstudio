@@ -130,8 +130,11 @@
    # invoke stan compiler and capture messages; note that the Stan
    # compiler will write some things to stderr and so we need to be careful
    # to capture that as well
-   so <- textConnection("stdout", open = "w")
-   se <- textConnection("stderr", open = "w")
+   so <- textConnection(NULL, open = "w")
+   on.exit(close(so), add = TRUE)
+   
+   se <- textConnection(NULL, open = "w")
+   on.exit(close(se), add = TRUE)
    
    sink(so, type = "output")
    sink(se, type = "message")
@@ -152,9 +155,6 @@
    # close our sinks
    sink(NULL, type = "output")
    sink(NULL, type = "message")
-   
-   close(so)
-   close(se)
    
    # bail if we failed to invoke the compiler
    if (!inherits(result, "error"))
