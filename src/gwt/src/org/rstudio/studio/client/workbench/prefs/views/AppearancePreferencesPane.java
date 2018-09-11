@@ -312,9 +312,20 @@ public class AppearancePreferencesPane extends PreferencesPane
             AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
             if (!themeList_.containsKey(currentTheme.getName()))
             {
+               StringBuilder warningMsg = new StringBuilder();
+               warningMsg.append("The active theme \"")
+                  .append(currentTheme.getName())
+                  .append("\" could not be found. It's possible it was removed outside the context of RStudio. Switching the ")
+                  .append(currentTheme.isDark() ? "dark " : "light ")
+                  .append("default theme: \"");
+               
                currentTheme = AceTheme.createDefault(currentTheme.isDark());
                uiPrefs_.theme().setGlobalValue(currentTheme);
                preview_.setTheme(currentTheme.getUrl());
+               
+               warningMsg.append(currentTheme.getName())
+                  .append("\".");
+               Debug.logWarning(warningMsg.toString());
             }
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
