@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
@@ -117,6 +118,13 @@ public class BranchToolbarButton extends ToolbarButton
          {
             if (event.isAttached())
             {
+               // rebuild the menu if required
+               if (menuRebuildRequired_)
+               {
+                  rebuildMenu();
+                  menuRebuildRequired_ = false;
+               }
+               
                // force a re-draw if necessary
                if (initialBranchMap_ != null)
                {
@@ -176,14 +184,29 @@ public class BranchToolbarButton extends ToolbarButton
    @Override
    public void onVcsRefresh(VcsRefreshEvent event)
    {
-      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
-      onRefresh(branches);
+      JsVectorString branches = pVcsState_.get().getBranchInfo().getBranches().cast();
+      if (branches.length() != branches_.length())
+      {
+         branches_ = branches.slice().cast();
+         menuRebuildRequired_ = true;
+      }
+      
+      for (int i = 0; i < branches.length(); i++)
+      {
+         if (!StringUtil.equals(branches.get(i), branches_.get(i)))
+         {
+            branches_ = branches.slice();
+            menuRebuildRequired_ = true;
+            break;
+         }
+      }
    }
    
-   private void onRefresh(JsArrayString branches)
+   private void rebuildMenu()
    {
       menu_.clearItems();
       
+      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
       if (branches.length() == 0)
       {
          onBeforePopulateMenu(menu_);
@@ -459,6 +482,9 @@ public class BranchToolbarButton extends ToolbarButton
    private int menuWidth_ = 0;
    private final SearchWidget searchWidget_;
    private Map<String, List<String>> initialBranchMap_;
+   
+   private boolean menuRebuildRequired_ = true;
+   private JsVectorString branches_ = JsVectorString.createVector();
    
    private HandlerRegistration previewHandler_;
    
