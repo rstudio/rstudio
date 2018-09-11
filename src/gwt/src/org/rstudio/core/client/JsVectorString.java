@@ -171,15 +171,30 @@ public class JsVectorString extends JavaScriptObject
       return shift(defaultValue());
    }
    
+   private final native String shift(String defaultValue)
+   /*-{
+      return this.shift() || defaultValue;
+   }-*/;
+   
    public final int size()
    {
       return length();
    }
    
-   private final native String shift(String defaultValue)
+   public final native JsVectorString slice(int begin, int end)
    /*-{
-      return this.shift() || defaultValue;
+      return this.slice(begin, end);
    }-*/;
+   
+   public final JsVectorString slice(int begin)
+   {
+      return slice(begin, length());
+   }
+   
+   public final JsVectorString slice()
+   {
+      return slice(0, length());
+   }
    
    public final native void splice(int start, int deleteCount, JsVectorString vector)
    /*-{
