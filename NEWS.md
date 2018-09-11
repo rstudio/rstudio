@@ -24,6 +24,7 @@
 
 ### SQL
 
+* Improved autocompletion support in SQL files / chunks
 * Author SQL queries in RStudio and preview in the SQL Results pane
 
 ### Stan
