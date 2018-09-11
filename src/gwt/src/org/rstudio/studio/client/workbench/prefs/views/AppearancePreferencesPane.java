@@ -306,8 +306,17 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
          
+            // It's possible the current theme was removed outside the context of
+            // RStudio, so choose a default if it can't be found.
+            AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+            if (!themeList_.containsKey(currentTheme.getName()))
+            {
+               currentTheme = AceTheme.createDefault(currentTheme.isDark());
+            }
+            
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
+            theme_.setValue(currentTheme.getName());
+            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
          },
          getProgressIndicator());
    }
