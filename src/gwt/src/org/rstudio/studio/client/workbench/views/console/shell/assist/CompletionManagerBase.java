@@ -46,6 +46,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -74,8 +75,12 @@ public abstract class CompletionManagerBase
       suggestTimer_ = new SuggestionTimer();
       helpTimer_ = new HelpTimer();
       handlers_ = new ArrayList<HandlerRegistration>();
-      
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
+      
+      docDisplay_.addAttachHandler((AttachEvent event) -> {
+         toggleHandlers(event.isAttached());
+      });
+            
    }
    
    @Inject
@@ -130,7 +135,11 @@ public abstract class CompletionManagerBase
       if (uiPrefs_.enableSnippets().getValue())
       {
          String[] parts = line.split("\\s+");
-         snippetToken_ = parts[parts.length - 1];
+         if (parts.length > 0)
+            snippetToken_ = parts[parts.length - 1];
+         else
+            snippetToken_ = "";
+         
          ArrayList<String> snippets = snippets_.getAvailableSnippets();
          for (String snippet : snippets)
             if (snippet.startsWith(snippetToken_))
@@ -685,16 +694,16 @@ public abstract class CompletionManagerBase
    {
       return new HandlerRegistration[] {
             
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               toggleHandlers(event.isAttached());
-            }),
-            
             docDisplay_.addBlurHandler((BlurEvent event) -> {
-               invalidatePendingRequests();
+               onBlur();
             }),
             
             docDisplay_.addClickHandler((ClickEvent event) -> {
                invalidatePendingRequests();
+            }),
+            
+            popup_.addMouseDownHandler((MouseDownEvent event) -> {
+               ignoreNextBlur_ = true;
             }),
             
             popup_.addAttachHandler((AttachEvent event) -> {
@@ -714,6 +723,17 @@ public abstract class CompletionManagerBase
             })
             
       };
+   }
+   
+   private void onBlur()
+   {
+      if (ignoreNextBlur_)
+      {
+         ignoreNextBlur_ = false;
+         return;
+      }
+      
+      invalidatePendingRequests();
    }
    
    private class SuggestionTimer
@@ -788,12 +808,13 @@ public abstract class CompletionManagerBase
    private final CompletionCache completionCache_;
    private final SuggestionTimer suggestTimer_;
    private final HelpTimer helpTimer_;
+   private final SnippetHelper snippets_;
+   
    private final List<HandlerRegistration> handlers_;
    
    private String completionToken_;
    private String snippetToken_;
-   
-   private final SnippetHelper snippets_;
+   private boolean ignoreNextBlur_;
    
    private CompletionRequestContext context_;
    private HelpStrategy helpStrategy_;
