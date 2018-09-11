@@ -23,6 +23,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
+#include <core/http/Request.hpp>
 
 namespace rstudio {
 namespace unit_tests {
@@ -129,6 +130,29 @@ context("Regular Expressions")
          expect_false(result);
       }
       
+   }
+}
+
+context("HttpRequest")
+{
+   test_that("Accept encoding works properly")
+   {
+      std::string encodingStr = "gzip,deflate,br";
+      std::string encodingStr2 = "gzip, deflate, br";
+
+      core::http::Request request;
+      request.setHeader("Accept-Encoding", encodingStr);
+
+      expect_true(request.acceptsEncoding("gzip"));
+      expect_true(request.acceptsEncoding("deflate"));
+      expect_true(request.acceptsEncoding("br"));
+      expect_false(request.acceptsEncoding("gzip,deflate,br"));
+
+      request.setHeader("Accept-Encoding", encodingStr2);
+      expect_true(request.acceptsEncoding("gzip"));
+      expect_true(request.acceptsEncoding("deflate"));
+      expect_true(request.acceptsEncoding("br"));
+      expect_false(request.acceptsEncoding("gzip,deflate,br"));
    }
 }
 

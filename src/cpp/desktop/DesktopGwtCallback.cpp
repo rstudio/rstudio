@@ -1257,7 +1257,7 @@ bool isProportionalFont(const QString& fontFamily)
 
 QString GwtCallback::getFixedWidthFontList()
 {
-   QFontDatabase db;
+   QFontDatabase& db = desktop::fontDatabase();
    QStringList families = db.families();
 
    QStringList::iterator it = std::remove_if(

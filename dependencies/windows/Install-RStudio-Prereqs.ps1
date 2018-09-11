@@ -16,6 +16,10 @@ function Test-Administrator
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
+function Download-File ($url, $output) {
+    (New-Object System.Net.WebClient).DownloadFile($url, $output)
+}
+
 ##############################################################################
 # script execution starts here
 ##############################################################################
@@ -24,12 +28,24 @@ If (-Not (Test-Administrator)) {
     exit
 }
 
+# PowerShell uses TLS 1.0 by default, which many sites will reject.
+# Set TLS 1.2 (3072), then TLS 1.1 (768), then TLS 1.0 (192), finally SSL 3.0 (48) 
+# Use integers because the enumeration values for TLS 1.2 and TLS 1.1 won't 
+# exist in .NET 4.0, even though they are addressable if .NET 4.5+ is 
+# installed (.NET 4.5 is an in-place upgrade).
+try { 
+    $securityProtocolSettingsOriginal = [System.Net.ServicePointManager]::SecurityProtocol
+    [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48
+} catch {
+    Write-Warning 'Unable to set PowerShell to use TLS 1.2 and TLS 1.1 due to old .NET Framework installed.' 
+}
+
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.5.0-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
         Write-Host "Downloading R 3.5.0..."
-        Invoke-WebRequest https://cran.rstudio.com/bin/windows/base/old/3.5.0/R-3.5.0-win.exe -OutFile $RSetupPackage
+        Download-File https://cran.rstudio.com/bin/windows/base/old/3.5.0/R-3.5.0-win.exe $RSetupPackage
     } else {
         Write-Host "Using previously downloaded R installer"
     }
@@ -47,22 +63,23 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/in
 refreshenv
 
 # install some deps via chocolatey
-choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
+choco install -y cmake --version 3.12.1 --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8 ant windows-sdk-10.1  7zip git ninja
-
-# install Visual C++ via chocolatey
-# The workload step is failing in Docker so we're installing it via Visual Studio installer 
-# later in this file. Leaving here as a reminder to try chocolatey again in the future.
-# RUN choco install -y visualstudio2017buildtools
-# RUN choco install -y visualstudio2017-workload-vctools
+choco install -y jdk8 --version 8.0.181
+choco install -y ant --version 1.10.5
+choco install -y 7zip --version 18.5.0.20180730
+choco install -y git --version 2.18.0
+choco install -y ninja --version 1.7.2
+choco install -y windows-sdk-10.1 --version 10.1.17134.12
+choco install -y visualstudio2017buildtools --version 15.8.2.0
+choco install -y visualstudio2017-workload-vctools --version 1.3.0
 
 # install nsis (version on chocolatey is too new)
 if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
     $NSISSetup = 'C:\nsis-2.50-setup.exe'
     Write-Host "Downloading NSIS..."
     if (-Not (Test-Path $NSISSetup)) {
-        Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe -OutFile $NSISSetup
+        Download-File https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe $NSISSetup
     } else {
         Write-Host "Using previously downloaded NSIS installer"
     }
@@ -73,24 +90,10 @@ if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
     Write-Host "NSIS already found, skipping"
 }
 
-# install visual c++
-if (-Not (Test-Path -Path "C:\Program Files (x86)\Microsoft Visual Studio\2017")) {
-    $VSSetup = "C:\vs_buildtools_2017.exe"
-    Write-Host "Downloading VS Buildtools setup..."
-    if (-Not (Test-Path $VSSetup)) {
-        Invoke-WebRequest https://s3.amazonaws.com/rstudio-buildtools/vs_buildtools_2017.exe -OutFile $VSSetup
-    } else {
-        Write-Host "Using previously downloaded Visual Studio installer"
-    }
-    Write-Host "Installing Visual Studio Build Tools..."
-    Start-Process $VSSetup -Wait -ArgumentList '--quiet --add Microsoft.VisualStudio.Workload.VCTools'
-    if ($DeleteDownloads) { Remove-Item $VSSetup -Force }
-} else {
-    Write-Host "Visual Studio 2017 build tools already intalled, skipping"
-}
-
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
+
+[System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"

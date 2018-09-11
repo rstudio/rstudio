@@ -18,10 +18,14 @@
 
 #include <iostream>
 #include <sstream>
+
+#include <boost/optional.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/restrict.hpp>
 
 #ifndef _WIN32
 #include <boost/iostreams/filter/gzip.hpp>
@@ -84,7 +88,30 @@ public:
       BOOST_ASSERT(false); 
       return boost::iostreams::write(dest, s, n);
    }   
-};     
+};
+
+struct StreamBuffer
+{
+   char* data;
+   size_t size;
+
+   StreamBuffer(char* data, size_t size) :
+      data(data), size(size)
+   {
+   }
+
+   ~StreamBuffer()
+   {
+      delete [] data;
+   }
+};
+
+class StreamResponse
+{
+public:
+   virtual Error initialize() = 0;
+   virtual boost::shared_ptr<StreamBuffer> nextBuffer() = 0;
+};
 
 class Response : public Message
 {
@@ -101,6 +128,7 @@ public:
       statusCode_ = response.statusCode_;
       statusCodeStr_ = response.statusCodeStr_;
       statusMessage_ = response.statusMessage_;
+      streamResponse_ = response.streamResponse_;
    }
 
 public:   
@@ -228,6 +256,10 @@ public:
       }
    }   
 
+   void setStreamFile(const FilePath& filePath,
+                      const Request& request,
+                      std::streamsize buffSize = 65536);
+
    Error setBody(const FilePath& filePath, std::streamsize buffSize = 512)
    {
       NullOutputFilter nullFilter;
@@ -288,13 +320,16 @@ public:
       if (request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
 
-      bool padding =
-          browser_utils::isQt(request.headerValue("User-Agent")) &&
-          filePath.mimeContentType() == "text/html";
-
-      Error error = setBody(filePath, filter, 128, padding);
+      Error error = setBody(filePath, filter, 128, usePadding(request, filePath));
       if (error)
          setError(status::InternalServerError, error.code().message());
+   }
+
+   bool usePadding(const Request& request,
+                   const FilePath& filePath) const
+   {
+      return browser_utils::isQt(request.headerValue("User-Agent")) &&
+             filePath.mimeContentType() == "text/html";
    }
    
    void setCacheableFile(const FilePath& filePath, const Request& request)
@@ -358,6 +393,16 @@ public:
       notFoundHandler_ = handler;
    }
 
+   bool isStreamResponse() const
+   {
+      return static_cast<bool>(streamResponse_);
+   }
+
+   boost::shared_ptr<StreamResponse> getStreamResponse() const
+   {
+      return streamResponse_;
+   }
+
 private:
    virtual void appendFirstLineBuffers(
          std::vector<boost::asio::const_buffer>& buffers) const ;
@@ -383,6 +428,8 @@ private:
    mutable std::string statusCodeStr_ ;
 
    NotFoundHandler notFoundHandler_;
+
+   boost::shared_ptr<StreamResponse> streamResponse_;
 };
 
 std::ostream& operator << (std::ostream& stream, const Response& r) ;

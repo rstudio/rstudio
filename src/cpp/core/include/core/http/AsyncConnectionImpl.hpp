@@ -35,6 +35,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/SocketUtils.hpp>
+#include <core/http/StreamWriter.hpp>
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
 
@@ -50,6 +51,7 @@ class ISocketOperations
 public:
    virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler) = 0;
    virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler) = 0;
+   virtual void asyncWrite(const boost::asio::const_buffers_1& buffers, Socket::Handler handler) = 0;
    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler) = 0;
 };
 
@@ -69,6 +71,11 @@ public:
    virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
    {
       boost::asio::async_write(*stream_, buffers, handler);
+   }
+
+   virtual void asyncWrite(const boost::asio::const_buffers_1& buffer, Socket::Handler handler)
+   {
+      boost::asio::async_write(*stream_, buffer, handler);
    }
 
    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler)
@@ -165,25 +172,42 @@ public:
       if (close)
          response_.setHeader("Connection", "close");
 
-      // make sure that if no body and content-length were specified,
-      // we send 0 for Content-Length
-      // otherwise, this response will be invalid
-      if (response_.body().empty() && response_.headerValue("Content-Length").empty())
-          response_.setContentLength(0);
-
       // call the response filter if we have one
       if (responseFilter_)
          responseFilter_(originalUri_, &response_);
 
-      // write
-      socketOperations_->asyncWrite(
-          response_.toBuffers(),
-          boost::bind(
-               &AsyncConnectionImpl<SocketType>::handleWrite,
-               AsyncConnectionImpl<SocketType>::shared_from_this(),
-               boost::asio::placeholders::error,
-               close)
-      );
+      if (response_.isStreamResponse())
+      {
+         boost::shared_ptr<core::http::StreamWriter<SocketType> > pWriter(
+                  new core::http::StreamWriter<SocketType>(
+                     *socket_,
+                     response_,
+                     boost::bind(&AsyncConnectionImpl<SocketType>::onStreamComplete,
+                                 AsyncConnectionImpl<SocketType>::shared_from_this()),
+                     boost::bind(&AsyncConnectionImpl<SocketType>::handleStreamError,
+                                 AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                 _1)));
+
+         pWriter->write();
+         return;
+      }
+      else
+      {
+         // make sure that if no body and content-length were specified,
+         // we send 0 for Content-Length
+         // otherwise, this response will be invalid
+         if (response_.body().empty() && response_.headerValue("Content-Length").empty())
+             response_.setContentLength(0);
+
+         // write
+         socketOperations_->asyncWrite(
+             response_.toBuffers(),
+             boost::bind(
+                  &AsyncConnectionImpl<SocketType>::handleWrite,
+                  AsyncConnectionImpl<SocketType>::shared_from_this(),
+                  boost::asio::placeholders::error,
+                  close));
+      }
    }
 
    virtual void writeResponse(const http::Response& response, bool close = true)
@@ -223,6 +247,13 @@ public:
                      Socket::Handler handler)
    {
       socketOperations_->asyncWrite(buffers, handler);
+   }
+
+   virtual void asyncWrite(
+                     const boost::asio::const_buffers_1& buffer,
+                     Socket::Handler handler)
+   {
+      socketOperations_->asyncWrite(buffer, handler);
    }
 
    virtual void close()
@@ -384,6 +415,19 @@ private:
 
       // ssl stream established - start reading
       readSome();
+   }
+
+   void onStreamComplete()
+   {
+      close();
+   }
+
+   void handleStreamError(const Error& error)
+   {
+      if (!core::http::isConnectionTerminatedError(error))
+         LOG_ERROR(error);
+
+      close();
    }
 
 private:

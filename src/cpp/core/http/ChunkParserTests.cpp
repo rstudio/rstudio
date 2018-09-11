@@ -15,7 +15,7 @@
 
 #include <ios>
 #include <sstream>
-#include <vector>
+#include <deque>
 
 #include <core/http/ChunkParser.hpp>
 
@@ -38,11 +38,11 @@ context("ChunkParserTests")
       std::string payloadStr = payload.str();
 
       ChunkParser chunkParser;
-      std::vector<std::string> chunks;
+      std::deque<boost::shared_ptr<std::string> > chunks;
 
       CHECK_FALSE(chunkParser.parse(payloadStr.c_str(), payloadStr.size(), &chunks));
       CHECK(chunks.size() == 1);
-      CHECK(chunks.at(0) == chunk);
+      CHECK(*(chunks.at(0)) == chunk);
    }
 
    test_that("Can parse on simple chunk with chunk end")
@@ -54,11 +54,11 @@ context("ChunkParserTests")
       std::string payloadStr = payload.str();
 
       ChunkParser chunkParser;
-      std::vector<std::string> chunks;
+      std::deque<boost::shared_ptr<std::string> > chunks;
 
       CHECK(chunkParser.parse(payloadStr.c_str(), payloadStr.size(), &chunks));
       CHECK(chunks.size() == 1);
-      CHECK(chunks.at(0) == chunk);
+      CHECK(*(chunks.at(0)) == chunk);
    }
 
    test_that("Can parse multiple simple chunks with chunk end")
@@ -76,13 +76,13 @@ context("ChunkParserTests")
       std::string payloadStr = payload.str();
 
       ChunkParser chunkParser;
-      std::vector<std::string> chunks;
+      std::deque<boost::shared_ptr<std::string> > chunks;
 
       CHECK(chunkParser.parse(payloadStr.c_str(), payloadStr.size(), &chunks));
       CHECK(chunks.size() == 3);
-      CHECK(chunks.at(0) == chunk);
-      CHECK(chunks.at(1) == chunk2);
-      CHECK(chunks.at(2) == chunk3);
+      CHECK(*(chunks.at(0)) == chunk);
+      CHECK(*(chunks.at(1)) == chunk2);
+      CHECK(*(chunks.at(2)) == chunk3);
    }
 
    test_that("Can parse piecewise chunks")
@@ -112,7 +112,7 @@ context("ChunkParserTests")
       std::string piece5Str = piece5.str();
 
       ChunkParser chunkParser;
-      std::vector<std::string> chunks;
+      std::deque<boost::shared_ptr<std::string> > chunks;
 
       CHECK_FALSE(chunkParser.parse(piece1Str.c_str(), piece1Str.size(), &chunks));
       CHECK(chunks.size() == 0);
@@ -122,15 +122,15 @@ context("ChunkParserTests")
 
       CHECK_FALSE(chunkParser.parse(piece3Str.c_str(), piece3Str.size(), &chunks));
       CHECK(chunks.size() == 1);
-      CHECK(chunks.at(0) == chunk1);
+      CHECK(*(chunks.at(0)) == chunk1);
 
       CHECK_FALSE(chunkParser.parse(piece4Str.c_str(), piece4Str.size(), &chunks));
       CHECK(chunks.size() == 2);
-      CHECK(chunks.at(1) == chunk2);
+      CHECK(*(chunks.at(1)) == chunk2);
 
       CHECK(chunkParser.parse(piece5Str.c_str(), piece5Str.size(), &chunks));
       CHECK(chunks.size() == 3);
-      CHECK(chunks.at(2) == chunk3);
+      CHECK(*(chunks.at(2)) == chunk3);
    }
 }
 

@@ -17,10 +17,12 @@
 #define CORE_HTTP_CHUNK_PARSER_HPP
 
 #include <stdint.h>
+
+#include <deque>
 #include <string>
-#include <vector>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace rstudio {
 namespace core {
@@ -37,7 +39,8 @@ public:
 
    /// Parses the next buffer and outputs any processed complete chunks.
    /// Returns true if no more chunks will be received.
-   bool parse(const char* buffer, size_t len, std::vector<std::string>* pOutChunks);
+   bool parse(const char* buffer, size_t len,
+              std::deque<boost::shared_ptr<std::string> >* pOutChunks);
 
 private:
    // state of the parser
@@ -56,7 +59,7 @@ private:
 
    // buffer for incoming chunk
    std::string chunkHeader_;
-   std::string chunk_;
+   boost::shared_ptr<std::string> chunk_;
 };
 
 } // namespace http

@@ -63,7 +63,7 @@ namespace http {
 
 // chunked handler for reading chunked encoding chunks
 // ONLY used for responses that return chunked encoding
-typedef boost::function<void(const http::Response&, const std::string&)> ChunkHandler;
+typedef boost::function<bool(const http::Response&, const std::string&)> ChunkHandler;
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
@@ -77,6 +77,8 @@ public:
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
                         const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
+   virtual void setChunkHandler(const ChunkHandler& chunkHandler) = 0;
+   virtual void resumeChunkProcessing() = 0;
    virtual void disableHandlers() = 0;
    virtual void close() = 0;
 };
@@ -121,7 +123,8 @@ public:
       // set handlers
       responseHandler_ = responseHandler;
       errorHandler_ = errorHandler;
-      chunkHandler_ = chunkHandler;
+      if (chunkHandler)
+         chunkHandler_ = chunkHandler;
 
       // connect and write request (implmented in a protocol
       // specific manner by subclassees)
@@ -154,6 +157,13 @@ public:
    }
 
    virtual void asyncWrite(
+                     const boost::asio::const_buffers_1& buffer,
+                     Handler handler)
+   {
+      boost::asio::async_write(socket(), buffer, handler);
+   }
+
+   virtual void asyncWrite(
                      const std::vector<boost::asio::const_buffer>& buffers,
                      Handler handler)
    {
@@ -176,6 +186,42 @@ public:
          }
       }
       END_LOCK_MUTEX
+   }
+
+   virtual void setChunkHandler(const ChunkHandler& chunkHandler)
+   {
+      chunkHandler_ = chunkHandler;
+   }
+
+   virtual void resumeChunkProcessing()
+   {
+      if (!chunkState_)
+      {
+         // no saved chunk state so this was an errant call and we should not do anything
+         return;
+      }
+
+      // deliver the chunks on the thread pool instead of directly from this method
+      // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
+      boost::shared_ptr<AsyncClient<SocketService> > sharedThis =
+            AsyncClient<SocketService>::shared_from_this();
+
+      ioService_.post([=]()
+      {
+         bool complete = chunkState_->complete;
+
+         // capture shared_ptr of this to keep instance alive while posting callback
+         // to io service
+         bool handled = sharedThis->deliverChunks(chunkState_->chunks, complete);
+
+         if (handled)
+         {
+            if (!complete)
+               sharedThis->readSomeContent();
+            else
+               closeAndRespond();
+         }
+      });
    }
 
 protected:
@@ -239,6 +285,10 @@ protected:
       // invoke error handler
       if (errorHandler_)
          errorHandler_(error);
+
+      // free handlers to ensure they do not keep a strong reference to us
+      // this will allow us to properly clean up in that case
+      disableHandlers();
    }
 
    void handleErrorCode(const boost::system::error_code& ec,
@@ -534,23 +584,10 @@ private:
       const char* bufferPtr = boost::asio::buffer_cast<const char*>(responseBuffer_.data());
 
       // parse the bytes into chunks
-      std::vector<std::string> chunks;
+      std::deque<boost::shared_ptr<std::string> > chunks;
       bool complete = chunkParser_->parse(bufferPtr, responseBuffer_.size(), &chunks);
 
-      // process any completed chunks
-      BOOST_FOREACH(const std::string& chunk, chunks)
-      {
-         if (chunkHandler_)
-         {
-            chunkHandler_(response_, chunk);
-         }
-         else
-         {
-            // no chunk handler supplied, so caller expects to receive all chunks
-            // in one shot when the request finishes - simply append chunk to final response
-            ResponseParser::appendToBody(chunk, &response_);
-         }
-      }
+      bool chunksHandled = deliverChunks(chunks, complete);
 
       if (!complete)
       {
@@ -560,13 +597,54 @@ private:
          // subsequent reads are read into the beginning of the buffer and not the end
          responseBuffer_.consume(responseBuffer_.size());
 
-         readSomeContent();
+         if (chunksHandled)
+            readSomeContent();
       }
       else
       {
          // no more chunks
-         closeAndRespond();
+         if (chunksHandled)
+            closeAndRespond();
       }
+   }
+
+   bool deliverChunks(std::deque<boost::shared_ptr<std::string> >& chunks,
+                      bool complete)
+   {
+      for (auto iter = chunks.begin(); iter != chunks.end();)
+      {
+         boost::shared_ptr<std::string> chunk = *iter;
+
+         if (chunkHandler_)
+         {
+            bool keepGoing = chunkHandler_(response_, *chunk);
+
+            if (!keepGoing)
+            {
+               // callback signaled to us to stop reading data for the moment
+               // (perhaps the receiving buffer was full)
+               // save this chunk state for later, and stop reading from the connection
+               // until we are signaled to do resume
+               chunkState_ = boost::make_shared<ChunkState>(chunks, complete);
+               return false;
+            }
+            else
+            {
+               // consumer successfully processed this chunk, so we can delete it now
+               iter = chunks.erase(iter);
+            }
+         }
+         else
+         {
+            // no chunk handler supplied, so caller expects to receive all chunks
+            // in one shot when the request finishes - simply append chunk to final response
+            ResponseParser::appendToBody(*chunk, &response_);
+
+            ++iter;
+         }
+      }
+
+      return true;
    }
 
    virtual bool isShutdownError(const boost::system::error_code& ec)
@@ -583,6 +661,10 @@ private:
          responseHandler_(response_);
       else if (chunkHandler_)
          chunkHandler_(response_, ""); // completion of chunks signified by empty chunk
+
+      // free handlers in case they keep a strong reference to us
+      // this will allow us to properly clean up in that case
+      disableHandlers();
    }
 
    void logError(const Error& error) const
@@ -597,7 +679,6 @@ private:
       }
    }
 
-// struct and instance variable to track connection retry state
 private:
    struct ConnectionRetryContext
    {
@@ -610,6 +691,19 @@ private:
       http::ConnectionRetryProfile profile;
       boost::posix_time::ptime stopTryingTime;
       boost::asio::deadline_timer retryTimer;
+   };
+
+   struct ChunkState
+   {
+      ChunkState(const std::deque<boost::shared_ptr<std::string> >& chunks,
+                 bool complete) :
+         chunks(chunks),
+         complete(complete)
+      {
+      }
+
+      std::deque<boost::shared_ptr<std::string> > chunks;
+      bool complete;
    };
 
 protected:
@@ -626,6 +720,8 @@ private:
    boost::shared_ptr<ChunkParser> chunkParser_;
    ChunkHandler chunkHandler_;
    bool chunkedEncoding_;
+
+   boost::shared_ptr<ChunkState> chunkState_;
 
    boost::mutex socketMutex_;
    bool closed_;

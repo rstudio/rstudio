@@ -77,22 +77,6 @@ boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms)
    return time_t_epoch + milliseconds(ms);
 }
 
-std::string format(const boost::posix_time::ptime& datetime,
-                   const std::string& format)
-{
-   using namespace boost::posix_time;
-
-   // facet for http date (construct w/ a_ref == 1 so we manage memory)
-   time_facet httpDateFacet(1);
-   httpDateFacet.format(format.c_str());
-
-   // output and return the date
-   std::ostringstream dateStream;
-   dateStream.imbue(std::locale(dateStream.getloc(), &httpDateFacet));
-   dateStream << datetime;
-   return dateStream.str();
-}
-
 std::string millisecondsSinceEpochAsString(double ms)
 {
    boost::posix_time::ptime time =

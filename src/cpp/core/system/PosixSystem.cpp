@@ -477,16 +477,20 @@ FilePath userHomePath(std::string envOverride)
 }
 
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
-                          const std::string& appName)
+                          const std::string& appName,
+                          bool ensureDirectory)
 {
    std::string lower = appName;
    boost::to_lower(lower);
 
    FilePath path = userHomeDirectory.childPath("." + lower);
-   Error error = path.ensureDirectory();
-   if (error)
+   if (ensureDirectory)
    {
-      LOG_ERROR(error);
+      Error error = path.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
    }
    return path;
 }
@@ -771,6 +775,16 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
       closeFileDescriptorsFromSafe(fdStart, pipeFd);
       closeFileDescriptorsFromSafe(pipeFd + 1, fdLimit);
    }
+}
+
+int permanentlyDropPriv(UidType newUid)
+{
+   return ::setuid(newUid);
+}
+
+int restoreRoot()
+{
+   return ::setuid(0);
 }
 
 } // namespace signal_safe
@@ -2586,7 +2600,6 @@ Error temporarilyDropPriv(const std::string& newUsername)
    // success
    return Success();
 }
-
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {

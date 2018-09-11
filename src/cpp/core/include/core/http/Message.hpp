@@ -40,7 +40,8 @@ class FilePath;
 namespace http {
 
 // encodings
-extern const char * const kGzipEncoding;         
+extern const char * const kGzipEncoding;
+extern const char * const kDeflateEncoding;
 extern const char * const kTransferEncoding;
 extern const char * const kChunkedTransferEncoding;
 

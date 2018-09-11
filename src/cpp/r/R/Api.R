@@ -812,3 +812,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    # otherwise, call prompting version
    .rs.installBuildTools(action)
 })
+
+.rs.addApiFunction("buildToolsExec", function(expr) {
+   .rs.withBuildTools(expr)
+})

@@ -32,7 +32,9 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/RequestParser.hpp>
+#include <core/http/Socket.hpp>
 #include <core/http/SocketUtils.hpp>
+#include <core/http/StreamWriter.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -75,14 +77,30 @@ public:
 
 public:
 
-   // request/resposne (used by Handler)
+   // request/response (used by Handler)
    virtual const core::http::Request& request() { return request_; }
 
    virtual void sendResponse(const core::http::Response &response)
    {
       try
       {
-         // write the response
+         if (response.isStreamResponse())
+         {
+            boost::shared_ptr<core::http::StreamWriter<typename ProtocolType::socket> > pWriter(
+                     new core::http::StreamWriter<typename ProtocolType::socket>(
+                        socket_,
+                        response,
+                        boost::bind(&HttpConnectionImpl::onStreamComplete,
+                                    HttpConnectionImpl<ProtocolType>::shared_from_this()),
+                        boost::bind(&HttpConnectionImpl::handleError,
+                                    HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                                    _1)));
+
+            pWriter->write();
+            return;
+         }
+
+         // write the non streaming response
          boost::asio::write(socket_,
                             response.toBuffers(
                                   core::http::Header::connectionClose()));
@@ -211,6 +229,17 @@ private:
          }
       }
       CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void onStreamComplete()
+   {
+      close();
+   }
+
+   void handleError(const core::Error& error)
+   {
+      LOG_ERROR(error);
+      close();
    }
 
 private:

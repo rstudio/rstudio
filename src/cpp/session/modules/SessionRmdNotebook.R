@@ -394,6 +394,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (is.null(options))
          return()
       
+      # fix up case where 'fig.dim' is a list
+      options[["fig.dim"]] <- as.numeric(options[["fig.dim"]])
+      
       # set those options
       knitr::opts_chunk$set(options)
       

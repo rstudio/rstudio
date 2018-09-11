@@ -102,7 +102,7 @@ namespace json {
 extern const char * const kRpcResult;
 extern const char * const kRpcError;
 extern const char * const kJsonContentType ;
-   
+extern const char * const kRpcAsyncHandle;
 
 // jsonRpcCategory
 const boost::system::error_category& jsonRpcCategory() ;

@@ -39,6 +39,7 @@
 #include <core/Log.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixUser.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/Thread.hpp>
@@ -712,6 +713,21 @@ Error ChildProcess::run()
          // note: forking is dangerous in a multithreaded environment (see note above)
          // this block must ONLY use async signal-safe functions and CANNOT
          // dynamically allocate ANY memory or take locks of any kind
+         //
+         // if an error occurs, we exit immediately as this is a critical error
+         // we use the form of exit, _exit, which forcefully tears down the process
+         // and does not attempt to run c++ cleanup code (as noted problematic above)
+
+         if (options_.detachSession)
+         {
+            if (::setsid() == -1)
+               ::_exit(kThreadSafeForkErrorExit);
+         }
+         else if (options_.terminateChildren)
+         {
+            if (::setpgid(0,0) == -1)
+               ::_exit(kThreadSafeForkErrorExit);
+         }
 
          // close pipe end that we do not need
          // this is not critical and as such, is best effort
@@ -722,9 +738,6 @@ Error ChildProcess::run()
          ::close(fdCloseFd[WRITE]);
 
          // wire standard streams
-         // if an error occurs, we exit immediately as this is a critical error
-         // we use the form of exit, _exit, which forcefully tears down the process
-         // and does not attempt to run c++ cleanup code (as noted problematic above)
          int result = ::dup2(fdInput[READ], STDIN_FILENO);
          if (result == -1)
             ::_exit(kThreadSafeForkErrorExit);
@@ -1612,6 +1625,100 @@ bool AsioAsyncChildProcess::hasRecentOutput() const
 pid_t AsioAsyncChildProcess::pid() const
 {
    return pAsioImpl_->pid();
+}
+
+namespace {
+
+Error forkAndRunImpl(const boost::function<int(void)>& func,
+                     const boost::optional<user::User>& user)
+{
+   pid_t pid = ::fork();
+   if (pid < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   if (pid == 0)
+   {
+      // child process
+      // ensure we only call async-signal safe kernel functions and do not allocate any heap memory
+
+      // check to see if we need to modify our process UID
+      if (user)
+      {
+         // if we are not currently root, we need to escalate first before attempting to change users
+         // note that if we cannot escalate (real user is not root) then we do not try to
+         if (!effectiveUserIsRoot() && realUserIsRoot())
+         {
+            int res = signal_safe::restoreRoot();
+            if (res != 0)
+               ::_exit(res);
+         }
+
+         if (user.get().userId != 0)
+         {
+            // non root user requested
+            // drop privilege to match UID of requested user
+            int res = signal_safe::permanentlyDropPriv(user.get().userId);
+            if (res != 0)
+               ::_exit(res);
+         }
+      }
+
+      // execute supplied func
+      ::_exit(func());
+   }
+   else
+   {
+      // parent process - wait for the child to exit
+      int status;
+      PidType result = posixCall<PidType>(
+         boost::bind(::waitpid, pid, &status, 0));
+
+      // check result
+      if (result == -1)
+      {
+         if (errno == ECHILD) // carve out for child already reaped
+            return Success();
+         else
+            return systemError(errno, ERROR_LOCATION);
+      }
+      else
+      {
+         int exitStatus = resolveExitStatus(status);
+         if (exitStatus != 0)
+            return systemError(exitStatus, ERROR_LOCATION);
+
+         return Success();
+      }
+   }
+}
+
+} // anonymous namespace
+Error forkAndRun(const boost::function<int(void)>& func,
+                 const std::string& runAs)
+{
+   boost::optional<user::User> optionalUser;
+
+   if (!runAs.empty())
+   {
+      // get uid of user to switch to
+      user::User user;
+      Error error = user::userFromUsername(runAs, &user);
+      if (error)
+         return error;
+
+      optionalUser = user;
+   }
+
+   return forkAndRunImpl(func, optionalUser);
+}
+
+Error forkAndRunPrivileged(const boost::function<int(void)>& func)
+{
+   user::User user = {};
+   user.userId = 0;
+   boost::optional<user::User> optionalUser = user;
+
+   return forkAndRunImpl(func, optionalUser);
 }
 
 } // namespace system

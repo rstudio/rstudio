@@ -24,6 +24,7 @@ typedef DWORD PidType;
 #include <sys/types.h>
 #include <sys/resource.h>
 typedef pid_t PidType;
+typedef uid_t UidType;
 #endif
 
 #include <string>
@@ -263,7 +264,8 @@ void sendSignalToSelf(SignalType signal);
 std::string username();
 FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
-                          const std::string& appName);
+                          const std::string& appName,
+                          bool ensureDirectory = true /* create directory */);
 unsigned int effectiveUserId();
 bool effectiveUserIsRoot();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);

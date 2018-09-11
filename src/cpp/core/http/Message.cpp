@@ -30,6 +30,7 @@ namespace http {
   
 // encodings
 const char * const kGzipEncoding = "gzip";
+const char * const kDeflateEncoding = "deflate";
 
 // transfer encodings
 const char * const kTransferEncoding = "Transfer-Encoding";

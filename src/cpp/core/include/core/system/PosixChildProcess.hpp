@@ -79,6 +79,17 @@ private:
    boost::shared_ptr<Impl> pAsioImpl_;
 };
 
+// forks a child process and runs the specified method within it
+// optionally as a specific user to run as, or current user if none specified
+// note: runAs requires root privileges (real user id of caller must be root)
+Error forkAndRun(const boost::function<int(void)>& func,
+                 const std::string& runAs = std::string());
+
+// forks a child process and runs the specified method within it as the root user
+// running as root requires the caller's real user id to be root
+// if this is not the case, the method will be run as the calling user
+Error forkAndRunPrivileged(const boost::function<int(void)>& func);
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

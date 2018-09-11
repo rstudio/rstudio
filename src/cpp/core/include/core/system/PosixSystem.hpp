@@ -248,6 +248,16 @@ core::Error restorePriv();
 // state of the original effective user, and in most cases that should be root
 core::Error restoreRoot();
 
+namespace signal_safe {
+
+// signal-safe version of privilege drop
+int permanentlyDropPriv(UidType newUid);
+
+// signal-safe restore root priv
+int restoreRoot();
+
+} // namespace signal_safe
+
 #ifdef __APPLE__
 // Detect subprocesses via Mac-only BSD-ish APIs
 std::vector<SubprocInfo> getSubprocessesMac(PidType pid);
