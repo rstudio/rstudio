@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -330,9 +331,13 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
             
-            // Focused theme should be in the list by now.
-            assert(themeList_.containsKey(focusedThemeName));
-            AceTheme focusedTheme = themeList.get(focusedThemeName);
+            String themeName = focusedThemeName;
+            if (!themeList.containsKey(themeName))
+            {
+               Debug.logWarning("The theme \"" + focusedThemeName + "\" does not exist. It may have been manually deleted outside the context of RStudio.");
+               themeName = AceTheme.createDefault().getName();
+            }
+            AceTheme focusedTheme = themeList.get(themeName);
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(focusedTheme.getName());
