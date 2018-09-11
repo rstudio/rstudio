@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class StanCompletionManager extends CompletionManagerBase
@@ -80,13 +79,6 @@ public class StanCompletionManager extends CompletionManagerBase
             });
          }
       };
-      
-      docDisplay_.addAttachHandler((AttachEvent event) -> {
-         if (event.isAttached())
-            attachHandlers();
-         else
-            detachHandlers();
-      });
    }
    
    @Override
@@ -167,12 +159,6 @@ public class StanCompletionManager extends CompletionManagerBase
       // TODO Auto-generated method stub
    }
 
-   @Override
-   public void codeCompletion()
-   {
-      beginSuggest(true, false, true);
-   }
-   
    private void runDiagnostics(final boolean useSourceDatabase)
    {
       // TODO: can we enable this in R Markdown documents using Stan?
@@ -243,16 +229,14 @@ public class StanCompletionManager extends CompletionManagerBase
             annotation.type());
    }
    
-   private void attachHandlers()
+   protected HandlerRegistration[] handlers()
    {
-      detachHandlers();
-      
-      handlers_ = new HandlerRegistration[] {
-            
+      return new HandlerRegistration[] {
+
             docDisplay_.addFocusHandler((FocusEvent event) -> {
                runDiagnostics(true);
             }),
-            
+
             docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
                boolean useSourceDatabase = event.isAutosave();
                runDiagnostics(useSourceDatabase);
@@ -261,21 +245,9 @@ public class StanCompletionManager extends CompletionManagerBase
       };
    }
    
-   private void detachHandlers()
-   {
-      if (handlers_ != null)
-      {
-         for (HandlerRegistration handler : handlers_)
-            handler.removeHandler();
-         handlers_ = null;
-      }
-   }
-
    private final DocDisplay docDisplay_;
    private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
    
    private final SignatureToolTipManager sigTips_;
-   
-   private HandlerRegistration[] handlers_;
 }

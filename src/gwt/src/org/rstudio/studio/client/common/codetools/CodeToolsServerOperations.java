@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
@@ -107,5 +108,11 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String filename,
          boolean useSourceDatabase,
          ServerRequestCallback<JsArray<AceAnnotation>> requestCallback);
+   
+   void sqlGetCompletions(
+         String line,
+         String connection,
+         SqlCompletionParseContext context,
+         ServerRequestCallback<Completions> requestCallback);
    
 }

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -54,6 +55,11 @@ import com.google.inject.Inject;
 public abstract class CompletionManagerBase
       implements CompletionRequestContext.Host
 {
+   public interface Callback
+   {
+      public void onToken(TokenIterator it, Token token);
+   }
+   
    public CompletionManagerBase(CompletionPopupDisplay popup,
                                 DocDisplay docDisplay,
                                 CompletionContext context)
@@ -67,10 +73,9 @@ public abstract class CompletionManagerBase
       completionCache_ = new CompletionCache();
       suggestTimer_ = new SuggestionTimer();
       helpTimer_ = new HelpTimer();
+      handlers_ = new ArrayList<HandlerRegistration>();
       
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
-      
-      init();
    }
    
    @Inject
@@ -81,42 +86,6 @@ public abstract class CompletionManagerBase
       events_ = events;
       uiPrefs_ = uiPrefs;
       helpStrategy_ = helpStrategy;
-   }
-   
-   private void init()
-   {
-      handlers_ = new HandlerRegistration[] {
-            
-            popup_.addAttachHandler((AttachEvent event) -> {
-               docDisplay_.setPopupVisible(event.isAttached());
-            }),
-            
-            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
-               onPopupSelection(event.getSelectedItem());
-            }),
-            
-            popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
-               onPopupSelectionCommit(event.getSelectedItem());
-            }),
-            
-            docDisplay_.addBlurHandler((BlurEvent event) -> {
-               invalidatePendingRequests();
-            }),
-            
-            docDisplay_.addClickHandler((ClickEvent event) -> {
-               invalidatePendingRequests();
-            }),
-            
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-                  removeHandlers();
-            }),
-            
-            events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
-               invalidatePendingRequests();
-            })
-            
-      };
    }
    
    protected void onPopupSelection(QualifiedName completion)
@@ -270,20 +239,23 @@ public abstract class CompletionManagerBase
       
       String line = docDisplay_.getCurrentLineUpToCursor();
       
-      // don't complete within comments
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
-      if (token.hasType("comment"))
-         return false;
-      
-      // don't complete within multi-line strings
-      if (token.hasType("string"))
+      if (token != null)
       {
-         String cursorTokenValue = token.getValue();
-         boolean isSingleLineString =
-               cursorTokenValue.startsWith("'") ||
-               cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         // don't complete within comments
+         if (token.hasType("comment"))
             return false;
+
+         // don't complete within multi-line strings
+         if (token.hasType("string"))
+         {
+            String cursorTokenValue = token.getValue();
+            boolean isSingleLineString =
+                  cursorTokenValue.startsWith("'") ||
+                  cursorTokenValue.startsWith("\"");
+            if (!isSingleLineString)
+               return false;
+         }
       }
       
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
@@ -324,6 +296,8 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
+   protected abstract HandlerRegistration[] handlers();
+   
    public abstract void goToHelp();
    public abstract void goToDefinition();
    public abstract void getCompletions(String line, CompletionRequestContext context);
@@ -361,6 +335,11 @@ public abstract class CompletionManagerBase
    {
    }
    
+   public void codeCompletion()
+   {
+      beginSuggest(true, false, true);
+   }
+   
    public void onPaste(PasteEvent event)
    {
       popup_.hide();
@@ -373,9 +352,7 @@ public abstract class CompletionManagerBase
    
    public void detach()
    {
-      for (HandlerRegistration handler : handlers_)
-         handler.removeHandler();
-      
+      removeHandlers();
       snippets_.detach();
       popup_.hide();
    }
@@ -673,10 +650,70 @@ public abstract class CompletionManagerBase
       helpTimer_.schedule(completion);
    }
    
+   private void toggleHandlers(boolean enable)
+   {
+      if (enable)
+         addHandlers();
+      else
+         removeHandlers();
+   }
+   
+   private void addHandlers()
+   {
+      removeHandlers();
+      
+      HandlerRegistration[] ownHandlers = defaultHandlers();
+      for (HandlerRegistration handler : ownHandlers)
+         handlers_.add(handler);
+      
+      HandlerRegistration[] userHandlers = handlers();
+      if (userHandlers != null)
+      {
+         for (HandlerRegistration handler : userHandlers)
+            handlers_.add(handler);
+      }
+   }
+   
    private void removeHandlers()
    {
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
+      handlers_.clear();
+   }
+   
+   private HandlerRegistration[] defaultHandlers()
+   {
+      return new HandlerRegistration[] {
+            
+            docDisplay_.addAttachHandler((AttachEvent event) -> {
+               toggleHandlers(event.isAttached());
+            }),
+            
+            docDisplay_.addBlurHandler((BlurEvent event) -> {
+               invalidatePendingRequests();
+            }),
+            
+            docDisplay_.addClickHandler((ClickEvent event) -> {
+               invalidatePendingRequests();
+            }),
+            
+            popup_.addAttachHandler((AttachEvent event) -> {
+               docDisplay_.setPopupVisible(event.isAttached());
+            }),
+            
+            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
+               onPopupSelection(event.getSelectedItem());
+            }),
+            
+            popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
+               onPopupSelectionCommit(event.getSelectedItem());
+            }),
+            
+            events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
+               invalidatePendingRequests();
+            })
+            
+      };
    }
    
    private class SuggestionTimer
@@ -751,6 +788,7 @@ public abstract class CompletionManagerBase
    private final CompletionCache completionCache_;
    private final SuggestionTimer suggestTimer_;
    private final HelpTimer helpTimer_;
+   private final List<HandlerRegistration> handlers_;
    
    private String completionToken_;
    private String snippetToken_;
@@ -758,7 +796,6 @@ public abstract class CompletionManagerBase
    private final SnippetHelper snippets_;
    
    private CompletionRequestContext context_;
-   private HandlerRegistration[] handlers_;
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;

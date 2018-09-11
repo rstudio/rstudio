@@ -2068,7 +2068,16 @@
 
 .rs.addFunction("tryCatch", function(expr)
 {
-   tryCatch(expr, condition = identity)
+   tryCatch(
+      
+      withCallingHandlers(
+         expr,
+         warning = function(w) invokeRestart("muffleWarning"),
+         message = function(m) invokeRestart("muffleMessage")
+      ),
+      
+      error = identity
+   )
 })
 
 .rs.addFunction("resolveAliasedPath", function(path)
@@ -2290,4 +2299,15 @@
          collapse = ""
       )
    )
+})
+
+.rs.addFunction("withCache", function(name, expr)
+{
+   cache <- .rs.getVar(name)
+   if (!is.null(cache))
+      return(cache)
+   
+   result <- force(expr)
+   .rs.setVar(name, result)
+   result
 })

@@ -50,12 +50,16 @@ public class EditorLanguage
          "mode/rhtml", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
+   public static final EditorLanguage LANG_SQL = new EditorLanguage(
+         "mode/sql", true);
    public static final EditorLanguage LANG_STAN = new EditorLanguage(
          "mode/stan", true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
          "mode/yaml", false, true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "mode/python", true);
+   public static final EditorLanguage LANG_SH = new EditorLanguage(
+         "mode/sh", false, false);
    
    // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
@@ -66,10 +70,6 @@ public class EditorLanguage
          "ace/mode/css", false, true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
          "ace/mode/javascript", false, true);
-   public static final EditorLanguage LANG_SQL = new EditorLanguage(
-         "mode/sql", false, true);
-   public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "mode/sh", false, false);
    public static final EditorLanguage LANG_TOML = new EditorLanguage(
          "ace/mode/toml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(

@@ -455,7 +455,7 @@ var Range = require("ace/range").Range;
       return false;
    };
 
-   this.findTokenBwd = function(value, skipMatching)
+   this.findTokenValueBwd = function(value, skipMatching)
    {
       skipMatching = !!skipMatching;
 
@@ -473,7 +473,7 @@ var Range = require("ace/range").Range;
       return false;
    };
 
-   this.findTokenFwd = function(value, skipMatching)
+   this.findTokenValueFwd = function(value, skipMatching)
    {
       skipMatching = !!skipMatching;
 
@@ -490,6 +490,43 @@ var Range = require("ace/range").Range;
 
       return false;
    };
+
+   this.findTokenTypeBwd = function(type, skipMatching)
+   {
+      skipMatching = !!skipMatching;
+
+      do
+      {
+         if (skipMatching && this.bwdToMatchingToken())
+            continue;
+
+         var token = this.getCurrentToken();
+         if (token.type === type)
+            return true;
+
+      } while (this.moveToPreviousToken());
+
+      return false;
+   };
+
+   this.findTokenTypeFwd = function(type, skipMatching)
+   {
+      skipMatching = !!skipMatching;
+
+      do
+      {
+         if (skipMatching && this.fwdToMatchingToken())
+            continue;
+
+         var token = this.getCurrentToken();
+         if (token.type === type)
+            return true;
+
+      } while (this.moveToNextToken());
+
+      return false;
+   };
+
 
 }).call(TokenIterator.prototype);
 

@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Delegating
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -766,6 +767,16 @@ public class AceEditor implements DocDisplay,
                         editor,
                         new Filter(),
                         cppContext_));
+               }
+               
+               // SQL completion manager
+               if (fileType_.isSql() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.SQL, new SqlCompletionManager(
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        context_));
                }
                
                // Stan completion manager

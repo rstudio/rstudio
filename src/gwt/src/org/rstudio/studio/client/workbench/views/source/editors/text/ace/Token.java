@@ -57,6 +57,11 @@ public class Token extends JavaScriptObject
       return value == getValue();
    }
    
+   public final boolean valueMatches(String pattern)
+   {
+      return getValue().matches(pattern);
+   }
+   
    public final boolean hasAllTypes(String... types)
    {
       String tokenType = getType();

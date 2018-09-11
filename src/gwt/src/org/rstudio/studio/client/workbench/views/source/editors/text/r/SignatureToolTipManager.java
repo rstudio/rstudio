@@ -446,13 +446,16 @@ public class SignatureToolTipManager
           uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue() &&
           !cursor.valueEquals("("))
       {
-         cursor.findTokenBwd("(", true);
+         cursor.findTokenValueBwd("(", true);
       }
       
       Token lookahead = cursor.peekFwd(1);
-      if (lookahead.valueEquals("::") || lookahead.valueEquals(":::"))
-         if (!cursor.moveToNextToken())
-            return;
+      if (lookahead != null)
+      {
+         if (lookahead.valueEquals("::") || lookahead.valueEquals(":::"))
+            if (!cursor.moveToNextToken())
+               return;
+      }
       
       if (cursor.valueEquals("::") || cursor.valueEquals(":::"))
          if (!cursor.moveToNextToken())
