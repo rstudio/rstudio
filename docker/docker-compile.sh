@@ -26,6 +26,9 @@
 # it's already built. If you're iterating on the Dockerfiles themselves, you'll
 # want to use "docker build" directly until you're happy with the
 # configuration, then use this script to test a build under the new config.
+#
+# To produce a debug build, set the environment variable CMAKE_BUILD_TYPE to
+# "Debug" before invoking the script.
 
 # friendly names for arguments
 IMAGE=$1
@@ -117,13 +120,23 @@ elif hash sysctl 2>/dev/null; then
     ENV="$ENV MAKEFLAKGS=-j$(sysctl -n hw.ncpu)"
 fi
 
+# forward build type if set
+if [ ! -z "$CMAKE_BUILD_TYPE" ]; then
+    ENV="$ENV CMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE"
+fi
+
+# adjust folder path when building debug
+if [ "$CMAKE_BUILD_TYPE" = "Debug" ]; then
+    FLAVOR_SUFFIX="-Debug"
+fi
+
 # remove previous image if it exists
 CONTAINER_ID="build-$REPO-$IMAGE"
 echo "Cleaning up container $CONTAINER_ID if it exists..."
 docker rm "$CONTAINER_ID" || true
 
 # run compile step
-docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean $VARIANT && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,}"
+docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean $VARIANT && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE$FLAVOR_SUFFIX/*.${PACKAGE,,}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
