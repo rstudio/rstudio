@@ -323,6 +323,8 @@ public class BranchToolbarButton extends ToolbarButton
             });
             menu.addSeparator();
             
+            // truncate list when we have too many branches
+            int n = 0;
             for (String branch : branches)
             {
                // skip detached branches
@@ -334,12 +336,15 @@ public class BranchToolbarButton extends ToolbarButton
                   continue;
                
                // construct branch label without remotes prefix
-
                final String branchLabel = branch.replaceAll("^remotes/" + caption + "/", "");
                final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
                menu.addItem(new MenuItem(
                      branchLabel,
                      new SwitchBranchCommand(branchLabel, branchValue)));
+               
+               // update branch count
+               if (n++ > MAX_BRANCHES)
+                  break;
             }
          }
       });
@@ -490,6 +495,8 @@ public class BranchToolbarButton extends ToolbarButton
    
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;
+   
+   private static final int MAX_BRANCHES = 100;
 
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
