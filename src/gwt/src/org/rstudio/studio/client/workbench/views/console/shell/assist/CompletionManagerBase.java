@@ -169,11 +169,18 @@ public abstract class CompletionManagerBase
          return;
       }
       
-      // if we receive a single completion result whose completion
-      // is the same as the input token, we should implicitly accept
-      boolean shouldImplicitlyAccept =
-            results.length == 1 &&
-            StringUtil.equals(completions.getToken(), results[0].name);
+      // if the token we have matches all available completions, we should
+      // implicitly accept it (handle cases where multiple completions with
+      // the same value but different types are received)
+      boolean shouldImplicitlyAccept = true;
+      for (int i = 0; i < results.length; i++)
+      {
+         if (!StringUtil.equals(completions.getToken(), results[i].name))
+         {
+            shouldImplicitlyAccept = false;
+            break;
+         }
+      }
       
       if (shouldImplicitlyAccept)
       {
@@ -344,6 +351,25 @@ public abstract class CompletionManagerBase
    {
    }
    
+   // Subclasses can override depending on what characters are typically
+   // considered part of identifiers / are relevant to a completion context.
+   protected boolean isBoundaryCharacter(char ch)
+   {
+      boolean valid =
+            Character.isLetterOrDigit(ch) ||
+            ch == '.' ||
+            ch == '_';
+      
+      return !valid;
+   }
+   
+   // Subclasses can override based on what characters might want to trigger
+   // completions, or force a new completion request.
+   protected boolean isTriggerCharacter(char ch)
+   {
+      return false;
+   }
+   
    public void codeCompletion()
    {
       beginSuggest(true, false, true);
@@ -364,16 +390,6 @@ public abstract class CompletionManagerBase
       removeHandlers();
       snippets_.detach();
       popup_.hide();
-   }
-   
-   // Is this a character that separates identifiers (e.g. whitespace)?
-   @SuppressWarnings("deprecation")
-   protected boolean isBoundaryCharacter(char ch)
-   {
-      if (ch == '\0')
-         return true;
-      
-      return Character.isSpace(ch);
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -548,6 +564,10 @@ public abstract class CompletionManagerBase
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
       String codeComplete = uiPrefs_.codeComplete().getValue();
+      
+      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_MANUAL))
+         return true;
+      
       if (!StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_ALWAYS))
          return false;
 
@@ -658,7 +678,7 @@ public abstract class CompletionManagerBase
       Scheduler.get().scheduleDeferred(() -> {
          
          int cursorColumn = docDisplay_.getCursorPosition().getColumn();
-         if (cursorColumn < 2)
+         if (cursorColumn == 0)
          {
             invalidatePendingRequests();
             return;

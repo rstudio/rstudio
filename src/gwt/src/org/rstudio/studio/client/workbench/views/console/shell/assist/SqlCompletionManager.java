@@ -67,6 +67,12 @@ public class SqlCompletionManager extends CompletionManagerBase
       return new HandlerRegistration[] {};
    }
    
+   @Override
+   protected boolean isTriggerCharacter(char ch)
+   {
+      return ch == '.';
+   }
+   
    private SqlCompletionParseContext completionContext()
    {
       SqlCompletionParseContext ctx = new SqlCompletionParseContext();
