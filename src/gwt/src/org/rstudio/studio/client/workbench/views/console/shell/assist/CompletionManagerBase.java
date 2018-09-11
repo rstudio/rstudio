@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -416,7 +417,6 @@ public abstract class CompletionManagerBase
             case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests(); return true;
             case KeyCodes.KEY_ENTER:     return onPopupEnter();
             case KeyCodes.KEY_TAB:       return onPopupTab();
-            case KeyCodes.KEY_BACKSPACE: return onPopupBackspace();
             }
             
             break;
@@ -644,28 +644,37 @@ public abstract class CompletionManagerBase
       return true;
    }
    
-   private boolean onPopupBackspace()
+   private void onDocumentChanged(DocumentChangedEvent event)
    {
+      if (!popup_.isShowing())
+         return;
+      
       if (docDisplay_.inMultiSelectMode())
-         return false;
+         return;
       
-      int cursorColumn = docDisplay_.getCursorPosition().getColumn();
-      if (cursorColumn < 2)
-      {
-         invalidatePendingRequests();
-         return false;
-      }
+      if (!event.getEvent().getAction().contentEquals("removeText"))
+         return;
       
-      String line = docDisplay_.getCurrentLine();
-      char ch = line.charAt(cursorColumn - 2);
-      if (isBoundaryCharacter(ch))
-      {
-         invalidatePendingRequests();
-         return false;
-      }
-      
-      Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
-      return false;
+      Scheduler.get().scheduleDeferred(() -> {
+         
+         int cursorColumn = docDisplay_.getCursorPosition().getColumn();
+         if (cursorColumn < 2)
+         {
+            invalidatePendingRequests();
+            return;
+         }
+         
+         String line = docDisplay_.getCurrentLine();
+         char ch = line.charAt(cursorColumn - 1);
+         if (isBoundaryCharacter(ch))
+         {
+            invalidatePendingRequests();
+            return;
+         }
+         
+         beginSuggest(false, false, false);
+         
+      });
    }
    
    private boolean onTab()
@@ -737,6 +746,10 @@ public abstract class CompletionManagerBase
             
             docDisplay_.addClickHandler((ClickEvent event) -> {
                invalidatePendingRequests();
+            }),
+            
+            docDisplay_.addDocumentChangedHandler((DocumentChangedEvent event) -> {
+               onDocumentChanged(event);
             }),
             
             popup_.addMouseDownHandler((MouseDownEvent event) -> {

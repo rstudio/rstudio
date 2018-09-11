@@ -78,6 +78,10 @@ public class CompletionCache
                               String substring,
                               Completions original)
    {
+      // no need to narrow when line + substring are equivalent
+      if (line.equals(substring))
+         return original;
+      
       // Construct the new completion token by taking the original
       // completion token, and adding the delta between the new line and
       // the original completion line used.
