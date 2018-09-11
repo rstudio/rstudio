@@ -530,7 +530,7 @@ public abstract class CompletionManagerBase
          // for spaces, only continue the completion session if this does indeed match
          // an existing completion item in the popup
          String token = completionToken_ + " ";
-         if (popup_.getItems() != null)
+         if (popup_.hasCompletions())
          {
             for (QualifiedName item : popup_.getItems())
                if (StringUtil.isSubsequence(item.name, token, false))
