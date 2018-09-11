@@ -25,6 +25,11 @@
    # extract token
    parts <- .rs.strsplit(line, "\\s+")
    token <- tail(parts, n = 1L)
+
+   # trim out operators
+   matches <- gregexpr("[-+*/%&|^=><]", token)[[1]]
+   if (!identical(c(matches), -1L))
+      token <- substring(token, tail(matches, n = 1L) + 1)
    
    # if we have a '.' in the token, assume that we're
    # attempting to complete field names from a table
