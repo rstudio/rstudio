@@ -264,7 +264,8 @@ void sendSignalToSelf(SignalType signal);
 std::string username();
 FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
-                          const std::string& appName);
+                          const std::string& appName,
+                          bool ensureDirectory = true /* create directory */);
 unsigned int effectiveUserId();
 bool effectiveUserIsRoot();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);

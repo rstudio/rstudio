@@ -458,13 +458,17 @@ FilePath userHomePath(std::string envOverride)
 }
 
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
-                          const std::string& appName)
+                          const std::string& appName,
+                          bool ensureDirectory)
 {
    wchar_t path[MAX_PATH + 1];
    std::wstring appNameWide(appName.begin(), appName.end());
+   int csidl = CSIDL_LOCAL_APPDATA;
+   if (ensureDirectory)
+      csidl |= CSIDL_FLAG_CREATE;
    HRESULT hr = ::SHGetFolderPathAndSubDirW(
          NULL,
-         CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE,
+         csidl,
          NULL,
          SHGFP_TYPE_CURRENT,
          appNameWide.c_str(),
