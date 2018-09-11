@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -36,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -173,14 +173,14 @@ public class StanCompletionManager extends CompletionManagerBase
                @Override
                public void onResponseReceived(JsArray<AceAnnotation> response)
                {
-                  JsArray<LintItem> lintItems = JavaScriptObject.createArray(response.length()).cast();
+                  JsVector<LintItem> lintItems = JsVector.createVector();
                   for (int i = 0; i < response.length(); i++)
                   {
                      LintItem item = createLintItem(response.get(i), useSourceDatabase);
                      if (item != null)
-                        lintItems.set(i, item);
+                        lintItems.push(item);
                   }
-                  docDisplay_.showLint(lintItems);
+                  docDisplay_.showLint(lintItems.cast());
                }
 
                @Override
