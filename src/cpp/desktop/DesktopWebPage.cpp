@@ -83,8 +83,8 @@ void onPdfDownloadRequested(QWebEngineDownloadItem* downloadItem)
    // if we're requesting the download of a file with a '.pdf' extension,
    // re-use that file name (since most desktop applications will display the
    /// associated filename somewhere visible)
-   QString fileName = downloadItem->url().fileName();
-   if (fileName.endsWith(QStringLiteral(".pdf")))
+   QString fileName = downloadItem->url().fileName(QUrl::RemoveQuery | QUrl::RemoveFragment);
+   if (fileName.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive))
    {
       QTemporaryDir tempDir(QStringLiteral("%1/").arg(scratchDir));
       tempDir.setAutoRemove(false);
