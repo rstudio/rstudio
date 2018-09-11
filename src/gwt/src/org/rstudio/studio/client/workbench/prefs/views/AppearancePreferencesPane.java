@@ -248,7 +248,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
-      preview_.setTheme(currentTheme.getUrl());
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
@@ -316,6 +315,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(currentTheme.getName());
+            preview_.setTheme(currentTheme.getUrl());
             removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
          },
          getProgressIndicator());
