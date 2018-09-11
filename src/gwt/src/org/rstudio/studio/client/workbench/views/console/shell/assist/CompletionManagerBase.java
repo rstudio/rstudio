@@ -136,14 +136,13 @@ public abstract class CompletionManagerBase
       {
          String[] parts = line.split("\\s+");
          if (parts.length > 0)
+         {
             snippetToken_ = parts[parts.length - 1];
-         else
-            snippetToken_ = "";
-         
-         ArrayList<String> snippets = snippets_.getAvailableSnippets();
-         for (String snippet : snippets)
-            if (snippet.startsWith(snippetToken_))
-               names.add(QualifiedName.createSnippet(snippet));
+            ArrayList<String> snippets = snippets_.getAvailableSnippets();
+            for (String snippet : snippets)
+               if (snippet.startsWith(snippetToken_))
+                  names.add(QualifiedName.createSnippet(snippet));
+         }
       }
       
       addExtraCompletions(completions.getToken(), names);
@@ -489,7 +488,10 @@ public abstract class CompletionManagerBase
       
       if (popup_.isShowing())
       {
-         Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
+         if (canContinueCompletions(charCode))
+            Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
+         else
+            invalidatePendingRequests();
       }
       else
       {
@@ -506,6 +508,41 @@ public abstract class CompletionManagerBase
          return true;
       
       return false;
+   }
+   
+   protected boolean canContinueCompletions(char ch)
+   {
+      // NOTE: We allow users to continue a completion 'session' in the case where
+      // a character was mistyped; e.g. imagine the user requested completions with
+      // the token 'rn' and got back:
+      //
+      //    - rnbinom
+      //    - rnorm
+      //
+      // and accidentally typed a 'z'. while no completion item will match, we should
+      // keep the completion session 'live' so that hitting backspace will continue
+      // to show completions with the original 'rn' token.
+      switch (ch)
+      {
+      
+      case ' ':
+      {
+         // for spaces, only continue the completion session if this does indeed match
+         // an existing completion item in the popup
+         String token = completionToken_ + " ";
+         if (popup_.getItems() != null)
+         {
+            for (QualifiedName item : popup_.getItems())
+               if (StringUtil.isSubsequence(item.name, token, false))
+                  return true;
+         }
+         
+         return false;
+      }
+      
+      }
+      
+      return true;
    }
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)

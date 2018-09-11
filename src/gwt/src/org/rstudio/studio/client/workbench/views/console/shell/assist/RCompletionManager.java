@@ -1148,7 +1148,7 @@ public class RCompletionManager implements CompletionManager
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
       // the majority of cases
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
-      if (cursorToken.hasType("string"))
+      if (cursorToken != null && cursorToken.hasType("string"))
       {
          String cursorTokenValue = cursorToken.getValue();
          boolean isSingleLineString =
