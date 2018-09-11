@@ -249,6 +249,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+      preview_.setTheme(currentTheme.getUrl());
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
@@ -311,11 +312,12 @@ public class AppearancePreferencesPane extends PreferencesPane
             if (!themeList_.containsKey(currentTheme.getName()))
             {
                currentTheme = AceTheme.createDefault(currentTheme.isDark());
+               uiPrefs_.theme().setGlobalValue(currentTheme);
+               preview_.setTheme(currentTheme.getUrl());
             }
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(currentTheme.getName());
-            preview_.setTheme(currentTheme.getUrl());
             removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
          },
          getProgressIndicator());
