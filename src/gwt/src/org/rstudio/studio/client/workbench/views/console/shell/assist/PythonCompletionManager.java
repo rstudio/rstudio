@@ -42,7 +42,7 @@ public class PythonCompletionManager extends CompletionManagerBase
       server_ = server;
       context_ = context;
    }
-
+   
    @Override
    public void goToHelp()
    {

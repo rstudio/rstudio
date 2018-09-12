@@ -344,8 +344,18 @@ public abstract class CompletionManagerBase
    
    // Subclasses can override to perform post-completion-insertion actions,
    // e.g. displaying a tooltip or similar
-   protected void onCompletionInserted(QualifiedName requestedCompletion)
+   protected void onCompletionInserted(QualifiedName completion)
    {
+      int type = completion.type;
+      if (!RCompletionType.isFunctionType(type))
+         return;
+      
+      boolean insertParensAfterCompletion =
+            RCompletionType.isFunctionType(type) &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+      
+      if (insertParensAfterCompletion)
+         docDisplay_.moveCursorBackward();
    }
    
    // Subclasses can override depending on what characters are typically
