@@ -991,7 +991,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          #
          # Some useful keyboard shortcuts for package authoring:
          #
-         #   Build and Reload Package:  \'%s\'
+         #   Install Package:           \'%s\'
          #   Check Package:             \'%s\'
          #   Test Package:              \'%s\'
          

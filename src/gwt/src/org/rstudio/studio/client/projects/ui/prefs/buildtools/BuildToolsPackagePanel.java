@@ -106,7 +106,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       
       add(installAdditionalArguments_ = new AdditionalArguments(
         new SafeHtmlBuilder().appendHtmlConstant(
-          "Build and Reload &mdash; R CMD INSTALL additional options:").toSafeHtml()));
+          "Install and Restart &mdash; R CMD INSTALL additional options:").toSafeHtml()));
      
       add(checkAdditionalArguments_ = new AdditionalArguments(
             new SafeHtmlBuilder().appendHtmlConstant(
