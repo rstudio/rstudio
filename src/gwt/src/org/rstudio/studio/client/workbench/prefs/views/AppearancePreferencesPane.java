@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -248,8 +249,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
-      preview_.setTheme(currentTheme.getUrl());
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+      preview_.setTheme(currentTheme.getUrl());
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
@@ -306,8 +307,30 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
          
+            // It's possible the current theme was removed outside the context of
+            // RStudio, so choose a default if it can't be found.
+            AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+            if (!themeList_.containsKey(currentTheme.getName()))
+            {
+               StringBuilder warningMsg = new StringBuilder();
+               warningMsg.append("The active theme \"")
+                  .append(currentTheme.getName())
+                  .append("\" could not be found. It's possible it was removed outside the context of RStudio. Switching the ")
+                  .append(currentTheme.isDark() ? "dark " : "light ")
+                  .append("default theme: \"");
+               
+               currentTheme = AceTheme.createDefault(currentTheme.isDark());
+               uiPrefs_.theme().setGlobalValue(currentTheme);
+               preview_.setTheme(currentTheme.getUrl());
+               
+               warningMsg.append(currentTheme.getName())
+                  .append("\".");
+               Debug.logWarning(warningMsg.toString());
+            }
+            
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
-            theme_.setValue(uiPrefs_.theme().getGlobalValue().getName());
+            theme_.setValue(currentTheme.getName());
+            removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
          },
          getProgressIndicator());
    }
@@ -319,9 +342,13 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             themeList_ = themeList;
             
-            // Focused theme should be in the list by now.
-            assert(themeList_.containsKey(focusedThemeName));
-            AceTheme focusedTheme = themeList.get(focusedThemeName);
+            String themeName = focusedThemeName;
+            if (!themeList.containsKey(themeName))
+            {
+               Debug.logWarning("The theme \"" + focusedThemeName + "\" does not exist. It may have been manually deleted outside the context of RStudio.");
+               themeName = AceTheme.createDefault().getName();
+            }
+            AceTheme focusedTheme = themeList.get(themeName);
             
             theme_.setChoices(themeList_.keySet().toArray(new String[0]));
             theme_.setValue(focusedTheme.getName());
