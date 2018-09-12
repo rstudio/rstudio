@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -42,12 +41,6 @@ public class PythonCompletionManager extends CompletionManagerBase
       docDisplay_ = docDisplay;
       server_ = server;
       context_ = context;
-   }
-
-   @Override
-   protected HandlerRegistration[] handlers()
-   {
-      return null;
    }
 
    @Override
@@ -110,6 +103,12 @@ public class PythonCompletionManager extends CompletionManagerBase
    public void getCompletions(String line, CompletionRequestContext context)
    {
       server_.pythonGetCompletions(buildCompletionLine(), completionContext(), context);
+   }
+   
+   @Override
+   public boolean isTriggerCharacter(char ch)
+   {
+      return ch == '.';
    }
    
    private PythonCompletionContext completionContext()

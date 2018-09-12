@@ -311,8 +311,6 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
-   protected abstract HandlerRegistration[] handlers();
-   
    public abstract void goToHelp();
    public abstract void goToDefinition();
    public abstract void getCompletions(String line, CompletionRequestContext context);
@@ -753,6 +751,11 @@ public abstract class CompletionManagerBase
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
       handlers_.clear();
+   }
+   
+   protected HandlerRegistration[] handlers()
+   {
+      return null;
    }
    
    private HandlerRegistration[] defaultHandlers()
