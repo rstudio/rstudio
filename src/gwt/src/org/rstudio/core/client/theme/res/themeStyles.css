@@ -28,6 +28,11 @@
 @external gwt-DecoratedPopupPanel;
 @external editor_dark;
 
+@external tabLayoutCenter;
+@external toolbarWrapper;
+@external multiPodUtilityTabArea;
+@external secondaryToolbar;
+
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
 @external windows, windows-highdpi, macintosh, linux;

@@ -1,6 +1,7 @@
 @external rstudio-themes-flat, rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external histBar;
+@external dataGridHeader;
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 

@@ -19,6 +19,8 @@
 @external popupTop, popupBottom, popupMiddle;
 @external gwt-DecoratedPopupPanel;
 
+@external themedPopupPanel;
+
 @eval THEME_DARKGREY_MENU_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground;
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
