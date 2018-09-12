@@ -4,10 +4,6 @@
 	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
 	<ui:style>
 		@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-		.aboutBox {
-			-webkit-user-select: auto;
-		}
-		
 		.productName {
 			font-size: 20pt;
 			font-weight: bold;
@@ -27,6 +23,7 @@
 			text-align: center;
 			font-size: 8pt;
 			margin-bottom: 3px;
+			user-select: text;
 		}
 		
 		.userAgent {
@@ -61,6 +58,7 @@
 	      margin-left: auto;
 	      margin-right: auto;
 	      width: 50%;
+	      user-select: text;
 	   }
 	   
 	   .outerProductInfo {
@@ -72,7 +70,7 @@
 			text-align: center;
 		}
 	</ui:style>
-	<g:HTMLPanel styleName="{style.aboutBox}">
+	<g:HTMLPanel>
 	   <g:HTMLPanel styleName="{style.outerProductInfo}">
 		   <g:HTMLPanel styleName="{style.productInfo}">
 				<g:Image resource='{res.rstudioLarge2x}'
