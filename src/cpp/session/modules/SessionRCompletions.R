@@ -3309,7 +3309,7 @@ assign(x = ".rs.acCompletionTypes",
    # Extract any R code from the snippet
    reRCode <- "`[Rr]\\s+[^`]+`"
    matches <- gregexpr(reRCode, snippet, perl = TRUE)[[1]]
-   if (matches == -1)
+   if (identical(c(matches), -1L))
       return(snippet)
    
    match.length <- attr(matches, "match.length")
