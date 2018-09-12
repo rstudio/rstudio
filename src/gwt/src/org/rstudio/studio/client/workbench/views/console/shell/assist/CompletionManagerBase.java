@@ -613,6 +613,10 @@ public abstract class CompletionManagerBase
    {
       suggestTimer_.cancel();
       
+      popup_.hide();
+      popup_.clearHelp(false);
+      popup_.setHelpVisible(false);
+      
       int type = completion.type;
       if (type == RCompletionType.SNIPPET)
       {
@@ -633,9 +637,6 @@ public abstract class CompletionManagerBase
          onCompletionInserted(completion);
       }
       
-      popup_.hide();
-      popup_.clearHelp(false);
-      popup_.setHelpVisible(false);
       docDisplay_.setFocus(true);
    }
    
