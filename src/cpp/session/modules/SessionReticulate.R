@@ -15,12 +15,12 @@
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
-.rs.addJsonRpcHandler("python_get_completions", function(line)
+.rs.addJsonRpcHandler("python_get_completions", function(line, ctx)
 {
    if (!requireNamespace("reticulate", quietly = TRUE))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.tryCatch(.rs.python.getCompletions(line))
+   completions <- .rs.tryCatch(.rs.python.getCompletions(line, ctx))
    if (inherits(completions, "error"))
       return(.rs.emptyCompletions(language = "Python"))
    
@@ -822,7 +822,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    completions
 })
 
-.rs.addFunction("python.getCompletions", function(line)
+.rs.addFunction("python.getCompletions", function(line, ctx)
 {
    # check for completion of a module name in e.g. 'import nu' or 'from nu'
    re_import <- paste(

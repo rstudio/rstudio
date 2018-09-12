@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -107,7 +109,54 @@ public class PythonCompletionManager extends CompletionManagerBase
    @Override
    public void getCompletions(String line, CompletionRequestContext context)
    {
-      server_.pythonGetCompletions(buildCompletionLine(), context);
+      server_.pythonGetCompletions(buildCompletionLine(), completionContext(), context);
+   }
+   
+   private PythonCompletionContext completionContext()
+   {
+      PythonCompletionContext context = new PythonCompletionContext();
+      discoverImports(context);
+      return context;
+   }
+   
+   private void discoverImports(PythonCompletionContext context)
+   {
+      Match match;
+      
+      int row = docDisplay_.getCursorPosition().getRow();
+      String cursorLine = docDisplay_.getLine(row);
+      String currentIndent = StringUtil.getIndent(cursorLine);
+      
+      for (; row >= 0; row--)
+      {
+         String line = docDisplay_.getLine(row);
+         String indent = StringUtil.getIndent(line);
+         
+         // if the indent of this line is greater than that
+         // of the cursor, assume it's part of a different
+         // scope and don't use it
+         if (indent.length() > currentIndent.length())
+            continue;
+         
+         // shrink current indent if it's smaller now
+         if (indent.length() < currentIndent.length())
+            currentIndent = indent;
+         
+         // try to match imports
+         match = RE_IMPORT.match(line, 0);
+         if (match != null)
+         {
+            context.aliases.set(match.getGroup(1), match.getGroup(1));
+            continue;
+         }
+         
+         match = RE_IMPORT_AS.match(line, 0);
+         if (match != null)
+         {
+            context.aliases.set(match.getGroup(2), match.getGroup(1));
+            continue;
+         }
+      }
    }
    
    // this routine is primarily used to provide some extra context
@@ -229,7 +278,13 @@ public class PythonCompletionManager extends CompletionManagerBase
       builder.append(docDisplay_.getCurrentLineUpToCursor());
       
       return builder.toString();
-   } 
+   }
+   
+   private static final Pattern RE_IMPORT =
+         Pattern.create("^\\s*import\\s+([\\w._]+)\\s*(?:#.*|$)", "");
+   
+   private static final Pattern RE_IMPORT_AS =
+         Pattern.create("^\\s*import\\s+([\\w._]+)\\s+as\\s+([\\w._]+)\\s*(?:#.*|$)", "");
    
    private final DocDisplay docDisplay_;
    private final CodeToolsServerOperations server_;
