@@ -78,10 +78,9 @@ public abstract class CompletionManagerBase
       handlers_ = new ArrayList<HandlerRegistration>();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
       
-      docDisplay_.addAttachHandler((AttachEvent event) -> {
-         toggleHandlers(event.isAttached());
-      });
-            
+      // deferred so that handlers are toggled after subclasses have finished
+      // construction
+      Scheduler.get().scheduleDeferred(() -> toggleHandlers(true));
    }
    
    @Inject
@@ -759,6 +758,10 @@ public abstract class CompletionManagerBase
    private HandlerRegistration[] defaultHandlers()
    {
       return new HandlerRegistration[] {
+            
+            docDisplay_.addAttachHandler((AttachEvent event) -> {
+               toggleHandlers(event.isAttached());
+            }),
             
             docDisplay_.addBlurHandler((BlurEvent event) -> {
                onBlur();
