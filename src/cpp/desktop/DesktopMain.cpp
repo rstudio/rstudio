@@ -328,6 +328,10 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    {
       QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
       QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+      
+      // allow WebGL rendering with the software renderer
+      static char enableWebglSoftwareRendering[] = "--enable-webgl-software-rendering";
+      pArguments->push_back(enableWebglSoftwareRendering);
    }
    
    // tell Chromium to ignore the GPU blacklist if requested
