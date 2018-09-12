@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
@@ -117,6 +118,13 @@ public class BranchToolbarButton extends ToolbarButton
          {
             if (event.isAttached())
             {
+               // rebuild the menu if required
+               if (menuRebuildRequired_)
+               {
+                  rebuildMenu();
+                  menuRebuildRequired_ = false;
+               }
+               
                // force a re-draw if necessary
                if (initialBranchMap_ != null)
                {
@@ -176,14 +184,30 @@ public class BranchToolbarButton extends ToolbarButton
    @Override
    public void onVcsRefresh(VcsRefreshEvent event)
    {
-      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
-      onRefresh(branches);
+      JsVectorString branches = pVcsState_.get().getBranchInfo().getBranches().cast();
+      if (branches.length() != branches_.length())
+      {
+         branches_ = branches.slice().cast();
+         menuRebuildRequired_ = true;
+         return;
+      }
+      
+      for (int i = 0; i < branches.length(); i++)
+      {
+         if (!StringUtil.equals(branches.get(i), branches_.get(i)))
+         {
+            branches_ = branches.slice();
+            menuRebuildRequired_ = true;
+            return;
+         }
+      }
    }
    
-   private void onRefresh(JsArrayString branches)
+   private void rebuildMenu()
    {
       menu_.clearItems();
       
+      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
       if (branches.length() == 0)
       {
          onBeforePopulateMenu(menu_);
@@ -300,6 +324,8 @@ public class BranchToolbarButton extends ToolbarButton
             });
             menu.addSeparator();
             
+            // truncate list when we have too many branches
+            int n = 0;
             for (String branch : branches)
             {
                // skip detached branches
@@ -311,12 +337,15 @@ public class BranchToolbarButton extends ToolbarButton
                   continue;
                
                // construct branch label without remotes prefix
-
                final String branchLabel = branch.replaceAll("^remotes/" + caption + "/", "");
                final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
                menu.addItem(new MenuItem(
                      branchLabel,
                      new SwitchBranchCommand(branchLabel, branchValue)));
+               
+               // update branch count
+               if (n++ > MAX_BRANCHES)
+                  break;
             }
          }
       });
@@ -460,10 +489,15 @@ public class BranchToolbarButton extends ToolbarButton
    private final SearchWidget searchWidget_;
    private Map<String, List<String>> initialBranchMap_;
    
+   private boolean menuRebuildRequired_ = true;
+   private JsVectorString branches_ = JsVectorString.createVector();
+   
    private HandlerRegistration previewHandler_;
    
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;
+   
+   private static final int MAX_BRANCHES = 100;
 
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
