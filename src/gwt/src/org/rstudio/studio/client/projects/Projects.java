@@ -562,7 +562,19 @@ public class Projects implements OpenProjectFileHandler,
                         "Creating a project with " + pkg,
                         new Dependency[] { Dependency.cranPackage(pkg) },
                         false,
-                        (Boolean success) -> { onReady.execute(); });
+                        (Boolean success) -> {
+                           if (!success)
+                           {
+                              globalDisplay_.showErrorMessage(
+                                    "Error installing " + pkg,
+                                    "Installation of package '" + pkg + "' failed, and so the project cannot " +
+                                    "be created. Try installing the package manually with " +
+                                    "'install.packages(\"" + pkg + "\")'.");
+                              return;
+                           }
+                           
+                           onReady.execute();
+                        });
                }
                else
                {
