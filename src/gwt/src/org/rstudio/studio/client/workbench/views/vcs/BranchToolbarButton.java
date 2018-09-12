@@ -189,6 +189,7 @@ public class BranchToolbarButton extends ToolbarButton
       {
          branches_ = branches.slice().cast();
          menuRebuildRequired_ = true;
+         return;
       }
       
       for (int i = 0; i < branches.length(); i++)
@@ -197,7 +198,7 @@ public class BranchToolbarButton extends ToolbarButton
          {
             branches_ = branches.slice();
             menuRebuildRequired_ = true;
-            break;
+            return;
          }
       }
    }
