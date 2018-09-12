@@ -63,6 +63,8 @@ namespace session {
 
 namespace {
 
+static bool s_canBuildCpp = false;
+
 std::string preflightPackageBuildErrorMessage(
       const std::string& message,
       const FilePath& buildDirectory)
@@ -2220,6 +2222,9 @@ bool haveRcppAttributes()
 
 bool canBuildCpp()
 {
+   if (s_canBuildCpp)
+      return true;
+   
 #ifdef __APPLE__
    if (isOSXMavericks() &&
        usingSystemMake() &&
@@ -2268,7 +2273,11 @@ bool canBuildCpp()
       return false;
    }
 
-   return result.exitStatus == EXIT_SUCCESS;
+   if (result.exitStatus != EXIT_SUCCESS)
+      return false;
+   
+   s_canBuildCpp = true;
+   return true;
 }
 
 bool installRBuildTools(const std::string& action)
