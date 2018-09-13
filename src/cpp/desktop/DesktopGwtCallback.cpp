@@ -607,7 +607,12 @@ void GwtCallback::showPptPresentation(QString path)
 void GwtCallback::showPDF(QString path, int pdfPage)
 {
    path = resolveAliasedPath(path);
+   
+#ifdef Q_OS_MAC
+   desktop::openFile(path);
+#else
    synctex().view(path, pdfPage);
+#endif
 }
 
 void GwtCallback::prepareShowWordDoc()
