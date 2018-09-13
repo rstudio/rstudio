@@ -70,6 +70,23 @@ if (!file.exists(boost_dirname)) {
    progress("Extracting archive -- please wait a moment...")
    progress("Feel free to get up and grab a coffee.")
    exec("7z.exe", "x -mmt4", boost_filename)
+   
+   
+   # Building RStudio using boost 1.65.1 and recent VS releases
+   # will output a warning "Unknown compiler version..." for each source file,
+   # Newer boost versions have this warning commented out, so let's do the 
+   # same until we upgrade to a newer boost release.
+   replace_one_line(file.path(boost_dirname, "boost", "config", "compiler", "visualc.hpp"),
+      '#     pragma message("Unknown compiler version - please run the configure tests and report the results")',
+      '#     // pragma message("Unknown compiler version - please run the configure tests and report the results")')
+   
+   # Building RStudio using boost 1.65.1 and recent VS releases will
+   # output many warnings of the form "warning STL4019: The member std::fpos::seekpos() is non-Standard...".
+   # This was fixed more recently in Boost: https://github.com/boostorg/iostreams/pull/57/files
+   # Apply that same fix to our build of Boost.
+   replace_one_line(file.path(boost_dirname, "boost", "iostreams", "detail", "config", "fpos.hpp"),
+                    '     !defined(_STLPORT_VERSION) && !defined(__QNX__) && !defined(_VX_CPU)',
+                    '     !defined(_STLPORT_VERSION) && !defined(__QNX__) && !defined(_VX_CPU) && !(defined(BOOST_MSVC) && _MSVC_STL_VERSION >= 141)')
 }
 
 # double-check that we generated the boost folder

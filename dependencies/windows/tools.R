@@ -119,3 +119,27 @@ ensure_dir <- function(...) {
             fatal("Failed to create directory '%s'\n", dir)
    }))
 }
+
+replace_one_line = function(filepath, orig_line, new_line) {
+   new_file <- tempfile()
+   unlink(new_file)
+   con <- file(filepath, "r")
+   found_line <- FALSE
+   while (TRUE) {
+      line = readLines(con, n = 1)
+      if (length(line) == 0) {
+         break
+      }
+      if (!found_line && line == orig_line) {
+         line <- new_line
+         found_line <- TRUE
+      }
+      write(line, file=new_file, append=TRUE)
+   }
+   close(con)
+   if (!found_line) {
+      fatal("Failed to locate expected line '%s' in '%s'.", orig_line, filepath)
+   }
+   unlink(filepath)
+   file.rename(new_file, filepath)
+}
