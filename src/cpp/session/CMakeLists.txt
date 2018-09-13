@@ -517,9 +517,6 @@ install(DIRECTORY "resources/profiler"
 
 # install libclang
 if(WIN32)
-   file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
-   install(PROGRAMS ${LIBCLANG_32_FILES}
-           DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
    file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
    install(PROGRAMS ${LIBCLANG_64_FILES}
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
