@@ -52,10 +52,10 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
-            <cmd refid="newStanDoc"/>
             <cmd refid="newPythonDoc"/>
-            <cmd refid="newD3Doc"/>
             <cmd refid="newSqlDoc"/>
+            <cmd refid="newStanDoc"/>
+            <cmd refid="newD3Doc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
