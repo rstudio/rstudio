@@ -3284,48 +3284,6 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onMoveLinesUp()
-   {
-      docDisplay_.moveLinesUp();
-   }
-
-   @Handler
-   void onMoveLinesDown()
-   {
-      docDisplay_.moveLinesDown();
-   }
-
-   @Handler
-   void onExpandToLine()
-   {
-      docDisplay_.expandToLine();
-   }
-
-   @Handler
-   void onCopyLinesDown()
-   {
-      docDisplay_.copyLinesDown();
-   }
-
-   @Handler
-   void onJoinLines()
-   {
-      docDisplay_.joinLines();
-   }
-
-   @Handler
-   void onRemoveLine()
-   {
-      docDisplay_.removeLine();
-   }
-
-   @Handler
-   void onSplitIntoLines()
-   {
-      docDisplay_.splitIntoLines();
-   }
-
-   @Handler
    void onCommentUncomment()
    {
       if (isCursorInTexMode())
@@ -3626,27 +3584,6 @@ public class TextEditingTarget implements
                colEnd + diff);
          docDisplay_.setSelectionRange(newRange);
       }
-   }
-
-   @Handler
-   void onBlockIndent()
-   {
-      docDisplay_.blockIndent();
-      docDisplay_.focus();
-   }
-
-   @Handler
-   void onBlockOutdent()
-   {
-      docDisplay_.blockOutdent();
-      docDisplay_.focus();
-   }
-
-   @Handler
-   void onReindent()
-   {
-      docDisplay_.reindent();
-      docDisplay_.focus();
    }
 
    @Handler

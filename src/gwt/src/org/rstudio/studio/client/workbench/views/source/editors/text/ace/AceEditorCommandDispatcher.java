@@ -136,6 +136,87 @@ public class AceEditorCommandDispatcher
             AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
    
+   @Handler
+   public void onMoveLinesUp()
+   {
+      fireEvent(
+            AceEditorCommandEvent.MOVE_LINES_UP,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onMoveLinesDown()
+   {
+      fireEvent(
+            AceEditorCommandEvent.MOVE_LINES_DOWN,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onExpandToLine()
+   {
+      fireEvent(
+            AceEditorCommandEvent.EXPAND_TO_LINE,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onCopyLinesDown()
+   {
+      fireEvent(
+            AceEditorCommandEvent.COPY_LINES_DOWN,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onJoinLines()
+   {
+      fireEvent(
+            AceEditorCommandEvent.JOIN_LINES,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onRemoveLine()
+   {
+      fireEvent(
+            AceEditorCommandEvent.REMOVE_LINE,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onSplitIntoLines()
+   {
+      fireEvent(
+            AceEditorCommandEvent.SPLIT_INTO_LINES,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+
+   @Handler
+   public void onBlockIndent()
+   {
+      fireEvent(
+            AceEditorCommandEvent.BLOCK_INDENT,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onBlockOutdent()
+   {
+      fireEvent(
+            AceEditorCommandEvent.BLOCK_OUTDENT,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
+   @Handler
+   public void onReindent()
+   {
+      fireEvent(
+            AceEditorCommandEvent.REINDENT,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+
    // Private methods ----
    
    private void fireEvent(int type, int policy)

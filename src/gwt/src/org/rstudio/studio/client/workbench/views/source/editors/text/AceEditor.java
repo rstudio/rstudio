@@ -463,6 +463,16 @@ public class AceEditor implements DocDisplay,
                   case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
                   case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
                   case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
+                  case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
+                  case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
+                  case AceEditorCommandEvent.EXPAND_TO_LINE:             expandToLine();             break;
+                  case AceEditorCommandEvent.COPY_LINES_DOWN:            copyLinesDown();            break;
+                  case AceEditorCommandEvent.JOIN_LINES:                 joinLines();                break;
+                  case AceEditorCommandEvent.REMOVE_LINE:                removeLine();               break;
+                  case AceEditorCommandEvent.SPLIT_INTO_LINES:           splitIntoLines();           break;
+                  case AceEditorCommandEvent.BLOCK_INDENT:               blockIndent();              break;
+                  case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
+                  case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
                   }
                }
             });
