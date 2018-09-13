@@ -54,7 +54,7 @@ public class MinimizedWindowFrame
 
       layout_ = new ClickDockLayoutPanel(Style.Unit.PX);
       layout_.setStylePrimaryName(themeStyles.minimizedWindow());
-      layout_.addStyleName(themeStyles.minimizedWindowObject());
+      layout_.addStyleName(themeStyles.rstheme_minimizedWindowObject());
 
       int leftPadding = title != null ? 8 : 4;
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);
@@ -62,7 +62,7 @@ public class MinimizedWindowFrame
 
       HorizontalPanel inner = new HorizontalPanel();
       inner.setWidth("100%");
-      inner.setStylePrimaryName(themeStyles.center());
+      inner.setStylePrimaryName(themeStyles.rstheme_center());
 
       if (title != null)
       {

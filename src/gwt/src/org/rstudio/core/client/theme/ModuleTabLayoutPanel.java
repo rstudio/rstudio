@@ -49,7 +49,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          layoutPanel_.add(left);
 
          HorizontalPanel center = new HorizontalPanel();
-         center.setStylePrimaryName(styles.tabLayoutCenter());
+         center.setStylePrimaryName(styles.rstheme_tabLayoutCenter());
          Label label = new Label(title, false);
          center.add(label);
          if (canClose)

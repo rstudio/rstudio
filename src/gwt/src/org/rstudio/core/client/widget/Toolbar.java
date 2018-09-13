@@ -130,7 +130,7 @@ public class Toolbar extends Composite
       toolbarWrapper_.add(horizontalPanel_);
       initWidget(toolbarWrapper_);
 
-      setStyleName(styles_.toolbarWrapper());
+      setStyleName(styles_.rstheme_toolbarWrapper());
    }
 
    protected void manageSeparators()

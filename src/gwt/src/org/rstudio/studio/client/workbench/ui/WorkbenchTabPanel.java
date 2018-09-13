@@ -63,7 +63,7 @@ class WorkbenchTabPanel
 
       utilPanel_ = new HTML();
       utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
-      utilPanel_.addStyleName(ThemeStyles.INSTANCE.multiPodUtilityTabArea());
+      utilPanel_.addStyleName(ThemeStyles.INSTANCE.rstheme_multiPodUtilityTabArea());
       panel_.add(utilPanel_);
       panel_.setWidgetRightWidth(utilPanel_,
                                  0, Unit.PX,
