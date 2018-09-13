@@ -496,7 +496,7 @@ int main(int argc, char* argv[])
             */
             
             std::vector<std::string> gpuBlacklist = {
-               "AMD FirePro D500"
+               "AMD FirePro"
             };
             
             for (const std::string& entry : gpuBlacklist)
