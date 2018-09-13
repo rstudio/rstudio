@@ -97,6 +97,7 @@
 * Added option to show whitespace characters for .tsv, .csv files (#3236)
 * The *Source* command can now be customized using magic `!source` comments (#3257)
 * Added linter rule to catch usage of `<-` in some situations where `=` is intended (#3289)
+* Add Sublime Text-style keyboard bindings; contribution from Randy Lai (@randy3k) (#3344)
 
 ### Bug Fixes
 
