@@ -144,7 +144,7 @@
       .rs.setVar("reticulate.matplotlib.show", plt$show)
       plt$show <- .rs.reticulate.matplotlib.showHook
    }
-      
+   
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
@@ -749,7 +749,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    names(parsed[[2]])
 })
 
-.rs.addFunction("python.getCompletionsMain", function(token)
+.rs.addFunction("python.getCompletionsMain", function(token, ctx)
 {
    dots <- gregexpr(".", token, fixed = TRUE)[[1]]
    if (identical(c(dots), -1L)) {
@@ -803,7 +803,12 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       else
          lhs
    
-   object <- tryCatch(reticulate::py_eval(evaluation, convert = FALSE), error = identity)
+   # if it looks like we're requesting attributes from a module alias,
+   # then substitute the name with that alias
+   object <- if (evaluation %in% names(ctx$aliases))
+      .rs.tryCatch(reticulate::import(ctx$aliases[[evaluation]], convert = FALSE))
+   else
+      .rs.tryCatch(reticulate::py_eval(evaluation, convert = FALSE))
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
@@ -1010,7 +1015,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    }
    
    source <- substring(line, cursor$tokenOffset())
-   .rs.python.getCompletionsMain(source)
+   .rs.python.getCompletionsMain(source, ctx)
 })
 
 .rs.addFunction("python.isPython3", function()
@@ -1170,7 +1175,7 @@ html.heading = _heading
    
    writeLines(page, con = path)
    path
-  
+   
 })
 
 .rs.addFunction("python.extractCurrentExpression", function(line, offset)
