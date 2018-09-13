@@ -785,30 +785,33 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(completions)
    }
    
-   # we had dots; try to evaluate the left-hand side of the dots
-   # and then filter on the attributes of the object (if any)
-   last <- tail(dots, n = 1)
-   lhs <- substring(token, 1, last - 1)
-   rhs <- substring(token, last + 1)
+   # we had dots; try to evaluate each component piece-by-piece to get
+   # to the relevant object providing us with completions
+   pieces <- .rs.strsplit(token, ".", fixed = TRUE)
    
-   # try evaluating the left-hand side (avoid evaluation of
-   # arrays, tuples, and dictionary literals)
-   evaluation <-
-      if (.rs.startsWith(lhs, "[") && .rs.endsWith(lhs, "]"))
-         "[]"
-      else if (.rs.startsWith(lhs, "{") && .rs.endsWith(lhs, "}"))
-         "{}"
-      else if (.rs.startsWith(lhs, "(") && .rs.endsWith(lhs, ")"))
-         "()"
-      else
-         lhs
-   
-   # if it looks like we're requesting attributes from a module alias,
-   # then substitute the name with that alias
-   object <- if (evaluation %in% names(ctx$aliases))
-      .rs.tryCatch(reticulate::import(ctx$aliases[[evaluation]], convert = FALSE))
+   # for the first piece, check to see if it might be a module
+   first <- .rs.python.sanitizeForCompletion(pieces[[1]])
+   object <- if (first %in% names(ctx$aliases))
+   {
+      module <- ctx$aliases[[first]]
+      .rs.tryCatch(reticulate::import(module, convert = FALSE))
+   }
    else
-      .rs.tryCatch(reticulate::py_eval(evaluation, convert = FALSE))
+   {
+      reticulate::py_eval(first, convert = FALSE)
+   }
+   
+   # now, try to extract sub-pieces from the module / object we received
+   i <- 2
+   while (i < length(pieces))
+   {
+      if (inherits(object, "error"))
+         break
+      
+      code <- .rs.python.sanitizeForCompletion(pieces[[i]])
+      object <- .rs.tryCatch(reticulate::py_get_attr(object, code))
+      i <- i + 1
+   }
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
@@ -818,9 +821,9 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(.rs.python.emptyCompletions())
    
    completions <- .rs.python.completions(
-      token      = rhs,
+      token      = tail(pieces, n = 1L),
       candidates = candidates,
-      source     = lhs,
+      source     = head(pieces, n = -1L),
       type       = .rs.python.inferObjectTypes(object, candidates)
    )
    
@@ -1358,4 +1361,16 @@ html.heading = _heading
       args             = as.character(args),
       arg_descriptions = as.character(arg_descriptions)
    )
+})
+
+.rs.addFunction("python.sanitizeForCompletion", function(item)
+{
+   if (.rs.startsWith(item, "[") && .rs.endsWith(item, "]"))
+      "[]"
+   else if (.rs.startsWith(item, "{") && .rs.endsWith(item, "}"))
+      "{}"
+   else if (.rs.startsWith(item, "(") && .rs.endsWith(item, ")"))
+      "()"
+   else
+      item
 })
