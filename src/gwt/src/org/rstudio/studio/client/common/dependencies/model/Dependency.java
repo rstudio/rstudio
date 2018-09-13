@@ -29,7 +29,9 @@ public class Dependency extends JavaScriptObject
    
    public static Dependency cranPackage(String name)
    {
-      return cranPackage(name, "", false);
+      // use version '0.0.0' just to indicate that any currently installed
+      // version of the requested package should suffice
+      return cranPackage(name, "0.0.0", false);
    }
    
    public static Dependency cranPackage(String name, 

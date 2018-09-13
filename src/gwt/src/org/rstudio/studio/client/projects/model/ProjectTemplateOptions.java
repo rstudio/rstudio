@@ -32,4 +32,7 @@ public class ProjectTemplateOptions extends JavaScriptObject
          inputs: inputs
       };
    }-*/;
+   
+   public final native ProjectTemplateDescription getDescription() /*-{ return this.description; }-*/;
+   public final native JsObject getInputs() /*-{ return this.inputs; }-*/;
 }
