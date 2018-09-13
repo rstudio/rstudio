@@ -378,6 +378,10 @@
 
    options(editor = function(name, file, title) {
 
+      # handle missing 'name' field
+      if (missing(name))
+         name <- NULL
+      
       # use internal editor for files and functions, otherwise
       # delegate to the default editor
       if (is.null(name) || is.function(name)) {
