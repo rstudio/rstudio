@@ -169,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -1000,10 +1001,12 @@ public class RemoteServer implements Server
    }
    
    public void pythonGetCompletions(String line,
+                                    PythonCompletionContext context,
                                     ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(line)
+            .add(context)
             .get();
       
       sendRequest(RPC_SCOPE, PYTHON_GET_COMPLETIONS, params, requestCallback);

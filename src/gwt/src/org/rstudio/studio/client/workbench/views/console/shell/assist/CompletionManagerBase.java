@@ -311,8 +311,6 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
-   protected abstract HandlerRegistration[] handlers();
-   
    public abstract void goToHelp();
    public abstract void goToDefinition();
    public abstract void getCompletions(String line, CompletionRequestContext context);
@@ -346,8 +344,18 @@ public abstract class CompletionManagerBase
    
    // Subclasses can override to perform post-completion-insertion actions,
    // e.g. displaying a tooltip or similar
-   protected void onCompletionInserted(QualifiedName requestedCompletion)
+   protected void onCompletionInserted(QualifiedName completion)
    {
+      int type = completion.type;
+      if (!RCompletionType.isFunctionType(type))
+         return;
+      
+      boolean insertParensAfterCompletion =
+            RCompletionType.isFunctionType(type) &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+      
+      if (insertParensAfterCompletion)
+         docDisplay_.moveCursorBackward();
    }
    
    // Subclasses can override depending on what characters are typically
@@ -605,6 +613,10 @@ public abstract class CompletionManagerBase
    {
       suggestTimer_.cancel();
       
+      popup_.hide();
+      popup_.clearHelp(false);
+      popup_.setHelpVisible(false);
+      
       int type = completion.type;
       if (type == RCompletionType.SNIPPET)
       {
@@ -625,9 +637,6 @@ public abstract class CompletionManagerBase
          onCompletionInserted(completion);
       }
       
-      popup_.hide();
-      popup_.clearHelp(false);
-      popup_.setHelpVisible(false);
       docDisplay_.setFocus(true);
    }
    
@@ -753,6 +762,11 @@ public abstract class CompletionManagerBase
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
       handlers_.clear();
+   }
+   
+   protected HandlerRegistration[] handlers()
+   {
+      return null;
    }
    
    private HandlerRegistration[] defaultHandlers()

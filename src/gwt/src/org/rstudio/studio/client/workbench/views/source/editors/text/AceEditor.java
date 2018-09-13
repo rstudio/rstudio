@@ -751,13 +751,9 @@ public class AceEditor implements DocDisplay,
                {
                   managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
                         editor,
-                        editor,
                         new CompletionPopupPanel(),
                         server_,
-                        new Filter(),
-                        context_,
-                        editor,
-                        false));
+                        context_));
                }
                
                // C++ completion manager

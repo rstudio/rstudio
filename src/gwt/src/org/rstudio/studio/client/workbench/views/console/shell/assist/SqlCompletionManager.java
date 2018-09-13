@@ -26,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SqlCompletionManager extends CompletionManagerBase
                                   implements CompletionManager
@@ -59,12 +58,6 @@ public class SqlCompletionManager extends CompletionManagerBase
    {
       String connection = discoverAssociatedConnectionString();
       server_.sqlGetCompletions(line, connection, completionContext(), context);
-   }
-   
-   @Override
-   protected HandlerRegistration[] handlers()
-   {
-      return new HandlerRegistration[] {};
    }
    
    @Override

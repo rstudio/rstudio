@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
@@ -84,6 +85,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void pythonGetCompletions(
          String line,
+         PythonCompletionContext context,
          ServerRequestCallback<Completions> requestCallback);
    
    void pythonGoToDefinition(
