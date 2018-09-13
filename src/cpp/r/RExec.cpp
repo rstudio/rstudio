@@ -18,6 +18,8 @@
 
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
+#include <core/StringUtils.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
@@ -57,6 +59,13 @@ public:
    DisableErrorHandlerScope()
       : didDisable_(false)
    {
+      // allow users to enable / disable suppression of error handlers
+      // (primarily for debugging when behind-the-scenes R code emits an error
+      // that we'd like to learn a bit more about)
+      bool suppressed = r::options::getOption("rstudio.errors.suppressed", true, false);
+      if (!suppressed)
+         return;
+      
       SEXP handlerSEXP = r::options::setErrorOption(R_NilValue);
       if (handlerSEXP != R_NilValue)
       {
