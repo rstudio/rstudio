@@ -52,8 +52,8 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newTextDoc"/>
             <cmd refid="newCppDoc"/>
-            <cmd refid="newPythonDoc"/>
             <cmd refid="newStanDoc"/>
+            <cmd refid="newPythonDoc"/>
             <cmd refid="newD3Doc"/>
             <cmd refid="newSqlDoc"/>
             <separator/>
@@ -862,8 +862,8 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newStanDoc"
-        menuLabel="_Stan Script"
-        desc="Create a new Stan script"
+        menuLabel="_Stan File"
+        desc="Create a new Stan program"
         rebindable="false"/>
         
    <cmd id="newD3Doc"
