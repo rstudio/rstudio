@@ -117,6 +117,7 @@ public class UIPrefsAccessor extends Prefs
    public static final String EDITOR_KEYBINDINGS_DEFAULT = "default";
    public static final String EDITOR_KEYBINDINGS_VIM = "vim";
    public static final String EDITOR_KEYBINDINGS_EMACS = "emacs";
+   public static final String EDITOR_KEYBINDINGS_SUBLIME = "sublime";
    
    public PrefValue<Boolean> useVimMode()
    {
@@ -128,6 +129,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_emacs_keybindings", false);
    }
    
+   public PrefValue<Boolean> enableSublimeKeybindings()
+   {
+      return bool("enable_sublime_keybindings", false);
+   }
+
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);

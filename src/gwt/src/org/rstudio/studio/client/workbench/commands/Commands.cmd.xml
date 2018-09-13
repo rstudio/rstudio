@@ -544,10 +544,14 @@ well as menu structures (for main menu and popup menus).
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
-         <shortcut refid="insertSection" value="Cmd+Shift+R"/>
+         <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
+         <shortcut refid="insertSection" value="Ctrl+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="extractFunction" value="Cmd+Alt+X"/>
          <shortcut refid="extractLocalVariable" value="Cmd+Alt+V"/>
          <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
+         <shortcut refid="commentUncomment" value="Cmd+/" disableModes="default,vim,emacs"/>
+         <shortcut refid="blockOutdent" value="Meta+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="blockIndent" value="Meta+]" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="reindent" value="Cmd+I"/>
          <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!(org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer())"/>
          <shortcut refid="reflowComment" value="Cmd+Alt+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer()"/>
@@ -563,16 +567,27 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand All Folds"/>
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Alt+Up" title="Move Lines Up" />
+         <shortcut refid="moveLinesUp" value="Ctrl+Meta+Up" title="Move Lines Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="moveLinesUp" value="Ctrl+Shift+Up" title="Move Lines Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut value="Alt+Down" title="Move Lines Down" />
-         <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" />
-         <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
-         <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim"/>
+         <shortcut refid="moveLinesDown" value="Ctrl+Meta+Down" title="Move Lines Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="moveLinesDown" value="Ctrl+Shift+Down" title="Move Lines Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
+         <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
+         <shortcut refid="expandToLine" value="Meta+L" title="Expand Selection to line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" />
+         <!-- Ctrl+L to be handled by ShortcutManager -->
+         <!-- <shortcut refid="expandToLine" value="Ctrl+L" title="Expand Selection to line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" /> -->
+         <shortcut refid="copyLinesDown" value="Cmd+Shift+D" title="Copy Lines Down" disableModes="default,vim,emacs" />
+         <shortcut refid="joinLines" value="Cmd+J" title="Join Lines" disableModes="default,vim,emacs" />
+         <shortcut refid="removeLine" value="Ctrl+Shift+K" title="Delete Line" disableModes="default,vim,emacs" />
+         <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim,sublime"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>
          <shortcut refid="yankAfterCursor" value="Ctrl+K" title="Yank Line After Cursor" />
          <shortcut refid="pasteLastYank" value="Ctrl+Y" title="Insert Yanked Text" />
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="insertAssignmentOperator" value="Alt+-" title="Insert Assignment Operator"/>
-         <shortcut refid="insertPipeOperator" value="Cmd+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertPipeOperator" value="Meta+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet" handlesEventPropagation="true" />
@@ -580,38 +595,47 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
          <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
+         <shortcut refid="quickAddNext" value="Cmd+D" title="Find and Add Next" disableModes="default,vim,emacs" />
          <shortcut refid="findUsages" value="Cmd+Alt+U"/>
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F"/>
          <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
          <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
-         <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs"/>
+         <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs,sublime"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
-         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim"/>
+         <shortcut refid="goToFileFunction" value="Cmd+P" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToFileFunction" value="Meta+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToFileFunction" value="Ctrl+Shift+R" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToLine" value="Alt+G" disableModes="default,vim,sublime"/>
+         <shortcut refid="goToLine" value="Ctrl+G" disableModes="default,vim,emacs"/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs,sublime"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+M" disableModes="default,vim,emacs"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+M" disableModes="default,vim,emacs"/>
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut refid="addCursorAbove" value="Ctrl+Alt+Up"/>
          <shortcut refid="addCursorBelow" value="Ctrl+Alt+Down"/>
-         <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
+         <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
-         <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim"/>
-         <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim"/>
+         <shortcut refid="splitIntoLines" value="Meta+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="splitIntoLines" value="Ctrl+Shift+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim,sublime"/>
+         <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim,sublime"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
          <shortcut value="Ctrl+Alt+Shift+Down" title="Move active cursor down"/>
       </shortcutgroup>
@@ -621,8 +645,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="zoomActualSize" value="Meta+0" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Panes">
-         <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim"/>
-         <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
+         <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim,sublime"/>
+         <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim,sublime"/>
          
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
@@ -644,18 +668,20 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Tabs">
          <shortcut refid="switchToTab" value="Ctrl+X B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="switchToTab" value="Ctrl+X B" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim"/>
+         <shortcut refid="switchToTab" value="Ctrl+X B" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,sublime"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="nextTab" value="Ctrl+X Right" disableModes="default,vim"/>
+         <shortcut refid="nextTab" value="Ctrl+X Right" disableModes="default,vim,sublime"/>
          <shortcut refid="nextTab" value="Ctrl+F12"/>
          <shortcut refid="nextTab" value="Ctrl+Tab" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="nextTab" value="Cmd+Shift+]" disableModes="default,vim,emacs"/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="previousTab" value="Ctrl+F11"/>
          <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="previousTab" value="Ctrl+X Left" disableModes="default,vim"/>
+         <shortcut refid="previousTab" value="Ctrl+X Left" disableModes="default,vim,sublime"/>
          <shortcut refid="previousTab" value="Ctrl+Shift+Tab" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="previousTab" value="Cmd+Shift+[" disableModes="default,vim,emacs"/>
          <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
          <shortcut refid="firstTab" value="Ctrl+Shift+F11"/>
          <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
@@ -663,21 +689,21 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
       
-         <shortcut refid="saveSourceDoc" value="Ctrl+X Ctrl+S" disableModes="default,vim"/>
+         <shortcut refid="saveSourceDoc" value="Ctrl+X Ctrl+S" disableModes="default,vim,sublime"/>
          <shortcut refid="saveSourceDoc" value="Ctrl+S" disableModes="emacs"/>
          <shortcut refid="saveSourceDoc" value="Meta+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
          <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
          
-         <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim"/>
+         <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim,sublime"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
          
-         <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim"/>
+         <shortcut refid="openSourceDoc" value="Ctrl+X Ctrl+F" disableModes="default,vim,sublime"/>
          <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
          <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
-         <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim"/>
+         <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim,sublime"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W" disableModes="emacs"/>
          
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
@@ -685,15 +711,20 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       </shortcutgroup>
       <shortcutgroup name="Build">
-         <shortcut refid="compilePDF" value="Cmd+Shift+K"/>
-         <shortcut refid="previewHTML" value="Cmd+Shift+K" />
-         <shortcut refid="knitDocument" value="Cmd+Shift+K" />
+         <shortcut refid="compilePDF" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="previewHTML" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="knitDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="compilePDF" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="previewHTML" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="knitDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
-         <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
+         <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L" disableModes="sublime"/>
+         <shortcut refid="devtoolsLoadAll" value="Ctrl+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
          <shortcut refid="testPackage" value="Cmd+Shift+T" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="testPackage" value="Cmd+Alt+F7" if="!org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
+         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D" disableModes="sublime"/>
+         <shortcut refid="roxygenizePackage" value="Ctrl+Shift+D" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Execute">
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
@@ -702,13 +733,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="previewSql" value="Cmd+Shift+Enter"/>;
          <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
-         <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim"/>
+         <shortcut refid="executeCode" value="Ctrl+C Ctrl+N" disableModes="default,vim,sublime"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
          <shortcut refid="executeCodeWithoutMovingCursor" value="Alt+Enter"/>
          <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E" disableModes="emacs"/>
-         <shortcut refid="executeCurrentFunction" value="Ctrl+C Ctrl+F" disableModes="default,vim"/>
+         <shortcut refid="executeCurrentFunction" value="Ctrl+C Ctrl+F" disableModes="default,vim,sublime"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
          <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
          <shortcut refid="executePreviousChunks" value="Cmd+Alt+P"/>
@@ -754,7 +785,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
          <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
-         <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim"/>
+         <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -1447,6 +1478,30 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Add Cursor Below Current Cursor"
         context="editor"/>
         
+   <cmd id="moveLinesUp"
+        menuLabel="Move Lines Up"
+        context="editor"/>
+      
+   <cmd id="moveLinesDown"
+        menuLabel="Move Lines Down"
+        context="editor"/>
+
+   <cmd id="expandToLine"
+        menuLabel="Expand Selection to Line"
+        context="editor"/>
+
+   <cmd id="copyLinesDown"
+        menuLabel="Copy Lines Down"
+        context="editor"/>
+
+   <cmd id="joinLines"
+        menuLabel="Join Lines"
+        context="editor"/>
+
+   <cmd id="removeLine"
+        menuLabel="Remove Line"
+        context="editor"/>
+
    <cmd id="splitIntoLines"
         menuLabel="Split Into Lines"
         desc="Create a new cursor on each line in current selection"

@@ -416,6 +416,10 @@ public class AceEditorNative extends JavaScriptObject {
       return this.getCursorPositionScreen();
    }-*/;
    
+   public final native void blockIndent() /*-{
+      return this.blockIndent();
+   }-*/;
+
    public final native void blockOutdent() /*-{
       return this.blockOutdent();
    }-*/;

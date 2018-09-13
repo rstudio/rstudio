@@ -3284,12 +3284,6 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onSplitIntoLines()
-   {
-      docDisplay_.splitIntoLines();
-   }
-
-   @Handler
    void onCommentUncomment()
    {
       if (isCursorInTexMode())
@@ -3590,13 +3584,6 @@ public class TextEditingTarget implements
                colEnd + diff);
          docDisplay_.setSelectionRange(newRange);
       }
-   }
-
-   @Handler
-   void onReindent()
-   {
-      docDisplay_.reindent();
-      docDisplay_.focus();
    }
 
    @Handler
