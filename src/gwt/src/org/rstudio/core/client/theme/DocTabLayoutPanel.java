@@ -1085,7 +1085,7 @@ public class DocTabLayoutPanel
 
          contentPanel_ = new HorizontalPanel();
          contentPanel_.setTitle(tooltip);
-         contentPanel_.setStylePrimaryName(styles_.tabLayoutCenter());
+         contentPanel_.setStylePrimaryName(styles_.rstheme_tabLayoutCenter());
          contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
          if (icon != null) {

@@ -8,7 +8,7 @@
            class="{res.themeStyles.search}"
            style="margin-right: 3px">
          <div class="{res.themeStyles.left}"></div>
-         <div class="{res.themeStyles.center}">
+         <div class="{res.themeStyles.rstheme_center}">
             <g:Image ui:field='icon_'
                      resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
