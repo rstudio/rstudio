@@ -35,7 +35,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 if(WIN32)
 
    list(
-      APPEND URLOPENER_SOURCE_FILES
+      APPEND RSRUN_SOURCE_FILES
       "${CMAKE_CURRENT_BINARY_DIR}/rsrun.rc")
 
    configure_file(
