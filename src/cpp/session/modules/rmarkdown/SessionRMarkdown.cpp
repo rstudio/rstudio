@@ -209,7 +209,7 @@ std::string assignOutputUrl(const std::string& outputFile)
       if (outputPath.extensionLowerCase() == ".pdf")
          indexPath = websiteDir.childPath(outputPath.filename());
       else
-         FilePath indexPath = websiteDir.childPath("index.html");
+         indexPath = websiteDir.childPath("index.html");
       
       s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
       // compute relative path to target file and append it to the path
