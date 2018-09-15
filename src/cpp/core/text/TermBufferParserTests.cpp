@@ -1,7 +1,7 @@
 /*
  * TermBufferParserTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include <core/text/TermBufferParser.hpp>
 
-#define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
 namespace rstudio {
@@ -29,97 +28,97 @@ const char *pEnd1 =   "\033[?1049l";
 const char *pEnd2 =   "\033[?1047l";
 const char *pEnd3 =   "\033[?47l";
 
-TEST_CASE("Terminal Buffer Mode Parsing")
+context("Terminal Buffer Mode Parsing")
 {
-   SECTION("Empty input")
+   test_that("Empty input")
    {
       std::string input;
       std::string newStr = core::text::stripSecondaryBuffer(input, NULL);
-      CHECK(newStr.empty());
+      expect_true(newStr.empty());
    }
 
-   SECTION("Empty input doesn't change existing true altmode")
+   test_that("Empty input doesn't change existing true altmode")
    {
       std::string input;
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(altMode == true);
+      expect_true(altMode);
    }
 
-   SECTION("Empty input doesn't change existing false altmode")
+   test_that("Empty input doesn't change existing false altmode")
    {
       std::string input;
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(altMode == false);
+      expect_false(altMode);
    }
 
-   SECTION("No escape codes")
+   test_that("No escape codes")
    {
       std::string input = "Hello World!\nHow are you today?";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Escape character at start")
+   test_that("Escape character at start")
    {
       std::string input = "\033";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Multiple Escape characters")
+   test_that("Multiple Escape characters")
    {
       std::string input = "\033\033\033\033\033";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Other ESC[ escape code")
+   test_that("Other ESC[ escape code")
    {
       std::string input = "Hello World!\nHow \033[000l are you today?";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Other ESC[? escape code")
+   test_that("Other ESC[? escape code")
    {
       std::string input = "Hello. How\033[?000l are you today?";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Other ESC[?x escape code")
+   test_that("Other ESC[?x escape code")
    {
       std::string input = "Hello. How\033[?x047h are you today?";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Other ESC[ escape code at start, middle and end")
+   test_that("Other ESC[ escape code at start, middle and end")
    {
       std::string input = "\033[?Hello World!\nHow \033[000l are you today?\033 Great!";
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(input.compare(newStr) == 0);
+      expect_true(input.compare(newStr) == 0);
    }
 
-   SECTION("Alternate buffer mode returns zero string")
+   test_that("Alternate buffer mode returns zero string")
    {
       std::string input = "None of this should be returned!";
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.empty());
-      CHECK(altMode == true);
+      expect_true(newStr.empty());
+      expect_true(altMode == true);
    }
 
-   SECTION("Alternate buffer mode with additional start sequences")
+   test_that("Alternate buffer mode with additional start sequences")
    {
       std::string input = "None of ";
       input.append(pStart1);
@@ -129,11 +128,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       input.append("The end.");
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.empty());
-      CHECK(altMode == true);
+      expect_true(newStr.empty());
+      expect_true(altMode == true);
    }
 
-   SECTION("Empty alt-mode in middle")
+   test_that("Empty alt-mode in middle")
    {
       std::string input = "Once upon ";
       input.append(pStart1);
@@ -143,11 +142,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Empty alt-mode in middle (variation 2)")
+   test_that("Empty alt-mode in middle (variation 2)")
    {
       std::string input = "Once upon ";
       input.append(pStart2);
@@ -157,11 +156,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Empty alt-mode in middle (variation 3)")
+   test_that("Empty alt-mode in middle (variation 3)")
    {
       std::string input = "Once upon ";
       input.append(pStart3);
@@ -171,11 +170,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Non-empty alt-mode in middle")
+   test_that("Non-empty alt-mode in middle")
    {
       std::string input = "Once upon ";
       input.append(pStart1);
@@ -186,11 +185,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Non-empty alt-mode in middle containing multiple starts")
+   test_that("Non-empty alt-mode in middle containing multiple starts")
    {
       std::string input = "Once upon ";
       input.append(pStart3);
@@ -203,11 +202,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("No-starts and multiple ends")
+   test_that("No-starts and multiple ends")
    {
       std::string input;
       input.append(pEnd1);
@@ -219,21 +218,21 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.compare(expect) == 0);
-      CHECK(altMode == false);
+      expect_true(newStr.compare(expect) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Starts in alt-mode, ends at the end")
+   test_that("Starts in alt-mode, ends at the end")
    {
       std::string input = "Once upon a time.";
       input.append(pEnd3);
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(newStr.empty());
-      CHECK(altMode == false);
+      expect_true(newStr.empty());
+      expect_true(altMode == false);
    }
 
-   SECTION("Starts in alt-mode, ends at the start")
+   test_that("Starts in alt-mode, ends at the start")
    {
       std::string input;
       input.append(pEnd1);
@@ -241,11 +240,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(expect.compare(newStr) == 0);
-      CHECK(altMode == false);
+      expect_true(expect.compare(newStr) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Starts in alt-mode, ends in the middle")
+   test_that("Starts in alt-mode, ends in the middle")
    {
       std::string input;
       input.append("Once upon a time.");
@@ -255,11 +254,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(expect.compare(newStr) == 0);
-      CHECK(altMode == false);
+      expect_true(expect.compare(newStr) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Starts in alt-mode, ends and restarts")
+   test_that("Starts in alt-mode, ends and restarts")
    {
       std::string input;
       input.append("Once upon a time.");
@@ -273,11 +272,11 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = true;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(expect.compare(newStr) == 0);
-      CHECK(altMode == false);
+      expect_true(expect.compare(newStr) == 0);
+      expect_true(altMode == false);
    }
 
-   SECTION("Multiple alt-mode runs")
+   test_that("Multiple alt-mode runs")
    {
       std::string input;
       input.append("Once upon a time.");
@@ -293,9 +292,20 @@ TEST_CASE("Terminal Buffer Mode Parsing")
 
       bool altMode = false;
       std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
-      CHECK(expect.compare(newStr) == 0);
-      CHECK(altMode == false);
+      expect_true(expect.compare(newStr) == 0);
+      expect_true(altMode == false);
    }
+   
+   test_that("No rsrun escape sequence")
+   {
+      std::string input = "Hello, World!";
+      std::string esc;
+      std::string newStr = core::text::rsrunStripESC(input, &esc);
+      expect_true(esc.empty());
+      expect_true(input.compare(newStr) == 0);
+   }
+   
+   // TODO (gary) more rsrun unit tests
 }
 
 } // end namespace tests

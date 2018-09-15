@@ -1,5 +1,5 @@
 /*
- * RsRunMain.cpp
+ * RSRun.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,18 +13,25 @@
  *
  */
 
-#include <core/system/System.hpp>
+#include <core/terminal/RSRun.hpp>
 
-#include "config.h"
+namespace rstudio {
+namespace core {
+namespace terminal {
 
-using namespace rstudio;
+namespace {
 
-int main(int argc, char** argv)
+} // anonymous namespace
+
+RSRun::RSRun()
 {
-   // Create a named pipe
-   std::string pipeIdentifier = core::system::generateShortenedUuid();
-  
-   // Construct the 
-   return EXIT_SUCCESS;
 }
 
+bool RSRun::processESC(const std::string& esc)
+{
+   return false;
+}
+
+} // namespace terminal
+} // namespace core
+} // namespace rstudio

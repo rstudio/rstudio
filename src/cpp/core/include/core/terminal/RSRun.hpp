@@ -1,5 +1,5 @@
 /*
- * RsRunMain.cpp
+ * RSRun.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,18 +13,29 @@
  *
  */
 
-#include <core/system/System.hpp>
+#ifndef RSRUN_HPP
+#define RSRUN_HPP
 
-#include "config.h"
+#include <string>
+#include <boost/noncopyable.hpp>
 
-using namespace rstudio;
+namespace rstudio {
+namespace core {
+namespace terminal {
 
-int main(int argc, char** argv)
+class RSRun : boost::noncopyable
 {
-   // Create a named pipe
-   std::string pipeIdentifier = core::system::generateShortenedUuid();
-  
-   // Construct the 
-   return EXIT_SUCCESS;
-}
+public:
+   explicit RSRun();
 
+   bool processESC(const std::string& esc);
+
+private:
+
+};
+
+} // namespace terminal
+} // namespace core
+} // namespace terminal
+
+#endif // RSRUN_HPP

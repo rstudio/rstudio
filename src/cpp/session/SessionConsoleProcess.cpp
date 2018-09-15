@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include <core/text/TermBufferParser.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
@@ -517,10 +519,19 @@ std::string ConsoleProcess::getBuffer() const
    return procInfo_->getFullSavedBuffer();
 }
 
-void ConsoleProcess::enqueOutputEvent(const std::string &output)
+void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
 {
-   if (envCaptureCmd_.output(output))
+   if (envCaptureCmd_.output(rawOutput))
       return;
+
+   // Pull out rsrun ESC sequences
+   std::string rsrunESC;   
+   std::string output = core::text::rsrunStripESC(rawOutput, &rsrunESC);
+   
+   if (rsrun_.processESC(rsrunESC))
+   {
+      // TODO (gary)      
+   }
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();

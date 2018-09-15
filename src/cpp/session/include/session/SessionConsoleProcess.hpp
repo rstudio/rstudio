@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@
 
 #include <core/system/Process.hpp>
 #include <core/terminal/PrivateCommand.hpp>
+#include <core/terminal/RSRun.hpp>
 
 #include <session/SessionConsoleProcessSocket.hpp>
 
@@ -217,7 +218,7 @@ private:
    void processQueuedInput(core::system::ProcessOperations& ops);
 
    std::string bufferedOutput() const;
-   void enqueOutputEvent(const std::string& output);
+   void enqueOutputEvent(const std::string& rawOutput);
    void enquePromptEvent(const std::string& prompt);
    void handleConsolePrompt(core::system::ProcessOperations& ops,
                             const std::string& prompt);
@@ -279,6 +280,9 @@ private:
 
    // private command handler, used to capture environment variables during terminal idle time
    core::terminal::PrivateCommand envCaptureCmd_;
+   
+   // rsrun handler, used to run R commands from terminal
+   core::terminal::RSRun rsrun_;
 };
 
 core::json::Array processesAsJson();

@@ -1,5 +1,5 @@
 /*
- * RsRunMain.cpp
+ * RSRunTests.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,18 +13,34 @@
  *
  */
 
-#include <core/system/System.hpp>
+#include <core/terminal/RSRun.hpp>
 
-#include "config.h"
+#include <tests/TestThat.hpp>
 
-using namespace rstudio;
+#include <core/BoostThread.hpp>
 
-int main(int argc, char** argv)
+namespace rstudio {
+namespace core {
+namespace terminal {
+namespace tests {
+
+namespace {
+
+} // anonymous namespace
+
+context("RSRun Terminal Handling")
 {
-   // Create a named pipe
-   std::string pipeIdentifier = core::system::generateShortenedUuid();
-  
-   // Construct the 
-   return EXIT_SUCCESS;
+   test_that("tests compile")
+   {
+      RSRun rsrun;
+
+      expect_true(true);
+   }
+   
+   // TODO (gary) more unit tests for RSRun class
 }
 
+} // end namespace tests
+} // end namespace terminal
+} // end namespace core
+} // end namespace rstudio
