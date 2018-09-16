@@ -24,6 +24,7 @@
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
+#include "SessionConsoleInput.hpp"
 
 using namespace rstudio::core;
 
@@ -527,10 +528,12 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    // Pull out rsrun ESC sequences
    std::string rsrunESC;   
    std::string output = core::text::rsrunStripESC(rawOutput, &rsrunESC);
-   
    if (rsrun_.processESC(rsrunESC))
    {
-      // TODO (gary)      
+      // TODO (gary)
+      if (console_input::executing())
+      {
+      }
    }
 
    // normal output processing

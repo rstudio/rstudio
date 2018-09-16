@@ -13,18 +13,26 @@
  *
  */
 
+#include <iostream>
 #include <core/system/System.hpp>
 
 #include "config.h"
 
 using namespace rstudio;
 
+const std::string ESC = "\033";
+const std::string BEL = "\a";
+const std::string RSRUN_PREFIX = "0FCD24A8";
+
 int main(int argc, char** argv)
 {
    // Create a named pipe
    std::string pipeIdentifier = core::system::generateShortenedUuid();
-  
-   // Construct the 
+
+   std::string sampleOutput = ESC + "]" + RSRUN_PREFIX + ";" + pipeIdentifier + ";" + "getwd()" + BEL;
+
+   std::cout << sampleOutput;
+
    return EXIT_SUCCESS;
 }
 
