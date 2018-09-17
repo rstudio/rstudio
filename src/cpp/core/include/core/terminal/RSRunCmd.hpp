@@ -1,5 +1,5 @@
 /*
- * RSRun.hpp
+ * RSRunCmd.hpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -26,10 +26,10 @@ namespace terminal {
 extern const char* const kRSRunPrefix; // prefix of RSRun ESC sequence
 extern const char* const kRSRunSuffix; // suffix (EOM) of RSRun ESC sequence
 
-class RSRun : boost::noncopyable
+class RSRunCmd : boost::noncopyable
 {
 public:
-   explicit RSRun();
+   explicit RSRunCmd();
 
    std::string processESC(const std::string& input);
 

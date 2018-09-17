@@ -1,5 +1,5 @@
 /*
- * RSRun.cpp
+ * RSRunCmd.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/terminal/RSRun.hpp>
+#include <core/terminal/RSRunCmd.hpp>
 
 namespace rstudio {
 namespace core {
@@ -30,11 +30,11 @@ const char* const kRSRunPrefix = "\033]RSRUN;";
 // End of an RSRun ESC sequence via ESC\ (ANSI ST - String Terminator).
 const char* const kRSRunSuffix = "\033\\";
 
-RSRun::RSRun()
+RSRunCmd::RSRunCmd()
 {
 }
 
-std::string RSRun::processESC(const std::string& input)
+std::string RSRunCmd::processESC(const std::string& input)
 {
    // parse and strip the ESC sequence
    std::string output = stripESC(input);
@@ -44,7 +44,7 @@ std::string RSRun::processESC(const std::string& input)
    return output;
 }
 
-std::string RSRun::stripESC(const std::string& strInput)
+std::string RSRunCmd::stripESC(const std::string& strInput)
 {
    switch (state_)
    {

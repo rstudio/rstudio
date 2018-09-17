@@ -26,7 +26,7 @@
 
 #include <core/system/Process.hpp>
 #include <core/terminal/PrivateCommand.hpp>
-#include <core/terminal/RSRun.hpp>
+#include <core/terminal/RSRunCmd.hpp>
 
 #include <session/SessionConsoleProcessSocket.hpp>
 
@@ -282,7 +282,7 @@ private:
    core::terminal::PrivateCommand envCaptureCmd_;
    
    // rsrun handler, used to run R commands from terminal
-   core::terminal::RSRun rsrun_;
+   core::terminal::RSRunCmd rsrunCmd_;
 };
 
 core::json::Array processesAsJson();

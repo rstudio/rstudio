@@ -16,7 +16,7 @@
 #include <iostream>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
-#include <core/terminal/RSRun.hpp>
+#include <core/terminal/RSRunCmd.hpp>
 
 #include "config.h"
 

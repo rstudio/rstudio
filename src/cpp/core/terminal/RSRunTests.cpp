@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/terminal/RSRun.hpp>
+#include <core/terminal/RSRunCmd.hpp>
 
 #include <tests/TestThat.hpp>
 
@@ -32,7 +32,7 @@ context("RSRun Terminal Handling")
 {
    test_that("tests compile")
    {
-      RSRun rsrun;
+      RSRunCmd rsrun;
 
       expect_true(true);
    }

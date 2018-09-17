@@ -528,7 +528,7 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    // third state, partial sequence, 
 
    // strip and act on rsrun escape sequences
-   std::string output = rsrun_.processESC(rawOutput);   
+   std::string output = rsrunCmd_.processESC(rawOutput);   
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();

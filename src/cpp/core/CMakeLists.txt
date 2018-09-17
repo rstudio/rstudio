@@ -124,7 +124,7 @@ set (CORE_SOURCE_FILES
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
    terminal/PrivateCommand.cpp
-   terminal/RSRun.cpp
+   terminal/RSRunCmd.cpp
    tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
    tex/TexSynctex.cpp
