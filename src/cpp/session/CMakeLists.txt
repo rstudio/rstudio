@@ -430,6 +430,9 @@ install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
 # postback
 add_subdirectory(postback)
 
+# rsrun
+add_subdirectory(rsrun)
+
 # HTML resources
 file(GLOB HTML_RESOURCE_FILES "resources/*.html")
 install(FILES ${HTML_RESOURCE_FILES}

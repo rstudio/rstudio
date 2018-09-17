@@ -337,9 +337,6 @@ else()
       # r library
       add_subdirectory(r)
 
-      # rsrun utility
-      add_subdirectory(rsrun)
-
       # initialize subdirectories
       file(MAKE_DIRECTORY conf)
 
