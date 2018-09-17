@@ -523,11 +523,11 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    if (envCaptureCmd_.output(rawOutput))
       return;
 
-   // first state, not in partial sequence, none found (use output as-is)
-   // second state, not in partial sequence, found a sequence (strip output, send rest?)
-   // third state, partial sequence, 
-
-   // strip and act on rsrun escape sequences
+   // Detect, act-on, and remove custom ESC sequences sent by "rsrun" 
+   // command-line tool. Don't want them being persisted to the terminal 
+   // buffer otherwise they would be replayed (and thus re-run) when 
+   // terminal buffer is reloaded into the terminal emulator after 
+   // session restarts or gwt-UI reloads.
    std::string output = rsrunCmd_.processESC(rawOutput);   
 
    // normal output processing

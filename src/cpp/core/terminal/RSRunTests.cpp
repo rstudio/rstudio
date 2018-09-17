@@ -30,14 +30,31 @@ namespace {
 
 context("RSRun Terminal Handling")
 {
-   test_that("tests compile")
+   test_that("initial parse state is normal")
    {
-      RSRunCmd rsrun;
+      RSRunCmd runCmd;
+      expect_true(runCmd.getParseState() == RSRunCmd::ParseState::normal);
+   }
 
-      expect_true(true);
+   test_that("empty input is a no-op")
+   {
+      RSRunCmd runCmd;
+      RSRunCmd::ParseState initialState = runCmd.getParseState();
+      std::string input;
+      std::string result = runCmd.processESC(input);
+      expect_true(result == input);
+      expect_true(initialState == runCmd.getParseState());
    }
    
-   // TODO (gary) more unit tests for RSRun class
+   test_that("simple input with no ESC codes is a no-op")
+   {
+      RSRunCmd runCmd;
+      RSRunCmd::ParseState initialState = runCmd.getParseState();
+      std::string input = "Hello World, here is some simple text for you!";
+      std::string result = runCmd.processESC(input);
+      expect_true(result == input);
+      expect_true(initialState == runCmd.getParseState());
+   }
 }
 
 } // end namespace tests

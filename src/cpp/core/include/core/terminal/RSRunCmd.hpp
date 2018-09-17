@@ -32,15 +32,17 @@ public:
    explicit RSRunCmd();
 
    std::string processESC(const std::string& input);
-
-private:
+   
    enum class ParseState { 
       normal, 
       partial, 
       running
    };
-   
+   ParseState getParseState() const { return state_; }
+ 
+private:
    std::string stripESC(const std::string& strInput);
+   void setParseState(ParseState state) { state_ = state; }
    
 private:
    ParseState state_ = ParseState::normal;
