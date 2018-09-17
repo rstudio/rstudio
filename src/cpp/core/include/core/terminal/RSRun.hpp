@@ -23,15 +23,28 @@ namespace rstudio {
 namespace core {
 namespace terminal {
 
+extern const char* const kRSRunPrefix; // prefix of RSRun ESC sequence
+extern const char* const kRSRunSuffix; // suffix (EOM) of RSRun ESC sequence
+
 class RSRun : boost::noncopyable
 {
 public:
    explicit RSRun();
 
-   bool processESC(const std::string& esc);
+   std::string processESC(const std::string& input);
 
 private:
-
+   enum class ParseState { 
+      normal, 
+      partial, 
+      running
+   };
+   
+   std::string stripESC(const std::string& strInput);
+   
+private:
+   ParseState state_ = ParseState::normal;
+   std::string esc_;
 };
 
 } // namespace terminal

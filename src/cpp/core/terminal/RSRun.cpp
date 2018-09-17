@@ -23,13 +23,45 @@ namespace {
 
 } // anonymous namespace
 
+// Start of an RSRun ESC sequence. Uses ANSI OSC – Operating System Command plus
+// what should be a unique prefix in any reasonable universe.
+const char* const kRSRunPrefix = "\033]RSRUN;";
+
+// End of an RSRun ESC sequence via ESC\ (ANSI ST - String Terminator).
+const char* const kRSRunSuffix = "\033\\";
+
 RSRun::RSRun()
 {
 }
 
-bool RSRun::processESC(const std::string& esc)
+std::string RSRun::processESC(const std::string& input)
 {
-   return false;
+   // parse and strip the ESC sequence
+   std::string output = stripESC(input);
+
+   //if (console_input::executing())
+
+   return output;
+}
+
+std::string RSRun::stripESC(const std::string& strInput)
+{
+   switch (state_)
+   {
+      case ParseState::normal:
+         break;
+
+      case ParseState::partial:
+         // Potential partial sequence previously seen, tack it back on
+         // and see if there's still a partial or full match
+         break;
+
+      case ParseState::running:
+         // An R command is executing from a prior ESC sequence
+         break;
+   }
+
+   return strInput; 
 }
 
 } // namespace terminal

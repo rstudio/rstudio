@@ -295,17 +295,6 @@ context("Terminal Buffer Mode Parsing")
       expect_true(expect.compare(newStr) == 0);
       expect_true(altMode == false);
    }
-   
-   test_that("No rsrun escape sequence")
-   {
-      std::string input = "Hello, World!";
-      std::string esc;
-      std::string newStr = core::text::rsrunStripESC(input, &esc);
-      expect_true(esc.empty());
-      expect_true(input.compare(newStr) == 0);
-   }
-   
-   // TODO (gary) more rsrun unit tests
 }
 
 } // end namespace tests

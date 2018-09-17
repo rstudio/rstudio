@@ -14,23 +14,31 @@
  */
 
 #include <iostream>
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
+#include <core/terminal/RSRun.hpp>
 
 #include "config.h"
 
 using namespace rstudio;
 
-const std::string ESC = "\033";
-const std::string BEL = "\a";
-const std::string RSRUN_PREFIX = "0FCD24A8";
-
 int main(int argc, char** argv)
 {
+   if (core::system::getenv("RSTUDIO_TERM").empty())
+   {
+      std::cerr << "rsrun: unsupported terminal: must invoke with RStudio terminal\n";
+      return EXIT_FAILURE;
+   }
+   
    // Create a named pipe
    std::string pipeIdentifier = core::system::generateShortenedUuid();
 
-   std::string sampleOutput = ESC + "]" + RSRUN_PREFIX + ";" + pipeIdentifier + ";" + "getwd()" + BEL;
-
+   std::string sampleOutput  = core::terminal::kRSRunPrefix;
+   sampleOutput += ";";
+   sampleOutput += pipeIdentifier;
+   sampleOutput += ";";
+   sampleOutput +="getwd()";
+   sampleOutput += core::terminal::kRSRunSuffix;
    std::cout << sampleOutput;
 
    return EXIT_SUCCESS;

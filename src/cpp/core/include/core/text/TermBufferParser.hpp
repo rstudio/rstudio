@@ -1,7 +1,7 @@
 /*
  * TermBufferParser.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,12 +38,6 @@ namespace text {
 std::string stripSecondaryBuffer(
       const std::string& str, // string to parse
       bool* pAltModeActive); // (optional in/out) is string "in" alt-buffer mode?
-      
-// Remove any rsrun ESC sequences from strInput and return the string without them.
-// If multiple ESC sequences are found, all are removed but only the contents of 
-// the final one is returned in pRSRunESC (which will be set to an empty string
-// if none are found).
-std::string rsrunStripESC(const std::string& strInput, std::string *pRSRunESC);
 
 } // namespace text
 } // namespace core

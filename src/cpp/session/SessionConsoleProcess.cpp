@@ -20,8 +20,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <core/text/TermBufferParser.hpp>
-
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
 #include "SessionConsoleInput.hpp"
@@ -525,16 +523,12 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
    if (envCaptureCmd_.output(rawOutput))
       return;
 
-   // Pull out rsrun ESC sequences
-   std::string rsrunESC;   
-   std::string output = core::text::rsrunStripESC(rawOutput, &rsrunESC);
-   if (rsrun_.processESC(rsrunESC))
-   {
-      // TODO (gary)
-      if (console_input::executing())
-      {
-      }
-   }
+   // first state, not in partial sequence, none found (use output as-is)
+   // second state, not in partial sequence, found a sequence (strip output, send rest?)
+   // third state, partial sequence, 
+
+   // strip and act on rsrun escape sequences
+   std::string output = rsrun_.processESC(rawOutput);   
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
