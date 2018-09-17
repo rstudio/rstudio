@@ -193,38 +193,32 @@ Error startup()
 
 Error initialize()
 {
+   // create the async server instance
+   s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
+            "Session RPCs",
+            std::string(),
+            core::system::EveryoneReadWriteMode);
+
+   // initialize with path to our socket
+   Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
+            FilePath(kServerRpcSocketPath));
+   if (error)
+      return error;
+
+   s_pSessionRpcServer->setScheduledCommandInterval(
+            boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));
+
+   // create the shared secret
+   error = key_file::readSecureKeyFile("session-rpc-key",
+                                       &s_sessionSharedSecret);
+   if (error)
+      return error;
+
+   // inject the shared secret into the session
+   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
+
    bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
-
-   // rpc socket only needed if project sharing, load balancing, or launcher sessions are in use
-   if (hasSharedStorage &&
-      (projectSharingEnabled || load_balancer::isLoadBalanced() || launcherSessionsEnabled()))
-
-   {
-      // create the async server instance
-      s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
-               "Session RPCs",
-               std::string(),
-               core::system::EveryoneReadWriteMode);
-
-      // initialize with path to our socket
-      Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
-               FilePath(kServerRpcSocketPath));
-      if (error)
-         return error;
-
-      s_pSessionRpcServer->setScheduledCommandInterval(
-               boost::posix_time::milliseconds(kSessionRpcCmdPeriodMs));   
-
-      // create the shared secret
-      error = key_file::readSecureKeyFile("session-rpc-key",
-                                          &s_sessionSharedSecret);
-      if (error)
-         return error;
-
-      // inject the shared secret into the session
-      sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
-   }
 
    if (!hasSharedStorage || !projectSharingEnabled)
    {
