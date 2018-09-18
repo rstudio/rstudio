@@ -21,6 +21,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionConstants.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/RExec.hpp>
@@ -139,8 +140,17 @@ void handleUSR2(int unused)
    if (console_input::executing())
       s_forceSuspendInterruptedR = 1;
 
-   // set the r interrupt flag (always)
-   rstudio::r::exec::setInterruptsPending(true);
+   bool isLauncherSession = options().getBoolOverlayOption(kLauncherSessionOption);
+
+   if (!isLauncherSession || console_input::executing())
+   {
+      // interrupt R
+      // for launcher sessions, we only want to interrupt user code to fix
+      // an excess logging issue caused by interrupting RStudio code that
+      // takes longer to execute in docker containers
+      // when not in launcher session mode, always interrupt
+      rstudio::r::exec::setInterruptsPending(true);
+   }
 
    // note that a suspend is being forced. 
    s_forceSuspend = 1;

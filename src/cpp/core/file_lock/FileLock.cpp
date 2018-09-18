@@ -160,8 +160,12 @@ void FileLock::initialize(const Settings& settings)
       FileLock::log(ss.str());
    }
 
+   std::string distributedLockingOption = core::system::getenv(kRStudioDistributedLockingEnabled);
+   bool distributedLockingEnabled = (distributedLockingOption == "1");
+
    FileLock::s_isLoadBalanced =
-         !core::system::getenv(kRStudioSessionRoute).empty();
+         !core::system::getenv(kRStudioSessionRoute).empty() ||
+         distributedLockingEnabled;
 
    s_isInitialized = true;
 }

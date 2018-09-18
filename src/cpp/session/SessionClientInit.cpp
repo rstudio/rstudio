@@ -190,8 +190,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["rstudio_version"] = sessionVersion;
 
    // check to ensure the version of this rsession process matches the version
-   // of the rserver that started us
+   // of the rserver that started us - we immediately clear this env var so that
+   // it is not persisted across session suspends
    std::string version = core::system::getenv(kRStudioVersion);
+   core::system::unsetenv(kRStudioVersion);
    if (!version.empty() && version != sessionVersion)
    {
       module_context::consoleWriteError("Session version " + sessionVersion +
