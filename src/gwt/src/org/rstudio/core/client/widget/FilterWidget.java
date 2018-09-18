@@ -51,5 +51,10 @@ public abstract class FilterWidget extends Composite
       initWidget(searchWidget_);
    }
    
+   public void focus()
+   {
+      searchWidget_.focus();
+   }
+   
    private final SearchWidget searchWidget_;
 }
