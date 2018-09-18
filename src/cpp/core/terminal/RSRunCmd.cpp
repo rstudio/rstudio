@@ -36,31 +36,36 @@ RSRunCmd::RSRunCmd()
 
 std::string RSRunCmd::processESC(const std::string& input)
 {
-   // parse and strip the ESC sequence
-   std::string output = stripESC(input);
-
-   //if (console_input::executing())
-
-   return output;
-}
-
-std::string RSRunCmd::stripESC(const std::string& strInput)
-{
+   std::string output;
    switch (state_)
    {
       case ParseState::normal:
-         break;
-
-      case ParseState::partial:
-         // Potential partial sequence previously seen, tack it back on
-         // and see if there's still a partial or full match
+         output = RSRunCmd::stripESC(input);
          break;
 
       case ParseState::running:
          // An R command is executing from a prior ESC sequence
          break;
    }
+   
+   //if (console_input::executing())
 
+   return output;
+}
+
+void RSRunCmd::reset()
+{
+   payload_.clear();
+   pipe_.clear();
+   state_ = ParseState::normal;
+}
+
+std::string RSRunCmd::stripESC(const std::string& strInput)
+{
+   auto pos = strInput.find(kRSRunPrefix);
+   if (pos != std::string::npos)
+   {
+   }
    return strInput; 
 }
 

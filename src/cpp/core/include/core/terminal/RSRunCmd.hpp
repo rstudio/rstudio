@@ -33,15 +33,15 @@ public:
 
    std::string processESC(const std::string& input);
    
+   void reset();
+   
    enum class ParseState { 
       normal, 
-      partial, 
       running
    };
    ParseState getParseState() const { return state_; }
    std::string getPayload() const { return payload_; }
    std::string getPipe() const { return pipe_; }
-   std::string getPartial() const { return partial_; }
 
    // create the ESC sequence for given pipe identifier and payload
    static std::string createESC(const std::string& pipeId, const std::string& payload);
@@ -54,7 +54,6 @@ private:
 
    std::string payload_;
    std::string pipe_;
-   std::string partial_;
 };
 
 } // namespace terminal

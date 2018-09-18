@@ -32,6 +32,8 @@ context("RSRun Terminal Handling")
    {
       RSRunCmd runCmd;
       expect_true(runCmd.getParseState() == RSRunCmd::ParseState::normal);
+      expect_true(runCmd.getPayload().empty());
+      expect_true(runCmd.getPipe().empty());
    }
 
    test_that("empty input is a no-op")
@@ -42,8 +44,10 @@ context("RSRun Terminal Handling")
       std::string result = runCmd.processESC(input);
       expect_true(result == input);
       expect_true(initialState == runCmd.getParseState());
+      expect_true(runCmd.getPayload().empty());
+      expect_true(runCmd.getPipe().empty());
    }
-   
+
    test_that("simple input with no ESC codes is a no-op")
    {
       RSRunCmd runCmd;
@@ -52,21 +56,24 @@ context("RSRun Terminal Handling")
       std::string result = runCmd.processESC(input);
       expect_true(result == input);
       expect_true(initialState == runCmd.getParseState());
+      expect_true(runCmd.getPayload().empty());
+      expect_true(runCmd.getPipe().empty());
    }
 
-//   test_that("input containing a single ESC sequence parses")
-//   {
-//      RSRunCmd runCmd;
-//      RSRunCmd::ParseState initialState = runCmd.getParseState();
-//
-//      std::string pipeId = "abcd";
-//      std::string payload = "getwd()";
-//      std::string input = RSRunCmd::createESC(pipeId, payload);
-//      std::string result = runCmd.processESC(input);
-//
-//      expect_true(result.empty());
-//      //expect_true(initialState == runCmd.getParseState());
-//   }
+   test_that("ESC sequence parses")
+   {
+      RSRunCmd runCmd;
+
+      std::string pipeId = "abcd";
+      std::string payload = "getwd()";
+      std::string input = RSRunCmd::createESC(pipeId, payload);
+      std::string result = runCmd.processESC(input);
+
+      expect_true(result.empty());
+      expect_true(runCmd.getPayload() == payload);
+      expect_true(runCmd.getPipe() == pipeId);
+      expect_true(runCmd.getParseState() == RSRunCmd::ParseState::running);
+   }
 }
 
 } // end namespace tests
