@@ -41,8 +41,7 @@ context("RSRun Terminal Handling")
       RSRunCmd runCmd;
       RSRunCmd::ParseState initialState = runCmd.getParseState();
       std::string input;
-      std::string result = runCmd.processESC(input);
-      expect_true(result == input);
+      runCmd.processESC(input);
       expect_true(initialState == runCmd.getParseState());
       expect_true(runCmd.getPayload().empty());
       expect_true(runCmd.getPipe().empty());
@@ -53,8 +52,7 @@ context("RSRun Terminal Handling")
       RSRunCmd runCmd;
       RSRunCmd::ParseState initialState = runCmd.getParseState();
       std::string input = "Hello World, here is some simple text for you!";
-      std::string result = runCmd.processESC(input);
-      expect_true(result == input);
+      runCmd.processESC(input);
       expect_true(initialState == runCmd.getParseState());
       expect_true(runCmd.getPayload().empty());
       expect_true(runCmd.getPipe().empty());
@@ -67,9 +65,8 @@ context("RSRun Terminal Handling")
       std::string pipeId = "abcd";
       std::string payload = "getwd()";
       std::string input = RSRunCmd::createESC(pipeId, payload);
-      std::string result = runCmd.processESC(input);
+      runCmd.processESC(input);
 
-      expect_true(result.empty());
       expect_true(runCmd.getPayload() == payload);
       expect_true(runCmd.getPipe() == pipeId);
       expect_true(runCmd.getParseState() == RSRunCmd::ParseState::running);

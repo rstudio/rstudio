@@ -518,17 +518,13 @@ std::string ConsoleProcess::getBuffer() const
    return procInfo_->getFullSavedBuffer();
 }
 
-void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
+void ConsoleProcess::enqueOutputEvent(const std::string &output)
 {
-   if (envCaptureCmd_.output(rawOutput))
+   if (envCaptureCmd_.output(output))
       return;
 
-   // Detect, act-on, and remove custom ESC sequences sent by "rsrun" 
-   // command-line tool. Don't want them being persisted to the terminal 
-   // buffer otherwise they would be replayed (and thus re-run) when 
-   // terminal buffer is reloaded into the terminal emulator after 
-   // session restarts or gwt-UI reloads.
-   std::string output = rsrunCmd_.processESC(rawOutput);   
+   // Detect and act-on custom ESC sequences sent by "rsrun" command-line tool.
+   rsrunCmd_.processESC(output);
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();

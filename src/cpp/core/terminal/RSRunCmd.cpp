@@ -14,14 +14,14 @@
  */
 
 #include <core/terminal/RSRunCmd.hpp>
+#include <core/RegexUtils.hpp>
+#include <boost/regex.hpp>
 
 namespace rstudio {
 namespace core {
 namespace terminal {
 
 namespace {
-
-} // anonymous namespace
 
 // Start of an RSRun ESC sequence. Uses ANSI OSC – Operating System Command plus
 // what should be a unique prefix in any reasonable universe.
@@ -30,17 +30,22 @@ const char* const kRSRunPrefix = "\033]RSRUN;";
 // End of an RSRun ESC sequence via ESC\ (ANSI ST - String Terminator).
 const char* const kRSRunSuffix = "\033\\";
 
+// Regex to match RSRun ESC sequence with group 1 as pipeId and group 2
+// as the embedded R code.
+const char* const kESCRegex = R"(\033]RSRUN;([A-Fa-f0-9]{8});([\S\s]+)\033\\)";
+
+} // anonymous namespace
+
 RSRunCmd::RSRunCmd()
 {
 }
 
-std::string RSRunCmd::processESC(const std::string& input)
+void RSRunCmd::processESC(const std::string& input)
 {
-   std::string output;
    switch (state_)
    {
       case ParseState::normal:
-         output = RSRunCmd::stripESC(input);
+         RSRunCmd::stripESC(input);
          break;
 
       case ParseState::running:
@@ -50,7 +55,6 @@ std::string RSRunCmd::processESC(const std::string& input)
    
    //if (console_input::executing())
 
-   return output;
 }
 
 void RSRunCmd::reset()
@@ -60,13 +64,20 @@ void RSRunCmd::reset()
    state_ = ParseState::normal;
 }
 
-std::string RSRunCmd::stripESC(const std::string& strInput)
+void RSRunCmd::stripESC(const std::string& input)
 {
-   auto pos = strInput.find(kRSRunPrefix);
-   if (pos != std::string::npos)
+   boost::regex re(kESCRegex);
+   boost::smatch match;
+   if (regex_utils::search(input, match, re))
    {
+      pipe_ = match[1];
+      payload_ = match[2];
+      std::string s = pipe_ + ": " + payload_;
    }
-   return strInput; 
+//   auto pos = strInput.find(kRSRunPrefix);
+//   if (pos != std::string::npos)
+//   {
+//   }
 }
 
 std::string RSRunCmd::createESC(const std::string& pipeId, const std::string& payload)
