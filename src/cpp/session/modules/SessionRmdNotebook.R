@@ -445,7 +445,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # could fail)
    if (exists("eval_lang", envir = asNamespace("knitr")))
    {
-      override <- function(x, envir = knit_global()) if (is.language(x)) NULL else x
+      override <- function(x, envir = knit_global()) {
+         
+         # white-list for the commonly-used 'T' and 'F' options
+         if (identical(x, as.name("T")))
+            return(TRUE)
+         else if (identical(x, as.name("F")))
+            return(FALSE)
+         else if (is.language(x))
+            return(NULL)
+         else
+            return(x)
+         
+      }
+      
       original <- .rs.replaceBinding("eval_lang", "knitr", override)
       on.exit(.rs.replaceBinding("eval_lang", "knitr", original), add = TRUE)
    }
