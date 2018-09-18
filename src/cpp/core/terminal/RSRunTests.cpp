@@ -17,8 +17,6 @@
 
 #include <tests/TestThat.hpp>
 
-#include <core/BoostThread.hpp>
-
 namespace rstudio {
 namespace core {
 namespace terminal {
@@ -55,6 +53,20 @@ context("RSRun Terminal Handling")
       expect_true(result == input);
       expect_true(initialState == runCmd.getParseState());
    }
+
+//   test_that("input containing a single ESC sequence parses")
+//   {
+//      RSRunCmd runCmd;
+//      RSRunCmd::ParseState initialState = runCmd.getParseState();
+//
+//      std::string pipeId = "abcd";
+//      std::string payload = "getwd()";
+//      std::string input = RSRunCmd::createESC(pipeId, payload);
+//      std::string result = runCmd.processESC(input);
+//
+//      expect_true(result.empty());
+//      //expect_true(initialState == runCmd.getParseState());
+//   }
 }
 
 } // end namespace tests

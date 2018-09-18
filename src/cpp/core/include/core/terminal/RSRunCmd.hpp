@@ -39,14 +39,22 @@ public:
       running
    };
    ParseState getParseState() const { return state_; }
- 
+   std::string getPayload() const { return payload_; }
+   std::string getPipe() const { return pipe_; }
+   std::string getPartial() const { return partial_; }
+
+   // create the ESC sequence for given pipe identifier and payload
+   static std::string createESC(const std::string& pipeId, const std::string& payload);
+
 private:
    std::string stripESC(const std::string& strInput);
-   void setParseState(ParseState state) { state_ = state; }
-   
+
 private:
    ParseState state_ = ParseState::normal;
-   std::string esc_;
+
+   std::string payload_;
+   std::string pipe_;
+   std::string partial_;
 };
 
 } // namespace terminal

@@ -64,6 +64,11 @@ std::string RSRunCmd::stripESC(const std::string& strInput)
    return strInput; 
 }
 
+std::string RSRunCmd::createESC(const std::string& pipeId, const std::string& payload)
+{
+   return std::string(kRSRunPrefix) + pipeId + ";" + payload + kRSRunSuffix;
+}
+
 } // namespace terminal
 } // namespace core
 } // namespace rstudio

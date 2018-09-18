@@ -21,6 +21,7 @@
 #include "config.h"
 
 using namespace rstudio;
+using namespace rstudio::core::terminal;
 
 int main(int argc, char** argv)
 {
@@ -33,13 +34,8 @@ int main(int argc, char** argv)
    // Create a named pipe
    std::string pipeIdentifier = core::system::generateShortenedUuid();
 
-   std::string sampleOutput  = core::terminal::kRSRunPrefix;
-   sampleOutput += ";";
-   sampleOutput += pipeIdentifier;
-   sampleOutput += ";";
-   sampleOutput +="getwd()";
-   sampleOutput += core::terminal::kRSRunSuffix;
-   std::cout << sampleOutput;
+   std::string sampleOutput = RSRunCmd::createESC(pipeIdentifier, "getwd()");
+   std::cerr << sampleOutput;
 
    return EXIT_SUCCESS;
 }
