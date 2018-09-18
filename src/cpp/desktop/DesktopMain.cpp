@@ -299,7 +299,7 @@ QString inferDefaultRenderingEngine()
          retinaDisplays += 1;
    }
    
-   if (retinaDisplays != totalDisplays)
+   if (retinaDisplays > 0 && retinaDisplays != totalDisplays)
       return QStringLiteral("software");
    
    return QStringLiteral("auto");
