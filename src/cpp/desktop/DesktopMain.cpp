@@ -270,12 +270,47 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
+#ifdef Q_OS_MAC
+
 QString inferDefaultRenderingEngine()
 {
-#ifndef _WIN32
+   // prefer software rendering in mixed-dpi multi-monitor
+   // configurations
+   // https://github.com/rstudio/rstudio/issues/3479
+   core::system::ProcessResult processResult;
+   Error error = core::system::runCommand(
+            "/usr/sbin/system_profiler SPDisplaysDataType | /usr/bin/grep 'Resolution:'",
+            core::system::ProcessOptions(),
+            &processResult);
+   
+   if (error || processResult.exitStatus != EXIT_SUCCESS)
+      return QStringLiteral("auto");
+   
+   std::vector<std::string> lines = 
+         core::algorithm::split(processResult.stdOut, "\n");
+   
+   // TODO: we likely need to handle case where e.g. a laptop is hooked up to
+   // multiple high DPI non-retina displays
+   int retinaDisplays = 0;
+   int totalDisplays = lines.size();
+   for (const std::string& line : lines)
+   {
+      if (line.find("Retina") != std::string::npos)
+         retinaDisplays += 1;
+   }
+   
+   if (retinaDisplays > 0 && retinaDisplays != totalDisplays)
+      return QStringLiteral("software");
+   
    return QStringLiteral("auto");
-#else
+}
 
+#endif
+
+#ifdef Q_OS_WIN
+
+QString inferDefaultRenderingEngine()
+{
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
       "Intel HD Graphics 520",
@@ -302,8 +337,18 @@ QString inferDefaultRenderingEngine()
    }
 
    return QStringLiteral("auto");
-#endif
 }
+
+#endif
+
+#ifdef Q_OS_LINUX
+
+QString inferDefaultRenderingEngine()
+{
+   return QStringLiteral("auto");
+}
+
+#endif
 
 void initializeRenderingEngine(std::vector<char*>* pArguments)
 {

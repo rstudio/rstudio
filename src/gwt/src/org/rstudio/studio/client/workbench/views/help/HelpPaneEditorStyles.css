@@ -9,6 +9,12 @@
 @external odd;
 @external even;
 
+/* Default to white text on black in editor_dark themes */
+.rstudio-themes-flat.editor_dark {
+   color: white;
+   background: none;
+}
+
 .rstudio-themes-flat.editor_dark div#TOC,
 .rstudio-themes-flat.editor_dark h1,
 .rstudio-themes-flat.editor_dark h2,

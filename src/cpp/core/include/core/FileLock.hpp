@@ -29,6 +29,9 @@
 
 #include <core/Settings.hpp>
 
+// env var to enable distributed locking mode
+#define kRStudioDistributedLockingEnabled "RSTUDIO_DISTRIBUTED_LOCKING_ENABLED"
+
 namespace rstudio {
 namespace core {
 
