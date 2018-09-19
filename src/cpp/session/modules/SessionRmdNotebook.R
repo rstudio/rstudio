@@ -1080,7 +1080,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # unset the chunk options and code (so we know what options/code
    # were actually specified in setup chunk later)
-   defaults <- list(error = FALSE)
+   # (we tag the 'FALSE' value so we can detect if the user has explicitly
+   # set or unset it in the setup chunk as well)
+   defaults <- list(error = .rs.scalar(FALSE))
    knitr::opts_chunk$restore(defaults)
    knitr:::knit_code$restore(list())
    knitr::opts_knit$set(root.dir = NULL)
@@ -1091,6 +1093,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # get current set of options
    defaultOptions <- knitr::opts_chunk$get()
    
+   # remove the rstudio-injected 'error' option if needed
+   if (identical(defaultOptions$error, .rs.scalar(FALSE)))
+      defaultOptions$error <- NULL
+   
    # restore the previously cached knitr options and code
    chunkOptions <- get(".rs.knitr.chunkOptions", envir = .rs.toolsEnv())
    knitr::opts_chunk$restore(chunkOptions)
@@ -1098,6 +1104,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    knitr:::knit_code$restore(knitrCode)
    knitrDir <- get(".rs.knitr.root.dir", envir = .rs.toolsEnv())
    knitr::opts_knit$set(root.dir = knitrDir)
+   
+   # overlay any newly-set chunk options set by the user in this chunk.
+   # this is necessary so that settings from e.g.
+   #
+   #    knitr::opts_chunk$set(connection = conn)
+   #
+   # are appropriately preserved after running the setup chunk
+   knitr::opts_chunk$set(defaultOptions)
    
    # return current set
    .rs.scalarListFromList(defaultOptions)
