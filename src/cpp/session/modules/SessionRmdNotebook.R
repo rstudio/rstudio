@@ -438,6 +438,30 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
    # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
+   
+   # override knitr's 'eval_lang' and suppress evaluation of language /
+   # symbol chunk options (necessary since we don't actually execute any
+   # R code while evaluating chunks and so evaluation of such chunk options
+   # could fail)
+   if (exists("eval_lang", envir = asNamespace("knitr")))
+   {
+      override <- function(x, envir = knit_global()) {
+         
+         # white-list for the commonly-used 'T' and 'F' options
+         if (identical(x, as.name("T")))
+            return(TRUE)
+         else if (identical(x, as.name("F")))
+            return(FALSE)
+         else if (is.language(x))
+            return(NULL)
+         else
+            return(x)
+         
+      }
+      
+      original <- .rs.replaceBinding("eval_lang", "knitr", override)
+      on.exit(.rs.replaceBinding("eval_lang", "knitr", original), add = TRUE)
+   }
 
    # knitr outputs relevant information in the form of messages that we attach to the error
    renderMessages <- list()

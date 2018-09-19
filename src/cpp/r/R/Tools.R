@@ -1007,9 +1007,11 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    searchPathName <- paste("package", package, sep = ":")
    if (searchPathName %in% search()) {
       env <- as.environment(searchPathName)
-      do.call("unlockBinding", list(binding, env))
-      assign(binding, override, envir = env)
-      do.call("lockBinding", list(binding, env))
+      if (exists(binding, envir = env)) {
+         do.call("unlockBinding", list(binding, env))
+         assign(binding, override, envir = env)
+         do.call("lockBinding", list(binding, env))
+      }
    }
    
    # return original
