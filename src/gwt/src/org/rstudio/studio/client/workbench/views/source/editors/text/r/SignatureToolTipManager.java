@@ -48,7 +48,6 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -155,54 +154,43 @@ public class SignatureToolTipManager
          {
             if (!monitoring_)
                return;
-               
+            
             // Defer so that anchors can update
             Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  // Check to see if the cursor has moved outside of the anchored region.
-                  if (anchor_ != null && toolTip_.isShowing())
+                  if (anchor_ == null || !toolTip_.isShowing())
+                     return;
+                  
+                  Position position = event.getPosition();
+                  if (position == null)
+                     return;
+                  
+                  if (anchor_.getRange().contains(position))
                   {
-                     Position position = event.getPosition();
-                     if (position != null && anchor_.getRange().contains(position))
+                     // Update the tooltip position if the cursor changes rows.
+                     if (tooltipPosition_ != null &&
+                           position.getRow() > tooltipPosition_.getRow())
                      {
-                        // Update the tooltip position if the cursor changes rows.
-                        if (tooltipPosition_ != null &&
-                              position.getRow() > tooltipPosition_.getRow())
-                        {
-                           // Allow tooltip to nudge right (but not left)
-                           int newColumn = Math.max(
-                                 tooltipPosition_.getColumn(),
-                                 position.getColumn());
-                           
-                           setTooltipPosition(Position.create(
-                                 position.getRow(),
-                                 newColumn));
-                        }
+                        // Allow tooltip to nudge right (but not left)
+                        int newColumn = Math.max(
+                              tooltipPosition_.getColumn(),
+                              position.getColumn());
+
+                        setTooltipPosition(Position.create(
+                              position.getRow(),
+                              newColumn));
                      }
-                     else
-                     {
-                        anchor_ = null;
-                        toolTip_.hide();
-                     }
+                  }
+                  else
+                  {
+                     detachAnchor();
+                     toolTip_.hide();
                   }
                }
             });
-         }
-      }));
-      
-      handlers_.add(toolTip_.addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            if (!event.isAttached())
-            {
-               completionPosition_ = null;
-               anchor_ = null;
-            }
          }
       }));
       
@@ -211,7 +199,7 @@ public class SignatureToolTipManager
          @Override
          public void onConsoleWriteInput(ConsoleWriteInputEvent event)
          {
-            anchor_ = null;
+            detachAnchor();
             toolTip_.hide();
          }
       }));
@@ -280,6 +268,7 @@ public class SignatureToolTipManager
    
    private void endMonitoring()
    {
+      detachAnchor();
       detachPreviewHandler();
       monitor_.cancel();
       monitoring_ = false;
@@ -364,12 +353,6 @@ public class SignatureToolTipManager
    // on an identifier before a '(' (a function call).
    private void setAnchor(TokenIterator cursor)
    {
-      if (anchor_ != null)
-      {
-         anchor_.detach();
-         anchor_ = null;
-      }
-      
       TokenIterator endCursor = cursor.clone();
       if (!endCursor.moveToNextToken())
          return;
@@ -397,6 +380,8 @@ public class SignatureToolTipManager
       }
       
       Position startPos = startCursor.getCurrentTokenPosition();
+      
+      detachAnchor();
       anchor_ = docDisplay_.createAnchoredSelection(startPos, endPos);
    }
    
@@ -578,6 +563,15 @@ public class SignatureToolTipManager
             toolTip_.setPopupPosition(left, top);
          }
       });
+   }
+   
+   private void detachAnchor()
+   {
+      if (anchor_ != null)
+      {
+         anchor_.detach();
+         anchor_ = null;
+      }
    }
    
    private final RCompletionToolTip toolTip_;
