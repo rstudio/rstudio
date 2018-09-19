@@ -85,6 +85,7 @@
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
+* Remove 4GB limit on Export (download) command in Files pane (#2103)
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
 * Allow changing zoom level without reloading (#2125)
