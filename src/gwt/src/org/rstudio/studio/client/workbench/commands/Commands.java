@@ -141,6 +141,12 @@ public abstract class
    public abstract AppCommand expandToMatching();
    public abstract AppCommand addCursorAbove();
    public abstract AppCommand addCursorBelow();
+   public abstract AppCommand moveLinesUp();
+   public abstract AppCommand moveLinesDown();
+   public abstract AppCommand expandToLine();
+   public abstract AppCommand copyLinesDown();
+   public abstract AppCommand joinLines();
+   public abstract AppCommand removeLine();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();
@@ -155,6 +161,8 @@ public abstract class
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
+   public abstract AppCommand blockIndent();
+   public abstract AppCommand blockOutdent();
    public abstract AppCommand reindent();
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();

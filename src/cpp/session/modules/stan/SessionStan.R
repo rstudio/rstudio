@@ -127,7 +127,18 @@
       }
    }
    
-   # invoke stan compiler and capture messages
+   # invoke stan compiler and capture messages; note that the Stan
+   # compiler will write some things to stderr and so we need to be careful
+   # to capture that as well
+   so <- textConnection(NULL, open = "w")
+   on.exit(close(so), add = TRUE)
+   
+   se <- textConnection(NULL, open = "w")
+   on.exit(close(se), add = TRUE)
+   
+   sink(so, type = "output")
+   sink(se, type = "message")
+   
    messages <- c()
    result <- tryCatch(
       withCallingHandlers(
@@ -140,6 +151,12 @@
       ),
       error = identity
    )
+   
+   # close our sinks
+   sink(NULL, type = "output")
+   sink(NULL, type = "message")
+   
+   # bail if we failed to invoke the compiler
    if (!inherits(result, "error"))
       return(list())
    
@@ -159,7 +176,8 @@
    message <- paste(tail(lines, n = -1), collapse = "")
    
    # TODO: although we only ever get one error now, return a vector of
-   # error objects in anticipation of that changing in the future
+   # error objects in anticipation of that changing in the future.
+   # (unfortunately diagnostics emitted on stderr don't provide line information)
    errors <- list(
       list(
          row    = as.numeric(matches[[3]]) - 1,

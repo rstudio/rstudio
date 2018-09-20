@@ -608,6 +608,7 @@ private:
       ptd.title    = title;
       ptd.subtitle = subtitle;
       ptd.caption  = caption;
+      ptd.openFiles = { "Read-and-delete-me" };
       projectTemplateRegistry()->add(package, ptd);
    }
    

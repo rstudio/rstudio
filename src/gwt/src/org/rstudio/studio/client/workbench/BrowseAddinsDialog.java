@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -79,6 +81,11 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       
       helpLink_ = new HelpLink("Using RStudio Addins", "rstudio_addins", false);
       helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      
+      addAttachHandler((AttachEvent event) -> {
+         if (event.isAttached())
+            Scheduler.get().scheduleDeferred(() -> filterWidget_.focus());
+      });
       
       keyProvider_ = new ProvidesKey<RAddin>()
       {
@@ -279,16 +286,18 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    @Override
    protected Command collectInput()
    {
+      // when we have no selection, assume the user intended to execute
+      // the first command in the list
       if (selection_ == null)
       {
-         return new Command()
-         {
-            @Override
-            public void execute()
-            {
-            }
-         };
+         List<RAddin> data = dataProvider_.getList();
+         if (!data.isEmpty())
+            selection_ = data.get(0);
       }
+      
+      // if we still don't have a selection, just return an empty command
+      if (selection_ == null)
+         return () -> {};
       
       return new ExecuteAddinCommand(
             addins_.get(selection_.getId()),

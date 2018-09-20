@@ -88,7 +88,7 @@ public class TextEditingTargetCommentHeaderHelper
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       customHeaderPattern_ = Pattern.create(
-         "^" + comment + "\\s*!" + keyword + "\\s*([.a-zA-Z]+[.a-zA-Z0-9:_]*)?\\s*(\\s+|\\()(.*)$",
+         "^" + comment + "\\s*!" + keyword + "\\s*([.a-zA-Z]+[.a-zA-Z0-9:_]*)?\\s*(\\s+|\\(|$)(.*)$",
          ""
       );
 

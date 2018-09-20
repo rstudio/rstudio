@@ -201,6 +201,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
          continueCommentsOnNewline().setGlobalValue(
                               newUiPrefs.continueCommentsOnNewline().getGlobalValue());
          
+         // sublime keybindings
+         enableSublimeKeybindings().setGlobalValue(
+                              newUiPrefs.enableSublimeKeybindings().getGlobalValue());
+
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());

@@ -171,15 +171,30 @@ public class JsVectorBoolean extends JavaScriptObject
       return shift(defaultValue());
    }
    
+   private final native boolean shift(boolean defaultValue)
+   /*-{
+      return this.shift() || defaultValue;
+   }-*/;
+   
    public final int size()
    {
       return length();
    }
    
-   private final native boolean shift(boolean defaultValue)
+   public final native JsVectorBoolean slice(int begin, int end)
    /*-{
-      return this.shift() || defaultValue;
+      return this.slice(begin, end);
    }-*/;
+   
+   public final JsVectorBoolean slice(int begin)
+   {
+      return slice(begin, length());
+   }
+   
+   public final JsVectorBoolean slice()
+   {
+      return slice(0, length());
+   }
    
    public final native void splice(int start, int deleteCount, JsVectorBoolean vector)
    /*-{

@@ -119,3 +119,10 @@ ensure_dir <- function(...) {
             fatal("Failed to create directory '%s'\n", dir)
    }))
 }
+
+replace_one_line = function(filepath, orig_line, new_line) {
+   contents <- readLines(filepath)
+   replaced <- gsub(contents, orig_line, new_line)
+   if (!identical(contents, replaced))
+      writeLines(replaced, filepath)
+}

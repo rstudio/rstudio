@@ -38,6 +38,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -45,6 +47,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -54,6 +57,11 @@ import com.google.inject.Inject;
 public abstract class CompletionManagerBase
       implements CompletionRequestContext.Host
 {
+   public interface Callback
+   {
+      public void onToken(TokenIterator it, Token token);
+   }
+   
    public CompletionManagerBase(CompletionPopupDisplay popup,
                                 DocDisplay docDisplay,
                                 CompletionContext context)
@@ -67,10 +75,12 @@ public abstract class CompletionManagerBase
       completionCache_ = new CompletionCache();
       suggestTimer_ = new SuggestionTimer();
       helpTimer_ = new HelpTimer();
-      
+      handlers_ = new ArrayList<HandlerRegistration>();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
       
-      init();
+      // deferred so that handlers are toggled after subclasses have finished
+      // construction
+      Scheduler.get().scheduleDeferred(() -> toggleHandlers(true));
    }
    
    @Inject
@@ -81,42 +91,6 @@ public abstract class CompletionManagerBase
       events_ = events;
       uiPrefs_ = uiPrefs;
       helpStrategy_ = helpStrategy;
-   }
-   
-   private void init()
-   {
-      handlers_ = new HandlerRegistration[] {
-            
-            popup_.addAttachHandler((AttachEvent event) -> {
-               docDisplay_.setPopupVisible(event.isAttached());
-            }),
-            
-            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
-               onPopupSelection(event.getSelectedItem());
-            }),
-            
-            popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
-               onPopupSelectionCommit(event.getSelectedItem());
-            }),
-            
-            docDisplay_.addBlurHandler((BlurEvent event) -> {
-               invalidatePendingRequests();
-            }),
-            
-            docDisplay_.addClickHandler((ClickEvent event) -> {
-               invalidatePendingRequests();
-            }),
-            
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-                  removeHandlers();
-            }),
-            
-            events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
-               invalidatePendingRequests();
-            })
-            
-      };
    }
    
    protected void onPopupSelection(QualifiedName completion)
@@ -161,11 +135,14 @@ public abstract class CompletionManagerBase
       if (uiPrefs_.enableSnippets().getValue())
       {
          String[] parts = line.split("\\s+");
-         snippetToken_ = parts[parts.length - 1];
-         ArrayList<String> snippets = snippets_.getAvailableSnippets();
-         for (String snippet : snippets)
-            if (snippet.startsWith(snippetToken_))
-               names.add(QualifiedName.createSnippet(snippet));
+         if (parts.length > 0)
+         {
+            snippetToken_ = parts[parts.length - 1];
+            ArrayList<String> snippets = snippets_.getAvailableSnippets();
+            for (String snippet : snippets)
+               if (snippet.startsWith(snippetToken_))
+                  names.add(QualifiedName.createSnippet(snippet));
+         }
       }
       
       addExtraCompletions(completions.getToken(), names);
@@ -191,11 +168,18 @@ public abstract class CompletionManagerBase
          return;
       }
       
-      // if we receive a single completion result whose completion
-      // is the same as the input token, we should implicitly accept
-      boolean shouldImplicitlyAccept =
-            results.length == 1 &&
-            StringUtil.equals(completions.getToken(), results[0].name);
+      // if the token we have matches all available completions, we should
+      // implicitly accept it (handle cases where multiple completions with
+      // the same value but different types are received)
+      boolean shouldImplicitlyAccept = true;
+      for (int i = 0; i < results.length; i++)
+      {
+         if (!StringUtil.equals(completions.getToken(), results[i].name))
+         {
+            shouldImplicitlyAccept = false;
+            break;
+         }
+      }
       
       if (shouldImplicitlyAccept)
       {
@@ -270,20 +254,23 @@ public abstract class CompletionManagerBase
       
       String line = docDisplay_.getCurrentLineUpToCursor();
       
-      // don't complete within comments
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
-      if (token.hasType("comment"))
-         return false;
-      
-      // don't complete within multi-line strings
-      if (token.hasType("string"))
+      if (token != null)
       {
-         String cursorTokenValue = token.getValue();
-         boolean isSingleLineString =
-               cursorTokenValue.startsWith("'") ||
-               cursorTokenValue.startsWith("\"");
-         if (!isSingleLineString)
+         // don't complete within comments
+         if (token.hasType("comment"))
             return false;
+
+         // don't complete within multi-line strings
+         if (token.hasType("string"))
+         {
+            String cursorTokenValue = token.getValue();
+            boolean isSingleLineString =
+                  cursorTokenValue.startsWith("'") ||
+                  cursorTokenValue.startsWith("\"");
+            if (!isSingleLineString)
+               return false;
+         }
       }
       
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
@@ -357,8 +344,42 @@ public abstract class CompletionManagerBase
    
    // Subclasses can override to perform post-completion-insertion actions,
    // e.g. displaying a tooltip or similar
-   protected void onCompletionInserted(QualifiedName requestedCompletion)
+   protected void onCompletionInserted(QualifiedName completion)
    {
+      int type = completion.type;
+      if (!RCompletionType.isFunctionType(type))
+         return;
+      
+      boolean insertParensAfterCompletion =
+            RCompletionType.isFunctionType(type) &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+      
+      if (insertParensAfterCompletion)
+         docDisplay_.moveCursorBackward();
+   }
+   
+   // Subclasses can override depending on what characters are typically
+   // considered part of identifiers / are relevant to a completion context.
+   protected boolean isBoundaryCharacter(char ch)
+   {
+      boolean valid =
+            Character.isLetterOrDigit(ch) ||
+            ch == '.' ||
+            ch == '_';
+      
+      return !valid;
+   }
+   
+   // Subclasses can override based on what characters might want to trigger
+   // completions, or force a new completion request.
+   protected boolean isTriggerCharacter(char ch)
+   {
+      return false;
+   }
+   
+   public void codeCompletion()
+   {
+      beginSuggest(true, false, true);
    }
    
    public void onPaste(PasteEvent event)
@@ -373,21 +394,9 @@ public abstract class CompletionManagerBase
    
    public void detach()
    {
-      for (HandlerRegistration handler : handlers_)
-         handler.removeHandler();
-      
+      removeHandlers();
       snippets_.detach();
       popup_.hide();
-   }
-   
-   // Is this a character that separates identifiers (e.g. whitespace)?
-   @SuppressWarnings("deprecation")
-   protected boolean isBoundaryCharacter(char ch)
-   {
-      if (ch == '\0')
-         return true;
-      
-      return Character.isSpace(ch);
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -431,7 +440,6 @@ public abstract class CompletionManagerBase
             case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests(); return true;
             case KeyCodes.KEY_ENTER:     return onPopupEnter();
             case KeyCodes.KEY_TAB:       return onPopupTab();
-            case KeyCodes.KEY_BACKSPACE: return onPopupBackspace();
             }
             
             break;
@@ -503,7 +511,10 @@ public abstract class CompletionManagerBase
       
       if (popup_.isShowing())
       {
-         Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
+         if (canContinueCompletions(charCode))
+            Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
+         else
+            invalidatePendingRequests();
       }
       else
       {
@@ -522,9 +533,48 @@ public abstract class CompletionManagerBase
       return false;
    }
    
+   protected boolean canContinueCompletions(char ch)
+   {
+      // NOTE: We allow users to continue a completion 'session' in the case where
+      // a character was mistyped; e.g. imagine the user requested completions with
+      // the token 'rn' and got back:
+      //
+      //    - rnbinom
+      //    - rnorm
+      //
+      // and accidentally typed a 'z'. while no completion item will match, we should
+      // keep the completion session 'live' so that hitting backspace will continue
+      // to show completions with the original 'rn' token.
+      switch (ch)
+      {
+      
+      case ' ':
+      {
+         // for spaces, only continue the completion session if this does indeed match
+         // an existing completion item in the popup
+         String token = completionToken_ + " ";
+         if (popup_.hasCompletions())
+         {
+            for (QualifiedName item : popup_.getItems())
+               if (StringUtil.isSubsequence(item.name, token, false))
+                  return true;
+         }
+         
+         return false;
+      }
+      
+      }
+      
+      return true;
+   }
+   
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
       String codeComplete = uiPrefs_.codeComplete().getValue();
+      
+      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_MANUAL))
+         return true;
+      
       if (!StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_ALWAYS))
          return false;
 
@@ -563,6 +613,10 @@ public abstract class CompletionManagerBase
    {
       suggestTimer_.cancel();
       
+      popup_.hide();
+      popup_.clearHelp(false);
+      popup_.setHelpVisible(false);
+      
       int type = completion.type;
       if (type == RCompletionType.SNIPPET)
       {
@@ -583,9 +637,6 @@ public abstract class CompletionManagerBase
          onCompletionInserted(completion);
       }
       
-      popup_.hide();
-      popup_.clearHelp(false);
-      popup_.setHelpVisible(false);
       docDisplay_.setFocus(true);
    }
    
@@ -621,28 +672,37 @@ public abstract class CompletionManagerBase
       return true;
    }
    
-   private boolean onPopupBackspace()
+   private void onDocumentChanged(DocumentChangedEvent event)
    {
+      if (!popup_.isShowing())
+         return;
+      
       if (docDisplay_.inMultiSelectMode())
-         return false;
+         return;
       
-      int cursorColumn = docDisplay_.getCursorPosition().getColumn();
-      if (cursorColumn < 2)
-      {
-         invalidatePendingRequests();
-         return false;
-      }
+      if (!event.getEvent().getAction().contentEquals("removeText"))
+         return;
       
-      String line = docDisplay_.getCurrentLine();
-      char ch = line.charAt(cursorColumn - 2);
-      if (isBoundaryCharacter(ch))
-      {
-         invalidatePendingRequests();
-         return false;
-      }
-      
-      Scheduler.get().scheduleDeferred(() -> beginSuggest(false, false, false));
-      return false;
+      Scheduler.get().scheduleDeferred(() -> {
+         
+         int cursorColumn = docDisplay_.getCursorPosition().getColumn();
+         if (cursorColumn == 0)
+         {
+            invalidatePendingRequests();
+            return;
+         }
+         
+         String line = docDisplay_.getCurrentLine();
+         char ch = line.charAt(cursorColumn - 1);
+         if (isBoundaryCharacter(ch))
+         {
+            invalidatePendingRequests();
+            return;
+         }
+         
+         beginSuggest(false, false, false);
+         
+      });
    }
    
    private boolean onTab()
@@ -673,10 +733,94 @@ public abstract class CompletionManagerBase
       helpTimer_.schedule(completion);
    }
    
+   private void toggleHandlers(boolean enable)
+   {
+      if (enable)
+         addHandlers();
+      else
+         removeHandlers();
+   }
+   
+   private void addHandlers()
+   {
+      removeHandlers();
+      
+      HandlerRegistration[] ownHandlers = defaultHandlers();
+      for (HandlerRegistration handler : ownHandlers)
+         handlers_.add(handler);
+      
+      HandlerRegistration[] userHandlers = handlers();
+      if (userHandlers != null)
+      {
+         for (HandlerRegistration handler : userHandlers)
+            handlers_.add(handler);
+      }
+   }
+   
    private void removeHandlers()
    {
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
+      handlers_.clear();
+   }
+   
+   protected HandlerRegistration[] handlers()
+   {
+      return null;
+   }
+   
+   private HandlerRegistration[] defaultHandlers()
+   {
+      return new HandlerRegistration[] {
+            
+            docDisplay_.addAttachHandler((AttachEvent event) -> {
+               toggleHandlers(event.isAttached());
+            }),
+            
+            docDisplay_.addBlurHandler((BlurEvent event) -> {
+               onBlur();
+            }),
+            
+            docDisplay_.addClickHandler((ClickEvent event) -> {
+               invalidatePendingRequests();
+            }),
+            
+            docDisplay_.addDocumentChangedHandler((DocumentChangedEvent event) -> {
+               onDocumentChanged(event);
+            }),
+            
+            popup_.addMouseDownHandler((MouseDownEvent event) -> {
+               ignoreNextBlur_ = true;
+            }),
+            
+            popup_.addAttachHandler((AttachEvent event) -> {
+               docDisplay_.setPopupVisible(event.isAttached());
+            }),
+            
+            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
+               onPopupSelection(event.getSelectedItem());
+            }),
+            
+            popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
+               onPopupSelectionCommit(event.getSelectedItem());
+            }),
+            
+            events_.addHandler(AceEditorCommandEvent.TYPE, (AceEditorCommandEvent event) -> {
+               invalidatePendingRequests();
+            })
+            
+      };
+   }
+   
+   private void onBlur()
+   {
+      if (ignoreNextBlur_)
+      {
+         ignoreNextBlur_ = false;
+         return;
+      }
+      
+      invalidatePendingRequests();
    }
    
    private class SuggestionTimer
@@ -751,14 +895,15 @@ public abstract class CompletionManagerBase
    private final CompletionCache completionCache_;
    private final SuggestionTimer suggestTimer_;
    private final HelpTimer helpTimer_;
+   private final SnippetHelper snippets_;
+   
+   private final List<HandlerRegistration> handlers_;
    
    private String completionToken_;
    private String snippetToken_;
-   
-   private final SnippetHelper snippets_;
+   private boolean ignoreNextBlur_;
    
    private CompletionRequestContext context_;
-   private HandlerRegistration[] handlers_;
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;

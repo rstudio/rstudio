@@ -276,6 +276,10 @@ public class ShortcutsEmitter
          return "189";
       if (val.equals("Backspace"))
          return "8";
+      if (val.equals("["))
+         return "219";
+      if (val.equals("]"))
+         return "221";
       return null;
    }
 

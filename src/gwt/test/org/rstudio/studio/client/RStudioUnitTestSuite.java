@@ -22,6 +22,7 @@ import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
 
@@ -31,19 +32,20 @@ import junit.framework.Test;
 
 public class RStudioUnitTestSuite extends GWTTestSuite
 {
-    public static Test suite()
-    {
-        GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
-        suite.addTestSuite(RTokenizerTests.class);
-        suite.addTestSuite(VirtualConsoleTests.class);
-        suite.addTestSuite(ConsoleOutputWriterTests.class);
-        suite.addTestSuite(StringUtilTests.class);
-        suite.addTestSuite(DomUtilsTests.class);
-        suite.addTestSuite(AnsiCodeTests.class);
-        suite.addTestSuite(TerminalLocalEchoTests.class);
-        suite.addTestSuite(TerminalSessionSocketTests.class);
-        suite.addTestSuite(JobManagerTests.class);
-        suite.addTestSuite(URIUtilsTests.class);
-        return suite;
-    }
+   public static Test suite()
+   {
+      GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
+      suite.addTestSuite(RTokenizerTests.class);
+      suite.addTestSuite(VirtualConsoleTests.class);
+      suite.addTestSuite(ConsoleOutputWriterTests.class);
+      suite.addTestSuite(StringUtilTests.class);
+      suite.addTestSuite(DomUtilsTests.class);
+      suite.addTestSuite(AnsiCodeTests.class);
+      suite.addTestSuite(TerminalLocalEchoTests.class);
+      suite.addTestSuite(TerminalSessionSocketTests.class);
+      suite.addTestSuite(JobManagerTests.class);
+      suite.addTestSuite(URIUtilsTests.class);
+      suite.addTestSuite(RChunkHeaderParserTests.class);
+      return suite;
+   }
 }

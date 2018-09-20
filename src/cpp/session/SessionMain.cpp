@@ -170,6 +170,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
 #include "modules/viewer/SessionViewer.hpp"
 #include "modules/SessionDiagnostics.hpp"
@@ -530,6 +531,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
+      (modules::sql::initialize)
       (modules::stan::initialize)
       (modules::plumber::initialize)
       (modules::source::initialize)
@@ -905,12 +907,23 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
 {
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
+      // for files in the temporary directory, show as content
+      //
+      // (perform this check first to handle case where
+      // tempdir lives within the user's home directory)
+      if (filePath.isWithin(module_context::tempDir()))
+      {
+         module_context::showContent(title, filePath);
+      }
+      
       // for files in the user's home directory and pdfs use an external browser
-      if (module_context::isVisibleUserFile(filePath) ||
+      else if (module_context::isVisibleUserFile(filePath) ||
           (filePath.extensionLowerCase() == ".pdf"))
       {
          module_context::showFile(filePath);
       }
+      
+      // otherwise, show as content
       else
       {
          module_context::showContent(title, filePath);

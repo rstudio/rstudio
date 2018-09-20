@@ -389,6 +389,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    long getLastModifiedTime();
    long getLastCursorChangedTime();
    
+   void moveLinesUp();
+   void moveLinesDown();
+   void expandToLine();
+   void copyLinesDown();
+   void joinLines();
+   void removeLine();
+
+   void blockIndent();
    void blockOutdent();
    void splitIntoLines();
    

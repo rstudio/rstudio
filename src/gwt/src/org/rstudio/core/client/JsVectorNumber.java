@@ -171,15 +171,30 @@ public class JsVectorNumber extends JavaScriptObject
       return shift(defaultValue());
    }
    
+   private final native double shift(double defaultValue)
+   /*-{
+      return this.shift() || defaultValue;
+   }-*/;
+   
    public final int size()
    {
       return length();
    }
    
-   private final native double shift(double defaultValue)
+   public final native JsVectorNumber slice(int begin, int end)
    /*-{
-      return this.shift() || defaultValue;
+      return this.slice(begin, end);
    }-*/;
+   
+   public final JsVectorNumber slice(int begin)
+   {
+      return slice(begin, length());
+   }
+   
+   public final JsVectorNumber slice()
+   {
+      return slice(0, length());
+   }
    
    public final native void splice(int start, int deleteCount, JsVectorNumber vector)
    /*-{

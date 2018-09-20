@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
@@ -527,26 +528,58 @@ public class Projects implements OpenProjectFileHandler,
             
             if (newProject.getNewPackageOptions() == null)
             {
-               projServer_.createProject(
-                     newProject.getProjectFile(),
-                     newProject.getNewPackageOptions(),
-                     newProject.getNewShinyAppOptions(),
-                     newProject.getProjectTemplateOptions(),
-                     new SimpleRequestCallback<String>()
-                     {
-                        @Override
-                        public void onResponseReceived(String foundProjectFile)
+               Command onReady = () -> {
+                  projServer_.createProject(
+                        newProject.getProjectFile(),
+                        newProject.getNewPackageOptions(),
+                        newProject.getNewShinyAppOptions(),
+                        newProject.getProjectTemplateOptions(),
+                        new SimpleRequestCallback<String>()
                         {
-                           if (!StringUtil.isNullOrEmpty(foundProjectFile))
+                           @Override
+                           public void onResponseReceived(String foundProjectFile)
                            {
-                              // found an existing project file with different name than the
-                              // parent folder; have to update here so that's what we end up
-                              // opening
-                              newProject.setProjectFile(foundProjectFile);
+                              if (!StringUtil.isNullOrEmpty(foundProjectFile))
+                              {
+                                 // found an existing project file with different name than the
+                                 // parent folder; have to update here so that's what we end up
+                                 // opening
+                                 newProject.setProjectFile(foundProjectFile);
+                              }
+                              continuation.execute();
                            }
-                           continuation.execute();
-                        }
-                     });
+                        });
+               };
+               
+               if (newProject.getProjectTemplateOptions() != null)
+               {
+                  // NOTE: We provide built-in project templates for packages that may
+                  // not be currently installed; in those cases, verify that the package is
+                  // installed and if not attempt installation from CRAN first
+                  String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
+                  RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
+                        "Creating project",
+                        "Creating a project with " + pkg,
+                        new Dependency[] { Dependency.cranPackage(pkg) },
+                        false,
+                        (Boolean success) -> {
+                           if (!success)
+                           {
+                              globalDisplay_.showErrorMessage(
+                                    "Error installing " + pkg,
+                                    "Installation of package '" + pkg + "' failed, and so the project cannot " +
+                                    "be created. Try installing the package manually with " +
+                                    "'install.packages(\"" + pkg + "\")'.");
+                              return;
+                           }
+                           
+                           onReady.execute();
+                        });
+               }
+               else
+               {
+                  onReady.execute();
+               }
             }
             else
             {

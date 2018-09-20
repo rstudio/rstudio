@@ -28,7 +28,19 @@ public class AceTheme extends JavaScriptObject
    
    public static final AceTheme createDefault()
    {
-      return create("Textmate (default)", "theme/default/textmate.rstheme", false);
+      return createDefault(false);
+   }
+   
+   public static final AceTheme createDefault(boolean isDark)
+   {
+      if (isDark)
+      {
+         return create("Tomorrow Night", "theme/default/tomorrow_night.rstheme", true);
+      }
+      else
+      {
+         return create("Textmate (default)", "theme/default/textmate.rstheme", false);
+      }
    }
    
    public static final native AceTheme create(String name, String url, Boolean isDark)

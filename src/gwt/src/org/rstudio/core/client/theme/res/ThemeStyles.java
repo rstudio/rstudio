@@ -54,14 +54,14 @@ public interface ThemeStyles extends CssResource
    
    String tabLayout();
    String tabLayoutLeft();
-   String tabLayoutCenter();
+   String rstheme_tabLayoutCenter();
    String tabLayoutRight();
    String dirtyTab();
    String dirtyTabIndicator();
    String docTabLabel();
 
    String toolbar();
-   String secondaryToolbar();
+   String rstheme_secondaryToolbar();
    String secondaryToolbarPanel();
    String globalToolbar();
    String desktopGlobalToolbar();
@@ -105,7 +105,7 @@ public interface ThemeStyles extends CssResource
 
    String left();
    String right();
-   String center();
+   String rstheme_center();
 
    String minimizedWindow();
 
@@ -147,7 +147,7 @@ public interface ThemeStyles extends CssResource
    String locatorPanel();
 
    String multiPodUtilityArea();
-   String multiPodUtilityTabArea();
+   String rstheme_multiPodUtilityTabArea();
 
    String tabOverflowPopup();   
    
@@ -183,7 +183,7 @@ public interface ThemeStyles extends CssResource
    String logoAnchor();
 
    String windowFrameObject();
-   String minimizedWindowObject();
+   String rstheme_minimizedWindowObject();
    String windowFrameWidget();
 
    String consoleOnlyWindowFrame();
@@ -193,7 +193,7 @@ public interface ThemeStyles extends CssResource
    String consoleMaximizeLayout();
 
    String tallerToolbarWrapper();
-   String toolbarWrapper();
+   String rstheme_toolbarWrapper();
    String webGlobalToolbarWrapper();
    String desktopGlobalToolbarWrapper();
 

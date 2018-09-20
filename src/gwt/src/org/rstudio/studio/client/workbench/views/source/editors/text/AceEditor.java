@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Delegating
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -462,6 +463,16 @@ public class AceEditor implements DocDisplay,
                   case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
                   case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
                   case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
+                  case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
+                  case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
+                  case AceEditorCommandEvent.EXPAND_TO_LINE:             expandToLine();             break;
+                  case AceEditorCommandEvent.COPY_LINES_DOWN:            copyLinesDown();            break;
+                  case AceEditorCommandEvent.JOIN_LINES:                 joinLines();                break;
+                  case AceEditorCommandEvent.REMOVE_LINE:                removeLine();               break;
+                  case AceEditorCommandEvent.SPLIT_INTO_LINES:           splitIntoLines();           break;
+                  case AceEditorCommandEvent.BLOCK_INDENT:               blockIndent();              break;
+                  case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
+                  case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
                   }
                }
             });
@@ -750,13 +761,9 @@ public class AceEditor implements DocDisplay,
                {
                   managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
                         editor,
-                        editor,
                         new CompletionPopupPanel(),
                         server_,
-                        new Filter(),
-                        context_,
-                        editor,
-                        false));
+                        context_));
                }
                
                // C++ completion manager
@@ -766,6 +773,16 @@ public class AceEditor implements DocDisplay,
                         editor,
                         new Filter(),
                         cppContext_));
+               }
+               
+               // SQL completion manager
+               if (fileType_.isSql() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.SQL, new SqlCompletionManager(
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        context_));
                }
                
                // Stan completion manager
@@ -2568,6 +2585,42 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public void moveLinesUp()
+   {
+      widget_.getEditor().execCommand("movelinesup");
+   }
+
+   @Override
+   public void moveLinesDown()
+   {
+      widget_.getEditor().execCommand("movelinesdown");
+   }
+
+   @Override
+   public void expandToLine()
+   {
+      widget_.getEditor().execCommand("expandtoline");
+   }
+
+   @Override
+   public void copyLinesDown()
+   {
+      widget_.getEditor().execCommand("copylinesdown");
+   }
+
+   @Override
+   public void joinLines()
+   {
+      widget_.getEditor().execCommand("joinlines");
+   }
+
+   @Override
+   public void removeLine()
+   {
+      widget_.getEditor().execCommand("removeline");
+   }
+
+   @Override
    public void splitIntoLines()
    {
       widget_.getEditor().splitIntoLines();
@@ -3621,6 +3674,11 @@ public class AceEditor implements DocDisplay,
    public int getLastVisibleRow()
    {
       return widget_.getEditor().getLastVisibleRow();
+   }
+
+   public void blockIndent()
+   {
+      widget_.getEditor().blockIndent();
    }
 
    public void blockOutdent()

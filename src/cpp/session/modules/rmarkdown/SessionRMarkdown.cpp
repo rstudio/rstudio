@@ -204,10 +204,14 @@ std::string assignOutputUrl(const std::string& outputFile)
    }
    if (!websiteDir.empty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(outputPath.parent()))
    {
-      // assign website build dir as output root
-      FilePath indexPath = websiteDir.childPath("index.html");
+      // if we're creating a '.pdf', detect the created book appropriately
+      FilePath indexPath;
+      if (outputPath.extensionLowerCase() == ".pdf")
+         indexPath = websiteDir.childPath(outputPath.filename());
+      else
+         indexPath = websiteDir.childPath("index.html");
+      
       s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
-
       // compute relative path to target file and append it to the path
       std::string relativePath = outputPath.relativePath(websiteDir);
       path += relativePath;

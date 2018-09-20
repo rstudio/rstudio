@@ -64,9 +64,9 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newTextDoc().createMenuItem(false));
       newMenu_.addItem(commands.newCppDoc().createMenuItem(false));
       newMenu_.addItem(commands.newPythonDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newSqlDoc().createMenuItem(false));
       newMenu_.addItem(commands.newStanDoc().createMenuItem(false));
       newMenu_.addItem(commands.newD3Doc().createMenuItem(false));
-      newMenu_.addItem(commands.newSqlDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));

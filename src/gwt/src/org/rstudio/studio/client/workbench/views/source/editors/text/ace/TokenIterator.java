@@ -90,14 +90,24 @@ public class TokenIterator extends JavaScriptObject
       return this.getCurrentTokenColumn();
    }-*/;
    
-   public native final boolean findTokenBwd(String token, boolean skipMatching)
+   public native final boolean findTokenTypeBwd(String token, boolean skipMatching)
    /*-{
-      return this.findTokenBwd(token, skipMatching);
+      return this.findTokenTypeBwd(token, skipMatching);
    }-*/;
    
-   public native final boolean findTokenFwd(String token, boolean skipMatching)
+   public native final boolean findTokenTypeFwd(String token, boolean skipMatching)
    /*-{
-      return this.findTokenFwd(token, skipMatching);
+      return this.findTokenTypeFwd(token, skipMatching);
+   }-*/;
+   
+   public native final boolean findTokenValueBwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenValueBwd(token, skipMatching);
+   }-*/;
+   
+   public native final boolean findTokenValueFwd(String token, boolean skipMatching)
+   /*-{
+      return this.findTokenValueFwd(token, skipMatching);
    }-*/;
    
    public native final boolean fwdToMatchingToken() /*-{
@@ -125,9 +135,36 @@ public class TokenIterator extends JavaScriptObject
       return moveToPosition(Position.create(row, column));
    }
    
+   public final native Token moveToStartOfRow() /*-{
+      return this.moveToStartOfRow();
+   }-*/;
+   
    public final native Token moveToEndOfRow() /*-{
       return this.moveToEndOfRow();
    }-*/;
+   
+   public final boolean moveToNextSignificantToken()
+   {
+      if (!moveToNextToken())
+         return false;
+      
+      return skipWhitespaceAndComments();
+   }
+   
+   public final boolean skipWhitespaceAndComments()
+   {
+      Token token = getCurrentToken();
+      
+      for (; token != null; token = stepForward())
+      {
+         if (token.hasType("comment") || token.valueMatches("\\s*"))
+            continue;
+         
+         break;
+      }
+      
+      return token != null;
+   }
    
    public final boolean valueEquals(String value)
    {

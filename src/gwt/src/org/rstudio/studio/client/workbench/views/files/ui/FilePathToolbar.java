@@ -109,8 +109,8 @@ public class FilePathToolbar extends Composite
       layout.setSize("100%", "21px");
 
       initWidget(layout);
-      addStyleName(ThemeStyles.INSTANCE.toolbarWrapper());
-      addStyleName(ThemeStyles.INSTANCE.secondaryToolbar());
+      addStyleName(ThemeStyles.INSTANCE.rstheme_toolbarWrapper());
+      addStyleName(ThemeStyles.INSTANCE.rstheme_secondaryToolbar());
 
       navigationObserver_ = navigationObserver;
       

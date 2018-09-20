@@ -171,15 +171,30 @@ public class JsVectorInteger extends JavaScriptObject
       return shift(defaultValue());
    }
    
+   private final native int shift(int defaultValue)
+   /*-{
+      return this.shift() || defaultValue;
+   }-*/;
+   
    public final int size()
    {
       return length();
    }
    
-   private final native int shift(int defaultValue)
+   public final native JsVectorInteger slice(int begin, int end)
    /*-{
-      return this.shift() || defaultValue;
+      return this.slice(begin, end);
    }-*/;
+   
+   public final JsVectorInteger slice(int begin)
+   {
+      return slice(begin, length());
+   }
+   
+   public final JsVectorInteger slice()
+   {
+      return slice(0, length());
+   }
    
    public final native void splice(int start, int deleteCount, JsVectorInteger vector)
    /*-{

@@ -15,12 +15,12 @@
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
-.rs.addJsonRpcHandler("python_get_completions", function(line)
+.rs.addJsonRpcHandler("python_get_completions", function(line, ctx)
 {
    if (!requireNamespace("reticulate", quietly = TRUE))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.tryCatch(.rs.python.getCompletions(line))
+   completions <- .rs.tryCatch(.rs.python.getCompletions(line, ctx))
    if (inherits(completions, "error"))
       return(.rs.emptyCompletions(language = "Python"))
    
@@ -144,7 +144,7 @@
       .rs.setVar("reticulate.matplotlib.show", plt$show)
       plt$show <- .rs.reticulate.matplotlib.showHook
    }
-      
+   
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
@@ -749,7 +749,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    names(parsed[[2]])
 })
 
-.rs.addFunction("python.getCompletionsMain", function(token)
+.rs.addFunction("python.getCompletionsMain", function(token, ctx)
 {
    dots <- gregexpr(".", token, fixed = TRUE)[[1]]
    if (identical(c(dots), -1L)) {
@@ -785,25 +785,33 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(completions)
    }
    
-   # we had dots; try to evaluate the left-hand side of the dots
-   # and then filter on the attributes of the object (if any)
-   last <- tail(dots, n = 1)
-   lhs <- substring(token, 1, last - 1)
-   rhs <- substring(token, last + 1)
+   # we had dots; try to evaluate each component piece-by-piece to get
+   # to the relevant object providing us with completions
+   pieces <- .rs.strsplit(token, ".", fixed = TRUE)
    
-   # try evaluating the left-hand side (avoid evaluation of
-   # arrays, tuples, and dictionary literals)
-   evaluation <-
-      if (.rs.startsWith(lhs, "[") && .rs.endsWith(lhs, "]"))
-         "[]"
-      else if (.rs.startsWith(lhs, "{") && .rs.endsWith(lhs, "}"))
-         "{}"
-      else if (.rs.startsWith(lhs, "(") && .rs.endsWith(lhs, ")"))
-         "()"
-      else
-         lhs
+   # for the first piece, check to see if it might be a module
+   first <- .rs.python.sanitizeForCompletion(pieces[[1]])
+   object <- if (first %in% names(ctx$aliases))
+   {
+      module <- ctx$aliases[[first]]
+      .rs.tryCatch(reticulate::import(module, convert = FALSE))
+   }
+   else
+   {
+      reticulate::py_eval(first, convert = FALSE)
+   }
    
-   object <- tryCatch(reticulate::py_eval(evaluation, convert = FALSE), error = identity)
+   # now, try to extract sub-pieces from the module / object we received
+   i <- 2
+   while (i < length(pieces))
+   {
+      if (inherits(object, "error"))
+         break
+      
+      code <- .rs.python.sanitizeForCompletion(pieces[[i]])
+      object <- .rs.tryCatch(reticulate::py_get_attr(object, code))
+      i <- i + 1
+   }
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
@@ -813,16 +821,16 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       return(.rs.python.emptyCompletions())
    
    completions <- .rs.python.completions(
-      token      = rhs,
+      token      = tail(pieces, n = 1L),
       candidates = candidates,
-      source     = lhs,
+      source     = head(pieces, n = -1L),
       type       = .rs.python.inferObjectTypes(object, candidates)
    )
    
    completions
 })
 
-.rs.addFunction("python.getCompletions", function(line)
+.rs.addFunction("python.getCompletions", function(line, ctx)
 {
    # check for completion of a module name in e.g. 'import nu' or 'from nu'
    re_import <- paste(
@@ -1010,7 +1018,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    }
    
    source <- substring(line, cursor$tokenOffset())
-   .rs.python.getCompletionsMain(source)
+   .rs.python.getCompletionsMain(source, ctx)
 })
 
 .rs.addFunction("python.isPython3", function()
@@ -1170,7 +1178,7 @@ html.heading = _heading
    
    writeLines(page, con = path)
    path
-  
+   
 })
 
 .rs.addFunction("python.extractCurrentExpression", function(line, offset)
@@ -1353,4 +1361,16 @@ html.heading = _heading
       args             = as.character(args),
       arg_descriptions = as.character(arg_descriptions)
    )
+})
+
+.rs.addFunction("python.sanitizeForCompletion", function(item)
+{
+   if (.rs.startsWith(item, "[") && .rs.endsWith(item, "]"))
+      "[]"
+   else if (.rs.startsWith(item, "{") && .rs.endsWith(item, "}"))
+      "{}"
+   else if (.rs.startsWith(item, "(") && .rs.endsWith(item, ")"))
+      "()"
+   else
+      item
 })

@@ -36,6 +36,8 @@ namespace desktop {
 QString binDirToHomeDir(QString binDir);
 #endif
 
+#define kMainWindowGeometry (QStringLiteral("mainwindow/geometry"))
+
 QString scratchPath;
 
 Options& options()
@@ -59,36 +61,32 @@ void Options::initFromCommandLine(const QStringList& arguments)
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
-   // NOTE: win->saveGeometry and win->restoreGeometry are unreliable in
-   // Qt 5.11.1 (they do not successfully restore the window size if the
-   // display bounds have changed) so we explicitly save and restore the
-   // bounds as a rectangle
-   QString key = QStringLiteral("mainwindow/bounds");
-   if (settings_.contains(key))
-   {
-      QRect bounds = settings_.value(key).toRect();
-      win->setGeometry(bounds);
-   }
-   else
-   {
-      QSize size = QSize(1200, 900).boundedTo(
+   // NOTE: on macOS, if the display configuration has changed, the attempt to
+   // restore window geometry can fail and the use can be left with a tiny
+   // RStudio window.
+   //
+   // to avoid this, we always first attempt to resize to a 'good' size, and
+   // then restore a saved window geometry (which may just silently fail if the
+   // display configuration has indeed changed)
+   //
+   // https://github.com/rstudio/rstudio/issues/3498
+   // https://github.com/rstudio/rstudio/issues/3159
+   //
+   QSize size = QSize(1200, 900).boundedTo(
             QApplication::desktop()->availableGeometry().size());
-      if (size.width() > 800 && size.height() > 500)
-      {
-         // Only use default size if it seems sane; otherwise let Qt set it
-         win->resize(size);
-      }
+   if (size.width() > 800 && size.height() > 500)
+   {
+      // Only use default size if it seems sane; otherwise let Qt set it
+      win->resize(size);
    }
+   
+   if (settings_.contains(kMainWindowGeometry))
+      win->restoreGeometry(settings_.value(kMainWindowGeometry).toByteArray());
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   // NOTE: win->saveGeometry and win->restoreGeometry are unreliable in
-   // Qt 5.11.1 (they do not successfully restore the window size if the
-   // display bounds have changed) so we explicitly save and restore the
-   // bounds as a rectangle
-   QVariant bounds = win->geometry();
-   settings_.setValue(QStringLiteral("mainwindow/bounds"), bounds);
+   settings_.setValue(kMainWindowGeometry, win->saveGeometry());
 }
 
 QString Options::portNumber() const

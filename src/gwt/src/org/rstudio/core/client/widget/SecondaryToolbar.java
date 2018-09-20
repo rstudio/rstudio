@@ -26,7 +26,7 @@ public class SecondaryToolbar extends Toolbar
       super();
       
       if (!appearAsPrimary)
-         addStyleName(styles_.secondaryToolbar());
+         addStyleName(styles_.rstheme_secondaryToolbar());
    }
 
    @Override

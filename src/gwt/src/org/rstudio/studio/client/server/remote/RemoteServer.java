@@ -169,6 +169,8 @@ import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -999,10 +1001,12 @@ public class RemoteServer implements Server
    }
    
    public void pythonGetCompletions(String line,
+                                    PythonCompletionContext context,
                                     ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(line)
+            .add(context)
             .get();
       
       sendRequest(RPC_SCOPE, PYTHON_GET_COMPLETIONS, params, requestCallback);
@@ -1062,6 +1066,20 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, STAN_RUN_DIAGNOSTICS, params, requestCallback);
+   }
+   
+   public void sqlGetCompletions(String line,
+                                 String connection,
+                                 SqlCompletionParseContext context,
+                                 ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(line)
+            .add(connection)
+            .add(context)
+            .get();
+      
+      sendRequest(RPC_SCOPE, SQL_GET_COMPLETIONS, params, requestCallback);
    }
    
    public void getHelpAtCursor(String line, int cursorPos,
@@ -5900,6 +5918,8 @@ public class RemoteServer implements Server
    private static final String STAN_GET_COMPLETIONS = "stan_get_completions";
    private static final String STAN_GET_ARGUMENTS = "stan_get_arguments";
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
+   
+   private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
    
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
