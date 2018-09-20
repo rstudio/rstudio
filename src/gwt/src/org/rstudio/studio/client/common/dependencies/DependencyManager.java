@@ -216,10 +216,9 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       // build dependency array
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
-      deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("RCurl", "1.95"));
       deps.add(Dependency.cranPackage("RJSONIO", "1.0"));
-      deps.add(Dependency.cranPackage("PKI", "0.1"));
+      deps.add(Dependency.cranPackage("openssl", "1.0.2"));
       deps.add(Dependency.cranPackage("rstudioapi", "0.5"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
