@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -32,6 +33,16 @@ public class BottomScrollPanel extends ScrollPanel
    public BottomScrollPanel()
    {
       scrolling_ = false;
+      
+      // use a timer to help debounce scroll events
+      scrollTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            scrollToBottom();
+         }
+      };
       
       // Provide a close-enough zone for determining if scrolled
       // to the bottom; allows for small rounding errors that have
@@ -100,8 +111,17 @@ public class BottomScrollPanel extends ScrollPanel
 
    public void onContentSizeChanged()
    {
-      if (scrolledToBottom_)
-         scrollToBottom();
+      // keep the user viewport at the bottom if they've scrolled to the bottom
+      if (!scrolledToBottom_)
+         return;
+      
+      // allow an existing timer to continue running (ensures
+      // that we attempt a scroll every few ticks as appropriate)
+      if (scrollTimer_.isRunning())
+         return;
+
+      // schedule a new scroll if we haven't done this yet
+      scrollTimer_.schedule(SCROLL_DELAY_MS);
    }
 
    public void saveScrollPosition()
@@ -124,7 +144,10 @@ public class BottomScrollPanel extends ScrollPanel
    {
       return vScroll_ != null;
    }
-
+   
+   private final Timer scrollTimer_;
+   private static final int SCROLL_DELAY_MS = 50;
+   
    private boolean scrolledToBottom_;
    private boolean scrolling_;
    private Integer vScroll_;
