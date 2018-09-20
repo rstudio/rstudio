@@ -164,9 +164,9 @@ public class SignatureToolTipManager
                   if (anchor_ == null || !toolTip_.isShowing())
                      return;
                   
-                  Position position = event.getPosition();
-                  if (position == null)
-                     return;
+                  // re-request cursor position in case it's changed since the
+                  // last cursor change without signaling event handlers
+                  Position position = docDisplay_.getCursorPosition();
                   
                   if (anchor_.getRange().contains(position))
                   {
