@@ -28,15 +28,9 @@ class RSRunCmd : boost::noncopyable
 public:
    explicit RSRunCmd();
 
-   void processESC(const std::string& input);
+   bool findESC(const std::string& input);
    
    void reset();
-   
-   enum class ParseState { 
-      normal, 
-      running
-   };
-   ParseState getParseState() const { return state_; }
    std::string getPayload() const { return payload_; }
    std::string getPipe() const { return pipe_; }
 
@@ -44,11 +38,6 @@ public:
    static std::string createESC(const std::string& pipeId, const std::string& payload);
 
 private:
-   void stripESC(const std::string& strInput);
-
-private:
-   ParseState state_ = ParseState::normal;
-
    std::string payload_;
    std::string pipe_;
 };

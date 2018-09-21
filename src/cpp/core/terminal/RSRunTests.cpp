@@ -31,7 +31,6 @@ context("RSRun Terminal Handling")
    test_that("initial parse state is normal")
    {
       RSRunCmd runCmd;
-      expect_true(runCmd.getParseState() == RSRunCmd::ParseState::normal);
       expect_true(runCmd.getPayload().empty());
       expect_true(runCmd.getPipe().empty());
    }
@@ -39,10 +38,8 @@ context("RSRun Terminal Handling")
    test_that("empty input is a no-op")
    {
       RSRunCmd runCmd;
-      RSRunCmd::ParseState initialState = runCmd.getParseState();
       std::string input;
-      runCmd.processESC(input);
-      expect_true(initialState == runCmd.getParseState());
+      expect_false(runCmd.findESC(input));
       expect_true(runCmd.getPayload().empty());
       expect_true(runCmd.getPipe().empty());
    }
@@ -50,10 +47,8 @@ context("RSRun Terminal Handling")
    test_that("simple input with no ESC codes is a no-op")
    {
       RSRunCmd runCmd;
-      RSRunCmd::ParseState initialState = runCmd.getParseState();
       std::string input = "Hello World, here is some simple text for you!";
-      runCmd.processESC(input);
-      expect_true(initialState == runCmd.getParseState());
+      expect_false(runCmd.findESC(input));
       expect_true(runCmd.getPayload().empty());
       expect_true(runCmd.getPipe().empty());
    }
@@ -62,14 +57,12 @@ context("RSRun Terminal Handling")
    {
       RSRunCmd runCmd;
 
-      std::string pipeId = "abcd";
+      std::string pipeId = "0123abcd";
       std::string payload = "getwd()";
       std::string input = RSRunCmd::createESC(pipeId, payload);
-      runCmd.processESC(input);
-
+      expect_true(runCmd.findESC(input));
       expect_true(runCmd.getPayload() == payload);
       expect_true(runCmd.getPipe() == pipeId);
-      expect_true(runCmd.getParseState() == RSRunCmd::ParseState::running);
    }
 }
 
