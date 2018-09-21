@@ -285,9 +285,10 @@ QString inferDefaultRenderingEngine()
    
    if (error || processResult.exitStatus != EXIT_SUCCESS)
       return QStringLiteral("auto");
-   
+
+   std::string output = string_utils::trimWhitespace(processResult.stdOut);
    std::vector<std::string> lines = 
-         core::algorithm::split(processResult.stdOut, "\n");
+         core::algorithm::split(output, "\n");
    
    // TODO: we likely need to handle case where e.g. a laptop is hooked up to
    // multiple high DPI non-retina displays
