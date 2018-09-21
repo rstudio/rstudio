@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.InfoBar;
@@ -353,6 +354,7 @@ public class PackagesPreferencesPane extends PreferencesPane
             @Override
             public void onError(ServerError error)
             {
+               Debug.logError(error);
             }
          }
       );
