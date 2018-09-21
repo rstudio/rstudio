@@ -17,18 +17,12 @@ define("mode/utils", ["require", "exports", "module"], function(require, exports
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
-var Unicode = require("ace/unicode").packages;
+var unicode = require("ace/unicode");
 
 (function() {
 
    var that = this;
-   var reWordCharacter = new RegExp(
-         "^[" +
-         Unicode.L +
-         Unicode.Mn + Unicode.Mc +
-         Unicode.Nd +
-         Unicode.Pc +
-         "._]+", "");
+   var reWordCharacter = new RegExp("^[" + unicode.wordChars + "._]+", "");
 
    // Simulate 'new Foo([args])'; ie, construction of an
    // object from an array of arguments
