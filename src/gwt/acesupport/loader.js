@@ -22,15 +22,17 @@
 
 define("rstudio/loader", ["require", "exports", "module"], function(require, exports, module) {
 
-var oop = require("ace/lib/oop");
-var event = require("ace/lib/event");
-var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
-var Editor = require("ace/editor").Editor;
 var EditSession = require("ace/edit_session").EditSession;
-var UndoManager = require("ace/undomanager").UndoManager;
-var Range = require("ace/range").Range;
-var Utils = require("mode/utils");
+var Editor = require("ace/editor").Editor;
+var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
 var ExpandSelection = require("util/expand_selection");
+var Range = require("ace/range").Range;
+var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+var TextMode = require("ace/mode/text").Mode;
+var UndoManager = require("ace/undomanager").UndoManager;
+var Utils = require("mode/utils");
+var event = require("ace/lib/event");
+var oop = require("ace/lib/oop");
 
 require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 
@@ -239,12 +241,7 @@ function loadEditor(container) {
    var env = {};
    container.env = env;
 
-   var Renderer = require("ace/virtual_renderer").VirtualRenderer;
-
-   var TextMode = require("ace/mode/text").Mode;
-   var theme = {}; // prevent default textmate theme from loading
-
-   env.editor = new RStudioEditor(new Renderer(container, theme), new RStudioEditSession(""));
+   env.editor = new RStudioEditor(new Renderer(container, ""), new RStudioEditSession(""));
    var session = env.editor.getSession();
    session.setMode(new TextMode());
    session.setUndoManager(new RStudioUndoManager());
