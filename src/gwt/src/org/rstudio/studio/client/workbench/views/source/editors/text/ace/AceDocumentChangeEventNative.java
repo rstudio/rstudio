@@ -15,20 +15,21 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class AceDocumentChangeEventNative extends JavaScriptObject
 {
    protected AceDocumentChangeEventNative() {};
    
    public final native String getAction() /*-{
-      return this.data.action;
+      return this.action;
    }-*/;
 
    public final native Range getRange() /*-{
-      return this.data.range;
+      return this;
    }-*/;
    
-   public final native String getText() /*-{
-      return this.data.text;
+   public final native JsArrayString getLines() /*-{
+      return this.lines;
    }-*/;
 }
