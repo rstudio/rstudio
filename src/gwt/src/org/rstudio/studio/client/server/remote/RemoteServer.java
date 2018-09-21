@@ -1248,6 +1248,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
    }
+
+   public void getCRANActives(
+                  ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_CRAN_ACTIVES, requestCallback);
+   }
    
    public void suggestTopics(String prefix,
                              ServerRequestCallback<JsArrayString> requestCallback)
@@ -5692,6 +5698,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
+   private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
