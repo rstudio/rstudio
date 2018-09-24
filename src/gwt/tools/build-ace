@@ -1,16 +1,9 @@
-#!/bin/sh
-
-# indirection to ensure correct 'nodejs' executable
-# is discovered / used
-if test -n "`which nodejs`"; then
-    NODEJS=nodejs
-else
-    NODEJS=node
-fi
-
-cd ace
+#!/usr/bin/env bash
 
 # Build and copy ace, ace-uncompressed to RStudio
+cd rstudio-ace
+
+NODEJS="$(command -v nodejs &> /dev/null && echo nodejs || echo node)"
 ${NODEJS} ./Makefile.dryice.js normal
 ${NODEJS} ./Makefile.dryice.js -m normal
 
@@ -31,11 +24,5 @@ cp build/src-min/worker-html.js ../../www/js/workers
 cp build/src-min/worker-css.js ../../www/js/workers
 cp build/src-min/worker-javascript.js ../../www/js/workers
 
-stripUseStrict() {
-    sed 's/"use strict";//g' "$1" > "$1.stripped"
-    mv "$1.stripped" "$1"
-}
-
-stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
-stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
+cd ..
 
