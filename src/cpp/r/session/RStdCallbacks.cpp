@@ -50,6 +50,7 @@ extern "C" {
 SA_TYPE SaveAction;
 #else
 __declspec(dllimport) SA_TYPE SaveAction;
+__declspec(dllimport) unsigned int localeCP;
 #endif
 
 }
@@ -337,7 +338,12 @@ int RReadConsole (const char *pmt,
             
             // ensure that our input fits within the buffer
             std::string::size_type maxLen = buflen - 2; // for \n\0
-            rInput = string_utils::utf8ToSystem(rInput, true);
+
+#ifdef _WIN32
+            // convert from UTF-8 to R's active code page
+            rInput = string_utils::reencode(rInput, CP_UTF8, localeCP, true);
+#endif
+
             if (rInput.length() > maxLen)
                rInput.resize(maxLen);
             std::string::size_type inputLen = rInput.length();
@@ -413,7 +419,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
       if (!s_suppressOutput)
       {
          // get output
-         std::string output = std::string(buf,buflen);
+         std::string output = std::string(buf, buflen);
          output = util::rconsole2utf8(output);
          
          // add to console actions

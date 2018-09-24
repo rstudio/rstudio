@@ -33,6 +33,20 @@
 # define CP_ACP 0
 #endif
 
+#ifdef _WIN32
+#include <Windows.h>
+
+extern "C" {
+
+// R's notion of the active code page
+__declspec(dllimport) unsigned int localeCP;
+
+// whether R is using UTF-8 output
+__declspec(dllimport) Rboolean WinUTF8out;
+
+}
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -79,28 +93,41 @@ bool hasCapability(const std::string& capability)
 
 std::string rconsole2utf8(const std::string& encoded)
 {
-   int codepage = CP_ACP;
-#ifdef _WIN32
-   Error error = r::exec::evaluateString("base::l10n_info()$codepage", &codepage);
-   if (error)
-      LOG_ERROR(error);
-#endif
-   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");
+#ifndef _WIN32
+   return encoded;
+#else
 
+   // NOTE: R normally outputs text encoded according to the
+   // current code page, but allows for UTF-8 text to be
+   // included and escaped as e.g.
+   //
+   //    \x02\xFF\xFE <text> \x03\xFF\xFE
+   //
+   // strangely, we observe that the inner text is _not_
+   // actually UTF-8 encoded; rather, it's encoded according
+   // to the active locale. (perhaps we're missing a
+   // flag set on R to request UTF-8 output? maybe something is
+   // causing R to leak the WinUTF8out flag?)
+   //
+   // regardless, we observe the most stable output by just removing
+   // those // flags and converting all text from the current code page
+   // to UTF-8
+   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
    while (pos != encoded.end() && regex_utils::search(pos, encoded.end(), m, utf8))
    {
       if (pos < m[0].first)
-         output.append(string_utils::systemToUtf8(std::string(pos, m[0].first), codepage));
+         output.append(string_utils::reencode(std::string(pos, m[0].first), localeCP, CP_UTF8, true));
       output.append(m[1].first, m[1].second);
       pos = m[0].second;
    }
    if (pos != encoded.end())
-      output.append(string_utils::systemToUtf8(std::string(pos, encoded.end()), codepage));
-
+      output.append(string_utils::reencode(std::string(pos, encoded.end()), localeCP, CP_UTF8, true));
    return output;
+
+#endif
 }
 
 core::Error iconvstr(const std::string& value,

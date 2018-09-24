@@ -255,80 +255,93 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
    return false;
 }
 
-std::string utf8ToSystem(const std::string& str,
-                         bool escapeInvalidChars)
+#ifdef _WIN32
+
+std::string reencode(const std::string& input,
+                     unsigned int inputCodepage,
+                     unsigned int outputCodepage,
+                     bool escapeInvalidCharacters)
 {
-   if (str.empty())
+   if (input.empty())
       return std::string();
 
-#ifdef _WIN32
-   std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], static_cast<int>(wide.size()));
-   if (chars < 0)
+   std::vector<wchar_t> wide(input.length() + 1);
+   int wideChars = ::MultiByteToWideChar(
+            inputCodepage, 0,
+            &input[0], static_cast<int>(input.length()),
+            &wide[0], static_cast<int>(wide.size()));
+   if (wideChars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
-      return str;
+      return input;
    }
 
-   std::ostringstream output;
-   char mbbuf[10];
-   // Only go up to chars - 1 because last char is \0
-   for (int i = 0; i < chars - 1; i++)
+   if (escapeInvalidCharacters)
    {
-      int mbc = wctomb(mbbuf, wide[i]);
-      if (mbc == -1)
+      char buffer[16];
+      std::stringstream output;
+
+      for (int i = 0; i < wideChars; i++)
       {
-         if (escapeInvalidChars)
+         int n = ::WideCharToMultiByte(
+                  outputCodepage, 0,
+                  &wide[i], 1,
+                  buffer, 16,
+                  nullptr, nullptr);
+
+         if (n == 0)
             output << "\\u{" << std::hex << wide[i] << "}";
          else
-            output << "?"; // TODO: Use GetCPInfo()
+            output.write(buffer, n);
       }
-      else
-         output.write(mbbuf, mbc);
+
+      return output.str();
    }
-   return output.str();
-#else
-   // Assumes that UTF8 is the locale on POSIX
-   return str;
-#endif
+   else
+   {
+      int outputChars = ::WideCharToMultiByte(
+               outputCodepage, 0,
+               &wide[0], wideChars,
+               nullptr, 0,
+               nullptr, nullptr);
+
+      if (outputChars == 0)
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return input;
+      }
+
+      std::vector<char> output(outputChars, 0);
+      ::WideCharToMultiByte(
+               outputCodepage, 0,
+               &wide[0], wideChars,
+               &output[0], outputChars,
+               nullptr, nullptr);
+
+      return std::string(output.begin(), output.end());
+   }
 }
 
-std::string systemToUtf8(const std::string& str, int codepage)
+#endif
+
+std::string utf8ToSystem(const std::string& str)
 {
-   if (str.empty())
-      return std::string();
-
-#ifdef _WIN32
-   std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), static_cast<int>(str.length()),
-                                     &wide[0], static_cast<int>(wide.size()));
-   if (chars < 0)
-   {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return str;
-   }
-
-   int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
-                                             nullptr, 0,
-                                             nullptr, nullptr);
-   if (bytesRequired == 0)
-   {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return str;
-   }
-   std::vector<char> buf(bytesRequired, 0);
-   int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, &wide[0], chars,
-                                            &(buf[0]), static_cast<int>(buf.size()),
-                                            nullptr, nullptr);
-   return std::string(buf.begin(), buf.end());
-#else
+#ifndef _WIN32
+   // assume system locale is UTF-8 on POSIX
    return str;
+#else
+   return reencode(str, CP_UTF8, CP_ACP);
 #endif
 }
 
 std::string systemToUtf8(const std::string& str)
 {
-   return systemToUtf8(str, CP_ACP);
+#ifndef _WIN32
+   // assume system locale is UTF-8 on POSIX
+   return str;
+#else
+   return reencode(str, CP_ACP, CP_UTF8);
+#endif
 }
 
 std::string toUpper(const std::string& str)
