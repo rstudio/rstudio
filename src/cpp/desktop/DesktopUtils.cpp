@@ -138,6 +138,7 @@ QString getFixedWidthFontList()
       // screen out annoying Qt warnings when attempting to
       // initialize incompatible fonts
       static std::set<std::string> blacklist = {
+         "8514oem",
          "Fixedsys",
          "Modern",
          "MS Sans Serif",

@@ -78,11 +78,15 @@ bool subsequenceIndices(std::string const& sequence,
 
 std::string getExtension(std::string const& str);
 
-std::string utf8ToSystem(const std::string& str,
-                         bool escapeInvalidChars=false);
+#ifdef _WIN32
+std::string reencode(const std::string& input,
+                     unsigned int inputCodepage,
+                     unsigned int outputCodepage,
+                     bool escapeInvalidCharacters = false);
+#endif
 
+std::string utf8ToSystem(const std::string& str);
 std::string systemToUtf8(const std::string& str);
-std::string systemToUtf8(const std::string& str, int codepage);
 
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
