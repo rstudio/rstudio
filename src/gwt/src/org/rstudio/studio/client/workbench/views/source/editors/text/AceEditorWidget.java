@@ -706,34 +706,17 @@ public class AceEditorWidget extends Composite
       Position start = range.getStart();
       Position end = range.getEnd();
       
-      // if the edit was all on one line or the action didn't change text
-      // in a way that could change lines, we can't have moved anything
-      if (start.getRow() == end.getRow() || 
-          (action != "insertText" &&
-           action != "insertLines" &&
-           action != "removeText" &&
-           action != "removeLines"))
-      {
-         return;
-      }
-      
-      int shiftedBy = 0;
-      int shiftStartRow = 0;
-      
       // compute how many rows to shift
-      if (action == "insertText" || 
-          action == "insertLines")
-      {
-         shiftedBy = end.getRow() - start.getRow();
-      } 
-      else
-      {
-         shiftedBy = start.getRow() - end.getRow();
-      }
+      int shiftedBy = (action == "insert")
+            ? end.getRow() - start.getRow()
+            : start.getRow() - end.getRow();
+      
+      if (shiftedBy == 0)
+         return;
       
       // compute where to start shifting
-      shiftStartRow = start.getRow() + 
-            ((action == "insertText" && start.getColumn() > 0) ? 
+      int shiftStartRow = start.getRow() + 
+            ((action == "insert" && start.getColumn() > 0) ? 
                   1 : 0);
       
       // make a pass through the breakpoints and move them as appropriate:
