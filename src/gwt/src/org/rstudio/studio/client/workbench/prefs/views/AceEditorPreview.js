@@ -6,7 +6,9 @@ var Renderer = require('ace/virtual_renderer').VirtualRenderer;
 var container = document.getElementById('editor');
 var RMode = require('mode/r').Mode;
 
-// Initialize the Ace editor
+// Initialize the Ace editor. We set the basePath config
+// only to squelch an error otherwise emitted by Ace.
+ace.config.set('basePath', 'ace');
 var editor = ace.edit('editor');
 
 // Set up options
