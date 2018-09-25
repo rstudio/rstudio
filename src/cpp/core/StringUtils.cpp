@@ -279,24 +279,9 @@ std::string utf8ToSystem(const std::string& str,
    char buffer[16];
    for (int i = 0; i < chars; i++)
    {
-      // allow transliteration because R on Windows typically
-      // transliterates unicode characters that cannot be exactly
-      // represented in the active code page.
-      //
-      // TODO: in the future, we should consider making it possible
-      // for callers to request transliteration vs. no transliteration,
-      // since this API is often used for text not directly intended for
-      // consumption by R
-      //
-      // TODO: should also allow users to supply requested code page for
-      // conversion, but that's a bit too late to bring in for v1.2
-      int n = ::WideCharToMultiByte(
-               CP_ACP, WC_COMPOSITECHECK,
-               &wide[i], 1,
-               buffer, 16,
-               nullptr, nullptr);
+      int n = wctomb(buffer, wide[i]);
 
-      if (n == 0)
+      if (n == -1)
       {
          if (escapeInvalidChars)
             output << "\\u{" << std::hex << wide[i] << "}";

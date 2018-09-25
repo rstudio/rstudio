@@ -278,6 +278,9 @@ int RReadConsole (const char *pmt,
          // user has to wait in any case we might as well help them out by
          // never having to start from scratch
          r::exec::IgnoreInterruptsScope ignoreInterrupts;
+
+         // synchronize locale with R
+         r::util::synchronizeLocale();
          
          // attempt to initialize 
          Error initError;
@@ -412,6 +415,9 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
    {
       if (!s_suppressOutput)
       {
+         // synchronize locale with R
+         r::util::synchronizeLocale();
+
          // get output
          std::string output = std::string(buf,buflen);
          output = util::rconsole2utf8(output);

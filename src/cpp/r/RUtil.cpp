@@ -274,6 +274,26 @@ bool isPackageAttached(const std::string& packageName)
    return false;
 }
 
+void synchronizeLocale()
+{
+#ifdef _WIN32
+   // check to see if the R locale has changed and update if so
+   std::string rLocale;
+   Error error = r::exec::RFunction("base:::Sys.getlocale")
+         .addParam("LC_ALL")
+         .call(&rLocale);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!rLocale.empty())
+   {
+      std::string locale = ::setlocale(LC_ALL, nullptr);
+      if (locale != rLocale)
+         ::setlocale(LC_ALL, rLocale.c_str());
+   }
+#endif
+}
+
 } // namespace util
 } // namespace r
 } // namespace rstudio
