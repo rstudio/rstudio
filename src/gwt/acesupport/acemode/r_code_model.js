@@ -1995,6 +1995,7 @@ var RCodeModel = function(session, tokenizer,
 
    this.$onDocChange = function(evt)
    {
+      this.$invalidateRow(evt.start.row);
       if (evt.action === "insert")
          this.$insertNewRows(evt.start.row, evt.end.row - evt.start.row);
       else
