@@ -5456,8 +5456,6 @@ dom.importCssString(".normal-mode .ace_cursor{\
           cm.curOp.cursorActivity = false;
       }, true);
     }
-    if (isHandled)
-      handleExternalSelection(cm, vim);
     return isHandled;
   }
   exports.CodeMirror = CodeMirror;
