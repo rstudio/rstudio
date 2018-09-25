@@ -262,8 +262,13 @@ std::string utf8ToSystem(const std::string& str,
       return std::string();
 
 #ifdef _WIN32
+
    std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], static_cast<int>(wide.size()));
+   int chars = ::MultiByteToWideChar(
+            CP_UTF8, 0,
+            str.c_str(), -1,
+            &wide[0], static_cast<int>(wide.size()));
+
    if (chars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -271,12 +276,27 @@ std::string utf8ToSystem(const std::string& str,
    }
 
    std::ostringstream output;
-   char mbbuf[10];
-   // Only go up to chars - 1 because last char is \0
-   for (int i = 0; i < chars - 1; i++)
+   char buffer[16];
+   for (int i = 0; i < chars; i++)
    {
-      int mbc = wctomb(mbbuf, wide[i]);
-      if (mbc == -1)
+      // allow transliteration because R on Windows typically
+      // transliterates unicode characters that cannot be exactly
+      // represented in the active code page.
+      //
+      // TODO: in the future, we should consider making it possible
+      // for callers to request transliteration vs. no transliteration,
+      // since this API is often used for text not directly intended for
+      // consumption by R
+      //
+      // TODO: should also allow users to supply requested code page for
+      // conversion, but that's a bit too late to bring in for v1.2
+      int n = ::WideCharToMultiByte(
+               CP_ACP, WC_COMPOSITECHECK,
+               &wide[i], 1,
+               buffer, 16,
+               nullptr, nullptr);
+
+      if (n == 0)
       {
          if (escapeInvalidChars)
             output << "\\u{" << std::hex << wide[i] << "}";
@@ -284,7 +304,9 @@ std::string utf8ToSystem(const std::string& str,
             output << "?"; // TODO: Use GetCPInfo()
       }
       else
-         output.write(mbbuf, mbc);
+      {
+         output.write(buffer, n);
+      }
    }
    return output.str();
 #else

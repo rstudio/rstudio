@@ -93,9 +93,11 @@ std::string rconsole2utf8(const std::string& encoded)
    return encoded;
 #else
    unsigned int codepage = localeCP;
+
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
+   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE)");
    while (pos != encoded.end() && regex_utils::search(pos, encoded.end(), m, utf8))
    {
       if (pos < m[0].first)
