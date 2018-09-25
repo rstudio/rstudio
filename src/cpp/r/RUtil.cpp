@@ -33,6 +33,16 @@
 # define CP_ACP 0
 #endif
 
+#ifdef _WIN32
+
+#include <Windows.h>
+
+extern "C" {
+__declspec(dllimport) unsigned int localeCP;
+}
+
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -79,14 +89,10 @@ bool hasCapability(const std::string& capability)
 
 std::string rconsole2utf8(const std::string& encoded)
 {
-   int codepage = CP_ACP;
-#ifdef _WIN32
-   Error error = r::exec::evaluateString("base::l10n_info()$codepage", &codepage);
-   if (error)
-      LOG_ERROR(error);
-#endif
-   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");
-
+#ifndef _WIN32
+   return encoded;
+#else
+   unsigned int codepage = localeCP;
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
@@ -101,6 +107,7 @@ std::string rconsole2utf8(const std::string& encoded)
       output.append(string_utils::systemToUtf8(std::string(pos, encoded.end()), codepage));
 
    return output;
+#endif
 }
 
 core::Error iconvstr(const std::string& value,
