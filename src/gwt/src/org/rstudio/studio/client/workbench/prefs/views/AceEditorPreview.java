@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.TextResource;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -105,28 +109,8 @@ public class AceEditorPreview extends DynamicIFrame
                         FontSizer.injectStylesIntoDocument(doc);
                         FontSizer.applyNormalFontSize(div);
                         
-                        body.appendChild(doc.createScriptElement(
-                              "var event = require('ace/lib/event');\n" +
-                              "var Editor = require('ace/editor').Editor;\n" +
-                              "var Renderer = require('ace/virtual_renderer').VirtualRenderer;\n" +
-                              "var dom = require('ace/lib/dom');\n" +
-                              "var container = document.getElementById('editor');\n" +
-                              "var value = dom.getInnerText(container);\n" +
-                              "container.innerHTML = '';\n" +
-                              "var session = ace.createEditSession(value);\n" +
-                              "var editor = new Editor(new Renderer(container, {}));\n" +
-                              "editor.setSession(session);\n" +
-                              "var env = {document: session, editor: editor, onResize: editor.resize.bind(editor, null)};\n" +
-                              "event.addListener(window, 'resize', env.onResize);\n" +
-                              "editor.on('destory', function() { event.removeListener(window, 'resize', env.onResize); });\n" +
-                              "editor.container.env = editor.env = env;\n" +
-                              "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
-                              "editor.setHighlightActiveLine(false);\n" +
-                              "editor.setReadOnly(true);\n" +
-                              "editor.renderer.setShowGutter(false);\n" +
-                              "editor.renderer.setDisplayIndentGuides(false);\n" +
-                              "var RMode = require('mode/r').Mode;\n" +
-                              "editor.getSession().setMode(new RMode(false, editor.getSession()));"));
+                        
+                        body.appendChild(doc.createScriptElement(RES.loader().getText()));
                      }
                   });
          }
@@ -199,4 +183,13 @@ public class AceEditorPreview extends DynamicIFrame
    private Double fontSize_;
    private Double zoomLevel_;
    private final String code_;
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("AceEditorPreview.js")
+      TextResource loader();
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+
 }
