@@ -94,6 +94,17 @@ std::string rconsole2utf8(const std::string& encoded)
 #else
    unsigned int codepage = localeCP;
 
+   // NOTE: On Windows with GUIs, when R attempts to write text to
+   // the console, it will surround UTF-8 text with 3-byte escapes:
+   //
+   //    \002\377\376 <text> \003\377\376
+   //
+   // strangely, we see these escapes around text that is not UTF-8
+   // encoded but rather is encoded according to the active locale.
+   // extract those pieces of text (discarding the escapes) and
+   // convert to UTF-8. (still not exactly sure what the cause of this
+   // behavior is; perhaps there is an extra UTF-8 <-> system conversion
+   // happening somewhere in the pipeline?)
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
