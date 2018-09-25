@@ -279,9 +279,6 @@ int RReadConsole (const char *pmt,
          // never having to start from scratch
          r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
-         // synchronize locale with R
-         r::util::synchronizeLocale();
-         
          // attempt to initialize 
          Error initError;
          Error error = r::exec::executeSafely<Error>(initialize, &initError);
@@ -415,9 +412,6 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
    {
       if (!s_suppressOutput)
       {
-         // synchronize locale with R
-         r::util::synchronizeLocale();
-
          // get output
          std::string output = std::string(buf,buflen);
          output = util::rconsole2utf8(output);
@@ -451,7 +445,13 @@ void RBusy(int which)
 {
    try
    {
-      s_callbacks.busy(which == 1) ;
+      // synchronize locale whenever R busy state changes
+      // (done relatively eagerly to ensure synchronization
+      // happens on each REPL iteration after user code is run)
+      r::util::synchronizeLocale();
+
+      // invoke callback
+      s_callbacks.busy(which == 1);
    }
    CATCH_UNEXPECTED_EXCEPTION 
 }

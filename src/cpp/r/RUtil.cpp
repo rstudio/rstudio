@@ -41,6 +41,8 @@ extern "C" {
 __declspec(dllimport) unsigned int localeCP;
 }
 
+unsigned int s_codepage = 0;
+
 #endif
 
 using namespace rstudio::core;
@@ -277,7 +279,12 @@ bool isPackageAttached(const std::string& packageName)
 void synchronizeLocale()
 {
 #ifdef _WIN32
-   // check to see if the R locale has changed and update if so
+
+   // bail if the codepages are still in sync
+   if (s_codepage == localeCP)
+      return;
+
+   // ask R what the current locale is and then update
    std::string rLocale;
    Error error = r::exec::RFunction("base:::Sys.getlocale")
          .addParam("LC_ALL")
@@ -291,6 +298,10 @@ void synchronizeLocale()
       if (locale != rLocale)
          ::setlocale(LC_ALL, rLocale.c_str());
    }
+
+   // save the updated codepage
+   s_codepage = localeCP;
+
 #endif
 }
 
