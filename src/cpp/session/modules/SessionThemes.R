@@ -791,6 +791,21 @@
 })
 
 # Worker Functions =================================================================================
+.rs.addFunction("isGlobalTheme", function(themeUrl)
+{
+   grepl("^theme/custom/global/.*?\\.rstheme$", themeUrl, ignore.case = TRUE)
+})
+
+.rs.addFunction("isLocalTheme", function(themeUrl)
+{
+   grepl("^theme/custom/local/.*\\.rstheme$", themeUrl, ignore.case = TRUE)
+})
+
+.rs.addFunction("isDefaultTheme", function(themeUrl)
+{
+   grepl("^theme/default/.*\\.rstheme$", themeUrl, ignore.case = TRUE)
+})
+
 # Gets the install location.
 #
 # @param global    Whether to get the global or local install dir.
@@ -826,11 +841,12 @@
 })
 
 .rs.addFunction("getThemeDirFromUrl", function(url) {
-   if (grepl("^theme/custom/global.*?\\.rstheme$", url, ignore.case = TRUE))
+
+   if (.rs.isGlobalTheme(url))
    {
       file.path(.rs.getThemeInstallDir(TRUE), basename(url))
    }
-   else if (grepl("^theme/custom/local.*\\.rstheme$", url, ignore.case= TRUE))
+   else if (.rs.isLocalTheme(url))
    {
       file.path(.rs.getThemeInstallDir(FALSE), basename(url))
    }
@@ -912,16 +928,20 @@
    
    nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
    nameLine <- themeLines[grep(nameRegex, themeLines, perl = TRUE)]
-   name <- sub(
-      "^\\s*(.+?)\\s*$",
-      "\\1",
-      regmatches(
-         nameLine,
-         regexec(
-            nameRegex,
+   name <- ""
+   if (length(nameLine) > 0)
+   {
+      name <- sub(
+         "^\\s*(.+?)\\s*$",
+         "\\1",
+         regmatches(
             nameLine,
-            perl = TRUE))[[1]][2],
-      perl = TRUE)
+            regexec(
+               nameRegex,
+               nameLine,
+               perl = TRUE))[[1]][2],
+         perl = TRUE)
+   }
    
    # If there's no name in the file, use the name of the file.
    if (is.na(name) || (name == "")) name <- fileName
@@ -933,6 +953,29 @@
          themePath,
          "\" is valid.",
          call. = FALSE)
+   }
+   
+   # Check if a theme with the same name already exists in the current location.
+   dupTheme <- .Call("rs_getThemes", PACKAGE = "(embedding)")[[tolower(name)]]
+   if (!is.null(dupTheme) && 
+      ((globally && .rs.isGlobalTheme(dupTheme$url)) ||
+      (!globally && .rs.isLocalTheme(dupTheme$url))))
+   {
+      stop(
+         "The specified theme, \"",
+         name,
+         "\", already exists in the target location. Please delete the existing theme and try again.",
+         call. = FALSE)
+   }
+   else if (!is.null(dupTheme))
+   {
+      willBeOverridden <- if (!globally || .rs.isDefaultTheme()) "The existing theme will be overridden by the new theme."
+                          else "The newly added theme will be overriden by the existing theme."
+      warning("There is another theme with the same name, \"",
+              name,
+              "\". ",
+              willBeOverridden,
+              call. = FALSE)
    }
    
    outputDir <- .rs.getThemeInstallDir(globally)
