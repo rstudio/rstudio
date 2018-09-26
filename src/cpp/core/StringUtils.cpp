@@ -277,7 +277,9 @@ std::string utf8ToSystem(const std::string& str,
 
    std::ostringstream output;
    char buffer[16];
-   for (int i = 0; i < chars; i++)
+
+   // Only go up to chars - 1 because last char is \0
+   for (int i = 0; i < chars - 1; i++)
    {
       int n = wctomb(buffer, wide[i]);
 
