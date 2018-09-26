@@ -806,6 +806,41 @@
    grepl("^theme/default/.*\\.rstheme$", themeUrl, ignore.case = TRUE)
 })
 
+.rs.addFunction("getThemeName", function(themeLines, fileName)
+{
+   tmThemeNameRegex <- "<key>name</key>\\s*<string>([^>]*)</string>"
+   rsthemeNameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
+   nameRegex <- tmThemeNameRegex
+   nameLine <- themeLines[grep(tmThemeNameRegex, themeLines, perl = TRUE, ignore.case = TRUE)]
+   if (length(nameLine) == 0)
+   {
+      nameRegex <- rsthemeNameRegex
+      nameLine <- themeLines[grep(rsthemeNameRegex, themeLines, perl = TRUE, ignore.case = TRUE)]
+   }
+   if (length(nameLine) == 0)
+   {
+      regmatches(
+         basename(fileName),
+         regexec(
+            "^([^\\.]*)(?:\\.[^\\.]*)?",
+            basename(fileName),
+            perl = TRUE))[[1]][2]
+   }
+   else
+   {
+      sub(
+         "^\\s*(.+?)\\s*$",
+         "\\1",
+         regmatches(
+            nameLine,
+            regexec(
+               nameRegex,
+               nameLine,
+               perl = TRUE))[[1]][2],
+         perl = TRUE)
+   }
+})
+
 # Gets the install location.
 #
 # @param global    Whether to get the global or local install dir.
@@ -913,12 +948,7 @@
 # Returns the name of the theme on success.
 .rs.addFunction("addTheme", function(themePath, apply, force, globally) {
    # Get the name of the file without extension.
-   fileName <- regmatches(
-      basename(themePath),
-      regexec(
-         "^([^\\.]*)(?:\\.[^\\.]*)?",
-         basename(themePath),
-         perl = TRUE))[[1]][2]
+   fileName <- basename(themePath)
    
    # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
    # the name of the file.
@@ -926,27 +956,9 @@
    themeLines <- readLines(conn)
    close(conn)
    
-   nameRegex <- "rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"
-   nameLine <- themeLines[grep(nameRegex, themeLines, perl = TRUE)]
-   name <- ""
-   if (length(nameLine) > 0)
-   {
-      name <- sub(
-         "^\\s*(.+?)\\s*$",
-         "\\1",
-         regmatches(
-            nameLine,
-            regexec(
-               nameRegex,
-               nameLine,
-               perl = TRUE))[[1]][2],
-         perl = TRUE)
-   }
+   name <- .rs.getThemeName(paste0(themeLines, collapse = "\n"), fileName)
    
-   # If there's no name in the file, use the name of the file.
-   if (is.na(name) || (name == "")) name <- fileName
-   
-   if (is.na(name) || (name == ""))
+   if (is.na(name) || (name == "") || is.null(name))
    {
       stop(
          "Unable to find a name for the new theme. Please check that the file \"",
@@ -1003,7 +1015,7 @@
       stop(
          "A file with the same name, \"",
          fileName,
-         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
+         "\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
          call. = FALSE)
    }
 

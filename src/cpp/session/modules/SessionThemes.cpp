@@ -452,6 +452,62 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
+Error getThemeName(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string themeFile;
+   Error error = json::readParams(request.params, &themeFile);
+
+   if (!error)
+   {
+      r::exec::RFunction openFile("file");
+      r::exec::RFunction readLines("readLines");
+      r::exec::RFunction paste0("paste0");
+      r::exec::RFunction getThemeName(".rs.getThemeName");
+      r::exec::RFunction close("close");
+
+      r::sexp::Protect protect;
+      SEXP conn, lines, joinedLines, name;
+
+      openFile.addParam(themeFile);
+      error = openFile.call(&conn, &protect);
+
+      if (!error)
+      {
+         readLines.addParam(conn);
+         error = readLines.call(&lines, &protect);
+         close.addParam(conn);
+         close.call();
+
+         if (!error)
+         {
+            paste0.addParam(lines);
+            paste0.addParam("collapse", "\n");
+            error = paste0.call(&joinedLines, &protect);
+
+            if (!error)
+            {
+               getThemeName.addParam("themeLines", joinedLines);
+               getThemeName.addParam("fileName", themeFile);
+               error = getThemeName.call(&name, &protect);
+
+               if (!error)
+               {
+                  std::string strName;
+                  error = r::sexp::extract(name, &strName);
+                  if (!error)
+                  {
+                     pResponse->setResult(strName);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   return error;
+}
+
 } // anonymous namespace
 
 /**
@@ -533,6 +589,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))
       (bind(registerRpcMethod, "remove_theme", removeTheme))
+      (bind(registerRpcMethod, "get_theme_name", getThemeName))
       (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
       (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
