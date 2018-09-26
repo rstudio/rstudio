@@ -982,7 +982,7 @@
    else if (!is.null(dupTheme))
    {
       willBeOverridden <- if (!globally || .rs.isDefaultTheme()) "The existing theme will be overridden by the new theme."
-                          else "The newly added theme will be overriden by the existing theme."
+                          else "The newly added theme will be overridden by the existing theme."
       warning("There is another theme with the same name, \"",
               name,
               "\". ",
