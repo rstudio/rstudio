@@ -706,12 +706,19 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 .rs.addApiFunction("getThemeInfo", function() {
-   editor <- .Call("rs_readUiPref", "theme")
-   global <- .Call("rs_readUiPref", "flat_theme")
-
-   if (is.null(editor)) {
+   
+   # read theme preferences (note: 'theme' is deprecated)
+   editor <- .rs.readUiPref("theme")
+   global <- .rs.readUiPref("flat_theme")
+   
+   # check 'rstheme' pref for editor theme
+   rstheme <- .rs.readUiPref("rstheme")
+   if (!is.null(rstheme))
+      editor <- rstheme[["name"]]
+   
+   # if we still don't have a theme, default to textmate
+   if (is.null(editor))
       editor <- "TextMate"
-   }
 
    global <- switch(
       if (is.null(global)) "" else global,
