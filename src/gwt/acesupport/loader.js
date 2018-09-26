@@ -241,17 +241,17 @@ function loadEditor(container) {
    var env = {};
    container.env = env;
 
-   // Load the editor
-   env.editor = new RStudioEditor(new Renderer(container, ""), new RStudioEditSession(""));
-   var session = env.editor.getSession();
-   session.setMode(new TextMode());
-   session.setUndoManager(new RStudioUndoManager());
-
    // Setup syntax checking
    var config = require("ace/config");
    config.set("basePath", "ace");
    config.set("workerPath", "js/workers");
    config.setDefaultValue("session", "useWorker", false);
+
+   // Load the editor
+   env.editor = new RStudioEditor(new Renderer(container, ""), new RStudioEditSession(""));
+   var session = env.editor.getSession();
+   session.setMode(new TextMode());
+   session.setUndoManager(new RStudioUndoManager());
 
    // We handle these commands ourselves.
    function squelch(cmd) {
