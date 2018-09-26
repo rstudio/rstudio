@@ -76,7 +76,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       management.add(headerLabel("Package Management"));
 
       infoBar_ = new InfoBar(InfoBar.WARNING);
-      infoBar_.setText("CRAN repos were modified outside package preferences.");
+      infoBar_.setText("CRAN repositories were modified outside package preferences.");
       infoBar_.addStyleName(res_.styles().themeInfobar());
       spaced(infoBar_);
       
