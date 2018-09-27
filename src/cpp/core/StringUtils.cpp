@@ -262,8 +262,13 @@ std::string utf8ToSystem(const std::string& str,
       return std::string();
 
 #ifdef _WIN32
+
    std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wide[0], static_cast<int>(wide.size()));
+   int chars = ::MultiByteToWideChar(
+            CP_UTF8, 0,
+            str.c_str(), -1,
+            &wide[0], static_cast<int>(wide.size()));
+
    if (chars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
@@ -271,12 +276,14 @@ std::string utf8ToSystem(const std::string& str,
    }
 
    std::ostringstream output;
-   char mbbuf[10];
+   char buffer[16];
+
    // Only go up to chars - 1 because last char is \0
    for (int i = 0; i < chars - 1; i++)
    {
-      int mbc = wctomb(mbbuf, wide[i]);
-      if (mbc == -1)
+      int n = wctomb(buffer, wide[i]);
+
+      if (n == -1)
       {
          if (escapeInvalidChars)
             output << "\\u{" << std::hex << wide[i] << "}";
@@ -284,7 +291,9 @@ std::string utf8ToSystem(const std::string& str,
             output << "?"; // TODO: Use GetCPInfo()
       }
       else
-         output.write(mbbuf, mbc);
+      {
+         output.write(buffer, n);
+      }
    }
    return output.str();
 #else
