@@ -26,6 +26,8 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.RVersionSpec;
@@ -34,7 +36,8 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -61,7 +64,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  Session session,
                                  GlobalDisplay globalDisplay,
                                  WorkbenchContext context,
-                                 EventBus events)
+                                 EventBus events,
+                                 ApplicationQuit quit)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
@@ -69,6 +73,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       session_ = session;
       globalDisplay_ = globalDisplay;
       events_ = events;
+      quit_ = quit;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
       VerticalPanel basic = new VerticalPanel();
@@ -511,11 +516,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                "Restart Required",
                "You need to restart RStudio in order for these changes to take effect. " +
                "Do you want to do this now?",
-               () -> {
-                  forceClosed(() -> {
-                     events_.fireEvent(new SwitchToProjectEvent(session_.getSessionInfo().getActiveProjectFile()));
-                  });
-               },
+               () -> forceClosed(() -> restart()),
                true);
          
       }
@@ -543,6 +544,25 @@ public class GeneralPreferencesPane extends PreferencesPane
          return rememberRVersionForProjects_.getValue();
       else
          return false;
+   }
+   
+   private void restart()
+   {
+      quit_.prepareForQuit(
+            "Restarting RStudio",
+            new QuitContext()
+            {
+               @Override
+               public void onReadyToQuit(boolean saveChanges)
+               {
+                  String project = session_.getSessionInfo().getActiveProjectFile();
+                  if (project == null)
+                     project = Projects.NONE;
+                  
+                  events_.fireEvent(new OpenProjectNewWindowEvent(project, null));
+                  quit_.performQuit(null, saveChanges);
+               }
+            });
    }
    
    private static final String ENGINE_AUTO        = "auto";
@@ -580,5 +600,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   private final ApplicationQuit quit_;
    
 }
