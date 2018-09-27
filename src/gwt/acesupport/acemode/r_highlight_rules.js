@@ -34,6 +34,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
    var lang = require("ace/lib/lang");
    var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
    var Utils = require("mode/utils");
+   var unicode = require("ace/unicode");
 
    var reLhsBracket = "[[({]";
    var reRhsBracket = "[\\])}]";
@@ -201,7 +202,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          "NA_complex_"
       ]);
 
-      var reIdentifier = "[a-zA-Z.][a-zA-Z0-9._]*";
+      var reIdentifier = "[" + unicode.wordChars + ".][" + unicode.wordChars + "._]*";
 
       var rules = {};
 

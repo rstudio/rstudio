@@ -34,8 +34,6 @@ public class CompileOutputBufferWithHighlight extends Composite
       
       output_ = new PreWidget();
       output_.setStylePrimaryName(styles_.output());
-      output_.addStyleName("ace_text-layer");
-      output_.addStyleName("ace_line");
       output_.addStyleName(styles_.paddedOutput());
       FontSizer.applyNormalFontSize(output_);
       console_ = new VirtualConsole(output_.getElement());

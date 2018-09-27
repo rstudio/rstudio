@@ -60,19 +60,8 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
          return this.$outdent.autoOutdent(state, session, row);
       };
       
-      this.tokenRe = new RegExp("^["
-          + unicode.packages.L
-          + unicode.packages.Mn + unicode.packages.Mc
-          + unicode.packages.Nd
-          + unicode.packages.Pc + "._]+", "g"
-      );
-
-      this.nonTokenRe = new RegExp("^(?:[^"
-          + unicode.packages.L
-          + unicode.packages.Mn + unicode.packages.Mc
-          + unicode.packages.Nd
-          + unicode.packages.Pc + "._]|\\s])+", "g"
-      );
+      this.tokenRe = new RegExp("^[" + unicode.wordChars + "._]+", "g");
+      this.nonTokenRe = new RegExp("^(?:[^" + unicode.wordChars + "._]|\\s)+", "g");
 
       // NOTE: these override fields used for 'auto_brace_insert'
       this.$complements = {

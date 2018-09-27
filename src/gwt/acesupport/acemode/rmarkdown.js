@@ -254,23 +254,12 @@ oop.inherits(Mode, MarkdownMode);
       return false;
    };
 
-    this.tokenRe = new RegExp("^["
-        + unicode.packages.L
-        + unicode.packages.Mn + unicode.packages.Mc
-        + unicode.packages.Nd
-        + unicode.packages.Pc + "._]+", "g"
-    );
+   this.tokenRe = new RegExp("^[" + unicode.wordChars + "._]+", "g");
+   this.nonTokenRe = new RegExp("^(?:[^" + unicode.wordChars + "._]|\\s)+", "g");
 
-    this.nonTokenRe = new RegExp("^(?:[^"
-        + unicode.packages.L
-        + unicode.packages.Mn + unicode.packages.Mc
-        + unicode.packages.Nd
-        + unicode.packages.Pc + "._]|\\s])+", "g"
-    );
+   this.allowAutoInsert = this.smartAllowAutoInsert;
 
-    this.allowAutoInsert = this.smartAllowAutoInsert;
-
-    this.$id = "mode/rmarkdown";
+   this.$id = "mode/rmarkdown";
 
 }).call(Mode.prototype);
 
