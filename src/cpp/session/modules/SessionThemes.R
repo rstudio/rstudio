@@ -1219,3 +1219,12 @@
       theme[names(theme) != "url"]
    })
 })
+
+# RPC Functions ====================================================================================
+.rs.addJsonRpcHandler("get_theme_name", function(themeFile) {
+   conn <- file(themeFile)
+   lines <- readLines(conn)
+   close(conn)
+   
+   .rs.scalar(.rs.getThemeName(paste0(lines, collapse = "\n"), themeFile))
+})
