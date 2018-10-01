@@ -6280,10 +6280,9 @@ public class TextEditingTarget implements
                {
                   previewFromR();
                }
-               else if (fileType_.isR())
+               else if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
                {
-                  if (extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
-                     customSource();
+                  customSource();
                }
                else
                {
