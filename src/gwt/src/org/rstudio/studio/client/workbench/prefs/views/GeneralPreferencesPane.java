@@ -559,8 +559,10 @@ public class GeneralPreferencesPane extends PreferencesPane
                   if (project == null)
                      project = Projects.NONE;
                   
-                  events_.fireEvent(new OpenProjectNewWindowEvent(project, null));
-                  quit_.performQuit(null, saveChanges);
+                  final String finalProject = project;
+                  quit_.performQuit(null, saveChanges, () -> {
+                     events_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
+                  });
                }
             });
    }
