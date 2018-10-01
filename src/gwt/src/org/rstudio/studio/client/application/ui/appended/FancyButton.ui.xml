@@ -3,12 +3,6 @@
 
    <ui:with field="res" type="org.rstudio.studio.client.application.ui.appended.FancyButton.Resources"/>
 
-   <button class="{res.styles.fancy}" type="submit"><table cellpadding="0" cellspacing="0" border="0">
-      <tr>
-         <td class="{res.styles.left}"></td>
-         <td ui:field='content_' class="{res.styles.inner}" valign="top"></td>
-         <td class="{res.styles.right}"></td>
-      </tr>
-   </table></button>
+   <button class="{res.styles.fancy}" type="submit" ui:field='content_'></button>
 
 </ui:UiBinder>
