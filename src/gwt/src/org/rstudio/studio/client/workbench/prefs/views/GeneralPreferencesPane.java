@@ -273,18 +273,18 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
          
-         ignoreGpuBlacklist_ = new CheckBox("Ignore GPU blacklist");
-         advanced.add(lessSpaced(ignoreGpuBlacklist_));
+         useGpuBlacklist_ = new CheckBox("Use GPU blacklist (recommended)");
+         advanced.add(lessSpaced(useGpuBlacklist_));
          Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
-            desktopGpuBlacklist_ = ignore;
-            ignoreGpuBlacklist_.setValue(ignore);
+            desktopIgnoreGpuBlacklist_ = ignore;
+            useGpuBlacklist_.setValue(!ignore);
          });
          
-         disableGpuDriverBugWorkarounds_ = new CheckBox("Disable GPU driver bug workarounds");
-         advanced.add(lessSpaced(disableGpuDriverBugWorkarounds_));
+         useGpuDriverBugWorkarounds_ = new CheckBox("Use GPU driver bug workarounds (recommended)");
+         advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
          Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
             desktopDisableGpuDriverBugWorkarounds_ = disable;
-            disableGpuDriverBugWorkarounds_.setValue(disable);
+            useGpuDriverBugWorkarounds_.setValue(!disable);
          });
          
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
@@ -449,20 +449,20 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
       
-      if (ignoreGpuBlacklist_ != null &&
-          desktopGpuBlacklist_ != ignoreGpuBlacklist_.getValue())
+      if (useGpuBlacklist_ != null &&
+          desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue())
       {
          restartRequired = true;
-         boolean ignore = ignoreGpuBlacklist_.getValue();
-         desktopGpuBlacklist_ = ignore;
+         boolean ignore = !useGpuBlacklist_.getValue();
+         desktopIgnoreGpuBlacklist_ = ignore;
          Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
       }
       
-      if (disableGpuDriverBugWorkarounds_ != null &&
-          desktopDisableGpuDriverBugWorkarounds_ != disableGpuDriverBugWorkarounds_.getValue())
+      if (useGpuDriverBugWorkarounds_ != null &&
+          desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue())
       {
          restartRequired = true;
-         boolean disable = disableGpuDriverBugWorkarounds_.getValue();
+         boolean disable = !useGpuDriverBugWorkarounds_.getValue();
          desktopDisableGpuDriverBugWorkarounds_ = disable;
          Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
       }
@@ -574,7 +574,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
-   private boolean desktopGpuBlacklist_ = false;
+   private boolean desktopIgnoreGpuBlacklist_ = false;
    private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
    
    private final FileSystemContext fsContext_;
@@ -584,8 +584,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
-   private CheckBox ignoreGpuBlacklist_ = null;
-   private CheckBox disableGpuDriverBugWorkarounds_ = null;
+   private CheckBox useGpuBlacklist_ = null;
+   private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;
