@@ -94,5 +94,22 @@ third"
 #' [name](link)
 statement <- 1 + 1
 
+# 15: https://github.com/rstudio/rstudio/issues/3582
+identity(
+   1) +
+   1
+
+# 16
+(1
+   + 2
+   + 3)
+
+# 17
+foo <- function(
+)
+{
+}
+
+
 # cursor should end here after executing all lines
 EOF

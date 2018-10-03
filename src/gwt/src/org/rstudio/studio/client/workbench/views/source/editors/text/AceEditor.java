@@ -3272,6 +3272,8 @@ public class AceEditor implements DocDisplay,
             continue;
          if (t.getType()  == "keyword.operator" ||
              t.getType()  == "keyword.operator.infix" ||
+             t.getValue() == "(" ||
+             t.getValue() == "[" ||
              t.getValue() == ",")
             return true;
          break;
@@ -3394,7 +3396,10 @@ public class AceEditor implements DocDisplay,
       // expand to enclosing '(' or '['
       do
       {
-         c.setRow(pos.getRow());
+         // NOTE: we don't use 'moveToPosition()' here as that API skips
+         // whitespace and comments, whereas we might want to actually begin
+         // on a comment here
+         c.setRow(startRow);
          
          // move forward over commented / empty lines
          int n = getSession().getLength();
@@ -3404,10 +3409,26 @@ public class AceEditor implements DocDisplay,
                break;
             
             c.setRow(c.getRow() + 1);
+            c.setOffset(0);
+         }
+         
+         // if we have a function token on this line, then use
+         // its scope for execution
+         JsArray<Token> tokens = getTokens(c.getRow());
+         for (int i = 0; i < tokens.length(); i++)
+         {
+            if (tokens.get(i).valueEquals("function"))
+            {
+               Position tokenPos = Position.create(
+                     c.getRow(),
+                     tokens.get(i).getColumn());
+               ScopeFunction scope = getFunctionAtPosition(tokenPos, false);
+               if (scope != null)
+                  return Range.fromPoints(scope.getPreamble(), scope.getEnd());
+            }
          }
          
          // move to last non-right-bracket token on line
-         c.moveToEndOfRow(c.getRow());
          while (c.valueEquals(")") || c.valueEquals("]"))
             if (!c.moveToPreviousToken())
                break;
