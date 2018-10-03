@@ -606,6 +606,10 @@ public class AceEditorNative extends JavaScriptObject {
       }
    }-*/;
    
+   public final native void selectMoreLines(int direction, boolean skip) /*-{
+      return this.selectMoreLines(direction, skip);
+   }-*/;
+   
    public final native void execCommand(String commandName) /*-{
       this.execCommand(commandName);
    }-*/;

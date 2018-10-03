@@ -121,12 +121,29 @@ public class AceEditorCommandDispatcher
    }
    
    @Handler
+   public void onAddCursorAboveSkipCurrent()
+   {
+      fireEvent(
+            AceEditorCommandEvent.ADD_CURSOR_ABOVE_SKIP_CURRENT,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+   
+   @Handler
    public void onAddCursorBelow()
    {
       fireEvent(
             AceEditorCommandEvent.ADD_CURSOR_BELOW,
             AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
    }
+   
+   @Handler
+   public void onAddCursorBelowSkipCurrent()
+   {
+      fireEvent(
+            AceEditorCommandEvent.ADD_CURSOR_BELOW_SKIP_CURRENT,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+   
    
    @Handler
    public void onInsertSnippet()
