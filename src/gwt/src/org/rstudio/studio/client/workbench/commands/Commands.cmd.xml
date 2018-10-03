@@ -634,6 +634,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
          <shortcut refid="splitIntoLines" value="Meta+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Shift+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="editLinesFromStart" value="Ctrl+Alt+Shift+A"/>
          <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim,sublime"/>
          <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim,sublime"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
@@ -1506,6 +1507,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="splitIntoLines"
         menuLabel="Split Into Lines"
         desc="Create a new cursor on each line in current selection"
+        context="editor"/>
+        
+   <cmd id="editLinesFromStart"
+        menuLabel="Edit Lines from Start"
+        desc="Create a new cursor at start of each line in selection"
         context="editor"/>
         
    <cmd id="executeAllCode"
