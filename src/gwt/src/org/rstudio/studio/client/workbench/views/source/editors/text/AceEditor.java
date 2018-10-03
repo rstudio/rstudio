@@ -451,28 +451,30 @@ public class AceEditor implements DocDisplay,
                   
                   switch (event.getCommand())
                   {
-                  case AceEditorCommandEvent.YANK_REGION:                yankRegion();               break;
-                  case AceEditorCommandEvent.YANK_BEFORE_CURSOR:         yankBeforeCursor();         break;
-                  case AceEditorCommandEvent.YANK_AFTER_CURSOR:          yankAfterCursor();          break;
-                  case AceEditorCommandEvent.PASTE_LAST_YANK:            pasteLastYank();            break;
-                  case AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
-                  case AceEditorCommandEvent.INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
-                  case AceEditorCommandEvent.JUMP_TO_MATCHING:           jumpToMatching();           break;
-                  case AceEditorCommandEvent.SELECT_TO_MATCHING:         selectToMatching();         break;
-                  case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
-                  case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
-                  case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
-                  case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
-                  case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
-                  case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
-                  case AceEditorCommandEvent.EXPAND_TO_LINE:             expandToLine();             break;
-                  case AceEditorCommandEvent.COPY_LINES_DOWN:            copyLinesDown();            break;
-                  case AceEditorCommandEvent.JOIN_LINES:                 joinLines();                break;
-                  case AceEditorCommandEvent.REMOVE_LINE:                removeLine();               break;
-                  case AceEditorCommandEvent.SPLIT_INTO_LINES:           splitIntoLines();           break;
-                  case AceEditorCommandEvent.BLOCK_INDENT:               blockIndent();              break;
-                  case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
-                  case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
+                  case AceEditorCommandEvent.YANK_REGION:                   yankRegion();               break;
+                  case AceEditorCommandEvent.YANK_BEFORE_CURSOR:            yankBeforeCursor();         break;
+                  case AceEditorCommandEvent.YANK_AFTER_CURSOR:             yankAfterCursor();          break;
+                  case AceEditorCommandEvent.PASTE_LAST_YANK:               pasteLastYank();            break;
+                  case AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR:    insertAssignmentOperator(); break;
+                  case AceEditorCommandEvent.INSERT_PIPE_OPERATOR:          insertPipeOperator();       break;
+                  case AceEditorCommandEvent.JUMP_TO_MATCHING:              jumpToMatching();           break;
+                  case AceEditorCommandEvent.SELECT_TO_MATCHING:            selectToMatching();         break;
+                  case AceEditorCommandEvent.EXPAND_TO_MATCHING:            expandToMatching();         break;
+                  case AceEditorCommandEvent.ADD_CURSOR_ABOVE:              selectMoreLines(-1, false); break;
+                  case AceEditorCommandEvent.ADD_CURSOR_ABOVE_SKIP_CURRENT: selectMoreLines(-1, true);  break;
+                  case AceEditorCommandEvent.ADD_CURSOR_BELOW:              selectMoreLines(1, false);  break;
+                  case AceEditorCommandEvent.ADD_CURSOR_BELOW_SKIP_CURRENT: selectMoreLines(1, true);   break;
+                  case AceEditorCommandEvent.INSERT_SNIPPET:                onInsertSnippet();          break;
+                  case AceEditorCommandEvent.MOVE_LINES_UP:                 moveLinesUp();              break;
+                  case AceEditorCommandEvent.MOVE_LINES_DOWN:               moveLinesDown();            break;
+                  case AceEditorCommandEvent.EXPAND_TO_LINE:                expandToLine();             break;
+                  case AceEditorCommandEvent.COPY_LINES_DOWN:               copyLinesDown();            break;
+                  case AceEditorCommandEvent.JOIN_LINES:                    joinLines();                break;
+                  case AceEditorCommandEvent.REMOVE_LINE:                   removeLine();               break;
+                  case AceEditorCommandEvent.SPLIT_INTO_LINES:              splitIntoLines();           break;
+                  case AceEditorCommandEvent.BLOCK_INDENT:                  blockIndent();              break;
+                  case AceEditorCommandEvent.BLOCK_OUTDENT:                 blockOutdent();             break;
+                  case AceEditorCommandEvent.REINDENT:                      reindent();                 break;
                   }
                }
             });
@@ -2570,6 +2572,11 @@ public class AceEditor implements DocDisplay,
    public void expandToMatching()
    {
       widget_.getEditor().jumpToMatching(true, true);
+   }
+   
+   private void selectMoreLines(int direction, boolean skip)
+   {
+      widget_.getEditor().selectMoreLines(direction, skip);
    }
    
    @Override

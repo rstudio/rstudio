@@ -624,11 +624,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="expandToMatching" value="Ctrl+Shift+M" disableModes="default,vim,emacs"/>
          <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut refid="addCursorAbove" value="Ctrl+Alt+Up"/>
+         <shortcut refid="addCursorAboveSkipCurrent" value="Ctrl+Alt+Shift+Up"/>
          <shortcut refid="addCursorBelow" value="Ctrl+Alt+Down"/>
+         <shortcut refid="addCursorBelowSkipCurrent" value="Ctrl+Alt+Shift+Down"/>
          <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
-         <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandSelection" value="Meta+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="shrinkSelection" value="Meta+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
@@ -1475,8 +1477,16 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Add Cursor Above Current Cursor"
         context="editor"/>
         
+   <cmd id="addCursorAboveSkipCurrent"
+        menuLabel="Move multi-select cursor up"
+        context="editor"/>
+        
    <cmd id="addCursorBelow"
         menuLabel="Add Cursor Below Current Cursor"
+        context="editor"/>
+        
+   <cmd id="addCursorBelowSkipCurrent"
+        menuLabel="Move multi-select cursor down"
         context="editor"/>
         
    <cmd id="moveLinesUp"

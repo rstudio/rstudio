@@ -140,7 +140,9 @@ public abstract class
    public abstract AppCommand selectToMatching();
    public abstract AppCommand expandToMatching();
    public abstract AppCommand addCursorAbove();
+   public abstract AppCommand addCursorAboveSkipCurrent();
    public abstract AppCommand addCursorBelow();
+   public abstract AppCommand addCursorBelowSkipCurrent();
    public abstract AppCommand moveLinesUp();
    public abstract AppCommand moveLinesDown();
    public abstract AppCommand expandToLine();
