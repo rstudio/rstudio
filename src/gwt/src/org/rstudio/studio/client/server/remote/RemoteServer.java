@@ -5601,6 +5601,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getThemeName(ServerRequestCallback<String> callback, String themeLocation)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(themeLocation));
+      sendRequest(RPC_SCOPE, GET_THEME_NAME, params, callback);
+   }
+   
+   @Override
    public void replaceCommentHeader(String command,
                                     String path,
                                     String code,
@@ -6065,6 +6073,7 @@ public class RemoteServer implements Server
    private static final String GET_THEMES = "get_themes";
    private static final String ADD_THEME = "add_theme";
    private static final String REMOVE_THEME = "remove_theme";
+   private static final String GET_THEME_NAME = "get_theme_name";
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
 }
