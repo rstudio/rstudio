@@ -289,7 +289,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> reindentOnPaste()
    {
-      return bool("reindent_on_paste", false);
+      return bool("reindent_on_paste", true);
    }
    
    public PrefValue<Boolean> verticallyAlignArgumentIndent()
