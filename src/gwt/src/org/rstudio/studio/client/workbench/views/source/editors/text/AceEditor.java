@@ -348,9 +348,13 @@ public class AceEditor implements DocDisplay,
                @Override
                public void execute()
                {
-                  if (activeEditEvent_.getType() == EditEvent.TYPE_PASTE_AND_INDENT ||
-                      monitor_.isShiftKeyDown() ||
-                      uiPrefs_.reindentOnPaste().getValue())
+                  boolean reindent =
+                        activeEditEvent_.getType() == EditEvent.TYPE_PASTE_AND_INDENT ||
+                        monitor_.isShiftKeyDown();
+                  
+                  reindent ^= uiPrefs_.reindentOnPaste().getValue();
+                  
+                  if (reindent)
                   {
                      Range range = Range.fromPoints(start, getSelectionEnd());
                      indentPastedRange(range);
