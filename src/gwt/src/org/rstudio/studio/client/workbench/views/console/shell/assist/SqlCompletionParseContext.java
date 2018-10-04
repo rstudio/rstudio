@@ -24,6 +24,8 @@ public class SqlCompletionParseContext
 {
    public final JsVectorString identifiers = JsVectorString.createVector();
    public final JsVectorString tables = JsVectorString.createVector();
+   public final JsVectorString schemas = JsVectorString.createVector();
    public final JsMapString aliases = JsMapString.create();
+   public String contextKeyword = "";
    public boolean preferLowercaseKeywords = true;
 }
