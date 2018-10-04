@@ -43,23 +43,11 @@ public class FancyButton extends FocusWidget
    {
       @Source("FancyButton.css")
       Styles styles();
-      
-      @ImageOptions(repeatStyle = RepeatStyle.None)
-      ImageResource buttonLeft();
-
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource buttonTile();
-      
-      @ImageOptions(repeatStyle = RepeatStyle.None)
-      ImageResource buttonRight();
    }
 
    interface Styles extends CssResource
    {
       String fancy();
-      String left();
-      String inner();
-      String right();
    }
 
    interface Binder extends UiBinder<ButtonElement, FancyButton> {}
@@ -82,5 +70,5 @@ public class FancyButton extends FocusWidget
    }
 
    @UiField
-   TableCellElement content_;
+   ButtonElement content_;
 }

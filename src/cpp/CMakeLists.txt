@@ -299,7 +299,10 @@ if(RSTUDIO_CONFIG_CORE_DEV)
 endif()
 if(RSTUDIO_CONFIG_MONITOR_ONLY)
    message(STATUS "Configured to build MONITOR_ONLY")
+elseif(RSTUDIO_CONFIG_SESSION_ONLY)
+   message(STATUS, "Configured to build SESSION_ONLY")
 endif()
+
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects

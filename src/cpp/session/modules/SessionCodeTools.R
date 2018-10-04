@@ -1925,8 +1925,8 @@
       data[["repos"]] <- sprintf(
          "c(%s)",
          paste(
-            names(repos),
-            .rs.surround(as.character(repos), with = "'"),
+            shQuote(names(repos)),
+            shQuote(as.character(repos)),
             sep = " = ",
             collapse = ", "
          )
