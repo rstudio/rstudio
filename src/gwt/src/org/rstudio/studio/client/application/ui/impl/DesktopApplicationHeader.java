@@ -242,6 +242,14 @@ public class DesktopApplicationHeader implements ApplicationHeader
       fireEditEvent(EditEvent.TYPE_PASTE);
       Desktop.getFrame().clipboardPaste();
    }
+   
+   @Handler
+   void onPasteAndIndent()
+   {
+      fireEditEvent(EditEvent.TYPE_PASTE_AND_INDENT);
+      Desktop.getFrame().clipboardPaste();
+   }
+   
 
    @Handler
    void onShowLogFiles()
