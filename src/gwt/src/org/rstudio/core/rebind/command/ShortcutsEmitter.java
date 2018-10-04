@@ -65,6 +65,7 @@ public class ShortcutsEmitter
          String title = childEl.getAttribute("title");
          String disableModes = childEl.getAttribute("disableModes");
          String handlesEventPropagation = childEl.getAttribute("handlesEventPropagation");
+         String platform = childEl.getAttribute("platform");
 
          // Use null when we don't have a command associated with the shortcut,
          // otherwise refer to the function that returns the command 
@@ -81,7 +82,7 @@ public class ShortcutsEmitter
          {
             printShortcut(writer, condition, shortcut, 
                   command, groupName_, title, disableModes,
-                  handlesEventPropagation);
+                  handlesEventPropagation, platform);
          }
       }
    }
@@ -113,7 +114,8 @@ public class ShortcutsEmitter
                               String shortcutGroup,
                               String title,
                               String disableModes,
-                              String handlesEventPropagation) throws UnableToCompleteException
+                              String handlesEventPropagation,
+                              String platform) throws UnableToCompleteException
    {
       List<Pair<Integer, String>> keys = new ArrayList<Pair<Integer, String>>();
       for (String keyCombination : shortcut.split("\\s+"))
@@ -162,6 +164,20 @@ public class ShortcutsEmitter
       }
       
       // Emit the relevant code registering these shortcuts.
+      if (!platform.isEmpty())
+      {
+         if (platform.equals("desktop"))
+         {
+            writer.println("if (org.rstudio.studio.client.application.Desktop.isDesktop()) {");
+            writer.indent();
+         }
+         else
+         {
+            writer.println("if (!org.rstudio.studio.client.application.Desktop.isDesktop()) {");
+            writer.indent();
+         }
+      }
+      
       if (!condition.isEmpty())
       {
          writer.println("if (" + condition + ") {");
@@ -212,6 +228,12 @@ public class ShortcutsEmitter
       }
 
       if (!condition.isEmpty())
+      {
+         writer.outdent();
+         writer.println("}");
+      }
+      
+      if (!platform.isEmpty())
       {
          writer.outdent();
          writer.println("}");
