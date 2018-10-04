@@ -41,6 +41,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
+      add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       
       docOutlineDisplay_ = new SelectWidget(
             "Show in document outline: ",

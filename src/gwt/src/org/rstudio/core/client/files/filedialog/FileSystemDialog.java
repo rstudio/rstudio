@@ -351,11 +351,6 @@ public abstract class FileSystemDialog extends ModalDialogBase
             while (singleMatch != null)
             {
                filters.add(singleMatch.getGroup(1));
-               if (!Desktop.isDesktop())
-               {
-                  // only extract first extension
-                  return filters;
-               }
                singleMatch = singleMatch.nextMatch();
             }
             listMatch = listMatch.nextMatch();

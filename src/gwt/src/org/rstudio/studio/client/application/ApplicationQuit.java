@@ -363,6 +363,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    public void performQuit(TutorialApiCallContext callContext,
                            boolean saveChanges,
+                           Command onQuitAcknowledged)
+   {
+      performQuit(callContext, null, saveChanges, null, null, onQuitAcknowledged);
+   }
+   
+   public void performQuit(TutorialApiCallContext callContext,
+                           boolean saveChanges,
                            String switchToProject)
    {
       performQuit(callContext, saveChanges, switchToProject, null);

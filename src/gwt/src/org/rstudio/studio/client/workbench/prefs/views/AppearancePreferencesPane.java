@@ -268,7 +268,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
    
-   private void removeTheme(String themeName, AceThemes themes)
+   private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
       if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
@@ -279,12 +279,22 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          themes.removeTheme(
             themeName,
-            errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
-         updateThemes(currentTheme.getName(), themes);
+            errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage),
+            () ->
+            {
+               updateThemes(currentTheme.getName(), themes);
+               afterOperation.execute();
+            });
       }
    }
    
-   private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
+   private void removeTheme(String themeName, AceThemes themes)
+   {
+      // No after operation necessary.
+      removeTheme(themeName, themes, () -> {});
+   }
+   
+   private void doAddTheme(String inputPath, AceThemes themes, boolean isTmTheme)
    {
       if (isTmTheme)
          dependencyManager_.withThemes(
@@ -298,6 +308,40 @@ public class AppearancePreferencesPane extends PreferencesPane
             inputPath,
             result -> updateThemes(result, themes),
             error -> showCantAddThemeDialog(inputPath, error));
+      
+   }
+   
+   private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
+   {
+      // Get the theme name and check if it's in the current list of themes.
+      themes.getThemeName(
+         inputPath,
+         name ->
+         {
+            if (themeList_.containsKey(name))
+            {
+               if (themeList_.get(name).isLocalCustomTheme())
+               {
+                  showDuplicateThemeError(
+                     name,
+                     () -> removeTheme(
+                        name,
+                        themes,
+                        () -> doAddTheme(inputPath, themes, isTmTheme)));
+               }
+               else
+               {
+                  showDuplicateThemeWarning(
+                     name,
+                     () -> doAddTheme(inputPath, themes, isTmTheme));
+               }
+            }
+            else
+            {
+               doAddTheme(inputPath, themes, isTmTheme);
+            }
+         },
+         error -> showCantAddThemeDialog(inputPath, error));
    }
    
    private void setThemes(AceThemes themes)
@@ -429,6 +473,39 @@ public class AppearancePreferencesPane extends PreferencesPane
          msg.toString(),
          continueOperation,
          false);
+   }
+   
+   private void showDuplicateThemeError(String themeName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("There is an existing theme with the same name as the new theme in the current")
+         .append(" location. Would you like remove the existing theme, \"")
+         .append(themeName)
+         .append("\", and add the new theme?");
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_ERROR,
+         "Duplicate Theme In Same Location",
+         msg.toString(),
+         continueOperation,
+         false);
+   }
+   
+   private void showDuplicateThemeWarning(String themeName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("There is an existing theme with the same name as the new theme, \"")
+         .append(themeName)
+         .append("\" in another location. The existing theme will be hidden but not removed.")
+         .append(" Removing the new theme later will un-hide the existing theme. Would you")
+         .append(" like to continue?");
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         "Duplicate Theme In Another Location",
+         msg.toString(),
+         continueOperation,
+         true);
    }
    
    @Override

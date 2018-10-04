@@ -1558,10 +1558,8 @@ public class TextEditingTarget implements
                return;
 
             // always check for changes if this is the active editor
-            if (commandHandlerReg_ != null)
-            {
+            if (isActiveDocument())
                checkForExternalEdit();
-            }
 
             // also check for changes on modifications if we are not dirty
             // note that we don't check for changes on removed files because
@@ -6280,10 +6278,9 @@ public class TextEditingTarget implements
                {
                   previewFromR();
                }
-               else if (fileType_.isR())
+               else if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
                {
-                  if (extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
-                     customSource();
+                  customSource();
                }
                else
                {
@@ -6317,6 +6314,10 @@ public class TextEditingTarget implements
       if (getPath() == null)
          return;
       
+      // If we're already waiting for the user to respond to an edit event, bail
+      if (isWaitingForUserResponseToExternalEdit_)
+         return;
+      
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
       server_.checkForExternalEdit(
@@ -6334,6 +6335,7 @@ public class TextEditingTarget implements
                      if (ignoreDeletes_)
                         return;
 
+                     isWaitingForUserResponseToExternalEdit_ = true;
                      globalDisplay_.showYesNoMessage(
                            GlobalDisplay.MSG_WARNING,
                            "File Deleted",
@@ -6346,6 +6348,7 @@ public class TextEditingTarget implements
                            {
                               public void execute()
                               {
+                                 isWaitingForUserResponseToExternalEdit_ = false;
                                  CloseEvent.fire(TextEditingTarget.this, null);
                               }
                            },
@@ -6353,6 +6356,7 @@ public class TextEditingTarget implements
                            {
                               public void execute()
                               {
+                                 isWaitingForUserResponseToExternalEdit_ = false;
                                  externalEditCheckInterval_.reset();
                                  ignoreDeletes_ = true;
                                  // Make sure it stays dirty
@@ -6387,6 +6391,7 @@ public class TextEditingTarget implements
                      else
                      {
                         externalEditCheckInterval_.reset();
+                        isWaitingForUserResponseToExternalEdit_ = true;
                         globalDisplay_.showYesNoMessage(
                               GlobalDisplay.MSG_WARNING,
                               "File Changed",
@@ -6398,6 +6403,7 @@ public class TextEditingTarget implements
                               {
                                  public void execute()
                                  {
+                                    isWaitingForUserResponseToExternalEdit_ = false;
                                     docUpdateSentinel_.revert();
                                  }
                               },
@@ -6405,6 +6411,7 @@ public class TextEditingTarget implements
                               {
                                  public void execute()
                                  {
+                                    isWaitingForUserResponseToExternalEdit_ = false;
                                     externalEditCheckInterval_.reset();
                                     docUpdateSentinel_.ignoreExternalEdit();
                                     // Make sure it stays dirty
@@ -7293,7 +7300,9 @@ public class TextEditingTarget implements
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
+   private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
+   
    
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;

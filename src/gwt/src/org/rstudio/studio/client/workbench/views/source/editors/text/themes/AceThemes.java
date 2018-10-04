@@ -28,6 +28,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -139,7 +140,10 @@ public class AceThemes
       });
    }
    
-   public void addTheme(String themeLocation, Consumer<String> stringConsumer, Consumer<String> errorMessageConsumer)
+   public void addTheme(
+      String themeLocation,
+      Consumer<String> stringConsumer,
+      Consumer<String> errorMessageConsumer)
    {
       themeServerOperations_.addTheme(new ServerRequestCallback<String>()
       {
@@ -157,7 +161,10 @@ public class AceThemes
       }, themeLocation);
    }
    
-   public void removeTheme(String themeName, Consumer<String> errorMessageConsumer)
+   public void removeTheme(
+      String themeName,
+      Consumer<String> errorMessageConsumer,
+      Operation afterOperation)
    {
       if (!themes_.containsKey(themeName))
       {
@@ -176,6 +183,7 @@ public class AceThemes
                public void onResponseReceived(Void response)
                {
                   themes_.remove(themeName);
+                  afterOperation.execute();
                }
                
                @Override
@@ -186,6 +194,31 @@ public class AceThemes
             },
             themeName);
       }
+   }
+   
+   // This function can be used to get the name of a theme without adding it to RStudio. It is not
+   // used to get the name of an existing theme.
+   public void getThemeName(
+      String themeLocation,
+      Consumer<String> stringConsumer,
+      Consumer<String> errorMessageConsumer)
+   {
+      themeServerOperations_.getThemeName(
+         new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String result)
+            {
+               stringConsumer.accept(result);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               errorMessageConsumer.accept(error.getUserMessage());
+            }
+         },
+         themeLocation);
    }
 
    private ThemeServerOperations themeServerOperations_;

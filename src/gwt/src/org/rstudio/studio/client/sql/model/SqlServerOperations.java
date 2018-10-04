@@ -1,7 +1,7 @@
 /*
- * ServerConstants.hpp
+ * SqlServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.sql.model;
 
-#ifndef SERVER_CONSTANTS_HPP
-#define SERVER_CONSTANTS_HPP
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
-#define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
-#define kRStudioServerLocalStream     "/tmp/rstudio-rserver/rserver.socket"
-#define kServerTmpDir                 "/tmp/rstudio-rserver"
-
-#endif // SERVER_CONSTANTS_HPP
-
+public interface SqlServerOperations extends BuildServerOperations
+{
+   void previewSql(String command, ServerRequestCallback<Void> requestCallback);
+}

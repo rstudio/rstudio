@@ -71,7 +71,7 @@ namespace overlay {
 
 Error initialize();
 Error startup();
-Error reloadConfiguration();
+bool reloadConfiguration();
 void shutdown();
 bool requireLocalR();
 
@@ -261,6 +261,10 @@ void httpServerAddHandlers()
 
 void reloadConfiguration()
 {
+   // swallow the output for now
+   // open source currently has no configuration reload options
+   // so displaying it as successful would be confusing to those users
+   // as no action would have occurred
    overlay::reloadConfiguration();
 }
 

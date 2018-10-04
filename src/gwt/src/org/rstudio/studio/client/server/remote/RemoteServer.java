@@ -1157,6 +1157,15 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   @Override
+   public void previewSql(String command,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      sendRequest(RPC_SCOPE, PREVIEW_SQL, params, requestCallback);
+   }
 
    public void editCompleted(String text,
                              ServerRequestCallback<Void> requestCallback)
@@ -1265,6 +1274,12 @@ public class RemoteServer implements Server
                   ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
+   }
+
+   public void getCRANActives(
+                  ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_CRAN_ACTIVES, requestCallback);
    }
    
    public void suggestTopics(String prefix,
@@ -3739,6 +3754,8 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "plots_create_rpubs_html", params, callback);
    }
    
+   
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
@@ -5386,6 +5403,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(code));
       sendRequest(RPC_SCOPE, CONNECTION_TEST, params, callback);
    }
+   
+   
 
    @Override
    public void launchEmbeddedShinyConnectionUI(String packageName, 
@@ -5595,6 +5614,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getThemeName(ServerRequestCallback<String> callback, String themeLocation)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(themeLocation));
+      sendRequest(RPC_SCOPE, GET_THEME_NAME, params, callback);
+   }
+   
+   @Override
    public void replaceCommentHeader(String command,
                                     String path,
                                     String code,
@@ -5694,6 +5721,8 @@ public class RemoteServer implements Server
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
+   
+   private static final String PREVIEW_SQL = "preview_sql";
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
@@ -5710,6 +5739,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
+   private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
@@ -6058,6 +6088,7 @@ public class RemoteServer implements Server
    private static final String GET_THEMES = "get_themes";
    private static final String ADD_THEME = "add_theme";
    private static final String REMOVE_THEME = "remove_theme";
+   private static final String GET_THEME_NAME = "get_theme_name";
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
 }

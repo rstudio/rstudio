@@ -31,17 +31,27 @@
    if (!identical(c(matches), -1L))
       token <- substring(token, tail(matches, n = 1L) + 1)
    
-   # if we have a '.' in the token, assume that we're
-   # attempting to complete field names from a table
+   # if we have a '.' in the token, then we're either trying
+   # to complete field names from a table, or table names from
+   # a schema. use the context keyword to figure out which
    if (grepl(".", token, fixed = TRUE))
-      return(.rs.sql.getCompletionsFields(token, conn, ctx))
-   
-   # check if we're explicitly requesting table name completions
-   if (length(parts) > 1)
    {
-      previous <- parts[[length(parts) - 1L]]
-      if (tolower(previous) %in% c("from", "into", "join", "update"))
+      if (identical(ctx$contextKeyword, "from"))
          return(.rs.sql.getCompletionsTables(token, conn, ctx))
+      else
+         return(.rs.sql.getCompletionsFields(token, conn, ctx))
+   }
+   
+   # if we're requesting completions within 'from', we either want
+   # schemas or table names
+   if (identical(ctx$contextKeyword, "from"))
+   {
+      completions <- Reduce(.rs.appendCompletions, list(
+         .rs.sql.getCompletionsSchemas(token, conn, ctx),
+         .rs.sql.getCompletionsTables(token, conn, ctx)
+      ))
+      
+      return(completions)
    }
    
    # otherwise, gather completions from other sources
@@ -79,13 +89,64 @@
    )
 })
 
+.rs.addFunction("sql.getCompletionsSchemas", function(token, conn, ctx)
+{
+   conn <- .rs.sql.asDBIConnection(conn)
+   if (is.null(conn))
+      return(.rs.emptyCompletions(language = "SQL"))
+   
+   objects <- .rs.tryCatch(DBI::dbListObjects(conn))
+   items <- Filter(function(x) {
+      "schema" %in% names(x@name)
+   }, objects$table)
+   
+   schemas <- vapply(items, function(item) {
+      item@name[["schema"]]
+   }, character(1))
+   
+   schemas <- setdiff(schemas, token)
+   
+   results <- .rs.selectFuzzyMatches(schemas, token)
+   .rs.makeCompletions(
+      token = token,
+      results = results,
+      packages = "schema",
+      type = .rs.acCompletionTypes$ENVIRONMENT
+   )
+})
+
 .rs.addFunction("sql.getCompletionsTables", function(token, conn, ctx)
 {
+   conn <- .rs.sql.asDBIConnection(conn)
+   
+   # if we have a '.' in the token, assume that we're attempting to
+   # complete table names from a particular schema
+   if (grepl(".", token, fixed = TRUE))
+   {
+      parts  <- .rs.strsplit(token, ".", fixed = TRUE)
+      schema <- parts[[1]]
+      token  <- parts[[2]]
+      
+      objects <- .rs.tryCatch(DBI::dbListObjects(conn, DBI::Id(schema = schema)))
+      
+      tables <- vapply(objects$table, function(object) {
+         tail(object@name, n = 1)
+      }, character(1))
+      
+      results <- .rs.selectFuzzyMatches(tables, token)
+      completions <- .rs.makeCompletions(
+         token = token,
+         results = results,
+         packages = "table",
+         type = .rs.acCompletionTypes$DATAFRAME
+      )
+      return(completions)
+   }
+   
    # use context-completed tables by default
    tables <- ctx$tables
    
    # attempt to derive table names from connection
-   conn <- .rs.sql.asDBIConnection(conn)
    if (!is.null(conn))
    {
       listedTables <- .rs.sql.listTables(conn)
@@ -131,7 +192,13 @@
       if (table %in% names(ctx$aliases))
          table <- ctx$aliases[[table]]
       
-      fields <- .rs.tryCatch(DBI::dbListFields(conn, table))
+      # if we know the schema associated with this table, then use it
+      schema <- ctx$schemas[[match(table, ctx$tables)]]
+      fields <- if (length(schema) && nzchar(schema))
+         .rs.tryCatch(DBI::dbListFields(conn, DBI::Id(schema = schema, table = table)))
+      else
+         .rs.tryCatch(DBI::dbListFields(conn, table))
+      
       if (inherits(fields, "error"))
          return(.rs.emptyCompletions(language = "SQL"))
       

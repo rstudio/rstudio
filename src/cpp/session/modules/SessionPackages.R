@@ -497,6 +497,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    rbind(rstudioDF, cranDF)
 })
 
+.rs.addJsonRpcHandler("get_cran_actives", function()
+{
+   data.frame(name = names(getOption("repos")),
+              host = "",
+              url = as.character(getOption("repos")),
+              country = "",
+              ok = TRUE,
+              stringsAsFactors = FALSE)
+})
+
 .rs.addJsonRpcHandler( "init_default_user_library", function()
 {
   .rs.initDefaultUserLibrary()

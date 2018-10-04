@@ -109,8 +109,29 @@ public class SqlCompletionManager extends CompletionManagerBase
       }
       
       ctx.preferLowercaseKeywords = (lowercaseKeywordCount >= uppercaseKeywordCount);
+      ctx.contextKeyword = findSqlContextKeyword();
       
       return ctx;
+   }
+   
+   private String findSqlContextKeyword()
+   {
+      TokenIterator it = docDisplay_.createTokenIterator(docDisplay_.getCursorPosition());
+      for (Token token = it.getCurrentToken();
+           token != null;
+           token = it.stepBackward())
+      {
+         if (token.hasType("support.function.codebegin"))
+            break;
+         
+         if (it.bwdToMatchingToken())
+            continue;
+         
+         if (it.getCurrentToken().typeEquals("keyword"))
+            return it.getCurrentToken().getValue().toLowerCase();
+      }
+      
+      return "";
    }
    
    private boolean parseSqlFrom(TokenIterator it, SqlCompletionParseContext ctx)
@@ -122,11 +143,33 @@ public class SqlCompletionManager extends CompletionManagerBase
       TokenIterator clone = it.clone();
       while (true)
       {
-         // consume table name
+         // check for identifier
          if (!clone.getCurrentToken().hasType("identifier"))
             break;
          
+         // check for text of form 'schema.table' and move on to
+         // table name in that case
+         String schema = "";
+         if (clone.peekFwd().valueEquals("."))
+         {
+            schema = clone.getCurrentToken().getValue();
+            
+            if (!clone.moveToNextSignificantToken())
+               break;
+            
+            if (!clone.valueEquals("."))
+               break;
+            
+            if (!clone.moveToNextSignificantToken())
+               break;
+            
+            if (!clone.getCurrentToken().hasType("identifier"))
+               break;
+         }
+         
+         // add schema + table name
          String table = clone.getCurrentToken().getValue();
+         ctx.schemas.push(schema);
          ctx.tables.push(table);
          
          if (!clone.moveToNextSignificantToken())
