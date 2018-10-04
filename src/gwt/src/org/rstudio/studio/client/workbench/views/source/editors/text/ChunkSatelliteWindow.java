@@ -75,6 +75,12 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    }
 
    @Override
+   public boolean supportsThemes()
+   {
+      return true;
+   }
+
+   @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       chunkWindowParams_ = params.cast();
@@ -169,6 +175,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event)
    {
+      Debug.logToConsole("receiveEvent ChunkSatelliteCacheEditorStyleEvent: " + event.getDocId());
+
       String docId = chunkWindowParams_.getDocId();
       
       if (event.getDocId() != docId)
