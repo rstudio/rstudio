@@ -314,10 +314,10 @@ QString inferDefaultRenderingEngine()
 {
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
-      "Intel HD Graphics 520",
-      "Intel HD Graphics 530",
-      "Intel HD Graphics 620",
-      "Intel HD Graphics 630",
+      "Intel(R) HD Graphics 520",
+      "Intel(R) HD Graphics 530",
+      "Intel(R) HD Graphics 620",
+      "Intel(R) HD Graphics 630",
    };
 
    DISPLAY_DEVICE device;
