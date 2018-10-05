@@ -100,6 +100,13 @@ public class AceThemes
                colors.set(2, parsed.blue());
                Desktop.getFrame().setBackgroundColor(colors);
                Desktop.getFrame().syncToEditorTheme(theme.isDark());
+
+               el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
+               style = DomUtils.getComputedStyles(el);
+               color = style.getBackgroundColor();
+               parsed = RGBColor.fromCss(color);
+
+               Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
             }
          }
       }.schedule(100);
