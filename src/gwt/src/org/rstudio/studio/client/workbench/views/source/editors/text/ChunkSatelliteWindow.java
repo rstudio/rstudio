@@ -175,8 +175,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event)
    {
-      Debug.logToConsole("receiveEvent ChunkSatelliteCacheEditorStyleEvent: " + event.getDocId());
-
       String docId = chunkWindowParams_.getDocId();
       
       if (event.getDocId() != docId)
