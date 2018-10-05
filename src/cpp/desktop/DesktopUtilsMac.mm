@@ -17,10 +17,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-
 #include <QWidget>
 
-#include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 
@@ -119,7 +117,6 @@ namespace {
 NSString* readSystemLocale()
 {
    using namespace core;
-   using namespace core::algorithm;
    using namespace core::system;
    Error error;
 
