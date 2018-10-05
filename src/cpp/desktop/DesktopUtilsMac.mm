@@ -135,6 +135,11 @@ NSString* readSystemLocale()
    // Now, try looking for the active locale using NSLocale.
    std::string localeIdentifier = [[[NSLocale currentLocale] localeIdentifier] UTF8String];
 
+   // Remove trailing @ components (macOS uses @ suffix to append locale overrides)
+   auto idx = localeIdentifier.find('@');
+   if (idx != std::string::npos)
+      localeIdentifier = localeIdentifier.substr(0, idx);
+
    // Enforce a UTF-8 locale.
    localeIdentifier += ".UTF-8";
 
@@ -150,6 +155,11 @@ NSString* readSystemLocale()
       LOG_ERROR(error);
 
    std::string defaultsLocale = string_utils::trimWhitespace(defaultsResult.stdOut);
+
+   // Remove trailing @ components (macOS uses @ suffix to append locale overrides)
+   idx = defaultsLocale.find('@');
+   if (idx != std::string::npos)
+      defaultsLocale = defaultsLocale.substr(0, idx);
 
    // Enforce a UTF-8 locale.
    defaultsLocale += ".UTF-8";
