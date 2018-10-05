@@ -95,14 +95,7 @@
    if (is.null(conn))
       return(.rs.emptyCompletions(language = "SQL"))
    
-   objects <- .rs.tryCatch(DBI::dbListObjects(conn))
-   items <- Filter(function(x) {
-      "schema" %in% names(x@name)
-   }, objects$table)
-   
-   schemas <- vapply(items, function(item) {
-      item@name[["schema"]]
-   }, character(1))
+   schemas <- .rs.tryCatch(.rs.db.listSchemas(conn))
    
    schemas <- setdiff(schemas, token)
    
@@ -127,11 +120,7 @@
       schema <- parts[[1]]
       token  <- parts[[2]]
       
-      objects <- .rs.tryCatch(DBI::dbListObjects(conn, DBI::Id(schema = schema)))
-      
-      tables <- vapply(objects$table, function(object) {
-         tail(object@name, n = 1)
-      }, character(1))
+      tables <- .rs.tryCatch(.rs.db.listTables(conn, schema))
       
       results <- .rs.selectFuzzyMatches(tables, token)
       completions <- .rs.makeCompletions(
@@ -194,11 +183,9 @@
       
       # if we know the schema associated with this table, then use it
       schema <- ctx$schemas[[match(table, ctx$tables)]]
-      fields <- if (length(schema) && nzchar(schema))
-         .rs.tryCatch(DBI::dbListFields(conn, DBI::Id(schema = schema, table = table)))
-      else
-         .rs.tryCatch(DBI::dbListFields(conn, table))
       
+      # retireve fields
+      fields <- .rs.tryCatch(.rs.db.listFields(conn, schema = schema, table = table))
       if (inherits(fields, "error"))
          return(.rs.emptyCompletions(language = "SQL"))
       
@@ -323,4 +310,53 @@
    }
    
    conn
+})
+
+.rs.addFunction("db.listFields", function(conn, schema = NULL, table = NULL)
+{
+   if (length(schema) && nzchar(schema))
+   {
+      # work around an issue in odbc when attempting to list fields using a qualified ID
+      if ("odbc" %in% loadedNamespaces() && inherits(conn, "OdbcConnection"))
+      {
+         columns <- odbc:::connection_sql_columns(
+            conn@ptr,
+            schema_name = schema,
+            table_name = table
+         )
+         return(columns[["name"]])
+      }
+      
+      # otherwise, use the regular DBI interface
+      return(DBI::dbListFields(conn, DBI::Id(schema = schema, table = table)))
+   }
+   
+   # no schema: just use the regular API
+   DBI::dbListFields(conn, table)
+})
+
+.rs.addFunction("db.listSchemas", function(conn)
+{
+   # work around issue in odbc where schema names are not returned as part
+   # of DBI::dbListObjects()
+   if ("odbc" %in% loadedNamespaces() && inherits(conn, "OdbcConnection"))
+   {
+      objects <- odbc::odbcListObjects(conn)
+      return(objects$name[objects$type == "schema"])
+   }
+   
+   objects <- DBI::dbListObjects(conn)
+   items <- Filter(function(x) "schema" %in% names(x@name), objects$table)
+   vapply(items, function(item) item@name[["schema"]],  character(1))
+})
+
+.rs.addFunction("db.listTables", function(conn, schema = NULL)
+{
+   # work around issue in odbc where requests for table names
+   # faile when a schema is specified
+   if ("odbc" %in% loadedNamespaces() && inherits(conn, "OdbcConnection"))
+      return(odbc::dbListTables(conn, schema = schema))
+   
+   objects <- DBI::dbListObjects(conn, DBI::Id(schema = schema))
+   vapply(objects$table, function(object) tail(object@name, n = 1), character(1))
 })
