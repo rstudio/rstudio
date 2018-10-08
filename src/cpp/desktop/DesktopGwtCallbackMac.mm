@@ -334,6 +334,7 @@ QString GwtCallback::getOpenFileName(const QString& qCaption,
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
    [open setCanChooseDirectories: canChooseDirectories];
+   [open setResolvesAliases: NO];
    
    // If the filter was specified and looks like a filter string
    // (i.e. "R Projects (*.RProj)"), extract just the extension ("RProj") to
