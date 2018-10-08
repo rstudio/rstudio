@@ -62,6 +62,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
+import org.rstudio.studio.client.KeyboardMonitor;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -71,6 +72,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -341,13 +343,22 @@ public class AceEditor implements DocDisplay,
 
             final Position start = getSelectionStart();
             
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            Scheduler.get().scheduleFinally(new ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  Range range = Range.fromPoints(start, getSelectionEnd());
-                  indentPastedRange(range);
+                  boolean reindent =
+                        activeEditEvent_.getType() == EditEvent.TYPE_PASTE_AND_INDENT ||
+                        monitor_.isShiftKeyDown();
+                  
+                  reindent ^= uiPrefs_.reindentOnPaste().getValue();
+                  
+                  if (reindent)
+                  {
+                     Range range = Range.fromPoints(start, getSelectionEnd());
+                     indentPastedRange(range);
+                  }
                }
             });
          }
@@ -434,6 +445,20 @@ public class AceEditor implements DocDisplay,
             MainWindowObject.lastFocusedEditorId().set(id);
          }
       });
+      
+      events_.addHandler(
+            EditEvent.TYPE,
+            new EditEvent.Handler()
+            {
+               @Override
+               public void onEdit(EditEvent event)
+               {
+                  if (event.isBeforeEdit())
+                     activeEditEvent_ = event;
+                  else
+                     activeEditEvent_ = EditEvent.NONE;
+               }
+            });
       
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
@@ -623,12 +648,8 @@ public class AceEditor implements DocDisplay,
 
    private void indentPastedRange(Range range)
    {
-      if (fileType_ == null ||
-          !fileType_.canAutoIndent() ||
-          !RStudioGinjector.INSTANCE.getUIPrefs().reindentOnPaste().getValue())
-      {
+      if (fileType_ == null || !fileType_.canAutoIndent())
          return;
-      }
 
       String firstLinePrefix = getSession().getTextRange(
             Range.fromPoints(Position.create(range.getStart().getRow(), 0),
@@ -672,13 +693,15 @@ public class AceEditor implements DocDisplay,
                    UIPrefs uiPrefs,
                    CollabEditor collab,
                    Commands commands,
-                   EventBus events)
+                   EventBus events,
+                   KeyboardMonitor monitor)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
       events_ = events;
+      monitor_ = monitor;
    }
 
    public TextFileType getFileType()
@@ -4103,6 +4126,7 @@ public class AceEditor implements DocDisplay,
    private CollabEditor collab_;
    private Commands commands_;
    private EventBus events_;
+   private KeyboardMonitor monitor_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
@@ -4123,6 +4147,7 @@ public class AceEditor implements DocDisplay,
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;
+   private EditEvent activeEditEvent_ = EditEvent.NONE;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
