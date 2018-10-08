@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -40,30 +41,42 @@ public class AceEditorEditLinesHelper implements CursorChangedHandler
       if (range_ == null)
          range_ = getSelectionExtent();
       
-      isPerformingEditLinesAction_ = true;
-      
-      switch (state)
+      try
       {
+         isPerformingEditLinesAction_ = true;
       
-      case 0:
-         editLinesFromStart(false, false);
-         break;
-         
-      case 1:
-         editLinesFromStart(false, true);
-         break;
-         
-      case 2:
-         editLinesFromStart(true, false);
-         break;
-         
-      case 3:
-         editLinesFromStart(true, true);
-         break;
-         
+         switch (state)
+         {
+
+         case 0:
+            editLinesFromStart(false, false);
+            break;
+
+         case 1:
+            editLinesFromStart(false, true);
+            break;
+
+         case 2:
+            editLinesFromStart(true, false);
+            break;
+
+         case 3:
+            editLinesFromStart(true, true);
+            break;
+
+         }
       }
       
-      isPerformingEditLinesAction_ = false;
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+      
+      finally
+      {
+         isPerformingEditLinesAction_ = false;
+      }
+      
    }
    
    private void editLinesFromStart(boolean ignoreBlankLines,
