@@ -299,6 +299,7 @@ public class AceEditor implements DocDisplay,
       snippets_ = new SnippetHelper(this);
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
       mixins_ = new AceEditorMixins(this);
+      editLines_ = new AceEditorEditLinesHelper(this);
       ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
@@ -462,6 +463,7 @@ public class AceEditor implements DocDisplay,
                   case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
                   case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
                   case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
+                  case AceEditorCommandEvent.EDIT_LINES_FROM_START:      editLinesFromStart();       break;
                   case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
                   case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
                   case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
@@ -2583,7 +2585,13 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().execCommand("addCursorBelow");
    }
-
+   
+   @Override
+   public void editLinesFromStart()
+   {
+      editLines_.editLinesFromStart();
+   }
+   
    @Override
    public void moveLinesUp()
    {
@@ -4102,6 +4110,7 @@ public class AceEditor implements DocDisplay,
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;
+   private final AceEditorEditLinesHelper editLines_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
