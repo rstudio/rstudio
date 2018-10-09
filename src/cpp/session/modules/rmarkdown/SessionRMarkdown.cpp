@@ -1293,6 +1293,18 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
    return r::sexp::create(s_paramsFiles[file], &rProtect);
 }
 
+SEXP rs_getWebsiteOutputDir()
+{
+   SEXP absolutePathSEXP = R_NilValue;
+
+   FilePath outputDir(module_context::websiteOutputDir());
+   if (!outputDir.empty())
+   {
+      r::sexp::Protect protect;
+      absolutePathSEXP = r::sexp::create(outputDir.absolutePath(), &protect);
+   }
+   return absolutePathSEXP;
+}
 
 void onShutdown(bool terminatedNormally)
 {
@@ -1371,6 +1383,11 @@ Error initialize()
    methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
+
+   r::routines::registerCallMethod(
+         "rs_getWebsiteOutputDir",
+         (DL_FUNC) rs_getWebsiteOutputDir,
+         0);
 
    initEnvironment();
 
