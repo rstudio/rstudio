@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
@@ -177,7 +176,7 @@ public class BaseMenuBar extends MenuBar
       if (autoHideRedundantSeparators_)
          manageSeparators();
       
-      Scheduler.get().scheduleFinally(() -> DomUtils.clampHeight(getElement(), 400));
+      DomUtils.clampHeight(getElement(), 400);
    }
 
    @Override
