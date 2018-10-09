@@ -1378,16 +1378,8 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_paramsFileForRmd" ;
-   methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   r::routines::registerCallMethod(
-         "rs_getWebsiteOutputDir",
-         (DL_FUNC) rs_getWebsiteOutputDir,
-         0);
+   RS_REGISTER_CALL_METHOD(rs_paramsFileForRmd);
+   RS_REGISTER_CALL_METHOD(rs_getWebsiteOutputDir);
 
    initEnvironment();
 
