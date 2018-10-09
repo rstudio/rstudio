@@ -149,6 +149,7 @@ public class BaseMenuBar extends MenuBar
       if (vertical_ && glass++ == 0)
          eventBus_.fireEvent(new GlassVisibilityEvent(true));
       super.onLoad();
+      
       for (MenuItem child : getItems())
       {
          if (child instanceof AppMenuItem)
@@ -171,8 +172,11 @@ public class BaseMenuBar extends MenuBar
             }
          }
       }
+      
       if (autoHideRedundantSeparators_)
          manageSeparators();
+      
+      DomUtils.clampHeight(getElement(), 400);
    }
 
    @Override

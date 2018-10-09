@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayMixed;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
@@ -39,6 +40,7 @@ import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -1135,6 +1137,40 @@ public class DomUtils
       return width;
       
    }-*/;
+   
+   public static final void clampHeight(final Element element,
+                                        final int requestedHeight)
+   {
+      // first, clear max-height and overflow so that the browser will attempt
+      // to use the default sizing for this window
+      element.getStyle().clearProperty("maxHeight");
+      element.getStyle().clearOverflowY();
+      
+      // then, attempt to resize element at end of event loop
+      Scheduler.get().scheduleFinally(() -> {
+
+         int windowHeight = Window.getClientHeight();
+         int currentTop = element.getAbsoluteTop();
+         int currentBottom = element.getAbsoluteBottom();
+         int currentHeight = element.getClientHeight();
+
+         // nothing to do if the widget height is smaller than the requested height
+         // and doesn't overflow the window
+         boolean isWithinBounds =
+               currentHeight < requestedHeight &&
+               currentBottom < windowHeight;
+
+         if (isWithinBounds)
+            return;
+
+         // otherwise, clamp the height and set overflow so that the user can
+         // scroll inner elements
+         int newHeight = MathUtil.clamp(requestedHeight, 20, windowHeight - currentTop - 10);
+         element.getStyle().setPropertyPx("maxHeight", newHeight);
+         element.getStyle().setOverflowY(Style.Overflow.AUTO);
+
+      });
+   }
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
