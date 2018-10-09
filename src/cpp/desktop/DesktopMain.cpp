@@ -333,8 +333,13 @@ QString inferDefaultRenderingEngine()
       // check for unsupported device
       std::string deviceString(device.DeviceString);
       for (auto&& item : blacklist)
+      {
          if (deviceString.find(item) != std::string::npos)
+         {
+            QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache, true);
             return QStringLiteral("software");
+         }
+      }
    }
 
    return QStringLiteral("auto");
