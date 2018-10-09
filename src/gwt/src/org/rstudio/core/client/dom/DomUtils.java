@@ -39,6 +39,7 @@ import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -1135,6 +1136,15 @@ public class DomUtils
       return width;
       
    }-*/;
+   
+   public static final void clampHeight(Element element, int requestedHeight)
+   {
+      int windowHeight = Window.getClientHeight();
+      int currentTop = element.getAbsoluteTop();
+      int newHeight = MathUtil.clamp(requestedHeight, 20, windowHeight - currentTop - 10);
+      element.getStyle().setPropertyPx("maxHeight", newHeight);
+      element.getStyle().setOverflowY(Style.Overflow.AUTO);
+   }
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

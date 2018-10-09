@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
@@ -149,6 +150,7 @@ public class BaseMenuBar extends MenuBar
       if (vertical_ && glass++ == 0)
          eventBus_.fireEvent(new GlassVisibilityEvent(true));
       super.onLoad();
+      
       for (MenuItem child : getItems())
       {
          if (child instanceof AppMenuItem)
@@ -171,8 +173,11 @@ public class BaseMenuBar extends MenuBar
             }
          }
       }
+      
       if (autoHideRedundantSeparators_)
          manageSeparators();
+      
+      Scheduler.get().scheduleFinally(() -> DomUtils.clampHeight(getElement(), 400));
    }
 
    @Override
