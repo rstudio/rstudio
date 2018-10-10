@@ -519,18 +519,10 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction( "setCRANRepos", function(cran, secondary)
 {
   local({
-      if (nchar(secondary) > 0)
-      {
-        r <- c(
-          list(CRAN = cran),
-          .rs.parseCRANReposList(secondary)
-        )
-      }
-      else
-      {
-        r <- getOption("repos");
-        r["CRAN"] <- cran;
-      }
+      r <- c(
+        list(CRAN = cran),
+        .rs.parseCRANReposList(secondary)
+      )
 
       # attribute indicating the repos was set from rstudio prefs
       attr(r, "RStudio") <- TRUE
