@@ -1233,6 +1233,7 @@
 
 # RPC Functions ====================================================================================
 .rs.addJsonRpcHandler("get_theme_name", function(themeFile) {
+   Encoding(themeFile) <- "UTF-8"
    lines <- readLines(themeFile, encoding = "UTF-8")
    .rs.scalar(.rs.getThemeName(paste0(lines, collapse = "\n"), themeFile))
 })
