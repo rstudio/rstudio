@@ -17,12 +17,31 @@ assign(".rs.rAddinsEnv", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 
 .rs.addJsonRpcHandler("prepare_for_addin", function()
 {
+   .rs.addins.addShinyResponseFilter()
+})
+
+.rs.addFunction("addins.addShinyResponseFilter", function()
+{
+   # save the old filter (if any)
    assign(
       ".rs.addins.savedShinyResponseFilter",
       getOption("shiny.http.response.filter"),
       envir = .rs.toolsEnv())
    
+   # register console prompt handler (clean up the filter on next prompt event)
+   .Call("rs_registerAddinConsolePromptHandler", PACKAGE = "(embedding)")
+   
+   # activate our filter
    options(shiny.http.response.filter = .rs.addins.shinyResponseFilter)
+})
+
+.rs.addFunction("addins.removeShinyResponseFilter", function()
+{
+   # restore the saved filter
+   options(shiny.http.response.filter = .rs.addins.savedShinyResponseFilter)
+   
+   # remove the saved filter from tools env
+   rm(".rs.addins.savedShinyResponseFilter", envir = .rs.toolsEnv())
 })
 
 .rs.addFunction("addins.shinyResponseFilter", function(request, response)
@@ -31,19 +50,16 @@ assign(".rs.rAddinsEnv", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    if (!identical(request$PATH_INFO, "/"))
       return(response)
    
-   # remove our old handler
-   options(shiny.http.response.filter = .rs.addins.savedShinyResponseFilter)
-   rm(".rs.addins.savedShinyResponseFilter", envir = .rs.toolsEnv())
-   
    # ensure text is character rather than raw (not sure if this can happen
    # but other shiny.http.response.filters do this so best to be safe)
    if (is.raw(response$content))
       response$content <- rawToChar(response$content)
    
    # inject our CSS into the response
-   css <- '<style type="text/css">select, input { zoom: 1.000001; }</style>'
-   response$content <- sub('<head>', paste('<head>', css, sep = ""), response$content, fixed = TRUE)
+   inject <- '<head><style type="text/css">select, input { zoom: 1.000001; }</style>'
+   response$content <- sub('<head>', inject, response$content, ignore.case = TRUE)
    
    # return the response
    response
 })
+
