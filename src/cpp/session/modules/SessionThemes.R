@@ -910,7 +910,7 @@
 
    
    isTemp <- is.null(outputLocation)
-   location <- if (is.null(outputLocation)) tempfile(pattern = fileName)
+   location <- if (is.null(outputLocation)) file.path(tempdir(), fileName)
    else file.path(outputLocation, fileName)
    
    if (!file.create(location))
