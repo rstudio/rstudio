@@ -456,7 +456,7 @@ int main(int argc, char * const argv[])
       // daemonize if requested
       if (options.serverDaemonize())
       {
-         Error error = core::system::daemonize();
+         Error error = core::system::daemonize(options.serverPidFile());
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 

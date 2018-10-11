@@ -195,6 +195,9 @@ ProgramStatus Options::read(int argc,
          value<bool>(&serverDaemonize_)->default_value(
                                       core::system::effectiveUserIsRoot()),
          "run program as daemon")
+      ("server-pid-file",
+         value<std::string>(&serverPidFile_)->default_value("/var/run/rstudio-server.pid"),
+         "location of pid file to write (only in daemon mode)")
       ("server-app-armor-enabled",
         value<bool>(&serverAppArmorEnabled_)->default_value(0),
         "is app armor enabled for this session")
