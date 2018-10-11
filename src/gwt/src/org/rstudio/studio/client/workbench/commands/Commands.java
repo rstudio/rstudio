@@ -148,6 +148,7 @@ public abstract class
    public abstract AppCommand joinLines();
    public abstract AppCommand removeLine();
    public abstract AppCommand splitIntoLines();
+   public abstract AppCommand editLinesFromStart();
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();
    public abstract AppCommand shrinkSelection();

@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -90,7 +91,9 @@ public class DocumentOutlineWidget extends Composite
                event.stopPropagation();
                event.preventDefault();
                
-               target_.setCursorPosition(node_.getPreamble());
+               target_.navigateToPosition(
+                     SourcePosition.create(node_.getPreamble().getRow(), node_.getPreamble().getColumn()),
+                     true);
                target_.getDocDisplay().alignCursor(node_.getPreamble(), 0.1);
                
                // Defer focus so it occurs after click has been fully handled

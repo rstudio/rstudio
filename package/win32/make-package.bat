@@ -1,11 +1,6 @@
 @echo off
 set PACKAGE_DIR="%CD%"
 
-if NOT "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-      echo "Building RStudio requires 64-bit Windows"
-      exit /b 1
-)
-
 REM clean if requested
 if "%1" == "clean" (
       call clean-build.bat

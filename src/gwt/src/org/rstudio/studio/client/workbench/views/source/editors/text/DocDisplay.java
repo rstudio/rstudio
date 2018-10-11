@@ -298,6 +298,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void addCursorAbove();
    void addCursorBelow();
+   void editLinesFromStart();
 
    HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
    JavaScriptObject getCleanStateToken();

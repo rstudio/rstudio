@@ -314,10 +314,10 @@ QString inferDefaultRenderingEngine()
 {
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
-      "Intel HD Graphics 520",
-      "Intel HD Graphics 530",
-      "Intel HD Graphics 620",
-      "Intel HD Graphics 630",
+      "Intel(R) HD Graphics 520",
+      "Intel(R) HD Graphics 530",
+      "Intel(R) HD Graphics 620",
+      "Intel(R) HD Graphics 630",
    };
 
    DISPLAY_DEVICE device;
@@ -333,8 +333,13 @@ QString inferDefaultRenderingEngine()
       // check for unsupported device
       std::string deviceString(device.DeviceString);
       for (auto&& item : blacklist)
+      {
          if (deviceString.find(item) != std::string::npos)
+         {
+            QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache, true);
             return QStringLiteral("software");
+         }
+      }
    }
 
    return QStringLiteral("auto");

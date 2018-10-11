@@ -445,9 +445,10 @@ public class ShortcutManager implements NativePreviewHandler,
       int keyCode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
       
-      // Convert Firefox hyphen key code to 'normal' hyphen keycode
-      // since we have code wired to that expectation
-      if (keyCode == 173)
+      // Convert Firefox hyphen key code and NumPad hyphen key code
+      // to 'normal' hyphen keycode since we have code wired to that
+      // expectation
+      if (keyCode == 109 || keyCode == 173)
          keyCode = 189;
       
       KeyCombination keyCombination = new KeyCombination(keyCode, modifier);

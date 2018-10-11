@@ -234,7 +234,18 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
    }
    else
    {
-      // interrupt the session
+      // interrupt the session. note that we call core::system::interrupt()
+      // as this will signal the interrupt to all processes in the same
+      // process group, which implies that processes launched through e.g.
+      // system() in R can be successfully interrupted. however, in some
+      // cases, a running application in R might install their own interrupt
+      // handler, thereby preventing us from receiving the signal we're now
+      // broadcasting. (was observed with Shiny applications on Windows)
+      //
+      // to ensure that the R session always receives an interrupt, we explicitly
+      // set the interrupt flag even though the normal interrupt handler would do
+      // the same.
+      r::exec::setInterruptsPending(true);
       core::system::interrupt();
 
       // acknowledge request

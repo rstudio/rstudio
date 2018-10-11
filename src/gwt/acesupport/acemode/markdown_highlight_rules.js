@@ -64,11 +64,10 @@ var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlig
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
-var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
-}
+};
 
 function github_embed(tag, prefix) {
     return { // Github style block
@@ -91,30 +90,30 @@ var MarkdownHighlightRules = function() {
     // handle highlighting for *abc*, _abc_ separately, as pandoc's
     // parser is a bit more strict about where '_' can appear
     var strongUnderscore = {
-        token: ["text", "constant.numeric.text"],
-        regex: "(\\s+|^)(__\\S.+?\\S__)\\b"
+        token: ["text", "constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
+        regex: "(^|\\s+)(_{2,3})(?![\\s_])(.*?)(?=_)(\\2)\\b"
     };
 
     var emphasisUnderscore = {
         token: ["text", "constant.language.boolean.text"],
-        regex: "(\\s+|^)(_(?=[^\\s_])(?:(?:\\\\.)|(?:[^\\s_\\\\]))*?_)\\b"
+        regex: "(^|\\s+)(_(?=[^\\s_]).*?_)\\b"
     };
 
     var strongStars = {
-        token: ["constant.numeric.text"],
-        regex: "([*][*]\\S.+?\\S[*][*])"
+        token: ["constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
+        regex: "([*]{2,3})(?![\\s*])(.*?)(?=[*])(\\1)"
     };
 
     var emphasisStars = {
         token: ["constant.language.boolean.text"],
-        regex: "([*](?=[^\\s*])(?:(?:\\\\.)|(?:[^\\s*\\\\]))*?[*])"
+        regex: "([*](?=[^\\s*]).*?[*])"
     };
 
     this.$rules = {
 
         "basic" : [{
             token : "constant.language.escape",
-            regex : /\\[\\`*_{}\[\]()#+\-.!]/
+            regex : /\\[\\`*_{}[\]()#+\-.!]/
         }, { // latex-style inverted question mark
             token : "text",
             regex : /[?]`/
@@ -129,7 +128,7 @@ var MarkdownHighlightRules = function() {
             regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
         }, { // link by reference
             token : ["text", "keyword", "text", "constant", "text"],
-            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
+            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
             token : ["text", "keyword", "text", "markup.href", "string", "text"],
             regex : "((?:[^^]|^)\\[)(" +                          // [
@@ -346,7 +345,7 @@ var MarkdownHighlightRules = function() {
             next  : "start"
         }, {
             token : "constant.language.escape",
-            regex : /\\[\\`*_{}\[\]()#+\-.!]/
+            regex : /\\[\\`*_{}[\]()#+\-.!]/
         }, { // latex-style inverted question mark
             token : "text",
             regex : /[?]`/
@@ -361,7 +360,7 @@ var MarkdownHighlightRules = function() {
             regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
         }, { // link by reference
             token : ["text", "keyword", "text", "constant", "text"],
-            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
+            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
             token : ["text", "keyword", "text", "markup.href", "string", "text"],
             regex : "((?:[^^]|^)\\[)(" +                          // [
