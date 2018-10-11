@@ -340,13 +340,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       }
       
       list(
-         Package     = desc$Package,
+         Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
          LibPath     = dirname(pkgPath),
-         Version     = desc$Version,
-         Title       = desc$Title,
+         Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
+         Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
          Source      = source,
          BrowseUrl   = utils::URLencode(url)
       )
+      
    }
    
    # to be called if our attempt to read the package DESCRIPTION file failed
