@@ -1053,12 +1053,14 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
    tomorrowConverted <- .rs.convertTmTheme(tomorrowTmTheme)
 
    # expected results
-   conn <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
-
-   expect_true(compareCss(parseCss(tomorrowConverted$theme), parseCss(readLines(conn))))
+   expect_true(
+      compareCss(
+         parseCss(tomorrowConverted$theme),
+         parseCss(
+            readLines(
+               file.path(inputFileLocation, "acecss", "tomorrow.css"),
+               encoding = "UTF-8"))))
    expect_false(tomorrowConverted$isDark)
-
-   close(conn)
 })
 
 test_that("convertTmTheme works correctly with parseTmTheme", {
@@ -1074,9 +1076,9 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
                paste0(key, ".tmTheme"))))
 
       # Expected Results
-      f <- file(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")))
-      expectedCss <- parseCss(readLines(f))
-      close(f)
+      expectedCss <- parseCss(
+         readLines(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")),
+         encoding = "UTF-8"))
 
       infoStr <- paste("Theme:", key)
       expect_true(compareCss(parseCss(actualConverted$theme), expectedCss), info = infoStr)
@@ -1595,14 +1597,8 @@ test_that("convertAceTheme works correctly", {
       inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
       expectedResultFile <- file.path(inputFileLocation, "rsthemes", paste0(value$fileName, ".rstheme"))
 
-      conn <- file(expectedResultFile)
-      expected <- readLines(conn)
-      close(conn)
-
-      conn <- file(inputAceFile)
-      aceActualLines <- readLines(conn)
-      close(conn)
-
+      expected <- readLines(expectedResultFile, encoding = "UTF-8")
+      aceActualLines <- readLines(inputAceFile, encoding = "UTF-8")
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
 
       # Check the css values
@@ -1626,13 +1622,12 @@ test_that_wrapped("convertTheme works correctly", {
          FALSE,
          FALSE)
 
-      f <- file(file.path(tempOutputDir, paste0(themeName, ".rstheme")))
-      actualCssLines <- readLines(f)
-      close(f)
-
-      f <- file(file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")))
-      expectedCssLines <- readLines(f)
-      close(f)
+      actualCssLines <- readLines(
+         file.path(tempOutputDir, paste0(themeName, ".rstheme")),
+         encoding = "UTF-8")
+      expectedCssLines <- readLines(
+         file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")),
+         encoding = "UTF-8")
 
       infoStr <- paste("Theme:", themeName)
       expect_true(compareCss(parseCss(actualCssLines), parseCss(expectedCssLines)), info = infoStr)
@@ -1702,14 +1697,8 @@ test_that_wrapped("addTheme works correctly with local install", {
    expect_equal(actualName, themeName, info = infoStr)
    expect_true(file.exists(installPath), info = infoStr)
 
-   f <- file(installPath)
-   actualLines <- readLines(f)
-   close(f)
-
-   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
-   expectedLines <- readLines(f)
-   close(f)
-
+   actualLines <- readLines(installPath, encoding = "UTF-8")
+   expectedLines <- readLines(file.path(inputFileLocation, "rsthemes", fileName), encoding = "UTF-8")
    expect_equal(actualLines, expectedLines, info = infoStr)
 },
 BEFORE_FUN = setThemeLocations,
@@ -1755,14 +1744,8 @@ test_that_wrapped("addTheme works correctly with global install", {
    expect_equal(actualName, themeName, info = infoStr)
    expect_true(file.exists(installPath), info = infoStr)
 
-   f <- file(installPath)
-   actualLines <- readLines(f)
-   close(f)
-
-   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
-   expectedLines <- readLines(f)
-   close(f)
-
+   actualLines <- readLines(installPath, encoding = "UTF-8")
+   expectedLines <- readLines(file.path(inputFileLocation, "rsthemes", fileName), encoding = "UTF-8")
    expect_equal(actualLines, expectedLines, info = infoStr)
 
    if (file.exists(installPath))
@@ -1802,29 +1785,24 @@ test_that_wrapped("addTheme gives error when the theme already exists", {
    expect_error(
       .rs.addTheme(themePath, FALSE, FALSE, FALSE),
       paste0(
-         "A file with the same name, \"",
-         themes[[40]]$fileName,
-         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`."))
+         "The specified theme, \"",
+         names(themes)[40],
+         "\", already exists in the target location. Please delete the existing theme and try again."))
 },
 BEFORE_FUN = setThemeLocations,
 AFTER_FUN = function()
 {
-   .rs.removeTheme(names(themes)[40], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[40], .rs.getThemes())
    unsetThemeLocations()
 })
 
 test_that_wrapped("addTheme works correctly with force = TRUE", {
    inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
    name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
+   exLines <- readLines(inputThemePath, encoding = "UTF-8")
    
-   f <- file(inputThemePath)
-   exLines <- readLines(f)
-   close(f)
-   
-   installedTheme <- .Call("rs_getThemes")[[tolower(name)]]
-   f <- file(.rs.getThemeDirFromUrl(installedTheme$url))
-   acLines <- readLines(f)
-   close(f)
+   installedTheme <- .rs.getThemes()[[tolower(name)]]
+   acLines <- readLines(.rs.getThemeDirFromUrl(installedTheme$url), encoding = "UTF-8")
    
    expect_equal(name, names(themes)[14])
    expect_equal(acLines, exLines)
@@ -1834,7 +1812,7 @@ BEFORE_FUN = function() {
    file.create(file.path(localInstallDir, paste0(themes[[14]]$fileName, ".rstheme")))
 },
 AFTER_FUN = function() {
-   .rs.removeTheme(names(themes)[14], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[14], .rs.getThemes())
    unsetThemeLocations()
 })
 
@@ -1856,7 +1834,7 @@ AFTER_FUN = unsetThemeLocations)
 
 # Test rs_getThemes ================================================================================
 test_that_wrapped("rs_getThemes gets default themes correctly", {
-   themeList <- .Call("rs_getThemes")
+   themeList <- .rs.getThemes()
    expect_equal(length(themeList), length(defaultThemes))
    .rs.enumerate(themeList, function(themeName, themeDetails) {
       infoStr <- paste("Theme:", themeDetails$name)
@@ -1886,7 +1864,7 @@ test_that_wrapped("rs_getThemes works correctly", {
                                    else paste0("theme/custom/local/", fileName)
       })
 
-   themeList <- .Call("rs_getThemes")
+   themeList <- .rs.getThemes()
    .rs.enumerate(addedThemes, function(themeName, themeLocation)
    {
       infoStr <- paste("Theme:", themeName)
@@ -1920,7 +1898,7 @@ AFTER_FUN = function() {
 test_that_wrapped("rs_getThemes location override works correctly", {
    # Nothing installed
    themeName <- "Dawn"
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/default/", defaultThemes[[themeName]]$fileName, ".rstheme"),
@@ -1933,7 +1911,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       FALSE,
       FALSE,
       TRUE)
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/custom/global/", expectedDawn$fileName, ".rstheme"),
@@ -1946,7 +1924,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       FALSE,
       FALSE,
       FALSE)
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/custom/local/", expectedDawn$fileName, ".rstheme"),
@@ -1958,14 +1936,14 @@ BEFORE_FUN = function() {
 },
 AFTER_FUN = function() {
    # Remove the theme from the local & global locations.
-   .rs.removeTheme(themeName, .Call("rs_getThemes"))
-   .rs.removeTheme(themeName, .Call("rs_getThemes"))
+   .rs.removeTheme(themeName, .rs.getThemes())
+   .rs.removeTheme(themeName, .rs.getThemes())
    unsetThemeLocations()
 })
 
 # Test removeTheme =================================================================================
 test_that_wrapped("removeTheme works correctly locally", {
-   .rs.removeTheme(names(themes)[19], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[19], .rs.getThemes())
    expect_false(file.exists(file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))))
 },
 BEFORE_FUN = function() {
@@ -1986,7 +1964,7 @@ AFTER_FUN = function() {
 })
 
 test_that_wrapped("removeTheme works correctly globally", {
-   .rs.removeTheme(names(themes)[22], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[22], .rs.getThemes())
    expect_false(file.exists(file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))))
 },
 BEFORE_FUN = function() {
@@ -2009,7 +1987,7 @@ AFTER_FUN = function() {
 
 test_that_wrapped("removeTheme gives correct error when unable to remove locally", {
    expect_error(
-      suppressWarnings(.rs.removeTheme(names(themes)[5], .Call("rs_getThemes"))),
+      suppressWarnings(.rs.removeTheme(names(themes)[5], .rs.getThemes())),
       "Please check your file system permissions.",
       fixed = TRUE)
 },
@@ -2033,7 +2011,7 @@ AFTER_FUN = function() {
 
 test_that_wrapped("removeTheme gives correct error when unable to remove globally", {
    expect_error(
-      suppressWarnings(.rs.removeTheme(names(themes)[32], .Call("rs_getThemes"))),
+      suppressWarnings(.rs.removeTheme(names(themes)[32], .rs.getThemes())),
       "The specified theme is installed for all users. Please contact your system administrator to remove the theme.",
       fixed = TRUE)
 },
