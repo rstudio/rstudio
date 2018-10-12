@@ -27,6 +27,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
@@ -216,15 +217,14 @@ bool handleRShowDocFile(const core::FilePath& filePath)
 }
 
 // javascript callbacks to inject into page
-const char * const kJsCallbacks =
-      "<script type=\"text/javascript\">\n"
-      "if (window.parent.helpNavigated)\n"
-      "   window.parent.helpNavigated(document, window);\n"
-      "if (window.parent.helpKeydown)\n"
-      "   window.onkeydown = function(e) {window.parent.helpKeydown(e);}\n"
-      "</script>\n";
-
-
+const char * const kJsCallbacks = R"EOF(
+<script type="text/javascript">
+if (window.parent.helpNavigated)
+   window.parent.helpNavigated(document, window);
+if (window.parent.helpKeydown)
+   window.onkeydown = function(e) { window.parent.helpKeydown(e); }
+</script>
+)EOF";
    
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
@@ -242,36 +242,35 @@ public:
             requestUri_,
             kHelpLocation);
 
+      std::string mut(src.begin(), src.end());
+
       // fixup hard-coded hrefs
-      Characters tempDest1;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest1),
-            boost::make_iterator_range(src.begin(), src.end()),
-            "href=\"/",
-            "href=\"" + baseUrl + "/");
-      Characters tempDest2;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest2),
-            boost::make_iterator_range(tempDest1.begin(), tempDest1.end()),
-            "href='/",
-            "href='" + baseUrl + "/");
-      
-      // fixup hard-coded src=
-      Characters tempDest3;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest3),
-            boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
-            "src=\"/",
-            "src=\"" + baseUrl + "/");
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(dest),
-            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
-            "src='/",
-            "src='" + baseUrl + "/");
-      
+      boost::algorithm::replace_all(mut, "href=\"/", "href=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(mut, "href='/", "href='" + baseUrl + "/");
+
+      // fixup hard-coded src
+      boost::algorithm::replace_all(mut, "src=\"/", "src=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(mut, "src='/", "src='" + baseUrl + "/");
+
+      // url encode hrefs (necessary as otherwise urls containing invalid
+      // characters, e.g. ':', will fail to redirect)
+      mut = boost::regex_replace(
+               mut,
+               boost::regex(R"/((href\s*=\s*)(['"])([^'"]*)(\2))/"),
+               [&](const boost::smatch& match)
+      {
+         using core::algorithm::spliterate;
+         auto href = spliterate(match[3], "/", [](const std::string& item) {
+            return http::util::urlEncode(item);
+         });
+         return match[1] + match[2] + href + match[4];
+      });
+
       // append javascript callbacks
-      std::string js(kJsCallbacks);
-      std::copy(js.begin(), js.end(), std::back_inserter(dest));
+      mut += kJsCallbacks;
+
+      // put into dest
+      std::copy(mut.begin(), mut.end(), std::back_inserter(dest));
    }
 private:
    std::string requestUri_;
