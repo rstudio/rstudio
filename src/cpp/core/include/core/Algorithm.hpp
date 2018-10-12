@@ -281,6 +281,17 @@ inline std::string join(Iterator begin, Iterator end, const std::string& delim)
    return result;
 }
 
+template <typename F>
+inline std::string spliterate(const std::string& string,
+                              const std::string& delimiter,
+                              F&& f)
+{
+   std::vector<std::string> pieces = split(string, delimiter);
+   for (auto&& piece : pieces)
+      piece = f(piece);
+   return join(pieces, delimiter);
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio
