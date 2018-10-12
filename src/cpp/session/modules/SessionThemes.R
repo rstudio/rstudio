@@ -487,8 +487,8 @@
    conn <- file(
       description = file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "templates", "ace_theme_template.css"),
       open = "rt")
-   cssTemplate <- paste0(readLines(conn), collapse ="\n")
-   close(conn)
+   on.exit(close(conn), add = TRUE)
+   cssTemplate <- paste0(readLines(conn, encoding = "UTF-8"), collapse ="\n")
    
    # Extract styles
    name <- tmTheme$name
@@ -719,9 +719,7 @@
          "\", does not exist.",
          call. = FALSE)
    }
-   xmlFile <- file(filePath)
-   xmlStr <- paste0(readLines(xmlFile), collapse = "\n")
-   close(xmlFile)
+   xmlStr <- paste0(readLines(filePath, encoding="UTF-8"), collapse = "\n")
    
    tmThemeDoc <- xml2::xml_root(xml2::read_xml(
       xmlStr, 
@@ -912,7 +910,7 @@
 
    
    isTemp <- is.null(outputLocation)
-   location <- if (is.null(outputLocation)) tempfile(pattern = fileName)
+   location <- if (is.null(outputLocation)) file.path(tempdir(), fileName)
    else file.path(outputLocation, fileName)
    
    if (!file.create(location))
@@ -952,10 +950,7 @@
    
    # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
    # the name of the file.
-   conn <- file(themePath)
-   themeLines <- readLines(conn)
-   close(conn)
-   
+   themeLines <- readLines(themePath, encoding = "UTF-8")
    name <- .rs.getThemeName(paste0(themeLines, collapse = "\n"), fileName)
    
    if (is.na(name) || (name == "") || is.null(name))
@@ -968,7 +963,7 @@
    }
    
    # Check if a theme with the same name already exists in the current location.
-   dupTheme <- .Call("rs_getThemes", PACKAGE = "(embedding)")[[tolower(name)]]
+   dupTheme <- .rs.getThemes()[[tolower(name)]]
    if (!is.null(dupTheme) && 
       ((globally && .rs.isGlobalTheme(dupTheme$url)) ||
       (!globally && .rs.isLocalTheme(dupTheme$url))))
@@ -981,7 +976,7 @@
    }
    else if (!is.null(dupTheme))
    {
-      willBeOverridden <- if (!globally || .rs.isDefaultTheme()) "The existing theme will be overridden by the new theme."
+      willBeOverridden <- if (!globally || .rs.isDefaultTheme(dupTheme$url)) "The existing theme will be overridden by the new theme."
                           else "The newly added theme will be overridden by the existing theme."
       warning("There is another theme with the same name, \"",
               name,
@@ -1009,7 +1004,7 @@
       }
    }
 
-   addedTheme <- file.path(outputDir, paste0(fileName, ".rstheme"))
+   addedTheme <- file.path(outputDir, fileName)
    if (file.exists(addedTheme) && !force)
    {
       stop(
@@ -1035,7 +1030,7 @@
    
    if (apply)
    {
-      .rs.applyTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)"))
+      .rs.applyTheme(name, .rs.getThemes())
    }
    
    name
@@ -1099,8 +1094,20 @@
    }
 })
 
+.rs.addFunction("getThemes", function() {
+   themeList <- .Call("rs_getThemes", PACKAGE = "(embedding)")
+   for (i in seq_along(themeList))
+   {
+      Encoding(themeList[[i]]$name) <- "UTF-8"
+      Encoding(themeList[[i]]$url) <- "UTF-8"
+   }
+   themeList
+})
+
 # C++ Wrappers =====================================================================================
 .rs.addFunction("internal.convertTheme", function(themePath) {
+   Encoding(themePath) <- "UTF-8"
+   
    warnings <- c()
    tryCatch(
       withCallingHandlers(
@@ -1128,6 +1135,8 @@
 })
 
 .rs.addFunction("internal.addTheme", function(themePath) {
+   Encoding(themePath) <- "UTF-8"
+
    warnings <- c()
    tryCatch(
       withCallingHandlers(
@@ -1149,6 +1158,8 @@
 })
 
 .rs.addFunction("internal.removeTheme", function(name, themeList) {
+   Encoding(name) <- "UTF-8"
+   
    warnings <- c()
    tryCatch(
       withCallingHandlers(
@@ -1202,26 +1213,27 @@
 # Apply a theme to RStudio.
 .rs.addApiFunction("applyTheme", function(name) {
    tryCatch(
-      .rs.applyTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)")),
+      .rs.applyTheme(name, .rs.getThemes()),
       error = function(e) { stop("Unable to apply the theme \"", name, "\". ", e$message) })
 })
 
 # Remove a theme from RStudio.
 .rs.addApiFunction("removeTheme", function(name) {
    tryCatch(
-      .rs.removeTheme(name, .Call("rs_getThemes", PACKAGE = "(embedding)")),
+      .rs.removeTheme(name, .rs.getThemes()),
       error = function(e) { stop("Unable to remove the theme \"", name, "\". ", e$message) })
 })
 
 # Get the list of installed themes.
 .rs.addApiFunction("getThemes", function() {
-   lapply(.Call("rs_getThemes", PACKAGE = "(embedding)"), function(theme) {
+   lapply(.rs.getThemes(), function(theme) {
       theme[names(theme) != "url"]
    })
 })
 
 # RPC Functions ====================================================================================
 .rs.addJsonRpcHandler("get_theme_name", function(themeFile) {
-   lines <- readLines(themeFile)
+   Encoding(themeFile) <- "UTF-8"
+   lines <- readLines(themeFile, encoding = "UTF-8")
    .rs.scalar(.rs.getThemeName(paste0(lines, collapse = "\n"), themeFile))
 })

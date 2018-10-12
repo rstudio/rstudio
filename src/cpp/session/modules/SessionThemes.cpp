@@ -26,7 +26,6 @@
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -140,7 +139,11 @@ void getThemesInLocation(
       {
          if (themeFile.hasExtensionLowerCase(".rstheme"))
          {
+#ifdef _WIN32
+            const std::wstring k_themeFileStr = themeFile.absolutePathW();
+#else
             const std::string k_themeFileStr = themeFile.canonicalPath();
+#endif
             std::ifstream themeIFStream(k_themeFileStr);
             std::string themeContents(
                (std::istreambuf_iterator<char>(themeIFStream)),
@@ -243,11 +246,7 @@ FilePath getLocalCustomThemePath()
       return FilePath(kLocalPathAlt);
    }
 
-#ifdef _WIN32
-   return core::system::userHomePath().childPath(".R\\rstudio\\themes");
-#else
-   return core::system::userHomePath().childPath(".R/rstudio/themes/");
-#endif
+   return module_context::userHomePath().childPath(".R/rstudio/themes/");
 }
 
 /**
