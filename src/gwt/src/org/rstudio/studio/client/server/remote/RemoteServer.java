@@ -4451,6 +4451,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void prepareForAddin(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PREPARE_FOR_ADDIN, requestCallback);
+   }
+   
+   @Override
    public void executeRAddinNonInteractively(String commandId, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -6058,6 +6064,7 @@ public class RemoteServer implements Server
    private static final String GET_PRODUCT_INFO = "get_product_info";
    
    private static final String GET_R_ADDINS = "get_r_addins";
+   private static final String PREPARE_FOR_ADDIN = "prepare_for_addin";
    private static final String EXECUTE_R_ADDIN = "execute_r_addin";
 
    private static final String CREATE_SHINY_APP = "create_shiny_app";
