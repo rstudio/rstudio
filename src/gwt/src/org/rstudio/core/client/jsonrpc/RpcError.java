@@ -60,7 +60,10 @@ public class RpcError extends JavaScriptObject
    public final static int INVALID_SESSION = 14;
    public final static int MAX_SESSIONS_REACHED = 15;
    public final static int MAX_USERS_REACHED = 16;
-   
+
+   // this session is a launcher session and the launch parameters need to be resent to implicitly relaunch the session
+   public final static int LAUNCH_PARAMETERS_MISSING = 17;
+
    // execution error (method was executed and returned known error state)
    public final static int EXECUTION_ERROR = 100;
      

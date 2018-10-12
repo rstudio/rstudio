@@ -342,15 +342,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       // general prefs
       final GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
-      boolean isSpawnerSession = session_.getSessionInfo().getSpawnerSession();
-      showServerHomePage_.setEnabled(!isSpawnerSession);
+      boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
+      showServerHomePage_.setEnabled(!isLauncherSession);
       
       reuseSessionsForProjectLinks_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
       
-      if (!isSpawnerSession)
+      if (!isLauncherSession)
          showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
       else
     	  showServerHomePage_.setValue("always");
