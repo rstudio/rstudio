@@ -2137,8 +2137,19 @@
    
    # attempt to parse extracted R code
    parsed <- .rs.tryCatch(parse(text = code, encoding = "UTF-8"))
-   if (inherits(parsed, "error"))
+   if (inherits(parsed, "error")) {
+      
+      # call 'Sys.setlocale()' to work around an R issue where flags
+      # set during parse can effectively be 'leaked' -- 'Sys.setlocale()'
+      # effectively resets those flags. see:
+      #
+      # https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=17484
+      # https://github.com/rstudio/rstudio/issues/3658
+      #
+      Sys.setlocale()
       return(character())
+
+   }
    
    discoveries <- new.env(parent = emptyenv())
    
