@@ -1,7 +1,7 @@
 /*
  * SafeConvert.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,10 +137,18 @@ boost::optional<TOutput> numberTo(TInput input)
    return result;
 }
 
+// Indexing into an empty vector causes assertion failures on some platforms.
+// Cannot rely on vector::data() as it is not guaranteed to be nullptr for
+// empty vectors.
+template <typename T>
+T* safe_vec_addr(std::vector<T>& vec)
+{
+   return vec.size() ? &vec[0] : nullptr;
+}
+
 } // namespace safe_convert
 } // namespace core 
 } // namespace rstudio
-
 
 #endif // CORE_SAFE_CONVERT_HPP
 
