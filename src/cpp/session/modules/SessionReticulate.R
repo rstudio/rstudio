@@ -140,6 +140,20 @@
        reticulate::py_module_available("matplotlib"))
    {
       matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      
+      # force the "Agg" backend (this is necessary as other backends may
+      # fail with RStudio if requisite libraries are not available)
+      backend <- matplotlib$get_backend()
+      if (!identical(tolower(backend), "agg"))
+      {
+         sys <- reticulate::import("sys", convert = TRUE)
+         if ("matplotlib.backends" %in% names(sys$modules))
+            matplotlib$pyplot$switch_backend("agg")
+         else
+            matplotlib$use("agg", warn = FALSE, force = TRUE)
+      }
+      
+      # inject our hook
       plt <- matplotlib$pyplot
       .rs.setVar("reticulate.matplotlib.show", plt$show)
       plt$show <- .rs.reticulate.matplotlib.showHook
