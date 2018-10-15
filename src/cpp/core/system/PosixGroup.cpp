@@ -58,7 +58,7 @@ Error groupFrom(const boost::function<int(
       buffer.resize(buffSize);
 
       // attempt the read
-      result = getGroup(value, &grp, safe_convert::safe_vec_addr(buffer), buffer.size(), &temp);
+      result = getGroup(value, &grp, buffer.data(), buffer.size(), &temp);
 
       // if we fail, double the buffer prior to retry
       if (result == ERANGE)
