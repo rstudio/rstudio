@@ -73,6 +73,7 @@
 * Subprocesses launched by 'system()' are now interruptible
 * Automatically discover packages used in R code and prompt for installation when missing
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
+* Variables containing '.' are now highlighted throughout the document when selected (#2094)
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
