@@ -3522,7 +3522,7 @@ public class RemoteServer implements Server
             scope, 
             method, 
             params.getJavaScriptObject(),
-            kwparams.getJavaScriptObject(),
+            kwparams == null ? JavaScriptObject.createObject() : kwparams.getJavaScriptObject(),
             redactLog, 
             new RpcResponseHandler() {
                @Override
