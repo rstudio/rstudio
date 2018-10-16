@@ -4125,6 +4125,11 @@ public class AceEditor implements DocDisplay,
    public AceEditor clone()
    {
       AceEditor cloned = new AceEditor();
+      
+      cloned.context_ = context_;
+      cloned.cppContext_ = cppContext_;
+      cloned.rnwContext_ = rnwContext_;
+      
       cloned.getWidget().getEditor().attachTo(this.getWidget().getEditor());
       return cloned;
    }
