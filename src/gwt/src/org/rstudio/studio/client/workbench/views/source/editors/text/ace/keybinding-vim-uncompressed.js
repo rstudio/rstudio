@@ -121,7 +121,6 @@ define("ace/keyboard/vim",["require","exports","module","ace/range","ace/lib/eve
     var curOp = this.curOp = this.curOp || {};
     if (!curOp.changeHandlers)
       curOp.changeHandlers = this._eventRegistry["change"] && this._eventRegistry["change"].slice();
-    if (this.virtualSelectionMode()) return;
     if (!curOp.lastChange) {
       curOp.lastChange = curOp.change = change;
     } else {
@@ -5063,22 +5062,7 @@ dom.importCssString(".normal-mode .ace_cursor{\
       var insertModeChangeRegister = vimGlobalState.registerController.getRegister('.');
       var isPlaying = macroModeState.isPlaying;
       var lastChange = macroModeState.lastInsertModeChanges;
-      var text = [];
       if (!isPlaying) {
-        var selLength = lastChange.inVisualBlock && vim.lastSelection ?
-            vim.lastSelection.visualBlock.height : 1;
-        var changes = lastChange.changes;
-        var text = [];
-        var i = 0;
-        while (i < changes.length) {
-          text.push(changes[i]);
-          if (changes[i] instanceof InsertModeKey) {
-             i++;
-          } else {
-             i+= selLength;
-          }
-        }
-        lastChange.changes = text;
         cm.off('change', onChange);
         CodeMirror.off(cm.getInputField(), 'keydown', onKeyEventTargetKeyDown);
       }
@@ -5201,8 +5185,13 @@ dom.importCssString(".normal-mode .ace_cursor{\
       if (!macroModeState.isPlaying) {
         while(changeObj) {
           lastChange.expectCursorActivityForChange = true;
-          if (changeObj.origin == '+input' || changeObj.origin == 'paste'
+          if (lastChange.ignoreCount > 1) {
+            lastChange.ignoreCount--;
+          } else if (changeObj.origin == '+input' || changeObj.origin == 'paste'
               || changeObj.origin === undefined /* only in testing */) {
+            var selectionCount = cm.listSelections().length;
+            if (selectionCount > 1)
+              lastChange.ignoreCount = selectionCount;
             var text = changeObj.text.join('\n');
             if (lastChange.maybeReset) {
               lastChange.changes = [];
@@ -5456,6 +5445,8 @@ dom.importCssString(".normal-mode .ace_cursor{\
           cm.curOp.cursorActivity = false;
       }, true);
     }
+    if (isHandled && !vim.visualBlock && !vim.insert)
+      handleExternalSelection(cm, vim);
     return isHandled;
   }
   exports.CodeMirror = CodeMirror;
