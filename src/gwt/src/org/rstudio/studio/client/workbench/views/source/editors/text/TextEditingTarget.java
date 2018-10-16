@@ -986,6 +986,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   public void onSplitEditor()
+   {
+      events_.fireEvent(new EditorSplitEvent());
+   }
+   
+   @Handler
    void onGoToNextSection()
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())

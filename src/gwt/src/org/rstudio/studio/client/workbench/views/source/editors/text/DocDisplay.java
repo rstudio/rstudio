@@ -445,4 +445,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToLineEnd();
    
    void toggleTokenInfo();
+   boolean onInsertSnippet();
+   
+   void destroy();
+   DocDisplay clone();
 }

@@ -21,11 +21,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
+public abstract class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
 {
-   public TextEditingTargetLatexFormatMenu(DocDisplay editor, UIPrefs prefs)
+   public abstract DocDisplay getEditor();
+   
+   public TextEditingTargetLatexFormatMenu(UIPrefs prefs)
    {
-      editor_ = editor;
       prefs_ = prefs;
       
       addItem(createLatexMenu("Section", "section*", true));
@@ -87,7 +88,7 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
          @Override
          public void execute()
          {
-            String selection = editor_.getSelectionValue();
+            String selection = getEditor().getSelectionValue();
             
             // modify prefix based on prefs
             String insertPrefix = prefix;
@@ -97,20 +98,20 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
                insertPrefix = insertPrefix.replace("*", "");
             }
             
-            editor_.insertCode(insertPrefix + selection + suffix, false);
-            editor_.focus();
+            getEditor().insertCode(insertPrefix + selection + suffix, false);
+            getEditor().focus();
             
             // if there was no previous selection then put the cursor
             // inside the braces
             if (selection.length() == 0)
             {
-               Position pos = editor_.getCursorPosition();
+               Position pos = getEditor().getCursorPosition();
                int row = pos.getRow();
                if (suffix.startsWith("\n"))
                   row = Math.max(0,  row - 1);
                int col = Math.max(0, pos.getColumn() - suffix.length());
            
-               editor_.setCursorPosition(Position.create(row, col));
+               getEditor().setCursorPosition(Position.create(row, col));
             }
          }};
    }
@@ -124,8 +125,8 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
          @Override
          public void execute()
          {
-            editor_.collapseSelection(true);
-            Position pos = editor_.getCursorPosition();
+            getEditor().collapseSelection(true);
+            Position pos = getEditor().getCursorPosition();
             
             StringBuilder indent = new StringBuilder();
             if (prefs_.useSpacesForTab().getValue())
@@ -147,10 +148,10 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
             code += "\n\\end{" + type + "}\n";
             
             
-            editor_.insertCode(code, false);
-            editor_.focus();
+            getEditor().insertCode(code, false);
+            getEditor().focus();
             
-            editor_.setCursorPosition(Position.create(pos.getRow() + 1, 
+            getEditor().setCursorPosition(Position.create(pos.getRow() + 1, 
                                                       item.length() + 1));
          }
          
@@ -158,6 +159,5 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
    }
   
    
-   private final DocDisplay editor_;
    private final UIPrefs prefs_;
 }

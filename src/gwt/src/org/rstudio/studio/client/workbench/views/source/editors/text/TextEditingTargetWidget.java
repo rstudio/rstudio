@@ -19,11 +19,11 @@ import java.util.List;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
@@ -79,6 +79,8 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorSplitEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorSplitEvent.EditorSplitType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -109,7 +111,8 @@ public class TextEditingTargetWidget
       uiPrefs_ = uiPrefs;
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
-      editor_ = editor;
+      editor_ = mainEditor_ = editor;
+      splitEditor_ = mainEditor_.clone();
       extendedType_ = extendedType;
       events_ = events;
       sourceOnSave_ = new CheckBox();
@@ -120,14 +123,14 @@ public class TextEditingTargetWidget
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
-
+      
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
          {  
             @Override
             public AceEditor getEditor()
             {
-               return (AceEditor)editor_;
+               return (AceEditor) editor_;
             }
             
             @Override
@@ -149,11 +152,14 @@ public class TextEditingTargetWidget
             } 
          });
       
+      editorContainer_ = new FlowPanel();
+      editorContainer_.add(editor_.asWidget());
+      
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
       
       editorPanel_.addEast(docOutlineWidget_, 0);
-      editorPanel_.add(editor.asWidget());
+      editorPanel_.add(editorContainer_);
       
       MouseDragHandler.addHandler(
             docOutlineWidget_.getLeftSeparator(),
@@ -190,7 +196,9 @@ public class TextEditingTargetWidget
                   
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
                   toggleDocOutlineButton_.setLatched(clamped != 0);
-                  editor_.onResize();
+                  
+                  mainEditor_.onResize();
+                  splitEditor_.onResize();
                }
                
                @Override
@@ -214,17 +222,77 @@ public class TextEditingTargetWidget
       
       adaptToFileType(fileType);
       
-      editor.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            toggleDocOutlineButton_.setLatched(
-                  docOutlineWidget_.getOffsetWidth() > 0);
-         }
+      mainEditor_.addFocusHandler((FocusEvent event) -> {
+         editor_ = mainEditor_;
+         toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
       });
+      
+      splitEditor_.addFocusHandler((FocusEvent event) -> {
+         editor_ = splitEditor_;
+      });
+      
+      events.addHandler(
+            EditorSplitEvent.TYPE,
+            new EditorSplitEvent.Handler()
+            {
+               @Override
+               public void onEditorSplit(EditorSplitEvent event)
+               {
+                  if (target.isActiveDocument())
+                     manageEditorSplits(event.getSplitType());
+               }
+            });
 
       initWidget(panel_);
+   }
+   
+   private void manageEditorSplits(EditorSplitType type)
+   {
+      Style mainEditorStyle = mainEditor_.asWidget().getElement().getStyle();
+      Style splitEditorStyle = splitEditor_.asWidget().getElement().getStyle();
+
+      switch (type)
+      {
+
+      case None:
+      {
+         editorContainer_.remove(splitEditor_.asWidget());
+         mainEditorStyle.setWidth(100, Unit.PCT);
+         mainEditorStyle.setHeight(100, Unit.PCT);
+         mainEditorStyle.clearFloat();
+         splitEditorStyle.setWidth(0, Unit.PCT);
+         splitEditorStyle.setHeight(0, Unit.PCT);
+         splitEditorStyle.clearFloat();
+         break;
+      }
+
+      case Horizontal:
+      {
+         editorContainer_.add(splitEditor_.asWidget());
+         mainEditorStyle.setWidth(50, Unit.PCT);
+         mainEditorStyle.setHeight(100, Unit.PCT);
+         mainEditorStyle.setFloat(Style.Float.LEFT);
+         splitEditorStyle.setWidth(50, Unit.PCT);
+         splitEditorStyle.setHeight(100, Unit.PCT);
+         splitEditorStyle.setFloat(Style.Float.LEFT);
+         break;
+      }
+
+      case Vertical:
+      {
+         editorContainer_.add(splitEditor_.asWidget());
+         mainEditorStyle.setWidth(100, Unit.PCT);
+         mainEditorStyle.setHeight(50, Unit.PCT);
+         mainEditorStyle.clearFloat();
+         splitEditorStyle.setWidth(100, Unit.PCT);
+         splitEditorStyle.setHeight(50, Unit.PCT);
+         splitEditorStyle.clearFloat();
+      }
+      
+      }
+      
+      mainEditor_.onResize();
+      splitEditor_.onResize();
    }
    
    public void initWidgetSize()
@@ -506,6 +574,8 @@ public class TextEditingTargetWidget
          toolbar.addRightWidget(publishButton_);
       }
       
+      addSplitMenu(toolbar);
+      
       toggleDocOutlineButton_ = new LatchingToolbarButton(
          "",
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
@@ -542,7 +612,8 @@ public class TextEditingTargetWidget
                               destination * progress +
                               initialSize * (1 - progress);
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
-                        editor_.onResize();
+                        mainEditor_.onResize();
+                        splitEditor_.onResize();
                      }
                      
                      @Override
@@ -580,7 +651,8 @@ public class TextEditingTargetWidget
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
-         editor_.setShowInvisibles(event.getValue());
+         mainEditor_.setShowInvisibles(event.getValue());
+         splitEditor_.setShowInvisibles(event.getValue());
       });
       
       if (docUpdateSentinel_ != null && docUpdateSentinel_.getPath() != null)
@@ -596,10 +668,39 @@ public class TextEditingTargetWidget
       return toolbar;
    }
    
+   private void addSplitMenu(Toolbar toolbar)
+   {
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      for (EditorSplitType type : EditorSplitType.values())
+         addSplitButton(menu, type);
+      
+      ToolbarButton button = new ToolbarButton("", ThemeResources.INSTANCE.codeTransform2x(), menu);
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(button);
+   }
+   
+   private void addSplitButton(final ToolbarPopupMenu menu, final EditorSplitType type)
+   {
+      menu.addItem(new MenuItem(type.toString(), new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new EditorSplitEvent(type));
+         }
+      }));
+   }
+   
    private ToolbarButton createLatexFormatButton()
    {
-      ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(editor_,
-                                                                      uiPrefs_);
+      ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(uiPrefs_)
+      {
+         @Override
+         public DocDisplay getEditor()
+         {
+            return editor_;
+         }
+      };
     
       ToolbarButton texButton = new ToolbarButton(
                            "Format", 
@@ -647,12 +748,14 @@ public class TextEditingTargetWidget
    public void adaptToExtendedFileType(String extendedType)
    {
       extendedType_ = extendedType;
-      adaptToFileType(editor_.getFileType());
+      adaptToFileType(mainEditor_.getFileType());
    }
 
    public void adaptToFileType(TextFileType fileType)
    {
-      editor_.setFileType(fileType);
+      mainEditor_.setFileType(fileType);
+      splitEditor_.setFileType(fileType);
+      
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
       boolean canCompileNotebook = fileType.canCompileNotebook();
@@ -982,7 +1085,9 @@ public class TextEditingTargetWidget
 
    public void onActivate()
    {
-      editor_.onActivate();
+      mainEditor_.onActivate();
+      splitEditor_.onActivate();
+      
       
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
@@ -996,7 +1101,8 @@ public class TextEditingTargetWidget
 
    public void setFontSize(double size)
    {
-      editor_.setFontSize(size);
+      mainEditor_.setFontSize(size);
+      splitEditor_.setFontSize(size);
    }
 
    public StatusBar getStatusBar()
@@ -1425,7 +1531,8 @@ public class TextEditingTargetWidget
 
    public void onVisibilityChanged(boolean visible)
    {
-      editor_.onVisibilityChanged(visible);
+      mainEditor_.onVisibilityChanged(visible);
+      splitEditor_.onVisibilityChanged(visible);
    }
    
    @Override
@@ -1515,6 +1622,10 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
+   private DocDisplay editor_;
+   private DocDisplay mainEditor_;
+   private DocDisplay splitEditor_;
+   
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
@@ -1522,7 +1633,6 @@ public class TextEditingTargetWidget
    private final UIPrefs uiPrefs_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private final ShinyTestPopupMenu shinyTestMenu_;
    private final PlumberViewerTypePopupMenu plumberViewerMenu_;
@@ -1530,6 +1640,7 @@ public class TextEditingTargetWidget
    private String publishPath_;
    private CheckBox sourceOnSave_;
    private DockLayoutPanel editorPanel_;
+   private ComplexPanel editorContainer_;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;

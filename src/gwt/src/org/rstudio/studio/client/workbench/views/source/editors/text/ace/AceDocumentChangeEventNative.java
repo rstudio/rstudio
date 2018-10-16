@@ -26,7 +26,8 @@ public class AceDocumentChangeEventNative extends JavaScriptObject
    }-*/;
 
    public final native Range getRange() /*-{
-      return this;
+      var Range = $wnd.require("ace/range").Range;
+      return Range.fromPoints(this.start, this.end);
    }-*/;
    
    public final native JsArrayString getLines() /*-{

@@ -189,6 +189,7 @@ public abstract class
    public abstract AppCommand insertPipeOperator();
    public abstract AppCommand openNextFileOnFilesystem();
    public abstract AppCommand openPreviousFileOnFilesystem();
+   public abstract AppCommand splitEditor();
  
    // Projects
    public abstract AppCommand newProject();

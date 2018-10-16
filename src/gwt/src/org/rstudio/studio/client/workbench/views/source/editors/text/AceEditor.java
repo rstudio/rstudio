@@ -3854,7 +3854,7 @@ public class AceEditor implements DocDisplay,
       return editor.tabstopManager != null;
    }-*/;
    
-   private boolean onInsertSnippet()
+   public boolean onInsertSnippet()
    {
       boolean executed = snippets_.onInsertSnippet();
       if (executed)
@@ -4120,6 +4120,18 @@ public class AceEditor implements DocDisplay,
       private final int delta_;
       private double startTime_ = -1;
       private AnimationScheduler.AnimationHandle handle_;
+   }
+   
+   public AceEditor clone()
+   {
+      AceEditor cloned = new AceEditor();
+      cloned.getWidget().getEditor().attachTo(this.getWidget().getEditor());
+      return cloned;
+   }
+   
+   public void destroy()
+   {
+      widget_.getEditor().destroy();
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
