@@ -182,11 +182,16 @@ public class EditingTargetInlineChunkExecution
          output.show();
       }
    }
+   
+   public void setDocDisplay(DocDisplay docDisplay)
+   {
+      display_ = docDisplay;
+   }
 
    // Private Members ----
 
    private final String docId_;
-   private final DocDisplay display_;
+   private DocDisplay display_;
    private final HashMap<String, ChunkInlineOutput> outputs_;
    
    // Injected ----

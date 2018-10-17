@@ -469,21 +469,21 @@ public class TextEditingTarget implements
       
       docDisplay_.addCloneFocusHandler(new CloneFocusEvent.Handler()
       {
-         private DocDisplay savedDocDisplay_;
          private HandlerRegistration focusHandler_;
          
          @Override
          public void onCloneFocus(CloneFocusEvent cloneFocusEvent)
          {
-            Debug.logToRConsole("Alt focused!");
-            savedDocDisplay_ = docDisplay;
+            DocDisplay cloneDisplay = cloneFocusEvent.getDocDisplay();
+            codeExecution_.setDocDisplay(cloneDisplay);
+            
             focusHandler_ = docDisplay_.addFocusHandler((FocusEvent focusEvent) -> {
-               Debug.logToRConsole("Main focused!");
-               docDisplay_ = savedDocDisplay_;
+               docDisplay_ = docDisplay;
+               codeExecution_.setDocDisplay(docDisplay);
                focusHandler_.removeHandler();
             });
             
-            docDisplay_ = cloneFocusEvent.getDocDisplay();
+            docDisplay_ = cloneDisplay;
          }
       });
       

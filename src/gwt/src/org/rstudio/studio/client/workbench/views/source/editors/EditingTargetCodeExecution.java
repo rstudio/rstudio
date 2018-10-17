@@ -67,8 +67,7 @@ public class EditingTargetCodeExecution
       docDisplay_ = display;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
-      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(
-            display, docId);
+      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(display, docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -499,7 +498,13 @@ public class EditingTargetCodeExecution
       docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }
    
-   private final DocDisplay docDisplay_;
+   public void setDocDisplay(DocDisplay docDisplay)
+   {
+      docDisplay_ = docDisplay;
+      inlineChunkExecutor_.setDocDisplay(docDisplay);
+   }
+   
+   private DocDisplay docDisplay_;
    private final TextEditingTarget target_;
    private final CodeExtractor codeExtractor_;
    private final String docId_;
