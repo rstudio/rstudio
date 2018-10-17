@@ -2942,8 +2942,9 @@ well as menu structures (for main menu and popup menus).
         context="packageDevelopment"/>
 
    <cmd id="roxygenizePackage"
+        label="Build Package Documentation"
         menuLabel="_Document"
-        desc="Run roxygen2 to document this package"
+        desc="Build package documentation"
         windowMode="background"
         context="packageDevelopment"/>
 
