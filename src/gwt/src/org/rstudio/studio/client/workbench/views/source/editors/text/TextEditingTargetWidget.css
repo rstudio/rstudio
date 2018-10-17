@@ -1,0 +1,43 @@
+@charset "UTF-8";
+
+@external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+@eval THEME_DEFAULT_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBodyBackground;
+@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
+@eval THEME_ALTERNATE_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBodyBackground;
+
+.rstudio-themes-default .container {
+	background: THEME_DEFAULT_BODY_BACKGROUND;
+}
+
+.rstudio-themes-dark-grey .container {
+	background: THEME_DARKGREY_BODY_BACKGROUND;
+}
+
+.rstudio-themes-alternate .container {
+	background: THEME_ALTERNATE_BODY_BACKGROUND;
+}
+
+.mainEditorHorizontalSplit {
+	width: 100% !important;
+	height: 50% !important;
+	margin-bottom: 2px;
+}
+
+.altEditorHorizontalSplit {
+	width: 100% !important;
+	height: 50% !important;
+	margin-top: 2px;
+}
+
+.mainEditorVerticalSplit {
+	width: 50% !important;
+	height: 100% !important;
+	float: left;
+}
+
+.altEditorVerticalSplit {
+	width: 50% !important;
+	height: 100% !important;
+	float: right;
+}

@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -31,6 +31,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -112,7 +114,7 @@ public class TextEditingTargetWidget
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = mainEditor_ = editor;
-      splitEditor_ = mainEditor_.clone();
+      altEditor_ = mainEditor_.clone();
       extendedType_ = extendedType;
       events_ = events;
       sourceOnSave_ = new CheckBox();
@@ -153,8 +155,9 @@ public class TextEditingTargetWidget
          });
       
       editorContainer_ = new FlowPanel();
+      editorContainer_.addStyleName(RES.styles().container());
       editorContainer_.add(mainEditor_.asWidget());
-      editorContainer_.add(splitEditor_.asWidget());
+      editorContainer_.add(altEditor_.asWidget());
       
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
@@ -199,7 +202,7 @@ public class TextEditingTargetWidget
                   toggleDocOutlineButton_.setLatched(clamped != 0);
                   
                   mainEditor_.onResize();
-                  splitEditor_.onResize();
+                  altEditor_.onResize();
                }
                
                @Override
@@ -229,8 +232,8 @@ public class TextEditingTargetWidget
          toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
       });
       
-      splitEditor_.addFocusHandler((FocusEvent event) -> {
-         editor_ = splitEditor_;
+      altEditor_.addFocusHandler((FocusEvent event) -> {
+         editor_ = altEditor_;
          docOutlineWidget_.attachTo(editor_);
       });
       
@@ -251,48 +254,41 @@ public class TextEditingTargetWidget
    
    private void manageEditorSplits(EditorSplitType type)
    {
-      Style mainEditorStyle = mainEditor_.asWidget().getElement().getStyle();
-      Style splitEditorStyle = splitEditor_.asWidget().getElement().getStyle();
+      Widget mainWidget = mainEditor_.asWidget();
+      Widget altWidget = altEditor_.asWidget();
+      
+      mainWidget.removeStyleName(RES.styles().mainEditorHorizontalSplit());
+      mainWidget.removeStyleName(RES.styles().mainEditorVerticalSplit());
+      altWidget.removeStyleName(RES.styles().altEditorHorizontalSplit());
+      altWidget.removeStyleName(RES.styles().altEditorVerticalSplit());
 
       switch (type)
       {
 
       case None:
       {
-         mainEditorStyle.setWidth(100, Unit.PCT);
-         mainEditorStyle.setHeight(100, Unit.PCT);
-         mainEditorStyle.clearFloat();
-         splitEditorStyle.setWidth(0, Unit.PCT);
-         splitEditorStyle.setHeight(0, Unit.PCT);
-         splitEditorStyle.clearFloat();
-         break;
-      }
-
-      case Horizontal:
-      {
-         mainEditorStyle.setWidth(50, Unit.PCT);
-         mainEditorStyle.setHeight(100, Unit.PCT);
-         mainEditorStyle.setFloat(Style.Float.LEFT);
-         splitEditorStyle.setWidth(50, Unit.PCT);
-         splitEditorStyle.setHeight(100, Unit.PCT);
-         splitEditorStyle.setFloat(Style.Float.LEFT);
+         // nothing to do
          break;
       }
 
       case Vertical:
       {
-         mainEditorStyle.setWidth(100, Unit.PCT);
-         mainEditorStyle.setHeight(50, Unit.PCT);
-         mainEditorStyle.clearFloat();
-         splitEditorStyle.setWidth(100, Unit.PCT);
-         splitEditorStyle.setHeight(50, Unit.PCT);
-         splitEditorStyle.clearFloat();
+         mainWidget.addStyleName(RES.styles().mainEditorVerticalSplit());
+         altWidget.addStyleName(RES.styles().altEditorVerticalSplit());
+         break;
+      }
+
+      case Horizontal:
+      {
+         mainWidget.addStyleName(RES.styles().mainEditorHorizontalSplit());
+         altWidget.addStyleName(RES.styles().altEditorHorizontalSplit());
+         break;
       }
       
       }
       
       mainEditor_.onResize();
-      splitEditor_.onResize();
+      altEditor_.onResize();
    }
    
    public void initWidgetSize()
@@ -613,7 +609,7 @@ public class TextEditingTargetWidget
                               initialSize * (1 - progress);
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
                         mainEditor_.onResize();
-                        splitEditor_.onResize();
+                        altEditor_.onResize();
                      }
                      
                      @Override
@@ -652,7 +648,7 @@ public class TextEditingTargetWidget
       showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          mainEditor_.setShowInvisibles(event.getValue());
-         splitEditor_.setShowInvisibles(event.getValue());
+         altEditor_.setShowInvisibles(event.getValue());
       });
       
       if (docUpdateSentinel_ != null && docUpdateSentinel_.getPath() != null)
@@ -754,7 +750,7 @@ public class TextEditingTargetWidget
    public void adaptToFileType(TextFileType fileType)
    {
       mainEditor_.setFileType(fileType);
-      splitEditor_.setFileType(fileType);
+      altEditor_.setFileType(fileType);
       
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
@@ -942,7 +938,7 @@ public class TextEditingTargetWidget
       ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
       
       mainEditor_.onResize();
-      splitEditor_.onResize();
+      altEditor_.onResize();
    }
 
    private void manageToolbarSizes()
@@ -1088,7 +1084,7 @@ public class TextEditingTargetWidget
    public void onActivate()
    {
       mainEditor_.onActivate();
-      splitEditor_.onActivate();
+      altEditor_.onActivate();
       
       
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
@@ -1104,7 +1100,7 @@ public class TextEditingTargetWidget
    public void setFontSize(double size)
    {
       mainEditor_.setFontSize(size);
-      splitEditor_.setFontSize(size);
+      altEditor_.setFontSize(size);
    }
 
    public StatusBar getStatusBar()
@@ -1534,7 +1530,7 @@ public class TextEditingTargetWidget
    public void onVisibilityChanged(boolean visible)
    {
       mainEditor_.onVisibilityChanged(visible);
-      splitEditor_.onVisibilityChanged(visible);
+      altEditor_.onVisibilityChanged(visible);
    }
    
    @Override
@@ -1624,9 +1620,32 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
+   
+
+   public interface Styles extends CssResource
+   {
+      String container();
+      String mainEditorHorizontalSplit();
+      String mainEditorVerticalSplit();
+      String altEditorHorizontalSplit();
+      String altEditorVerticalSplit();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("TextEditingTargetWidget.css")
+      Styles styles();
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
+   
    private DocDisplay editor_;
    private DocDisplay mainEditor_;
-   private DocDisplay splitEditor_;
+   private DocDisplay altEditor_;
    
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
