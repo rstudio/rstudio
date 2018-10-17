@@ -3559,14 +3559,13 @@ public class RemoteServer implements Server
       
       var responseCallback = new Object();
       responseCallback.onResponse = $entry(function(response) {
-        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
+        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(*)(response);
       });
 
       $wnd.opener.sendRemoteServerRequest($wnd,
                                           scope, 
                                           method, 
                                           params,
-                                          kwparams,
                                           redactLog,
                                           responseCallback);
    }-*/;
