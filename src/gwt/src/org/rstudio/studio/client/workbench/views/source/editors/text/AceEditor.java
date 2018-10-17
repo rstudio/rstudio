@@ -302,6 +302,7 @@ public class AceEditor implements DocDisplay,
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
+      clones_ = new ArrayList<AceEditor>();
       ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
@@ -716,35 +717,40 @@ public class AceEditor implements DocDisplay,
       setFileType(fileType, false);
    }
 
-   public void setFileType(TextFileType fileType, boolean suppressCompletion)
+   public void setFileType(final TextFileType fileType,
+                           final boolean suppressCompletion)
    {
-      fileType_ = fileType;
-      updateLanguage(suppressCompletion);
+      forEachEditor((AceEditor editor) -> {
+         editor.fileType_ = fileType;
+         editor.updateLanguage(suppressCompletion);
+      });
    }
 
-   public void setFileType(TextFileType fileType,
-                           CompletionManager completionManager)
+   public void setFileType(final TextFileType fileType,
+                           final CompletionManager completionManager)
    {
-      fileType_ = fileType;
-      updateLanguage(completionManager, null);
-   }
-
-   @Override
-   public void setRnwCompletionContext(RnwCompletionContext rnwContext)
-   {
-      rnwContext_ = rnwContext;
-   }
-
-   @Override
-   public void setCppCompletionContext(CppCompletionContext cppContext)
-   {
-      cppContext_ = cppContext;
+      forEachEditor((AceEditor editor) -> {
+         editor.fileType_ = fileType;
+         editor.updateLanguage(completionManager, null);
+      });
    }
 
    @Override
-   public void setRCompletionContext(CompletionContext context)
+   public void setRnwCompletionContext(final RnwCompletionContext rnwContext)
    {
-      context_ = context;
+      forEachEditor((AceEditor editor) -> editor.rnwContext_ = rnwContext);
+   }
+
+   @Override
+   public void setCppCompletionContext(final CppCompletionContext cppContext)
+   {
+      forEachEditor((AceEditor editor) -> editor.cppContext_ = cppContext);
+   }
+
+   @Override
+   public void setRCompletionContext(final CompletionContext context)
+   {
+      forEachEditor((AceEditor editor) -> editor.context_ = context);
    }
 
    private void updateLanguage(boolean suppressCompletion)
@@ -877,6 +883,11 @@ public class AceEditor implements DocDisplay,
    @Override
    public void syncCompletionPrefs()
    {
+      forEachEditor((AceEditor editor) -> editor.doSyncCompletionPrefs());
+   }
+   
+   private void doSyncCompletionPrefs()
+   {
       if (fileType_ == null)
          return;
 
@@ -897,6 +908,11 @@ public class AceEditor implements DocDisplay,
 
    @Override
    public void syncDiagnosticsPrefs()
+   {
+      forEachEditor((AceEditor editor) -> editor.doSyncDiagnosticPrefs());
+   }
+   
+   private void doSyncDiagnosticPrefs()
    {
       if (fileType_ == null)
          return;
@@ -4122,21 +4138,53 @@ public class AceEditor implements DocDisplay,
       private AnimationScheduler.AnimationHandle handle_;
    }
    
+   private static final native void bind(AceEditorNative lhs, AceEditorNative rhs)
+   /*-{
+      
+      var ldoc = lhs.session.doc;
+      var rdoc = rhs.session.doc;
+      
+      var $onChange = function(emitter, receiver) {
+         
+         return function(delta) {
+            
+            if (receiver.$suppressChanges)
+               return;
+               
+            emitter.$suppressChanges = true;
+            receiver.applyDelta(delta);
+            emitter.$suppressChanges = false;
+         };
+
+      };
+      
+      ldoc.on("change", $onChange(ldoc, rdoc));
+      rdoc.on("change", $onChange(rdoc, ldoc));
+      
+   }-*/;
+   
    public AceEditor clone()
    {
-      AceEditor cloned = new AceEditor();
+      final AceEditor clone = new AceEditor();
       
-      cloned.context_ = context_;
-      cloned.cppContext_ = cppContext_;
-      cloned.rnwContext_ = rnwContext_;
+      clone.context_ = context_;
+      clone.cppContext_ = cppContext_;
+      clone.rnwContext_ = rnwContext_;
+      clone.fileType_ = fileType_;
+      clone.useEmacsKeybindings_ = useEmacsKeybindings_;
+      clone.useVimMode_ = useVimMode_;
       
-      cloned.getWidget().getEditor().attachTo(this.getWidget().getEditor());
-      return cloned;
+      bind(this.getWidget().getEditor(), clone.getWidget().getEditor());
+      
+      clones_.add(clone);
+      return clone;
    }
    
-   public void destroy()
+   private void forEachEditor(CommandWithArg<AceEditor> command)
    {
-      widget_.getEditor().destroy();
+      command.execute(this);
+      for (AceEditor clone : clones_)
+         command.execute(clone);
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
@@ -4174,6 +4222,7 @@ public class AceEditor implements DocDisplay,
    private final AceEditorMixins mixins_;
    private final AceEditorEditLinesHelper editLines_;
    private EditEvent activeEditEvent_ = EditEvent.NONE;
+   private final List<AceEditor> clones_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

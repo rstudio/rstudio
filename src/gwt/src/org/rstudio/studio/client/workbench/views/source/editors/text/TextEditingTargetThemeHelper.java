@@ -83,8 +83,8 @@ public class TextEditingTargetThemeHelper
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
       
       int n = aceContentElements.length;
-      assert n == 1
-            : "Expected a single editor instance; found " + n;
+      assert n > 0
+            : "Expected at least one editor instance; found " + n;
       
       Element content = aceContentElements[0];
       currentStyle_ = DomUtils.getComputedStyles(content);

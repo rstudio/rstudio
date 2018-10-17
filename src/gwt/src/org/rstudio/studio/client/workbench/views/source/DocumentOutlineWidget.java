@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -37,7 +38,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -55,8 +55,9 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class DocumentOutlineWidget extends Composite
-                  implements EditorThemeStyleChangedEvent.Handler
+public class DocumentOutlineWidget
+      extends Composite
+      implements EditorThemeStyleChangedEvent.Handler
 {
    public class VerticalSeparator extends Composite
    {
@@ -91,20 +92,13 @@ public class DocumentOutlineWidget extends Composite
                event.stopPropagation();
                event.preventDefault();
                
-               target_.navigateToPosition(
+               docDisplay_.navigateToPosition(
                      SourcePosition.create(node_.getPreamble().getRow(), node_.getPreamble().getColumn()),
                      true);
-               target_.getDocDisplay().alignCursor(node_.getPreamble(), 0.1);
+               docDisplay_.alignCursor(node_.getPreamble(), 0.1);
                
                // Defer focus so it occurs after click has been fully handled
-               Scheduler.get().scheduleDeferred(new ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     target_.focus();
-                  }
-               });
+               Scheduler.get().scheduleFinally(() -> docDisplay_.focus());
             }
          }, ClickEvent.getType());
          
@@ -217,6 +211,7 @@ public class DocumentOutlineWidget extends Composite
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
       target_ = target;
+      docDisplay_ = target.getDocDisplay();
       
       separator_ = new VerticalSeparator();
       container_.addWest(separator_, 4);
@@ -236,8 +231,8 @@ public class DocumentOutlineWidget extends Composite
       
       container_.add(panel_);
       handlers_ = new HandlerRegistrations();
-      initHandlers();
           
+      attachTo(docDisplay_);
       initWidget(container_);
    }
    
@@ -253,9 +248,13 @@ public class DocumentOutlineWidget extends Composite
       updateStyles(emptyPlaceholder_, event.getStyle());
    }
    
-   private void initHandlers()
+   public void attachTo(final DocDisplay docDisplay)
    {
-      handlers_.add(target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      docDisplay_ = docDisplay;
+      
+      handlers_.clearHandlers();
+      
+      handlers_.add(docDisplay.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
       {
          @Override
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
@@ -265,7 +264,7 @@ public class DocumentOutlineWidget extends Composite
          }
       }));
       
-      handlers_.add(target_.getDocDisplay().addActiveScopeChangedHandler(new ActiveScopeChangedEvent.Handler()
+      handlers_.add(docDisplay.addActiveScopeChangedHandler(new ActiveScopeChangedEvent.Handler()
       {
          @Override
          public void onActiveScopeChanged(ActiveScopeChangedEvent event)
@@ -276,14 +275,14 @@ public class DocumentOutlineWidget extends Composite
          }
       }));
       
-      handlers_.add(target_.getDocDisplay().addCursorChangedHandler(new CursorChangedHandler()
+      handlers_.add(docDisplay.addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            if (target_.getDocDisplay().isScopeTreeReady(event.getPosition().getRow()))
+            if (docDisplay.isScopeTreeReady(event.getPosition().getRow()))
             {
-               currentScope_ = target_.getDocDisplay().getCurrentScope();
+               currentScope_ = docDisplay.getCurrentScope();
                currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
                resetTreeStyles();
             }
@@ -301,6 +300,15 @@ public class DocumentOutlineWidget extends Composite
          }
       }));
       
+      Scheduler.get().scheduleFinally(() -> {
+         int row = docDisplay.getCursorPosition().getRow();
+         if (docDisplay.isScopeTreeReady(row))
+         {
+            currentScope_ = docDisplay.getCurrentScope();
+            currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
+            resetTreeStyles();
+         }
+      });
    }
    
    private void updateStyles(Widget widget, Style computed)
@@ -426,7 +434,7 @@ public class DocumentOutlineWidget extends Composite
          return false;
       
       // don't show R functions or R sections in .Rmd unless requested
-      TextFileType fileType = target_.getDocDisplay().getFileType();
+      TextFileType fileType = docDisplay_.getFileType();
       if (shownSectionsPref != UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL && fileType.isRmd())
       {
          if (node.isFunction())
@@ -491,6 +499,7 @@ public class DocumentOutlineWidget extends Composite
    private final TextEditingTarget target_;
    private final HandlerRegistrations handlers_;
    
+   private DocDisplay docDisplay_;
    private JsArray<Scope> scopeTree_;
    private Scope currentScope_;
    private Scope currentVisibleScope_;

@@ -604,6 +604,7 @@ public class AceEditorBackgroundLinkHighlighter
                   newMarkers.put(newRow, markers);
                }
             });
+            
             activeMarkers_.clear();
             activeMarkers_ = newMarkers;
          }

@@ -30,6 +30,13 @@ public class HandlerRegistrations implements HandlerRegistration
    {
       registrations_.add(reg);
    }
+   
+   public void clearHandlers()
+   {
+      for (HandlerRegistration registration : registrations_)
+         registration.removeHandler();
+      registrations_.clear();
+   }
 
    public void removeHandler()
    {

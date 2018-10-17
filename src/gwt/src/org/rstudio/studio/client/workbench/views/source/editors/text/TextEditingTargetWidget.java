@@ -153,7 +153,8 @@ public class TextEditingTargetWidget
          });
       
       editorContainer_ = new FlowPanel();
-      editorContainer_.add(editor_.asWidget());
+      editorContainer_.add(mainEditor_.asWidget());
+      editorContainer_.add(splitEditor_.asWidget());
       
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
@@ -224,11 +225,13 @@ public class TextEditingTargetWidget
       
       mainEditor_.addFocusHandler((FocusEvent event) -> {
          editor_ = mainEditor_;
+         docOutlineWidget_.attachTo(editor_);
          toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
       });
       
       splitEditor_.addFocusHandler((FocusEvent event) -> {
          editor_ = splitEditor_;
+         docOutlineWidget_.attachTo(editor_);
       });
       
       events.addHandler(
@@ -256,7 +259,6 @@ public class TextEditingTargetWidget
 
       case None:
       {
-         editorContainer_.remove(splitEditor_.asWidget());
          mainEditorStyle.setWidth(100, Unit.PCT);
          mainEditorStyle.setHeight(100, Unit.PCT);
          mainEditorStyle.clearFloat();
@@ -268,7 +270,6 @@ public class TextEditingTargetWidget
 
       case Horizontal:
       {
-         editorContainer_.add(splitEditor_.asWidget());
          mainEditorStyle.setWidth(50, Unit.PCT);
          mainEditorStyle.setHeight(100, Unit.PCT);
          mainEditorStyle.setFloat(Style.Float.LEFT);
@@ -280,7 +281,6 @@ public class TextEditingTargetWidget
 
       case Vertical:
       {
-         editorContainer_.add(splitEditor_.asWidget());
          mainEditorStyle.setWidth(100, Unit.PCT);
          mainEditorStyle.setHeight(50, Unit.PCT);
          mainEditorStyle.clearFloat();
@@ -940,7 +940,9 @@ public class TextEditingTargetWidget
       super.onResize();
       manageToolbarSizes();
       ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
-     
+      
+      mainEditor_.onResize();
+      splitEditor_.onResize();
    }
 
    private void manageToolbarSizes()
