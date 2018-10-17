@@ -124,9 +124,6 @@
 #
 # Returns the luma of the specified color.
 .rs.addFunction("getLuma", function(color) {
-   # The numbers used in this calculation are taken from
-   # https://github.com/ajaxorg/ace/blob/master/tool/tmtheme.js#L191. It is not entirely clear
-   # why they were chosen, as there are no comments in the orginal.
    rgb <- .rs.getRgbColor(color)
    (0.21 * rgb[[1]] + 0.72 * rgb[[2]] + 0.07 * rgb[[3]]) / 255
 })
@@ -771,7 +768,6 @@
 # @param aceCss      The ace CSS to convert.
 # @param name        The name 
 .rs.addFunction("convertAceTheme", function(name, aceCss, isDark) {
-   library("highlight")
    source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
    
    rsTheme <- .rs.compile_theme(aceCss, isDark)
@@ -789,135 +785,6 @@
 })
 
 # Worker Functions =================================================================================
-.rs.addFunction("parseCss", function(cssLines)
-{
-   css <- list()
-   
-   # Split any lines with "\n" for proper parsing.
-   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", cssLines), c("\n"), perl = TRUE))
-   
-   currKey = NULL
-   isLastDescForKey <- FALSE
-   inCommentBlock <- FALSE
-   candidateKey <- NULL
-   for (currLine in cssLines)
-   {
-      orgLine <- currLine
-      
-      # We use this to still parse the code before the start of the comment, if any.
-      startCommentBlock <- FALSE
-      
-      # Remove all in-line comments.
-      currLine <- gsub("/\\*.*?\\*/", "", currLine)
-      
-      # If we're not in a comment block and the current line has a comment opener, start the comment
-      # block and update the line by removing the commented section. This allows for CSS before the
-      # start of a comment. Note that this comment can't be contained wholly on a single line
-      # because of the gsub above this.
-      if (!inCommentBlock && grepl("/\\*", currLine))
-      {
-         startCommentBlock <- TRUE
-         currLine <- sub("/\\*.*$", "", currLine)
-      }
-      
-      # If we're in a comment block and the current line has a comment closer, end the comment block
-      # and update the line by removing the commented section. This allows for CSS after the end of
-      # a comment.
-      if (inCommentBlock && grepl("\\*/", currLine))
-      {
-         inCommentBlock <- FALSE
-         currLine <- sub("^.*?\\*/", "", currLine)
-      }
-      
-      if (!inCommentBlock)
-      {
-         # Check for a change of key.
-         if (grepl("^\\s*\\.[^\\{]+\\{", currLine))
-         {
-            candidateKey <- paste(
-               candidateKey, 
-               regmatches(
-                  currLine,
-                  regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
-               sep = " ")
-            
-            if (!grepl("^\\s*$", candidateKey))
-            {
-               if (!is.null(currKey))
-               {
-                  warning("Malformed CSS: ", orgLine, ". No closing bracket for last block.")
-               }
-               currKey <- candidateKey
-               candidateKey <- NULL
-               
-               css[[currKey]] <- list()
-               currLine <- sub("^\\s*[^\\{]*?\\s*\\{", "", currLine)
-            }
-         }
-         
-         if (!is.null(currKey))
-         {
-            if (grepl("\\}", currLine))
-            {
-               isLastDescForKey <- TRUE
-               currLine <- sub("^([^\\}]*)\\}\\s*$", "\\1", currLine)
-               if (grepl("\\}", currLine))
-               {
-                  warning("Maformed CSS: ", orgLine, ". Extra closing brackets.")
-               }
-            }
-            
-            if (grepl(":", currLine))
-            {
-               descValues <- strsplit(currLine, "\\s*;\\s*")[[1]]
-               for (value in descValues)
-               {
-                  if (value != "")
-                  {
-                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", value), "\\s*:\\s*")[[1]]
-                     if (length(desc) != 2)
-                     {
-                        warning("Malformed CSS: ", orgLine, ". Invalid element within block.")
-                     }
-                     else
-                     {
-                        css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
-                     }
-                  }
-               }
-            }
-            else if (!grepl("^\\s*$", currLine))
-            {
-               warning("Malformd CSS: ", orgLine, ". Unexpected non-css line.")
-            }
-         }
-         else if (!grepl("^\\s*$", currLine))
-         {
-            if (is.null(candidateKey))
-            {
-               candidateKey <- currLine
-            }
-            else
-            {
-               candidateKey <- paste(candidateKey, currLine)
-            }
-         }
-         
-         if (isLastDescForKey)
-         {
-            currKey <- NULL
-            isLastDescForKey <- FALSE
-         }
-         
-         if (startCommentBlock)
-         {
-            inCommentBlock <- TRUE
-         }
-      }
-   }
-   
-   css
-})
 .rs.addFunction("isGlobalTheme", function(themeUrl)
 {
    grepl("^theme/custom/global/.*?\\.rstheme$", themeUrl, ignore.case = TRUE)
