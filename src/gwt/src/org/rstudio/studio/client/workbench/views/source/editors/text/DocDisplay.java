@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CloneFocusEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
@@ -221,6 +222,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
+   HandlerRegistration addCloneFocusHandler(CloneFocusEvent.Handler handler);
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);

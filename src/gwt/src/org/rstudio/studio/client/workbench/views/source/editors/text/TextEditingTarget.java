@@ -467,6 +467,26 @@ public class TextEditingTarget implements
                                          events_, 
                                          this);
       
+      docDisplay_.addCloneFocusHandler(new CloneFocusEvent.Handler()
+      {
+         private DocDisplay savedDocDisplay_;
+         private HandlerRegistration focusHandler_;
+         
+         @Override
+         public void onCloneFocus(CloneFocusEvent cloneFocusEvent)
+         {
+            Debug.logToRConsole("Alt focused!");
+            savedDocDisplay_ = docDisplay;
+            focusHandler_ = docDisplay_.addFocusHandler((FocusEvent focusEvent) -> {
+               Debug.logToRConsole("Main focused!");
+               docDisplay_ = savedDocDisplay_;
+               focusHandler_.removeHandler();
+            });
+            
+            docDisplay_ = cloneFocusEvent.getDocDisplay();
+         }
+      });
+      
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -7247,7 +7267,7 @@ public class TextEditingTarget implements
    }
    
    private StatusBar statusBar_;
-   private final DocDisplay docDisplay_;
+   private DocDisplay docDisplay_;
    private final UIPrefs prefs_;
    private Display view_;
    private final Commands commands_;

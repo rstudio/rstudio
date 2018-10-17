@@ -2309,6 +2309,11 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
    
+   public HandlerRegistration addCloneFocusHandler(CloneFocusEvent.Handler handler)
+   {
+      return cloneHandlers_.addHandler(CloneFocusEvent.TYPE, handler);
+   }
+   
    public Scope getScopeAtPosition(Position position)
    {
       if (hasCodeModelScopeTree())
@@ -4174,6 +4179,10 @@ public class AceEditor implements DocDisplay,
       clone.useEmacsKeybindings_ = useEmacsKeybindings_;
       clone.useVimMode_ = useVimMode_;
       
+      clone.addFocusHandler((FocusEvent event) -> {
+         cloneHandlers_.fireEvent(new CloneFocusEvent(clone));
+      });
+      
       bind(this.getWidget().getEditor(), clone.getWidget().getEditor());
       
       clones_.add(clone);
@@ -4189,6 +4198,7 @@ public class AceEditor implements DocDisplay,
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
+   private final HandlerManager cloneHandlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
    private ScrollAnimator scrollAnimator_;
