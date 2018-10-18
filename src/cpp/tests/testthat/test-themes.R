@@ -15,6 +15,9 @@
 
 context("themes")
 
+# We need this file for .rs.parseCss
+source(file.path("..", "..", "session", "resources", "themes", "compile-themes.R"))
+
 inputFileLocation <- file.path(path.expand("."), "themes")
 tempOutputDir <- file.path(inputFileLocation, "temp")
 localInstallDir <- file.path(inputFileLocation, "localInstall")
@@ -185,17 +188,23 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
             }
             else if (acVal != exVal)
             {
-               match <- "^(#[a-fA-F\\d]{6}|rgb\\(\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*\\))$"
-               if (grepl(match, acVal) && grepl(match, exVal))
+               colorRegex <- "^(#[a-fA-F\\d]{6}|rgba?\\(\\s*\\d{1,3}\\s*(?:,\\s*\\d{1,3}\\s*){2}(?:,\\s*[01](?:\\.\\d+)?)?\\s*\\))$"
+               if (grepl(colorRegex, acVal, perl = TRUE) && grepl(colorRegex, exVal, perl = TRUE))
                {
                   acRgb <- .rs.getRgbColor(acVal)
                   exRgb <- .rs.getRgbColor(exVal)
-                  if (!all.equal(acRgb, exRgb))
+                  if (!identical(acRgb, exRgb))
                   {
                      msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
                      cat(msgStart, msg, "\n")
                      equal <- FALSE
                   }
+               }
+               else
+               {
+                  msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
+                  cat(msgStart, msg, "\n")
+                  equal <- FALSE
                }
             }
          }
@@ -1460,20 +1469,19 @@ test_that("parseTmTheme handles incorrect input", {
 
 # Test convertAceTheme =============================================================================
 test_that("convertAceTheme works correctly", {
-   library("highlight")
-
    .rs.enumerate(themes, function(key, value) {
       inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
       expectedResultFile <- file.path(inputFileLocation, "rsthemes", paste0(value$fileName, ".rstheme"))
 
       expected <- readLines(expectedResultFile, encoding = "UTF-8")
       aceActualLines <- readLines(inputAceFile, encoding = "UTF-8")
+      
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
 
       # Check the css values
       infoStr = paste0("Theme: ", key)
       expect_true(compareCss(.rs.parseCss(actual), .rs.parseCss(expected)), info = infoStr)
-
+      
       # Check the metadata values
       expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
       expect_equal(getRsIsDark(actual), getRsIsDark(expected), fixed = TRUE, info = infoStr)

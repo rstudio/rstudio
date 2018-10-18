@@ -110,9 +110,9 @@
    paste0(
       "rgb(",
       paste(
-         round(alpha1 * c1rgb[[1]] + alpha2 * c2rgb[[1]]),
-         round(alpha1 * c1rgb[[2]] + alpha2 * c2rgb[[2]]),
-         round(alpha1 * c1rgb[[3]] + alpha2 * c2rgb[[3]]),
+         ceiling(alpha1 * c1rgb[[1]] + alpha2 * c2rgb[[1]]),
+         ceiling(alpha1 * c1rgb[[2]] + alpha2 * c2rgb[[2]]),
+         ceiling(alpha1 * c1rgb[[3]] + alpha2 * c2rgb[[3]]),
          sep = ","),
       ")")
 })
@@ -770,7 +770,7 @@
 .rs.addFunction("convertAceTheme", function(name, aceCss, isDark) {
    source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
    
-   rsTheme <- .rs.compile_theme(aceCss, isDark)
+   rsTheme <- .rs.compile_theme(aceCss, isDark, name = name)
    if (length(rsTheme) == 0)
    {
       stop("Please see above for warnings.",

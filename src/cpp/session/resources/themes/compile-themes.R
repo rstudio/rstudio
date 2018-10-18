@@ -12,12 +12,12 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
-.rs.addFunction("parseCss", function(cssLines)
+.rs.addFunction("parseCss", function(lines)
 {
    css <- list()
    
    # Split any lines with "\n" for proper parsing.
-   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", cssLines), c("\n"), perl = TRUE))
+   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", lines), c("\n"), perl = TRUE))
    
    currKey = NULL
    isLastDescForKey <- FALSE
@@ -63,6 +63,7 @@
                   currLine,
                   regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
                sep = " ")
+            candidateKey <- trimws(candidateKey)
             
             if (!grepl("^\\s*$", candidateKey))
             {
@@ -898,8 +899,6 @@
 })
 
 .rs.addFunction("compile_theme", function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
-   library("highlight")
-   
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", lines)
    stripped <- grep("^\\.", stripped, value = TRUE)
@@ -927,65 +926,15 @@
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
    content <- gsub(regex, "", content)
    
-   ## Modify the CSS so the parser can handle it.
-   modified <- c()
-   blockStarts <- grep("{", content, fixed = TRUE)
-   blockEnds <- grep("}", content, fixed = TRUE)
+   ## Parse the css
+   parsed <- .rs.parseCss(lines = content)
    
-   pairs <- Map(c, blockStarts, blockEnds)
-   for (pair in pairs) {
-      
-      start <- pair[[1]]
-      end <- pair[[2]]
-      
-      ## Figure out what classes are associated with this block.
-      classesEnd <- start
-      index <- start - 1
-      if (index > 0 && grepl(",\\s*$", content[index])) {
-         while (index > 0 && grepl(",\\s*$", content[index]))
-            index <- index - 1
-         classesStart <- index + 1
-      } else {
-         classesStart <- classesEnd
-      }
-      
-      subContent <- content[classesStart:classesEnd]
-      subContent[length(subContent)] <- gsub(
-         "\\s*\\{.*", "",
-         subContent[length(subContent)]
-      )
-      
-      allClasses <- strsplit(paste(subContent, collapse = " "),
-                             split = "\\s*,\\s*",
-                             perl = TRUE)[[1]]
-      
-      thisBlock <- gsub(".*\\s*\\{.*", "{", content[start:end])
-      
-      # Ensure all CSS lines end with a semicolon.
-      range <- 2:(length(thisBlock) - 1)
-      thisBlock[range] <-
-         paste(
-            gsub(";\\s*", "", thisBlock[range]),
-            ";",
-            sep = ""
-         )
-      
-      blockPasted <- paste(thisBlock, collapse = "\n")
-      for (class in allClasses) {
-         modified <- c(modified, paste(class, blockPasted))
-      }
-   }
-   
-   ## Parse the modified CSS.
-   modified <- unlist(strsplit(modified, "\n", fixed = TRUE))
-   parsed <- suppressWarnings(.rs.parseCss(lines = modified))
-   
-   if (!any(grepl("^ace_keyword", names(parsed)))) {
+   if (!any(grepl("^\\.ace_keyword", names(parsed)))) {
       warning("No field 'ace_keyword' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
-   key <- grep("^ace_keyword", names(parsed), value = TRUE)[[1]]
+   key <- grep("^\\.ace_keyword", names(parsed), value = TRUE)[[1]]
    keywordColor <- parsed[[key]]$color
    if (is.null(keywordColor)) {
       warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)
@@ -1002,7 +951,7 @@
    
    ## Coloring for brackets, discarding the ace bounding box shown
    ## on highlight.
-   layerName <- "ace_marker-layer .ace_bracket"
+   layerName <- ".ace_marker-layer .ace_bracket"
    if (!(layerName %in% names(parsed))) {
       warning("Expected rule for '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
