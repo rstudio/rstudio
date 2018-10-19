@@ -125,6 +125,21 @@ bool isLocalURL(const std::string& url,
    return false;
 }
 
+std::string normalizeHttpdSearchContent(const std::string& content)
+{
+   return boost::regex_replace(
+            content,
+            boost::regex("(The search string was <b>\")(.*)(\"</b>)"),
+            [](const boost::smatch& m)
+   {
+      std::string query = m[2];
+      if (query.find('<') != std::string::npos)
+         query = string_utils::htmlEscape(query);
+
+      return m[1] + string_utils::htmlEscape(m[2]) + m[3];
+   });
+}
+
 template <typename F>
 bool isHttpdErrorPayload(SEXP payloadSEXP, F accessor)
 {
@@ -414,6 +429,10 @@ void handleHttpdResult(SEXP httpdSEXP,
          content = r::sexp::asString(STRING_ELT(payloadSEXP, 0));
       else if (TYPEOF(payloadSEXP) == VECSXP)
          content = r::sexp::asString(VECTOR_ELT(payloadSEXP, 0));
+
+      // normalize search result output
+      if (boost::algorithm::iends_with(request.path(), "/search"))
+         content = normalizeHttpdSearchContent(content);
       
       // check for special file returns
       std::string fileName ;
