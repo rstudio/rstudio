@@ -125,6 +125,29 @@ bool isLocalURL(const std::string& url,
    return false;
 }
 
+template <typename F>
+bool isHttpdErrorPayload(SEXP payloadSEXP, F accessor)
+{
+   for (int i = 0; i < r::sexp::length(payloadSEXP); i++)
+   {
+      std::string line = r::sexp::asString(accessor(payloadSEXP, i));
+      if (line.find("<title>R: httpd error</title>") != std::string::npos)
+         return true;
+   }
+
+   return false;
+}
+
+bool isHttpdErrorPayload(SEXP payloadSEXP)
+{
+   switch (TYPEOF(payloadSEXP))
+   {
+   case STRSXP : return isHttpdErrorPayload(payloadSEXP, STRING_ELT);
+   case VECSXP : return isHttpdErrorPayload(payloadSEXP, VECTOR_ELT);
+   default     : return false;
+   }
+}
+
 
 // hook the browseURL function to look for calls to the R internal http
 // server. for custom URLs remap the address to remote and then fire
@@ -320,7 +343,6 @@ void setDynamicContentResponse(const std::string& content,
    http::NullOutputFilter nullFilter;
    setDynamicContentResponse(content, request, nullFilter, pResponse);
 }
-   
 
 template <typename Filter>
 void handleHttpdResult(SEXP httpdSEXP, 
@@ -339,7 +361,7 @@ void handleHttpdResult(SEXP httpdSEXP,
    const char * const kTextHtml = "text/html";
    std::string contentType(kTextHtml);
    std::vector<std::string> headers;
-   
+
    // if present, second element is content type
    if (LENGTH(httpdSEXP) > 1) 
    {
@@ -377,7 +399,14 @@ void handleHttpdResult(SEXP httpdSEXP,
    // payload = string
    if ((TYPEOF(payloadSEXP) == STRSXP || TYPEOF(payloadSEXP) == VECSXP) &&
         LENGTH(payloadSEXP) > 0)
-   { 
+   {
+      // handle httpd errors (returned as specially constructed payload)
+      if (isHttpdErrorPayload(payloadSEXP))
+      {
+         pResponse->setError(http::status::NotFound, "URL '" + request.uri() + "' not found");
+         return;
+      }
+
       // get the names and the content string
       SEXP namesSEXP = r::sexp::getNames(httpdSEXP);
       std::string content;
