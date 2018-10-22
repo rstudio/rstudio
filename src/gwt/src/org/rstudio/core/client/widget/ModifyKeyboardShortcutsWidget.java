@@ -234,7 +234,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       changes_ = new HashMap<KeyboardShortcutEntry, KeyboardShortcutEntry>();
       buffer_ = new KeySequence();
       
-      table_ = new DataGrid<KeyboardShortcutEntry>(1000, RES, KEY_PROVIDER);
+      table_ = new RStudioDataGrid<KeyboardShortcutEntry>(1000, RES, KEY_PROVIDER);
       
       FlowPanel emptyWidget = new FlowPanel();
       Label emptyLabel = new Label("No bindings available");
