@@ -388,6 +388,25 @@
    writeLines(lines, odbcinstPath)
 })
 
+.rs.addFunction("odbcOdbcInstLibPath", function() {
+   odbcinstLib <- NULL
+
+   odbcinstBin <- system2("which", "odbcinst", stdout = TRUE)
+   if (is.null(odbcinstBin) || length(odbcinstBin) == 0) {
+      warning("Could not find path to odbcinst.")
+   }
+   else {
+      odbcinstLink <- system2("readlink", odbcinstBin, stdout = T)
+      if (!is.null(odbcinstLink) && length(odbcinstLink) > 0) {
+         odbcinstBinPath <- normalizePath(file.path(dirname(odbcinstBin), dirname(odbcinstLink)))
+         odbcinstLibPath <- normalizePath(file.path(odbcinstBinPath, "..", "lib"))
+         odbcinstLib <- dir(odbcinstLibPath, pattern = "libodbcinst.*\\.dylib", full.names = T)[[1]]
+      }
+   }
+
+   odbcinstLib
+})
+
 .rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath, version) {
    # Find odbcinst.ini file
    odbcinstPath <- .rs.odbcBundleOdbcinstPath()
@@ -401,6 +420,17 @@
       paste("Version", "=", version),
       paste("Installer", "=", "RStudio")
    )
+
+   # In OSX register to use unixODBC
+   if (identical(.rs.odbcBundleOsName(), "osx")) {
+      odbcinstLib <- .rs.odbcOdbcInstLibPath()
+      if (!is.null(odbcinstLib)) {
+         odbcinst[[name]] <- c(
+            odbcinst[[name]],
+            paste("ODBCInstLib", "=", odbcinstLib)
+         )
+      }
+   }
    
    # Write odbcinst.ini
    .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
