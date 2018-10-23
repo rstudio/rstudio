@@ -133,7 +133,7 @@ std::string normalizeHttpdSearchContent(const std::string& content)
       if (query.find('<') != std::string::npos)
          query = string_utils::htmlEscape(query);
 
-      return m[1] + string_utils::htmlEscape(m[2]) + m[3];
+      return m[1] + query + m[3];
    });
 }
 
