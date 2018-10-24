@@ -109,6 +109,36 @@ var MarkdownHighlightRules = function() {
         regex: "([*](?=[^\\s*]).*?[*])"
     };
 
+    var inlineNote = {
+        token : "text",
+        regex : "\\^\\[" + escaped("]") + "\\]"
+    };
+
+    var reference = {
+        token : ["text", "constant", "text", "url", "string", "text"],
+        regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
+    };
+
+    var linkByReference = {
+        token : ["text", "keyword", "text", "constant", "text"],
+        regex : "(\\s*\\[)(" + escaped("]") + ")(\\]\\[)("+ escaped("]") + ")(\\])"
+    };
+
+    var linkByUrl = {
+        token : ["text", "keyword", "text", "markup.href", "string", "text"],
+        regex : "(\\s*\\[)(" +                            // [
+            escaped("]") +                                // link text
+            ")(\\]\\()" +                                 // ](
+            '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +    // href
+            '(\\s*"' +  escaped('"') + '"\\s*)?' +        // "title"
+            "(\\))"                                       // )
+    };
+
+    var urlLink = {
+        token : ["text", "keyword", "text"],
+        regex : "(<)((?:https?|ftp|dict):[^'\">\\s]+|(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+)(>)"
+    };
+
     this.$rules = {
 
         "basic" : [{
@@ -123,28 +153,12 @@ var MarkdownHighlightRules = function() {
         }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)(.*?[^`])(\\1)"
-        }, { // reference
-            token : ["text", "constant", "text", "url", "string", "text"],
-            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
-        }, { // link by reference
-            token : ["text", "keyword", "text", "constant", "text"],
-            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\\s*\\[)("+ escaped("]") + ")(\\])"
-        }, { // link by url
-            token : ["text", "keyword", "text", "markup.href", "string", "text"],
-            regex : "((?:[^^]|^)\\[)(" +                          // [
-                escaped("]") +                                    // link text
-                ")(\\]\\()"+                                      // ](
-                '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
-                '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
-                "(\\))"                                           // )
-        }, {
-            token : ["text", "keyword", "text"],
-            regex : "(<)("+
-                "(?:https?|ftp|dict):[^'\">\\s]+"+
-                "|"+
-                "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
-                ")(>)"
         },
+            inlineNote,
+            reference,
+            linkByReference,
+            linkByUrl,
+            urlLink,
             strongStars,
             strongUnderscore,
             emphasisStars,
@@ -207,13 +221,11 @@ var MarkdownHighlightRules = function() {
             token : "string.blockquote",
             regex : "^\\s*>\\s*",
             next  : "blockquote"
-        }, { // reference
-            token : ["text", "constant", "text", "url", "string", "text"],
-            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
-        }, { // link by reference
-            token : ["text", "keyword", "text", "constant", "text"],
-            regex : "(\\[)((?:[[^\\]]*\\]|[^\\[\\]])*)(\\][ ]?(?:\\n[ ]*)?\\[)(.*?)(\\])"
-        }, { // HR *
+        },
+            inlineNote,
+            reference,
+            linkByReference,
+           { // HR *
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\*[ ]?){3,}\\s*$"
         }, { // HR -
@@ -355,28 +367,12 @@ var MarkdownHighlightRules = function() {
         }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)(.*?[^`])(\\1)"
-        }, { // reference
-            token : ["text", "constant", "text", "url", "string", "text"],
-            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
-        }, { // link by reference
-            token : ["text", "keyword", "text", "constant", "text"],
-            regex : "((?:[^^]|^)\\[)(" + escaped("]") + ")(\\]\\s*\\[)("+ escaped("]") + ")(\\])"
-        }, { // link by url
-            token : ["text", "keyword", "text", "markup.href", "string", "text"],
-            regex : "((?:[^^]|^)\\[)(" +                          // [
-                escaped("]") +                                    // link text
-                ")(\\]\\()"+                                      // ](
-                '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
-                '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
-                "(\\))"                                           // )
-        }, {
-            token : ["text", "keyword", "text"],
-            regex : "(<)("+
-                "(?:https?|ftp|dict):[^'\">\\s]+"+
-                "|"+
-                "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
-                ")(>)"
         },
+            inlineNote,
+            reference,
+            linkByReference,
+            linkByUrl,
+            urlLink,
             strongStars,
             strongUnderscore,
             emphasisStars,
