@@ -74,7 +74,7 @@ NSString* readSystemLocale()
    if (allLocales.find(defaultsLocale) != std::string::npos)
       return [NSString stringWithUTF8String: defaultsLocale.c_str()];
 
-   return nullptr;
+   return NULL;
 }
 
 } // end anonymous namespace
