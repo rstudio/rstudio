@@ -114,9 +114,8 @@ Error invokeServerRpc(const std::string& endpoint,
 
 Error initialize()
 {
-   r::routines::registerCallMethod("rs_invokeServerRpc",
-                                   (DL_FUNC)rs_invokeServerRpc,
-                                   2);
+   RS_REGISTER_CALL_METHOD(rs_invokeServerRpc);
+
    return Success();
 }
 
