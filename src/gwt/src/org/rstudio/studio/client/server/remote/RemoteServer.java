@@ -39,8 +39,19 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.*;
+import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.InvalidSessionEvent;
+import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.ActiveSession;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -234,7 +245,6 @@ public class RemoteServer implements Server
       clientId_ = null;
       disconnected_ = false;
       listeningForEvents_ = false;
-      sessionRelaunchPending_ = false;
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
@@ -3066,8 +3076,6 @@ public class RemoteServer implements Server
                   }
                   else
                   {
-                     clearSessionRelaunchPending();
-
                      T result = response.<T> getResult();
                      requestCallback.onResponseReceived(result);
                   }
@@ -3167,8 +3175,6 @@ public class RemoteServer implements Server
             // no error, process the result
             else
             {
-               clearSessionRelaunchPending();
-
                // no error, forward to caller
                responseHandler.onResponseReceived(response);
                
@@ -3261,55 +3267,9 @@ public class RemoteServer implements Server
          // attempting to resolve
          return true;
       }
-      // launch params missing means we are in a launcher session that needs to be implicitly resumed
-      else if (error.getCode() == RpcError.LAUNCH_PARAMETERS_MISSING)
-      {
-         if (launchParameters_ == null)
-            return false;
-
-         // resend the RPC with the launch params received earlier via client_init
-         JSONObject kwParams = new JSONObject();
-         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
-
-         RpcRequest modifiedRequest = new RpcRequest(request.getUrl(),
-                                                     request.getMethod(),
-                                                     request.getParams(),
-                                                     kwParams,
-                                                     request.getRedactLog(),
-                                                     request.getSourceWindow(),
-                                                     request.getClientId(),
-                                                     request.getClientVersion());
-
-         setSessionRelaunchPending();
-
-         retryHandler.onModifiedRetry(modifiedRequest);
-         return true;
-      }
       else
       {
          return false;
-      }
-   }
-
-   private void setSessionRelaunchPending()
-   {
-      if (!sessionRelaunchPending_)
-      {
-         sessionRelaunchPending_ = true;
-
-         // fire event to inform UI that we are attempting to relaunch the session
-         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED));
-      }
-   }
-
-   private void clearSessionRelaunchPending()
-   {
-      if (sessionRelaunchPending_)
-      {
-         sessionRelaunchPending_ = false;
-
-         // fire event to inform UI that we are done relaunching the session
-         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_COMPLETE));
       }
    }
 
@@ -3387,7 +3347,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
@@ -3479,8 +3439,6 @@ public class RemoteServer implements Server
                                boolean redactLog,
                                final ServerRequestCallback<T> requestCallback)
    {
-      assert kwparams == null : "kwparams was not null for sendRequestViaMainWorkbench - not currently supported";
-
       JSONObject request = new JSONObject();
       request.put("method", new JSONString(method));
       if (params != null)
@@ -3510,8 +3468,6 @@ public class RemoteServer implements Server
                   }
                   else
                   {
-                     clearSessionRelaunchPending();
-
                      T result = response.<T> getResult();
                      requestCallback.onResponseReceived(result);
                   }
@@ -3531,7 +3487,7 @@ public class RemoteServer implements Server
       
       var responseCallback = new Object();
       responseCallback.onResponse = $entry(function(response) {
-        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(*)(response);
+        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
       });
 
       $wnd.opener.sendRemoteServerRequest($wnd,
@@ -5683,7 +5639,6 @@ public class RemoteServer implements Server
    private String userHomePath_;
    private boolean listeningForEvents_;
    private boolean disconnected_;
-   private boolean sessionRelaunchPending_;
 
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_ ;

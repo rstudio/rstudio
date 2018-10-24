@@ -89,12 +89,7 @@ public class AceThemes
             // synchronize the effective background color with the desktop
             if (Desktop.isDesktop())
             {
-               // find 'rstudio_container' element (note that this may not exist
-               // in some satellite windows; e.g. the Git window)
                Element el = Document.get().getElementById("rstudio_container");
-               if (el == null)
-                  return;
-               
                Style style = DomUtils.getComputedStyles(el);
                String color = style.getBackgroundColor();
                RGBColor parsed = RGBColor.fromCss(color);
