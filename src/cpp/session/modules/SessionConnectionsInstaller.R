@@ -391,16 +391,16 @@
 .rs.addFunction("odbcOdbcInstLibPath", function() {
    odbcinstLib <- NULL
 
-   odbcinstBin <- system2("which", "odbcinst", stdout = TRUE)
-   if (is.null(odbcinstBin) || length(odbcinstBin) == 0) {
+   odbcinstBin <- Sys.which("odbcinst")
+   if (nchar(odbcinstBin) == 0) {
       warning("Could not find path to odbcinst.")
    }
    else {
-      odbcinstLink <- system2("readlink", odbcinstBin, stdout = T)
-      if (!is.null(odbcinstLink) && length(odbcinstLink) > 0) {
+      odbcinstLink <- Sys.readlink(odbcinstBin)
+      if (!is.na(odbcinstLink)) {
          odbcinstBinPath <- normalizePath(file.path(dirname(odbcinstBin), dirname(odbcinstLink)))
          odbcinstLibPath <- normalizePath(file.path(odbcinstBinPath, "..", "lib"))
-         odbcinstLib <- dir(odbcinstLibPath, pattern = "libodbcinst.*\\.dylib", full.names = T)[[1]]
+         odbcinstLib <- dir(odbcinstLibPath, pattern = "libodbcinst.*\\.dylib", full.names = TRUE)[[1]]
       }
    }
 
@@ -426,7 +426,7 @@
 })
 
 .rs.addFunction("odbcBundleDriverIniPath", function(name, driverPath) {
-   dir(driverPath, pattern = paste(tolower(name), ".*\\.ini", sep = ""), recursive = T, full.names = T)
+   dir(driverPath, pattern = paste(tolower(name), ".*\\.ini", sep = ""), recursive = TRUE, full.names = T)
 })
 
 .rs.addFunction("odbcBundleRegisterOSX", function(name, driverPath, version, installPath) {
