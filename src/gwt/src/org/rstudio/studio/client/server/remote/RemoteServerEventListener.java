@@ -338,6 +338,11 @@ class RemoteServerEventListener
             // and all state is reset correctly
             restart();
          }
+
+         public void onModifiedRetry(RpcRequest modifiedRequest)
+         {
+            restart();
+         }
          
          public void onError(RpcError error)
          {

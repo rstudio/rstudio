@@ -1920,13 +1920,19 @@
    else
       getOption("download.file.extra")
    
+   # NOTE: we need to quote arguments with single quotes below,
+   # as this command will be submitted using double quotes (and
+   # embedded quotes in the command are not properly escaped)
+   escape <- function(string)
+      sprintf("'%s'", gsub("'", "\\'", string, fixed = TRUE))
+   
    data <- list()
    if (length(repos)) {
       data[["repos"]] <- sprintf(
          "c(%s)",
          paste(
-            shQuote(names(repos)),
-            shQuote(as.character(repos)),
+            escape(names(repos)),
+            escape(as.character(repos)),
             sep = " = ",
             collapse = ", "
          )

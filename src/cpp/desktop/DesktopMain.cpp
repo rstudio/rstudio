@@ -582,7 +582,10 @@ int main(int argc, char* argv[])
       // determine the filename that was passed to us
       QString filename;
 #ifdef __APPLE__
-      // get filename from OpenFile apple-event (pump to ensure delivery)
+      // get filename from OpenFile apple-event. pump to ensure delivery
+      // (empirically, pumping twice is required as the event is not always
+      // ready in time for the first call)
+      pApp->processEvents();
       pApp->processEvents();
       filename = verifyAndNormalizeFilename(
                               pAppLaunch->startupOpenFileRequest());

@@ -198,7 +198,56 @@ public class RpcRequest
          requestLogEntry_ = null;
       }
    }
-     
+
+   public String getUrl()
+   {
+      return url_;
+   }
+
+   public String getMethod()
+   {
+      return method_;
+   }
+
+   public JSONArray getParams()
+   {
+      return params_;
+   }
+
+   public JSONObject getKwparams()
+   {
+      return kwparams_;
+   }
+
+   public boolean getRedactLog()
+   {
+      return redactLog_;
+   }
+
+   public String getSourceWindow()
+   {
+      if (sourceWindow_ == null)
+         return null;
+
+      return sourceWindow_.toString();
+   }
+
+   public String getClientId()
+   {
+      if (clientId_ == null)
+         return null;
+
+      return clientId_.toString();
+   }
+
+   public String getClientVersion()
+   {
+      if (clientVersion_ == null)
+         return null;
+      
+      return clientVersion_.toString();
+   }
+
    final private String url_ ;
    final private String method_ ;
    final private JSONArray params_ ;
