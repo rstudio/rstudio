@@ -18,7 +18,7 @@ oop.inherits(Occur, Search);
         var translatedPos = this.originalToOccurPosition(editor.session, pos);
         editor.moveCursorToPosition(translatedPos);
         return true;
-    }
+    };
     this.exit = function(editor, options) {
         var pos = options.translatePosition && editor.getCursorPosition();
         var translatedPos = pos && this.occurToOriginalPosition(editor.session, pos);
@@ -26,14 +26,14 @@ oop.inherits(Occur, Search);
         if (translatedPos)
             editor.moveCursorToPosition(translatedPos);
         return true;
-    }
+    };
 
     this.highlight = function(sess, regexp) {
         var hl = sess.$occurHighlight = sess.$occurHighlight || sess.addDynamicMarker(
                 new SearchHighlight(null, "ace_occur-highlight", "text"));
         hl.setRegexp(regexp);
         sess._emit("changeBackMarker"); // force highlight layer redraw
-    }
+    };
 
     this.displayOccurContent = function(editor, options) {
         this.$originalSession = editor.session;
@@ -47,12 +47,12 @@ oop.inherits(Occur, Search);
         occurSession.$useEmacsStyleLineStart = this.$useEmacsStyleLineStart;
         this.highlight(occurSession, options.re);
         occurSession._emit('changeBackMarker');
-    }
+    };
 
     this.displayOriginalContent = function(editor) {
         editor.setSession(this.$originalSession);
         this.$originalSession.$useEmacsStyleLineStart = this.$useEmacsStyleLineStart;
-    }
+    };
     this.originalToOccurPosition = function(session, pos) {
         var lines = session.$occurMatchingLines;
         var nullPos = {row: 0, column: 0};
@@ -62,13 +62,13 @@ oop.inherits(Occur, Search);
                 return {row: i, column: pos.column};
         }
         return nullPos;
-    }
+    };
     this.occurToOriginalPosition = function(session, pos) {
         var lines = session.$occurMatchingLines;
         if (!lines || !lines[pos.row])
             return pos;
         return {row: lines[pos.row].row, column: pos.column};
-    }
+    };
 
     this.matchingLines = function(session, options) {
         options = oop.mixin({}, options);
@@ -82,7 +82,7 @@ oop.inherits(Occur, Search);
                 lines :
                 lines.concat({row: row, content: session.getLine(row)});
         }, []);
-    }
+    };
 
 }).call(Occur.prototype);
 
@@ -92,8 +92,6 @@ dom.importCssString(".ace_occur-highlight {\n\
     background-color: rgba(87, 255, 8, 0.25);\n\
     position: absolute;\n\
     z-index: 4;\n\
-    -moz-box-sizing: border-box;\n\
-    -webkit-box-sizing: border-box;\n\
     box-sizing: border-box;\n\
     box-shadow: 0 0 4px rgb(91, 255, 50);\n\
 }\n\
@@ -151,20 +149,20 @@ function OccurKeyboardHandler() {}
 
 oop.inherits(OccurKeyboardHandler, HashHandler);
 
-;(function() {
+(function() {
 
     this.isOccurHandler = true;
 
     this.attach = function(editor) {
         HashHandler.call(this, occurCommands, editor.commands.platform);
         this.$editor = editor;
-    }
+    };
 
     var handleKeyboard$super = this.handleKeyboard;
     this.handleKeyboard = function(data, hashId, key, keyCode) {
         var cmd = handleKeyboard$super.call(this, data, hashId, key, keyCode);
         return (cmd && cmd.command) ? cmd : undefined;
-    }
+    };
 
 }).call(OccurKeyboardHandler.prototype);
 
@@ -172,14 +170,14 @@ OccurKeyboardHandler.installIn = function(editor) {
     var handler = new this();
     editor.keyBinding.addKeyboardHandler(handler);
     editor.commands.addCommands(occurCommands);
-}
+};
 
 OccurKeyboardHandler.uninstallFrom = function(editor) {
     editor.commands.removeCommands(occurCommands);
     var handler = editor.getKeyboardHandler();
     if (handler.isOccurHandler)
         editor.keyBinding.removeKeyboardHandler(handler);
-}
+};
 
 exports.occurStartCommand = occurStartCommand;
 
@@ -222,18 +220,14 @@ exports.iSearchCommands = [{
     bindKey: {win: "Ctrl-F", mac: "Command-F"},
     exec: function(iSearch) {
         iSearch.cancelSearch(true);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "searchForward",
     bindKey: {win: "Ctrl-S|Ctrl-K", mac: "Ctrl-S|Command-G"},
     exec: function(iSearch, options) {
         options.useCurrentOrPrevSearch = true;
         iSearch.next(options);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "searchBackward",
     bindKey: {win: "Ctrl-R|Ctrl-Shift-K", mac: "Ctrl-R|Command-Shift-G"},
@@ -241,42 +235,30 @@ exports.iSearchCommands = [{
         options.useCurrentOrPrevSearch = true;
         options.backwards = true;
         iSearch.next(options);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "extendSearchTerm",
     exec: function(iSearch, string) {
         iSearch.addString(string);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "extendSearchTermSpace",
     bindKey: "space",
-    exec: function(iSearch) { iSearch.addString(' '); },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    exec: function(iSearch) { iSearch.addString(' '); }
 }, {
     name: "shrinkSearchTerm",
     bindKey: "backspace",
     exec: function(iSearch) {
         iSearch.removeChar();
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: 'confirmSearch',
     bindKey: 'return',
-    exec: function(iSearch) { iSearch.deactivate(); },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    exec: function(iSearch) { iSearch.deactivate(); }
 }, {
     name: 'cancelSearch',
     bindKey: 'esc|Ctrl-G',
-    exec: function(iSearch) { iSearch.deactivate(true); },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    exec: function(iSearch) { iSearch.deactivate(true); }
 }, {
     name: 'occurisearch',
     bindKey: 'Ctrl-O',
@@ -284,9 +266,7 @@ exports.iSearchCommands = [{
         var options = oop.mixin({}, iSearch.$options);
         iSearch.deactivate();
         occurStartCommand.exec(iSearch.$editor, options);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "yankNextWord",
     bindKey: "Ctrl-w",
@@ -295,9 +275,7 @@ exports.iSearchCommands = [{
             range = ed.selection.getRangeOfMovements(function(sel) { sel.moveCursorWordRight(); }),
             string = ed.session.getTextRange(range);
         iSearch.addString(string);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: "yankNextChar",
     bindKey: "Ctrl-Alt-y",
@@ -306,15 +284,11 @@ exports.iSearchCommands = [{
             range = ed.selection.getRangeOfMovements(function(sel) { sel.moveCursorRight(); }),
             string = ed.session.getTextRange(range);
         iSearch.addString(string);
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: 'recenterTopBottom',
     bindKey: 'Ctrl-l',
-    exec: function(iSearch) { iSearch.$editor.execCommand('recenterTopBottom'); },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    exec: function(iSearch) { iSearch.$editor.execCommand('recenterTopBottom'); }
 }, {
     name: 'selectAllMatches',
     bindKey: 'Ctrl-space',
@@ -326,18 +300,19 @@ exports.iSearchCommands = [{
                     return ranges.concat(ea ? ea : []); }, []) : [];
         iSearch.deactivate(false);
         ranges.forEach(ed.selection.addRange.bind(ed.selection));
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
+    }
 }, {
     name: 'searchAsRegExp',
     bindKey: 'Alt-r',
     exec: function(iSearch) {
         iSearch.convertNeedleToRegExp();
-    },
-    readOnly: true,
-    isIncrementalSearchCommand: true
-}];
+    }
+}].map(function(cmd) {
+    cmd.readOnly = true;
+    cmd.isIncrementalSearchCommand = true;
+    cmd.scrollIntoView = "animate-cursor";
+    return cmd;
+});
 
 function IncrementalSearchKeyboardHandler(iSearch) {
     this.$iSearch = iSearch;
@@ -345,7 +320,7 @@ function IncrementalSearchKeyboardHandler(iSearch) {
 
 oop.inherits(IncrementalSearchKeyboardHandler, HashHandler);
 
-;(function() {
+(function() {
 
     this.attach = function(editor) {
         var iSearch = this.$iSearch;
@@ -355,15 +330,19 @@ oop.inherits(IncrementalSearchKeyboardHandler, HashHandler);
                 return iSearch.deactivate();
             e.stopPropagation();
             e.preventDefault();
-            return e.command.exec(iSearch, e.args || {});
+            var scrollTop = editor.session.getScrollTop();
+            var result = e.command.exec(iSearch, e.args || {});
+            editor.renderer.scrollCursorIntoView(null, 0.5);
+            editor.renderer.animateScrolling(scrollTop);
+            return result;
         });
-    }
+    };
 
     this.detach = function(editor) {
         if (!this.$commandExecHandler) return;
         editor.commands.removeEventListener('exec', this.$commandExecHandler);
         delete this.$commandExecHandler;
-    }
+    };
 
     var handleKeyboard$super = this.handleKeyboard;
     this.handleKeyboard = function(data, hashId, key, keyCode) {
@@ -376,7 +355,7 @@ oop.inherits(IncrementalSearchKeyboardHandler, HashHandler);
             if (extendCmd) { return {command: extendCmd, args: key}; }
         }
         return false;
-    }
+    };
 
 }).call(IncrementalSearchKeyboardHandler.prototype);
 
@@ -412,7 +391,7 @@ function regExpToObject(re) {
     return {
         expression: string.slice(start+1, flagStart),
         flags: string.slice(flagStart+1)
-    }
+    };
 }
 
 function stringToRegExp(string, flags) {
@@ -425,7 +404,7 @@ function objectToRegExp(obj) {
     return stringToRegExp(obj.expression, obj.flags);
 }
 
-;(function() {
+(function() {
 
     this.activate = function(ed, backwards) {
         this.$editor = ed;
@@ -437,7 +416,7 @@ function objectToRegExp(obj) {
         this.$mousedownHandler = ed.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.selectionFix(ed);
         this.statusMessage(true);
-    }
+    };
 
     this.deactivate = function(reset) {
         this.cancelSearch(reset);
@@ -449,13 +428,13 @@ function objectToRegExp(obj) {
         }
         ed.onPaste = this.$originalEditorOnPaste;
         this.message('');
-    }
+    };
 
     this.selectionFix = function(editor) {
         if (editor.selection.isEmpty() && !editor.session.$emacsMark) {
             editor.clearSelection();
         }
-    }
+    };
 
     this.highlight = function(regexp) {
         var sess = this.$editor.session,
@@ -463,7 +442,7 @@ function objectToRegExp(obj) {
                 new SearchHighlight(null, "ace_isearch-result", "text"));
         hl.setRegexp(regexp);
         sess._emit("changeBackMarker"); // force highlight layer redraw
-    }
+    };
 
     this.cancelSearch = function(reset) {
         var e = this.$editor;
@@ -477,7 +456,7 @@ function objectToRegExp(obj) {
         }
         this.highlight(null);
         return Range.fromPoints(this.$currentPos, this.$currentPos);
-    }
+    };
 
     this.highlightAndFindWithNeedle = function(moveToNext, needleUpdateFunc) {
         if (!this.$editor) return null;
@@ -488,7 +467,7 @@ function objectToRegExp(obj) {
         if (options.needle.length === 0) {
             this.statusMessage(true);
             return this.cancelSearch(true);
-        };
+        }
         options.start = this.$currentPos;
         var session = this.$editor.session,
             found = this.find(session),
@@ -499,13 +478,13 @@ function objectToRegExp(obj) {
             this.$editor.selection.setRange(Range.fromPoints(shouldSelect ? this.$startPos : found.end, found.end));
             this.$editor.renderer.scrollCursorIntoView(this.$editor.getCursorPosition(), 0.5);
             if (moveToNext) this.$currentPos = found.end;
-            this.highlight(options.re)
+            this.highlight(options.re);
         }
 
         this.statusMessage(found);
 
         return found;
-    }
+    };
 
     this.addString = function(s) {
         return this.highlightAndFindWithNeedle(false, function(needle) {
@@ -515,7 +494,7 @@ function objectToRegExp(obj) {
             reObj.expression += s;
             return objectToRegExp(reObj);
         });
-    }
+    };
 
     this.removeChar = function(c) {
         return this.highlightAndFindWithNeedle(false, function(needle) {
@@ -525,7 +504,7 @@ function objectToRegExp(obj) {
             reObj.expression = reObj.expression.substring(0, reObj.expression.length-1);
             return objectToRegExp(reObj);
         });
-    }
+    };
 
     this.next = function(options) {
         options = options || {};
@@ -535,28 +514,28 @@ function objectToRegExp(obj) {
             return options.useCurrentOrPrevSearch && needle.length === 0 ?
                 this.$prevNeedle || '' : needle;
         });
-    }
+    };
 
     this.onMouseDown = function(evt) {
         this.deactivate();
         return true;
-    }
+    };
 
     this.onPaste = function(text) {
         this.addString(text);
-    }
+    };
 
     this.convertNeedleToRegExp = function() {
         return this.highlightAndFindWithNeedle(false, function(needle) {
             return isRegExp(needle) ? needle : stringToRegExp(needle, 'ig');
         });
-    }
+    };
 
     this.convertNeedleToString = function() {
         return this.highlightAndFindWithNeedle(false, function(needle) {
             return isRegExp(needle) ? regExpToObject(needle).expression : needle;
         });
-    }
+    };
 
     this.statusMessage = function(found) {
         var options = this.$options, msg = '';
@@ -564,7 +543,7 @@ function objectToRegExp(obj) {
         msg += 'isearch: ' + options.needle;
         msg += found ? '' : ' (not found)';
         this.message(msg);
-    }
+    };
 
     this.message = function(msg) {
         if (this.$editor.showCommandLine) {
@@ -573,7 +552,7 @@ function objectToRegExp(obj) {
         } else {
             console.log(msg);
         }
-    }
+    };
 
 }).call(IncrementalSearch.prototype);
 
@@ -585,8 +564,6 @@ dom.importCssString && dom.importCssString("\
 .ace_marker-layer .ace_isearch-result {\
   position: absolute;\
   z-index: 6;\
-  -moz-box-sizing: border-box;\
-  -webkit-box-sizing: border-box;\
   box-sizing: border-box;\
 }\
 div.ace_isearch-result {\
@@ -632,18 +609,6 @@ require("../incremental_search");
 var iSearchCommandModule = require("../commands/incremental_search_commands");
 
 
-var screenToTextBlockCoordinates = function(x, y) {
-    var canvasPos = this.scroller.getBoundingClientRect();
-
-    var col = Math.floor(
-        (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth
-    );
-
-    var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
-
-    return this.session.screenToDocumentPosition(row, col);
-};
-
 var HashHandler = require("./hash_handler").HashHandler;
 exports.handler = new HashHandler();
 
@@ -660,8 +625,6 @@ exports.handler.attach = function(editor) {
         dom.importCssString('\
             .emacs-mode .ace_cursor{\
                 border: 1px rgba(50,250,50,0.8) solid!important;\
-                -moz-box-sizing: border-box!important;\
-                -webkit-box-sizing: border-box!important;\
                 box-sizing: border-box!important;\
                 background-color: rgba(0,250,0,0.9);\
                 opacity: 0.5;\
@@ -731,11 +694,11 @@ exports.handler.attach = function(editor) {
                     replacement : undefined);
         }
         return lastMark;
-    }
+    };
 
     editor.on("click", $resetMarkMode);
     editor.on("changeSession", $kbSessionChange);
-    editor.renderer.screenToTextCoordinates = screenToTextBlockCoordinates;
+    editor.renderer.$blockCursor = true;
     editor.setStyle("emacs-mode");
     editor.commands.addCommands(commands);
     exports.handler.platform = editor.commands.platform;
@@ -745,7 +708,7 @@ exports.handler.attach = function(editor) {
 };
 
 exports.handler.detach = function(editor) {
-    delete editor.renderer.screenToTextCoordinates;
+    editor.renderer.$blockCursor = false;
     editor.session.$selectLongWords = $formerLongWords;
     editor.session.$useEmacsStyleLineStart = $formerLineStart;
     editor.removeEventListener("click", $resetMarkMode);
@@ -828,7 +791,7 @@ exports.handler.getStatusText = function(editor, data) {
   if (data.count)
     str += data.count;
   if (data.keyChain)
-    str += " " + data.keyChain
+    str += " " + data.keyChain;
   return str;
 };
 
@@ -890,7 +853,7 @@ exports.handler.handleKeyboard = function(data, hashId, key, keyCode) {
         data.lastCommand = null;
 
     if (!command.readOnly && editor.emacsMark())
-        editor.setEmacsMark(null)
+        editor.setEmacsMark(null);
         
     if (data.count) {
         var count = data.count;
@@ -981,7 +944,7 @@ exports.emacsKeys = {
     "M-;": "togglecomment",
 
     "C-/|C-x u|S-C--|C-z": "undo",
-    "S-C-/|S-C-x u|C--|S-C-z": "redo", //infinite undo?
+    "S-C-/|S-C-x u|C--|S-C-z": "redo", // infinite undo?
     "C-x r":  "selectRectangularRegion",
     "M-x": {command: "focusCommandLine", args: "M-x "}
 };
@@ -1023,7 +986,7 @@ exports.handler.addCommands({
                 transientMarkModeActive = true,
                 hasNoSelection = ranges.every(function(range) { return range.isEmpty(); });
             if (transientMarkModeActive && (mark || !hasNoSelection)) {
-                if (editor.inMultiSelectMode) editor.forEachSelection({exec: editor.clearSelection.bind(editor)})
+                if (editor.inMultiSelectMode) editor.forEachSelection({exec: editor.clearSelection.bind(editor)});
                 else editor.clearSelection();
                 if (mark) editor.pushEmacsMark(null);
                 return;
@@ -1083,17 +1046,27 @@ exports.handler.addCommands({
     },
     killLine: function(editor) {
         editor.pushEmacsMark(null);
-        var pos = editor.getCursorPosition();
-        if (pos.column === 0 &&
-            editor.session.doc.getLine(pos.row).length === 0) {
-            editor.selection.selectLine();
-        } else {
-            editor.clearSelection();
-            editor.selection.selectLineEnd();
-        }
+        editor.clearSelection();
         var range = editor.getSelectionRange();
+        var line = editor.session.getLine(range.start.row);
+        range.end.column = line.length;
+        line = line.substr(range.start.column);
+        
+        var foldLine = editor.session.getFoldLine(range.start.row);
+        if (foldLine && range.end.row != foldLine.end.row) {
+            range.end.row = foldLine.end.row;
+            line = "x";
+        }
+        if (/^\s*$/.test(line)) {
+            range.end.row++;
+            line = editor.session.getLine(range.end.row);
+            range.end.column = /^\s*$/.test(line) ? line.length : 0;
+        }
         var text = editor.session.getTextRange(range);
-        exports.killRing.add(text);
+        if (editor.prevOp.command == this)
+            exports.killRing.append(text);
+        else
+            exports.killRing.add(text);
 
         editor.session.remove(range);
         editor.clearSelection();
@@ -1114,6 +1087,7 @@ exports.handler.addCommands({
         exec: function(editor) {
             exports.killRing.add(editor.getCopyText());
             editor.commands.byName.cut.exec(editor);
+            editor.setEmacsMark(null);
         },
         readOnly: true,
         multiSelectAction: "forEach"
@@ -1165,6 +1139,12 @@ exports.killRing = {
         if (this.$data.length > 30)
             this.$data.shift();
     },
+    append: function(str) {
+        var idx = this.$data.length - 1;
+        var text = this.$data[idx] || "";
+        if (str) text += str;
+        if (text) this.$data[idx] = text;
+    },
     get: function(n) {
         n = n || 1;
         return this.$data.slice(this.$data.length-n, this.$data.length).reverse().join('\n');
@@ -1180,4 +1160,11 @@ exports.killRing = {
     }
 };
 
-});
+});                (function() {
+                    window.require(["ace/keyboard/emacs"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            
