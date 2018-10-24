@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 
+#include <core/StringUtils.hpp>
 #include <core/FilePath.hpp>
 
 #include <core/system/System.hpp>
@@ -21,17 +22,73 @@ namespace rstudio {
 namespace desktop {
 namespace utils {
       
-// PORT: from DesktopUtilsMac.mm
+namespace {
+
+NSString* readSystemLocale()
+{
+   using namespace core;
+   using namespace core::system;
+   Error error;
+
+   // First, read all available locales so we can validate whether we've received
+   // a valid locale.
+   ProcessResult localeResult;
+   error = runCommand("/usr/bin/locale -a", ProcessOptions(), &localeResult);
+   if (error)
+      LOG_ERROR(error);
+
+   std::string allLocales = localeResult.stdOut;
+
+   // Now, try looking for the active locale using NSLocale.
+   std::string localeIdentifier = [[[NSLocale currentLocale] localeIdentifier] UTF8String];
+
+   // Remove trailing @ components (macOS uses @ suffix to append locale overrides)
+   std::string::size_type idx = localeIdentifier.find('@');
+   if (idx != std::string::npos)
+      localeIdentifier = localeIdentifier.substr(0, idx);
+
+   // Enforce a UTF-8 locale.
+   localeIdentifier += ".UTF-8";
+
+   if (allLocales.find(localeIdentifier) != std::string::npos)
+      return [NSString stringWithCString: localeIdentifier.c_str()];
+
+   // If that failed, fall back to reading the defaults value. Note that Mojave
+   // (at least with 10.14) reports the wrong locale above and so we rely on this
+   // as a fallback.
+   ProcessResult defaultsResult;
+   error = runCommand("defaults read NSGlobalDomain AppleLocale", ProcessOptions(), &defaultsResult);
+   if (error)
+      LOG_ERROR(error);
+
+   std::string defaultsLocale = string_utils::trimWhitespace(defaultsResult.stdOut);
+
+   // Remove trailing @ components (macOS uses @ suffix to append locale overrides)
+   idx = defaultsLocale.find('@');
+   if (idx != std::string::npos)
+      defaultsLocale = defaultsLocale.substr(0, idx);
+
+   // Enforce a UTF-8 locale.
+   defaultsLocale += ".UTF-8";
+
+   if (allLocales.find(defaultsLocale) != std::string::npos)
+      return [NSString stringWithUTF8String: defaultsLocale.c_str()];
+
+   return nullptr;
+}
+
+} // end anonymous namespace
+
 void initializeLang()
 {
    // Not sure what the memory management rules are here, i.e. whether an
    // autorelease pool is active. Just let it leak, since we're only calling
    // this once (at the time of this writing).
-   
+
    // We try to simulate the behavior of R.app.
-   
+
    NSString* lang = nil;
-   
+
    // Highest precedence: force.LANG. If it has a value, use it.
    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
    [defaults addSuiteNamed:@"org.R-project.R"];
@@ -48,7 +105,7 @@ void initializeLang()
    {
       lang = @"en_US.UTF-8";
    }
-   
+
    // Next highest precedence: LANG environment variable.
    if (!lang)
    {
@@ -56,40 +113,28 @@ void initializeLang()
       if (!envLang.empty())
       {
          lang = [NSString stringWithCString:envLang.c_str()
-                                   encoding:NSASCIIStringEncoding];
+                          encoding:NSASCIIStringEncoding];
       }
    }
-   
+
    // Next highest precedence: Try to figure out language from the current
    // locale.
    if (!lang)
    {
-      NSString* lcid = [[NSLocale currentLocale] localeIdentifier];
-      if (lcid)
-      {
-         // Eliminate trailing @ components (OS X uses the @ suffix to append
-         // locale overrides like alternate currency formats)
-         std::string localeId = std::string([lcid UTF8String]);
-         std::size_t atLoc = localeId.find('@');
-         if (atLoc != std::string::npos)
-         {
-            localeId = localeId.substr(0, atLoc);
-            lcid = [NSString stringWithUTF8String: localeId.c_str()];
-         }
-         
-         lang = [lcid stringByAppendingString:@".UTF-8"];
-      }
+      lang = readSystemLocale();
    }
-   
+
    // None of the above worked. Just hard code it.
    if (!lang)
    {
       lang = @"en_US.UTF-8";
    }
-   
+
    const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
    core::system::setenv("LANG", clang);
    core::system::setenv("LC_CTYPE", clang);
+
+   initializeSystemPrefs();
 }
    
 void initializeSystemPrefs()
