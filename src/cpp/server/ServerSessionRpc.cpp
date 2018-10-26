@@ -34,6 +34,7 @@
 #include "load_balancer/LoadBalancer.hpp"
 #include "ServerActivation.hpp"
 #include "ServerSessionRpc.hpp"
+#include "ServerJobLauncher.hpp"
 
 #define kInvalidSecretEndpoint "/invalid_secret"
 
@@ -145,11 +146,6 @@ void validationHandler(
    handler(username, pConnection);
 }
 
-bool launcherSessionsEnabled()
-{
-   return getServerBoolOption(kLauncherSessionsEnabled);
-}
-
 } // anonymous namespace
 
 void addHandler(const std::string &prefix,
@@ -160,7 +156,7 @@ void addHandler(const std::string &prefix,
       s_pSessionRpcServer->addHandler(
                prefix, boost::bind(validationHandler, handler, _1));
 
-      if (launcherSessionsEnabled())
+      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
       {
          // if we're using job launcher sessions, we need to handle RPCs
          // from within the regular http server since sessions will be
