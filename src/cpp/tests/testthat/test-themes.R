@@ -103,12 +103,12 @@ defaultThemes <- list(
    "Xcode" = list("fileName" = "xcode", isDark = FALSE))
 
 # Helpers ==========================================================================================
-compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
+compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = FALSE)
 {
    browser(expr = shouldBreak)
    equal <- TRUE
-   msgStart <- "\nCSS"
-   if (!is.null(parent)) msgStart <- paste0("\nElement \"", parent, "\" ")
+   msgStart <- paste0("\n", infoStr, "\nCSS")
+   if (!is.null(parent)) msgStart <- paste0("\n", infoStr, "\nElement \"", parent, "\"'s")
    
    if (!all(actual %in% expected) || !all(expected %in% actual))
    {
@@ -178,7 +178,7 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
             exVal <- expected[[name]]
             if (is.list(acVal) && is.list(exVal))
             {
-               equal <- equal && compareCss(acVal, exVal, name)
+               equal <- equal && compareCss(acVal, exVal, infoStr, name)
             }
             else if (is.list(acVal) || is.list(exVal))
             {
@@ -195,14 +195,14 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
                   exRgb <- .rs.getRgbColor(exVal)
                   if (!identical(acRgb, exRgb))
                   {
-                     msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
+                     msg <- sprintf("\"%s\" rule doesn't match. Actual: %s, Expected: %s", name, acVal, exVal)
                      cat(msgStart, msg, "\n")
                      equal <- FALSE
                   }
                }
                else
                {
-                  msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
+                  msg <- sprintf("\"%s\" rule doesn't match. Actual: %s, Expected: %s", name, acVal, exVal)
                   cat(msgStart, msg, "\n")
                   equal <- FALSE
                }
@@ -490,7 +490,7 @@ test_that("rgb conversion handles invalid values correctly", {
 
 # Test mixColors ===================================================================================
 test_that("mixColors works correctly", {
-   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "rgb(106,38,158)")
+   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "rgb(107,39,159)")
    expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "rgb(128,128,128)")
    expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "rgb(125,125,125)")
    expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "rgb(40,40,40)")
@@ -937,7 +937,8 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
          .rs.parseCss(
             readLines(
                file.path(inputFileLocation, "acecss", "tomorrow.css"),
-               encoding = "UTF-8"))))
+               encoding = "UTF-8")),
+         "Theme: Tomorrow"))
    expect_false(tomorrowConverted$isDark)
 })
 
@@ -959,7 +960,7 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
          encoding = "UTF-8"))
 
       infoStr <- paste("Theme:", key)
-      expect_true(compareCss(.rs.parseCss(actualConverted$theme), expectedCss), info = infoStr)
+      expect_true(compareCss(.rs.parseCss(actualConverted$theme), expectedCss, infoStr), info = infoStr)
       expect_equal(actualConverted$isDark, value$isDark, info = infoStr)
    })
 })
@@ -1480,7 +1481,7 @@ test_that("convertAceTheme works correctly", {
 
       # Check the css values
       infoStr = paste0("Theme: ", key)
-      expect_true(compareCss(.rs.parseCss(actual), .rs.parseCss(expected)), info = infoStr)
+      expect_true(compareCss(.rs.parseCss(actual), .rs.parseCss(expected), infoStr), info = infoStr)
       
       # Check the metadata values
       expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
@@ -1507,7 +1508,7 @@ test_that_wrapped("convertTheme works correctly", {
          encoding = "UTF-8")
 
       infoStr <- paste("Theme:", themeName)
-      expect_true(compareCss(.rs.parseCss(actualCssLines), .rs.parseCss(expectedCssLines)), info = infoStr)
+      expect_true(compareCss(.rs.parseCss(actualCssLines), .rs.parseCss(expectedCssLines), infoStr), info = infoStr)
 
       # Check name values
       expectedName <- getRsThemeName(expectedCssLines)

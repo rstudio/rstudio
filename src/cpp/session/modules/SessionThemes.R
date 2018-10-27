@@ -320,7 +320,7 @@
       scope <- fallbackScopes[[i]]
       if (is.null(styles[[name]]) || (styles[[name]] == ""))
       {
-         if (is.null(styles[[scope]]) ||
+         if (is.null(styles[[scope]]) ||
              (styles[[scope]] == "") ||
              is.null(styles[[scope]][[color]]) ||
              (styles[[scope]][[color]] == ""))
