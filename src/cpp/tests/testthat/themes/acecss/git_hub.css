@@ -64,8 +64,16 @@
   color: #800080
 }
 
+.ace-git-hub .ace_constant.ace_language {
+  font-weight: bold
+}
+
 .ace-git-hub .ace_constant.ace_other {
   color: #009999
+}
+
+.ace-git-hub .ace_support.ace_constant {
+  font-weight: bold
 }
 
 .ace-git-hub .ace_support.ace_function {
@@ -78,6 +86,10 @@
 
 .ace-git-hub .ace_support.ace_type {
   color: #445588
+}
+
+.ace-git-hub .ace_storage {
+  font-weight: bold
 }
 
 .ace-git-hub .ace_storage.ace_type {
@@ -99,7 +111,8 @@
 }
 
 .ace-git-hub .ace_comment.ace_doc {
-  font-style: bold italic;
+  font-style: italic;
+  font-weight: bold;
   color: #999999
 }
 

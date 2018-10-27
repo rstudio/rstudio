@@ -71,6 +71,7 @@
 }
 
 .ace_constant.ace_language {
+  font-weight: bold;
   color: #DE8E30
 }
 

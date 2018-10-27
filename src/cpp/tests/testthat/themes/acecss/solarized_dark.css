@@ -56,6 +56,11 @@
   color: #859900
 }
 
+.ace-solarized-dark .ace_keyword.ace_operator {
+  font-weight: bold;
+  color: #859900
+}
+
 .ace-solarized-dark .ace_constant.ace_language {
   color: #B58900
 }

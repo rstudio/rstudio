@@ -134,6 +134,10 @@
   color: #FF9358
 }
 
+.ace-espresso-libre .ace_entity.ace_name.ace_tag {
+  font-weight: bold
+}
+
 .ace-espresso-libre .ace_keyword {
   color: #BDAE9D
 }

@@ -131,6 +131,10 @@
   color: #0000A2
 }
 
+.ace_entity.ace_name.ace_tag {
+  font-weight: bold
+}
+
 .ace_markup.ace_heading {
   color: #0C07FF
 }

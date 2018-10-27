@@ -57,6 +57,7 @@
 }
 
 .ace-brilliance-dull .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #7979B7
 }
 

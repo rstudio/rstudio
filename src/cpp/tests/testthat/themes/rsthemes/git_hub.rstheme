@@ -66,6 +66,10 @@
   color: #800080
 }
 
+.ace_constant.ace_language {
+  font-weight: bold
+}
+
 .ace_constant.ace_other {
   color: #009999
 }
@@ -78,8 +82,16 @@
   color: #445588
 }
 
+.ace_support.ace_constant {
+  font-weight: bold
+}
+
 .ace_support.ace_type {
   color: #445588
+}
+
+.ace_storage {
+  font-weight: bold
 }
 
 .ace_storage.ace_type {
@@ -101,7 +113,8 @@
 }
 
 .ace_comment.ace_doc {
-  font-style: bold italic;
+  font-style: italic;
+  font-weight: bold;
   color: #999999
 }
 

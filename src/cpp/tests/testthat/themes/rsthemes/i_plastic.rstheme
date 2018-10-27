@@ -78,6 +78,10 @@
   color: #3333FF
 }
 
+.ace_storage {
+  font-weight: bold
+}
+
 .ace_support.ace_constant {
   color: #6782D3
 }
@@ -119,6 +123,10 @@
 
 .ace_entity.ace_name.ace_function {
   color: #FF8000
+}
+
+.ace_entity.ace_name.ace_tag {
+  font-weight: bold
 }
 
 .ace_support.ace_type {

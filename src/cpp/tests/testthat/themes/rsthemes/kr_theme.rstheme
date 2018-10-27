@@ -112,6 +112,10 @@
   background-color: #0F0040
 }
 
+.ace_markup.ace_header {
+  font-weight: bold
+}
+
 .ace_support.ace_type {
   color: #FCFFE0
 }

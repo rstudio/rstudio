@@ -138,6 +138,10 @@
   color: #0000A2
 }
 
+.ace-textmate .ace_entity.ace_name.ace_tag {
+  font-weight: bold
+}
+
 .ace-textmate .ace_markup.ace_heading {
   color: #0C07FF
 }

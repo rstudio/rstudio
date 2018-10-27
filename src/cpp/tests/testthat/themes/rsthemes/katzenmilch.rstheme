@@ -95,6 +95,7 @@
 }
 
 .ace_storage {
+  font-weight: bold;
   color: rgba(123, 92, 191, 1.0);
   background-color: rgba(139, 93, 223, 0.051)
 }

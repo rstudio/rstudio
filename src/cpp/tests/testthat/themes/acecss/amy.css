@@ -81,6 +81,7 @@
 }
 
 .ace-amy .ace_invalid.ace_illegal {
+  font-weight: bold;
   color: #400080;
   background-color: #FFFF00
 }

@@ -187,6 +187,10 @@
    {
       cssLines <- c(cssLines, "font-style:italic;")
    }
+   if (grepl("bold", fontStyle))
+   {
+      cssLines <- c(cssLines, "font-weight:bold;")
+   }
    
    if (!is.null(styles$foreground))
    {
@@ -284,25 +288,6 @@
       }
    }
    
-   fScopeNames <- names(fallbackScopes)
-   for (i in 1:length(fallbackScopes))
-   {
-      name <- fScopeNames[i]
-      scope <- fallbackScopes[[i]]
-      if (is.null(styles[[name]]) || (styles[[name]] == ""))
-      {
-         if (is.null(styles[[scope]]) || (styles[[scope]] == ""))
-         {
-            # All fallback elements are foreground for now.
-            styles[[name]] <- paste0("color:", styles$foreground, ";")
-         }
-         else 
-         {
-            styles[[name]] <- styles[[scope]]
-         }
-      }
-   }
-   
    if (is.null(styles$fold))
    {
       foldSource <- styles$entity.name.function
@@ -327,6 +312,28 @@
    }
    
    styles$isDark = tolower(as.character(.rs.getLuma(styles$background) <  0.5))
+   
+   fScopeNames <- names(fallbackScopes)
+   for (i in 1:length(fallbackScopes))
+   {
+      name <- fScopeNames[i]
+      scope <- fallbackScopes[[i]]
+      if (is.null(styles[[name]]) || (styles[[name]] == ""))
+      {
+         if (is.null(styles[[scope]]) ||
+             (styles[[scope]] == "") ||
+             is.null(styles[[scope]][[color]]) ||
+             (styles[[scope]][[color]] == ""))
+         {
+            # All fallback elements are foreground for now.
+            styles[[name]] <- paste0("color:", styles$foreground, ";")
+         }
+         else 
+         {
+            styles[[name]] <- styles[[scope]]
+         }
+      }
+   }
    
    list("styles" = styles, "unsupportedScopes" = unsupportedScopes)
 })
