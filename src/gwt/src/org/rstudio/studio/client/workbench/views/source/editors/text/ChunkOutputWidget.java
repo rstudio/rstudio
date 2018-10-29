@@ -679,7 +679,6 @@ public class ChunkOutputWidget extends Composite
       if (spinner_ != null)
       {
          spinner_.removeFromParent();
-         spinner_.detach();
          spinner_ = null;
       }
       // create a black or white spinner as appropriate
@@ -694,6 +693,7 @@ public class ChunkOutputWidget extends Composite
       spinner_.getElement().getStyle().setOpacity(1);
       root_.getElement().getStyle().setOpacity(0.2);
 
+      spinner_.setVisible(true);
       clear_.setVisible(false);
       expand_.setVisible(false);
       popout_.setVisible(false);
@@ -708,8 +708,8 @@ public class ChunkOutputWidget extends Composite
 
       if (spinner_ != null)
       {
+         spinner_.setVisible(false);
          spinner_.removeFromParent();
-         spinner_.detach();
          spinner_ = null;
       }
 
