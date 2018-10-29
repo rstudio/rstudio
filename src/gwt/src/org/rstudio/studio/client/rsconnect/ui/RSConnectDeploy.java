@@ -831,40 +831,33 @@ public class RSConnectDeploy extends Composite
       {
          if (StringUtil.isNullOrEmpty(source_.getDeployFile()))
          {
-            // Want to make sure the dialog (e.g. publish wizard) has gone away before the message
+            // Make sure the dialog (e.g. publish wizard) dismisses before the message
             // is shown. In some scenarios, varying both by dialog and by platform (desktop vs.
             // server), the message is showing while the dialog is still visible but not fully
             // initialized. In another scenario, the dialog does not dismiss when
-            // indicator.onCompleted() is invoked unless we delay the invocation a bit. This is
-            // all rather unsatisfying.
-            Timer onCompletedTimer = new Timer()
-            {
-               @Override
-               public void run()
+            // indicator.onCompleted() is invoked unless we delay the invocation a bit.
+            Scheduler.get().scheduleDeferred(() -> {
+               indicator.onCompleted();
+      
+               // On Desktop (macOS, at least), trying to show message here leaves the
+               // publish wizard visible in an incomplete state and it doesn't dismiss
+               // until the message is dismissed. A scheduleDeferred did not help, but
+               // a timer works.
+               Timer showMessageTimer = new Timer()
                {
-                  indicator.onCompleted();
-         
-                  // Want to make sure the publish wizard has gone away before this message is shown.
-                  // On Desktop (macOS, at least), trying to do this with indicator.onError(msg)
-                  // leaves the publish wizard visible in an incomplete state and it doesn't dismiss
-                  // until the message is dismissed, so defer message display a bit.
-                  Timer showMessageTimer = new Timer()
+                  @Override
+                  public void run()
                   {
-                     @Override
-                     public void run()
-                     {
-                        RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                              GlobalDisplay.MSG_INFO,
-                              "Finished Document Not Found",
-                              "To publish finished document to RStudio Connect, you must first render " +
-                                    "it. Dismiss this message, click Knit to render the document, " +
-                                    "then try publishing again.");
-                     }
-                  };
-                  showMessageTimer.schedule(100);
-               }
-            };
-            onCompletedTimer.schedule(100);
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                           GlobalDisplay.MSG_INFO,
+                           "Finished Document Not Found",
+                           "To publish finished document to RStudio Connect, you must first render " +
+                                 "it. Dismiss this message, click Knit to render the document, " +
+                                 "then try publishing again.");
+                  }
+               };
+               showMessageTimer.schedule(100);
+            });
             return;
          }
          ArrayList<String> files = new ArrayList<String>();
