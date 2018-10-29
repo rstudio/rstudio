@@ -141,11 +141,11 @@
 }
 
 .ace_keyword {
-  color: #BDAE9D
+  color: #43A8ED
 }
 
 .ace_keyword.ace_operator {
-  color: #BDAE9D
+  color: #43A8ED
 }
 .nocolor.ace_editor .ace_line span {
   color: #43a8ed !important;
