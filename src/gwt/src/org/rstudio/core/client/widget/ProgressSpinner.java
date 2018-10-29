@@ -101,7 +101,7 @@ public class ProgressSpinner extends Composite
    
    public void startAnimating()
    {
-      if (isAnimating_)
+      if (isAnimating_ || requestStopAnimating_)
          return;
       
       isAnimating_ = true;
@@ -111,7 +111,7 @@ public class ProgressSpinner extends Composite
    
    public void stopAnimating()
    {
-      requestStopAnimating_ = false;
+      requestStopAnimating_ = true;
    }
    
    private boolean animate()
