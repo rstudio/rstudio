@@ -24,8 +24,6 @@
 
 #include <boost/function.hpp>
 
-#include <core/system/UserObfuscation.hpp>
-
 #define kProjectNone   "none"
 #define kUserIdLen      5
 #define kProjectIdLen   8
@@ -55,30 +53,8 @@ enum SessionScopeState
    ScopeMissingProject,
 };
 
-inline std::string obfuscatedUserId(uid_t uid)
-{
-   std::ostringstream ustr;
-   ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
-        << OBFUSCATE_USER_ID(uid);
-   return ustr.str();
-}
-
-inline uid_t deobfuscatedUserId(const std::string& userId)
-{
-   // shortcut if user ID is not known
-   if (userId.empty())
-      return 0;
-
-   // attempt to parse user id
-   long uid = strtol(userId.c_str(), NULL, 16);
-
-   // collapse all error cases
-   if (uid == LONG_MAX || uid == LONG_MIN)
-      uid = 0;
-   else if (uid != 0)
-      uid = DEOBFUSCATE_USER_ID(uid);
-   return uid;
-}
+void setMinUid(uid_t minUid);
+std::string obfuscatedUserId(uid_t uid);
 
 class ProjectId
 {

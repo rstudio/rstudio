@@ -23,6 +23,7 @@
 #include <core/ProgramOptions.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixSystem.hpp>
@@ -394,6 +395,7 @@ ProgramStatus Options::read(int argc,
 
    // resolve minimum user id
    authMinimumUserId_ = resolveMinimumUserId(authMinimumUserId, osWarnings);
+   core::r_util::setMinUid(authMinimumUserId_);
 
    // read auth login html
    FilePath loginPageHtmlPath(authLoginPageHtml);
