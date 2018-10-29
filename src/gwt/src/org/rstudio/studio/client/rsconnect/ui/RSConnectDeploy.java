@@ -64,6 +64,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
@@ -830,12 +831,27 @@ public class RSConnectDeploy extends Composite
       {
          if (StringUtil.isNullOrEmpty(source_.getDeployFile()))
          {
-            indicator.onError(
-                  "Only rendered documents can be published to RStudio Connect. " +
-                  "To publish this document, click Knit to render it, then click " +
-                  "the Publish button above the rendered document.");
-            indicator.onCompleted(); 
-            return; 
+            indicator.onCompleted();
+
+            // Want to make sure the publish wizard has gone away before this message is shown.
+            // On Desktop (macOS, at least), trying to do this with indicator.onError(msg)
+            // leaves the publish wizard visible in an incomplete state and it doesn't dismiss
+            // until the message is dismissed, so defer message display a bit.
+            Timer timer = new Timer()
+            {
+               @Override
+               public void run()
+               {
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                        GlobalDisplay.MSG_INFO,
+                        "Finished Document Not Found",
+                        "To publish finished document to RStudio Connect, you must first render " +
+                              "it. Dismiss this message, click Knit to render the document, " +
+                              "then try publishing again.");
+               }
+            };
+            timer.schedule(250);
+            return;
          }
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
@@ -1245,7 +1261,7 @@ public class RSConnectDeploy extends Composite
       {
          onError(error.getMessage());
       }
-   };
+   }
    
    private void showAppError(String error)
    {

@@ -1,7 +1,7 @@
 /*
  * PublishReportSourcePage.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ public class PublishReportSourcePage
          RSConnectPublishInput input,
          boolean asMultiple)
    {
-      super(title, subTitle, "Publish Source Code", icon, null, 
+      super(title, subTitle, "Publish to RStudio Connect", icon, null,
             createPages(input, asMultiple));
    }
 
