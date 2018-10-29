@@ -26,14 +26,9 @@
 extern "C" {
 #endif
 
-#if defined(_MSC_VER)
-#define __attribute__(x)
-#define inline
-#endif
-
 typedef enum {
 	BUF_OK = 0,
-	BUF_ENOMEM = -1,
+	BUF_ENOMEM = -1
 } buferror_t;
 
 /* struct buf: character array buffer */
