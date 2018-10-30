@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -429,7 +429,6 @@ void setMinUid(uid_t uid)
    s_minUid = uid;
 }
 
-#ifndef _WIN32
 namespace {
 
 // max user ID string (length of 5)
@@ -468,8 +467,6 @@ std::string obfuscatedUserId(uid_t uid)
         << OBFUSCATE_USER_ID(uid);
    return ustr.str().substr(0, kUserIdLen);
 }
-#endif
-
 
 } // namespace r_util
 } // namespace core 
