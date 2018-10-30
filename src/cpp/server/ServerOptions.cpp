@@ -204,7 +204,10 @@ ProgramStatus Options::read(int argc,
         "is app armor enabled for this session")
       ("server-set-umask",
          value<bool>(&serverSetUmask_)->default_value(1),
-         "set the umask to 022 on startup");
+         "set the umask to 022 on startup")
+      ("secure-cookie-key-file",
+        value<std::string>(&secureCookieKeyFile_)->default_value(""),
+        "path override for secure cookie key");
 
    // www - web server options
    options_description www("www") ;
