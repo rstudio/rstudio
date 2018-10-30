@@ -54,15 +54,13 @@
   border-color: #BDAE9D
 }
 
-.ace_keyword {
-  color: #43A8ED
-}
-
 .ace_constant {
+  font-weight: bold;
   color: #C5656B
 }
 
 .ace_constant.ace_language {
+  font-weight: bold;
   color: #585CF6
 }
 
@@ -75,22 +73,27 @@
 }
 
 .ace_support.ace_function {
+  font-weight: bold;
   color: #7290D9
 }
 
 .ace_support.ace_constant {
+  font-weight: bold;
   color: #00AF0E
 }
 
 .ace_support.ace_class {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_support.ace_type {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_storage {
+  font-weight: bold;
   color: #43A8ED
 }
 
@@ -109,6 +112,7 @@
 }
 
 .ace_variable {
+  font-weight: bold;
   color: #FF9358
 }
 
@@ -133,6 +137,7 @@
 }
 
 .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #FF9358
 }
 
@@ -141,10 +146,12 @@
 }
 
 .ace_keyword {
+  font-weight: bold;
   color: #43A8ED
 }
 
 .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #43A8ED
 }
 .nocolor.ace_editor .ace_line span {

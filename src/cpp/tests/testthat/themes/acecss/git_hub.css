@@ -81,10 +81,12 @@
 }
 
 .ace-git-hub .ace_support.ace_class {
+  font-weight: bold;
   color: #445588
 }
 
 .ace-git-hub .ace_support.ace_type {
+  font-weight: bold;
   color: #445588
 }
 
@@ -93,6 +95,7 @@
 }
 
 .ace-git-hub .ace_storage.ace_type {
+  font-weight: bold;
   color: #445588
 }
 
@@ -149,9 +152,11 @@
 }
 
 .ace-git-hub .ace_keyword {
+  font-weight: bold;
   color: #000000
 }
 
 .ace-git-hub .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #000000
 }

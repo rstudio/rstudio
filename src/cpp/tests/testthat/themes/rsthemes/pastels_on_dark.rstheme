@@ -88,11 +88,13 @@
 }
 
 .ace_invalid {
+  font-weight: bold;
   color: #F8F8F8;
   background-color: rgba(86, 45, 86, 0.75)
 }
 
 .ace_invalid.ace_illegal {
+  font-weight: bold;
   color: #F8F8F8;
   background-color: rgba(86, 45, 86, 0.75)
 }
@@ -126,10 +128,7 @@
 .ace_support.ace_type {
   color: #8F938F
 }
- 
-.ace_variable {
-  color: #8F938F
-}
+
 .nocolor.ace_editor .ace_line span {
   color: #757ad8 !important;
 }

@@ -70,6 +70,10 @@
   color: #666666
 }
 
+.ace_constant.ace_language {
+  color: #707090
+}
+
 .ace_support.ace_constant {
   background-color: #200020
 }

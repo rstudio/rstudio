@@ -55,6 +55,7 @@
 }
 
 .ace_constant.ace_language {
+  font-weight: bold;
   color: #FFA995
 }
 
@@ -89,6 +90,7 @@
 }
 
 .ace_storage {
+  font-weight: bold;
   color: #3A68A3
 }
 
@@ -129,6 +131,7 @@
 }
 
 .ace_entity.ace_name {
+  font-weight: bold;
   color: #0000FF
 }
 
@@ -142,6 +145,7 @@
 }
 
 .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #000000
 }
 .nocolor.ace_editor .ace_line span {

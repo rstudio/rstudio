@@ -108,7 +108,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
    browser(expr = shouldBreak)
    equal <- TRUE
    msgStart <- paste0("\n", infoStr, "\nCSS")
-   if (!is.null(parent)) msgStart <- paste0("\n", infoStr, "\nElement \"", parent, "\"'s")
+   if (!is.null(parent)) msgStart <- paste0("\n", infoStr, "\nElement \"", parent, "\"")
    
    if (!all(actual %in% expected) || !all(expected %in% actual))
    {
@@ -176,6 +176,8 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
          {
             acVal <- actual[[name]]
             exVal <- expected[[name]]
+            if (!is.list(acVal)) acVal <- gsub(" +", " ", trimws(acVal), perl = TRUE)
+            
             if (is.list(acVal) && is.list(exVal))
             {
                equal <- equal && compareCss(acVal, exVal, infoStr, name)
@@ -530,7 +532,7 @@ test_that("parseStyles works correctly", {
    # Setup objects for the test case
    allValues <- list(
       "foreground" = "#a12d96",
-      "fontStyle" = "underline italic",
+      "fontStyle" = "underline italic bold",
       "background" = "#1ad269")
    noFont <- list("foreground" = "#863021", "background" = "#A1A1A1")
    onlyItalic <- list("fontStyle" = "italic")
@@ -544,13 +546,23 @@ test_that("parseStyles works correctly", {
    emptyList <- list()
 
    # Expected Values
-   allValuesEx <- "text-decoration:underline;font-style:italic;color:#a12d96;background-color:#1ad269;"
-   noFontEx <- "color:#863021;background-color:#A1A1A1;"
-   onlyItalicEx <- "font-style:italic;"
-   underLineBgEx <- "text-decoration:underline;background-color:rgba(161, 161, 161, 1.00);"
-   nonsenseFontEx <- "color:rgba(26, 43, 60, 0.30);background-color:#112233;"
-   nonsenseFont2Ex <- "text-decoration:underline;color:#cccccc;background-color:#1a2b3c;"
-   emptyListEx <- ""
+   allValuesEx <- list(
+      "text-decoration" = "underline",
+      "font-style" = "italic",
+      "font-weight" = "bold",
+      "color" = "#a12d96",
+      "background-color" = "#1ad269")
+   noFontEx <- list("color" = "#863021", "background-color" = "#A1A1A1")
+   onlyItalicEx <- list("font-style" = "italic")
+   underLineBgEx <- list(
+      "text-decoration" = "underline",
+      "background-color" = "rgba(161, 161, 161, 1.00)")
+   nonsenseFontEx <- list("color" = "rgba(26, 43, 60, 0.30)", "background-color" = "#112233")
+   nonsenseFont2Ex <- list(
+      "text-decoration" = "underline",
+      "color" = "#cccccc",
+      "background-color" = "#1a2b3c")
+   emptyListEx <- list()
 
    # Test cases (no error)
    expect_equal(.rs.parseStyles(allValues), allValuesEx)
@@ -754,35 +766,35 @@ test_that("extractStyles works correctly", {
    tomorrowStyles$bracket = "#D1D1D1"
    tomorrowStyles$active_line = "#EFEFEF"
    tomorrowStyles$cursor = "#AEAFAD"
-   tomorrowStyles$invisible = "color:#D1D1D1;"
-   tomorrowStyles$comment = "color:#8E908C;"
-   tomorrowStyles$variable = "color:#C82829;"
-   tomorrowStyles$string.regexp = "color:#C82829;"
-   tomorrowStyles$entity.name.tag = "color:#C82829;"
-   tomorrowStyles$`entity.other.attribute-name` = "color:#C82829;"
-   tomorrowStyles$meta.tag = "color:#C82829;"
-   tomorrowStyles$constant.numeric = "color:#F5871F;"
-   tomorrowStyles$constant.language = "color:#F5871F;"
-   tomorrowStyles$support.constant = "color:#F5871F;"
-   tomorrowStyles$constant.character = "color:#F5871F;"
-   tomorrowStyles$variable.parameter = "color:#F5871F;"
-   tomorrowStyles$keyword.other.unit = "color:#F5871F;"
-   tomorrowStyles$support.type = "color:#C99E00;"
-   tomorrowStyles$support.class =  "color:#C99E00;"
-   tomorrowStyles$string = "color:#718C00;"
-   tomorrowStyles$markup.heading = "color:#718C00;"
-   tomorrowStyles$keyword.operator = "color:#3E999F;"
-   tomorrowStyles$entity.name.function = "color:#4271AE;"
-   tomorrowStyles$support.function = "color:#4271AE;"
-   tomorrowStyles$keyword = "color:#8959A8;"
-   tomorrowStyles$storage = "color:#8959A8;"
-   tomorrowStyles$storage.type = "color:#8959A8;"
-   tomorrowStyles$invalid = "color:#FFFFFF;background-color:#C82829;"
-   tomorrowStyles$invalid.deprecated = "color:#FFFFFF;background-color:#8959A8;"
+   tomorrowStyles$invisible =  "#D1D1D1"
+   tomorrowStyles$comment = list("color" = "#8E908C")
+   tomorrowStyles$variable = list("color" = "#C82829")
+   tomorrowStyles$string.regexp = list("color" = "#C82829")
+   tomorrowStyles$entity.name.tag = list("color" = "#C82829")
+   tomorrowStyles$`entity.other.attribute-name` = list("color" = "#C82829")
+   tomorrowStyles$meta.tag = list("color" = "#C82829")
+   tomorrowStyles$constant.numeric = list("color" = "#F5871F")
+   tomorrowStyles$constant.language = list("color" = "#F5871F")
+   tomorrowStyles$support.constant = list("color" = "#F5871F")
+   tomorrowStyles$constant.character = list("color" = "#F5871F")
+   tomorrowStyles$variable.parameter = list("color" = "#F5871F")
+   tomorrowStyles$keyword.other.unit = list("color" = "#F5871F")
+   tomorrowStyles$support.type = list("color" = "#C99E00")
+   tomorrowStyles$support.class =  list("color" = "#C99E00")
+   tomorrowStyles$string = list("color" = "#718C00")
+   tomorrowStyles$markup.heading = list("color" = "#718C00")
+   tomorrowStyles$keyword.operator = list("color" = "#3E999F")
+   tomorrowStyles$entity.name.function = list("color" = "#4271AE")
+   tomorrowStyles$support.function = list("color" = "#4271AE")
+   tomorrowStyles$keyword = list("color" = "#8959A8")
+   tomorrowStyles$storage = list("color" = "#8959A8")
+   tomorrowStyles$storage.type = list("color" = "#8959A8")
+   tomorrowStyles$invalid = list("color" = "#FFFFFF", "background-color" = "#C82829")
+   tomorrowStyles$invalid.deprecated = list("color" = "#FFFFFF", "background-color" = "#8959A8")
    tomorrowStyles$fold = "#4271AE"
    tomorrowStyles$gutterBg = "#FFFFFF"
    tomorrowStyles$gutterFg = "rgb(166,166,166)"
-   tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6;"
+   tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6"
    tomorrowStyles$isDark = "false"
 
    unsupportedScopes = list(

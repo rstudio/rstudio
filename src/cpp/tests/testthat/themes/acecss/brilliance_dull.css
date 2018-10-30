@@ -96,6 +96,7 @@
 }
 
 .ace-brilliance-dull .ace_invalid {
+  font-weight: bold;
   color: #211211;
   background-color: #A7595A
 }

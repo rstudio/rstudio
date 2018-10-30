@@ -58,6 +58,7 @@
 }
 
 .ace-active4d .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #006699
 }
 
@@ -70,6 +71,7 @@
 }
 
 .ace-active4d .ace_support.ace_function {
+  font-weight: bold;
   color: #45AE34
 }
 
@@ -99,6 +101,7 @@
 }
 
 .ace-active4d .ace_variable {
+  font-weight: bold;
   color: #0053FF
 }
 

@@ -55,18 +55,22 @@
 }
 
 .ace_keyword {
+  font-weight: bold;
   color: #0000FF
 }
 
 .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #0000FF
 }
 
 .ace_constant {
+  font-weight: bold;
   color: #C5060B
 }
 
 .ace_constant.ace_language {
+  font-weight: bold;
   color: #585CF6
 }
 
@@ -79,22 +83,27 @@
 }
 
 .ace_support.ace_function {
+  font-weight: bold;
   color: #3C4C72
 }
 
 .ace_support.ace_constant {
+  font-weight: bold;
   color: #06960E
 }
 
 .ace_support.ace_class {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_support.ace_type {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_storage {
+  font-weight: bold;
   color: #0000FF
 }
 
@@ -117,6 +126,7 @@
 }
 
 .ace_variable {
+  font-weight: bold;
   color: #0000A2
 }
 
@@ -137,6 +147,7 @@
 }
 
 .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #0000A2
 }
 
@@ -145,6 +156,7 @@
 }
 
 .ace_markup.ace_heading {
+  font-weight: bold;
   color: #0C07FF
 }
 

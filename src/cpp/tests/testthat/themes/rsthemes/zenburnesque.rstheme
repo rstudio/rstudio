@@ -62,6 +62,10 @@
   color: #FFFFA0
 }
 
+.ace_constant.ace_character {
+  color: #FF8080
+}
+
 .ace_constant.ace_numeric {
   color: #22C0FF
 }
@@ -84,10 +88,12 @@
 }
 
 .ace_variable {
+  font-weight: bold;
   color: #FFCC66
 }
 
 .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #FFCC66
 }
 .nocolor.ace_editor .ace_line span {

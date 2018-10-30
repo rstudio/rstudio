@@ -75,6 +75,7 @@
 }
 
 .ace_support {
+  font-weight: bold;
   color: #3333FF
 }
 

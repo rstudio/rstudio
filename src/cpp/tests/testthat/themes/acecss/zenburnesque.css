@@ -60,6 +60,10 @@
   color: #FFFFA0
 }
 
+.ace-zenburnesque .ace_constant.ace_character {
+  color: #FF8080
+}
+
 .ace-zenburnesque .ace_constant.ace_numeric {
   color: #22C0FF
 }
@@ -82,9 +86,11 @@
 }
 
 .ace-zenburnesque .ace_variable {
+  font-weight: bold;
   color: #FFCC66
 }
 
 .ace-zenburnesque .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #FFCC66
 }

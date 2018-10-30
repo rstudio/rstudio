@@ -175,33 +175,33 @@
 #
 # Returns the converted font style.
 .rs.addFunction("parseStyles", function(styles) {
-   cssLines <- character(0)
+   css <- list()
    fontStyle <- if (is.null(styles$fontStyle)) "" else styles$fontStyle
    
    if (grepl("underline", fontStyle))
    {
       # Not the most efficient, but this shouldn't be an overly common operation.
-      cssLines <- c(cssLines, "text-decoration:underline;")
+      css[["text-decoration"]] = "underline"
    }
    if (grepl("italic", fontStyle))
    {
-      cssLines <- c(cssLines, "font-style:italic;")
+      css[["font-style"]] <- "italic"
    }
    if (grepl("bold", fontStyle))
    {
-      cssLines <- c(cssLines, "font-weight:bold;")
+      css[["font-weight"]] <- "bold"
    }
    
    if (!is.null(styles$foreground))
    {
-      cssLines <- c(cssLines, paste0("color:", .rs.parseColor(styles$foreground), ";"))
+      css[["color"]] <- .rs.parseColor(styles$foreground)
    }
    if (!is.null(styles$background))
    {
-      cssLines <- c(cssLines, paste0("background-color:", .rs.parseColor(styles$background), ";"))
+      css[["background-color"]] <- .rs.parseColor(styles$background)
    }
    
-   paste0(cssLines, collapse = "")
+   css
 })
 
 # Extracts the style information from a parsed tmTheme object.
@@ -249,13 +249,13 @@
       "bracket" =  invisColor,
       "active_line" = .rs.parseColor(globalSettings$lineHighlight),
       "cursor" = .rs.parseColor(globalSettings$caret),
-      "invisible" = paste0("color:", invisColor, ";"))
+      "invisible" = invisColor)
    
-   if (is.null(styles$background)) styles$background <- defaultGlobals$background
-   if (is.null(styles$foreground)) styles$foreground <- defaultGlobals$foreground
-   if (is.null(styles$selection)) styles$selection <- defaultGlobals$selection
-   if (is.null(styles$active_line)) styles$active_line <- defaultGlobals$active_line
-   if (is.null(styles$cursor)) styles$cursor <- defaultGlobals$cursor
+   if (!("background" %in% names(styles))) styles$background <- defaultGlobals$background
+   if (!("foreground" %in% names(styles))) styles$foreground <- defaultGlobals$foreground
+   if (!("selection" %in% names(styles))) styles$selection <- defaultGlobals$selection
+   if (!("active_line" %in% names(styles))) styles$active_line <- defaultGlobals$active_line
+   if (!("cursor" %in% names(styles))) styles$cursor <- defaultGlobals$cursor
    
    # Get the specified scopes
    unsupportedScopes <- list()
@@ -269,11 +269,12 @@
          for (scope in scopes)
          {
             style <- .rs.parseStyles(element$settings)
-            if (scope %in% supportedScopeNames)
+            haveStyle <- !is.null(style) && !is.na(style) && (length(style) > 0)
+            if ((scope %in% supportedScopeNames) && haveStyle)
             {
                styles[[ supportedScopes[[scope]] ]] <- style
             }
-            else if (!is.null(style))
+            else if (haveStyle)
             {
                if (!(scope %in% names(unsupportedScopes)))
                {
@@ -288,28 +289,29 @@
       }
    }
    
-   if (is.null(styles$fold))
+   if (!("fold" %in% names(styles)))
    {
-      foldSource <- styles$entity.name.function
-      if (is.null(foldSource) || (foldSource == "")) foldSource <- styles$keyword
-      
-      if (!is.null(foldSource) && (foldSource != ""))
+      if (("entity.name.function" %in% names(styles)) 
+          && ("color" %in% names(styles[["entity.name.function"]]))
+          && (styles[["entity.name.function"]][["color"]] != ""))
       {
-         styles$fold <- regmatches(foldSource, regexec("\\:([^;]+)", foldSource))[[1]][2]
+         styles[["fold"]] <- styles[["entity.name.function"]][["color"]]
+      }
+      else if (("keyword" %in% names(styles))
+               && ("color" %in% names(styles[["keyword"]]))
+               && (styles[["keyword"]][["color"]] != ""))
+      {
+         styles[["fold"]] <- styles[["keyword"]][["color"]]
       }
       else
       {
-         styles$fold <- defaultGlobals$fold
+         styles[["fold"]] <- defaultGlobals$fold
       }
    }
    
-   styles$gutterBg = styles$background
-   styles$gutterFg = .rs.mixColors(styles$foreground, styles$background, 0.5)
-   
-   if (is.null(styles$selected_word_highlight))
-   {
-      styles$selected_word_highlight <- paste0("border: 1px solid ", styles$selection, ";")
-   }
+   styles[["gutterBg"]] <- styles$background
+   styles[["gutterFg"]] <- .rs.mixColors(styles$foreground, styles$background, 0.5)
+   styles[["selected_word_highlight"]] <- paste0("border: 1px solid ", styles$selection)
    
    styles$isDark = tolower(as.character(.rs.getLuma(styles$background) <  0.5))
    
@@ -318,17 +320,19 @@
    {
       name <- fScopeNames[i]
       scope <- fallbackScopes[[i]]
-      if (is.null(styles[[name]]) || (styles[[name]] == ""))
+      if (!(name %in% names(styles)) || !("color" %in% names(styles[[name]])))
       {
-         if (is.null(styles[[scope]]) ||
-             (styles[[scope]] == "") ||
-             is.null(styles[[scope]][[color]]) ||
-             (styles[[scope]][[color]] == ""))
+         if (!(scope %in% names(styles)) || !("color" %in% names(styles[[scope]])))
          {
             # All fallback elements are foreground for now.
-            styles[[name]] <- paste0("color:", styles$foreground, ";")
+            if (!(name %in% names(styles))) styles[[name]] <- list()
+            styles[[name]][["color"]] <- styles$foreground
          }
-         else 
+         else if (name %in% names(styles))
+         {
+            styles[[name]][["color"]] <- styles[[scope]][["color"]]
+         }
+         else
          {
             styles[[name]] <- styles[[scope]]
          }
@@ -486,7 +490,6 @@
    
    # RStudio Supported Scopes
    supportedScopes[["marker-layer.active_debug_line"]] <- "marker-layer .active_debug_line"
-   
    # Read the template files
    conn <- file(
       description = file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "templates", "ace_theme_template.css"),
@@ -500,7 +503,7 @@
    styleRes <- .rs.extractStyles(tmTheme, supportedScopes)
    styles <- styleRes$styles
    unsupportedScopes <- styleRes$unsupportedScopes
-
+   
    # Fill template
    styles$cssClass = paste0("ace-", hyphenate(name))
    styles$uuid <- tmTheme$uuid
@@ -508,7 +511,7 @@
    
    for (scope in supportedScopes)
    {
-      if (!is.null(styles[[scope]]))
+      if (scope %in% names(styles))
       {
          if (grepl("active_debug_line", scope, fixed = TRUE))
          {
@@ -518,13 +521,22 @@
                styles$cssClass,
                " ",
                gsub("^|\\.", ".ace_", scope),
-               " {\n  ",
-               gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
+               " {\n")
+            for (rule in names(styles[[scope]]))
+            {
+               if (!grepl("^\\s*$", styles[[scope]][[rule]], perl = TRUE))
+               {
+                  css = paste0("  ", css, rule, ": ", styles[[scope]][[rule]], ";\n")
+               }
+            }
+            
+            css = paste0(
+               css,
                "\n  position: absolute;",
                "\n  z-index: -1;",
                "\n}")
          }
-         else
+         else if (length(styles[[scope]]) > 0)
          {
             css = paste0(
                css,
@@ -532,9 +544,16 @@
                styles$cssClass,
                " ",
                gsub("^|\\.", ".ace_", scope),
-               " {\n  ",
-               gsub(":([^ ])", ": \\1", gsub(";([^\n])", ";\n\\1", styles[[scope]])),
-               "\n}")
+               " {\n")
+            for (rule in names(styles[[scope]]))
+            {
+               if (!grepl("^\\s*$", styles[[scope]][[rule]], perl = TRUE))
+               {
+                  css = paste0("  ", css, rule, ": ", styles[[scope]][[rule]], ";\n")
+               }
+            }
+            
+            css = paste0(css, "\n}")
          }
       }
    }
@@ -744,17 +763,17 @@
    if (childrenCount != 1)
    {
       stop("Expected 1 non-text child of the root, found: ",
-         childrenCount,
-         call. = FALSE)
+           childrenCount,
+           call. = FALSE)
    }
    
    # Check the structure at the root is correct before continuing.
    if (xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)) != "dict")
    {
       stop("Expecting \"dict\" element; found \"",
-         xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)),
-         "\".",
-         call. = FALSE)
+           xml2::xml_name(xml2::xml_child(tmThemeDoc, 1)),
+           "\".",
+           call. = FALSE)
    }
    if (xml2::xml_length(xml2::xml_child(tmThemeDoc, 1)) < 1)
    {
@@ -781,7 +800,7 @@
    if (length(rsTheme) == 0)
    {
       stop("Please see above for warnings.",
-         .call = FALSE)
+           .call = FALSE)
    }
    
    c(
@@ -870,14 +889,14 @@
    {
       installLocation <- Sys.getenv("RS_THEME_LOCAL_HOME", unset = NA)
       installLocation <- if (is.na(installLocation)) file.path("~", ".R", "rstudio", "themes") 
-                         else installLocation
+      else installLocation
    }
    
    installLocation
 })
 
 .rs.addFunction("getThemeDirFromUrl", function(url) {
-
+   
    if (.rs.isGlobalTheme(url))
    {
       file.path(.rs.getThemeInstallDir(TRUE), basename(url))
@@ -910,7 +929,7 @@
    
    aceTheme <- .rs.convertTmTheme(tmTheme)
    rsTheme <- .rs.convertAceTheme(name, aceTheme$theme, aceTheme$isDark)
-
+   
    
    isTemp <- is.null(outputLocation)
    location <- if (is.null(outputLocation)) file.path(tempdir(), fileName)
@@ -924,9 +943,9 @@
          ". Please see above for relevant warnings.",
          call. = FALSE)
    }
-
+   
    cat(rsTheme, file = location)
-
+   
    if (add)
    {
       .rs.addTheme(location, apply, force, globally)
@@ -968,8 +987,8 @@
    # Check if a theme with the same name already exists in the current location.
    dupTheme <- .rs.getThemes()[[tolower(name)]]
    if (!is.null(dupTheme) && 
-      ((globally && .rs.isGlobalTheme(dupTheme$url)) ||
-      (!globally && .rs.isLocalTheme(dupTheme$url))))
+       ((globally && .rs.isGlobalTheme(dupTheme$url)) ||
+        (!globally && .rs.isLocalTheme(dupTheme$url))))
    {
       stop(
          "The specified theme, \"",
@@ -980,7 +999,7 @@
    else if (!is.null(dupTheme))
    {
       willBeOverridden <- if (!globally || .rs.isDefaultTheme(dupTheme$url)) "The existing theme will be overridden by the new theme."
-                          else "The newly added theme will be overridden by the existing theme."
+      else "The newly added theme will be overridden by the existing theme."
       warning("There is another theme with the same name, \"",
               name,
               "\". ",
@@ -1006,7 +1025,7 @@
             call. = FALSE)
       }
    }
-
+   
    addedTheme <- file.path(outputDir, fileName)
    if (file.exists(addedTheme) && !force)
    {
@@ -1016,7 +1035,7 @@
          "\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`.",
          call. = FALSE)
    }
-
+   
    if (!file.copy(
       themePath,
       addedTheme,
@@ -1072,7 +1091,7 @@
    {
       .rs.applyTheme("TextMate")
    }
-
+   
    filePath <- .rs.getThemeDirFromUrl(themeList[[tolower(name)]]$url)
    if (is.null(filePath))
    {
@@ -1139,7 +1158,7 @@
 
 .rs.addFunction("internal.addTheme", function(themePath) {
    Encoding(themePath) <- "UTF-8"
-
+   
    warnings <- c()
    tryCatch(
       withCallingHandlers(
