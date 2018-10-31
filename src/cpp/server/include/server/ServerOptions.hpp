@@ -221,6 +221,11 @@ public:
    }
 
    std::string gwtPrefix() const;
+
+   core::FilePath secureCookieKeyFile() const
+   {
+      return core::FilePath(secureCookieKeyFile_);
+   }
    
    std::string getOverlayOption(const std::string& name)
    {
@@ -293,6 +298,7 @@ private:
    int rsessionProxyMaxWaitSeconds_;
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
+   std::string secureCookieKeyFile_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

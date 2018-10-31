@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -161,8 +161,6 @@ if (UNIX)
    if(EXISTS "/proc/self")
       set(HAVE_PROCSELF TRUE)
    endif()
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
    # find packages and libraries
    find_library(PTHREAD_LIBRARIES pthread)
@@ -305,6 +303,9 @@ else()
    )
 
 endif()
+
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+      ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # define include dirs
 set(CORE_INCLUDE_DIRS ${CORE_INCLUDE_DIRS} include)

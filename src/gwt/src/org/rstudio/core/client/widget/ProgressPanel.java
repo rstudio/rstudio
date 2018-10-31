@@ -40,6 +40,20 @@ public class ProgressPanel extends Composite
    
    public ProgressPanel(Widget progressImage, int verticalOffset)
    { 
+      timer_ = new Timer()
+      {
+         public void run()
+         {
+            progressImage_.setVisible(true);
+            progressSpinner_.setVisible(true);
+            if (message_ != null)
+            {
+               progressLabel_.setText(message_);
+               progressLabel_.setVisible(true);
+            }
+         }
+      };
+      
       progressImage_ = progressImage;
 
       progressSpinner_ = new ProgressSpinner(getSpinnerColor());
@@ -75,33 +89,21 @@ public class ProgressPanel extends Composite
    
    public void beginProgressOperation(int delayMs, final String message)
    {
-      clearTimer();
+      timer_.cancel();
 
       progressSpinner_.setColorType(getSpinnerColor());
       progressSpinner_.setVisible(false);
       progressImage_.setVisible(false);
       progressLabel_.setVisible(false);
+      message_ = message;
 
-      timer_ = new Timer() {
-         public void run() {
-            if (timer_ != this)
-               return; // This should never happen, but, just in case
-
-            progressImage_.setVisible(true);
-            progressSpinner_.setVisible(true);
-            if (message != null)
-            {
-               progressLabel_.setText(message);
-               progressLabel_.setVisible(true);
-            }
-         }
-      };
       timer_.schedule(delayMs);
    }
 
    public void endProgressOperation()
    {
-      clearTimer();
+      timer_.cancel();
+      
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
       progressLabel_.setVisible(false);
@@ -115,17 +117,9 @@ public class ProgressPanel extends Composite
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
 
-   private void clearTimer()
-   {
-      if (timer_ != null)
-      {
-         timer_.cancel();
-         timer_ = null;
-      }
-   }
-
    private final Widget progressImage_ ;
    private final ProgressSpinner progressSpinner_;
    private final Label progressLabel_;
    private Timer timer_;
+   private String message_;
 }

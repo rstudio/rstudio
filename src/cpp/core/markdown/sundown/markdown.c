@@ -74,6 +74,7 @@ static size_t char_autolink_email(struct buf *ob, struct sd_markdown *rndr, uint
 static size_t char_autolink_www(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
 static size_t char_link(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
 static size_t char_superscript(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_dollar(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
 
 enum markdown_char_t {
 	MD_CHAR_NONE = 0,
@@ -88,6 +89,7 @@ enum markdown_char_t {
 	MD_CHAR_AUTOLINK_EMAIL,
 	MD_CHAR_AUTOLINK_WWW,
 	MD_CHAR_SUPERSCRIPT,
+	MD_CHAR_DOLLAR
 };
 
 static char_trigger markdown_char_ptrs[] = {
@@ -103,6 +105,7 @@ static char_trigger markdown_char_ptrs[] = {
 	&char_autolink_email,
 	&char_autolink_www,
 	&char_superscript,
+	&char_dollar
 };
 
 /* render • structure containing one particular render */
@@ -249,6 +252,242 @@ _isspace(int c)
 {
 	return c == ' ' || c == '\n';
 }
+
+
+/********************************
+ * LATEX MATH PARSING FUNCTIONS *
+ ********************************/
+
+/* org-mode inline latex math, e.g. $...$
+ *
+ * Rules for parsing:
+ *
+ *  1. eqations must be attached to begin and end $
+ *  2. at most two newlines in the equation
+ *  3. the closing $ must be followed by whitespace, punctuation, or a dash.
+ */
+
+static size_t
+prefix_math(uint8_t *data, size_t size)
+{
+	/* $$latex */
+	if (7 < size && data[0] == '$' && data[1] == '$' && 
+		data[2] == 'l' && data[3] == 'a' && data[4] == 't' && 
+		data[5] == 'e' && data[6] == 'x')
+		return 7;
+	/* $latex */
+	if (6 < size && data[0] == '$' &&
+		data[1] == 'l' && data[2] == 'a' && data[3] == 't' && 
+		data[4] == 'e' && data[5] == 'x')
+		return 6;
+	/* $$ */
+	else if (2 < size && data[0] == '$' && data[1] == '$')
+		return 2;
+	/* $ */
+	else if (1 < size && data[0] == '$')
+		return 1;
+
+	return 0;
+}
+static size_t
+parse_orgmode_math(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
+{
+	static const char *punct = "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~";
+	size_t i = 1, nl = 0, length = 0;
+	struct buf *work;
+	int r;
+
+	if (!rndr->cb.inlinemath) return 0;
+
+	if (i < size && (data[i] == ' ' || data[i] == '\n') )
+		return 0;
+
+	while(i < size){
+		while (i < size && !(data[i] == '\n' || data[i] == '$')) {
+			i++;
+			length++;
+		}
+
+		if (i == size) return 0;
+
+		if (data[i] == '\n') nl++;
+
+		if (nl > 2) return 0;
+
+		if (data[i] == '$'){
+
+			/* bail if there's whitespace before the dollar or */
+			if (data[i - 1] == ' ' || data[i - 1] == '\n')
+				return 0;
+
+			/* bail if there's not whitespace or punctuation following the 
+			 * dollar.
+			 */
+			if (i < size && data[i + 1] != ' ' && data[i + 1] != '\n' &&
+				(strchr(punct,data[i + 1]) == NULL) )
+				return 0;
+
+			i++;
+
+			if (i <= size) {
+				work = rndr_newbuf(rndr, BUFFER_SPAN);
+				bufput(work, data + 1, length);
+				r = rndr->cb.inlinemath(ob,work, rndr->opaque);
+				rndr_popbuf(rndr, BUFFER_SPAN);
+				return  r ? i : 0;
+			} else {
+				return 0;
+			}
+
+		}
+
+		i++;
+		length++;
+	}
+
+	return 0;
+}
+
+/* parse_escape_math • parse \(...\) or \[...\] and return */
+static size_t
+parse_escape_math(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
+{
+	int (*render_method)(struct buf *ob, const struct buf *text, void *opaque);
+	size_t i = 1, length = 0;
+	uint8_t c;
+	struct buf *work;
+	int r;
+
+	if (i < size) {
+		switch (data[i]) {
+			case '(':
+				if (!rndr->cb.inlinemath) return 0;
+				render_method = rndr->cb.inlinemath;
+				c = ')';
+				break;
+			case '[':
+				if (!rndr->cb.displayedmath) return 0;
+				render_method = rndr->cb.displayedmath;
+				c = ']';
+			   	break;
+			default:
+				return 0;
+		}
+	}
+
+	i++;
+
+	while (i < size) {
+		while (i < size && data[i] != '\\') {
+			i++;
+			length++;
+		}
+		
+		if (i == size) return 0;
+
+		if (i + 1 < size && data[i + 1] == c){
+			i += 2;
+			work = rndr_newbuf(rndr, BUFFER_SPAN);
+			bufput(work, data + 2, length);
+			r = render_method(ob,work, rndr->opaque);
+			rndr_popbuf(rndr, BUFFER_SPAN);
+			return r ? i : 0;
+		}
+
+		i++;
+		length++;
+	}
+
+	return 0;
+}
+
+static size_t
+parse_inline_math(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
+{
+	size_t i = 0, pre;
+	struct buf *work;
+	int r;
+
+	if (!rndr->cb.inlinemath) return 0;
+
+	pre = prefix_math(data, size);
+
+	if (pre == 0) return 0;
+
+	i = pre;
+
+	while (i < size && data[i] != '$')
+		i++;
+		
+	if (i == size) return 0;
+
+	work = rndr_newbuf(rndr, BUFFER_SPAN);
+	bufput(work, data + pre, i - pre);
+	r = rndr->cb.inlinemath(ob,work, rndr->opaque);
+	rndr_popbuf(rndr, BUFFER_SPAN);
+
+	i++; 
+
+	return r ? i : 0;
+}
+
+static size_t
+parse_displayed_math(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
+{
+	size_t i = 0, pre;
+	struct buf *work;
+	int r;
+
+	if (!rndr->cb.displayedmath) return 0;
+
+	pre = prefix_math(data, size);
+
+	if (pre == 0) return 0;
+
+	i = pre;
+
+	while (i + 1 < size && !(data[i] == '$' && data[i + 1] == '$') )
+		i++;
+		
+	if (i == size - 1) return 0;
+
+	work = rndr_newbuf(rndr, BUFFER_SPAN);
+	bufput(work, data + pre, i - pre);
+	r = rndr->cb.displayedmath(ob,work, rndr->opaque);
+	rndr_popbuf(rndr, BUFFER_SPAN);
+
+	i += 2; /* passed the $$ */
+
+	return r ? i : 0;
+}
+
+static size_t 
+char_dollar(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+{
+	size_t i;
+
+	i = prefix_math(data, size);
+
+	if (i == 0) return 0;
+
+	if (i > 1) {
+
+		/* $$latex or $$ */
+		if (data[0] == '$' && data[1] == '$')
+			return parse_displayed_math(ob, rndr, data, size);
+		
+		/* $latex */
+		return parse_inline_math(ob, rndr, data, size);
+
+	} 
+
+	/* $ */
+	if (i == 1)
+		return parse_orgmode_math(ob, rndr, data, size);
+
+	return 0;
+}
+
 
 /****************************
  * INLINE PARSING FUNCTIONS *
@@ -669,7 +908,9 @@ char_codespan(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t of
 
 	/* real code span */
 	if (f_begin < f_end) {
-		struct buf work = { data + f_begin, f_end - f_begin, 0, 0 };
+		struct buf work = {0, 0, 0, 0};
+		work.data = data + f_begin;
+		work.size = f_end - f_begin;
 		if (!rndr->cb.codespan(ob, &work, rndr->opaque))
 			end = 0;
 	} else {
@@ -689,8 +930,14 @@ char_escape(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offs
 	struct buf work = { 0, 0, 0, 0 };
 
 	if (size > 1) {
+		size_t i;
 		if (strchr(escape_chars, data[1]) == NULL)
 			return 0;
+
+		if (size > 2 && (data[1] == '(' || data[1] == '[') && 
+			((rndr->ext_flags & MKDEXT_LATEX_MATH) != 0)  &&
+			((i = parse_escape_math(ob, rndr, data, size)) != 0) )
+			return i;
 
 		if (rndr->cb.normal_text) {
 			work.data = data + 1;
@@ -740,8 +987,10 @@ char_langle_tag(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 {
 	enum mkd_autolink altype = MKDA_NOT_AUTOLINK;
 	size_t end = tag_length(data, size, &altype);
-	struct buf work = { data, end, 0, 0 };
 	int ret = 0;
+	struct buf work = { 0, 0, 0, 0 };
+	work.data = data;
+	work.size = end;
 
 	if (end > 2) {
 		if (rndr->cb.autolink && altype != MKDA_NOT_AUTOLINK) {
@@ -1106,6 +1355,7 @@ char_superscript(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t
 	return (sup_start == 2) ? sup_len + 1 : sup_len;
 }
 
+
 /*********************************
  * BLOCK-LEVEL PARSING FUNCTIONS *
  *********************************/
@@ -1373,6 +1623,7 @@ prefix_uli(uint8_t *data, size_t size)
 }
 
 
+
 /* parse_block • parsing of one block, returning next uint8_t to parse */
 static void parse_block(struct buf *ob, struct sd_markdown *rndr,
 			uint8_t *data, size_t size);
@@ -1429,7 +1680,8 @@ parse_paragraph(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 {
 	size_t i = 0, end = 0;
 	int level = 0;
-	struct buf work = { data, 0, 0, 0 };
+	struct buf work = { 0, 0, 0, 0 };
+	work.data = data;
 
 	while (i < size) {
 		for (end = i + 1; end < size && data[end - 1] != '\n'; end++) /* empty */;
@@ -1815,6 +2067,7 @@ parse_atxheader(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 }
 
 
+
 /* htmlblock_end • checking end of HTML block : </tag>[ \t]*\n[ \t*]\n */
 /*	returns the length on match, 0 otherwise */
 static size_t
@@ -1895,7 +2148,8 @@ parse_htmlblock(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 {
 	size_t i, j = 0, tag_end;
 	const char *curtag = NULL;
-	struct buf work = { data, 0, 0, 0 };
+	struct buf work = { 0, 0, 0, 0 };
+	work.data = data;
 
 	/* identification of the opening tag */
 	if (size < 2 || data[0] != '<')
@@ -2439,6 +2693,9 @@ sd_markdown_new(
 	if (extensions & MKDEXT_SUPERSCRIPT)
 		md->active_char['^'] = MD_CHAR_SUPERSCRIPT;
 
+   if (extensions & MKDEXT_LATEX_MATH)
+		md->active_char['$'] = MD_CHAR_DOLLAR;
+
 	/* Extension data */
 	md->ext_flags = extensions;
 	md->opaque = opaque;
@@ -2452,7 +2709,7 @@ void
 sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, struct sd_markdown *md)
 {
 #define MARKDOWN_GROW(x) ((x) + ((x) >> 1))
-	static const char UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
+	static const uint8_t UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
 
 	struct buf *text;
 	size_t beg, end;

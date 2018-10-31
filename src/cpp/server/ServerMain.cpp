@@ -487,7 +487,7 @@ int main(int argc, char * const argv[])
       core::system::crypto::initialize();
 
       // initialize secure cookie module
-      error = core::http::secure_cookie::initialize();
+      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
