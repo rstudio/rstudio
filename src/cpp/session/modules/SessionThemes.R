@@ -12,6 +12,8 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
+
 # ACE/tools/tmThemes.js Functions ==================================================================
 
 # Determines the luma of a color. This refers to the perceived luminance of the color. More 
@@ -691,8 +693,6 @@
 # @param aceCss      The ace CSS to convert.
 # @param name        The name 
 .rs.addFunction("convertAceTheme", function(name, aceCss, isDark) {
-   source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
-   
    rsTheme <- .rs.compile_theme(aceCss, isDark, name = name)
    if (length(rsTheme) == 0)
    {
