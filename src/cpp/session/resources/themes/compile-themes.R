@@ -1005,7 +1005,7 @@
       return(c())
    }
    
-   key <- grep("^\\.ace_keyword", names(parsed), value = TRUE)[[1]]
+   key <- grep("^\\.ace_keyword\\s*$", names(parsed), value = TRUE)[[1]]
    keywordColor <- parsed[[key]]$color
    if (is.null(keywordColor)) {
       warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)

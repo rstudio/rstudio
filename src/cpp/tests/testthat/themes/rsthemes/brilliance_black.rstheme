@@ -143,7 +143,7 @@
   color: #EEEEEE
 }
 .nocolor.ace_editor .ace_line span {
-  color: #0000ce !important;
+  color: #EEEEEE !important;
 }
 .ace_bracket {
   margin: 0 !important;
