@@ -168,35 +168,91 @@
    )
 })
 
-## Utility colors for parsing hex colors
-.rs.addFunction("parse_css_color", function(value) {
-   unlist(lapply(value, function(x) {
-      if (grepl("^\\s*rgb", x, perl = TRUE)) 
+# Converts a color to an array of the RGB values of the color.
+#
+# @param color    The color to convert.
+#
+# Returns the RGB color.
+.rs.addFunction("getRgbColor", function(color) {
+   if (is.vector(color) && any(is.integer(color))) 
+   {
+      if (length(color) != 3) 
       {
-         stripped <- gsub("^.*\\((.*)\\)$", "\\1", x)
-         splat <- strsplit(stripped, "\\s*,\\s*", perl = TRUE)[[1]]
-         c(
-            red = as.numeric(splat[[1]]),
-            green = as.numeric(splat[[2]]),
-            blue = as.numeric(splat[[3]])
-         )
+         stop(
+            "expected 3 values for RGB color, not ",
+            length(color),
+            call. = FALSE)
       }
-      else 
+      colorVec <- color
+   }
+   else if (substr(color, 0, 1) == "#") 
+   {
+      if (nchar(color) != 7)
       {
-         col2rgb(value)[, 1]
+         stop(
+            "hex representation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: ",
+            color,
+            call. = FALSE)
       }
-   }))
+      else
+      {
+         colorVec <- sapply(
+            c(substr(color, 2, 3), substr(color, 4, 5), substr(color, 6, 7)),
+            hexStrToI <- function(str) { strtoi(str, 16L) },
+            USE.NAMES = FALSE)
+      }
+   }
+   else if (grepl("^rgba?", color))
+   {
+      matches = regmatches(color, regexec("\\(([^,\\)]+),([^,\\)]+),([^,\\)]+)", color))[[1]]
+      if (length(matches) != 4)
+      {
+         stop(
+            "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: ",
+            color,
+            call. = FALSE)
+      }
+      colorVec <- strtoi(matches[2:4])
+   }
+   else
+   {
+      stop(
+         "supplied color has an invalid format: ",
+         color,
+         ". Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
+         call. = FALSE)
+   }
+   
+   # Check for inconsistencies.
+   invalidMsg <- paste0("invalid color supplied: ", color, ". ")
+   if (any(is.na(colorVec)) || any(!is.integer(colorVec)))
+   {
+      stop(
+         invalidMsg,
+         "One or more RGB values could not be converted to an integer",
+         call. = FALSE)
+   }
+   if (any(colorVec < 0))
+   {
+      stop(invalidMsg, "RGB value cannot be negative", call. = FALSE)
+   }
+   if (any(colorVec > 255))
+   {
+      stop(invalidMsg, "RGB value cannot be greater than 255", call. = FALSE)
+   }
+   
+   colorVec
 })
 
 .rs.addFunction("format_css_color", function(color) {
    sprintf("rgb(%s, %s, %s)",
-           color[["red"]],
-           color[["green"]],
-           color[["blue"]])
+           color[1],
+           color[2],
+           color[3])
 })
 
 .rs.addFunction("color_as_hex", function(color) {
-   paste("#", paste(toupper(as.hexmode(as.integer(color))), collapse = ""), sep = "")
+   paste("#", paste(format(as.hexmode(as.integer(color[1:3])), upper.case = TRUE, width = 2), collapse = ""), sep = "")
 })
 
 # Strip color from field
@@ -208,11 +264,29 @@
    }
 })
 
-.rs.addFunction("mix_colors", function(x, y, p) {
-   setNames(as.integer(
-      (p * x) +
-         ((1 - p) * y)
-   ), c("red", "green", "blue"))
+# Mixes two colors together.
+#
+# @param color1   The first color.
+# @param color2   The second color.
+# @param alpha1   The alpha of the first color.
+# @param alpha2   The alpha of the second color.
+# 
+# Returns the mixed color in string format.
+.rs.addFunction("mixColors", function(color1, color2, alpha1, alpha2 = NULL) {
+   c1rgb <- .rs.getRgbColor(color1)
+   c2rgb <- .rs.getRgbColor(color2)
+   
+   if (is.null(alpha2))
+   {
+      alpha2 = 1 - alpha1
+   }
+   
+   .rs.color_as_hex(
+      c(
+         ceiling(alpha1 * c1rgb[[1]] + alpha2 * c2rgb[[1]]),
+         ceiling(alpha1 * c1rgb[[2]] + alpha2 * c2rgb[[2]]),
+         ceiling(alpha1 * c1rgb[[3]] + alpha2 * c2rgb[[3]]),
+         sep = ","))
 })
 
 .rs.addFunction("add_content", function(content, ..., replace)
@@ -911,16 +985,12 @@
    ## There may (should) be a rule for just '.ace-<theme> { ... }'; we need
    ## to preserve this theme, but apply it to the '.ace_editor' directly.
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
-   content <- gsub(regex, ".ace_editor {", lines)
-   
-   ## Copy ace_editor as ace_editor_theme
-   regex <- paste("^\\.ace_editor \\{$", sep = "")
    content <- gsub(regex, paste(
       ".ace_editor",
       ".rstudio-themes-flat.ace_editor_theme .profvis-flamegraph",
       ".rstudio-themes-flat.ace_editor_theme", 
       ".rstudio-themes-flat .ace_editor_theme {",
-      sep = ", "), content)
+      sep = ", "), lines)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
@@ -928,6 +998,7 @@
    
    ## Parse the css
    parsed <- .rs.parseCss(lines = content)
+   names(parsed)[grep("^\\.ace_editor(,.*|)$", names(parsed), perl = TRUE)] <- "ace_editor"
    
    if (!any(grepl("^\\.ace_keyword", names(parsed)))) {
       warning("No field 'ace_keyword' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
@@ -989,29 +1060,26 @@
    
    
    ## Generate a color used for chunks, e.g. in .Rmd documents.
-   backgroundRgb <- .rs.parse_css_color(background)
-   foregroundRgb <- .rs.parse_css_color(foreground)
-   
    ## Determine an appropriate mixing proportion, and override for certain
    ## themes.
    mix <- .rs.get_chunk_bg_color(name, isDark, chunkBgPropOverrideMap)
    
-   mergedColor <- .rs.mix_colors(
-      backgroundRgb,
-      foregroundRgb,
+   mergedColor <- .rs.mixColors(
+      background,
+      foreground,
       mix
    )
    
    content <- c(
       content,
-      .rs.create_line_marker_rule(".ace_foreign_line", .rs.color_as_hex(mergedColor))
+      .rs.create_line_marker_rule(".ace_foreign_line", mergedColor)
    )
    
    ## Generate a color used for 'debugging' backgrounds.
    if (!any(grepl(".ace_active_debug_line", content, fixed = TRUE)))
    {
-      debugPrimary <- .rs.parse_css_color("#FFDE38")
-      debugBg <- .rs.color_as_hex(.rs.mix_colors(backgroundRgb, debugPrimary, 0.5))
+      debugPrimary <- "#FFDE38"
+      debugBg <- .rs.mixColors(background, debugPrimary, 0.5)
    
       content <- c(
          content,
@@ -1025,8 +1093,7 @@
    ## Dark backgrounds need a bit more contrast than light ones for
    ## a nice visual display.
    mixingProportion <- if (isDark) 0.8 else 0.9
-   errorBgColor <-
-      .rs.color_as_hex(.rs.mix_colors(backgroundRgb, foregroundRgb, mixingProportion))
+   errorBgColor <- .rs.mixColors(background, foreground, mixingProportion)
    
    content <- c(
       content,

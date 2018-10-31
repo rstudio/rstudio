@@ -60,6 +60,10 @@
   color: #2060A0
 }
 
+.ace-slush-and-poppies .ace_constant.ace_character {
+  color: #800000
+}
+
 .ace-slush-and-poppies .ace_constant.ace_numeric {
   color: #0080A0
 }

@@ -165,20 +165,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #382F28;
+  background-color: #393029;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #947F2A;
+  background-color: #95802A;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #473D35;
+  background-color: #483E36;
 }
 .ace_console_error {
-  background-color: #473D35;
+  background-color: #483E36;
 }
 .terminal {
   background-color: #2A211C;

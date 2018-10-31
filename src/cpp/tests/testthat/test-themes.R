@@ -492,11 +492,11 @@ test_that("rgb conversion handles invalid values correctly", {
 
 # Test mixColors ===================================================================================
 test_that("mixColors works correctly", {
-   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "rgb(107,39,159)")
-   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "rgb(128,128,128)")
-   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "rgb(125,125,125)")
-   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "rgb(40,40,40)")
-   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(28,230,57)", 1), "rgb(10,10,10)")
+   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "#6B279F")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "#808080")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "#7D7D7D")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "#282828")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(28,230,57)", 1), "#0A0A0A")
 })
 
 # Test getLuma =====================================================================================
@@ -793,7 +793,7 @@ test_that("extractStyles works correctly", {
    tomorrowStyles$invalid.deprecated = list("color" = "#FFFFFF", "background-color" = "#8959A8")
    tomorrowStyles$fold = "#4271AE"
    tomorrowStyles$gutterBg = "#FFFFFF"
-   tomorrowStyles$gutterFg = "rgb(166,166,166)"
+   tomorrowStyles$gutterFg = "#A6A6A6"
    tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6"
    tomorrowStyles$isDark = "false"
 
