@@ -423,7 +423,7 @@
             {
                if (!grepl("^\\s*$", styles[[scope]][[rule]], perl = TRUE))
                {
-                  css = paste0("  ", css, rule, ": ", styles[[scope]][[rule]], ";\n")
+                  css = paste0(css, "  ", rule, ": ", styles[[scope]][[rule]], ";\n")
                }
             }
             
@@ -446,7 +446,7 @@
             {
                if (!grepl("^\\s*$", styles[[scope]][[rule]], perl = TRUE))
                {
-                  css = paste0("  ", css, rule, ": ", styles[[scope]][[rule]], ";\n")
+                  css = paste0(css, "  ", rule, ": ", styles[[scope]][[rule]], ";\n")
                }
             }
             
@@ -841,7 +841,7 @@
          call. = FALSE)
    }
    
-   cat(rsTheme, file = location)
+   cat(paste(rsTheme, collapse="\n"), file = location)
    
    if (add)
    {
