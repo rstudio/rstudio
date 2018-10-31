@@ -134,8 +134,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          "Converting Theme",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("xml2", "1.2.0"),
-            Dependency.cranPackage("highlight", "0.4.7.2")
+            Dependency.cranPackage("xml2", "1.2.0")
          },
          true,
          succeeded ->
