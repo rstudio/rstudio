@@ -908,10 +908,30 @@ var initDataTableLoad = function(result) {
 };
 
 var initDataTable = function(resCols, data) {
+
   if (resCols.error) {
     showError(cols.error);
     return;
   }
+
+  // an issue was discovered late in the RStudio v1.2 release cycle whereby
+  // attempts to render data tables containing large numbers could fail, due to
+  // an issue wherein our JSON serializer would incorrectly serialize large
+  // numbers. to avoid churning the JSON serializer so close to release, we
+  // instead transmit these columns as strings and then convert back to numeric
+  // here.
+  for (var i = 0; i < resCols.length; i++) {
+    var entry = resCols[i];
+    if (entry.hasOwnProperty("col_breaks")) {
+      var col_breaks = entry["col_breaks"];
+      for (var j = 0; j < col_breaks.length; j++) {
+        if (typeof col_breaks[j] === "string")
+          col_breaks[j] = parseFloat(col_breaks[j]);
+      }
+    }
+  }
+
+  // save reference to column data
   cols = resCols;
 
   // look up the query parameters
