@@ -532,6 +532,7 @@ Error initialize()
    // links have a different prefix.
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, session::options().rResourcesPath().childPath("themes").childPath("compile-themes.R").absolutePath()))
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))

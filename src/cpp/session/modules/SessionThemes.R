@@ -12,8 +12,6 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
-source(file.path(.Call("rs_rResourcesPath", PACKAGE = "(embedding)"), "themes", "compile-themes.R"))
-
 # ACE/tools/tmThemes.js Functions ==================================================================
 
 # Determines the luma of a color. This refers to the perceived luminance of the color. More 
