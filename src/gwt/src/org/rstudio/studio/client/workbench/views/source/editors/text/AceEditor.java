@@ -38,7 +38,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -3812,14 +3811,7 @@ public class AceEditor implements DocDisplay,
    
    private boolean onInsertSnippet()
    {
-      boolean executed = snippets_.onInsertSnippet();
-      if (executed)
-      {
-         Event evt = Event.getCurrentEvent();
-         evt.stopPropagation();
-         evt.preventDefault();
-      }
-      return executed;
+      return snippets_.onInsertSnippet();
    }
    
    public void toggleTokenInfo()
