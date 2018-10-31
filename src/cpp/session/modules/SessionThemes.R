@@ -1109,10 +1109,6 @@
    {
       stop(gsub("%pkg%", "xml2", missingLibraryMsg, fixed = TRUE))
    }
-   if (!suppressWarnings(require("highlight", quietly = TRUE)))
-   {
-      stop(gsub("%pkg%", "highlight", missingLibraryMsg, fixed = TRUE))
-   }
    
    tryCatch(
       .rs.convertTheme(themePath, add, outputLocation, apply, force, globally),
