@@ -18,8 +18,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/signal.hpp>
-
+#include <core/BoostSignals.hpp>
 #include <core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
@@ -103,7 +102,7 @@ private:
    bool hasErrors_;
 
    std::vector<boost::shared_ptr<NotebookCapture> > captures_;
-   std::vector<boost::signals::connection> connections_;
+   std::vector<RSTUDIO_BOOST_CONNECTION> connections_;
 };
 
 } // namespace notebook

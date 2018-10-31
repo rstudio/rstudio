@@ -87,7 +87,7 @@ public:
       pInput_->enque(kThreadQuitCommand);
 
       // unregister handlers
-      BOOST_FOREACH(boost::signals::connection connection, handlers_)
+      BOOST_FOREACH(RSTUDIO_BOOST_CONNECTION connection, handlers_)
       {
          connection.disconnect();
       }
@@ -652,7 +652,7 @@ private:
    boost::shared_ptr<ChunkExecContext> execContext_;
 
    // registered signal handlers
-   std::vector<boost::signals::connection> handlers_;
+   std::vector<RSTUDIO_BOOST_CONNECTION> handlers_;
 
    // the thread which submits console input, and the queue which feeds it
    boost::thread console_;
