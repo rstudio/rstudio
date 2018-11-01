@@ -5630,7 +5630,7 @@ public class RemoteServer implements Server
 
    @Override
    public void startJob(JobLaunchSpec spec, 
-                        ServerRequestCallback<Void> callback)
+                        ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(spec));

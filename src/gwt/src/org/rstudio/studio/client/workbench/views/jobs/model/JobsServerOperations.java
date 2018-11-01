@@ -23,7 +23,7 @@ public interface JobsServerOperations
 {
    void setJobListening(String id, boolean listening,
                         ServerRequestCallback<JsArray<JobOutput> > output);
-   void startJob(JobLaunchSpec spec, ServerRequestCallback<Void> callback); 
+   void startJob(JobLaunchSpec spec, ServerRequestCallback<String> callback);
    void clearJobs(ServerRequestCallback<Void> callback);
    void executeJobAction(String id, String action, ServerRequestCallback<Void> callback);
 }
