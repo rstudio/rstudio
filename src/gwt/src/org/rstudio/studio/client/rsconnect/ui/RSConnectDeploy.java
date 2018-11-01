@@ -64,6 +64,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
@@ -830,12 +831,34 @@ public class RSConnectDeploy extends Composite
       {
          if (StringUtil.isNullOrEmpty(source_.getDeployFile()))
          {
-            indicator.onError(
-                  "Only rendered documents can be published to RStudio Connect. " +
-                  "To publish this document, click Knit to render it, then click " +
-                  "the Publish button above the rendered document.");
-            indicator.onCompleted(); 
-            return; 
+            // Make sure the dialog (e.g. publish wizard) dismisses before the message
+            // is shown. In some scenarios, varying both by dialog and by platform (desktop vs.
+            // server), the message is showing while the dialog is still visible but not fully
+            // initialized. In another scenario, the dialog does not dismiss when
+            // indicator.onCompleted() is invoked unless we delay the invocation a bit.
+            Scheduler.get().scheduleDeferred(() -> {
+               indicator.onCompleted();
+      
+               // On Desktop (macOS, at least), trying to show message here leaves the
+               // publish wizard visible in an incomplete state and it doesn't dismiss
+               // until the message is dismissed. A scheduleDeferred did not help, but
+               // a timer works.
+               Timer showMessageTimer = new Timer()
+               {
+                  @Override
+                  public void run()
+                  {
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                           GlobalDisplay.MSG_INFO,
+                           "Finished Document Not Found",
+                           "To publish finished document to RStudio Connect, you must first render " +
+                                 "it. Dismiss this message, click Knit to render the document, " +
+                                 "then try publishing again.");
+                  }
+               };
+               showMessageTimer.schedule(100);
+            });
+            return;
          }
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
@@ -1245,7 +1268,7 @@ public class RSConnectDeploy extends Composite
       {
          onError(error.getMessage());
       }
-   };
+   }
    
    private void showAppError(String error)
    {

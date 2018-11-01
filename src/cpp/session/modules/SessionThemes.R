@@ -976,18 +976,21 @@
 # @param The name of the theme to remove.
 .rs.addFunction("removeTheme", function(name, themeList) {
    currentTheme <- .rs.api.getThemeInfo()$editor
+   lowerCaseName <- tolower(name)
    
-   if (is.null(themeList[[tolower(name)]]))
+   if (is.null(themeList[[lowerCaseName]]))
    {
       stop("The specified theme \"", name, "\" does not exist.")
    }
    
-   if (identical(tolower(name), tolower(currentTheme)))
+   if (identical(lowerCaseName, tolower(currentTheme)))
    {
-      .rs.applyTheme("TextMate")
+      nextTheme <- if (themeList[[lowerCaseName]]$isDark) "Tomorrow Night" else "TextMate (default)"
+      warning("Removing the active theme - setting the current theme to ", nextTheme)
+      .rs.applyTheme(nextTheme, themeList)
    }
-   
-   filePath <- .rs.getThemeDirFromUrl(themeList[[tolower(name)]]$url)
+
+   filePath <- .rs.getThemeDirFromUrl(themeList[[lowerCaseName]]$url)
    if (is.null(filePath))
    {
       stop("Please verify that the theme is installed as a custom theme.")

@@ -552,11 +552,16 @@ int main(int argc, char* argv[])
 
       // determine the filename that was passed to us
       QString filename;
+
 #ifdef __APPLE__
-      // get filename from OpenFile apple-event (pump to ensure delivery)
-      pApp->processEvents();
-      filename = verifyAndNormalizeFilename(
-                              pAppLaunch->startupOpenFileRequest());
+      // run an event loop for a short period of time just to ensure
+      // that the OpenFile startup event (if any) gets pumped
+      QEventLoop loop;
+      QTimer::singleShot(100, &loop, &QEventLoop::quit);
+      loop.exec();
+
+      // grab the startup file request (if any)
+      filename = verifyAndNormalizeFilename(pAppLaunch->startupOpenFileRequest());
 #endif
       // allow all platforms (including OSX) to check the command line.
       // we include OSX because the way Qt handles apple events is to

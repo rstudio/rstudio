@@ -39,7 +39,7 @@ extern "C" {
 enum mkd_autolink {
 	MKDA_NOT_AUTOLINK,	/* used internally when it is not an autolink*/
 	MKDA_NORMAL,		/* normal http/http/ftp/mailto/etc link */
-	MKDA_EMAIL,			/* e-mail link without explit mailto: */
+	MKDA_EMAIL			/* e-mail link without explit mailto: */
 };
 
 enum mkd_tableflags {
@@ -59,6 +59,7 @@ enum mkd_extensions {
 	MKDEXT_SPACE_HEADERS = (1 << 6),
 	MKDEXT_SUPERSCRIPT = (1 << 7),
 	MKDEXT_LAX_SPACING = (1 << 8),
+	MKDEXT_LATEX_MATH = (1 << 9)
 };
 
 /* sd_callbacks - functions for rendering parsed data */
@@ -89,6 +90,8 @@ struct sd_callbacks {
 	int (*triple_emphasis)(struct buf *ob, const struct buf *text, void *opaque);
 	int (*strikethrough)(struct buf *ob, const struct buf *text, void *opaque);
 	int (*superscript)(struct buf *ob, const struct buf *text, void *opaque);
+	int (*inlinemath)(struct buf *ob, const struct buf *text, void *opaque);
+	int (*displayedmath)(struct buf *ob, const struct buf *text, void *opaque);
 
 	/* low level callbacks - NULL copies input directly into the output */
 	void (*entity)(struct buf *ob, const struct buf *entity, void *opaque);

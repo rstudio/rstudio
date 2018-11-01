@@ -49,6 +49,8 @@ public interface RSConnectServerOperations
                RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
    
+   void cancelPublish(ServerRequestCallback<Boolean> requestCallback);
+   
    void getServerUrls(
                ServerRequestCallback<JsArray<RSConnectServerEntry>> requestCallback);
 

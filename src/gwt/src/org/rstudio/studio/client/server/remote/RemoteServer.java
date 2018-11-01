@@ -4643,6 +4643,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void cancelPublish(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            CANCEL_PUBLISH,
+            requestCallback);
+   }
+   
+   @Override
    public void validateServerUrl(String url, 
          ServerRequestCallback<RSConnectServerInfo> requestCallback)
    {
@@ -6108,6 +6116,7 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
+   private static final String CANCEL_PUBLISH = "cancel_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_SERVER_URLS = "get_server_urls";
