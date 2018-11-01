@@ -16,7 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
-import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
