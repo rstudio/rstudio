@@ -20,10 +20,10 @@
 #include <deque>
 
 #include <boost/regex.hpp>
-#include <boost/signals.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/system/Process.hpp>
 #include <core/terminal/PrivateCommand.hpp>
 
@@ -146,7 +146,7 @@ public:
    void setPromptHandler(
          const boost::function<bool(const std::string&, Input*)>& onPrompt);
 
-   boost::signal<void(int)>& onExit() { return onExit_; }
+   RSTUDIO_BOOST_SIGNAL<void(int)>& onExit() { return onExit_; }
 
    std::string handle() const { return procInfo_->getHandle(); }
    InteractionMode interactionMode() const { return procInfo_->getInteractionMode(); }
@@ -264,7 +264,7 @@ private:
    boost::mutex inputOutputQueueMutex_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
-   boost::signal<void(int)> onExit_;
+   RSTUDIO_BOOST_SIGNAL<void(int)> onExit_;
 
    // regex for prompt detection
    boost::regex controlCharsPattern_;

@@ -18,7 +18,8 @@
 #define SESSION_RMARKDOWN_NOTEBOOK_HPP
 
 #include <ctime>
-#include <boost/signals.hpp>
+
+#include <core/BoostSignals.hpp>
 #include <core/json/Json.hpp>
 
 #define kChunkLibDir "lib"
@@ -76,24 +77,24 @@ std::string notebookCtxId();
 struct Events : boost::noncopyable
 {
    // Document {0}, chunk {1} from context id {3} execution completed
-   boost::signal<void(const std::string&, const std::string&,
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&,
                       const std::string&)> 
                 onChunkExecCompleted;
 
    // Document {0}, chunk {1} had console output of type {2} and text {3}
-   boost::signal<void(const std::string&, const std::string&, int, 
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&, int, 
                 const std::string&)>
                 onChunkConsoleOutput;
 
-   boost::signal<void(const core::FilePath&, const core::FilePath&, 
+   RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&, const core::FilePath&, 
                       const core::json::Value& metadata, unsigned ordinal)> 
                          onPlotOutput;
-   boost::signal<void(const core::FilePath&, const core::FilePath&,
+   RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&, const core::FilePath&,
                       const core::json::Value& metadata)> onHtmlOutput;
-   boost::signal<void(const core::json::Object&)> onErrorOutput;
-   boost::signal<void(const core::FilePath&, const core::FilePath&,
+   RSTUDIO_BOOST_SIGNAL<void(const core::json::Object&)> onErrorOutput;
+   RSTUDIO_BOOST_SIGNAL<void(const core::FilePath&, const core::FilePath&,
                       const core::json::Value& metadata)> onDataOutput;
-   boost::signal<void(Condition condition, const std::string& message)> 
+   RSTUDIO_BOOST_SIGNAL<void(Condition condition, const std::string& message)> 
                          onCondition;
 };
 

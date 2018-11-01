@@ -20,9 +20,9 @@
 #include <vector>
 #include <map>
 
-#include <boost/signals.hpp>
 #include <boost/asio/io_service.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/http/AsyncClient.hpp>
 #include <core/http/Request.hpp>
 #include <core/Thread.hpp>

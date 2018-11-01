@@ -19,10 +19,10 @@
 
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
-#include <boost/signal.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -654,13 +654,13 @@ private:
    
    int nextGroup_; 
    
-   boost::signal<void(const r::session::RSuspendOptions&,Settings*),
-                 boost::last_value<void>,
+   RSTUDIO_BOOST_SIGNAL<void(const r::session::RSuspendOptions&,Settings*),
+                 RSTUDIO_BOOST_LAST_VALUE<void>,
                  int,
                  std::less<int> > suspendSignal_;
                   
-   boost::signal<void(const Settings&),
-                 boost::last_value<void>,
+   RSTUDIO_BOOST_SIGNAL<void(const Settings&),
+                 RSTUDIO_BOOST_LAST_VALUE<void>,
                  int,
                  std::greater<int> > resumeSignal_;
 };

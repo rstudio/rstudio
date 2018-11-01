@@ -230,6 +230,18 @@ else()
    message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}: ${BOOST_ROOT}")
 endif()
 
+# allow opt-in to using Boost.Signals2
+# TODO: remove this in RStudio v1.3 and port to signals2
+if(NOT RSTUDIO_BOOST_SIGNALS_VERSION)
+   if (BOOST_VERSION VERSION_LESS 1.69.0)
+      set(RSTUDIO_BOOST_SIGNALS_VERSION 1)
+   else()
+      set(RSTUDIO_BOOST_SIGNALS_VERSION 2)
+   endif()
+endif()
+
+message(STATUS "Using Booost.Signals version ${RSTUDIO_BOOST_SIGNALS_VERSION}")
+add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION})
 
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
