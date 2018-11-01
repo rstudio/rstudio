@@ -62,15 +62,20 @@ public class AceThemes
    private void applyTheme(Document document, final AceTheme theme)
    {
       Element oldStyleEl = document.getElementById(linkId_);
-      if (oldStyleEl != null)
-         oldStyleEl.removeFromParent();
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
       currentStyleEl.setHref(theme.getUrl() + "?dark=" + (theme.isDark() ? "1" : "0"));
-      document.getBody().appendChild(currentStyleEl);
+      if (null != oldStyleEl)
+      {
+         document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+      }
+      else
+      {
+         document.getBody().appendChild(currentStyleEl);
+      }
       
       if(theme.isDark())
          document.getBody().addClassName("editor_dark");
