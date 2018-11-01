@@ -62,6 +62,20 @@ Error base64HMAC(const std::string& value,
    return hashWithSecureKey(value + expires, pHMAC);
 }
 
+Error ensureKeyStrength(const std::string& key)
+{
+   // ensure the key is at least 256 bits (32 bytes) in strength
+   // this is good security practice, and our encryption and decryption
+   // operations require a key of that size at least
+   if (key.size() < 32)
+   {
+      LOG_ERROR_MESSAGE("secure-cookie-key specified is not strong enough! It must be at least 256 bits (32 bytes/characters) long!");
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
@@ -255,24 +269,27 @@ const std::string& getKey()
    return s_secureCookieKey;
 }
 
+
 Error initialize()
 {
    Error error = key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey);
    if (error)
       return error;
 
-   // ensure the key is at least 256 bits (32 bytes) in strength
-   // this is good security practice, and our encryption and decryption
-   // operations require a key of that size at least
-   if (s_secureCookieKey.size() < 32)
-   {
-      LOG_ERROR_MESSAGE("secure-cookie-key specified is not strong enough! It must be at least 256 bits (32 bytes/characters) long!");
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-   }
-
-   return Success();
+   return ensureKeyStrength(s_secureCookieKey);
 }
 
+Error initialize(const FilePath& secureKeyFile)
+{
+   if (secureKeyFile.empty())
+      return initialize();
+
+   Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey);
+   if (error)
+      return error;
+
+   return ensureKeyStrength(s_secureCookieKey);
+}
 
 } // namespace secure_cookie
 } // namespace http

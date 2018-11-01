@@ -285,6 +285,25 @@ private:
 
 boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 
+Error cancelPublish(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   if (s_pRSConnectPublish_ &&
+       s_pRSConnectPublish_->isRunning())
+   {
+      // There is a running publish operation; end it.
+      s_pRSConnectPublish_->terminate();
+      pResponse->setResult(true);
+   }
+   else
+   {
+      // No running publish operation.
+      pResponse->setResult(false);
+   }
+
+   return Success();
+}
+
 Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -561,6 +580,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
+      (bind(registerRpcMethod, "cancel_publish", cancelPublish))
       (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
       (bind(registerRpcMethod, "get_rmd_publish_details", getRmdPublishDetails))
       (bind(sourceModuleRFile, "SessionRSConnect.R"))

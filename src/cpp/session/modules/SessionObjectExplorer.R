@@ -929,7 +929,12 @@
       more <- FALSE
    }
    
-   if (more || nchar(output) > 80)
+   # guard against unexpected inputs
+   if (is.na(output) || !is.character(output))
+   {
+      output <- "<NA>"
+   }
+   else if (more || nchar(output) > 80)
    {
       truncated <- substring(output, 1, 80)
       output <- paste(truncated, trailing, sep = "")

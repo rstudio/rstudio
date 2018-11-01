@@ -25,20 +25,9 @@ namespace rstudio {
 namespace core {
 namespace key_file {
 
-core::Error readSecureKeyFile(const std::string& file, std::string* pContents)
+core::Error readSecureKeyFile(const FilePath& secureKeyPath,
+                              std::string* pContents)
 {
-   // determine path to use for secure cookie key file
-   core::FilePath secureKeyPath;
-   if (core::system::effectiveUserIsRoot())
-   {
-      secureKeyPath = core::FilePath("/etc/rstudio").complete(file);
-      if (!secureKeyPath.exists())
-         secureKeyPath = core::FilePath("/var/lib/rstudio-server") 
-                                       .complete(file);
-   }
-   else
-      secureKeyPath = core::FilePath("/tmp/rstudio-server").complete(file);
-
    // read file if it already exists
    if (secureKeyPath.exists())
    {
@@ -91,6 +80,24 @@ core::Error readSecureKeyFile(const std::string& file, std::string* pContents)
 
    // return success
    return core::Success();
+}
+
+core::Error readSecureKeyFile(const std::string& filename,
+                              std::string* pContents)
+{
+   // determine path to use for secure cookie key file
+   core::FilePath secureKeyPath;
+   if (core::system::effectiveUserIsRoot())
+   {
+      secureKeyPath = core::FilePath("/etc/rstudio").complete(filename);
+      if (!secureKeyPath.exists())
+         secureKeyPath = core::FilePath("/var/lib/rstudio-server") 
+                                       .complete(filename);
+   }
+   else
+      secureKeyPath = core::FilePath("/tmp/rstudio-server").complete(filename);
+
+   return readSecureKeyFile(secureKeyPath, pContents);
 }
 
 } // namespace key_file
