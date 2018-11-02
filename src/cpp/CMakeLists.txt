@@ -196,6 +196,9 @@ if(UNIX)
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
+      if(NOT Boost_VERSION VERSION_LESS 1.69.0)
+         list(REMOVE_ITEM BOOST_LIBS signals)
+      endif()
 
       # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
@@ -205,11 +208,15 @@ if(UNIX)
       message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
    else()
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
+      find_package(Boost ${BOOST_VERSION} REQUIRED)
+      if(NOT Boost_VERSION VERSION_LESS 1.69.0)
+         list(REMOVE_ITEM BOOST_LIBS signals)
+      endif()
       find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
       message(STATUS "Using system Boost ${BOOST_VERSION}")
    endif()
 
-   # WIN32 BOOST
+# WIN32 BOOST
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
@@ -233,14 +240,14 @@ endif()
 # allow opt-in to using Boost.Signals2
 # TODO: remove this in RStudio v1.3 and port to signals2
 if(NOT RSTUDIO_BOOST_SIGNALS_VERSION)
-   if (BOOST_VERSION VERSION_LESS 1.69.0)
+   if (Boost_VERSION VERSION_LESS 1.69.0)
       set(RSTUDIO_BOOST_SIGNALS_VERSION 1)
    else()
       set(RSTUDIO_BOOST_SIGNALS_VERSION 2)
    endif()
 endif()
 
-message(STATUS "Using Booost.Signals version ${RSTUDIO_BOOST_SIGNALS_VERSION}")
+message(STATUS "Using Boost.Signals version ${RSTUDIO_BOOST_SIGNALS_VERSION}")
 add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION})
 
 # add boost as system include directory
