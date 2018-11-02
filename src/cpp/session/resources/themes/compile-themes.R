@@ -54,7 +54,12 @@
       
       if (!inCommentBlock)
       {
-         # Check for a change of key.
+         # Check for a change of key. A "key" in this context is the name of a CSS rule block. For example, in
+         # .ace_editor {
+         #     font-weight: bold;
+         #     color: #AAAAAA
+         # }
+         # ".ace_editor" is the key and "font-weight: bold" and "color: #AAAAAA" are descriptions for that key.
          if (grepl("^\\s*\\.[^\\{]+\\{", currLine))
          {
             candidateKey <- paste(
@@ -63,7 +68,7 @@
                   currLine,
                   regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
                sep = " ")
-            candidateKey <- trimws(candidateKey)
+            candidateKey <- gsub("^\\s*|\\s*$", "", candidateKey, perl = TRUE)
             
             if (!grepl("^\\s*$", candidateKey))
             {
@@ -79,8 +84,11 @@
             }
          }
          
+         # If there is currently a key, look for it's descriptions.
          if (!is.null(currKey))
          {
+            # Determine if we're at the end of the block and remove the closing bracket to be able
+            # to parse anything that comes before it on the same line.
             if (grepl("\\}", currLine))
             {
                isLastDescForKey <- TRUE
@@ -91,13 +99,18 @@
                }
             }
             
+            # Look for a : on the line. CSS rules always have the format "name: style", so this
+            # indicates there is a description on this line..
             if (grepl(":", currLine))
             {
+               # Split on the rule separator. There may be multiple descriptions on one line.
                descValues <- strsplit(currLine, "\\s*;\\s*")[[1]]
                for (value in descValues)
                {
+                  # If there is a non-empty value, parse the description.
                   if (value != "")
                   {
+                     # Strip whitespace and ;, if any, and then split on :.
                      desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", value), "\\s*:\\s*")[[1]]
                      if (length(desc) != 2)
                      {
@@ -110,6 +123,7 @@
                   }
                }
             }
+            # If the line doesn't contain a description and is non-empty, it is malformed.
             else if (!grepl("^\\s*$", currLine))
             {
                warning("Malformd CSS: ", orgLine, ". Unexpected non-css line.")
@@ -123,16 +137,20 @@
             }
             else
             {
+               # selectors for CSS rule blocks may be split over multiple lines.
                candidateKey <- paste(candidateKey, currLine)
             }
          }
          
+         # If we've finished a block, reset the key and the block-end indicator.
          if (isLastDescForKey)
          {
             currKey <- NULL
             isLastDescForKey <- FALSE
          }
          
+         # If we started a comment block this line, update the inCommentBlock status so we ignore
+         # all lines until the end of the comment block is found.
          if (startCommentBlock)
          {
             inCommentBlock <- TRUE
@@ -198,7 +216,7 @@
       {
          colorVec <- sapply(
             c(substr(color, 2, 3), substr(color, 4, 5), substr(color, 6, 7)),
-            hexStrToI <- function(str) { strtoi(str, 16L) },
+            function(str) { strtoi(str, 16L) },
             USE.NAMES = FALSE)
       }
    }

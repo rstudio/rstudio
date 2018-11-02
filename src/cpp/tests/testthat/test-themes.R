@@ -176,7 +176,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
          {
             acVal <- actual[[name]]
             exVal <- expected[[name]]
-            if (!is.list(acVal)) acVal <- gsub(" +", " ", trimws(acVal), perl = TRUE)
+            if (!is.list(acVal)) acVal <- gsub(" +", " ", gsub("^\\s*|\\s*$", "", acVal, perl = TRUE), perl = TRUE)
             
             if (is.list(acVal) && is.list(exVal))
             {
