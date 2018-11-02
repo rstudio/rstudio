@@ -73,11 +73,16 @@
 }
 
 .ace-i-plastic .ace_support {
+  font-weight: bold;
   color: #3333FF
 }
 
 .ace-i-plastic .ace_support.ace_constant {
   color: #6782D3
+}
+
+.ace-i-plastic .ace_storage {
+  font-weight: bold
 }
 
 .ace-i-plastic .ace_invalid {
@@ -117,6 +122,10 @@
 
 .ace-i-plastic .ace_entity.ace_name.ace_function {
   color: #FF8000
+}
+
+.ace-i-plastic .ace_entity.ace_name.ace_tag {
+  font-weight: bold
 }
 
 .ace-i-plastic .ace_support.ace_type {

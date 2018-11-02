@@ -56,6 +56,10 @@
   color: #F92672
 }
 
+.ace-monokai .ace_keyword.ace_operator {
+  color: #F92672
+}
+
 .ace-monokai .ace_constant.ace_language {
   color: #AE81FF
 }

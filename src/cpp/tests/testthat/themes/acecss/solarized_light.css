@@ -89,6 +89,7 @@
 }
 
 .ace-solarized-light .ace_storage {
+  font-weight: bold;
   color: #073642
 }
 
@@ -121,5 +122,6 @@
 }
 
 .ace-solarized-light .ace_entity.ace_name.ace_tag {
+  font-weight: bold;
   color: #268BD2
 }

@@ -53,6 +53,7 @@
 }
 
 .ace-dreamweaver .ace_invalid {
+  font-weight:bold;
   color: #EE000B;
   background-color: #EFFF8A
 }

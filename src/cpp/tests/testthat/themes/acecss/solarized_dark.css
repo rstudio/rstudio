@@ -56,6 +56,10 @@
   color: #859900
 }
 
+.ace-solarized-dark .ace_keyword.ace_operator {
+  color: #859900
+}
+
 .ace-solarized-dark .ace_constant.ace_language {
   color: #B58900
 }
@@ -85,6 +89,7 @@
 }
 
 .ace-solarized-dark .ace_storage {
+  font-weight: bold;
   color: #93A1A1
 }
 
@@ -118,5 +123,6 @@
 }
 
 .ace-solarized-dark .ace_entity.ace_name.ace_tag {
+  font-weight: bold;
   color: #268BD2
 }

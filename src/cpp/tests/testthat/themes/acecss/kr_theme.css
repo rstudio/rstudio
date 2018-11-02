@@ -106,6 +106,10 @@
   color: #BABD9C
 }
 
+.ace-kr-theme .ace_markup.ace_heading {
+  font-weight: bold
+}
+
 .ace-kr-theme .ace_markup.ace_list {
   background-color: #0F0040
 }

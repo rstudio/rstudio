@@ -63,6 +63,7 @@
 }
 
 .ace_constant {
+  font-weight: bold;
   color: #811F24
 }
 
@@ -93,6 +94,7 @@
 .ace_invalid.ace_deprecated {
   text-decoration: underline;
   font-style: italic;
+  font-weight: bold;
   color: #B52A1D
 }
 
@@ -114,6 +116,7 @@
 }
 
 .ace_markup.ace_heading {
+  font-weight: bold;
   color: #19356D
 }
 
@@ -135,20 +138,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #ECECEC;
+  background-color: #EDEDED;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #FCEB98;
+  background-color: #FCEC99;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #E0E0E0;
+  background-color: #E1E1E1;
 }
 .ace_console_error {
-  background-color: #E0E0E0;
+  background-color: #E1E1E1;
 }
 .terminal {
   background-color: #F9F9F9;
