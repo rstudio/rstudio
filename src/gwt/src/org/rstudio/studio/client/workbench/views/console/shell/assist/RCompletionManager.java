@@ -753,8 +753,13 @@ public class RCompletionManager implements CompletionManager
             return false;
          }
          
+         // When inserting a space, continue showing the current set of
+         // completions and update the current completion token.
          if (c == ' ')
+         {
+            token_ += " ";
             return false;
+         }
          
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can
