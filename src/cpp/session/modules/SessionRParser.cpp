@@ -408,7 +408,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    if (!failed)
    {
       DEBUG("--- Found function in pkgInfo index: " << *fnInfo.binding());
-      return fnInfo.performsNse();
+      return bool(fnInfo.performsNse());
    }
    
    // Handle some special cases first.
