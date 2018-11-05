@@ -118,11 +118,29 @@ FunctionSymbolUsageCache& functionSymbolUsageCache()
    return instance;
 }
 
+std::string translate(SEXP charSEXP, bool asUtf8 = false)
+{
+   if (asUtf8)
+   {
+      if (Rf_getCharCE(charSEXP) == CE_UTF8)
+         return std::string(CHAR(charSEXP), LENGTH(charSEXP));
+      else
+         return Rf_translateCharUTF8(charSEXP);
+   }
+   else
+   {
+      if (Rf_getCharCE(charSEXP) == CE_NATIVE)
+         return std::string(CHAR(charSEXP), LENGTH(charSEXP));
+      else
+         return Rf_translateChar(charSEXP);
+   }
+}
+
 } // anonymous namespace
    
 std::string asString(SEXP object) 
 {
-    return std::string(Rf_translateChar(Rf_asChar(object)));
+   return translate(Rf_asChar(object));
 }
    
 std::string safeAsString(SEXP object, const std::string& defValue)
@@ -685,8 +703,8 @@ Error getNames(SEXP sexp, std::vector<std::string>* pNames)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
    
    // copy them into the vector
-   for (int i=0; i<Rf_length(namesSEXP); i++)
-      pNames->push_back(Rf_translateChar(STRING_ELT(namesSEXP, i)) );
+   for (int i = 0; i < Rf_length(namesSEXP); i++)
+      pNames->push_back(translate(STRING_ELT(namesSEXP, i)));
    
    return Success();
 }
@@ -816,7 +834,7 @@ Error extract(SEXP valueSEXP, std::vector<int>* pVector)
    
    return Success(); 
 }
-   
+
 Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
@@ -825,38 +843,35 @@ Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
 
-   *pString = std::string(asUtf8 ?
-                  Rf_translateCharUTF8(STRING_ELT(valueSEXP, 0)) :
-                  Rf_translateChar(STRING_ELT(valueSEXP, 0)));
-
+   *pString = translate(STRING_ELT(valueSEXP, 0), asUtf8);
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::vector<std::string>* pVector)
+Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
 
    pVector->clear();
-   for (int i=0; i<Rf_length(valueSEXP); i++)
-      pVector->push_back(Rf_translateChar(STRING_ELT(valueSEXP, i)));
+   for (int i = 0; i < Rf_length(valueSEXP); i++)
+      pVector->push_back(translate(STRING_ELT(valueSEXP, i), asUtf8));
    
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
+Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
    
    pSet->clear();
-   for (int i=0; i<Rf_length(valueSEXP); i++)
-      pSet->insert(Rf_translateChar(STRING_ELT(valueSEXP, i)));
+   for (int i = 0; i < Rf_length(valueSEXP); i++)
+      pSet->insert(translate(STRING_ELT(valueSEXP, i), asUtf8));
    
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap)
+Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -873,9 +888,9 @@ Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pM
       SEXP el = VECTOR_ELT(valueSEXP, i);
       std::set<std::string> contents;
       for (int j = 0; j < Rf_length(el); ++j)
-         contents.insert(std::string(Rf_translateChar(STRING_ELT(el, j))));
+         contents.insert(translate(STRING_ELT(el, j), asUtf8));
       
-      std::string name = std::string(Rf_translateChar(STRING_ELT(namesSEXP, i)));
+      std::string name = translate(STRING_ELT(namesSEXP, i), asUtf8);
       pMap->operator [](name) = contents;
    }
    
