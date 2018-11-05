@@ -15,9 +15,19 @@
  
 @external .gwt-CheckBox;
 
+@if rstudio.desktop true {
+@def appDetailsWidth 250px
+@def accountListWidth 262px
+@def deployIllustrationMarginLeft 12px
+} @else {
+@def appDetailsWidth 238px
+@def accountListWidth 250px
+@def deployIllustrationMarginLeft 0
+}
+
 .deployIllustration
 {
-   margin-left: 0;
+   margin-left: deployIllustrationMarginLeft;
 }
 
 .sourceDestLabels
@@ -133,7 +143,7 @@
 .accountList
 {
    height: 100px;
-   width: 250px;
+   width: accountListWidth;
 }
 
 .accountList.accountListCondensed
@@ -178,7 +188,7 @@
    padding: 5px;
    margin: 0px;
    overflow: hidden;
-   width: 238px;
+   width: appDetailsWidth;
 }
 
 .appDetailsPanel 

@@ -1280,7 +1280,7 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setText(lines[lines.length - 1]);
       appErrorMessage_.setTitle(error);
    }
-   
+
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
