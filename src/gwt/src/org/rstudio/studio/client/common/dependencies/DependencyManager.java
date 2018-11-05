@@ -153,7 +153,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             Dependency.cranPackage("htmltools", "0.3.6"),
             Dependency.cranPackage("htmlwidgets", "1.2", true),
             Dependency.cranPackage("jsonlite", "0.9.19"),
-            Dependency.cranPackage("r2d3", "0.2.0", true)
+            Dependency.cranPackage("r2d3", "0.2.2", true)
          },
          true,
          succeeded ->
@@ -298,7 +298,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
       deps.add(Dependency.cranPackage("rprojroot", "1.0"));
       deps.add(Dependency.cranPackage("mime", "0.5"));
-      deps.add(Dependency.cranPackage("rmarkdown", "1.9"));
+      deps.add(Dependency.cranPackage("rmarkdown", "1.10"));
       return deps;
    }
    
@@ -428,7 +428,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             new Dependency[] {
                   Dependency.cranPackage("jsonlite", "0.9.19"),
                   Dependency.cranPackage("png", "0.1-7"),
-                  Dependency.cranPackage("reticulate", "1.6"),
+                  Dependency.cranPackage("reticulate", "1.10"),
             },
             true,
             new CommandWithArg<Boolean>()
