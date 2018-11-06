@@ -90,11 +90,20 @@
 
 .buildToolsRoxygenize {
    width: 100%;
-   margin-bottom: 12px;
+   margin-bottom: 10px;
 }
 
 .buildToolsDevtools {
    margin-bottom: 10px;
+}
+
+.buildToolsConfigure {
+   margin-top: -3px;
+}
+
+.buildToolsCheckAsCran {
+	margin-left: -5px;
+	margin-bottom: 12px;
 }
 
 .previewWebsite {

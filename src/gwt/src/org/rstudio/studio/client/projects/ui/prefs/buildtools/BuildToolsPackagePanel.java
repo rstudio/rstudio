@@ -76,6 +76,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       chkUseRoxygen_ = checkBox("Generate documentation with Roxygen");
       rocletPanel.add(chkUseRoxygen_);
       btnConfigureRoxygen_ = new ThemedButton("Configure...");
+      btnConfigureRoxygen_.addStyleName(RES.styles().buildToolsConfigure());
       btnConfigureRoxygen_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -103,6 +104,9 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
       
+      chkAsCran_ = checkBox("Check package as CRAN");
+      chkAsCran_.addStyleName(RES.styles().buildToolsCheckAsCran());
+      add(chkAsCran_);
       
       add(installAdditionalArguments_ = new AdditionalArguments(
         new SafeHtmlBuilder().appendHtmlConstant(
@@ -137,6 +141,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       installAdditionalArguments_.setText("--no-multiarch --with-keep.source");
       chkUseDevtools_.setValue(true);
+      chkAsCran_.setValue(true);
    }
 
    @Override
@@ -161,6 +166,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       roxygenizePanel_.setVisible(showRoxygenize);
       chkUseDevtools_.setValue(config.getPackageUseDevtools());
       chkUseRoxygen_.setValue(config.hasPackageRoxygenize());
+      chkAsCran_.setValue(config.getPackageCheckAsCran());
       chkUseRoxygen_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -188,6 +194,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       RProjectConfig config = options.getConfig();
       config.setPackageUseDevtools(chkUseDevtools_.getValue());
+      config.setPackageCheckAsCran(chkAsCran_.getValue());
       config.setPackagePath(pathSelector_.getText());
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
@@ -214,6 +221,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
    private CheckBox chkUseDevtools_;
+   private CheckBox chkAsCran_;
    private ThemedButton btnConfigureRoxygen_;
    
    private WorkbenchContext workbenchContext_;

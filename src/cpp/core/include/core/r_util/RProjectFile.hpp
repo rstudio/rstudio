@@ -50,10 +50,13 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : useDevtools(true)
+      : useDevtools(true),
+        checkAsCran(true)
    {
    }
+
    bool useDevtools;
+   bool checkAsCran;
 };
 
 struct RProjectConfig
@@ -82,6 +85,7 @@ struct RProjectConfig
         packageCheckArgs(),
         packageRoxygenize(),
         packageUseDevtools(false),
+        packageCheckAsCran(true),
         makefilePath(),
         websitePath(),
         customScriptPath(),
@@ -115,6 +119,7 @@ struct RProjectConfig
    std::string packageCheckArgs;
    std::string packageRoxygenize;
    bool packageUseDevtools;
+   bool packageCheckAsCran;
    std::string makefilePath;
    std::string websitePath;
    std::string customScriptPath;

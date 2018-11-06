@@ -690,6 +690,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = userSettings().useDevtools();
+   defaultConfig.packageCheckAsCran = true;
    return defaultConfig;
 }
 

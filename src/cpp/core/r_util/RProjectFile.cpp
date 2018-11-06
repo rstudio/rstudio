@@ -207,6 +207,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packageUseDevtools = buildDefaults.useDevtools;
+   pConfig->packageCheckAsCran = buildDefaults.checkAsCran;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
@@ -705,6 +706,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageUseDevtools = false;
    }
 
+   // extract package check as cran
+   it = dcfFields.find("PackageCheckAsCRAN");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageCheckAsCran)))
+         return requiredFieldError("PackageCheckAsCRAN", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageCheckAsCran = true;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -912,6 +925,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
             if (config.packageUseDevtools)
             {
                build.append("PackageUseDevtools: Yes\n");
+            }
+
+            if (!config.packageCheckAsCran)
+            {
+               build.append("PackageCheckAsCRAN: No\n");
             }
 
             if (!config.packagePath.empty())

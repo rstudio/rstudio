@@ -918,6 +918,10 @@ private:
       module_context::RCommand rCheckCmd(rBinDir);
       rCheckCmd << "check";
 
+      // check as cran if requested
+      if (projectConfig().packageCheckAsCran)
+         rCheckCmd << "--as-cran";
+
       // add extra args if provided
       std::string extraArgs = projectConfig().packageCheckArgs;
       rCheckCmd << extraArgs;
@@ -1027,11 +1031,15 @@ private:
       if (!userSettings().cleanupAfterRCmdCheck())
          args.push_back("cleanup = FALSE");
 
+      if (!projectConfig().packageCheckAsCran)
+         args.push_back("cran = FALSE");
+
+
       // optional extra check args
       if (!projectConfig().packageCheckArgs.empty())
       {
-         args.push_back("args = " +
-                        packageArgsVector(projectConfig().packageCheckArgs));
+         std::string packageArgs = packageArgsVector(projectConfig().packageCheckArgs);
+         args.push_back("args = " + packageArgs);
       }
 
       // optional extra build args
@@ -1048,6 +1056,8 @@ private:
 
          args.push_back("build_args = " + packageArgsVector(buildArgs));
       }
+
+      // turn off cran checking unless '--as-cran' is within the check options
 
       // add the args
       ostr << boost::algorithm::join(args, ", ");

@@ -191,6 +191,14 @@ public class RProjectConfig extends JavaScriptObject
       this.package_use_devtools = useDevtools;
    }-*/;
    
+   public native final boolean getPackageCheckAsCran() /*-{
+      return this.package_check_as_cran;
+   }-*/;
+   
+   public native final void setPackageCheckAsCran(boolean checkAsCran) /*-{
+      this.package_check_as_cran = checkAsCran;
+   }-*/;
+   
    public native final String getPackagePath() /*-{
       return this.package_path;
    }-*/;

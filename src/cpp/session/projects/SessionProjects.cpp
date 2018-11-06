@@ -369,6 +369,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
    configJson["package_use_devtools"] = config.packageUseDevtools;
+   configJson["package_check_as_cran"] = config.packageCheckAsCran;
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
@@ -600,6 +601,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     configJson,
                     "build_type", &(config.buildType),
                     "package_use_devtools", &(config.packageUseDevtools),
+                    "package_check_as_cran", &(config.packageCheckAsCran),
                     "package_path", &(config.packagePath),
                     "package_install_args", &(config.packageInstallArgs),
                     "package_build_args", &(config.packageBuildArgs),
@@ -608,12 +610,14 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
                     "website_path", &(config.websitePath),
-                    "custom_script_path", &(config.customScriptPath),
-                    "tutorial_path", &(config.tutorialPath));
+                    "custom_script_path", &(config.customScriptPath));
    if (error)
       return error;
 
-   error = json::readObject(configJson, "disable_execute_rprofile", &(config.disableExecuteRprofile));
+   error = json::readObject(
+            configJson,
+            "disable_execute_rprofile", &(config.disableExecuteRprofile),
+            "tutorial_path", &(config.tutorialPath));
    if (error)
       return error;
 
