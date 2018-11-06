@@ -42,17 +42,6 @@ QString s_sumatraPdfExePath    = kUnknown;
 int     s_chromiumDevtoolsPort = -1;
 double  s_zoomLevel            = 1.0;
 
-QString getFixedWidthFontList()
-{
-   return desktop::getFixedWidthFontList();
-}
-
-QString& fixedWidthFontList()
-{
-   static QString instance = getFixedWidthFontList();
-   return instance;
-}
-
 #ifdef Q_OS_LINUX
 
 void readEntry(
@@ -138,26 +127,6 @@ DesktopInfo::DesktopInfo(QObject* parent)
    : QObject(parent)
 {
    initialize();
-
-   QObject::connect(
-            this,
-            &DesktopInfo::sumatraPdfExePathChanged,
-            &DesktopInfo::setSumatraPdfExePath);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::fixedWidthFontListChanged,
-            &DesktopInfo::setFixedWidthFontList);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::zoomLevelChanged,
-            &DesktopInfo::setZoomLevel);
-   
-   QObject::connect(
-            this,
-            &DesktopInfo::chromiumDevtoolsPortChanged,
-            &DesktopInfo::setChromiumDevtoolsPort);
 }
 
 QString DesktopInfo::getPlatform()
@@ -183,16 +152,7 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   return fixedWidthFontList();
-}
-
-void DesktopInfo::setFixedWidthFontList(QString list)
-{
-   if (fixedWidthFontList() != list)
-   {
-      fixedWidthFontList() = list;
-      emit fixedWidthFontListChanged(list);
-   }
+   return desktop::getFixedWidthFontList();
 }
 
 QString DesktopInfo::getFixedWidthFont()

@@ -48,11 +48,7 @@ public:
    Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT)
 
    Q_INVOKABLE QString getFixedWidthFontList();
-   Q_INVOKABLE void setFixedWidthFontList(QString list);
-   Q_PROPERTY(QString fixedWidthFontList
-              READ getFixedWidthFontList
-              WRITE setFixedWidthFontList
-              NOTIFY fixedWidthFontListChanged)
+   Q_PROPERTY(QString fixedWidthFontList READ getFixedWidthFontList CONSTANT)
 
    Q_INVOKABLE QString getFixedWidthFont();
    Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)

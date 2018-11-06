@@ -17,9 +17,13 @@
 
 #include <set>
 
-#include <QPushButton>
-#include <QTimer>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFile>
+#include <QPushButton>
+#include <QStandardPaths>
+#include <QThread>
+#include <QTimer>
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
@@ -35,12 +39,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
-
-QFontDatabase& fontDatabase()
-{
-   static QFontDatabase instance;
-   return instance;
-}
 
 #ifdef Q_OS_WIN
 
@@ -127,13 +125,15 @@ bool isGnomeDesktop()
 
 #ifndef Q_OS_MAC
 
-QString getFixedWidthFontList()
+namespace {
+
+QString rebuildFontCache()
 {
-   QFontDatabase& db = desktop::fontDatabase();
-   QStringList fonts;
+   QFontDatabase db;
+   QStringList fontList;
    for (const QString& family : db.families())
    {
-      
+
 #ifdef _WIN32
       // screen out annoying Qt warnings when attempting to
       // initialize incompatible fonts
@@ -155,9 +155,44 @@ QString getFixedWidthFontList()
 #endif
 
       if (isFixedWidthFont(QFont(family, 12)))
-         fonts.append(family);
+         fontList.append(family);
    }
-   return fonts.join(QStringLiteral("\n"));
+
+   QString fonts = fontList.join(QStringLiteral("\n"));
+
+   // write to cache
+   QString dataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+   QDir(dataPath).mkdir(QStringLiteral("."));
+
+   QFile fontsCache(dataPath.append(QStringLiteral("/fonts.cache")));
+   if (fontsCache.open(QIODevice::WriteOnly | QIODevice::Text))
+      fontsCache.write(fonts.toUtf8());
+
+   // return font list
+   return fonts;
+}
+
+QString getFixedWidthFontListImpl()
+{
+   // check to see if we have a cache of fonts available
+   QString dataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+   QFile dataDir(dataPath);
+   QFile fontsCache(dataPath.append(QStringLiteral("/fonts.cache")));
+   if (fontsCache.open(QIODevice::ReadOnly | QIODevice::Text))
+   {
+      QThread::create(rebuildFontCache)->start();
+      return QString::fromUtf8(fontsCache.readAll());
+   }
+
+   return rebuildFontCache();
+}
+
+} // end anonymous namespace
+
+QString getFixedWidthFontList()
+{
+   static QString instance = getFixedWidthFontListImpl();
+   return instance;
 }
 
 #endif
