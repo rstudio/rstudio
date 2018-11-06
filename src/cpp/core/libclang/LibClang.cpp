@@ -61,6 +61,22 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
    if (FilePath(includePath).exists())
      compileArgs.push_back(std::string("-I") + includePath);
 
+#ifdef __APPLE__
+   // newer versions of macOS (e.g. Mojave) no longer install system
+   // headers into /usr/include by default. attempt to find the headers
+   // made available as part of the default toolchain instead
+   if (!FilePath("/usr/include").exists())
+   {
+      std::string xcodeIncludePath =
+               "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include";
+      if (FilePath(xcodeIncludePath).exists())
+      {
+         compileArgs.insert(compileArgs.begin(), xcodeIncludePath);
+         compileArgs.insert(compileArgs.begin(), "-isystem");
+      }
+   }
+#endif
+
    return compileArgs;
 }
 
