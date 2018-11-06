@@ -90,9 +90,7 @@ public:
 
 inline DesktopInfo& desktopInfo()
 {
-   static DesktopInfo* instance = nullptr;
-   if (instance == nullptr)
-      instance = new DesktopInfo(qApp);
+   static DesktopInfo* instance = new DesktopInfo(qApp);
    return *instance;
 }
 
