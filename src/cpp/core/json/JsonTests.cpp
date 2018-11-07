@@ -398,7 +398,7 @@ TEST_CASE("Json")
       object["a"] = true;
       object["b"] = false;
       object["c"] = 1000;
-      object["d"] = 18446744073709550615U;
+      object["d"] = (uint64_t)18446744073709550615U;
       object["e"] = 246.9;
       object["f"] = std::string("Hello world");
 
