@@ -66,12 +66,12 @@ void deserializeConsoleProcs(const std::string& jsonStr)
       return;
    }
 
-   json::Array procs = value.get_array();
+   const json::Array& procs = value.get_array();
    for (json::Array::iterator it = procs.begin();
         it != procs.end();
         it++)
    {
-      ConsoleProcessPtr proc = ConsoleProcess::fromJson(it->get_obj());
+      ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).get_obj());
 
       // Deserializing consoleprocs list only happens during session
       // initialization, therefore they do not represent an actual running

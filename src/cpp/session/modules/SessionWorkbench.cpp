@@ -120,7 +120,7 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
    ListBuilder selectionBuilder(&protect);
    for (std::size_t i = 0; i < selection.size(); ++i)
    {
-      json::Object object = selection[i].get_obj();
+      const json::Object& object = selection[i].get_obj();
       
       json::Array rangeJson;
       std::string text;

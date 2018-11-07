@@ -735,8 +735,7 @@ core::json::Object ConsoleProcess::toJson() const
    return procInfo_->toJson();
 }
 
-ConsoleProcessPtr ConsoleProcess::fromJson(
-                                             core::json::Object &obj)
+ConsoleProcessPtr ConsoleProcess::fromJson(const core::json::Object &obj)
 {
    boost::shared_ptr<ConsoleProcessInfo> pProcInfo(ConsoleProcessInfo::fromJson(obj));
    ConsoleProcessPtr pProc(new ConsoleProcess(pProcInfo));

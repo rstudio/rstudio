@@ -199,7 +199,7 @@ public:
    void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;
-   static ConsoleProcessPtr fromJson( core::json::Object& obj);
+   static ConsoleProcessPtr fromJson(const core::json::Object& obj);
 
    void onReceivedInput(const std::string& input);
 

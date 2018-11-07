@@ -137,12 +137,12 @@ std::vector<std::string> packageNames(const std::vector<Dependency> deps)
 std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
 {
    std::vector<Dependency> deps;
-   BOOST_FOREACH(const json::Value& depJsonValue, depsJson)
+   for (const json::Value& depJsonValue : depsJson)
    {
       if (json::isType<json::Object>(depJsonValue))
       {
          Dependency dep;
-         json::Object depJson = depJsonValue.get_obj();
+         const json::Object& depJson = depJsonValue.get_obj();
          Error error = json::readObject(depJson,
                                         "type", &(dep.type),
                                         "name", &(dep.name),

@@ -1,7 +1,7 @@
 /*
  * Json.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,72 +14,128 @@
  */
 
 #include <core/json/Json.hpp>
-#include <core/json/JsonRpc.hpp>
 
-#include <cstdlib>
-#include <sstream>
-
-#include <boost/format.hpp>
-#include <boost/foreach.hpp>
-#include <boost/scoped_array.hpp>
-
-#include <core/Log.hpp>
-#include <core/Thread.hpp>
-
-#include "spirit/json_spirit.h"
+#include <core/json/rapidjson/stringbuffer.h>
+#include <core/json/rapidjson/prettywriter.h>
+#include <core/json/rapidjson/writer.h>
 
 namespace rstudio {
 namespace core {
 namespace json {
 
-json_spirit::Value_type ObjectType = json_spirit::obj_type;
-json_spirit::Value_type ArrayType = json_spirit::array_type; 
-json_spirit::Value_type StringType = json_spirit::str_type;
-json_spirit::Value_type BooleanType = json_spirit::bool_type;
-json_spirit::Value_type IntegerType = json_spirit::int_type;
-json_spirit::Value_type RealType = json_spirit::real_type;
-json_spirit::Value_type NullType = json_spirit::null_type;
-
-json::Value toJsonString(const std::string& val)
+Object& Value::get_obj() const
 {
-   return json::Value(val);
+   // note - need c-style cast here because we are unsafely upcasting
+   // this is "safe" in this context because the derived Object class
+   // does not have any additional members
+   return (Object&)(*this);
 }
 
-json::Object toJsonObject(
-      const std::vector<std::pair<std::string,std::string> >& options)
+Array& Value::get_array() const
 {
-   json::Object optionsJson;
+   // note - need c-style cast here because we are unsafely upcasting
+   // this is "safe" in this context because the derived Array class
+   // does not have any additional members
+   return (Array&)(*this);
+}
+
+rapidjson::CrtAllocator Value::s_allocator;
+
+template <>
+Object Value::get_value<Object>() const
+{
+   Object& self = get_obj();
+   Object copy = self;
+   return copy;
+}
+
+template <>
+Array Value::get_value<Array>() const
+{
+   Array& self = get_array();
+   Array copy = self;
+   return copy;
+}
+
+template <>
+int Value::get_value<int>() const
+{
+   return get_impl().GetInt();
+}
+
+template <>
+double Value::get_value<double>() const
+{
+   return get_impl().GetDouble();
+}
+
+template <>
+unsigned int Value::get_value<unsigned int>() const
+{
+   return get_impl().GetUint();
+}
+
+template <>
+int64_t Value::get_value<int64_t>() const
+{
+   return get_impl().GetInt64();
+}
+
+template <>
+uint64_t Value::get_value<uint64_t>() const
+{
+   return get_impl().GetUint64();
+}
+
+template <>
+bool Value::get_value<bool>() const
+{
+   return get_impl().GetBool();
+}
+
+template <>
+const char* Value::get_value<const char*>() const
+{
+   return get_impl().GetString();
+}
+
+template <>
+std::string Value::get_value<std::string>() const
+{
+   return std::string(get_impl().GetString(), get_impl().GetStringLength());
+}
+
+Object toJsonObject(const std::vector<std::pair<std::string,std::string> >& options)
+{
+   Object optionsJson;
    typedef std::pair<std::string,std::string> Pair;
-   BOOST_FOREACH(const Pair& option, options)
+   for (const Pair& option : options)
    {
       optionsJson[option.first] = option.second;
    }
    return optionsJson;
 }
 
-std::vector<std::pair<std::string,std::string> > optionsFromJson(
-                                      const json::Object& optionsJson)
+std::vector<std::pair<std::string,std::string> > optionsFromJson(const Object& optionsJson)
 {
    std::vector<std::pair<std::string,std::string> > options;
-   BOOST_FOREACH(const json::Member& member, optionsJson)
+   for (const Member& member : optionsJson)
    {
-      std::string name = member.first;
-      json::Value value = member.second;
-      if (value.type() == json::StringType)
-         options.push_back(std::make_pair(name, value.get_str()));
+      if (member.value().type() == StringType)
+         options.push_back(std::make_pair(member.name(), member.value().get_str()));
    }
    return options;
 }
 
 bool fillSetString(const Array& array, std::set<std::string>* pSet)
 {
-   for (Array::const_iterator it = array.begin();
+   for (Array::iterator it = array.begin();
         it != array.end();
         ++it)
    {
       if (!isType<std::string>(*it))
          return false;
-      pSet->insert(it->get_str());
+      pSet->insert((*it).get_str());
    }
 
    return true;
@@ -87,27 +143,27 @@ bool fillSetString(const Array& array, std::set<std::string>* pSet)
 
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
 {
-   for (Array::const_iterator it = array.begin();
+   for (Array::iterator it = array.begin();
         it != array.end();
         ++it)
    {
       if (!isType<std::string>(*it))
          return false;
-      pVector->push_back(it->get_str());
+      pVector->push_back((*it).get_str());
    }
-   
+
    return true;
 }
 
 bool fillVectorInt(const Array& array, std::vector<int>* pVector)
 {
-   for (Array::const_iterator it = array.begin();
+   for (Array::iterator it = array.begin();
         it != array.end();
         ++it)
    {
       if (!isType<int>(*it))
          return false;
-      pVector->push_back(it->get_int());
+      pVector->push_back((*it).get_int());
    }
 
    return true;
@@ -115,58 +171,51 @@ bool fillVectorInt(const Array& array, std::vector<int>* pVector)
 
 bool fillMap(const Object& object, std::map< std::string, std::vector<std::string> >* pMap)
 {
-   for (Object::const_iterator it = object.begin();
+   for (Object::iterator it = object.begin();
         it != object.end();
         ++it)
    {
       std::vector<std::string> strings;
-      const json::Array& array = it->second.get_array();
+      const Array& array = (*it).value().get_array();
       if (!fillVectorString(array, &strings))
          return false;
-      
-      (*pMap)[it->first] = strings;
+
+      (*pMap)[(*it).name()] = strings;
    }
    return true;
 }
 
 bool parse(const std::string& input, Value* pValue)
 {
-   // two threads simultaneously using the json parser has been observed
-   // to crash the process. protect it globally with a mutex. note this was
-   // probably a result of not defining BOOST_SPIRIT_THREADSAFE (which we
-   // have subsequently defined) however since there isn't much documentation 
-   // on the behavior of boost spirit w/ threads and the specific behavior
-   // of this constant we leave in mutex just to be sure   
-      
-   static boost::mutex s_spiritMutex ;
-   LOCK_MUTEX(s_spiritMutex)
-   {
-      return json_spirit::read(input, *pValue);
-   }
-   END_LOCK_MUTEX
-   
-   // mutex related error
-   return false;
+   return pValue->parse(input);
 }
 
 void write(const Value& value, std::ostream& os)
 {
-   json_spirit::write(value, os);
+   os << write(value);
 }
 
 void writeFormatted(const Value& value, std::ostream& os)
 {
-   json_spirit::write_formatted(value, os);
+   os << writeFormatted(value);
 }
 
 std::string write(const Value& value)
 {
-   return json_spirit::write(value);
+   rapidjson::StringBuffer buffer;
+   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+
+   value.get_impl().Accept(writer);
+   return std::string(buffer.GetString(), buffer.GetLength());
 }
 
 std::string writeFormatted(const Value& value)
 {
-   return json_spirit::write_formatted(value);
+   rapidjson::StringBuffer buffer;
+   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+   value.get_impl().Accept(writer);
+   return std::string(buffer.GetString(), buffer.GetLength());
 }
 
 } // namespace json

@@ -356,7 +356,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             "markers parameter was not a data frame or unnamed list");
 
       std::vector<SourceMarker> markers;
-      BOOST_FOREACH(const json::Value& markerJson, markersJson.get_array())
+      for (const json::Value& markerJson : markersJson.get_array())
       {
          if (json::isType<json::Object>(markerJson))
          {
@@ -467,7 +467,7 @@ void writeSourceMarkers(bool terminatedNormally)
 
 } // anonymous namespace
 
-json::Value markersStateAsJson()
+json::Object markersStateAsJson()
 {
    return sourceMarkers().stateAsJson();
 }

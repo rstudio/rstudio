@@ -124,15 +124,15 @@ void onClientInit()
 Error extractFilePaths(const json::Array& files, 
                        std::vector<FilePath>* pFilePaths)
 {   
-   for(json::Array::const_iterator 
+   for(json::Array::iterator
          it = files.begin(); 
          it != files.end();
          ++it)
    {
-      if (it->type() != json::StringType)
+      if ((*it).type() != json::StringType)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
-      std::string file = it->get_str() ;
+      std::string file = (*it).get_str() ;
       pFilePaths->push_back(module_context::resolveAliasedPath(file)) ;
    }
 

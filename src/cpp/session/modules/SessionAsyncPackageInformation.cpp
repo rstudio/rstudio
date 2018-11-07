@@ -110,14 +110,12 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
 {
    using namespace core::json;
    
-   for (json::Object::const_iterator it = functionObjectJson.begin();
-        it != functionObjectJson.end();
-        ++it)
+   for (const json::Member& member : functionObjectJson)
    {
-      const std::string& functionName = it->first;
+      const std::string& functionName = member.name();
       FunctionInformation info(functionName, pkgName);
       
-      const json::Value& valueJson = it->second;
+      const json::Value& valueJson = member.value();
       
       json::Array formalNamesJson;
       json::Array formalInfoJson;

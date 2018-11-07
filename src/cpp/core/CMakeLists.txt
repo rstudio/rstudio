@@ -80,9 +80,6 @@ set (CORE_SOURCE_FILES
    libclang/Utils.cpp
    json/Json.cpp
    json/JsonRpc.cpp
-   json/spirit/json_spirit_reader.cpp
-   json/spirit/json_spirit_value.cpp
-   json/spirit/json_spirit_writer.cpp
    http/Cookie.cpp
    http/Header.cpp
    http/Message.cpp

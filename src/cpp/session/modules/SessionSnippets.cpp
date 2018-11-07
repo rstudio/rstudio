@@ -71,7 +71,7 @@ Error saveSnippets(const json::JsonRpcRequest& request,
    {
       if (json::isType<json::Object>(valueJson))
       {
-         json::Object snippetJson = valueJson.get_obj();
+         const json::Object& snippetJson = valueJson.get_obj();
          std::string mode, contents;
          Error error = json::readObject(snippetJson, "mode", &mode,
                                                      "contents", &contents);

@@ -173,13 +173,22 @@ boost::shared_ptr<ShinyFunction> findShinyFunction(std::string filename,
    return bestPsf;
 }
 
-boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
+boost::shared_ptr<Breakpoint> breakpointFromJson(const json::Object& obj)
 {
-   return boost::make_shared<Breakpoint>(obj["type"].get_int(),
-                                         obj["line_number"].get_int(),
-                                         obj["id"].get_int(),
-                                         obj["path"].get_str());
+   int type = 0;
+   int lineNumber = 0;
+   int id = 0;
+   std::string path;
 
+   Error error = json::readObject(obj,
+                                  "type", &type,
+                                  "line_number", &lineNumber,
+                                  "id", &id,
+                                  "path", &path);
+   if (error)
+      LOG_ERROR(error);
+
+   return boost::make_shared<Breakpoint>(type, lineNumber, id, path);
 }
 
 std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)

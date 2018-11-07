@@ -1491,12 +1491,12 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
                                           bool includeRenameNew = true)
 {
    std::vector<FilePath> results;
-   for (json::Array::const_iterator it = paths.begin();
+   for (json::Array::iterator it = paths.begin();
         it != paths.end();
         it++)
    {
       std::string oldPath, newPath;
-      if (splitRename(it->get_str(), &oldPath, &newPath))
+      if (splitRename((*it).get_str(), &oldPath, &newPath))
       {
          if (includeRenameOld)
             results.push_back(resolveAliasedPath(oldPath));
@@ -1505,7 +1505,7 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
       }
       else
       {
-         results.push_back(resolveAliasedPath(it->get_str()));
+         results.push_back(resolveAliasedPath((*it).get_str()));
       }
    }
    return results;

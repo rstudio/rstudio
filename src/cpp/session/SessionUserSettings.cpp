@@ -135,7 +135,7 @@ SEXP rs_readUiPref(SEXP prefName)
       json::Object uiPrefs = projects::projectContext().uiPrefs();
       json::Object::iterator it = uiPrefs.find(pref);
       if (it != uiPrefs.end())
-         prefValue = it->second;
+         prefValue = (*it).value();
    }
 
    // then try global UI prefs
@@ -144,7 +144,7 @@ SEXP rs_readUiPref(SEXP prefName)
       json::Object uiPrefs = userSettings().uiPrefs();
       json::Object::iterator it = uiPrefs.find(pref);
       if (it != uiPrefs.end())
-         prefValue = it->second;
+         prefValue = (*it).value();
    }
 
    // convert to SEXP and return
@@ -174,10 +174,10 @@ SEXP rs_writeUiPref(SEXP prefName, SEXP value)
    json::Object::iterator it = uiPrefs.find(pref);
    if (it != uiPrefs.end())
    {
-      if (it->second.type() != prefValue.type())
+      if ((*it).value().type() != prefValue.type())
       {
          r::exec::error("Type mismatch: expected " + 
-                  json::typeAsString(it->second.type()) + "; got " + 
+                  json::typeAsString((*it).value().type()) + "; got " +
                   json::typeAsString(prefValue.type()));
          return R_NilValue;
       }

@@ -217,7 +217,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
 void extractChunkIds(const json::Array& chunkOutputs, 
                      std::vector<std::string> *pIds)
 {
-   BOOST_FOREACH(const json::Value& chunkOutput, chunkOutputs)
+   for (const json::Value& chunkOutput : chunkOutputs)
    {
       if (chunkOutput.type() != json::ObjectType)
          continue;

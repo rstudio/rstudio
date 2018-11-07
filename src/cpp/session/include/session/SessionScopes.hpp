@@ -114,11 +114,11 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
    std::string projectPath;
    if (projectEntryVal.type() == core::json::ObjectType)
    {
-      core::json::Object obj = projectEntryVal.get_obj();
+      const core::json::Object& obj = projectEntryVal.get_obj();
       core::json::Object::iterator it = obj.find(kProjectEntryDir);
-      if (it != obj.end() && it->second.type() == core::json::StringType)
+      if (it != obj.end() && (*it).value().type() == core::json::StringType)
       {
-         projectPath = it->second.get_str();
+         projectPath = (*it).value().get_str();
       }
    }
 

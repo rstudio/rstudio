@@ -223,7 +223,7 @@ Error attemptContentsMigration(json::Object& propertiesJson,
                                const FilePath& propertiesPath)
 {
    // extract contents from properties (if it exists)
-   if (!propertiesJson.count("contents"))
+   if (propertiesJson.find("contents") == propertiesJson.end())
       return Success();
    
    json::Value contentsJson = propertiesJson["contents"];
@@ -311,10 +311,10 @@ SourceDocument::SourceDocument(const std::string& type)
 
 std::string SourceDocument::getProperty(const std::string& name) const
 {
-   json::Object::const_iterator it = properties_.find(name);
+   json::Object::iterator it = properties_.find(name);
    if (it != properties_.end())
    {
-      json::Value valueJson = it->second;
+      json::Value valueJson = (*it).value();
       if (json::isType<std::string>(valueJson))
          return valueJson.get_str();
       else
@@ -594,15 +594,15 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    return error;
 }
 
-void SourceDocument::editProperty(const json::Object::value_type& property)
+void SourceDocument::editProperty(const json::Member& property)
 {
-   if (property.second.is_null())
+   if (property.value().is_null())
    {
-      properties_.erase(property.first);
+      properties_.erase(property.name());
    }
    else
    {
-      properties_[property.first] = property.second;
+      properties_.insert(property);
    }
 }
 
@@ -687,7 +687,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       if (includeContents && !contents.empty())
          jsonDoc["contents"] = contents;
       
-      if (!jsonDoc.count("contents"))
+      if (jsonDoc.find("contents") == jsonDoc.end())
          jsonDoc["contents"] = std::string();
       
       return pDoc->readFromJson(&jsonDoc);

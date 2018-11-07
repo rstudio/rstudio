@@ -39,7 +39,7 @@ bool isConnection(const ConnectionId& id, json::Value valueJson)
       return false;
    }
 
-   json::Object connJson = valueJson.get_obj();
+   const json::Object& connJson = valueJson.get_obj();
    return hasConnectionId(id, connJson);
 }
 

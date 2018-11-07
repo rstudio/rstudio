@@ -31,7 +31,7 @@ namespace session {
 namespace modules {      
 namespace markers {
 
-core::json::Value markersStateAsJson();
+core::json::Object markersStateAsJson();
 
 core::Error initialize();
    

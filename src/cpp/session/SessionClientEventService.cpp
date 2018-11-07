@@ -46,7 +46,7 @@ const int kLastChanceWaitSeconds = 4;
 bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 {
    const json::Object& eventJSON = event.get_obj();
-   int eventId = eventJSON.find("id")->second.get_int();
+   int eventId = (*eventJSON.find("id")).value().get_int();
    return eventId <= targetId;
 }
          
