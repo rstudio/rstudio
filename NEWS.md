@@ -98,6 +98,7 @@
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
 * Add option to disable cursor save/load; improves performance on some Windows machines (#2778)
+* Add option to turn off knitr chunk background highlighting (#2837)
 * R startup files (e.g. .Rprofile) are now always saved with trailing newlines (#3029)
 * Update embedded libclang to 5.0.2 (Windows only)
 * RStudio now a 64-bit application on Windows (Linux and Mac are already 64-bit)
@@ -106,6 +107,9 @@
 * The *Source* command can now be customized using magic `!source` comments (#3257)
 * Added linter rule to catch usage of `<-` in some situations where `=` is intended (#3289)
 * Add Sublime Text-style keyboard bindings; contribution from Randy Lai (@randy3k) (#3344)
+* Make it possible to stop a runaway content publishing process (#3787)
+* Update OpenSSL on Windows to 1.0.2p (#3606)
+* Add UTF-8 support in custom login page HTML (#3830)
 
 ### Bug Fixes
 
@@ -125,6 +129,7 @@
 * Fix proxy timeouts with the websocket used for the Terminal, via keepalive messages (#1860)
 * Fix RStudio hang when installing packages (e.g. BH) in Packrat projects on Windows (#1864)
 * Fix `file.edit` failures with Chinese filenames on Windows (#1868)
+* Fix hang on opening Global Options when many fonts are installed (#1889)
 * Fix errors when importing non-ASCII filenames in base Import Dataset (#1910)
 * Fix `rserver` crash that can occur when proxying websockets to Shiny apps (#2061)
 * Fix hang on some Linux systems caused by X11 clipboard monitoring w/ option to disable monitoring (#2068)
