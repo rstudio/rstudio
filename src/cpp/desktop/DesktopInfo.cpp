@@ -27,7 +27,7 @@
 #define kRedhatRelease "/etc/redhat-release"
 #define kOsRelease     "/etc/os-release"
 
-#define kUnknown QStringLiteral("unknown")
+#define kUnknown QStringLiteral("(unknown)")
 
 using namespace rstudio::core;
 
@@ -39,19 +39,9 @@ namespace {
 QString s_platform             = kUnknown;
 QString s_version              = kUnknown;
 QString s_sumatraPdfExePath    = kUnknown;
+QString s_fixedWidthFontList   = kUnknown;
 int     s_chromiumDevtoolsPort = -1;
 double  s_zoomLevel            = 1.0;
-
-QString getFixedWidthFontList()
-{
-   return desktop::getFixedWidthFontList();
-}
-
-QString& fixedWidthFontList()
-{
-   static QString instance = getFixedWidthFontList();
-   return instance;
-}
 
 #ifdef Q_OS_LINUX
 
@@ -138,26 +128,6 @@ DesktopInfo::DesktopInfo(QObject* parent)
    : QObject(parent)
 {
    initialize();
-
-   QObject::connect(
-            this,
-            &DesktopInfo::sumatraPdfExePathChanged,
-            &DesktopInfo::setSumatraPdfExePath);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::fixedWidthFontListChanged,
-            &DesktopInfo::setFixedWidthFontList);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::zoomLevelChanged,
-            &DesktopInfo::setZoomLevel);
-   
-   QObject::connect(
-            this,
-            &DesktopInfo::chromiumDevtoolsPortChanged,
-            &DesktopInfo::setChromiumDevtoolsPort);
 }
 
 QString DesktopInfo::getPlatform()
@@ -183,16 +153,7 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   return fixedWidthFontList();
-}
-
-void DesktopInfo::setFixedWidthFontList(QString list)
-{
-   if (fixedWidthFontList() != list)
-   {
-      fixedWidthFontList() = list;
-      emit fixedWidthFontListChanged(list);
-   }
+   return s_fixedWidthFontList;
 }
 
 QString DesktopInfo::getFixedWidthFont()

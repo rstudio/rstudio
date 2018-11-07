@@ -48,23 +48,19 @@ public:
    Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT)
 
    Q_INVOKABLE QString getFixedWidthFontList();
-   Q_INVOKABLE void setFixedWidthFontList(QString list);
-   Q_PROPERTY(QString fixedWidthFontList
-              READ getFixedWidthFontList
-              WRITE setFixedWidthFontList
-              NOTIFY fixedWidthFontListChanged)
+   Q_PROPERTY(QString fixedWidthFontList READ getFixedWidthFontList)
 
    Q_INVOKABLE QString getFixedWidthFont();
-   Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
+   Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont)
 
    Q_INVOKABLE QString getProportionalFont();
-   Q_PROPERTY(QString proportionalFont READ getProportionalFont CONSTANT)
+   Q_PROPERTY(QString proportionalFont READ getProportionalFont)
 
    Q_INVOKABLE QString getDesktopSynctexViewer();
-   Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
+   Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer)
 
    Q_INVOKABLE bool desktopHooksAvailable();
-   Q_PROPERTY(bool desktopHooksAvailable READ desktopHooksAvailable CONSTANT)
+   Q_PROPERTY(bool desktopHooksAvailable READ desktopHooksAvailable)
 
    Q_INVOKABLE QString getSumatraPdfExePath();
    Q_INVOKABLE void setSumatraPdfExePath(QString path);
