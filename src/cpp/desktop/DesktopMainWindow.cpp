@@ -220,7 +220,7 @@ try {
 } catch (e) {
    wnd = window;
 }
-wnd.desktopHooks.invokeCommand('%1');
+(wnd || window).desktopHooks.invokeCommand('%1');
 )EOF");
 #else
    QString fmt = QStringLiteral("window.desktopHooks.invokeCommand('%1')");
