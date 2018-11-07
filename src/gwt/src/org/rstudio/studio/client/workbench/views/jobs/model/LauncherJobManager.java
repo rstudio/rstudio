@@ -1,5 +1,5 @@
 /*
- * RStudioGinModuleOverlay.java
+ * LauncherJobManager.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,15 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client;
 
-public class RStudioGinModuleOverlay extends RStudioGinModule
+package org.rstudio.studio.client.workbench.views.jobs.model;
+
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+
+public class LauncherJobManager
 {
-   @Override
-   protected void configure()
+   void launcherJobsFeatureAvailable(SimpleRequestCallback<Boolean> callback)
    {
-      super.configure();
-
-      
+      callback.onResponseReceived(false);
    }
 }
