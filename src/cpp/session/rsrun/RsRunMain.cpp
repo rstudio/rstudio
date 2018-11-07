@@ -34,10 +34,7 @@ int main(int argc, char** argv)
    // Create a named pipe
    std::string pipeIdentifier = core::system::generateShortenedUuid();
 
-   std::cerr << "1\n";
-   std::string sampleOutput = RSRunCmd::createESC(pipeIdentifier, "getwd()");
-   std::cerr << sampleOutput;
-   std::cerr << "2\n";
+   std::cerr << RSRunCmd::createESC(pipeIdentifier, "getwd()");
 
    return EXIT_SUCCESS;
 }

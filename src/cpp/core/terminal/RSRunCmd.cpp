@@ -40,44 +40,24 @@ RSRunCmd::RSRunCmd()
 {
 }
 
-void RSRunCmd::processESC(const std::string& input)
+bool RSRunCmd::findESC(const std::string& input)
 {
-   switch (state_)
-   {
-      case ParseState::normal:
-         RSRunCmd::stripESC(input);
-         break;
+   reset();
 
-      case ParseState::running:
-         // An R command is executing from a prior ESC sequence
-         break;
-   }
-   
-   //if (console_input::executing())
+   boost::regex re(kESCRegex);
+   boost::smatch match;
+   if (!regex_utils::search(input, match, re))
+      return false;
 
+   pipe_ = match[1];
+   payload_ = match[2];
+   return true;
 }
 
 void RSRunCmd::reset()
 {
    payload_.clear();
    pipe_.clear();
-   state_ = ParseState::normal;
-}
-
-void RSRunCmd::stripESC(const std::string& input)
-{
-   boost::regex re(kESCRegex);
-   boost::smatch match;
-   if (regex_utils::search(input, match, re))
-   {
-      pipe_ = match[1];
-      payload_ = match[2];
-      std::string s = pipe_ + ": " + payload_;
-   }
-//   auto pos = strInput.find(kRSRunPrefix);
-//   if (pos != std::string::npos)
-//   {
-//   }
 }
 
 std::string RSRunCmd::createESC(const std::string& pipeId, const std::string& payload)

@@ -20,6 +20,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
+
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
 #include "SessionConsoleInput.hpp"
@@ -523,8 +525,30 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output)
    if (envCaptureCmd_.output(output))
       return;
 
-   // Detect and act-on custom ESC sequences sent by "rsrun" command-line tool.
-   rsrunCmd_.processESC(output);
+   // watch for rsrun escape sequence
+   if (rsrunCmd_.findESC(output))
+   {
+      // connect to the named pipe
+      // TODO
+      if (console_input::executing())
+      {
+         // send BUSY
+      }
+      else
+      {
+         // send ACK
+         // start tee'ing output to both console and the named pipe
+
+         // run the commmand
+         r::exec::RFunction(".rs.api.sendToConsole")
+               .addParam(string_utils::utf8ToSystem(rsrunCmd_.getPayload()))
+               .call();
+
+         // when no longer busy, send DONE
+         //      ClientEvent busyEvent(kBusy, busy);
+         //      rsession::clientEventQueue().add(busyEvent);
+      }
+   }
 
    // normal output processing
    bool currentAltBufferStatus = procInfo_->getAltBufferActive();
