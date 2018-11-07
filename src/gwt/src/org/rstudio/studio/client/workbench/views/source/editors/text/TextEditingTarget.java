@@ -5201,14 +5201,23 @@ public class TextEditingTarget implements
                      {
                         hideBreakpointWarningBar();
                      }
-                     consoleDispatcher_.executeSourceCommand(
-                           getPath(),
-                           fileType_,
-                           docUpdateSentinel_.getEncoding(),
-                           activeCodeIsAscii(),
-                           forceEcho ? true : echo,
-                           prefs_.focusConsoleAfterExec().getValue(),
-                           docDisplay_.hasBreakpoints());   
+                     if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
+                     {
+                        // use the custom source command if known
+                        customSource();
+                     }
+                     else
+                     {
+                        // otherwise, execute the source() command
+                        consoleDispatcher_.executeSourceCommand(
+                              getPath(),
+                              fileType_,
+                              docUpdateSentinel_.getEncoding(),
+                              activeCodeIsAscii(),
+                              forceEcho ? true : echo,
+                              prefs_.focusConsoleAfterExec().getValue(),
+                              docDisplay_.hasBreakpoints());
+                     }
                   }
                };
             
