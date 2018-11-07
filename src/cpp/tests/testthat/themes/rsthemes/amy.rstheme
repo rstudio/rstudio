@@ -70,6 +70,10 @@
   color: #666666
 }
 
+.ace_constant.ace_language {
+  color: #707090
+}
+
 .ace_support.ace_constant {
   background-color: #200020
 }
@@ -83,6 +87,7 @@
 }
 
 .ace_invalid.ace_illegal {
+  font-weight: bold;
   color: #400080;
   background-color: #FFFF00
 }
@@ -130,20 +135,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #311436;
+  background-color: #321537;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #8F6F2C;
+  background-color: #906F2C;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #43294C;
+  background-color: #442A4D;
 }
 .ace_console_error {
-  background-color: #43294C;
+  background-color: #442A4D;
 }
 .terminal {
   background-color: #200020;

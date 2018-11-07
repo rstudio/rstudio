@@ -26,7 +26,6 @@
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -56,6 +55,7 @@ namespace {
 
 const std::string kGridResourcePrefix = "grid_resource/";
 const std::string kPythonPrefix = "python/";
+const std::string kProfilesPrefix = "profiles/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -139,7 +139,11 @@ void getThemesInLocation(
       {
          if (themeFile.hasExtensionLowerCase(".rstheme"))
          {
+#ifdef _WIN32
+            const std::wstring k_themeFileStr = themeFile.absolutePathW();
+#else
             const std::string k_themeFileStr = themeFile.canonicalPath();
+#endif
             std::ifstream themeIFStream(k_themeFileStr);
             std::string themeContents(
                (std::istreambuf_iterator<char>(themeIFStream)),
@@ -242,11 +246,7 @@ FilePath getLocalCustomThemePath()
       return FilePath(kLocalPathAlt);
    }
 
-#ifdef _WIN32
-   return core::system::userHomePath().childPath(".R\\rstudio\\themes");
-#else
-   return core::system::userHomePath().childPath(".R/rstudio/themes/");
-#endif
+   return module_context::userHomePath().childPath(".R/rstudio/themes/");
 }
 
 /**
@@ -467,6 +467,7 @@ void handleDefaultThemeRequest(const http::Request& request,
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
          (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
+         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
          kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
@@ -487,6 +488,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
          (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
+         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
          kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
@@ -510,6 +512,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
          "/" +
          (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
          (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
+         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
          kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
@@ -529,6 +532,7 @@ Error initialize()
    // links have a different prefix.
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, session::options().rResourcesPath().childPath("themes").childPath("compile-themes.R").absolutePath()))
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))

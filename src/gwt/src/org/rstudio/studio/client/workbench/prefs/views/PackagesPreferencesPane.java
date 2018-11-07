@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -31,8 +32,10 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -44,6 +47,7 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
@@ -70,6 +74,11 @@ public class PackagesPreferencesPane extends PreferencesPane
       VerticalPanel development = new VerticalPanel();
     
       management.add(headerLabel("Package Management"));
+
+      infoBar_ = new InfoBar(InfoBar.WARNING);
+      infoBar_.setText("CRAN repositories modified outside package preferences.");
+      infoBar_.addStyleName(res_.styles().themeInfobar());
+      spaced(infoBar_);
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "Primary CRAN repository:",
@@ -128,6 +137,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
+         management.add(infoBar_);
+
          lessSpaced(cranMirrorTextBox_);
          management.add(cranMirrorTextBox_);
 
@@ -302,6 +313,51 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       useNewlineInMakefiles_.setEnabled(true);
       useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
+
+      server_.getCRANActives(
+         new SimpleRequestCallback<JsArray<CRANMirror>>() {
+            @Override 
+            public void onResponseReceived(JsArray<CRANMirror> mirrors)
+            {
+               boolean cranDiffers = false;
+
+               ArrayList<CRANMirror> secondary = cranMirror_.getSecondaryRepos();
+
+               if (secondary.size() + 1 != mirrors.length() || mirrors.length() == 0)
+               {
+                  cranDiffers = true;
+               }
+               else
+               {
+                  // First entry should always be CRAN when set by preferences
+                  if (!mirrors.get(0).getName().equals("CRAN") ||
+                      !mirrors.get(0).getURL().equals(cranMirror_.getURL())) {
+                     cranDiffers = true;
+                  }
+                  for(int i=1; i<mirrors.length(); i++)
+                  {
+                     if (!mirrors.get(i).getName().equals(secondary.get(i-1).getName()) ||
+                         !mirrors.get(i).getURL().equals(secondary.get(i-1).getURL()))
+                     {
+                        cranDiffers = true;
+                        break;
+                     }
+                  }
+               }
+
+               if (cranDiffers)
+               {
+                  infoBar_.addStyleName(res_.styles().themeInfobarShowing());
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         }
+      );
    }
 
    @Override
@@ -359,6 +415,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final GlobalDisplay globalDisplay_;
    private final MirrorsServerOperations server_;
+   private final InfoBar infoBar_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
    private CheckBox useInternet2_;

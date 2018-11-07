@@ -10,7 +10,8 @@
 # Description:       RStudio server provides a web interface to R
 ### END INIT INFO
 
-# Check for missing binaries 
+# Check for missing binaries
+PID_FILE=/var/run/rstudio-server.pid
 RSERVER_BIN="${CMAKE_INSTALL_PREFIX}/bin/rserver"
 test -x $RSERVER_BIN || { echo "$RSERVER_BIN not installed"; 
 	if [ "$1" = "stop" ]; then exit 0;
@@ -29,7 +30,7 @@ case "$1" in
 
 	## Start daemon with startproc(8). If this fails
 	## the return value is set appropriately by startproc.
-	/sbin/startproc $RSERVER_BIN
+        /sbin/startproc -p $PID_FILE $RSERVER_BIN
 
 	# Remember status and be verbose
 	rc_status -v
@@ -39,7 +40,7 @@ case "$1" in
 
 	## Stop daemon with killproc(8) and if this fails
 	## killproc sets the return value according to LSB.
-	/sbin/killproc $RSERVER_BIN
+        /sbin/killproc -p $PID_FILE $RSERVER_BIN
 
 	# Remember status and be verbose
 	rc_status -v

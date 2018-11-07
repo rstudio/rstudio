@@ -458,7 +458,7 @@ void ChunkExecContext::disconnect()
    }
 
    // unhook all our event handlers
-   BOOST_FOREACH(const boost::signals::connection connection, connections_) 
+   BOOST_FOREACH(const RSTUDIO_BOOST_CONNECTION& connection, connections_)
    {
       connection.disconnect();
    }

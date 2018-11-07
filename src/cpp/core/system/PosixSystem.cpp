@@ -68,6 +68,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileLogWriter.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 #include <core/SyslogLogWriter.hpp>
 #include <core/StderrLogWriter.hpp>
@@ -1277,14 +1278,52 @@ FilePath currentWorkingDir(PidType pid)
 #endif
 }
 
-Error daemonize()
+namespace {
+
+Error writePidFile(const FilePath& pidFile, PidType pid)
 {
+   return core::writeStringToFile(pidFile,
+                                  safe_convert::numberToString(pid),
+                                  string_utils::LineEndingPosix);
+}
+
+} // anonymous namespace
+
+Error daemonize(const std::string& pidFile)
+{
+   bool writePid = !pidFile.empty();
+
+   if (writePid)
+   {
+      // ensure that we will be able to write the daemon's pid to the pidfile by first
+      // writing our own pid - if this fails, we need to bail out before daemonizing
+      Error error = writePidFile(FilePath(pidFile), ::getpid());
+      if (error)
+         return error;
+   }
+
    // fork
    PidType pid = ::fork();
    if (pid < 0)
+   {
       return systemError(errno, ERROR_LOCATION); // fork error
+   }
    else if (pid > 0)
-      ::exit(EXIT_SUCCESS); // parent exits
+   {
+      int ret = EXIT_SUCCESS;
+
+      if (writePid)
+      {
+         Error error = writePidFile(FilePath(pidFile), pid);
+         if (error)
+         {
+            LOG_ERROR(error);
+            ret = EXIT_FAILURE;
+         }
+      }
+
+      ::exit(ret); // parent exits
+   }
 
    // obtain a new process group
    ::setsid();

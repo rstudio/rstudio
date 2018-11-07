@@ -519,18 +519,17 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction( "setCRANRepos", function(cran, secondary)
 {
   local({
-      if (nchar(secondary) > 0)
-      {
-        r <- c(
-          list(CRAN = cran),
-          .rs.parseCRANReposList(secondary)
-        )
-      }
-      else
-      {
-        r <- getOption("repos");
-        r["CRAN"] <- cran;
-      }
+
+      r <- c(
+        list(CRAN = cran),
+        .rs.parseCRANReposList(secondary)
+      )
+      
+      # ensure repos is character (many packages assume the
+      # repos option will be a character vector)
+      n <- names(r)
+      r <- as.character(r)
+      names(r) <- n
 
       # attribute indicating the repos was set from rstudio prefs
       attr(r, "RStudio") <- TRUE
@@ -1007,9 +1006,11 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    searchPathName <- paste("package", package, sep = ":")
    if (searchPathName %in% search()) {
       env <- as.environment(searchPathName)
-      do.call("unlockBinding", list(binding, env))
-      assign(binding, override, envir = env)
-      do.call("lockBinding", list(binding, env))
+      if (exists(binding, envir = env)) {
+         do.call("unlockBinding", list(binding, env))
+         assign(binding, override, envir = env)
+         do.call("lockBinding", list(binding, env))
+      }
    }
    
    # return original

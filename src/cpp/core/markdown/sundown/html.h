@@ -48,13 +48,13 @@ typedef enum {
 	HTML_TOC = (1 << 6),
 	HTML_HARD_WRAP = (1 << 7),
 	HTML_USE_XHTML = (1 << 8),
-	HTML_ESCAPE = (1 << 9),
+	HTML_ESCAPE = (1 << 9)
 } html_render_mode;
 
 typedef enum {
 	HTML_TAG_NONE = 0,
 	HTML_TAG_OPEN,
-	HTML_TAG_CLOSE,
+	HTML_TAG_CLOSE
 } html_tag;
 
 int

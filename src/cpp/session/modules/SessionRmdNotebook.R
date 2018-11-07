@@ -438,6 +438,30 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
    # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
+   
+   # override knitr's 'eval_lang' and suppress evaluation of language /
+   # symbol chunk options (necessary since we don't actually execute any
+   # R code while evaluating chunks and so evaluation of such chunk options
+   # could fail)
+   if (exists("eval_lang", envir = asNamespace("knitr")))
+   {
+      override <- function(x, envir = knit_global()) {
+         
+         # white-list for the commonly-used 'T' and 'F' options
+         if (identical(x, as.name("T")))
+            return(TRUE)
+         else if (identical(x, as.name("F")))
+            return(FALSE)
+         else if (is.language(x))
+            return(NULL)
+         else
+            return(x)
+         
+      }
+      
+      original <- .rs.replaceBinding("eval_lang", "knitr", override)
+      on.exit(.rs.replaceBinding("eval_lang", "knitr", original), add = TRUE)
+   }
 
    # knitr outputs relevant information in the form of messages that we attach to the error
    renderMessages <- list()
@@ -1056,7 +1080,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # unset the chunk options and code (so we know what options/code
    # were actually specified in setup chunk later)
-   defaults <- list(error = FALSE)
+   # (we tag the 'FALSE' value so we can detect if the user has explicitly
+   # set or unset it in the setup chunk as well)
+   defaults <- list(error = .rs.scalar(FALSE))
    knitr::opts_chunk$restore(defaults)
    knitr:::knit_code$restore(list())
    knitr::opts_knit$set(root.dir = NULL)
@@ -1067,6 +1093,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # get current set of options
    defaultOptions <- knitr::opts_chunk$get()
    
+   # remove the rstudio-injected 'error' option if needed
+   if (identical(defaultOptions$error, .rs.scalar(FALSE)))
+      defaultOptions$error <- NULL
+   
    # restore the previously cached knitr options and code
    chunkOptions <- get(".rs.knitr.chunkOptions", envir = .rs.toolsEnv())
    knitr::opts_chunk$restore(chunkOptions)
@@ -1074,6 +1104,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    knitr:::knit_code$restore(knitrCode)
    knitrDir <- get(".rs.knitr.root.dir", envir = .rs.toolsEnv())
    knitr::opts_knit$set(root.dir = knitrDir)
+   
+   # overlay any newly-set chunk options set by the user in this chunk.
+   # this is necessary so that settings from e.g.
+   #
+   #    knitr::opts_chunk$set(connection = conn)
+   #
+   # are appropriately preserved after running the setup chunk
+   knitr::opts_chunk$set(defaultOptions)
    
    # return current set
    .rs.scalarListFromList(defaultOptions)

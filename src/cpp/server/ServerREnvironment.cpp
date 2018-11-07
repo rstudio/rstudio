@@ -33,6 +33,8 @@ namespace r_environment {
   
 namespace {
 
+boost::mutex s_versionMutex;
+
 // R version detected during initialization (either the system
 // R version or the provided fallback)
 core::r_util::RVersion s_rVersion;
@@ -70,11 +72,6 @@ bool initialize(std::string* pErrMsg)
 
 core::r_util::RVersion rVersion()
 {
-   // make a copy protected by a mutex just to be on the safest
-   // possible side (the copy is cheap and we're not sure what
-   // universal guarantees about multi-threaded read access to
-   // std::vector are)
-   static boost::mutex s_versionMutex ;
    LOCK_MUTEX(s_versionMutex)
    {
       return s_rVersion;
@@ -87,7 +84,11 @@ core::r_util::RVersion rVersion()
 
 void setRVersion(const r_util::RVersion& version)
 {
-   s_rVersion = version;
+   LOCK_MUTEX(s_versionMutex)
+   {
+      s_rVersion = version;
+   }
+   END_LOCK_MUTEX
 }
 
 bool detectRVersion(const core::FilePath& rScriptPath,

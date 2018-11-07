@@ -1194,7 +1194,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
       // extract string vector
       std::vector<std::string> filenames;
-      Error error = r::sexp::extract(fileSEXP, &filenames);
+      Error error = r::sexp::extract(fileSEXP, &filenames, true);
       if (error)
          throw r::exec::RErrorException(error.summary());
 

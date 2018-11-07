@@ -68,6 +68,10 @@
   color: #666666
 }
 
+.ace-amy .ace_constant.ace_language {
+  color: #707090
+}
+
 .ace-amy .ace_support.ace_constant {
   background-color: #200020
 }
@@ -81,6 +85,7 @@
 }
 
 .ace-amy .ace_invalid.ace_illegal {
+  font-weight: bold;
   color: #400080;
   background-color: #FFFF00
 }

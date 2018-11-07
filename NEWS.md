@@ -1,54 +1,50 @@
 ## v1.2 - Release Notes
 
-### Python and Notebooks
+### Improved Language Support
 
-* Use a shared Python session to execute Python chunks via `reticulate`
-* Simple bindings to access R objects from Python chunks and vice versa
-* Show `matplotlib` plots emitted by Python chunks 
-
-### Keyring
-
-* Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
-* Install `keyring` directly from dialog prompt
-
-### D3
-
-* Author D3 visualizations in RStudio and preview in the Viewer pane
-* Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
-
-### Jobs
-
-* Run any R script as a background job in a clean R session
-* Monitor progress and see script output in real time
-* Optionally give jobs your global environment when started, and export values back when complete
-
-### SQL
+#### SQL
 
 * Improved autocompletion support in SQL files / chunks
 * Author SQL queries in RStudio and preview in the SQL Results pane
 
-### Stan
+#### D3
+
+* Author D3 visualizations in RStudio and preview in the Viewer pane
+* Use [r2d3](https://rstudio.github.io/r2d3/) D3 visualizations in R Notebook chunks
+
+#### Python 
+
+* Interactive Python REPL embedded in the R console, via `reticulate`
+* Use a shared Python session to execute Python code chunks in R markdown documents
+* Show `matplotlib` plots emitted by Python chunks 
+* Simple bindings to access R objects from Python chunks and vice versa
+* Improved Python script and autocompletion support
+
+#### Stan
 
 * Improved autocompletion support in Stan files / chunks
 * Implemented document outline for Stan files
 * Local Stan workers can now be interrupted
 
-### Testing
+### Package Improvements
+
+#### Testthat
 
 * *Run Tests* command in [testthat](https://github.com/r-lib/testthat) R scripts for direct running
 * testthat output in the *Build* pane with navigable issue list
 * Integration with [shinytest](https://github.com/rstudio/shinytest) to record and run Shiny app tests
 
-### PowerPoint
-
-* Create PowerPoint presentations with R Markdown
-
-### Package Management
+#### Package Management
 
 * Specify a primary CRAN URL and secondary CRAN repos from the package preferences pane.
 * Link to a package's primary CRAN page from the packages pane.
 * Configure CRAN repos with a repos.conf configuration file and the `r-cran-repos-file` option.
 * Suggest additional secondary CRAN repos with the `r-cran-repos-url` option.
+
+#### Keyring
+
+* Store passwords and secrets securely with `keyring` by calling `rstudioapi::askForSecret()`
+* Install `keyring` directly from dialog prompt
 
 ### Plumber
 
@@ -56,17 +52,28 @@
 * Execute Plumber APIs within RStudio to view Swagger documentation and make test calls to the APIs
 * Publish Plumber APIs to [RStudio Connect](https://www.rstudio.com/products/connect/)
 
+### PowerPoint
+
+* Create PowerPoint presentations with R Markdown
+
 ### Theming
 
 * Support for user-defined editor color schemes
 * Themes now are stored in easily installed, edited, and managed plain-text `.rstheme` files 
 * Import your favorite `.tmtheme` files as RStudio themes
 
+### Jobs
+
+* Run any R script as a background job in a clean R session
+* Monitor progress and see script output in real time
+* Optionally give jobs your global environment when started, and export values back when complete
+
 ### Miscellaneous
 
 * Subprocesses launched by 'system()' are now interruptible
 * Automatically discover packages used in R code and prompt for installation when missing
 * Git 'Create Branch' dialog defaults to remote associated w/current branch (if any)
+* Variables containing '.' are now highlighted throughout the document when selected (#2094)
 * Added link to purrr cheat sheet (in Help) and link to browse all cheat sheets
 * Added option to temporarily disable environment pane refreshing
 * Improve NSE detection for dplyr (better understands S3 dispatch and idioms)
@@ -75,10 +82,11 @@
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
-* Upgrade embedded Pandoc to 2.2.1 (#1807)
+* Upgrade embedded Pandoc to 2.3.1 (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
+* Remove 4GB limit on Export (download) command in Files pane (#2103)
 * Allow opening .ini files with `file.edit` (#2116)
 * Add `shinymod` snippet for Shiny modules (#2078)
 * Allow changing zoom level without reloading (#2125)

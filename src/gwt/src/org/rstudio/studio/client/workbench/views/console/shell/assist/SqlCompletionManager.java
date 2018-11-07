@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -109,8 +110,29 @@ public class SqlCompletionManager extends CompletionManagerBase
       }
       
       ctx.preferLowercaseKeywords = (lowercaseKeywordCount >= uppercaseKeywordCount);
+      ctx.contextKeyword = findSqlContextKeyword();
       
       return ctx;
+   }
+   
+   private String findSqlContextKeyword()
+   {
+      TokenIterator it = docDisplay_.createTokenIterator(docDisplay_.getCursorPosition());
+      for (Token token = it.getCurrentToken();
+           token != null;
+           token = it.stepBackward())
+      {
+         if (token.hasType("support.function.codebegin"))
+            break;
+         
+         if (it.bwdToMatchingToken())
+            continue;
+         
+         if (it.getCurrentToken().typeEquals("keyword"))
+            return it.getCurrentToken().getValue().toLowerCase();
+      }
+      
+      return "";
    }
    
    private boolean parseSqlFrom(TokenIterator it, SqlCompletionParseContext ctx)
@@ -122,11 +144,33 @@ public class SqlCompletionManager extends CompletionManagerBase
       TokenIterator clone = it.clone();
       while (true)
       {
-         // consume table name
-         if (!clone.getCurrentToken().hasType("identifier"))
+         // check for identifier
+         if (!isSqlIdentifier(clone))
             break;
          
-         String table = clone.getCurrentToken().getValue();
+         // check for text of form 'schema.table' and move on to
+         // table name in that case
+         String schema = "";
+         if (clone.peekFwd().valueEquals("."))
+         {
+            schema = sqlIdentifierValue(clone);
+            
+            if (!clone.moveToNextSignificantToken())
+               break;
+            
+            if (!clone.valueEquals("."))
+               break;
+            
+            if (!clone.moveToNextSignificantToken())
+               break;
+            
+            if (!isSqlIdentifier(clone))
+               break;
+         }
+         
+         // add schema + table name
+         String table = sqlIdentifierValue(clone);
+         ctx.schemas.push(schema);
          ctx.tables.push(table);
          
          if (!clone.moveToNextSignificantToken())
@@ -137,10 +181,10 @@ public class SqlCompletionManager extends CompletionManagerBase
          
          // check for identifier -- if we have one, it's
          // the alias name
-         if (!clone.getCurrentToken().hasType("identifier"))
+         if (!isSqlIdentifier(clone))
             break;
          
-         String alias = clone.getCurrentToken().getValue();
+         String alias = sqlIdentifierValue(clone);
          ctx.aliases.set(alias, table);
          
          if (!clone.moveToNextSignificantToken())
@@ -178,12 +222,11 @@ public class SqlCompletionManager extends CompletionManagerBase
    
    private boolean parseSqlIdentifier(TokenIterator it, SqlCompletionParseContext ctx)
    {
-      Token token = it.getCurrentToken();
-      if (!token.hasType("identifier"))
+      if (!isSqlIdentifier(it))
          return false;
       
-      String value = token.getValue();
-      ctx.identifiers.push(value);
+      String identifier = sqlIdentifierValue(it);
+      ctx.identifiers.push(identifier);
       return true;
    }
    
@@ -194,11 +237,10 @@ public class SqlCompletionManager extends CompletionManagerBase
       if (!consumeKeyword(it, keyword))
          return false;
       
-      Token token = it.getCurrentToken();
-      if (!token.hasType("identifier"))
+      if (!isSqlIdentifier(it))
          return false;
       
-      String table = token.getValue();
+      String table = sqlIdentifierValue(it);
       ctx.tables.push(table);
       return true;
    }
@@ -262,6 +304,29 @@ public class SqlCompletionManager extends CompletionManagerBase
       it.moveToPosition(docDisplay_.getCursorPosition());
       it.findTokenTypeBwd("support.function.codebegin", false);
       return it;
+   }
+   
+   private static final boolean isSqlIdentifier(Token token)
+   {
+      return
+            token.hasType("identifier") ||
+            token.hasType("string");
+            
+   }
+   
+   private static final boolean isSqlIdentifier(TokenIterator it)
+   {
+      return isSqlIdentifier(it.getCurrentToken());
+   }
+   
+   private static final String sqlIdentifierValue(Token token)
+   {
+      return StringUtil.dequote(token.getValue());
+   }
+   
+   private static final String sqlIdentifierValue(TokenIterator it)
+   {
+      return sqlIdentifierValue(it.getCurrentToken());
    }
    
    private static final Pattern RE_SQL_PREVIEW = Pattern.create("^-{2,}\\s*!preview\\s+conn\\s*=\\s*(.*)$", "");

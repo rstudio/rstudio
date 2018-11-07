@@ -20,8 +20,8 @@
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/signal.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
@@ -64,7 +64,7 @@ private:
    friend UserSettings& userSettings();
 
 public:
-   boost::signal<void()> onChanged;
+   RSTUDIO_BOOST_SIGNAL<void()> onChanged;
 
 public:
    // COPYING: boost::noncopyable

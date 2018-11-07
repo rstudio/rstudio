@@ -681,6 +681,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
       authMinimumUserId_ = safe_convert::stringTo<unsigned int>(
                               core::system::getenv(kRStudioMinimumUserId), 100);
+
+#ifndef _WIN32
+      r_util::setMinUid(authMinimumUserId_);
+#endif
       core::system::unsetenv(kRStudioMinimumUserId);
    }
 

@@ -54,15 +54,13 @@
   border-color: #BDAE9D
 }
 
-.ace_keyword {
-  color: #43A8ED
-}
-
 .ace_constant {
+  font-weight: bold;
   color: #C5656B
 }
 
 .ace_constant.ace_language {
+  font-weight: bold;
   color: #585CF6
 }
 
@@ -75,22 +73,27 @@
 }
 
 .ace_support.ace_function {
+  font-weight: bold;
   color: #7290D9
 }
 
 .ace_support.ace_constant {
+  font-weight: bold;
   color: #00AF0E
 }
 
 .ace_support.ace_class {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_support.ace_type {
+  font-weight: bold;
   color: #6D79DE
 }
 
 .ace_storage {
+  font-weight: bold;
   color: #43A8ED
 }
 
@@ -109,6 +112,7 @@
 }
 
 .ace_variable {
+  font-weight: bold;
   color: #FF9358
 }
 
@@ -133,15 +137,22 @@
 }
 
 .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #FF9358
 }
 
+.ace_entity.ace_name.ace_tag {
+  font-weight: bold
+}
+
 .ace_keyword {
-  color: #BDAE9D
+  font-weight: bold;
+  color: #43A8ED
 }
 
 .ace_keyword.ace_operator {
-  color: #BDAE9D
+  font-weight: bold;
+  color: #43A8ED
 }
 .nocolor.ace_editor .ace_line span {
   color: #43a8ed !important;
@@ -154,20 +165,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #382F28;
+  background-color: #393029;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #947F2A;
+  background-color: #95802A;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #473D35;
+  background-color: #483E36;
 }
 .ace_console_error {
-  background-color: #473D35;
+  background-color: #483E36;
 }
 .terminal {
   background-color: #2A211C;

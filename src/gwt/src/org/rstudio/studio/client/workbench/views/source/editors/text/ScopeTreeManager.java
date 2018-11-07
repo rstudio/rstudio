@@ -60,8 +60,12 @@ public abstract class ScopeTreeManager
             docDisplay.addDocumentChangedHandler((DocumentChangedEvent event) -> {
                final Position position = event.getEvent().getRange().getStart();
                Scheduler.get().scheduleDeferred(() -> {
-                  scopeManager_.invalidateFrom(Position.create(position));
-                  worker_.rebuildScopeTreeFromRow(position.getRow());
+                  
+                  Position rebuildPos = scopeManager_.invalidateFrom(Position.create(position));
+                  if (rebuildPos == null)
+                     rebuildPos = position;
+                     
+                  worker_.rebuildScopeTreeFromRow(rebuildPos.getRow());
                });
             }),
             
@@ -129,7 +133,7 @@ public abstract class ScopeTreeManager
          // to find any initial token. in that case, just step forward (this should
          // walk to the first token in the document)
          TokenIterator it = docDisplay_.createTokenIterator();
-         Token token = it.moveToPosition(position);
+         Token token = it.moveToPosition(position, true);
          if (token == null)
             token = it.stepForward();
          

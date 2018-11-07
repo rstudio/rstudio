@@ -4,6 +4,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsMap;
@@ -13,6 +14,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -143,10 +146,31 @@ public class Addins
                   {
                      String code = addin.getPackage() + ":::" + 
                                    addin.getBinding() + "()";
-                     events_.fireEvent(new SendToConsoleEvent(code, 
-                                                              true, 
-                                                              false, 
-                                                              false));
+                     
+                     if (BrowseCap.isMacintoshDesktopMojave())
+                     {
+                        server_.prepareForAddin(new ServerRequestCallback<Void>()
+                        {
+                           @Override
+                           public void onResponseReceived(Void response)
+                           {
+                              SendToConsoleEvent event = new SendToConsoleEvent(code, true, false, false);
+                              events_.fireEvent(event);
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
+                     }
+                     else
+                     {
+                        SendToConsoleEvent event = new SendToConsoleEvent(code, true, false, false);
+                        events_.fireEvent(event);
+                     }
+                        
                   }
                });
             }

@@ -706,12 +706,13 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 .rs.addApiFunction("getThemeInfo", function() {
-   editor <- .Call("rs_readUiPref", "theme")
-   global <- .Call("rs_readUiPref", "flat_theme")
+   
+   # read theme preferences
+   global <- .rs.readUiPref("flat_theme")
 
-   if (is.null(editor)) {
-      editor <- "TextMate"
-   }
+   theme <- .rs.readUiPref("rstheme")
+   if (is.null(theme))
+      theme <- list("name" = "Textmate (default)", "isDark" = FALSE)
 
    global <- switch(
       if (is.null(global)) "" else global,
@@ -720,74 +721,10 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       "Classic"
    )
 
-   dark <- grepl(
-      paste(
-         "ambiance",
-         "chaos",
-         "clouds midnight",
-         "cobalt",
-         "dracula",
-         "idle fingers",
-         "kr theme",
-         "material",
-         "merbivore soft",
-         "merbivore",
-         "mono industrial",
-         "monokai",
-         "pastel on dark",
-         "solarized dark",
-         "tomorrow night blue",
-         "tomorrow night bright",
-         "tomorrow night 80s",
-         "tomorrow night",
-         "twilight",
-         "vibrant ink",
-       sep = "|"
-     ),
-     editor,
-     ignore.case = TRUE)
-
-   colors <- list(
-      "Ambiance"              = list(background = "#202020", color = "#E6E1DC"),
-      "Chaos"                 = list(background = "#161616", color = "#E6E1DC"),
-      "Chrome"                = list(background = "#FFFFFF", color = "black"),
-      "Clouds Midnight"       = list(background = "#191919", color = "#929292"),
-      "Clouds"                = list(background = "#FFFFFF", color = "#000000"),
-      "Cobalt"                = list(background = "#002240", color = "#FFFFFF"),
-      "Crimson Editor"        = list(background = "#FFFFFF", color = "rgb(64, 64, 64)"),
-      "Dawn"                  = list(background = "#F9F9F9", color = "#080808"),
-      "Dracula"               = list(background = "#282a36", color = "#f8f8f2"),
-      "Dreamwaver"            = list(background = "#FFFFFF", color = "black"),
-      "Eclipse"               = list(background = "#FFFFFF", color = "black"),
-      "Idle Fingers"          = list(background = "#323232", color = "#FFFFFF"),
-      "Katzenmilch"           = list(background = "#f3f2f3", color = "rgba(15, 0, 9, 1.0)"),
-      "Kr Theme"              = list(background = "#0B0A09", color = "#FCFFE0"),
-      "Material"              = list(background = "#263238", color = "#C5C8C6"),
-      "Merbivore Soft"        = list(background = "#1C1C1C", color = "#E6E1DC"),
-      "Merbivore"             = list(background = "#161616", color = "#E6E1DC"),
-      "Mono Industrial"       = list(background = "#222C28", color = "#FFFFFF"),
-      "Monokai"               = list(background = "#272822", color = "#F8F8F2"),
-      "Pastel On Dark"        = list(background = "#2C2828", color = "#8F938F"),
-      "Solarized Dark"        = list(background = "#002B36", color = "#93A1A1"),
-      "Solarized Light"       = list(background = "#FDF6E3", color = "#586E75"),
-      "TextMate"              = list(background = "#FFFFFF", color = "black"),
-      "Tomorrow Night Blue"   = list(background = "#002451", color = "#FFFFFF"),
-      "Tomorrow Night Bright" = list(background = "#000000", color = "#DEDEDE"),
-      "Tomorrow Night 80s"    = list(background = "#2D2D2D", color = "#CCCCCC"),
-      "Tomorrow Night"        = list(background = "#1D1F21", color = "#C5C8C6"),
-      "Tomorrow"              = list(background = "#FFFFFF", color = "#4D4D4C"),
-      "Twilight"              = list(background = "#141414", color = "#F8F8F8"),
-      "Vibrant Ink"           = list(background = "#0F0F0F", color = "#FFFFFF"),
-      "Xcode"                 = list(background = "#FFFFFF", color = "#000000")
-   )
-
-   c(
-      list(
-         editor = editor,
-         global = global,
-         dark = dark
-      ),
-      colors[[editor]]
+   list(
+      editor = theme$name,
+      global = global,
+      dark = theme$isDark
    )
 })
 

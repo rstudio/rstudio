@@ -21,6 +21,7 @@
 namespace rstudio {
 namespace core {
 class Error;
+class FilePath;
 }
 }
 
@@ -28,7 +29,11 @@ namespace rstudio {
 namespace core {
 namespace key_file {
   
-core::Error readSecureKeyFile(const std::string& file, std::string* pContents);
+core::Error readSecureKeyFile(const FilePath& secureKeyPath,
+                              std::string *pContents);
+
+core::Error readSecureKeyFile(const std::string& filename,
+                              std::string* pContents);
 
 } // namespace key_file
 } // namespace server

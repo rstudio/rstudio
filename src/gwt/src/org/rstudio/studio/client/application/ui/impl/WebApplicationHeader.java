@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -208,9 +208,6 @@ public class WebApplicationHeader extends Composite
             {
                logoAnchor_.setHref(logoTargetUrl_);
                logoAnchor_.setTitle("RStudio Server Home");
-
-               logoLarge_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home2x()));
-               logoSmall_.setResource(new ImageResource2x(ThemeResources.INSTANCE.rstudio_home_small2x()));
             }
             else
             {

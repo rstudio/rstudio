@@ -43,7 +43,7 @@ namespace user {
 }
 
 // daemonize the process
-core::Error daemonize();
+core::Error daemonize(const std::string& pidFile = std::string());
 
 // umask
 // file creation masks and file modes

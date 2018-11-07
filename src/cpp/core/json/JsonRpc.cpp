@@ -409,6 +409,9 @@ std::string JsonRpcErrorCategory::message( int ev ) const
       case errc::MaxUsersReached:
          return "The maximum amount of concurrent users for this license has been reached";
 
+      case errc::LaunchParametersMissing:
+         return "Launch parameters for launcher session missing and should be resent";
+
       default:
          BOOST_ASSERT(false);
          return "Unknown error type" ;

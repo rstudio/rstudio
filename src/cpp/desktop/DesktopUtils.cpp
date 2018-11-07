@@ -115,7 +115,14 @@ bool isCentOS()
 
 bool isGnomeDesktop()
 {
-   return core::system::getenv("DESKTOP_SESSION") == "gnome";
+   if (core::system::getenv("DESKTOP_SESSION") == "gnome")
+      return true;
+
+   std::string desktop = core::system::getenv("XDG_CURRENT_DESKTOP");
+   if (desktop.find("GNOME") != std::string::npos)
+      return true;
+
+   return false;
 }
 
 #ifndef Q_OS_MAC
@@ -131,6 +138,7 @@ QString getFixedWidthFontList()
       // screen out annoying Qt warnings when attempting to
       // initialize incompatible fonts
       static std::set<std::string> blacklist = {
+         "8514oem",
          "Fixedsys",
          "Modern",
          "MS Sans Serif",

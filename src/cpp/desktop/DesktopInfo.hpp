@@ -16,6 +16,7 @@
 #ifndef DESKTOP_DESKTOP_INFO_HPP
 #define DESKTOP_DESKTOP_INFO_HPP
 
+#include <QApplication>
 #include <QObject>
 #include <QString>
 
@@ -89,8 +90,8 @@ public:
 
 inline DesktopInfo& desktopInfo()
 {
-   static DesktopInfo instance;
-   return instance;
+   static DesktopInfo* instance = new DesktopInfo(qApp);
+   return *instance;
 }
 
 } // end namespace desktop

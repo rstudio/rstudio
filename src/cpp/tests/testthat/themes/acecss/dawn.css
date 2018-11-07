@@ -61,6 +61,7 @@
 }
 
 .ace-dawn .ace_constant {
+  font-weight:bold;
   color: #811F24
 }
 
@@ -91,6 +92,7 @@
 .ace-dawn .ace_invalid.ace_deprecated {
   text-decoration: underline;
   font-style: italic;
+  font-weight: bold;
   color: #B52A1D
 }
 
@@ -112,6 +114,7 @@
 }
 
 .ace-dawn .ace_markup.ace_heading {
+  font-weight: bold;
   color: #19356D
 }
 

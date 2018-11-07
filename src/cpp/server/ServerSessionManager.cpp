@@ -233,6 +233,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
 
 namespace {
 
+boost::mutex s_configFilterMutex;
 core::system::ProcessConfigFilter s_processConfigFilter;
 
 } // anonymous namespace
@@ -240,7 +241,11 @@ core::system::ProcessConfigFilter s_processConfigFilter;
 
 void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter)
 {
-   s_processConfigFilter = filter;
+   LOCK_MUTEX(s_configFilterMutex)
+   {
+      s_processConfigFilter = filter;
+   }
+   END_LOCK_MUTEX
 }
 
 // default session launcher -- does the launch then tracks the pid
@@ -253,12 +258,19 @@ Error SessionManager::launchAndTrackSession(
    using namespace rstudio::core::system;
    std::string runAsUser = realUserIsRoot() ? profile.context.username : "";
 
+   core::system::ProcessConfigFilter configFilter;
+   LOCK_MUTEX(s_configFilterMutex)
+   {
+      configFilter = s_processConfigFilter;
+   }
+   END_LOCK_MUTEX
+
    // launch the session
    PidType pid = 0;
    Error error = launchChildProcess(profile.executablePath,
                                     runAsUser,
                                     profile.config,
-                                    s_processConfigFilter,
+                                    configFilter,
                                     &pid);
    if (error)
       return error;

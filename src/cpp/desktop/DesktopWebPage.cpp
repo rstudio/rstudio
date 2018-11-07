@@ -136,6 +136,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
    settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+   settings()->setAttribute(QWebEngineSettings::WebGLEnabled, true);
    
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
@@ -242,6 +243,14 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
       pWindow = new SatelliteWindow(pMainWindow, name, this);
       pWindow->resize(width, height);
 
+      // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
+      QAction* action = new QAction(pWindow);
+      action->setShortcut(Qt::CTRL + Qt::Key_W);
+      pWindow->addAction(action);
+      QObject::connect(
+               action, &QAction::triggered,
+               static_cast<SatelliteWindow*>(pWindow), &SatelliteWindow::onCloseWindowShortcut);
+
       if (x >= 0 && y >= 0)
       {
          // if the window specified its location, use it
@@ -274,6 +283,14 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
    {
       pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, nullptr, this,
                                     allowExternalNavigate);
+
+      // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
+      QAction* action = new QAction(pWindow);
+      action->setShortcut(Qt::CTRL + Qt::Key_W);
+      pWindow->addAction(action);
+      QObject::connect(
+               action, &QAction::triggered,
+               pWindow, &BrowserWindow::close);
    }
 
    // if we have a name set, start tracking this window
