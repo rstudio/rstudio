@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -126,9 +127,20 @@ public class AppearancePreferencesPane extends PreferencesPane
          
          zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
       
-         String[] fonts = DesktopInfo.getFixedWidthFontList().split("\\n");
+         String fontList = DesktopInfo.getFixedWidthFontList();
+         
+         String[] fonts = fontList.isEmpty()
+               ? new String[] {}
+               : fontList.split("\\n");
+               
+         String fontFaceLabel = fontList.isEmpty()
+               ? "Editor font (loading...):"
+               : "Editor font:";
 
-         fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
+         if (fontList.isEmpty())
+            registerFontListReadyCallback();
+         
+         fontFace_ = new SelectWidget(fontFaceLabel, fonts, fonts, false, false, false);
          fontFace_.getListBox().setWidth("95%");
 
          String value = DesktopInfo.getFixedWidthFont();
@@ -563,6 +575,47 @@ public class AppearancePreferencesPane extends PreferencesPane
    public String getName()
    {
       return "Appearance";
+   }
+   
+   private final native void registerFontListReadyCallback()
+   /*-{
+   
+      var self = this;
+      $wnd.onFontListReady = $entry(function() {
+      	self.@org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane::onFontListReady()();
+      });
+   
+   }-*/;
+   
+   private void onFontListReady()
+   {
+      // NOTE: we use a short poll as we might receive this notification
+      // just before the Qt webchannel has been able to synchronize with
+      // the front-end
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         private int retryCount_ = 0;
+         
+         @Override
+         public boolean execute()
+         {
+            if (retryCount_++ > 20)
+               return false;
+            
+            String fonts = DesktopInfo.getFixedWidthFontList();
+            if (fonts.isEmpty())
+               return true;
+         
+            String[] fontList = fonts.split("\\n");
+            String value = fontFace_.getValue();
+            value = value.replaceAll("\\\"", "");
+            fontFace_.setLabel("Editor font:");
+            fontFace_.setChoices(fontList, fontList);
+            fontFace_.setValue(value);
+            return false;
+         }
+         
+      }, 100);
    }
 
    private final PreferencesDialogResources res_;
