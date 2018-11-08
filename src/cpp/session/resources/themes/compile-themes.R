@@ -1067,6 +1067,18 @@
       replace = operatorBgColor
    )
    
+   ## Provide a color for invisible characters if none is defined.
+   if (is.null(parsed[[".ace_invisible"]])) {
+      color <- .rs.strip_color_from_field(parsed[[layerName]]$border)
+      content <- .rs.add_content(
+         content,
+         ".ace_invisible {",
+         "  color: %s;",
+         "}",
+         replace = color
+      )
+   }
+   
    ## Get the default background, foreground color for the theme.
    background <- parsed$ace_editor$`background-color`
    if (is.null(background))
