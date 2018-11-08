@@ -70,12 +70,10 @@ public class AceThemes
          docRootUrl_ = currentUrl;
       }
       else if (!currentUrl.equals(docRootUrl_) &&
-         currentUrl.contains(docRootUrl_) &&
          currentUrl.indexOf(docRootUrl_) == 0)
       {
          pathUpCount = currentUrl.substring(docRootUrl_.length()).split("/").length;
       }
-      
       
       // Build the URL.
       StringBuilder urlBuilder = new StringBuilder();
