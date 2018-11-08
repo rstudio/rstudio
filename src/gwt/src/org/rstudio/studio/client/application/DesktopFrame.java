@@ -62,6 +62,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void clipboardCopy();
    void clipboardPaste();
    
+   void performWebAction(int action, Command onExecuted);
+   
    void setClipboardText(String text);
    void getClipboardText(CommandWithArg<String> callback);
    
