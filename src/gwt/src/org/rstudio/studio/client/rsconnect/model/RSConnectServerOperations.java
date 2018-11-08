@@ -40,6 +40,10 @@ public interface RSConnectServerOperations
    void getRSConnectDeployments(String sourceFile, String outputFile,
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
    
+   void forgetRSConnectDeployments(String sourceFile,
+                                   String outputFile,
+                                   ServerRequestCallback<Void> requestCallback);
+   
    void getDeploymentFiles (String target, 
                boolean asMultipleRmd,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);

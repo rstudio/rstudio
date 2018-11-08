@@ -4622,6 +4622,19 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void forgetRSConnectDeployments(String sourceFile,
+                                          String outputFile,
+                                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(sourceFile)
+            .add(outputFile)
+            .get();
+      
+      sendRequest(RPC_SCOPE, FORGET_RSCONNECT_DEPLOYMENTS, params, requestCallback);
+   }
+   
+   @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
          String server, String appName, String appTitle, String appId,
@@ -6139,6 +6152,7 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
    private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
+   private static final String FORGET_RSCONNECT_DEPLOYMENTS = "forget_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String CANCEL_PUBLISH = "cancel_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
