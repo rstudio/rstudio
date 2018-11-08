@@ -96,6 +96,8 @@ public Q_SLOTS:
    void clipboardCopy();
    void clipboardPaste();
 
+   void performWebAction(int action);
+
    void setClipboardText(QString text);
    QString getClipboardText();
    
