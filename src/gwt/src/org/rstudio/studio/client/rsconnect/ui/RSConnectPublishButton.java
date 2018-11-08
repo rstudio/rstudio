@@ -576,7 +576,7 @@ public class RSConnectPublishButton extends Composite
                      
                      display_.showYesNoMessage(
                            GlobalDisplay.MSG_INFO,
-                           "Forget Deployment",
+                           "Clear Deployments",
                            "Are you sure you want to remove all local deployment history for " + appLabel + "?",
                            false,
                            () -> { forgetDeployment(); },
@@ -881,7 +881,7 @@ public class RSConnectPublishButton extends Composite
                   
                   display_.showMessage(
                         GlobalDisplay.MSG_INFO,
-                        "Forget Deployment",
+                        "Clear Deployments",
                         "Local deployment history for " + appLabel + " successfully removed.");
                }
 
