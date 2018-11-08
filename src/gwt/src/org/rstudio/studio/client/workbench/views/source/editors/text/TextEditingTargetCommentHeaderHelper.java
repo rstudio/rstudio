@@ -133,8 +133,7 @@ public class TextEditingTargetCommentHeaderHelper
 
                commentHeader_ = new CommentHeader(function, optionsArr);
             }
-            
-         }   
+         }
       }
    }
 
@@ -158,6 +157,11 @@ public class TextEditingTargetCommentHeaderHelper
       
       public String function;
       public String[] args;
+   }
+   
+   public boolean hasCommentHeader()
+   {
+      return commentHeader_ != null;
    }
    
    private Pattern customHeaderPattern_;

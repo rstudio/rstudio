@@ -36,13 +36,17 @@ public class TextEditingTargetRHelper
       eventBus_ = eventBus;
    }
 
-   public void customSource(EditingTarget editingTarget)
+   public boolean customSource(EditingTarget editingTarget)
    {
       TextEditingTargetCommentHeaderHelper customSource = new TextEditingTargetCommentHeaderHelper(
          docDisplay_.getCode(),
          "source",
          "#"
       );
+      
+      // No work to do if we didn't find a comment header
+      if (!customSource.hasCommentHeader())
+         return false;
 
       customSource.buildCommand(
          editingTarget.getPath(),
@@ -55,6 +59,8 @@ public class TextEditingTargetRHelper
             }
          }
       );
+
+      return true;
    }
 
    private EventBus eventBus_; 
