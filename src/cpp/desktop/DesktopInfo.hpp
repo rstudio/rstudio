@@ -39,6 +39,9 @@ Q_SIGNALS:
    void chromiumDevtoolsPortChanged(quint16 value);
 
 public:
+   void onClose();
+
+public:
    explicit DesktopInfo(QObject* parent = nullptr);
 
    Q_INVOKABLE QString getPlatform();

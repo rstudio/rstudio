@@ -15,6 +15,7 @@
 
 #include "DesktopInfo.hpp"
 
+#include <atomic>
 #include <set>
 
 #include <QThread>
@@ -40,6 +41,9 @@ namespace desktop {
 
 namespace {
 
+std::atomic<bool> s_abortRequested(false);
+QThread* s_fontDatabaseWorker = nullptr;
+
 QString s_platform             = kUnknown;
 QString s_version              = kUnknown;
 QString s_sumatraPdfExePath    = kUnknown;
@@ -56,6 +60,8 @@ void buildFontDatabaseImpl()
    QStringList fontList;
    for (const QString& family : db.families())
    {
+      if (s_abortRequested)
+         return;
 
 #ifdef _WIN32
       // screen out annoying Qt warnings when attempting to
@@ -92,7 +98,8 @@ void buildFontDatabaseImpl()
 
 void buildFontDatabase()
 {
-   QThread::create(buildFontDatabaseImpl)->start();
+   s_fontDatabaseWorker = QThread::create(buildFontDatabaseImpl);
+   s_fontDatabaseWorker->start();
 }
 
 #else
@@ -186,6 +193,15 @@ void initialize()
 }
 
 } // end anonymous namespace
+
+void DesktopInfo::onClose()
+{
+   if (s_fontDatabaseWorker->isRunning())
+   {
+      s_abortRequested = true;
+      s_fontDatabaseWorker->wait(1000);
+   }
+}
 
 DesktopInfo::DesktopInfo(QObject* parent)
    : QObject(parent)

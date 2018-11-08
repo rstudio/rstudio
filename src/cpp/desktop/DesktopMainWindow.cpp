@@ -254,6 +254,8 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       ::UnhookWinEvent(eventHook_);
 #endif
 
+   desktopInfo().onClose();
+
    if (!geometrySaved_)
    {
       desktop::options().saveMainWindowBounds(this);
