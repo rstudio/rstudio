@@ -15,6 +15,8 @@
 
 #include "DesktopInfo.hpp"
 
+#include <set>
+
 #include <QThread>
 
 #include <core/SafeConvert.hpp>
