@@ -36,6 +36,10 @@ var oop = require("ace/lib/oop");
 
 require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 
+
+
+// RStudioEditor ----
+
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
@@ -131,6 +135,9 @@ oop.inherits(RStudioEditor, Editor);
 }).call(RStudioEditor.prototype);
 
 
+
+// RStudioEditSession ----
+
 var RStudioEditSession = function(text, mode) {
    EditSession.call(this, text, mode);
 };
@@ -225,6 +232,9 @@ oop.inherits(RStudioEditSession, EditSession);
 }).call(RStudioEditSession.prototype);
 
 
+
+// RStudioUndoManager ----
+
 var RStudioUndoManager = function() {
    UndoManager.call(this);
 };
@@ -237,13 +247,39 @@ oop.inherits(RStudioUndoManager, UndoManager);
    };
 }).call(RStudioUndoManager.prototype);
 
+
+
+// RStudioRenderer ----
+
+var RStudioRenderer = function(container, theme) {
+   Renderer.call(this, container, theme);
+};
+oop.inherits(RStudioRenderer, Renderer);
+
+(function() {
+
+   this.setTheme = function(theme) {
+
+      if (theme)
+         Renderer.prototype.setTheme.call(this, theme);
+
+   }
+
+}).call(RStudioRenderer.prototype);
+
+
+
 function loadEditor(container) {
    var env = {};
    container.env = env;
 
    // Load the editor
-   env.editor = new RStudioEditor(new Renderer(container, ""), new RStudioEditSession(""));
-   var session = env.editor.getSession();
+   var renderer = new RStudioRenderer(container, "");
+   var session = new RStudioEditSession("");
+   var editor = new RStudioEditor(renderer, session);
+   env.editor = editor;
+
+   var session = editor.getSession();
    session.setMode(new TextMode());
    session.setUndoManager(new RStudioUndoManager());
 
