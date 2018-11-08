@@ -106,7 +106,8 @@ MainWindow::MainWindow(QUrl url) :
            this, SLOT(onCloseWindowShortcut()));
 
    connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
-      QString js = QStringLiteral("if (window.onFontListReady) window.onFontListReady()");
+      QString js = QStringLiteral(
+         "if (typeof window.onFontListReady === 'function') window.onFontListReady()");
       this->webPage()->runJavaScript(js);
    });
 
