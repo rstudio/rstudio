@@ -54,6 +54,8 @@ public:
    void setDesktopRenderingEngine(QString engine);
 
    QString proportionalFont() const;
+   void setProportionalFont(QString font);
+
    QString fixedWidthFont() const;
    void setFixedWidthFont(QString font);
 
@@ -116,6 +118,8 @@ private:
    {
    }
    friend Options& options();
+
+   void setFont(QString key, QString font);
 
    QSettings settings_;
    core::FilePath scriptsPath_;
