@@ -115,6 +115,7 @@ public class DataEditingTargetWidget extends Composite
          };
          table_.setDataViewerCallback(view);
          table_.setListViewerCallback(view);
+         table_.setColumnFrameCallback();
       });
 
       Widget mainWidget;

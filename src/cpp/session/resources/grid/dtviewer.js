@@ -72,6 +72,18 @@ var activeColumnInfo = {
 // manually adjusted widths of each column
 var manualWidths = [];
 
+// offset from which to start rendering columns
+var columnOffset = 0;
+
+// maximum number of columns to draw
+// the default is maintained separately for view element considerations
+var defaultMaxColumns = 50;
+var maxColumns = defaultMaxColumns;
+
+// boolean for whether bootstrapping is occurring, used to
+// rate limit certain events
+var bootstrapping = false;
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -337,6 +349,9 @@ var preDrawCallback = function() {
 };
 
 var postDrawCallback = function() {
+  // cols might not be initialized at this point
+  if (!cols) { return; }
+
   var indicator = $(".DTS_Loading");
   if (indicator) {
       indicator.removeClass("showLoading");
@@ -905,6 +920,8 @@ var initDataTableLoad = function(result) {
       postInitActions[actionName]();
     }
   }
+
+  bootstrapping = false;
 };
 
 var initDataTable = function(resCols, data) {
@@ -913,6 +930,11 @@ var initDataTable = function(resCols, data) {
     return;
   }
   cols = resCols;
+  
+  // due to the jquery magic done in dataTables with rewriting variables and
+  // the amount of window parameters we're already using this is a sane fit
+  // for setting a constant from dtviewer to dataTables
+  window.dataTableMaxColumns = Math.max(0, cols.length - 1); 
 
   // look up the query parameters
   var parsedLocation = parseLocationUrl();
@@ -926,16 +948,21 @@ var initDataTable = function(resCols, data) {
      "text": []
   }
 
-  // add each column
+  // add each column, offset this and only add as many as current maxColumns
   var thead = document.getElementById("data_cols");
-  for (var j = 0; j < cols.length; j++) {
+  for (j = 0; j < cols.length && j <= maxColumns + columnOffset; j++) {
     // create table header
-    thead.appendChild(createHeader(j, cols[j]));
+    thead.appendChild(createHeader(j <= 0 ? j : j + columnOffset, cols[j]));
     var colType = cols[j].col_type;
     if (colType === "numeric" || colType === "data.frame" || colType === "list") {
       typeIndices[colType].push(j);
     } else {
       typeIndices["text"].push(j);
+    }
+
+    // start at 0 for the dummy column but then one time increment by initialIndex
+    if (j <= 0) {
+      j = columnOffset;
     }
   }
   addResizeHandlers(thead);
@@ -955,6 +982,8 @@ var initDataTable = function(resCols, data) {
         d.obj = obj;
         d.cache_key = cacheKey;
         d.show = "data";
+        d.column_offset = columnOffset;
+        d.max_columns = maxColumns;
       },
       "error": function(jqXHR) {
         if (jqXHR.responseText[0] !== "{")
@@ -1047,6 +1076,9 @@ var initDataTable = function(resCols, data) {
   });
 
   initDataTableLoad();
+
+  // update the GWT column widget
+  window.columnFrameCallback(columnOffset, maxColumns);
 };
 
 var debouncedSearch = debounce(function(text) {
@@ -1218,6 +1250,8 @@ var addResizeHandlers = function(ele) {
 // 5. initialize the data table
 var bootstrap = function(data) {
 
+  boostrapping = true;
+
   // dismiss any active popups
   if (dismissActivePopup)
     dismissActivePopup(true);
@@ -1311,7 +1345,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
     if (dismissActivePopup)
       dismissActivePopup(true);
   }
-  for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
+  for (var i = 0; i < thead.children.length; i++) {
     var colIdx = i + (rowNumbers ? 0 : 1);
     var col = cols[colIdx];
     var th = thead.children[i];
@@ -1454,6 +1488,9 @@ window.setOption = function(option, value) {
     case "listViewerCallback":
       window.listViewerCallback = value;
       break;
+    case "columnFrameCallback":
+      window.columnFrameCallback = value;
+      break;
   }
 };
 
@@ -1463,9 +1500,69 @@ window.dataViewerCallback = function(row, col) { alert("No viewer for data at " 
 // default viewer for list cells
 window.listViewerCallback = function(row, col) { alert("No viewer for list at " + col + ", " + row  + "."); };
 
+// callback for updating the GWT column widget
+window.columnFrameCallback = function() {};
+
 window.getActiveColumn = function() {
   return activeColumnInfo;
 };
+
+window.nextColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  var newOffset = Math.max(0, Math.min(cols.length - 1 - maxColumns, columnOffset + maxColumns));
+  if (columnOffset != newOffset) {
+    columnOffset = newOffset;
+    bootstrap();
+  }
+}
+
+window.prevColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  var newOffset = Math.max(0, Math.min(cols.length - 1 - maxColumns, columnOffset - maxColumns));
+  if (columnOffset != newOffset) {
+    columnOffset = newOffset;
+    bootstrap();
+  }
+}
+
+window.firstColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  if (columnOffset != 0) {
+    columnOffset = 0;
+    bootstrap();
+  }
+}
+
+window.lastColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  if (columnOffset != cols.length - 1 - maxColumns) {
+    columnOffset = cols.length - 1 - maxColumns;
+    bootstrap();
+  }
+}
+
+window.setOffsetAndMaxColumns = function(newOffset, newMax) {
+  if (bootstrapping) { return; }
+  if (newOffset >= cols.length) { return; }
+
+  if (newOffset > 0) {
+    columnOffset = newOffset;
+  }
+  if (newMax > 0) {
+    newMax = Math.min(cols.length - 1 - newOffset, newMax);
+    maxColumns = newMax;
+  }
+  bootstrap();
+}
+
+// return whether to show the column frame UI elements
+window.isLimitedColumnFrame = function() {
+  return cols.length > defaultMaxColumns;
+}
 
 var parsedLocation = parseLocationUrl();
 var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";

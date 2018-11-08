@@ -2453,6 +2453,18 @@ body.ubuntu_mono .searchBox {
    opacity: 0.8;
 }
 
+.dataTableColumnWidget {
+   font-size: 10px;
+   border: none;
+   width: 50px;
+   background-color: transparent;
+   text-align: center;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark-menus .dataTableColumnWidget {
+   color: white;
+}
+
 /* RSTUDIO DEFAULT THEME */
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-background,

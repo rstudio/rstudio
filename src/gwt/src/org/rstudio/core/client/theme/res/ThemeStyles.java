@@ -203,6 +203,8 @@ public interface ThemeStyles extends CssResource
    String terminalClearButton();
    String refreshToolbarButton();
 
+   String dataTableColumnWidget();
+
    String tabIcon();
    
    String menuCheckable();
