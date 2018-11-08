@@ -28,8 +28,6 @@
 #include <r/RUtil.hpp>
 #include <r/ROptions.hpp>
 
-#include "SessionThemes.hpp"
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -110,9 +108,6 @@ Error initialize()
 
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
-      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/" + themes::kDefaultThemeLocation, themes::handleDefaultThemeRequest))
-      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/" + themes::kGlobalCustomThemeLocation, themes::handleGlobalCustomThemeRequest))
-      (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/" + themes::kLocalCustomThemeLocation, themes::handleLocalCustomThemeRequest))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq))
       (boost::bind(module_context::registerUriHandler, kProfilerResourceLocation, handleProfilerResourceResReq));
 

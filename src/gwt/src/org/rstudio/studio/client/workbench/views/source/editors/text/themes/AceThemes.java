@@ -55,22 +55,48 @@ public class AceThemes
       events_ = events;
       prefs_ = prefs;
       themes_ = new HashMap<>();
+      docRootUrl_ = null;
 
       prefs.get().theme().bind(theme -> applyTheme(theme));
    }
    
    private void applyTheme(Document document, final AceTheme theme)
    {
-      Element oldStyleEl = document.getElementById(linkId_);
+      // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
+      int pathUpCount = 0;
+      String currentUrl = document.getURL();
+      if (null == docRootUrl_)
+      {
+         docRootUrl_ = currentUrl;
+      }
+      else if (!currentUrl.equals(docRootUrl_) &&
+         currentUrl.contains(docRootUrl_) &&
+         currentUrl.indexOf(docRootUrl_) == 0)
+      {
+         pathUpCount = currentUrl.substring(docRootUrl_.length()).split("/").length;
+      }
+      
+      
+      // Build the URL.
+      StringBuilder urlBuilder = new StringBuilder();
+      for (int i = 0; i < pathUpCount; ++i)
+      {
+         urlBuilder.append("../");
+      }
+      urlBuilder.append(theme.getUrl())
+         .append("?dark=")
+         .append(theme.isDark() ? "1" : "0");
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
-      currentStyleEl.setHref(theme.getUrl() + "?dark=" + (theme.isDark() ? "1" : "0"));
+      currentStyleEl.setHref(urlBuilder.toString());
+   
+      Element oldStyleEl = document.getElementById(linkId_);
       if (null != oldStyleEl)
       {
-         document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+        document.getBody().replaceChild(currentStyleEl, oldStyleEl);
       }
       else
       {
@@ -243,4 +269,5 @@ public class AceThemes
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
    private HashMap<String, AceTheme> themes_;
+   private String docRootUrl_;
 }
