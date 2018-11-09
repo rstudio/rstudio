@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -116,8 +117,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
          addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
       }
 
-      addOkButton(new ThemedButton(buttonName, event -> maybeAccept()));
-      addCancelButton(
+      ThemedButton okButton = new ThemedButton(buttonName, event -> maybeAccept());
+      ElementIds.assignElementId(okButton.getElement(), 
+            ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
+      addOkButton(okButton);
+      
+      ThemedButton cancelButton = 
          new ThemedButton("Cancel",
          event -> {
             if (invokeOperationEvenOnCancel_)
@@ -125,7 +130,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
                operation_.execute(null, FileSystemDialog.this);
             }
             closeDialog();
-         }));
+         });
+      ElementIds.assignElementId(cancelButton.getElement(), 
+            ElementIds.FILE_CANCEL_BUTTON + "_" + ElementIds.idSafeString(buttonName));
+      addCancelButton(cancelButton);
 
       addDomHandler(event ->
          {
