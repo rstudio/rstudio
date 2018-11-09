@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
@@ -55,7 +56,6 @@ public class AceThemes
       events_ = events;
       prefs_ = prefs;
       themes_ = new HashMap<>();
-      docRootUrl_ = null;
 
       prefs.get().theme().bind(theme -> applyTheme(theme));
    }
@@ -64,15 +64,12 @@ public class AceThemes
    {
       // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
       int pathUpCount = 0;
+      String baseUrl = GWT.getHostPageBaseURL();
       String currentUrl = document.getURL();
-      if (null == docRootUrl_)
+      if (!currentUrl.equals(baseUrl) &&
+         currentUrl.indexOf(baseUrl) == 0)
       {
-         docRootUrl_ = currentUrl;
-      }
-      else if (!currentUrl.equals(docRootUrl_) &&
-         currentUrl.indexOf(docRootUrl_) == 0)
-      {
-         pathUpCount = currentUrl.substring(docRootUrl_.length()).split("/").length;
+         pathUpCount = currentUrl.substring(baseUrl.length()).split("/").length;
       }
       
       // Build the URL.
@@ -267,5 +264,4 @@ public class AceThemes
    private final Provider<UIPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
    private HashMap<String, AceTheme> themes_;
-   private String docRootUrl_;
 }
