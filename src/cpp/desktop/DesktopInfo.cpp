@@ -41,8 +41,10 @@ namespace desktop {
 
 namespace {
 
+#ifndef Q_OS_MAC
 std::atomic<bool> s_abortRequested(false);
 QThread* s_fontDatabaseWorker = nullptr;
+#endif
 
 QString s_platform             = kUnknown;
 QString s_version              = kUnknown;
@@ -196,11 +198,13 @@ void initialize()
 
 void DesktopInfo::onClose()
 {
+#ifndef Q_OS_MAC
    if (s_fontDatabaseWorker->isRunning())
    {
       s_abortRequested = true;
       s_fontDatabaseWorker->wait(1000);
    }
+#endif
 }
 
 DesktopInfo::DesktopInfo(QObject* parent)
