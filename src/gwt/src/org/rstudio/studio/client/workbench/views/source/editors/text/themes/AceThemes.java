@@ -65,7 +65,9 @@ public class AceThemes
       // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
       int pathUpCount = 0;
       String baseUrl = GWT.getHostPageBaseURL();
-      String currentUrl = document.getURL();
+      
+      // Strip any query out of the current URL since it isn't relevant to the path.
+      String currentUrl = document.getURL().split("\\?")[0];
       if (!currentUrl.equals(baseUrl) &&
          currentUrl.indexOf(baseUrl) == 0)
       {
