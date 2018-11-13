@@ -28,10 +28,10 @@ public class ElementIds
       return ID_PREFIX + id;
    }
    
-   public static String idFromLabel(String label)
+   public static String idSafeString(String text)
    {
       // replace all non-alphanumerics with underscores
-      String id = label.replaceAll("[^a-zA-Z0-0]", "_");
+      String id = text.replaceAll("[^a-zA-Z0-0]", "_");
       
       // collapse multiple underscores to a single underscore
       id = id.replaceAll("_+", "_");
@@ -41,7 +41,12 @@ public class ElementIds
       id = id.replaceAll("_+$", "");
       
       // convert to lowercase and return
-      return ID_PREFIX + "label_" + id.toLowerCase();
+      return id.toLowerCase();
+   }
+   
+   public static String idFromLabel(String label)
+   {
+      return ID_PREFIX + "label_" + idSafeString(label);
    }
    
    public final static String ID_PREFIX = "rstudio_";
@@ -67,4 +72,8 @@ public class ElementIds
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
    public final static String XTERM_WIDGET = "xterm_widget";
    public final static String FILE_DIALOG_NAME_PROMPT = "file_dialog_name_prompt";
+   public final static String WORKBENCH_PANEL = "workbench_panel";
+   public final static String WORKBENCH_TAB = "workbench_tab";
+   public final static String FILE_ACCEPT_BUTTON = "file_accept";
+   public final static String FILE_CANCEL_BUTTON = "file_cancel";
 }

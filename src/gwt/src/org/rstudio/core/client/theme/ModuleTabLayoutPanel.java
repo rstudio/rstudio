@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -43,6 +44,10 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       {
          layoutPanel_ = new HorizontalPanel();
          layoutPanel_.setStylePrimaryName(styles.tabLayout());
+         
+         // Assign a unique element ID based on the tab's title
+         ElementIds.assignElementId(layoutPanel_.getElement(), 
+               ElementIds.WORKBENCH_TAB + "_" + ElementIds.idSafeString(title));
 
          HTML left = new HTML();
          left.setStylePrimaryName(styles.tabLayoutLeft());
