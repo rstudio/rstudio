@@ -560,10 +560,8 @@ public class RSConnectPublishButton extends Composite
             publishMenu_.addItem(menuItem);
          }
          
-         publishMenu_.addSeparator();
-         
          publishMenu_.addItem(new MenuItem(
-               AppCommand.formatMenuLabel(null, "Clear Deployments", null),
+               AppCommand.formatMenuLabel(null, "Clear List", null),
                true,
                new Scheduler.ScheduledCommand()
                {
@@ -576,7 +574,7 @@ public class RSConnectPublishButton extends Composite
                      
                      display_.showYesNoMessage(
                            GlobalDisplay.MSG_INFO,
-                           "Clear Deployments",
+                           "Clear List",
                            "Are you sure you want to remove all local deployment history for " + appLabel + "?",
                            false,
                            () -> { forgetDeployment(); },
@@ -584,6 +582,8 @@ public class RSConnectPublishButton extends Composite
                            false);
                   }
                }));
+         
+         publishMenu_.addSeparator();
          
          publishMenu_.addItem(new MenuItem(
                AppCommand.formatMenuLabel(
@@ -881,7 +881,7 @@ public class RSConnectPublishButton extends Composite
                   
                   display_.showMessage(
                         GlobalDisplay.MSG_INFO,
-                        "Clear Deployments",
+                        "Clear List",
                         "Local deployment history for " + appLabel + " successfully removed.");
                }
 

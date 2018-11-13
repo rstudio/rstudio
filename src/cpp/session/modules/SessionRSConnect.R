@@ -15,7 +15,7 @@
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
 {
-  rsconnect::forgetDeployment(sourcePath, force = TRUE)
+  rsconnect::forgetDeployment(appPath = sourcePath, force = TRUE)
 })
 
 # this is a clone of 'applicationConfigDir' in the rsconnect package; we use it
