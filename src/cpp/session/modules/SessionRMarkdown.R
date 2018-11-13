@@ -279,6 +279,8 @@
 
 .rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
 {
+   Encoding(yaml) <- "UTF-8"
+
    data <- list()
    parseError <- ""
    parseSucceeded <- FALSE
