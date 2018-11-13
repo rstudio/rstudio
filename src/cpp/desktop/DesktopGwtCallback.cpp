@@ -15,7 +15,6 @@
 
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
-#include "DesktopWebPage.hpp"
 
 #ifdef _WIN32
 #include <shlobj.h>
@@ -478,13 +477,6 @@ void GwtCallback::clipboardCopy()
 void GwtCallback::clipboardPaste()
 {
    doAction(QKeySequence::Paste);
-}
-
-void GwtCallback::performWebAction(int action)
-{
-   pOwner_->webView()->triggerPageAction(
-            static_cast<QWebEnginePage::WebAction>(action),
-            false);
 }
 
 void GwtCallback::setClipboardText(QString text)

@@ -19,9 +19,8 @@ import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.DesktopWebAction;
+import org.rstudio.studio.client.application.DesktopFrame;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -43,7 +42,6 @@ public class CopyPlotToClipboardDesktopDialog
    {
       super(options, previewer, onClose);
      
-      indicator_ = addProgressIndicator(false);
       clipboard_ = clipboard;
    }
    
@@ -78,14 +76,14 @@ public class CopyPlotToClipboardDesktopDialog
             NodeList<Element> images = doc.getElementsByTagName("img");
             if (images.getLength() > 0)
             {
-               indicator_.onProgress("Copying plot...");
-               
                ElementEx img = images.getItem(0).cast();
-               img.focus();
-               Desktop.getFrame().performWebAction(DesktopWebAction.CopyImageToClipboard, () -> {
-                  indicator_.onCompleted();
-                  completed.execute();
-               });
+               DesktopFrame frame = Desktop.getFrame();
+               frame.copyPageRegionToClipboard(
+                     img.getClientLeft(),
+                     img.getClientTop(),
+                     img.getClientWidth(),
+                     img.getClientHeight(),
+                     completed);
             }
             else
             {
@@ -97,5 +95,4 @@ public class CopyPlotToClipboardDesktopDialog
    }
    
    protected final ExportPlotClipboard clipboard_;
-   private final ProgressIndicator indicator_;
 }
