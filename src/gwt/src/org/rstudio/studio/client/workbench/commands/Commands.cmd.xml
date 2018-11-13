@@ -310,6 +310,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activateJobs"/>
          
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -1252,6 +1253,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show Co_nnections"
         windowMode="main"/>
         
+   <cmd id="activateJobs"
+        label="Show Jobs Pane"
+        menuLabel = "Show _Jobs"
+        windowMode="main"/>
+         
    <cmd id="layoutZoomSource"
         checkable="true"
         label="Zoom Source"
