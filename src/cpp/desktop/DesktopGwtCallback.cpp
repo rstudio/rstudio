@@ -770,6 +770,13 @@ void GwtCallback::activateSatelliteWindow(QString name)
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
 {
    auto* view = pMainWindow_->webView();
+
+   double scale = view->zoomFactor();
+   left = left * scale;
+   top = top * scale;
+   width = width * scale;
+   height = height * scale;
+
    QPixmap pixmap = view->grab(QRect(left, top, width, height));
    QApplication::clipboard()->setPixmap(pixmap);
 }
