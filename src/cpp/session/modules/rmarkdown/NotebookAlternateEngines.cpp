@@ -264,7 +264,15 @@ Error executeStanEngineChunk(const std::string& docId,
       return Success();
    }
    RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
-   
+
+   // write input code to cache
+   error = appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            targetPath);
+   if (error)
+      LOG_ERROR(error);
+
    // evaluate engine options (so we can pass them through to stan call)
    r::sexp::Protect protect;
    SEXP engineOptsSEXP = R_NilValue;
