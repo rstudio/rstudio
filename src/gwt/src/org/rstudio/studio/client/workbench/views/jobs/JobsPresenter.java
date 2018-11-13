@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
@@ -60,6 +62,7 @@ public class JobsPresenter extends BasePresenter
       void addJobOutput(String id, int type, String output);
       void hideJobOutput(String id, boolean animate);
       void syncElapsedTime(int timestamp);
+      void bringToFront();
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -138,12 +141,10 @@ public class JobsPresenter extends BasePresenter
       if (jobs.isEmpty())
          onConfirmed.execute();
 
-      // count the number of running jobs
-      int running = 0;
-      for (int i = 0; i < jobs.size(); i++)
-      {
-         running++;
-      }
+      // count the number of running session jobs
+      long running = jobs.stream()
+            .filter(t -> t.type == JobConstants.JOB_TYPE_SESSION &&
+                         t.state == JobConstants.STATE_RUNNING).count();
       
       if (running > 0)
       {
@@ -158,6 +159,12 @@ public class JobsPresenter extends BasePresenter
       
       // done, okay to close
       onConfirmed.execute();
+   }
+   
+   @Handler
+   public void onActivateJobs()
+   {
+      display_.bringToFront();
    }
    
    // Private methods ---------------------------------------------------------
