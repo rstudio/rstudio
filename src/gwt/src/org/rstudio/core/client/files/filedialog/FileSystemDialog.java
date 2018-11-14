@@ -38,7 +38,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.application.Desktop;
 
 public abstract class FileSystemDialog extends ModalDialogBase
       implements SelectionCommitHandler<FileSystemItem>, 
@@ -351,7 +350,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (!StringUtil.isNullOrEmpty(filter))
       {
          Pattern listPattern = Pattern.create("\\(([^)]+)\\)");
-         Pattern singlePattern = Pattern.create("\\*([^\\s]*)");
+         Pattern singlePattern = Pattern.create("\\*([^\\s]+)");
          Match listMatch = listPattern.match(filter, 0);
          while (listMatch != null)
          {
@@ -369,13 +368,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    private static boolean extensionMatchesFilters(String extension, List<String> filterExtensions)
    {
+      if (filterExtensions.isEmpty())
+         return true;
+      
       for (String filter: filterExtensions)
-      {
          if (filter.equalsIgnoreCase(extension))
-         {
             return true;
-         }
-      }
       
       return false;
    }
