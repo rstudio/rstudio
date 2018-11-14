@@ -438,6 +438,20 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
+   public boolean hasHtmlWidgets()
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof ChunkOutputFrame)
+         {
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   @Override
    public boolean hasErrors()
    {
       return hasErrors_;
