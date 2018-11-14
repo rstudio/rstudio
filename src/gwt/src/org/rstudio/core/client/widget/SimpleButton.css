@@ -2,7 +2,7 @@
 
 .simpleButton {
    display: block;
-   padding-top: 2px;
+   padding: 2px;
    margin: 0;
    border: none;
    background: transparent;

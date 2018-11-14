@@ -2,8 +2,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.event.dom.client.*;
-import org.rstudio.core.client.CommandWith2Args;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -39,7 +37,8 @@ public class DataTableColumnWidget extends TextBox
       {
          // starting at column 1 means no offset
          offsetAndMax[0] = Integer.parseInt(values[0].trim()) - 1;
-      } catch (NumberFormatException e)
+      }
+      catch (NumberFormatException e)
       {
          return offsetAndMax;
       }

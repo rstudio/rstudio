@@ -17,6 +17,7 @@ package org.rstudio.studio.client.dataviewer;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -65,7 +66,8 @@ public class DataTable
       toolbar.addLeftWidget(filterButton_);
       filterButton_.setVisible(!isPreview);
 
-      toolbar.addLeftSeparator();
+      colsSeparator_ = toolbar.addLeftSeparator();
+      colsSeparator_.setVisible(false);
       addColumnControls(toolbar);
 
       searchWidget_ = new SearchWidget(new SuggestOracle() {
@@ -138,8 +140,7 @@ public class DataTable
    }
    private void addColumnControls(Toolbar toolbar)
    {
-      colsLabel_ =
-         new ToolbarLabel("Cols:");
+      colsLabel_ = new ToolbarLabel("Cols:");
       colsLabel_.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
       colsLabel_.setVisible(false);
       toolbar.addLeftWidget(colsLabel_);
@@ -167,7 +168,8 @@ public class DataTable
 
    private void setColumnControlVisibility(boolean visible)
    {
-      colsLabel_.setVisible(false);
+      colsSeparator_.setVisible(visible);
+      colsLabel_.setVisible(visible);
       for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
       {
          columnViewButtons_.get(i).setVisible(visible);
@@ -358,15 +360,16 @@ public class DataTable
    private Host host_;
    private LatchingToolbarButton filterButton_;
    private DataTableColumnWidget columnTextWidget_;
+   private Widget colsSeparator_;
    private ToolbarLabel colsLabel_;
    private ArrayList<SimpleButton> columnViewButtons_;
    private SearchWidget searchWidget_;
    private boolean filtered_ = false;
 
    private static String COLUMN_VIEW_BUTTONS[] = {
-      "<<",
-      "<",
-      ">",
-      ">>"
+      "\u2B70",
+      "\uD83E\uDC20",
+      "\uD83E\uDC22",
+      "\u2B72"
    };
 }

@@ -2459,6 +2459,12 @@ body.ubuntu_mono .searchBox {
    width: 50px;
    background-color: transparent;
    text-align: center;
+   padding-left: 0px !important; /* unfortunately top-level theme styles override class styles in specificity */
+}
+.dataTableColumnWidget:hover {
+   margin: -1px; /* due to using antiquated tables for layout this is necessary for no item movement on border hover */
+   border: rgba(20, 20, 20, 0.5) solid 1px;
+   border-radius: 3px;
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-menus .dataTableColumnWidget {
