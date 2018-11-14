@@ -75,6 +75,51 @@ var activeColumnInfo = {
 // manually adjusted widths of each column
 var manualWidths = [];
 
+// helper for creating a tag with properties + content
+// (created as a string)
+var createTag = function(tag, content, attributes) {
+
+  // if content is an object and attributes is undefined,
+  // treat this as request to create tag with attributes
+  // but no content
+  if (typeof content === 'object' && typeof attributes == 'undefined')
+  {
+    attributes = content;
+    content = '';
+  }
+
+  // ensure attributes is an object
+  attributes = attributes || {};
+
+  // compute inner attributes
+  var parts = [];
+  for (var key in attributes) {
+
+    if (key === 'class')
+      debugger;
+
+    // extract value
+    var value = attributes[key];
+
+    // join arrays of values
+    if (Object.prototype.toString.call(value) === '[object Array]')
+      value = value.join(' ');
+
+    // skip non-string values
+    if (typeof value !== 'string')
+      continue;
+
+    // push attribute
+    parts.push(key + '="' + value.replace(/"/g, "&quot;") + '"')
+  }
+
+  // build the final html
+  var opener = '<' + tag + ' ' + parts.join(' ') + '>';
+  var closer = '</' + tag + '>';
+  return opener + (content || '') + closer;
+
+}
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -209,21 +254,27 @@ var renderCellContents = function(data, type, row, meta, clazz) {
 
 var renderCellClass = function (data, type, row, meta, clazz) {
 
-  var title = null;
-  if (typeof(data) === "string") 
-    title = data.replace(/\"/g, "&quot;");
-
+  // render cell contents
   var contents = renderCellContents(data, type, row, meta, clazz);
 
-  // don't apply overflow if this is already a small cell (improves performance
-  // when rendering a large number of small cells)
-  var extraClass = '';
-  if (contents.length >= 20)
-    extraClass = ' largeCell'
+  // compute classes for tag
+  var classes = [clazz];
 
-  return '<span title="' + title + '" class="' + clazz + extraClass + '">' +
-    contents +
-    '</span>';
+  // treat data with more than 10 characters as 'long'
+  if (contents.length >= 10)
+    classes.push('largeCell');
+
+  // compute title (if any)
+  var title = undefined;
+  if (typeof data === "string")
+    title = data.replace(/"/g, "&quot;");
+
+  // produce tag
+  return createTag('span', contents, {
+    'class': classes,
+    'title': title
+  });
+
 };
 
 // render a number cell
@@ -1126,7 +1177,7 @@ var addResizeHandlers = function(ele) {
       // don't allow resizing beneath minimum size. prefer
       // the original column width, but for large columns allow
       // resizing to minimum of 100 pixels
-      var minColWidth = origColWidths[col] || 40;
+      var minColWidth = origColWidths[col] || 50;
       if (minColWidth > 100)
          minColWidth = 100;
 
