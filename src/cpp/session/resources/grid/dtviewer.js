@@ -95,9 +95,6 @@ var createTag = function(tag, content, attributes) {
   var parts = [];
   for (var key in attributes) {
 
-    if (key === 'class')
-      debugger;
-
     // extract value
     var value = attributes[key];
 
