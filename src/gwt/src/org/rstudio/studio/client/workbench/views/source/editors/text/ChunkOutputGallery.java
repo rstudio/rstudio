@@ -219,6 +219,17 @@ public class ChunkOutputGallery extends Composite
    }
    
    @Override
+   public boolean hasHtmlWidgets()
+   {
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof ChunkHtmlPage)
+            return true;
+      }
+      return false;
+   }
+
+   @Override
    public boolean hasErrors()
    {
       if (console_ != null)
