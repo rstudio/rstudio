@@ -18,9 +18,13 @@
 #include <atomic>
 #include <set>
 
+#include <boost/algorithm/string.hpp>
+
 #include <QThread>
 
+#include <core/Algorithm.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/FileSerializer.hpp>
@@ -100,6 +104,53 @@ void buildFontDatabaseImpl()
 
 void buildFontDatabase()
 {
+#ifdef Q_OS_LINUX
+   // if fontconfig is installed, we can use it to query monospace
+   // fonts using its own cache (and it should be much more performant
+   // than asking Qt to build the font database on demand)
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand("fc-list :spacing=100 -f '%{fullname}\n' | sort | uniq", options, &result);
+   if (!error)
+   {
+      std::vector<std::string> fonts;
+      for (const std::string& line : core::algorithm::split(result.stdOut, "\n"))
+      {
+         if (line.empty())
+            continue;
+
+         // if a font has multiple names for different languages (e.g. some Japanese fonts
+         // have names in both English + Japanese) then just take the first reported name
+         auto idx = line.find(',');
+         auto font = (idx == std::string::npos) ? line : line.substr(0, idx);
+
+         // remove a trailing 'Regular'
+         if (boost::algorithm::ends_with(font, " Regular"))
+            font = font.substr(0, font.length() - strlen(" Regular"));
+
+         // TODO: right now, we just use the full font name as-is; we should instead
+         // collect fonts alongside their supported styles and apply those separately
+         // in the front-end (e.g. setting all of 'font', 'font-style' and 'font-weight'
+         // as appropriate for the selected font). until then, screen out font variants
+         // with explicit weighting / styling
+         if (boost::algorithm::ends_with(font, " Bold") ||
+             boost::algorithm::ends_with(font, " Oblique") ||
+             boost::algorithm::ends_with(font, " Italic"))
+         {
+            continue;
+         }
+
+         // add the font
+         fonts.push_back(font);
+      }
+
+      QString fontList = QString::fromStdString(core::algorithm::join(fonts, "\n"));
+      s_fixedWidthFontList = fontList;
+      return;
+   }
+
+#endif
+
    s_fontDatabaseWorker = QThread::create(buildFontDatabaseImpl);
    s_fontDatabaseWorker->start();
 }
@@ -199,7 +250,7 @@ void initialize()
 void DesktopInfo::onClose()
 {
 #ifndef Q_OS_MAC
-   if (s_fontDatabaseWorker->isRunning())
+   if (s_fontDatabaseWorker && s_fontDatabaseWorker->isRunning())
    {
       s_abortRequested = true;
       s_fontDatabaseWorker->wait(1000);
