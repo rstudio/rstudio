@@ -1260,7 +1260,7 @@ var addResizeHandlers = function(ele) {
          initTableWidth = $("#rsGridData").width();
          boundsExceeded = 0;
 
-         if (origColWidths[col] == null)
+         if (typeof origColWidths[col] === 'undefined')
             origColWidths[col] = initColWidth;
 
          $("#rsGridData td:nth-child(" + col + ")").css(
