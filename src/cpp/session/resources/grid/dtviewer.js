@@ -82,7 +82,7 @@ var createTag = function(tag, content, attributes) {
   // if content is an object and attributes is undefined,
   // treat this as request to create tag with attributes
   // but no content
-  if (typeof content === 'object' && typeof attributes == 'undefined')
+  if (typeof content === 'object' && typeof attributes === 'undefined')
   {
     attributes = content;
     content = '';
@@ -262,9 +262,9 @@ var renderCellClass = function (data, type, row, meta, clazz) {
     classes.push('largeCell');
 
   // compute title (if any)
-  var title = undefined;
+  var title;
   if (typeof data === "string")
-    title = data.replace(/"/g, "&quot;");
+    title = data;
 
   // produce tag
   return createTag('span', contents, {
