@@ -170,12 +170,29 @@ public class JobItem extends Composite
       state_.setText(state);
 
       // sync status and progress
-      status_.setText(job.status);
-      
-      // show progress bar if the job is running and has a progress bar
-      running_.setVisible(
-            job.max > 0 && 
-            job_.state == JobConstants.STATE_RUNNING);
+      if (job_.state == JobConstants.STATE_RUNNING)
+      {
+         if (job.max > 0)
+         {
+            // show progress bar and status label if the job is running and has
+            // a progress bar
+            status_.setText(job.status);
+            running_.setVisible(true);
+         }
+         else if (!StringUtil.isNullOrEmpty(job.status))
+         {
+            // no progress bar -- but we have a status, so show that as the
+            // running state
+            state_.setText(job.status);
+            running_.setVisible(false);
+         }
+      }
+      else
+      {
+         // not running; hide the progress area
+         running_.setVisible(false);
+      }
+
       
       // show the state if we're not showing the progress bar
       state_.setVisible(!running_.isVisible());
