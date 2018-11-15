@@ -639,7 +639,7 @@
          "\", does not exist.",
          call. = FALSE)
    }
-   xmlStr <- paste0(readLines(filePath, encoding="UTF-8"), collapse = "\n")
+   xmlStr <- paste(readLines(filePath, encoding = "UTF-8", warn = FALSE), collapse = "\n")
    
    tmThemeDoc <- xml2::xml_root(xml2::read_xml(
       xmlStr, 
@@ -867,7 +867,7 @@
    
    # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
    # the name of the file.
-   themeLines <- readLines(themePath, encoding = "UTF-8")
+   themeLines <- readLines(themePath, encoding = "UTF-8", warn = FALSE)
    name <- .rs.getThemeName(paste0(themeLines, collapse = "\n"), fileName)
    
    if (is.na(name) || (name == "") || is.null(name))
