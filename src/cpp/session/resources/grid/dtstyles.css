@@ -309,7 +309,8 @@ th:focus {
     text-align: right;
 }
 
-.numberCell, .textCell, .listCell, .dataCell {
+.largeCell {
+    display: inline-block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -23,6 +23,9 @@ var table;
 // the column definitions from the server
 var cols;
 
+// the column widths (on initial draw)
+var origColWidths = [];
+
 // dismiss the active filter popup, if any
 var dismissActivePopup = null;
 
@@ -71,6 +74,48 @@ var activeColumnInfo = {
 
 // manually adjusted widths of each column
 var manualWidths = [];
+
+// helper for creating a tag with properties + content
+// (created as a string)
+var createTag = function(tag, content, attributes) {
+
+  // if content is an object and attributes is undefined,
+  // treat this as request to create tag with attributes
+  // but no content
+  if (typeof content === 'object' && typeof attributes === 'undefined')
+  {
+    attributes = content;
+    content = '';
+  }
+
+  // ensure attributes is an object
+  attributes = attributes || {};
+
+  // compute inner attributes
+  var parts = [];
+  for (var key in attributes) {
+
+    // extract value
+    var value = attributes[key];
+
+    // join arrays of values
+    if (Object.prototype.toString.call(value) === '[object Array]')
+      value = value.join(' ');
+
+    // skip non-string values
+    if (typeof value !== 'string')
+      continue;
+
+    // push attribute
+    parts.push(key + '="' + value.replace(/"/g, "&quot;") + '"')
+  }
+
+  // build the final html
+  var opener = '<' + tag + ' ' + parts.join(' ') + '>';
+  var closer = '</' + tag + '>';
+  return opener + (content || '') + closer;
+
+}
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -205,15 +250,28 @@ var renderCellContents = function(data, type, row, meta, clazz) {
 };
 
 var renderCellClass = function (data, type, row, meta, clazz) {
-  var title = null;
-  if (typeof(data) === "string") 
-     title = data.replace(/\"/g, "&quot;");
-  return '<div class="cell">' + 
-         '<div class="' + clazz + '" ' + 
-         (title !== null ? 'title="' + title + '"' : '') +
-         '>' + 
-         renderCellContents(data, type, row, meta, clazz) + '</div>' +
-         '<div class="resizer" data-col="' + meta.col + '" /></div>';
+
+  // render cell contents
+  var contents = renderCellContents(data, type, row, meta, clazz);
+
+  // compute classes for tag
+  var classes = [clazz];
+
+  // treat data with more than 10 characters as 'long'
+  if (contents.length >= 10)
+    classes.push('largeCell');
+
+  // compute title (if any)
+  var title;
+  if (typeof data === "string")
+    title = data;
+
+  // produce tag
+  return createTag('span', contents, {
+    'class': classes,
+    'title': title
+  });
+
 };
 
 // render a number cell
@@ -1109,12 +1167,17 @@ var addResizeHandlers = function(ele) {
    var initColWidth = null;   // the initial width of the column
    var initTableWidth = null; // the initial width of the table
    var boundsExceeded = 0;
-   var minColWidth = 40;
 
    var applyDelta = function(delta) {
       var colWidth = initColWidth + delta;
 
-      // don't allow resizing beneath minimum size
+      // don't allow resizing beneath minimum size. prefer
+      // the original column width, but for large columns allow
+      // resizing to minimum of 100 pixels
+      var minColWidth = origColWidths[col] || 50;
+      if (minColWidth > 100)
+         minColWidth = 100;
+
       if (delta < 0 && colWidth < minColWidth) {
          boundsExceeded += delta;
          return;
@@ -1193,6 +1256,10 @@ var addResizeHandlers = function(ele) {
          initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
          initTableWidth = $("#rsGridData").width();
          boundsExceeded = 0;
+
+         if (typeof origColWidths[col] === 'undefined')
+            origColWidths[col] = initColWidth;
+
          $("#rsGridData td:nth-child(" + col + ")").css(
             "border-right-color", "#A0A0FF");
          evt.preventDefault();
@@ -1247,6 +1314,7 @@ var bootstrap = function(data) {
   // clean state
   table = null;   
   cols = null;
+  origColWidths = [];
   dismissActivePopup = null;
   cachedSearch = "";
   cachedFilterValues = [];
