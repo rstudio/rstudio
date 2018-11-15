@@ -18,9 +18,13 @@
 #include <atomic>
 #include <set>
 
+#include <boost/algorithm/string.hpp>
+
 #include <QThread>
 
+#include <core/Algorithm.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/FileSerializer.hpp>
@@ -100,6 +104,30 @@ void buildFontDatabaseImpl()
 
 void buildFontDatabase()
 {
+#ifdef Q_OS_LINUX
+   // if fontconfig is installed, we can use it to query monospace
+   // fonts using its own cache (and it should be much more performant
+   // than asking Qt to build the font database on demand)
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
+            options,
+            &result);
+
+   bool didReturnFonts =
+         error == Success() &&
+         result.exitStatus == EXIT_SUCCESS &&
+         !result.stdOut.empty();
+
+   if (didReturnFonts)
+   {
+      s_fixedWidthFontList = QString::fromStdString(result.stdOut);
+      return;
+   }
+
+#endif
+
    s_fontDatabaseWorker = QThread::create(buildFontDatabaseImpl);
    s_fontDatabaseWorker->start();
 }
@@ -199,7 +227,7 @@ void initialize()
 void DesktopInfo::onClose()
 {
 #ifndef Q_OS_MAC
-   if (s_fontDatabaseWorker->isRunning())
+   if (s_fontDatabaseWorker && s_fontDatabaseWorker->isRunning())
    {
       s_abortRequested = true;
       s_fontDatabaseWorker->wait(1000);
