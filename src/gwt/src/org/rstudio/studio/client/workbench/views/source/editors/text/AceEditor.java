@@ -736,7 +736,7 @@ public class AceEditor implements DocDisplay,
          // so work around that by just creating a final reference and use that
          final AceEditor editor = this;
          
-         completionManager = new DelegatingCompletionManager(this)
+         completionManager = new DelegatingCompletionManager(this, context_)
          {
             @Override
             protected void initialize(Map<Mode, CompletionManager> managers)
