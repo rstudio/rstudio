@@ -54,7 +54,7 @@
   border-color: %foreground%;
 }
 
-.%cssClass& .ace_invisible {
+.%cssClass% .ace_invisible {
   color: %invisible%;
 }
 
