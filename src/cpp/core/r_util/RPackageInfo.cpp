@@ -117,10 +117,7 @@ bool isPackageDirectory(const FilePath& dir)
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);
       if (error)
-      {
-         LOG_ERROR(error);
          return false;
-      }
 
       return pkgInfo.type() == kPackageType;
    }

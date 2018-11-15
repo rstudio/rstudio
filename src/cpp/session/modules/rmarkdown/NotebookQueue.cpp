@@ -87,10 +87,13 @@ public:
       pInput_->enque(kThreadQuitCommand);
 
       // unregister handlers
-      BOOST_FOREACH(boost::signals::connection connection, handlers_)
+      BOOST_FOREACH(RSTUDIO_BOOST_CONNECTION& connection, handlers_)
       {
          connection.disconnect();
       }
+
+      // clear queue state and any active execution contexts
+      clear();
    }
 
    bool complete()
@@ -350,9 +353,7 @@ private:
       // extract the default chunk options, then augment with the unit's 
       // chunk-specific options
       json::Object chunkOptions;
-      error = unit->parseOptions(&chunkOptions);
-      if (error)
-         LOG_ERROR(error);
+      Error optionsError = unit->parseOptions(&chunkOptions);
       ChunkOptions options(docQueue->defaultChunkOptions(), chunkOptions);
 
       // establish execution context for the unit
@@ -419,6 +420,14 @@ private:
                workingDir, options, docQueue->pixelWidth(), 
                docQueue->charWidth());
             execContext_->connect();
+
+            // if there was an error parsing the options for the chunk, display
+            // that as an error inside the chunk itself
+            if (optionsError)
+            {
+                execContext_->onConsoleOutput(module_context::ConsoleOutputError,
+                                              optionsError.summary());
+            }
          }
          execUnit_ = unit;
          enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
@@ -652,7 +661,7 @@ private:
    boost::shared_ptr<ChunkExecContext> execContext_;
 
    // registered signal handlers
-   std::vector<boost::signals::connection> handlers_;
+   std::vector<RSTUDIO_BOOST_CONNECTION> handlers_;
 
    // the thread which submits console input, and the queue which feeds it
    boost::thread console_;

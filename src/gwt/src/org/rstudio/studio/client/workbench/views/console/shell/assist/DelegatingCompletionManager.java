@@ -18,20 +18,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 
 public abstract class DelegatingCompletionManager implements CompletionManager 
 {
-   public DelegatingCompletionManager(DocDisplay docDisplay)
+   public DelegatingCompletionManager(DocDisplay docDisplay, CompletionContext context)
    {
       docDisplay_ = docDisplay;
       completionManagerMap_ = new HashMap<Mode, CompletionManager>();
       nullManager_ = new NullCompletionManager();
+      
+      if (docDisplay_ instanceof AceEditor)
+      {
+         String path = context == null ? "" : context.getPath();
+         snippets_ = new SnippetHelper((AceEditor) docDisplay_, path);
+      }
       
       initialize(completionManagerMap_);
    }
@@ -50,7 +61,18 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       CompletionManager manager = getCurrentCompletionManager();
-      return manager.previewKeyDown(event);
+      if (manager.previewKeyDown(event))
+         return true;
+      
+      if (snippets_ != null)
+      {
+         int keyCode = event.getKeyCode();
+         int modifier = KeyboardShortcut.getModifierValue(event);
+         if (modifier == KeyboardShortcut.SHIFT && keyCode == KeyCodes.KEY_TAB)
+            return snippets_.attemptSnippetInsertion(true);
+      }
+      
+      return false;
    }
 
    @Override
@@ -112,10 +134,14 @@ public abstract class DelegatingCompletionManager implements CompletionManager
             manager.detach();
          }
       });
+      
+      if (snippets_ != null)
+         snippets_.detach();
    }
 
    private final DocDisplay docDisplay_;
    private final Map<DocumentMode.Mode, CompletionManager> completionManagerMap_;
    private final CompletionManager nullManager_;
    
+   private SnippetHelper snippets_;
 }

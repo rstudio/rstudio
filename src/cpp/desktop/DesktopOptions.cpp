@@ -37,6 +37,8 @@ QString binDirToHomeDir(QString binDir);
 #endif
 
 #define kMainWindowGeometry (QStringLiteral("mainwindow/geometry"))
+#define kFixedWidthFont     (QStringLiteral("font.fixedWidth"))
+#define kProportionalFont   (QStringLiteral("font.proportional"))
 
 QString scratchPath;
 
@@ -134,6 +136,7 @@ void Options::setDesktopRenderingEngine(QString engine)
 }
 
 namespace {
+
 QString findFirstMatchingFont(const QStringList& fonts,
                               QString defaultFont,
                               bool fixedWidthOnly)
@@ -147,14 +150,28 @@ QString findFirstMatchingFont(const QStringList& fonts,
    }
    return defaultFont;
 }
+
 } // anonymous namespace
+
+void Options::setFont(QString key, QString font)
+{
+   if (font.isEmpty())
+      settings_.remove(key);
+   else
+      settings_.setValue(key, font);
+}
+
+void Options::setProportionalFont(QString font)
+{
+   setFont(kProportionalFont, font);
+}
 
 QString Options::proportionalFont() const
 {
    static QString detectedFont;
 
    QString font =
-         settings_.value(QString::fromUtf8("font.proportional")).toString();
+         settings_.value(kProportionalFont).toString();
    if (!font.isEmpty())
    {
       return font;
@@ -198,11 +215,7 @@ QString Options::proportionalFont() const
 
 void Options::setFixedWidthFont(QString font)
 {
-   if (font.isEmpty())
-      settings_.remove(QString::fromUtf8("font.fixedWidth"));
-   else
-      settings_.setValue(QString::fromUtf8("font.fixedWidth"),
-                         font);
+   setFont(kFixedWidthFont, font);
 }
 
 QString Options::fixedWidthFont() const
@@ -210,7 +223,7 @@ QString Options::fixedWidthFont() const
    static QString detectedFont;
 
    QString font =
-         settings_.value(QString::fromUtf8("font.fixedWidth")).toString();
+         settings_.value(kFixedWidthFont).toString();
    if (!font.isEmpty())
    {
       return QString::fromUtf8("\"") + font + QString::fromUtf8("\"");
@@ -296,6 +309,17 @@ bool Options::disableGpuDriverBugWorkarounds() const
 void Options::setDisableGpuDriverBugWorkarounds(bool disable)
 {
    settings_.setValue(QStringLiteral("general.disableGpuDriverBugWorkarounds"), disable);
+}
+
+bool Options::useFontConfigDatabase() const
+{
+   QVariant use = settings_.value(QStringLiteral("general.useFontConfigDatabase"), true);
+   return use.toBool();
+}
+
+void Options::setUseFontConfigDatabase(bool use)
+{
+   settings_.setValue(QStringLiteral("general.useFontConfigDatabase"), use);
 }
 
 #ifdef _WIN32

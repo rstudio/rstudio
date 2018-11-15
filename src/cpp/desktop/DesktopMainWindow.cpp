@@ -105,6 +105,12 @@ MainWindow::MainWindow(QUrl url) :
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
 
+   connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
+      QString js = QStringLiteral(
+         "if (typeof window.onFontListReady === 'function') window.onFontListReady()");
+      this->webPage()->runJavaScript(js);
+   });
+
    connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
            this, SLOT(commitDataRequest(QSessionManager&)),
            Qt::DirectConnection);
@@ -220,7 +226,7 @@ try {
 } catch (e) {
    wnd = window;
 }
-wnd.desktopHooks.invokeCommand('%1');
+(wnd || window).desktopHooks.invokeCommand('%1');
 )EOF");
 #else
    QString fmt = QStringLiteral("window.desktopHooks.invokeCommand('%1')");
@@ -247,6 +253,8 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    if (eventHook_)
       ::UnhookWinEvent(eventHook_);
 #endif
+
+   desktopInfo().onClose();
 
    if (!geometrySaved_)
    {

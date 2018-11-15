@@ -328,8 +328,12 @@ public class ChunkOutputWidget extends Composite
          int contentHeight = root_.getElement().getOffsetHeight() + 19;
          height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight);
          
-         // clamp height of widgets
-         height = Math.min(height, ChunkOutputUi.MAX_CHUNK_HEIGHT);
+         // clamp height of widgets if there's an htmlwidget present; if HTML
+         // widgets fill the editor surface, the resulting UX is unpleasant.
+         if (presenter_.hasHtmlWidgets())
+         {
+            height = Math.min(height, ChunkOutputUi.MAX_CHUNK_HEIGHT);
+         }
 
          // if we have renders pending, don't shrink until they're loaded 
          if (pendingRenders_ > 0 && height < renderedHeight_)
@@ -679,7 +683,6 @@ public class ChunkOutputWidget extends Composite
       if (spinner_ != null)
       {
          spinner_.removeFromParent();
-         spinner_.detach();
          spinner_ = null;
       }
       // create a black or white spinner as appropriate
@@ -694,6 +697,7 @@ public class ChunkOutputWidget extends Composite
       spinner_.getElement().getStyle().setOpacity(1);
       root_.getElement().getStyle().setOpacity(0.2);
 
+      spinner_.setVisible(true);
       clear_.setVisible(false);
       expand_.setVisible(false);
       popout_.setVisible(false);
@@ -708,8 +712,8 @@ public class ChunkOutputWidget extends Composite
 
       if (spinner_ != null)
       {
+         spinner_.setVisible(false);
          spinner_.removeFromParent();
-         spinner_.detach();
          spinner_ = null;
       }
 

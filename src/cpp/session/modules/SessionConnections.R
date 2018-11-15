@@ -877,7 +877,7 @@ options(connectionObserver = list(
    if (!.rs.isDesktop()) return(list())
 
    # once per session, attempt to download driver updates
-   if (!is.null(installerUrl)) {
+   if (!is.null(installerUrl) && nchar(installerUrl) > 0) {
       installerHostName <- gsub("https?://|/[^:].+$", "", installerUrl)
 
       connectionsWarning <- tryCatch({

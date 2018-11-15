@@ -15,13 +15,13 @@
 # sanitizers released with newer versions of clang)
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
-cmake ../cpp -GXcode                 \
-    -DLIBR_HOME="${R_HOME}"          \
-    -DLIBR_INCLUDE_DIRS="${R_INCL}"  \
-    -DLIBR_DOC_DIR="${R_DOCS}"       \
-    -DRSTUDIO_USE_LIBCXX="Yes"       \
-    -DRSTUDIO_USE_SYSTEM_BOOST="Yes" \
-    -DRSTUDIO_BOOST_VERSION="1.56.0" \
+cmake ../cpp -GXcode                           \
+    -DLIBR_HOME="${R_HOME}"                    \
+    -DLIBR_INCLUDE_DIRS="${R_INCL}"            \
+    -DLIBR_DOC_DIR="${R_DOCS}"                 \
+    -DRSTUDIO_USE_LIBCXX="Yes"                 \
+    -DRSTUDIO_USE_SYSTEM_BOOST="Yes"           \
+    -DRSTUDIO_BOOST_REQUESTED_VERSION="1.56.0" \
     "$@"
 cmake ../cpp -DLIBR_LIBRARIES="${R_LIBS}/libR.dylib"
 cd ..

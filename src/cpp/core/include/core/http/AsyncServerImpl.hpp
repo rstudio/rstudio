@@ -365,8 +365,9 @@ private:
             // flow all traffic like a proxy
             const std::string& method = pRequest->method();
             if (method != "GET" &&
-                method != "PUT" &&
-                method != "POST")
+                method != "POST" &&
+                method != "HEAD" &&
+                method != "PUT")
             {
                // invalid method - fail out
                LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());

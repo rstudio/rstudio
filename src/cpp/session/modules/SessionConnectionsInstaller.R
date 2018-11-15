@@ -388,7 +388,26 @@
    writeLines(lines, odbcinstPath)
 })
 
-.rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath, version) {
+.rs.addFunction("odbcOdbcInstLibPath", function() {
+   odbcinstLib <- NULL
+
+   odbcinstBin <- Sys.which("odbcinst")
+   if (nchar(odbcinstBin) == 0) {
+      warning("Could not find path to odbcinst.")
+   }
+   else {
+      odbcinstLink <- Sys.readlink(odbcinstBin)
+      if (!is.na(odbcinstLink)) {
+         odbcinstBinPath <- normalizePath(file.path(dirname(odbcinstBin), dirname(odbcinstLink)))
+         odbcinstLibPath <- normalizePath(file.path(odbcinstBinPath, "..", "lib"))
+         odbcinstLib <- dir(odbcinstLibPath, pattern = "libodbcinst.*\\.dylib", full.names = TRUE)[[1]]
+      }
+   }
+
+   odbcinstLib
+})
+
+.rs.addFunction("odbcBundleRegisterLinux", function(name, driverPath, version, installPath) {
    # Find odbcinst.ini file
    odbcinstPath <- .rs.odbcBundleOdbcinstPath()
    
@@ -406,7 +425,39 @@
    .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
 })
 
-.rs.addFunction("odbcBundleRegisterWindows", function(name, driverPath, version) {
+.rs.addFunction("odbcBundleDriverIniPath", function(name, driverPath) {
+   dir(driverPath, pattern = paste(tolower(name), ".*\\.ini", sep = ""), recursive = TRUE, full.names = T)
+})
+
+.rs.addFunction("odbcBundleRegisterOSX", function(name, driverPath, version, installPath) {
+   # Update odbcinst.ini
+   .rs.odbcBundleRegisterLinux(name, driverPath, version, installPath)
+
+   # Find driver.ini file
+   driverIniFile <- .rs.odbcBundleDriverIniPath(name, installPath)
+   
+   if (length(driverIniFile) == 0) {
+      warning("Could not find '", name, "' driver INI file under: ", installPath)
+   }
+   else {
+      # Read driver.ini
+      driverIni <- .rs.odbcBundleReadIni(driverIniFile)
+
+      # In OSX register to use unixODBC
+      odbcinstLib <- .rs.odbcOdbcInstLibPath()
+      if (!is.null(odbcinstLib)) {
+         driverIni[["Driver"]] <- c(
+            driverIni[["Driver"]],
+            paste("ODBCInstLib", "=", odbcinstLib)
+         )
+      }
+      
+      # Write odbcinst.ini
+      .rs.odbcBundleWriteIni(driverIniFile, driverIni)
+   }
+})
+
+.rs.addFunction("odbcBundleRegisterWindows", function(name, driverPath, version, installPath) {
    .rs.odbcBundleRegistryAdd(
       list(
          list(
@@ -467,16 +518,16 @@
    normalizePath(driverPath)
 })
 
-.rs.addFunction("odbcBundleRegister", function(name, driverPath, version) {
+.rs.addFunction("odbcBundleRegister", function(name, driverPath, version, installPath) {
    osRegistrations <- list(
-      osx = .rs.odbcBundleRegisterLinux,
+      osx = .rs.odbcBundleRegisterOSX,
       windows = .rs.odbcBundleRegisterWindows,
       linux = .rs.odbcBundleRegisterLinux
    )
    
    osRegistration <- osRegistrations[[.rs.odbcBundleOsName()]]
    
-   osRegistration(name, driverPath, version) 
+   osRegistration(name, driverPath, version, installPath) 
 })
 
 .rs.addFunction("odbcBundleValidate", function(bundleFile, md5) {
@@ -527,7 +578,7 @@
    driverPath <- .rs.odbcBundleFindDriver(name, installPath, libraryPattern)
    
    message("Registering driver")
-   .rs.odbcBundleRegister(name, driverPath, version)
+   .rs.odbcBundleRegister(name, driverPath, version, installPath)
 
    message("")
    message("Installation complete")

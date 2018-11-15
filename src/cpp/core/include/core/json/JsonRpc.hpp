@@ -49,6 +49,9 @@ enum errc_t {
    MaxSessionsReached = 15,     // license error - max sessions reached
    MaxUsersReached = 16,  // license error - max users reached
 
+   // launcher session parameters not found and should be resent to implicitly resume the session
+   LaunchParametersMissing = 17,
+
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
    // of the error which occurred. More details are provided within the

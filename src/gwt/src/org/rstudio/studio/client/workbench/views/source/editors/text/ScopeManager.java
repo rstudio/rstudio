@@ -35,7 +35,7 @@ public class ScopeManager
    public final native void onScopeEnd(Position position);
    public final native JsArray<Scope> getActiveScopes(Position position);
    public final native JsArray<Scope> getScopeList();
-   public final native void invalidateFrom(Position position);
+   public final native Position invalidateFrom(Position position);
    
    @JsOverlay
    public final Scope getScopeAt(Position position)

@@ -215,10 +215,23 @@ select {
 }
 
 @if rstudio.desktop true {
+
 .macintosh select {
    font-size: 11px;
    text-indent: 0.1em;
 }
+
+/* Work around an issue with macOS 10.14 (Mojave) + Chrome
+   where select inputs and radio buttons are not rendered correctly. */
+.macintosh select,
+.macintosh input[type="radio"] {
+	background-color: white;
+}
+
+.macintosh input[type="radio"] {
+	zoom: 1.000001;
+}
+
 }
 
 input[type="radio"] + label {

@@ -75,6 +75,12 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    }
 
    @Override
+   public boolean supportsThemes()
+   {
+      return true;
+   }
+
+   @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       chunkWindowParams_ = params.cast();

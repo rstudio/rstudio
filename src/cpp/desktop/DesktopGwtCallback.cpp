@@ -770,6 +770,13 @@ void GwtCallback::activateSatelliteWindow(QString name)
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
 {
    auto* view = pMainWindow_->webView();
+
+   double scale = view->zoomFactor();
+   left = left * scale;
+   top = top * scale;
+   width = width * scale;
+   height = height * scale;
+
    QPixmap pixmap = view->grab(QRect(left, top, width, height));
    QApplication::clipboard()->setPixmap(pixmap);
 }
@@ -1262,14 +1269,7 @@ bool isProportionalFont(const QString& fontFamily)
 
 QString GwtCallback::getFixedWidthFontList()
 {
-   QFontDatabase& db = desktop::fontDatabase();
-   QStringList families = db.families();
-
-   QStringList::iterator it = std::remove_if(
-            families.begin(), families.end(), isProportionalFont);
-   families.erase(it, families.end());
-
-   return families.join(QString::fromUtf8("\n"));
+   return desktop::getFixedWidthFontList();
 }
 
 QString GwtCallback::getFixedWidthFont()

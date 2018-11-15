@@ -90,8 +90,6 @@ public class ShortcutManager implements NativePreviewHandler,
       for (KeyMapType type : KeyMapType.values())
          keyMaps_.put(type, new KeyMap());
       
-      commandHandlesEventPropagation_ = new HashSet<String>();
-      
       // Defer injection because the ShortcutManager is constructed
       // very eagerly (to allow for codegen stuff in ShortcutsEmitter
       // to work)
@@ -268,16 +266,6 @@ public class ShortcutManager implements NativePreviewHandler,
       }
    }
    
-   public void registerCommandHandlesEventPropagation(AppCommand command)
-   {
-      commandHandlesEventPropagation_.add(command.getId());
-   }
-   
-   private boolean commandHandlesEventPropagation(String id)
-   {
-      return commandHandlesEventPropagation_.contains(id);
-   }
-   
    public void resetAppCommandBindings()
    {
       KeyMap map = new KeyMap();
@@ -445,9 +433,10 @@ public class ShortcutManager implements NativePreviewHandler,
       int keyCode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
       
-      // Convert Firefox hyphen key code to 'normal' hyphen keycode
-      // since we have code wired to that expectation
-      if (keyCode == 173)
+      // Convert Firefox hyphen key code and NumPad hyphen key code
+      // to 'normal' hyphen keycode since we have code wired to that
+      // expectation
+      if (keyCode == 109 || keyCode == 173)
          keyCode = 189;
       
       KeyCombination keyCombination = new KeyCombination(keyCode, modifier);
@@ -548,17 +537,9 @@ public class ShortcutManager implements NativePreviewHandler,
                }
             }
             
-            if (commandHandlesEventPropagation(binding.getId()))
-            {
-               binding.execute();
-               return false;
-            }
-            else
-            {
-               event.stopPropagation();
-               binding.execute();
-               return true;
-            }
+            event.stopPropagation();
+            binding.execute();
+            return true;
          }
          
          if (map.isPrefix(keyBuffer_))
@@ -756,7 +737,6 @@ public class ShortcutManager implements NativePreviewHandler,
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
    
    private final Map<KeyMapType, KeyMap> keyMaps_;
-   private final Set<String> commandHandlesEventPropagation_;
    private final List<ShortcutInfo> shortcutInfo_;
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    

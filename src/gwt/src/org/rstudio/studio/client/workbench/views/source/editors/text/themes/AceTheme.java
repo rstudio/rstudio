@@ -69,17 +69,17 @@ public class AceTheme extends JavaScriptObject
    
    public final Boolean isDefaultTheme()
    {
-      return Pattern.create("^/theme/default/.+?\\.rstheme$").test(getUrl());
+      return Pattern.create("^theme/default/.+?\\.rstheme$").test(getUrl());
    }
    
    public final Boolean isLocalCustomTheme()
    {
-      return Pattern.create("^/theme/custom/local/.+?\\.rstheme$").test(getUrl());
+      return Pattern.create("^theme/custom/local/.+?\\.rstheme$").test(getUrl());
    }
    
-   public final Boolean isGlobalCustonTheme()
+   public final Boolean isGlobalCustomTheme()
    {
-      return Pattern.create("^/theme/custom/global/.+?\\.rstheme$").test(getUrl());
+      return Pattern.create("^theme/custom/global/.+?\\.rstheme$").test(getUrl());
    }
    
    public final String getFileStem()

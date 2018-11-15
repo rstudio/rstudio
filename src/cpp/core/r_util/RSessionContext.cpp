@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,8 +42,17 @@
 #include <core/system/PosixUser.hpp>
 #endif
 
-#define kSessionSuffix "-d"
-#define kProjectNone   "none"
+#include <core/SafeConvert.hpp>
+#include <core/system/Environment.hpp>
+
+#include "config.h"
+
+// must be included after config.h for RSTUDIO_SERVER define
+#include <core/system/UserObfuscation.hpp>
+
+#define kSessionSuffix         "-d"
+#define kProjectNone           "none"
+#define kRstudioMinimumUserId  "RSTUDIO_MINIMUM_USER_ID"
 
 namespace rstudio {
 namespace core {
@@ -411,6 +420,52 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
       return generateScopeId(reserved);
    else
       return id;
+}
+
+static uid_t s_minUid = 0;
+
+void setMinUid(uid_t uid)
+{
+   s_minUid = uid;
+}
+
+namespace {
+
+// max user ID string (length of 5)
+constexpr uid_t MAX_UID = 0xFFFFF;
+
+uid_t getMinUid()
+{
+   std::string minUserEnv = core::system::getenv(kRstudioMinimumUserId);
+   if (minUserEnv.empty())
+      return s_minUid;
+
+   return safe_convert::stringTo<uid_t>(minUserEnv, 0);
+}
+
+} // anonymous namespace
+
+std::string obfuscatedUserId(uid_t uid)
+{
+   if (uid > MAX_UID)
+   {
+      // if large uids are being used, we want to wrap them back to a value lower than
+      // the maximum allowed uid to prevent duplicate ID strings
+      // if the difference between this uid and the minimum allowed value is less than
+      // the maximum allowed uid, use it instead so we do not have to worry about duplicates
+      // as the resulting obfuscated ID will not have to be truncated
+      //
+      // if the difference is still greater than the max uid, we will have to live with truncation
+      // so do not bother remapping the uid
+      uid_t minUid = getMinUid();
+      if (uid >= minUid && (uid - minUid < MAX_UID))
+         uid -= minUid;
+   }
+
+   std::ostringstream ustr;
+   ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
+        << OBFUSCATE_USER_ID(uid);
+   return ustr.str().substr(0, kUserIdLen);
 }
 
 } // namespace r_util

@@ -39,6 +39,8 @@
 
 using namespace rstudio::core;
 
+#define kRStudioNotebookExecuting ("rstudio.notebook.executing")
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -216,6 +218,9 @@ void ChunkExecContext::connect()
       if (error)
          LOG_ERROR(error);
    }
+
+   // broadcast that we're executing in a Notebook
+   r::options::setOption(kRStudioNotebookExecuting, true);
    
    // reset width
    prevCharWidth_ = r::options::getOptionWidth();
@@ -446,6 +451,9 @@ void ChunkExecContext::disconnect()
    if (error)
       LOG_ERROR(error);
 
+   // broadcast that we're done with notebook execution
+   r::options::setOption(kRStudioNotebookExecuting, false);
+
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
@@ -458,7 +466,7 @@ void ChunkExecContext::disconnect()
    }
 
    // unhook all our event handlers
-   BOOST_FOREACH(const boost::signals::connection connection, connections_) 
+   BOOST_FOREACH(const RSTUDIO_BOOST_CONNECTION& connection, connections_)
    {
       connection.disconnect();
    }

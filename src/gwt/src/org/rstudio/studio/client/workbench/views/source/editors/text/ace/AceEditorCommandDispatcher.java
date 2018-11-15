@@ -129,6 +129,14 @@ public class AceEditorCommandDispatcher
    }
    
    @Handler
+   public void onEditLinesFromStart()
+   {
+      fireEvent(
+            AceEditorCommandEvent.EDIT_LINES_FROM_START,
+            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
+   }
+   
+   @Handler
    public void onInsertSnippet()
    {
       fireEvent(

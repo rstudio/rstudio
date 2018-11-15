@@ -42,6 +42,12 @@ enum JobState {
    JobStateMax   = JobFailed
 };
 
+enum JobType {
+   JobTypeUnknown = 0,
+   JobTypeSession = 1,
+   JobTypeLauncher = 2
+};
+
 class Job
 {
 public:
@@ -54,6 +60,7 @@ public:
        int progress, 
        int max,
        JobState state,
+       JobType type,
        bool autoRemove,
        SEXP actions,
        bool show);
@@ -78,6 +85,9 @@ public:
 
    // the current state of the job
    JobState state() const;
+
+   // type of job
+   JobType type() const;
 
    // whether the job is complete
    bool complete() const;
@@ -130,6 +140,7 @@ private:
    std::string group_;
 
    JobState state_;
+   JobType type_;
 
    int progress_;
    int max_;

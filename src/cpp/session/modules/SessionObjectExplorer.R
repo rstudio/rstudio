@@ -202,7 +202,7 @@
    # get object (refreshing if requested). note that refreshes following a
    # restart may lose reference to the original object if e.g. the object lived
    # in the global environment but the global environment was not restored
-   if (refresh) {
+   if (refresh && is.character(entry$title)) {
       tryCatch(
          expr = {
             object <- eval(parse(text = entry$title), envir = entry$envir)
@@ -929,7 +929,12 @@
       more <- FALSE
    }
    
-   if (more || nchar(output) > 80)
+   # guard against unexpected inputs
+   if (is.na(output) || !is.character(output))
+   {
+      output <- "<NA>"
+   }
+   else if (more || nchar(output) > 80)
    {
       truncated <- substring(output, 1, 80)
       output <- paste(truncated, trailing, sep = "")

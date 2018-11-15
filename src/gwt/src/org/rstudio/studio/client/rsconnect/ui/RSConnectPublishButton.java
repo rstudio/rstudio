@@ -51,6 +51,7 @@ import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -493,6 +494,7 @@ public class RSConnectPublishButton extends Composite
                contentPath_, contentType_, previous));
          break;
       case RSConnect.CONTENT_TYPE_DOCUMENT:
+      case RSConnect.CONTENT_TYPE_WEBSITE:
          // All R Markdown variants (single/multiple and static/Shiny)
          if (docPreview_.getSourceFile() == null)
          {
@@ -501,12 +503,8 @@ public class RSConnectPublishButton extends Composite
                   "before publishing it.");
             break;
          }
-         fireDeployDocEvent(contentPath_, docPreview_, previous);
+         fireDeployDocEvent(previous);
          break;
-      case RSConnect.CONTENT_TYPE_WEBSITE:
-            events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-                  docPreview_, RSConnect.CONTENT_TYPE_WEBSITE, previous));
-          break;
       case RSConnect.CONTENT_TYPE_PLUMBER_API:
          events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
          break;
@@ -562,7 +560,31 @@ public class RSConnectPublishButton extends Composite
             publishMenu_.addItem(menuItem);
          }
          
+         publishMenu_.addItem(new MenuItem(
+               AppCommand.formatMenuLabel(null, "Clear List", null),
+               true,
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     String appLabel = StringUtil.isNullOrEmpty(contentPath_)
+                           ? "this application"
+                           : "'" + contentPath_ + "'";
+                     
+                     display_.showYesNoMessage(
+                           GlobalDisplay.MSG_INFO,
+                           "Clear List",
+                           "Are you sure you want to remove all local deployment history for " + appLabel + "?",
+                           false,
+                           () -> { forgetDeployment(); },
+                           null,
+                           false);
+                  }
+               }));
+         
          publishMenu_.addSeparator();
+         
          publishMenu_.addItem(new MenuItem(
                AppCommand.formatMenuLabel(
                      commands_.rsconnectDeploy().getImageResource(), 
@@ -640,7 +662,7 @@ public class RSConnectPublishButton extends Composite
                                  new ArrayList<String>(), 
                                  false, true);
                      events_.fireEvent(
-                           new RSConnectDeployInitiatedEvent(source, settings, 
+                           new RSConnectDeployInitiatedEvent(source, settings,
                                  true, RSConnectDeploymentRecord.create(
                                        plot.name, null, null, plot.account, 
                                        plot.server)));
@@ -825,22 +847,6 @@ public class RSConnectPublishButton extends Composite
          {
             populatedPath_ = contentPath_;
             populating_ = false;
-            
-            // if publishing a website but not content, filter deployments 
-            // that are static (as we can't update them)
-            if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE && 
-                (docPreview_ == null || 
-                 StringUtil.isNullOrEmpty(docPreview_.getOutputFile())))
-            {
-               JsArray<RSConnectDeploymentRecord> codeRecs = 
-                     JsArray.createArray().cast();
-               for (int i = 0; i < recs.length(); i++)
-               {
-                  if (!recs.get(i).getAsStatic())
-                     codeRecs.push(recs.get(i));
-               }
-               recs = codeRecs;
-            }
 
             setPreviousDeployments(recs);
             if (callback != null)
@@ -856,29 +862,57 @@ public class RSConnectPublishButton extends Composite
          }
       });
    }
+   
+   private void forgetDeployment()
+   {
+      server_.forgetRSConnectDeployments(
+            contentPath_,
+            StringUtil.notNull(outputPath_),
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  populateDeployments(true);
+                  
+                  String appLabel = StringUtil.isNullOrEmpty(contentPath_)
+                        ? "this application"
+                        : "'" + contentPath_ + "'";
+                  
+                  display_.showMessage(
+                        GlobalDisplay.MSG_INFO,
+                        "Clear List",
+                        "Local deployment history for " + appLabel + " successfully removed.");
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
 
    // fetch render output info if necessary and then fire deployment event
-   private void fireDeployDocEvent(final String target,
-                                   final RenderedDocPreview docPreview,
-                                   final RSConnectDeploymentRecord previous)
+   private void fireDeployDocEvent(final RSConnectDeploymentRecord previous)
    {
       // prevent re-entrancy
       if (rmdInfoPending_)
          return;
       
-      if (StringUtil.isNullOrEmpty(docPreview.getOutputFile()))
+      if (StringUtil.isNullOrEmpty(docPreview_.getOutputFile()))
       {
          rmdInfoPending_ = true;
-         rmdServer_.getRmdOutputInfo(target,
+         rmdServer_.getRmdOutputInfo(contentPath_,
                new ServerRequestCallback<RmdOutputInfo>()
                {
                   @Override
                   public void onResponseReceived(RmdOutputInfo response)
                   {
-                     RenderedDocPreview preview = new RenderedDocPreview( target,
+                     RenderedDocPreview preview = new RenderedDocPreview(contentPath_,
                            response.output_file_exists ? response.output_file : "", true);
                      events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-                           preview, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
+                           preview, contentType_, previous));
                      rmdInfoPending_ = false;
                   }
             
@@ -895,8 +929,7 @@ public class RSConnectPublishButton extends Composite
       }
       else
       {
-         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-               docPreview, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(docPreview_, contentType_, previous));
       }
    }
    

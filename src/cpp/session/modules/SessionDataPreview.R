@@ -13,6 +13,11 @@
 #
 #
 
+.rs.addJsonRpcHandler("preview_sql", function(code)
+{
+   eval(parse(text = code), envir = globalenv())
+})
+
 .rs.addFunction("previewDataFrame", function(data, script)
 {
    preparedData <- .rs.prepareViewerData(
@@ -55,7 +60,3 @@
    .rs.previewDataFrame(data, script)
 })
 
-.rs.addGlobalFunction("previewSql", function(conn, statement, ...)
-{
-   .rs.previewSql(conn, statement, ...)
-})

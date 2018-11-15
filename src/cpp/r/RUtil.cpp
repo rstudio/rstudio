@@ -33,6 +33,18 @@
 # define CP_ACP 0
 #endif
 
+#ifdef _WIN32
+
+#include <Windows.h>
+
+extern "C" {
+__declspec(dllimport) unsigned int localeCP;
+}
+
+unsigned int s_codepage = 0;
+
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -79,17 +91,26 @@ bool hasCapability(const std::string& capability)
 
 std::string rconsole2utf8(const std::string& encoded)
 {
-   int codepage = CP_ACP;
-#ifdef _WIN32
-   Error error = r::exec::evaluateString("base::l10n_info()$codepage", &codepage);
-   if (error)
-      LOG_ERROR(error);
-#endif
-   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");
+#ifndef _WIN32
+   return encoded;
+#else
+   unsigned int codepage = localeCP;
 
+   // NOTE: On Windows with GUIs, when R attempts to write text to
+   // the console, it will surround UTF-8 text with 3-byte escapes:
+   //
+   //    \002\377\376 <text> \003\377\376
+   //
+   // strangely, we see these escapes around text that is not UTF-8
+   // encoded but rather is encoded according to the active locale.
+   // extract those pieces of text (discarding the escapes) and
+   // convert to UTF-8. (still not exactly sure what the cause of this
+   // behavior is; perhaps there is an extra UTF-8 <-> system conversion
+   // happening somewhere in the pipeline?)
    std::string output;
    std::string::const_iterator pos = encoded.begin();
    boost::smatch m;
+   boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE)");
    while (pos != encoded.end() && regex_utils::search(pos, encoded.end(), m, utf8))
    {
       if (pos < m[0].first)
@@ -101,6 +122,7 @@ std::string rconsole2utf8(const std::string& encoded)
       output.append(string_utils::systemToUtf8(std::string(pos, encoded.end()), codepage));
 
    return output;
+#endif
 }
 
 core::Error iconvstr(const std::string& value,
@@ -252,6 +274,35 @@ bool isPackageAttached(const std::string& packageName)
       }
    }
    return false;
+}
+
+void synchronizeLocale()
+{
+#ifdef _WIN32
+
+   // bail if the codepages are still in sync
+   if (s_codepage == localeCP)
+      return;
+
+   // ask R what the current locale is and then update
+   std::string rLocale;
+   Error error = r::exec::RFunction("base:::Sys.getlocale")
+         .addParam("LC_ALL")
+         .call(&rLocale);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!rLocale.empty())
+   {
+      std::string locale = ::setlocale(LC_ALL, nullptr);
+      if (locale != rLocale)
+         ::setlocale(LC_ALL, rLocale.c_str());
+   }
+
+   // save the updated codepage
+   s_codepage = localeCP;
+
+#endif
 }
 
 } // namespace util

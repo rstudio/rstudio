@@ -39,7 +39,7 @@ BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
 if ! test -e $BOOST_DIR
 then
    # download boost
-   BOOST_URL=https://ufpr.dl.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.tar.bz2
+   BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/boost_1_63_0.tar.bz2
    if [ ! -f "$BOOST_TAR" ]; then
       if [ "$PLATFORM" == "Darwin" ]
       then

@@ -91,27 +91,28 @@ public class SelectWidget extends Composite
       if (horizontalLayout)
       {
          horizontalPanel_ = new HorizontalPanel();
-         Label labelWidget = new Label(label);
+         label_ = new Label(label);
          if (listOnLeft)
          {
             horizontalPanel_.add(listBox_);
-            horizontalPanel_.add(labelWidget);
+            horizontalPanel_.add(label_);
          }
          else
          {
-            horizontalPanel_.add(labelWidget);
+            horizontalPanel_.add(label_);
             horizontalPanel_.add(listBox_);
          }
         
          horizontalPanel_.setCellVerticalAlignment(
-                                          labelWidget, 
+                                          label_, 
                                           HasVerticalAlignment.ALIGN_MIDDLE);
          panel = horizontalPanel_;
       }
       else
       {
+         label_ = new Label(label, true);
          flowPanel_ = new FlowPanel();
-         flowPanel_.add(new Label(label, true));
+         flowPanel_.add(label_);
          panel = flowPanel_;
          panel.add(listBox_);
       }
@@ -136,6 +137,11 @@ public class SelectWidget extends Composite
    public ListBox getListBox()
    {
       return listBox_;
+   }
+   
+   public void setLabel(String label)
+   {
+      label_.setText(label);
    }
    
    public void setChoices(String[] options)
@@ -218,5 +224,6 @@ public class SelectWidget extends Composite
    
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
+   private Label label_ = null;
    private final ListBox listBox_;
 }

@@ -371,8 +371,13 @@ core::Error runChunk(const std::string& docId,
    
    // generate process options
    core::system::ProcessOptions options;
+
+   // don't set terminateChildren on win32 as that flag
+   // will force the process to generate a new console window
+#ifndef _WIN32
    options.terminateChildren = true;
-   
+#endif
+
    core::system::Options env;
    core::system::environment(&env);
    

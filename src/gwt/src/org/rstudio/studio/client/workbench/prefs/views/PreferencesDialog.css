@@ -56,10 +56,6 @@
    display: none;
 }
 
-.themeInfobar > div {
-   border: none;
-}
-
 .themeInfobarShowing {
    display: block;
 }

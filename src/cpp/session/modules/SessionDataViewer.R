@@ -166,7 +166,7 @@
     list(
       col_name        = .rs.scalar(col_name),
       col_type        = .rs.scalar(col_type),
-      col_breaks      = col_breaks,
+      col_breaks      = as.character(col_breaks),
       col_counts      = col_counts,
       col_search_type = .rs.scalar(col_search_type),
       col_label       = .rs.scalar(col_label),

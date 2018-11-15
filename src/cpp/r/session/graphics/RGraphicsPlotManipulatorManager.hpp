@@ -16,8 +16,7 @@
 #ifndef R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 #define R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 
-#include <boost/signal.hpp>
-
+#include <core/BoostSignals.hpp>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
@@ -53,7 +52,7 @@ public:
 public:
    core::Error initialize(const UnitConversionFunctions& convert);
 
-   boost::signal<void ()>& onShowManipulator() ;
+   RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator() ;
    void setPlotManipulatorValues(const core::json::Object& values);
    void manipulatorPlotClicked(int x, int y);
    
@@ -85,7 +84,7 @@ private:
    bool replayingManipulator_;
 
    // manipulator event hook
-   boost::signal<void ()> onShowManipulator_;
+   RSTUDIO_BOOST_SIGNAL<void ()> onShowManipulator_;
 
    // unit conversion function
    UnitConversionFunctions convert_;

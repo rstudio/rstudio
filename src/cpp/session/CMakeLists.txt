@@ -34,9 +34,9 @@ endif()
 # if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
 #   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
 # endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
-  message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
-endif()
+# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
+#   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
+# endif()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
@@ -479,7 +479,7 @@ install(DIRECTORY "resources/connections"
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
 # install pandoc
-set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.2.1")
+set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/2.3.1")
 file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
 install(FILES ${PANDOC_FILES}
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -491,9 +491,9 @@ install(FILES ${PANDOC_FILES}
 #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
 # install rsconnect package
-file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
-install(FILES ${RSCONNECT_PACKAGE}
-        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+# file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
+# install(FILES ${RSCONNECT_PACKAGE}
+#         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
 # install PDF.js
 install(DIRECTORY "resources/pdfjs"

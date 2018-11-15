@@ -143,6 +143,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SuicideEvent.TYPE, this);
       events.addHandler(SessionAbendWarningEvent.TYPE, this);    
       events.addHandler(SessionSerializationEvent.TYPE, this);
+      events.addHandler(SessionRelaunchEvent.TYPE, this);
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
@@ -434,6 +435,23 @@ public class Application implements ApplicationEventHandlers
                           0);    // no timeout
          break;
       case SessionSerializationAction.COMPLETED:
+         view_.hideSerializationProgress();
+         break;
+      }
+   }
+
+   public void onSessionRelaunch(SessionRelaunchEvent event)
+   {
+      switch (event.getType())
+      {
+      case RELAUNCH_INITIATED:
+         view_.showSerializationProgress(
+               "Relaunching R session (this may take awhile)...",
+               true, // modal - we don't want the user using the session while we relaunch it
+               0, // show immediately
+               0); // never timeout
+         break;
+      case RELAUNCH_COMPLETE:
          view_.hideSerializationProgress();
          break;
       }

@@ -1,7 +1,7 @@
 /*
  * PosixGroup.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,10 +55,10 @@ Error groupFrom(const boost::function<int(
    int result = 0;
    do
    {
-      buffer.reserve(buffSize);
+      buffer.resize(buffSize);
 
       // attempt the read
-      result = getGroup(value, &grp, &(buffer[0]), buffSize, &temp);
+      result = getGroup(value, &grp, buffer.data(), buffer.size(), &temp);
 
       // if we fail, double the buffer prior to retry
       if (result == ERANGE)

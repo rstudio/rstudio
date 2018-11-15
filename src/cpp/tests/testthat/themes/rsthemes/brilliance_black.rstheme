@@ -143,7 +143,7 @@
   color: #EEEEEE
 }
 .nocolor.ace_editor .ace_line span {
-  color: #0000ce !important;
+  color: #EEEEEE !important;
 }
 .ace_bracket {
   margin: 0 !important;
@@ -153,20 +153,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #232323;
+  background-color: #242424;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #867522;
+  background-color: #867623;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #393939;
+  background-color: #3A3A3A;
 }
 .ace_console_error {
-  background-color: #393939;
+  background-color: #3A3A3A;
 }
 .terminal {
   background-color: rgba(13, 13, 13, 0.98);

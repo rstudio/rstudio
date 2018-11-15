@@ -28,4 +28,6 @@ public interface ThemeServerOperations
    void addTheme(ServerRequestCallback<String> request, String themeLocation);
    
    void removeTheme(ServerRequestCallback<Void> request, String themeName);
+   
+   void getThemeName(ServerRequestCallback<String> request, String themeLocation);
 }

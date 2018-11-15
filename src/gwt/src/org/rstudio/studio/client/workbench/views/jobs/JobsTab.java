@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -39,6 +40,9 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                    JobElapsedTickEvent.Handler
    {
       abstract void confirmClose(Command onConfirmed);
+      
+      @Handler
+      public abstract void onActivateJobs();
    }
    
    public interface Binder extends CommandBinder<Commands, JobsTab.Shim> {}

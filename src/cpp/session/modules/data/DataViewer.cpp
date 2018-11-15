@@ -45,8 +45,6 @@
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-#include "../SessionThemes.hpp"
-
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
 #endif
@@ -1035,18 +1033,6 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
       (bind(registerUriHandler, "/grid_data", getGridData))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kDefaultThemeLocation,
-          session::modules::themes::handleDefaultThemeRequest))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kGlobalCustomThemeLocation,
-          session::modules::themes::handleGlobalCustomThemeRequest))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kLocalCustomThemeLocation,
-          session::modules::themes::handleLocalCustomThemeRequest))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 
    Error error = initBlock.execute();

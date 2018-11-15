@@ -16,10 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-
 import com.google.inject.Inject;
 
 public class TextEditingTargetSqlHelper
@@ -31,23 +30,26 @@ public class TextEditingTargetSqlHelper
    }
    
    @Inject
-   void initialize(EventBus eventBus)
+   void initialize(SqlServerOperations server)
    {
-      eventBus_ = eventBus;
+      server_ = server;
    }
    
    
-   public void previewSql(EditingTarget editingTarget)
+   public boolean previewSql(EditingTarget editingTarget)
    {
       TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
          docDisplay_.getCode(),
          "preview",
          "--"
       );
+      
+      if (!previewSource.hasCommentHeader())
+         return false;
 
       if (previewSource.getFunction().length() == 0)
       {
-         previewSource.setFunction("previewSql");
+         previewSource.setFunction(".rs.previewSql");
       }
 
       previewSource.buildCommand(
@@ -57,11 +59,13 @@ public class TextEditingTargetSqlHelper
             @Override
             public void execute(String command)
             {
-               eventBus_.fireEvent(new SendToConsoleEvent(command, true));
+               server_.previewSql(command, new VoidServerRequestCallback());
             }
          }
       );
+      
+      return true;
    }
-   private EventBus eventBus_; 
    private DocDisplay docDisplay_;
+   private SqlServerOperations server_;
 }

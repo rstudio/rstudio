@@ -58,6 +58,8 @@ bool isWindowsOnlyFunction(const std::string& name);
 // Is package attached to search path?
 bool isPackageAttached(const std::string& packageName);
 
+void synchronizeLocale();
+
 } // namespace util   
 } // namespace r
 } // namespace rstudio

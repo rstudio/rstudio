@@ -1291,6 +1291,22 @@ public class StringUtil
       return str1.equalsIgnoreCase(str2);
    }
    
+   public static final String dequote(String string)
+   {
+      return dequote(string, "\\\\");
+   }
+   
+   public static final String dequote(String string, String escape)
+   {
+      for (String delimiter : new String[] { "\"", "'", "`" })
+         if (string.startsWith(delimiter) && string.endsWith(delimiter))
+            return string
+                  .substring(1, string.length() - 1)
+                  .replaceAll(escape + delimiter, delimiter);
+      
+      return string;
+   }
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT

@@ -311,8 +311,12 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- index$paths
    }
    
-   # Merge in completions from the current directory.
-   dirPaths <- .rs.listFilesFuzzy(directory, tokenName)
+   # Merge in completions from the current directory. This can be
+   # slow on networked filesystems so do this with a timeout.
+   dirPaths <- .rs.withTimeLimit(1, .rs.listFilesFuzzy(directory, tokenName))
+   if (is.null(dirPaths))
+      dirPaths <- character()
+   
    if (directoriesOnly)
    {
       dirInfo <- .rs.fileInfo(dirPaths)

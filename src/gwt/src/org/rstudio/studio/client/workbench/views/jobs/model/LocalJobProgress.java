@@ -1,5 +1,5 @@
 /*
- * GlobalJobProgress.java
+ * LocalJobProgress.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *

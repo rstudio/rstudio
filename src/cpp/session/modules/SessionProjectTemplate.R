@@ -64,9 +64,6 @@
    # list all files in project directory
    projectFiles <- list.files(projectPath, recursive = TRUE)
    
-   # expand environment variables within 'openFiles' specification
-   openFiles <- .rs.expandEnvironmentVariables(openFiles)
-   
    # convert from glob to regular expression
    reOpenFiles <- glob2rx(openFiles)
    
@@ -79,19 +76,3 @@
    .Call("rs_addFirstRunDoc", projectFilePath, files)
 })
 
-.rs.addFunction("expandEnvironmentVariables", function(fields)
-{
-   transformed <- fields
-   .rs.enumerate(Sys.getenv(), function(key, val) {
-      
-      patterns <- c(
-         paste("\\$", key, "\\b", sep = ""),       # $FOO
-         paste("\\$\\{", key, "\\}\\b", sep = ""), # ${FOO}
-         paste("%", key, "%\\b", sep = "")         # %FOO%
-      )
-      
-      for (pattern in patterns)
-         transformed <<- gsub(pattern, val, transformed, ignore.case = TRUE)
-   })
-   transformed
-})

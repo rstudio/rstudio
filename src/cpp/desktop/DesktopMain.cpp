@@ -274,35 +274,6 @@ bool useRemoteDevtoolsDebugging()
 
 QString inferDefaultRenderingEngine()
 {
-   // prefer software rendering in mixed-dpi multi-monitor
-   // configurations
-   // https://github.com/rstudio/rstudio/issues/3479
-   core::system::ProcessResult processResult;
-   Error error = core::system::runCommand(
-            "/usr/sbin/system_profiler SPDisplaysDataType | /usr/bin/grep 'Resolution:'",
-            core::system::ProcessOptions(),
-            &processResult);
-   
-   if (error || processResult.exitStatus != EXIT_SUCCESS)
-      return QStringLiteral("auto");
-
-   std::string output = string_utils::trimWhitespace(processResult.stdOut);
-   std::vector<std::string> lines = 
-         core::algorithm::split(output, "\n");
-   
-   // TODO: we likely need to handle case where e.g. a laptop is hooked up to
-   // multiple high DPI non-retina displays
-   int retinaDisplays = 0;
-   int totalDisplays = lines.size();
-   for (const std::string& line : lines)
-   {
-      if (line.find("Retina") != std::string::npos)
-         retinaDisplays += 1;
-   }
-   
-   if (retinaDisplays > 0 && retinaDisplays != totalDisplays)
-      return QStringLiteral("software");
-   
    return QStringLiteral("auto");
 }
 
@@ -314,10 +285,10 @@ QString inferDefaultRenderingEngine()
 {
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
-      "Intel HD Graphics 520",
-      "Intel HD Graphics 530",
-      "Intel HD Graphics 620",
-      "Intel HD Graphics 630",
+      "Intel(R) HD Graphics 520",
+      "Intel(R) HD Graphics 530",
+      "Intel(R) HD Graphics 620",
+      "Intel(R) HD Graphics 630",
    };
 
    DISPLAY_DEVICE device;
@@ -333,8 +304,13 @@ QString inferDefaultRenderingEngine()
       // check for unsupported device
       std::string deviceString(device.DeviceString);
       for (auto&& item : blacklist)
+      {
          if (deviceString.find(item) != std::string::npos)
+         {
+            QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache, true);
             return QStringLiteral("software");
+         }
+      }
    }
 
    return QStringLiteral("auto");
@@ -576,11 +552,16 @@ int main(int argc, char* argv[])
 
       // determine the filename that was passed to us
       QString filename;
+
 #ifdef __APPLE__
-      // get filename from OpenFile apple-event (pump to ensure delivery)
-      pApp->processEvents();
-      filename = verifyAndNormalizeFilename(
-                              pAppLaunch->startupOpenFileRequest());
+      // run an event loop for a short period of time just to ensure
+      // that the OpenFile startup event (if any) gets pumped
+      QEventLoop loop;
+      QTimer::singleShot(100, &loop, &QEventLoop::quit);
+      loop.exec();
+
+      // grab the startup file request (if any)
+      filename = verifyAndNormalizeFilename(pAppLaunch->startupOpenFileRequest());
 #endif
       // allow all platforms (including OSX) to check the command line.
       // we include OSX because the way Qt handles apple events is to

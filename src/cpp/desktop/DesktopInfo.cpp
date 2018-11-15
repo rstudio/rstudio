@@ -15,7 +15,16 @@
 
 #include "DesktopInfo.hpp"
 
+#include <atomic>
+#include <set>
+
+#include <boost/algorithm/string.hpp>
+
+#include <QThread>
+
+#include <core/Algorithm.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/FileSerializer.hpp>
@@ -27,7 +36,7 @@
 #define kRedhatRelease "/etc/redhat-release"
 #define kOsRelease     "/etc/os-release"
 
-#define kUnknown QStringLiteral("unknown")
+#define kUnknown QStringLiteral("(unknown)")
 
 using namespace rstudio::core;
 
@@ -36,22 +45,105 @@ namespace desktop {
 
 namespace {
 
+#ifndef Q_OS_MAC
+std::atomic<bool> s_abortRequested(false);
+QThread* s_fontDatabaseWorker = nullptr;
+#endif
+
 QString s_platform             = kUnknown;
 QString s_version              = kUnknown;
 QString s_sumatraPdfExePath    = kUnknown;
+QString s_fixedWidthFontList   = QStringLiteral("");
 int     s_chromiumDevtoolsPort = -1;
 double  s_zoomLevel            = 1.0;
 
-QString getFixedWidthFontList()
+#ifndef Q_OS_MAC
+
+void buildFontDatabaseImpl()
 {
-   return desktop::getFixedWidthFontList();
+   QFontDatabase db;
+
+   QStringList fontList;
+   for (const QString& family : db.families())
+   {
+      if (s_abortRequested)
+         return;
+
+#ifdef _WIN32
+      // screen out annoying Qt warnings when attempting to
+      // initialize incompatible fonts
+      static std::set<std::string> blacklist = {
+         "8514oem",
+         "Fixedsys",
+         "Modern",
+         "MS Sans Serif",
+         "MS Serif",
+         "Roman",
+         "Script",
+         "Small Fonts",
+         "System",
+         "Terminal"
+      };
+
+      if (blacklist.count(family.toStdString()))
+         continue;
+#endif
+
+      if (isFixedWidthFont(QFont(family, 12)))
+         fontList.append(family);
+   }
+
+   QString fonts = fontList.join(QStringLiteral("\n"));
+
+   // NOTE: invokeMethod() is used to ensure thread-safe communication
+   QMetaObject::invokeMethod(
+            &desktopInfo(),
+            "setFixedWidthFontList",
+            Q_ARG(QString, fonts));
 }
 
-QString& fixedWidthFontList()
+void buildFontDatabase()
 {
-   static QString instance = getFixedWidthFontList();
-   return instance;
+#ifdef Q_OS_LINUX
+
+   if (desktop::options().useFontConfigDatabase())
+   {
+      // if fontconfig is installed, we can use it to query monospace
+      // fonts using its own cache (and it should be much more performant
+      // than asking Qt to build the font database on demand)
+      core::system::ProcessOptions options;
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(
+               "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
+               options,
+               &result);
+
+      bool didReturnFonts =
+            error == Success() &&
+            result.exitStatus == EXIT_SUCCESS &&
+            !result.stdOut.empty();
+
+      if (didReturnFonts)
+      {
+         s_fixedWidthFontList = QString::fromStdString(result.stdOut);
+         return;
+      }
+   }
+
+#endif
+
+   s_fontDatabaseWorker = QThread::create(buildFontDatabaseImpl);
+   s_fontDatabaseWorker->start();
 }
+
+#else
+
+void buildFontDatabase()
+{
+   s_fixedWidthFontList = desktop::getFixedWidthFontList();
+}
+
+#endif
 
 #ifdef Q_OS_LINUX
 
@@ -111,6 +203,8 @@ void initializeOsRelease()
 
 void initialize()
 {
+   buildFontDatabase();
+
 #ifdef Q_OS_LINUX
    if (FilePath(kOsRelease).exists())
    {
@@ -134,30 +228,21 @@ void initialize()
 
 } // end anonymous namespace
 
+void DesktopInfo::onClose()
+{
+#ifndef Q_OS_MAC
+   if (s_fontDatabaseWorker && s_fontDatabaseWorker->isRunning())
+   {
+      s_abortRequested = true;
+      s_fontDatabaseWorker->wait(1000);
+   }
+#endif
+}
+
 DesktopInfo::DesktopInfo(QObject* parent)
    : QObject(parent)
 {
    initialize();
-
-   QObject::connect(
-            this,
-            &DesktopInfo::sumatraPdfExePathChanged,
-            &DesktopInfo::setSumatraPdfExePath);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::fixedWidthFontListChanged,
-            &DesktopInfo::setFixedWidthFontList);
-
-   QObject::connect(
-            this,
-            &DesktopInfo::zoomLevelChanged,
-            &DesktopInfo::setZoomLevel);
-   
-   QObject::connect(
-            this,
-            &DesktopInfo::chromiumDevtoolsPortChanged,
-            &DesktopInfo::setChromiumDevtoolsPort);
 }
 
 QString DesktopInfo::getPlatform()
@@ -168,6 +253,11 @@ QString DesktopInfo::getPlatform()
 QString DesktopInfo::getVersion()
 {
    return s_version;
+}
+
+bool DesktopInfo::desktopHooksAvailable()
+{
+   return true;
 }
 
 QString DesktopInfo::getScrollingCompensationType()
@@ -183,15 +273,15 @@ QString DesktopInfo::getScrollingCompensationType()
 
 QString DesktopInfo::getFixedWidthFontList()
 {
-   return fixedWidthFontList();
+   return s_fixedWidthFontList;
 }
 
-void DesktopInfo::setFixedWidthFontList(QString list)
+void DesktopInfo::setFixedWidthFontList(QString fontList)
 {
-   if (fixedWidthFontList() != list)
+   if (s_fixedWidthFontList != fontList)
    {
-      fixedWidthFontList() = list;
-      emit fixedWidthFontListChanged(list);
+      s_fixedWidthFontList = fontList;
+      emit fixedWidthFontListChanged(fontList);
    }
 }
 
@@ -200,20 +290,37 @@ QString DesktopInfo::getFixedWidthFont()
    return options().fixedWidthFont();
 }
 
+void DesktopInfo::setFixedWidthFont(QString font)
+{
+   if (font != options().fixedWidthFont())
+   {
+      options().setFixedWidthFont(font);
+      emit fixedWidthFontChanged(font);
+   }
+}
+
 QString DesktopInfo::getProportionalFont()
 {
    return options().proportionalFont();
 }
 
+void DesktopInfo::setProportionalFont(QString font)
+{
+   if (font != options().proportionalFont())
+   {
+      options().setProportionalFont(font);
+      emit proportionalFontChanged(font);
+   }
+}
+
 QString DesktopInfo::getDesktopSynctexViewer()
 {
-   // TODO: this isn't really constant
    return Synctex::desktopViewerInfo().name;
 }
 
-bool DesktopInfo::desktopHooksAvailable()
+void DesktopInfo::setDesktopSynctexViewer(QString)
 {
-   return true;
+   qWarning() << "setDesktopSynctexViewer() not implemented";
 }
 
 QString DesktopInfo::getSumatraPdfExePath()

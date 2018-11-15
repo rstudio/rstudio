@@ -18,8 +18,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/signal.hpp>
-
+#include <core/BoostSignals.hpp>
 #include <core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
@@ -61,8 +60,10 @@ public:
    ExecScope execScope();
    const ChunkOptions& options();
 
-   // inject console input manually
+   // inject console input/output manually
    void onConsoleInput(const std::string& input);
+   void onConsoleOutput(module_context::ConsoleOutputType type,
+         const std::string& output);
 
    // invoked to indicate that an expression has finished evaluating
    void onExprComplete();
@@ -73,8 +74,6 @@ public:
    void disconnect();
 
 private:
-   void onConsoleOutput(module_context::ConsoleOutputType type, 
-         const std::string& output);
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onConsolePrompt(const std::string&);
    void onFileOutput(const core::FilePath& file, const core::FilePath& sidecar,
@@ -103,7 +102,7 @@ private:
    bool hasErrors_;
 
    std::vector<boost::shared_ptr<NotebookCapture> > captures_;
-   std::vector<boost::signals::connection> connections_;
+   std::vector<RSTUDIO_BOOST_CONNECTION> connections_;
 };
 
 } // namespace notebook

@@ -34,6 +34,9 @@ public class Job
    
    // the job's state (idle, running, completed, etc.)
    public int state;
+
+   // the job's type (session, ad-hoc)
+   public int type;
    
    // the number of progress units the job has completed so far
    public int progress;

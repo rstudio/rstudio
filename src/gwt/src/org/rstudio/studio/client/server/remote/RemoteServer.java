@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.json.client.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -39,19 +40,8 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
-import org.rstudio.studio.client.application.events.InvalidSessionEvent;
-import org.rstudio.studio.client.application.events.ServerOfflineEvent;
-import org.rstudio.studio.client.application.events.UnauthorizedEvent;
-import org.rstudio.studio.client.application.model.ActiveSession;
-import org.rstudio.studio.client.application.model.InvalidSessionInfo;
-import org.rstudio.studio.client.application.model.ProductInfo;
-import org.rstudio.studio.client.application.model.RVersionSpec;
-import org.rstudio.studio.client.application.model.SuspendOptions;
-import org.rstudio.studio.client.application.model.TutorialApiCallContext;
-import org.rstudio.studio.client.application.model.UpdateCheckResult;
+import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.*;
 import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -221,12 +211,6 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONBoolean;
-import com.google.gwt.json.client.JSONNull;
-import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -245,6 +229,7 @@ public class RemoteServer implements Server
       clientId_ = null;
       disconnected_ = false;
       listeningForEvents_ = false;
+      sessionRelaunchPending_ = false;
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
@@ -346,6 +331,7 @@ public class RemoteServer implements Server
          {
             clientId_ = sessionInfo.getClientId();
             clientVersion_ = sessionInfo.getClientVersion();
+            launchParameters_ = sessionInfo.getLaunchParameters();
             requestCallback.onResponseReceived(sessionInfo);
          }
    
@@ -1157,6 +1143,15 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   @Override
+   public void previewSql(String command,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      sendRequest(RPC_SCOPE, PREVIEW_SQL, params, requestCallback);
+   }
 
    public void editCompleted(String text,
                              ServerRequestCallback<Void> requestCallback)
@@ -1265,6 +1260,12 @@ public class RemoteServer implements Server
                   ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
+   }
+
+   public void getCRANActives(
+                  ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_CRAN_ACTIVES, requestCallback);
    }
    
    public void suggestTopics(String prefix,
@@ -2868,6 +2869,7 @@ public class RemoteServer implements Server
       return sendRequest(EVENTS_SCOPE,
                          "get_events",
                          params,
+                         null,
                          false,
                          requestCallback,
                          retryHandler);
@@ -2887,7 +2889,7 @@ public class RemoteServer implements Server
                                 String method,
                                 ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, new JSONArray(), requestCallback);
+      sendRequest(scope, method, new JSONArray(), null, requestCallback);
    }
 
    private <T> void sendRequest(String scope,
@@ -2897,7 +2899,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(param));
-      sendRequest(scope, method, params, requestCallback);
+      sendRequest(scope, method, params, null, requestCallback);
    }
 
    private <T> void sendRequest(String scope,
@@ -2907,7 +2909,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(param));
-      sendRequest(scope, method, params, requestCallback);
+      sendRequest(scope, method, params, null, requestCallback);
    }
 
    private <T> void sendRequest(String scope,
@@ -2922,7 +2924,7 @@ public class RemoteServer implements Server
                      new JSONString(param) :
                      JSONNull.getInstance());
 
-      sendRequest(scope, method, params, requestCallback);
+      sendRequest(scope, method, params, null, requestCallback);
    }
 
    private <T> void sendRequest(String scope,
@@ -2940,7 +2942,7 @@ public class RemoteServer implements Server
                                     JSONNull.getInstance());
 
 
-      sendRequest(scope, method, params, requestCallback);
+      sendRequest(scope, method, params, null, requestCallback);
    }
 
 
@@ -2955,16 +2957,24 @@ public class RemoteServer implements Server
       params.set(0, param != null ? new JSONObject(param) :
                                     JSONNull.getInstance());
 
-      sendRequest(scope, method, params, requestCallback);
+      sendRequest(scope, method, params, null, requestCallback);
    }
-
 
    private <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, params, false, requestCallback);
+      sendRequest(scope, method, params, null, false, requestCallback);
+   }
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final JSONObject kwparams,
+                                final ServerRequestCallback<T> requestCallback)
+   {
+      sendRequest(scope, method, params, kwparams,false, requestCallback);
    }
 
    private <T> void sendRequest(final String scope,
@@ -2973,17 +2983,28 @@ public class RemoteServer implements Server
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> cb)
    {
+      sendRequest(scope, method, params, null, redactLog, cb);
+
+   }
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final JSONObject kwparams,
+                                final boolean redactLog,
+                                final ServerRequestCallback<T> cb)
+   {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
       if (Satellite.isCurrentWindowSatellite())
       {
-         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
+         sendRequestViaMainWorkbench(scope, method, params, kwparams, redactLog, cb);
 
       }
       // otherwise just a standard request with single retry
       else
       {
-         sendRequestWithRetry(scope, method, params, redactLog, cb); 
+         sendRequestWithRetry(scope, method, params, kwparams, redactLog, cb);
       }
       
    }
@@ -2992,6 +3013,7 @@ public class RemoteServer implements Server
                                  final String scope,
                                  final String method,
                                  final JSONArray params,
+                                 final JSONObject kwparams,
                                  final boolean redactLog,
                                  final ServerRequestCallback<T> requestCallback)
    {
@@ -3005,11 +3027,24 @@ public class RemoteServer implements Server
             // is no retry handler installed)
             sendRequest(scope,
                         method, 
-                        params, 
+                        params,
+                        kwparams,
                         redactLog, 
                         requestCallback, 
                         null);
-         }   
+         }
+
+         public void onModifiedRetry(RpcRequest modifiedRequest)
+         {
+            // retry this modified request once
+            sendRequest(scope,
+                        modifiedRequest.getMethod(),
+                        modifiedRequest.getParams(),
+                        modifiedRequest.getKwparams(),
+                        modifiedRequest.getRedactLog(),
+                        requestCallback,
+                        null);
+         }
 
          public void onError(RpcError error)
          {
@@ -3021,7 +3056,8 @@ public class RemoteServer implements Server
       // submit request (retry same request up to one time)
       sendRequest(scope, 
                   method, 
-                  params, 
+                  params,
+                  kwparams,
                   redactLog, 
                   requestCallback, 
                   retryHandler);
@@ -3033,6 +3069,7 @@ public class RemoteServer implements Server
                               String scope,
                               String method,
                               JSONArray params,
+                              JSONObject kwparams,
                               boolean redactLog,
                               final ServerRequestCallback<T> requestCallback,
                               RetryHandler retryHandler)
@@ -3042,6 +3079,7 @@ public class RemoteServer implements Server
             scope,
             method,
             params,
+            kwparams,
             redactLog,
             new RpcResponseHandler() 
             {
@@ -3061,6 +3099,8 @@ public class RemoteServer implements Server
                   }
                   else
                   {
+                     clearSessionRelaunchPending();
+
                      T result = response.<T> getResult();
                      requestCallback.onResponseReceived(result);
                   }
@@ -3077,6 +3117,7 @@ public class RemoteServer implements Server
                                   String scope, 
                                   String method, 
                                   JSONArray params,
+                                  JSONObject kwparams,
                                   boolean redactLog,
                                   final RpcResponseHandler responseHandler,
                                   final RetryHandler retryHandler)
@@ -3092,7 +3133,7 @@ public class RemoteServer implements Server
       RpcRequest rpcRequest = new RpcRequest(rserverURL,
                                              method,
                                              params,
-                                             null,
+                                             kwparams,
                                              redactLog,
                                              sourceWindow,
                                              clientId_,
@@ -3111,7 +3152,7 @@ public class RemoteServer implements Server
             
             // if we have a retry handler then see if we can resolve the
             // error and then retry
-            if ( resolveRpcErrorAndRetry(error, retryHandler) )
+            if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
                return ;
 
             // first crack goes to globally registered rpc error handlers
@@ -3143,7 +3184,7 @@ public class RemoteServer implements Server
 
                // if we have a retry handler then see if we can resolve the
                // error and then retry
-               if ( resolveRpcErrorAndRetry(error, retryHandler) )
+               if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
                   return ;
 
                // give first crack to internal handlers, then forward to caller
@@ -3160,6 +3201,8 @@ public class RemoteServer implements Server
             // no error, process the result
             else
             {
+               clearSessionRelaunchPending();
+
                // no error, forward to caller
                responseHandler.onResponseReceived(response);
                
@@ -3210,7 +3253,8 @@ public class RemoteServer implements Server
          return Boolean.parseBoolean(eventsPending);
    }
 
-   private boolean resolveRpcErrorAndRetry(final RpcError error,
+   private boolean resolveRpcErrorAndRetry(final RpcRequest request,
+                                           final RpcError error,
                                            final RetryHandler retryHandler)
    {
       // won't even attempt resolve if we don't have a retryHandler
@@ -3252,9 +3296,55 @@ public class RemoteServer implements Server
          // attempting to resolve
          return true;
       }
+      // launch params missing means we are in a launcher session that needs to be implicitly resumed
+      else if (error.getCode() == RpcError.LAUNCH_PARAMETERS_MISSING)
+      {
+         if (launchParameters_ == null)
+            return false;
+
+         // resend the RPC with the launch params received earlier via client_init
+         JSONObject kwParams = new JSONObject();
+         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
+
+         RpcRequest modifiedRequest = new RpcRequest(request.getUrl(),
+                                                     request.getMethod(),
+                                                     request.getParams(),
+                                                     kwParams,
+                                                     request.getRedactLog(),
+                                                     request.getSourceWindow(),
+                                                     request.getClientId(),
+                                                     request.getClientVersion());
+
+         setSessionRelaunchPending();
+
+         retryHandler.onModifiedRetry(modifiedRequest);
+         return true;
+      }
       else
       {
          return false;
+      }
+   }
+
+   private void setSessionRelaunchPending()
+   {
+      if (!sessionRelaunchPending_)
+      {
+         sessionRelaunchPending_ = true;
+
+         // fire event to inform UI that we are attempting to relaunch the session
+         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED));
+      }
+   }
+
+   private void clearSessionRelaunchPending()
+   {
+      if (sessionRelaunchPending_)
+      {
+         sessionRelaunchPending_ = false;
+
+         // fire event to inform UI that we are done relaunching the session
+         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_COMPLETE));
       }
    }
 
@@ -3332,7 +3422,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
@@ -3388,11 +3478,25 @@ public class RemoteServer implements Server
             sendRequest(getSourceWindowName(sourceWindow),
                         scope, 
                         method, 
-                        jsonParams, 
+                        jsonParams,
+                        null,
                         redactLog, 
                         responseHandler, 
                         null);
-         }   
+         }
+
+         public void onModifiedRetry(RpcRequest modifiedRequest)
+         {
+            // retry this modified request once
+            sendRequest(getSourceWindowName(sourceWindow),
+                        scope,
+                        modifiedRequest.getMethod(),
+                        modifiedRequest.getParams(),
+                        modifiedRequest.getKwparams(),
+                        modifiedRequest.getRedactLog(),
+                        responseHandler,
+                        null);
+         }
 
          public void onError(RpcError error)
          {
@@ -3405,7 +3509,8 @@ public class RemoteServer implements Server
       sendRequest(getSourceWindowName(sourceWindow),
                   scope, 
                   method, 
-                  jsonParams, 
+                  jsonParams,
+                  null,
                   redactLog, 
                   responseHandler, 
                   retryHandler);
@@ -3421,9 +3526,12 @@ public class RemoteServer implements Server
                                String scope,
                                String method,
                                JSONArray params,
+                               JSONObject kwparams,
                                boolean redactLog,
                                final ServerRequestCallback<T> requestCallback)
    {
+      assert kwparams == null : "kwparams was not null for sendRequestViaMainWorkbench - not currently supported";
+
       JSONObject request = new JSONObject();
       request.put("method", new JSONString(method));
       if (params != null)
@@ -3437,6 +3545,7 @@ public class RemoteServer implements Server
             scope, 
             method, 
             params.getJavaScriptObject(),
+            kwparams == null ? JavaScriptObject.createObject() : kwparams.getJavaScriptObject(),
             redactLog, 
             new RpcResponseHandler() {
                @Override
@@ -3453,6 +3562,8 @@ public class RemoteServer implements Server
                   }
                   else
                   {
+                     clearSessionRelaunchPending();
+
                      T result = response.<T> getResult();
                      requestCallback.onResponseReceived(result);
                   }
@@ -3467,18 +3578,19 @@ public class RemoteServer implements Server
                                     String scope,
                                     String method,
                                     JavaScriptObject params,
+                                    JavaScriptObject kwparams,
                                     boolean redactLog,
                                     RpcResponseHandler handler) /*-{
       
       var responseCallback = new Object();
       responseCallback.onResponse = $entry(function(response) {
-        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
+        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(*)(response);
       });
 
       $wnd.opener.sendRemoteServerRequest($wnd,
                                           scope, 
                                           method, 
-                                          params, 
+                                          params,
                                           redactLog,
                                           responseCallback);
    }-*/;
@@ -3738,6 +3850,8 @@ public class RemoteServer implements Server
       params.set(3,  new JSONNumber(height));
       sendRequest(RPC_SCOPE, "plots_create_rpubs_html", params, callback);
    }
+   
+   
    
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
@@ -4361,6 +4475,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void prepareForAddin(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PREPARE_FOR_ADDIN, requestCallback);
+   }
+   
+   @Override
    public void executeRAddinNonInteractively(String commandId, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4502,6 +4622,19 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void forgetRSConnectDeployments(String sourceFile,
+                                          String outputFile,
+                                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(sourceFile)
+            .add(outputFile)
+            .get();
+      
+      sendRequest(RPC_SCOPE, FORGET_RSCONNECT_DEPLOYMENTS, params, requestCallback);
+   }
+   
+   @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
          String server, String appName, String appTitle, String appId,
@@ -4519,6 +4652,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
+            requestCallback);
+   }
+   
+   @Override
+   public void cancelPublish(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            CANCEL_PUBLISH,
             requestCallback);
    }
    
@@ -5386,6 +5527,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(code));
       sendRequest(RPC_SCOPE, CONNECTION_TEST, params, callback);
    }
+   
+   
 
    @Override
    public void launchEmbeddedShinyConnectionUI(String packageName, 
@@ -5500,7 +5643,7 @@ public class RemoteServer implements Server
 
    @Override
    public void startJob(JobLaunchSpec spec, 
-                        ServerRequestCallback<Void> callback)
+                        ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(spec));
@@ -5511,6 +5654,30 @@ public class RemoteServer implements Server
    public void clearJobs(ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, "clear_jobs", callback);
+   }
+
+   @Override
+   public void getLauncherJobsEnabled(ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(RPC_SCOPE, "launcher_jobs_enabled", callback);
+   }
+   
+   @Override
+   public void startLauncherJobStatusStream(String jobId,
+                                            ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      sendRequest(RPC_SCOPE, "launcher_jobs_start_status_stream", params, callback);
+   }
+  
+   @Override
+   public void stopLauncherJobStatusStream(String jobId,
+                                           ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      sendRequest(RPC_SCOPE, "launcher_jobs_stop_status_stream", params, callback);
    }
 
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
@@ -5595,6 +5762,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getThemeName(ServerRequestCallback<String> callback, String themeLocation)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(themeLocation));
+      sendRequest(RPC_SCOPE, GET_THEME_NAME, params, callback);
+   }
+   
+   @Override
    public void replaceCommentHeader(String command,
                                     String path,
                                     String code,
@@ -5609,9 +5784,11 @@ public class RemoteServer implements Server
 
    private String clientId_;
    private String clientVersion_ = "";
+   private JsObject launchParameters_;
    private String userHomePath_;
    private boolean listeningForEvents_;
    private boolean disconnected_;
+   private boolean sessionRelaunchPending_;
 
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_ ;
@@ -5694,6 +5871,8 @@ public class RemoteServer implements Server
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
+   
+   private static final String PREVIEW_SQL = "preview_sql";
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
@@ -5710,6 +5889,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
+   private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
@@ -5954,6 +6134,7 @@ public class RemoteServer implements Server
    private static final String GET_PRODUCT_INFO = "get_product_info";
    
    private static final String GET_R_ADDINS = "get_r_addins";
+   private static final String PREPARE_FOR_ADDIN = "prepare_for_addin";
    private static final String EXECUTE_R_ADDIN = "execute_r_addin";
 
    private static final String CREATE_SHINY_APP = "create_shiny_app";
@@ -5971,7 +6152,9 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
    private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
+   private static final String FORGET_RSCONNECT_DEPLOYMENTS = "forget_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
+   private static final String CANCEL_PUBLISH = "cancel_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_SERVER_URLS = "get_server_urls";
@@ -6058,6 +6241,7 @@ public class RemoteServer implements Server
    private static final String GET_THEMES = "get_themes";
    private static final String ADD_THEME = "add_theme";
    private static final String REMOVE_THEME = "remove_theme";
+   private static final String GET_THEME_NAME = "get_theme_name";
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
 }

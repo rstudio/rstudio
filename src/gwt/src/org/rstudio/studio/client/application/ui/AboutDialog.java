@@ -30,7 +30,6 @@ public class AboutDialog extends ModalDialogBase
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      info_ = info;
       setText("About " + editionInfo_.editionName());
       ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
@@ -43,9 +42,8 @@ public class AboutDialog extends ModalDialogBase
          });
          addLeftButton(licenseButton);
       }
-      contents_ = new AboutDialogContents(info_, editionInfo_);
+      contents_ = new AboutDialogContents(info, editionInfo_);
       setWidth("600px");
-      firstTimeShown_ = true;
    }
 
    @Override
@@ -57,12 +55,7 @@ public class AboutDialog extends ModalDialogBase
    @Override
    protected void onDialogShown()
    {
-      if (!firstTimeShown_ && editionInfo_.proLicense() && Desktop.isDesktop())
-      {
-         // update license status display every time About dialog is shown
-         contents_ = new AboutDialogContents(info_, editionInfo_);
-      }
-      firstTimeShown_ = false;
+      contents_.refresh();
       super.onDialogShown();
    }
 
@@ -72,8 +65,6 @@ public class AboutDialog extends ModalDialogBase
       editionInfo_ = editionInfo;
    } 
    
-   private boolean firstTimeShown_;
-   private ProductInfo info_;
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
 }

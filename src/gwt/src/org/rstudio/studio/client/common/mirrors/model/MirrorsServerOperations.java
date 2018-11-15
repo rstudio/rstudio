@@ -30,4 +30,7 @@ public interface MirrorsServerOperations
    void validateCranRepo(
          ServerRequestCallback<Boolean> requestCallback,
          String cranRepoUrl);
+
+   void getCRANActives(
+   		 ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
 }

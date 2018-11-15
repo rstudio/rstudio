@@ -1558,10 +1558,8 @@ public class TextEditingTarget implements
                return;
 
             // always check for changes if this is the active editor
-            if (commandHandlerReg_ != null)
-            {
+            if (isActiveDocument())
                checkForExternalEdit();
-            }
 
             // also check for changes on modifications if we are not dirty
             // note that we don't check for changes on removed files because
@@ -5199,18 +5197,8 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
-                     if (docDisplay_.hasBreakpoints())
-                     {
-                        hideBreakpointWarningBar();
-                     }
-                     consoleDispatcher_.executeSourceCommand(
-                           getPath(),
-                           fileType_,
-                           docUpdateSentinel_.getEncoding(),
-                           activeCodeIsAscii(),
-                           forceEcho ? true : echo,
-                           prefs_.focusConsoleAfterExec().getValue(),
-                           docDisplay_.hasBreakpoints());   
+                     executeRSourceCommand(forceEcho ? true : echo, 
+                        prefs_.focusConsoleAfterExec().getValue());
                   }
                };
             
@@ -5452,9 +5440,9 @@ public class TextEditingTarget implements
       }); 
    }
 
-   void customSource()
+   boolean customSource()
    {
-      rHelper_.customSource(TextEditingTarget.this);
+      return rHelper_.customSource(TextEditingTarget.this);
    }
    
    void renderRmd()
@@ -6280,29 +6268,41 @@ public class TextEditingTarget implements
                {
                   previewFromR();
                }
-               else if (fileType_.isR())
-               {
-                  if (extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
-                     customSource();
-               }
                else
                {
-                  if (docDisplay_.hasBreakpoints())
-                  {
-                     hideBreakpointWarningBar();
-                  }
-                  consoleDispatcher_.executeSourceCommand(
-                                             docUpdateSentinel_.getPath(), 
-                                             fileType_,
-                                             docUpdateSentinel_.getEncoding(), 
-                                             activeCodeIsAscii(),
-                                             false,
-                                             false,
-                                             docDisplay_.hasBreakpoints());
+                  executeRSourceCommand(false, false);
                }
             }
          }
       };
+   }
+   
+   private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
+   {
+      // Hide breakpoint warning bar if visible (since we will re-evaluate
+      // breakpoints after source)
+      if (docDisplay_.hasBreakpoints())
+      {
+         hideBreakpointWarningBar();
+      }
+
+      if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
+      {
+         // If this R script looks like it has a custom source
+         // command, try to execute it; if successful, we're done.
+         if (customSource())
+            return;
+      }
+
+      // Execute the R source() command
+      consoleDispatcher_.executeSourceCommand(
+                                 docUpdateSentinel_.getPath(), 
+                                 fileType_,
+                                 docUpdateSentinel_.getEncoding(), 
+                                 activeCodeIsAscii(),
+                                 forceEcho,
+                                 focusAfterExec,
+                                 docDisplay_.hasBreakpoints());
    }
 
    public void checkForExternalEdit()
@@ -6315,6 +6315,10 @@ public class TextEditingTarget implements
 
       // If the doc has never been saved, don't even bother checking
       if (getPath() == null)
+         return;
+      
+      // If we're already waiting for the user to respond to an edit event, bail
+      if (isWaitingForUserResponseToExternalEdit_)
          return;
       
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
@@ -6334,6 +6338,7 @@ public class TextEditingTarget implements
                      if (ignoreDeletes_)
                         return;
 
+                     isWaitingForUserResponseToExternalEdit_ = true;
                      globalDisplay_.showYesNoMessage(
                            GlobalDisplay.MSG_WARNING,
                            "File Deleted",
@@ -6346,6 +6351,7 @@ public class TextEditingTarget implements
                            {
                               public void execute()
                               {
+                                 isWaitingForUserResponseToExternalEdit_ = false;
                                  CloseEvent.fire(TextEditingTarget.this, null);
                               }
                            },
@@ -6353,6 +6359,7 @@ public class TextEditingTarget implements
                            {
                               public void execute()
                               {
+                                 isWaitingForUserResponseToExternalEdit_ = false;
                                  externalEditCheckInterval_.reset();
                                  ignoreDeletes_ = true;
                                  // Make sure it stays dirty
@@ -6387,6 +6394,7 @@ public class TextEditingTarget implements
                      else
                      {
                         externalEditCheckInterval_.reset();
+                        isWaitingForUserResponseToExternalEdit_ = true;
                         globalDisplay_.showYesNoMessage(
                               GlobalDisplay.MSG_WARNING,
                               "File Changed",
@@ -6398,6 +6406,7 @@ public class TextEditingTarget implements
                               {
                                  public void execute()
                                  {
+                                    isWaitingForUserResponseToExternalEdit_ = false;
                                     docUpdateSentinel_.revert();
                                  }
                               },
@@ -6405,6 +6414,7 @@ public class TextEditingTarget implements
                               {
                                  public void execute()
                                  {
+                                    isWaitingForUserResponseToExternalEdit_ = false;
                                     externalEditCheckInterval_.reset();
                                     docUpdateSentinel_.ignoreExternalEdit();
                                     // Make sure it stays dirty
@@ -7293,7 +7303,9 @@ public class TextEditingTarget implements
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
+   private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
+   
    
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;

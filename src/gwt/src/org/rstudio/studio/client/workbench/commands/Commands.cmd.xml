@@ -30,10 +30,6 @@ well as menu structures (for main menu and popup menus).
       "background": always operates on main window, but in the background
       "<satellite name>": operates on named satellite; sent to the main window
         for processing unless fired from the named satellite
-  @handlesEventPropagation: Whether the command itself handles event propagation.
-     This is primarily used by commands which may be active and dispatched to,
-     but opt not to handle the event, thereby allowing the browser default
-     behavior in response to the pressed key.
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -314,6 +310,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activateJobs"/>
          
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -458,6 +455,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="clearTerminalScrollbackBuffer"/>
             <cmd refid="closeTerminal"/>
           </menu>
+         <menu label="_Jobs">
+            <cmd refid="startJob"/>
+            <cmd refid="clearJobs"/>
+          </menu>
          <menu label="Addins">
             <cmd refid="browseAddins"/>
          </menu>
@@ -590,7 +591,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
-         <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet" handlesEventPropagation="true" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -634,6 +634,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
          <shortcut refid="splitIntoLines" value="Meta+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Shift+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut refid="editLinesFromStart" value="Ctrl+Alt+Shift+A"/>
          <shortcut refid="goToStartOfCurrentScope" value="Ctrl+Alt+A" disableModes="default,vim,sublime"/>
          <shortcut refid="goToEndOfCurrentScope" value="Ctrl+Alt+E" disableModes="default,vim,sublime"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
@@ -1252,6 +1253,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show Co_nnections"
         windowMode="main"/>
         
+   <cmd id="activateJobs"
+        label="Show Jobs Pane"
+        menuLabel = "Show _Jobs"
+        windowMode="main"/>
+         
    <cmd id="layoutZoomSource"
         checkable="true"
         label="Zoom Source"
@@ -1506,6 +1512,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="splitIntoLines"
         menuLabel="Split Into Lines"
         desc="Create a new cursor on each line in current selection"
+        context="editor"/>
+        
+   <cmd id="editLinesFromStart"
+        menuLabel="Edit Lines from Start"
+        desc="Create a new cursor at start of each line in selection"
         context="editor"/>
         
    <cmd id="executeAllCode"
@@ -2936,8 +2947,9 @@ well as menu structures (for main menu and popup menus).
         context="packageDevelopment"/>
 
    <cmd id="roxygenizePackage"
+        label="Build Package Documentation"
         menuLabel="_Document"
-        desc="Run roxygen2 to document this package"
+        desc="Build package documentation"
         windowMode="background"
         context="packageDevelopment"/>
 
@@ -3289,7 +3301,7 @@ well as menu structures (for main menu and popup menus).
     <cmd id="startJob"
          menuLabel="Start Job..."
          buttonLabel="Start Job"
-         desc="Run an R script as a job"
+         desc="Run a background job"
          windowMode="main"/>
 
     <cmd id="sourceAsJob"

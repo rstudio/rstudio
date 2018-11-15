@@ -41,7 +41,9 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       ensureWidget();
 
       if (progress)
+      {
          progressPanel_.showProgress(progressDelayMs_);
+      }
       else
       {
          progressPanel_.setWidget(mainWidget_);

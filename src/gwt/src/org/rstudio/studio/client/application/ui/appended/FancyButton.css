@@ -1,30 +1,14 @@
 button.fancy {
-   padding: 0;
-   border: 0 none;
-   margin: 0 0 0 -3px;
-   outline: none;
-   background-color: #f3f3f4;
-}
-button.fancy:focus {
-   outline: none;
-}
-
-@sprite button.fancy .left {
-   gwt-image: 'buttonLeft';
-   width: 11px;
-   height: 38px;
-}
-@sprite button.fancy .inner {
-   gwt-image: 'buttonTile';
-   color: white;
-   font-weight: bold;
-   font-size: 13px;
-   height: 38px;
-   padding: 5px;
-   padding-top: 9px;
-}
-@sprite button.fancy .right {
-   gwt-image: 'buttonRight';
-   width: 11px;
-   height: 38px;
+  background-color: #75aadb;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  cursor: pointer;
+  outline: none;
+  border: 0;
+  color: white;
 }

@@ -78,6 +78,8 @@ public:
    
    bool serverDaemonize() const { return serverDaemonize_; }
 
+   std::string serverPidFile() const { return serverPidFile_; }
+
    bool serverSetUmask() const { return serverSetUmask_; }
 
    // www 
@@ -219,6 +221,11 @@ public:
    }
 
    std::string gwtPrefix() const;
+
+   core::FilePath secureCookieKeyFile() const
+   {
+      return core::FilePath(secureCookieKeyFile_);
+   }
    
    std::string getOverlayOption(const std::string& name)
    {
@@ -262,6 +269,7 @@ private:
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;
+   std::string serverPidFile_;
    bool serverAppArmorEnabled_;
    bool serverSetUmask_;
    bool serverOffline_;
@@ -290,6 +298,7 @@ private:
    int rsessionProxyMaxWaitSeconds_;
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
+   std::string secureCookieKeyFile_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

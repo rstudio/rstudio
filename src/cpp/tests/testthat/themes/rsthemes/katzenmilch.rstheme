@@ -95,6 +95,7 @@
 }
 
 .ace_storage {
+  font-weight: bold;
   color: rgba(123, 92, 191, 1.0);
   background-color: rgba(139, 93, 223, 0.051)
 }
@@ -160,24 +161,24 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #E6E5E6;
+  background-color: #E8E6E8;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #F9E895;
+  background-color: #F9E896;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #DAD9DA;
+  background-color: #DDDADC;
 }
 .ace_console_error {
-  background-color: #DAD9DA;
+  background-color: #DDDADC;
 }
 .terminal {
   background-color: #f3f2f3;
-  color: #000000;
+  color: rgba(15, 0, 9, 1.0);
   font-feature-settings: "liga" 0;
   position: relative;
   user-select: none;
@@ -207,7 +208,7 @@
   overflow-y: scroll;
 }
 .xtermInvertColor { color: #f3f2f3; }
-.xtermInvertBgColor { background-color: #000000; }
+.xtermInvertBgColor { background-color: rgba(15, 0, 9, 1.0); }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }

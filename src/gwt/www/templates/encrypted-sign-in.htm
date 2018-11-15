@@ -4,7 +4,7 @@
 #
 # encrypted-sign-in.htm
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, Inc.
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -17,7 +17,7 @@
 <html>
 
 <head>
-
+<meta charset="UTF-8" />
 <title>RStudio Sign In</title>
 <link rel="shortcut icon" href="images/favicon.ico" />
 
@@ -76,32 +76,20 @@ input[type=text], input[type=password] {
   display: #errorDisplay#;
   font-weight: bold;
 }
+
 button.fancy {
-  padding: 0;
-  border: 0 none;
-  margin: 0;
-  outline: none;
-  cursor: pointer;
-  background-color: white;
-}
-button.fancy .left {
-  width: 11px;
-  height: 35px;
-  background: url(images/buttonLeft.png) center right no-repeat;
-}
-button.fancy .inner {
-  color: white;
+  background-color: #75aadb;
+  border-radius: 4px;
   font-weight: bold;
-  font-size: 13px;
-  background: url(images/buttonTile.png) center repeat-x;
-  height: 35px;
-  padding: 5px;
-  padding-top: 1px;
-}
-button.fancy .right {
-  width: 11px;
-  height: 35px;
-  background: url(images/buttonRight.png) center left no-repeat;
+  font-size: 14px;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  cursor: pointer;
+  outline: none;
+  border: 0;
+  color: white;
 }
 </style>
 
@@ -197,13 +185,7 @@ function submitRealForm() {
          <label for="staySignedIn">Stay signed in</label>
       </p>
        <input type="hidden" name="appUri" value="#appUri#"/>
-      <div id="buttonpanel"><button class="fancy" type="submit"><table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="left"></td>
-          <td class="inner" valign="middle">Sign In</td>
-          <td class="right"></td>
-        </tr>
-      </table></button></div>
+       <div id="buttonpanel"><button class="fancy" type="submit">Sign In</button></div>
     </td>
   </tr>
 </table>

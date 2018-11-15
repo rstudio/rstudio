@@ -30,6 +30,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -43,6 +44,8 @@ namespace modules {
 namespace r_addins {
 
 namespace {
+
+RSTUDIO_BOOST_CONNECTION s_consolePromptHandler;
 
 bool isDevtoolsLoadAllActive()
 {
@@ -487,6 +490,24 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onConsolePrompt(const std::string&)
+{
+   Error error = r::exec::RFunction(".rs.addins.removeShinyResponseFilter").call();
+   if (error)
+      LOG_ERROR(error);
+
+   s_consolePromptHandler.disconnect();
+}
+
+SEXP rs_registerAddinConsolePromptHandler()
+{
+   using namespace module_context;
+
+   s_consolePromptHandler = events().onConsolePrompt.connect(onConsolePrompt);
+
+   return R_NilValue;
+}
+
 } // end anonymous namespace
 
 core::json::Value addinRegistryAsJson()
@@ -504,6 +525,9 @@ Error initialize()
    
    // register worker
    ppe::indexer().addWorker(addinWorker());
+
+   // register call methods
+   RS_REGISTER_CALL_METHOD(rs_registerAddinConsolePromptHandler);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

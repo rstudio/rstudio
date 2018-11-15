@@ -92,6 +92,12 @@ public class BrowseCap
    {
       return Desktop.isDesktop() && isMacintosh();
    }
+   
+   public static boolean isMacintoshDesktopMojave()
+   {
+      return isMacintoshDesktop() && isUserAgent("mac os x 10_14");
+            
+   }
   
    public static boolean isWindows()
    {

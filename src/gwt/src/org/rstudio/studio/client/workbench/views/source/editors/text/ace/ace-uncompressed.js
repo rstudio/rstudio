@@ -37859,18 +37859,12 @@ var Editor = function(renderer, session) {
         if (selection.isEmpty() || selection.isMultiLine())
             return;
 
-        var startOuter = selection.start.column - 1;
-        var endOuter = selection.end.column + 1;
+        var startColumn = selection.start.column;
+        var endColumn = selection.end.column;
         var line = session.getLine(selection.start.row);
-        var lineCols = line.length;
-        var needle = line.substring(Math.max(startOuter, 0),
-                                    Math.min(endOuter, lineCols));
-        if ((startOuter >= 0 && /^[\w\d]/.test(needle)) ||
-            (endOuter <= lineCols && /[\w\d]$/.test(needle)))
-            return;
-
-        needle = line.substring(selection.start.column, selection.end.column);
-        if (!/^[\w\d]+$/.test(needle))
+        
+        var needle = line.substring(selection.start.column, selection.end.column);
+        if (!/[\w\d]/.test(needle))
             return;
 
         var re = this.$search.$assembleRegExp({
@@ -37878,6 +37872,10 @@ var Editor = function(renderer, session) {
             caseSensitive: true,
             needle: needle
         });
+
+        var wordWithBoundary = line.substring(startColumn - 1, endColumn + 1);
+        if (!re.test(wordWithBoundary))
+            return;
 
         return re;
     };
@@ -53162,8 +53160,7 @@ exports.createEditSession = function(text, mode) {
 }
 exports.EditSession = EditSession;
 exports.UndoManager = UndoManager;
-});
-            (function() {
+});            (function() {
                 window.require(["ace/ace"], function(a) {
                     a && a.config.init(true);
                     if (!window.ace)

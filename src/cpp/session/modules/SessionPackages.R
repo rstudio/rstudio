@@ -340,13 +340,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       }
       
       list(
-         Package     = desc$Package,
+         Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
          LibPath     = dirname(pkgPath),
-         Version     = desc$Version,
-         Title       = desc$Title,
+         Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
+         Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
          Source      = source,
          BrowseUrl   = utils::URLencode(url)
       )
+      
    }
    
    # to be called if our attempt to read the package DESCRIPTION file failed
@@ -495,6 +496,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                            ok = TRUE,
                            stringsAsFactors = FALSE)
    rbind(rstudioDF, cranDF)
+})
+
+.rs.addJsonRpcHandler("get_cran_actives", function()
+{
+   data.frame(name = names(getOption("repos")),
+              host = "",
+              url = as.character(getOption("repos")),
+              country = "",
+              ok = TRUE,
+              stringsAsFactors = FALSE)
 })
 
 .rs.addJsonRpcHandler( "init_default_user_library", function()

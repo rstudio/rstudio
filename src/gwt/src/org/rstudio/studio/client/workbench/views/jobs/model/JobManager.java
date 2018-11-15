@@ -27,6 +27,8 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -67,7 +69,8 @@ public class JobManager implements JobRefreshEvent.Handler,
                      Binder binder,
                      JobsServerOperations server,
                      GlobalDisplay display,
-                     Provider<SourceWindowManager> pSourceManager)
+                     Provider<SourceWindowManager> pSourceManager,
+                     LauncherJobManager launcherJobManager)
    {
       events_ = events;
       pSession_ = pSession;
@@ -75,6 +78,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       server_ = server;
       display_ = display;
       pSourceManager_ = pSourceManager;
+      launcherJobManager_ = launcherJobManager;
       binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(JobRefreshEvent.TYPE, this);
@@ -358,7 +362,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(String path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job", 
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job",
             path,
             spec ->
             {
@@ -369,9 +373,15 @@ public class JobManager implements JobRefreshEvent.Handler,
                {
                   spec.setEncoding(doc.getEncoding());
                }
-               
+
                // tell the server to start running this script
-               server_.startJob(spec, new VoidServerRequestCallback());
+               server_.startJob(spec, new ServerRequestCallback<String>() {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             });
       dialog.showModal();
    }
@@ -422,4 +432,5 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
    private final GlobalDisplay display_;
+   private final LauncherJobManager launcherJobManager_;
 }

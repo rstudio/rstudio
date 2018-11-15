@@ -26,13 +26,18 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -57,13 +62,18 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  FileDialogs fileDialogs,
                                  UIPrefs prefs,
                                  Session session,
-                                 final GlobalDisplay globalDisplay,
-                                 WorkbenchContext context)
+                                 GlobalDisplay globalDisplay,
+                                 WorkbenchContext context,
+                                 EventBus events,
+                                 ApplicationQuit quit)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       session_ = session;
+      globalDisplay_ = globalDisplay;
+      events_ = events;
+      quit_ = quit;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
       VerticalPanel basic = new VerticalPanel();
@@ -240,7 +250,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       if (Desktop.isDesktop())
       {
-         Label osLabel = headerLabel("OS Integration (quit required)");
+         Label osLabel = headerLabel("OS Integration");
          if (!firstHeader)
             spacedBefore(osLabel);
          advanced.add(osLabel);
@@ -263,18 +273,18 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
          
-         ignoreGpuBlacklist_ = new CheckBox("Ignore GPU blacklist");
-         advanced.add(lessSpaced(ignoreGpuBlacklist_));
+         useGpuBlacklist_ = new CheckBox("Use GPU blacklist (recommended)");
+         advanced.add(lessSpaced(useGpuBlacklist_));
          Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
-            desktopGpuBlacklist_ = ignore;
-            ignoreGpuBlacklist_.setValue(ignore);
+            desktopIgnoreGpuBlacklist_ = ignore;
+            useGpuBlacklist_.setValue(!ignore);
          });
          
-         disableGpuDriverBugWorkarounds_ = new CheckBox("Disable GPU driver bug workarounds");
-         advanced.add(lessSpaced(disableGpuDriverBugWorkarounds_));
+         useGpuDriverBugWorkarounds_ = new CheckBox("Use GPU driver bug workarounds (recommended)");
+         advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
          Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
             desktopDisableGpuDriverBugWorkarounds_ = disable;
-            disableGpuDriverBugWorkarounds_.setValue(disable);
+            useGpuDriverBugWorkarounds_.setValue(!disable);
          });
          
          enableAccessibility_ = new CheckBox("Enable DOM accessibility");
@@ -332,15 +342,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       // general prefs
       final GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
       
-      boolean isSpawnerSession = session_.getSessionInfo().getSpawnerSession();
-      showServerHomePage_.setEnabled(!isSpawnerSession);
+      boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
+      showServerHomePage_.setEnabled(!isLauncherSession);
       
       reuseSessionsForProjectLinks_.setEnabled(true);
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
       
-      if (!isSpawnerSession)
+      if (!isLauncherSession)
          showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
       else
     	  showServerHomePage_.setValue("always");
@@ -406,12 +416,14 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
+      boolean uiReloadRequired = super.onApply(rPrefs);
+      boolean restartRequired = false;
 
       if (enableAccessibility_ != null &&
           desktopAccessibility_ != enableAccessibility_.getValue())
       {
          // set accessibility property if changed
+         restartRequired = true;
          boolean desktopAccessibility = enableAccessibility_.getValue();
          desktopAccessibility_ = desktopAccessibility;
          Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
@@ -421,6 +433,7 @@ public class GeneralPreferencesPane extends PreferencesPane
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
          // set monitoring property if changed
+         restartRequired = true;
          boolean desktopMonitoring = clipboardMonitoring_.getValue();
          desktopMonitoring_ = desktopMonitoring;
          Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
@@ -430,23 +443,26 @@ public class GeneralPreferencesPane extends PreferencesPane
           !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
          // set desktop renderer when changed
+         restartRequired = true;
          String renderingEngine = renderingEngineWidget_.getValue();
          renderingEngine_ = renderingEngine;
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
       
-      if (ignoreGpuBlacklist_ != null &&
-          desktopGpuBlacklist_ != ignoreGpuBlacklist_.getValue())
+      if (useGpuBlacklist_ != null &&
+          desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue())
       {
-         boolean ignore = ignoreGpuBlacklist_.getValue();
-         desktopGpuBlacklist_ = ignore;
+         restartRequired = true;
+         boolean ignore = !useGpuBlacklist_.getValue();
+         desktopIgnoreGpuBlacklist_ = ignore;
          Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
       }
       
-      if (disableGpuDriverBugWorkarounds_ != null &&
-          desktopDisableGpuDriverBugWorkarounds_ != disableGpuDriverBugWorkarounds_.getValue())
+      if (useGpuDriverBugWorkarounds_ != null &&
+          desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue())
       {
-         boolean disable = disableGpuDriverBugWorkarounds_.getValue();
+         restartRequired = true;
+         boolean disable = !useGpuDriverBugWorkarounds_.getValue();
          desktopDisableGpuDriverBugWorkarounds_ = disable;
          Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
       }
@@ -492,8 +508,20 @@ public class GeneralPreferencesPane extends PreferencesPane
                                              restoreLastProject_.getValue());
          rPrefs.setProjectsPrefs(projectsPrefs);
       }
+      
+      if (restartRequired)
+      {
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION,
+               "Restart Required",
+               "You need to restart RStudio in order for these changes to take effect. " +
+               "Do you want to do this now?",
+               () -> forceClosed(() -> restart()),
+               true);
+         
+      }
 
-      return restartRequired;
+      return uiReloadRequired;
    }
 
    @Override
@@ -518,6 +546,27 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
+   private void restart()
+   {
+      quit_.prepareForQuit(
+            "Restarting RStudio",
+            new QuitContext()
+            {
+               @Override
+               public void onReadyToQuit(boolean saveChanges)
+               {
+                  String project = session_.getSessionInfo().getActiveProjectFile();
+                  if (project == null)
+                     project = Projects.NONE;
+                  
+                  final String finalProject = project;
+                  quit_.performQuit(null, saveChanges, () -> {
+                     events_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
+                  });
+               }
+            });
+   }
+   
    private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
    private static final String ENGINE_GLES        = "gles";
@@ -525,7 +574,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    
    private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
-   private boolean desktopGpuBlacklist_ = false;
+   private boolean desktopIgnoreGpuBlacklist_ = false;
    private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
    
    private final FileSystemContext fsContext_;
@@ -535,8 +584,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
    private CheckBox clipboardMonitoring_ = null;
-   private CheckBox ignoreGpuBlacklist_ = null;
-   private CheckBox disableGpuDriverBugWorkarounds_ = null;
+   private CheckBox useGpuBlacklist_ = null;
+   private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
    private SelectWidget showServerHomePage_;
@@ -551,4 +600,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox showLastDotValue_;
    private final UIPrefs prefs_;
    private final Session session_;
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
+   private final ApplicationQuit quit_;
+   
 }

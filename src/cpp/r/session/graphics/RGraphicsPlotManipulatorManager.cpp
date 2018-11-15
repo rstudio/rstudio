@@ -184,7 +184,7 @@ Error PlotManipulatorManager::initialize(
 }
 
 
-boost::signal<void ()>& PlotManipulatorManager::onShowManipulator()
+RSTUDIO_BOOST_SIGNAL<void ()>& PlotManipulatorManager::onShowManipulator()
 {
    return onShowManipulator_;
 }

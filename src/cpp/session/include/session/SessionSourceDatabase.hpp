@@ -21,8 +21,8 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/signals.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
@@ -212,14 +212,14 @@ core::Error rename(const core::FilePath& from, const core::FilePath& to);
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
-   boost::signal<void(const std::string&,
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&,
                       boost::shared_ptr<SourceDocument>)>      onDocRenamed;
-   boost::signal<void(const std::string&)>                     onDocAdded;
-   boost::signal<void(
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onDocAdded;
+   RSTUDIO_BOOST_SIGNAL<void(
       boost::shared_ptr<source_database::SourceDocument>)>     onDocPendingRemove;
-   boost::signal<void(const std::string&, const std::string&)> onDocRemoved;
-   boost::signal<void()>                                       onRemoveAll;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onDocRemoved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onRemoveAll;
 };
 
 Events& events();

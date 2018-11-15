@@ -23,6 +23,7 @@
 #include <core/ProgramOptions.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixSystem.hpp>
@@ -195,12 +196,18 @@ ProgramStatus Options::read(int argc,
          value<bool>(&serverDaemonize_)->default_value(
                                       core::system::effectiveUserIsRoot()),
          "run program as daemon")
+      ("server-pid-file",
+         value<std::string>(&serverPidFile_)->default_value("/var/run/rstudio-server.pid"),
+         "location of pid file to write (only in daemon mode)")
       ("server-app-armor-enabled",
         value<bool>(&serverAppArmorEnabled_)->default_value(0),
         "is app armor enabled for this session")
       ("server-set-umask",
          value<bool>(&serverSetUmask_)->default_value(1),
-         "set the umask to 022 on startup");
+         "set the umask to 022 on startup")
+      ("secure-cookie-key-file",
+        value<std::string>(&secureCookieKeyFile_)->default_value(""),
+        "path override for secure cookie key");
 
    // www - web server options
    options_description www("www") ;
@@ -391,6 +398,7 @@ ProgramStatus Options::read(int argc,
 
    // resolve minimum user id
    authMinimumUserId_ = resolveMinimumUserId(authMinimumUserId, osWarnings);
+   core::r_util::setMinUid(authMinimumUserId_);
 
    // read auth login html
    FilePath loginPageHtmlPath(authLoginPageHtml);

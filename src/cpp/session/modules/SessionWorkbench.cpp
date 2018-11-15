@@ -722,7 +722,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
       // we screen out consecutive transition attempts (otherwise we can
       // get multiple interleaved attempts to launch the REPL with console
       // input)
-      static boost::signals::connection conn;
+      static RSTUDIO_BOOST_CONNECTION conn;
       if (conn.connected())
          return Success();
       

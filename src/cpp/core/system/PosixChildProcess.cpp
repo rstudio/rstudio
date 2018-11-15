@@ -470,6 +470,19 @@ Error ChildProcess::run()
       pEnvironment = new ProcessArgs(env);
    }
 
+   boost::optional<uid_t> runAsUser;
+   if (options_.threadSafe && !options_.runAsUser.empty())
+   {
+      // fetch the user to switch to before forking, as the method is not
+      // async signal safe and could cause lockups
+      core::system::user::User user;
+      Error error = core::system::user::userFromUsername(options_.runAsUser, &user);
+      if (error)
+         return error;
+
+      runAsUser = user.userId;
+   }
+
    if (options_.threadSafe && options_.pseudoterminal)
    {
       return systemError(boost::system::errc::operation_not_supported,
@@ -717,6 +730,12 @@ Error ChildProcess::run()
          // if an error occurs, we exit immediately as this is a critical error
          // we use the form of exit, _exit, which forcefully tears down the process
          // and does not attempt to run c++ cleanup code (as noted problematic above)
+
+         if (runAsUser)
+         {
+            if (signal_safe::permanentlyDropPriv(runAsUser.get()) == -1)
+               ::_exit(kThreadSafeForkErrorExit);
+         }
 
          if (options_.detachSession)
          {

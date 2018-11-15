@@ -23,6 +23,7 @@
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
    namespace http {
       class Request;
       class Response;
@@ -72,7 +73,11 @@ void remove(const http::Request& request,
             const std::string& path,
             core::http::Response* pResponse);
 
+// initialize with default secure cookie key file
 core::Error initialize();
+
+// initialize with specific secure cookie key file
+core::Error initialize(const FilePath& secureKeyFile);
 
 const std::string& getKey();
 

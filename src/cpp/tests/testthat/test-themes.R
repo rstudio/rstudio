@@ -15,6 +15,9 @@
 
 context("themes")
 
+# We need this file for .rs.parseCss
+source(file.path("..", "..", "session", "resources", "themes", "compile-themes.R"))
+
 inputFileLocation <- file.path(path.expand("."), "themes")
 tempOutputDir <- file.path(inputFileLocation, "temp")
 localInstallDir <- file.path(inputFileLocation, "localInstall")
@@ -100,143 +103,12 @@ defaultThemes <- list(
    "Xcode" = list("fileName" = "xcode", isDark = FALSE))
 
 # Helpers ==========================================================================================
-parseCss <- function(cssLines, shouldBreak = FALSE)
-{
-   browser(expr = shouldBreak)
-   css <- list()
-   
-   # Split any lines with "\n" for proper parsing.
-   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", cssLines), c("\n"), perl = TRUE))
-   
-   currKey = NULL
-   isLastDescForKey <- FALSE
-   inCommentBlock <- FALSE
-   candidateKey <- NULL
-   for (currLine in cssLines)
-   {
-      orgLine <- currLine
-      
-      # We use this to still parse the code before the start of the comment, if any.
-      startCommentBlock <- FALSE
-      
-      # Remove all in-line comments.
-      currLine <- gsub("/\\*.*?\\*/", "", currLine)
-      
-      # If we're not in a comment block and the current line has a comment opener, start the comment
-      # block and update the line by removing the commented section. This allows for CSS before the
-      # start of a comment. Note that this comment can't be contained wholly on a single line
-      # because of the gsub above this.
-      if (!inCommentBlock && grepl("/\\*", currLine))
-      {
-         startCommentBlock <- TRUE
-         currLine <- sub("/\\*.*$", "", currLine)
-      }
-      
-      # If we're in a comment block and the current line has a comment closer, end the comment block
-      # and update the line by removing the commented section. This allows for CSS after the end of
-      # a comment.
-      if (inCommentBlock && grepl("\\*/", currLine))
-      {
-         inCommentBlock <- FALSE
-         currLine <- sub("^.*?\\*/", "", currLine)
-      }
-      
-      if (!inCommentBlock)
-      {
-         # Check for a change of key.
-         if (grepl("^\\s*\\.[^\\{]+\\{", currLine))
-         {
-            candidateKey <- paste(
-               candidateKey, 
-               regmatches(
-                  currLine,
-                  regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
-               sep = " ")
-            
-            if (!grepl("^\\s*$", candidateKey))
-            {
-               if (!is.null(currKey))
-               {
-                  warning("Malformed CSS: ", orgLine, ". No closing bracket for last block.")
-               }
-               currKey <- candidateKey
-               candidateKey <- NULL
-               
-               css[[currKey]] <- list()
-               currLine <- sub("^\\s*[^\\{]*?\\s*\\{", "", currLine)
-            }
-         }
-         
-         if (!is.null(currKey))
-         {
-            if (grepl("\\}", currLine))
-            {
-               isLastDescForKey <- TRUE
-               currLine <- sub("^([^\\}]*)\\}\\s*$", "\\1", currLine)
-               if (grepl("\\}", currLine))
-               {
-                  warning("Maformed CSS: ", orgLine, ". Extra closing brackets.")
-               }
-            }
-            
-            if (grepl(":", currLine))
-            {
-               descValues <- strsplit(currLine, "\\s*;\\s*")[[1]]
-               for (value in descValues)
-               {
-                  if (value != "")
-                  {
-                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", value), "\\s*:\\s*")[[1]]
-                     if (length(desc) != 2)
-                     {
-                        warning("Malformed CSS: ", orgLine, ". Invalid element within block.")
-                     }
-                     else
-                     {
-                        css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
-                     }
-                  }
-               }
-            }
-            else if (!grepl("^\\s*$", currLine))
-            {
-               warning("Malformd CSS: ", orgLine, ". Unexpected non-css line.")
-            }
-         }
-         else if (!grepl("^\\s*$", currLine))
-         {
-            if (is.null(candidateKey))
-            {
-               candidateKey <- currLine
-            }
-            else
-            {
-               candidateKey <- paste(candidateKey, currLine)
-            }
-         }
-         
-         if (isLastDescForKey)
-         {
-            currKey <- NULL
-            isLastDescForKey <- FALSE
-         }
-         
-         if (startCommentBlock)
-         {
-            inCommentBlock <- TRUE
-         }
-      }
-   }
-   
-   css
-}
-
-compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
+compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = FALSE)
 {
    browser(expr = shouldBreak)
    equal <- TRUE
-   msgStart <- "\nCSS"
-   if (!is.null(parent)) msgStart <- paste0("\nElement \"", parent, "\" ")
+   msgStart <- paste0("\n", infoStr, "\nCSS")
+   if (!is.null(parent)) msgStart <- paste0("\n", infoStr, "\nElement \"", parent, "\"")
    
    if (!all(actual %in% expected) || !all(expected %in% actual))
    {
@@ -304,9 +176,11 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
          {
             acVal <- actual[[name]]
             exVal <- expected[[name]]
+            if (!is.list(acVal)) acVal <- gsub(" +", " ", gsub("^\\s*|\\s*$", "", acVal, perl = TRUE), perl = TRUE)
+            
             if (is.list(acVal) && is.list(exVal))
             {
-               equal <- equal && compareCss(acVal, exVal, name)
+               equal <- equal && compareCss(acVal, exVal, infoStr, name)
             }
             else if (is.list(acVal) || is.list(exVal))
             {
@@ -316,17 +190,23 @@ compareCss <- function(actual, expected, parent = NULL, shouldBreak = FALSE)
             }
             else if (acVal != exVal)
             {
-               match <- "^(#[a-fA-F\\d]{6}|rgb\\(\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*,\\s*[0-9]{1-3}\\s*\\))$"
-               if (grepl(match, acVal) && grepl(match, exVal))
+               colorRegex <- "^(#[a-fA-F\\d]{6}|rgba?\\(\\s*\\d{1,3}\\s*(?:,\\s*\\d{1,3}\\s*){2}(?:,\\s*[01](?:\\.\\d+)?)?\\s*\\))$"
+               if (grepl(colorRegex, acVal, perl = TRUE) && grepl(colorRegex, exVal, perl = TRUE))
                {
                   acRgb <- .rs.getRgbColor(acVal)
                   exRgb <- .rs.getRgbColor(exVal)
-                  if (!all.equal(acRgb, exRgb))
+                  if (!identical(acRgb, exRgb))
                   {
-                     msg <- sprintf("value doesn't match. Actual: %s, Expected: %s", acVal, exVal)
+                     msg <- sprintf("\"%s\" rule doesn't match. Actual: %s, Expected: %s", name, acVal, exVal)
                      cat(msgStart, msg, "\n")
                      equal <- FALSE
                   }
+               }
+               else
+               {
+                  msg <- sprintf("\"%s\" rule doesn't match. Actual: %s, Expected: %s", name, acVal, exVal)
+                  cat(msgStart, msg, "\n")
+                  equal <- FALSE
                }
             }
          }
@@ -612,11 +492,11 @@ test_that("rgb conversion handles invalid values correctly", {
 
 # Test mixColors ===================================================================================
 test_that("mixColors works correctly", {
-   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "rgb(106,38,158)")
-   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "rgb(128,128,128)")
-   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "rgb(125,125,125)")
-   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "rgb(40,40,40)")
-   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(28,230,57)", 1), "rgb(10,10,10)")
+   expect_equal(.rs.mixColors("#aa11bb", "rgb(21, 140, 231)", 0.6, 0.2), "#6B279F")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.5), "#808080")
+   expect_equal(.rs.mixColors("rgb(0, 0, 0)", "rgb(255, 255, 255)", 0.51), "#7D7D7D")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(30,30,30)", 1, 1), "#282828")
+   expect_equal(.rs.mixColors("rgb(10,10,10)", "rgb(28,230,57)", 1), "#0A0A0A")
 })
 
 # Test getLuma =====================================================================================
@@ -652,7 +532,7 @@ test_that("parseStyles works correctly", {
    # Setup objects for the test case
    allValues <- list(
       "foreground" = "#a12d96",
-      "fontStyle" = "underline italic",
+      "fontStyle" = "underline italic bold",
       "background" = "#1ad269")
    noFont <- list("foreground" = "#863021", "background" = "#A1A1A1")
    onlyItalic <- list("fontStyle" = "italic")
@@ -666,13 +546,23 @@ test_that("parseStyles works correctly", {
    emptyList <- list()
 
    # Expected Values
-   allValuesEx <- "text-decoration:underline;font-style:italic;color:#a12d96;background-color:#1ad269;"
-   noFontEx <- "color:#863021;background-color:#A1A1A1;"
-   onlyItalicEx <- "font-style:italic;"
-   underLineBgEx <- "text-decoration:underline;background-color:rgba(161, 161, 161, 1.00);"
-   nonsenseFontEx <- "color:rgba(26, 43, 60, 0.30);background-color:#112233;"
-   nonsenseFont2Ex <- "text-decoration:underline;color:#cccccc;background-color:#1a2b3c;"
-   emptyListEx <- ""
+   allValuesEx <- list(
+      "text-decoration" = "underline",
+      "font-style" = "italic",
+      "font-weight" = "bold",
+      "color" = "#a12d96",
+      "background-color" = "#1ad269")
+   noFontEx <- list("color" = "#863021", "background-color" = "#A1A1A1")
+   onlyItalicEx <- list("font-style" = "italic")
+   underLineBgEx <- list(
+      "text-decoration" = "underline",
+      "background-color" = "rgba(161, 161, 161, 1.00)")
+   nonsenseFontEx <- list("color" = "rgba(26, 43, 60, 0.30)", "background-color" = "#112233")
+   nonsenseFont2Ex <- list(
+      "text-decoration" = "underline",
+      "color" = "#cccccc",
+      "background-color" = "#1a2b3c")
+   emptyListEx <- list()
 
    # Test cases (no error)
    expect_equal(.rs.parseStyles(allValues), allValuesEx)
@@ -876,35 +766,35 @@ test_that("extractStyles works correctly", {
    tomorrowStyles$bracket = "#D1D1D1"
    tomorrowStyles$active_line = "#EFEFEF"
    tomorrowStyles$cursor = "#AEAFAD"
-   tomorrowStyles$invisible = "color:#D1D1D1;"
-   tomorrowStyles$comment = "color:#8E908C;"
-   tomorrowStyles$variable = "color:#C82829;"
-   tomorrowStyles$string.regexp = "color:#C82829;"
-   tomorrowStyles$entity.name.tag = "color:#C82829;"
-   tomorrowStyles$`entity.other.attribute-name` = "color:#C82829;"
-   tomorrowStyles$meta.tag = "color:#C82829;"
-   tomorrowStyles$constant.numeric = "color:#F5871F;"
-   tomorrowStyles$constant.language = "color:#F5871F;"
-   tomorrowStyles$support.constant = "color:#F5871F;"
-   tomorrowStyles$constant.character = "color:#F5871F;"
-   tomorrowStyles$variable.parameter = "color:#F5871F;"
-   tomorrowStyles$keyword.other.unit = "color:#F5871F;"
-   tomorrowStyles$support.type = "color:#C99E00;"
-   tomorrowStyles$support.class =  "color:#C99E00;"
-   tomorrowStyles$string = "color:#718C00;"
-   tomorrowStyles$markup.heading = "color:#718C00;"
-   tomorrowStyles$keyword.operator = "color:#3E999F;"
-   tomorrowStyles$entity.name.function = "color:#4271AE;"
-   tomorrowStyles$support.function = "color:#4271AE;"
-   tomorrowStyles$keyword = "color:#8959A8;"
-   tomorrowStyles$storage = "color:#8959A8;"
-   tomorrowStyles$storage.type = "color:#8959A8;"
-   tomorrowStyles$invalid = "color:#FFFFFF;background-color:#C82829;"
-   tomorrowStyles$invalid.deprecated = "color:#FFFFFF;background-color:#8959A8;"
+   tomorrowStyles$invisible =  "#D1D1D1"
+   tomorrowStyles$comment = list("color" = "#8E908C")
+   tomorrowStyles$variable = list("color" = "#C82829")
+   tomorrowStyles$string.regexp = list("color" = "#C82829")
+   tomorrowStyles$entity.name.tag = list("color" = "#C82829")
+   tomorrowStyles$`entity.other.attribute-name` = list("color" = "#C82829")
+   tomorrowStyles$meta.tag = list("color" = "#C82829")
+   tomorrowStyles$constant.numeric = list("color" = "#F5871F")
+   tomorrowStyles$constant.language = list("color" = "#F5871F")
+   tomorrowStyles$support.constant = list("color" = "#F5871F")
+   tomorrowStyles$constant.character = list("color" = "#F5871F")
+   tomorrowStyles$variable.parameter = list("color" = "#F5871F")
+   tomorrowStyles$keyword.other.unit = list("color" = "#F5871F")
+   tomorrowStyles$support.type = list("color" = "#C99E00")
+   tomorrowStyles$support.class =  list("color" = "#C99E00")
+   tomorrowStyles$string = list("color" = "#718C00")
+   tomorrowStyles$markup.heading = list("color" = "#718C00")
+   tomorrowStyles$keyword.operator = list("color" = "#3E999F")
+   tomorrowStyles$entity.name.function = list("color" = "#4271AE")
+   tomorrowStyles$support.function = list("color" = "#4271AE")
+   tomorrowStyles$keyword = list("color" = "#8959A8")
+   tomorrowStyles$storage = list("color" = "#8959A8")
+   tomorrowStyles$storage.type = list("color" = "#8959A8")
+   tomorrowStyles$invalid = list("color" = "#FFFFFF", "background-color" = "#C82829")
+   tomorrowStyles$invalid.deprecated = list("color" = "#FFFFFF", "background-color" = "#8959A8")
    tomorrowStyles$fold = "#4271AE"
    tomorrowStyles$gutterBg = "#FFFFFF"
-   tomorrowStyles$gutterFg = "rgb(166,166,166)"
-   tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6;"
+   tomorrowStyles$gutterFg = "#A6A6A6"
+   tomorrowStyles$selected_word_highlight = "border: 1px solid #D6D6D6"
    tomorrowStyles$isDark = "false"
 
    unsupportedScopes = list(
@@ -1053,12 +943,15 @@ test_that("convertTmTheme works correctly without parseTmTheme", {
    tomorrowConverted <- .rs.convertTmTheme(tomorrowTmTheme)
 
    # expected results
-   conn <- file(file.path(inputFileLocation, "acecss", "tomorrow.css"))
-
-   expect_true(compareCss(parseCss(tomorrowConverted$theme), parseCss(readLines(conn))))
+   expect_true(
+      compareCss(
+         .rs.parseCss(tomorrowConverted$theme),
+         .rs.parseCss(
+            readLines(
+               file.path(inputFileLocation, "acecss", "tomorrow.css"),
+               encoding = "UTF-8")),
+         "Theme: Tomorrow"))
    expect_false(tomorrowConverted$isDark)
-
-   close(conn)
 })
 
 test_that("convertTmTheme works correctly with parseTmTheme", {
@@ -1074,12 +967,12 @@ test_that("convertTmTheme works correctly with parseTmTheme", {
                paste0(key, ".tmTheme"))))
 
       # Expected Results
-      f <- file(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")))
-      expectedCss <- parseCss(readLines(f))
-      close(f)
+      expectedCss <- .rs.parseCss(
+         readLines(file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css")),
+         encoding = "UTF-8"))
 
       infoStr <- paste("Theme:", key)
-      expect_true(compareCss(parseCss(actualConverted$theme), expectedCss), info = infoStr)
+      expect_true(compareCss(.rs.parseCss(actualConverted$theme), expectedCss, infoStr), info = infoStr)
       expect_equal(actualConverted$isDark, value$isDark, info = infoStr)
    })
 })
@@ -1589,26 +1482,19 @@ test_that("parseTmTheme handles incorrect input", {
 
 # Test convertAceTheme =============================================================================
 test_that("convertAceTheme works correctly", {
-   library("highlight")
-
    .rs.enumerate(themes, function(key, value) {
       inputAceFile <- file.path(inputFileLocation, "acecss", paste0(value$fileName, ".css"))
       expectedResultFile <- file.path(inputFileLocation, "rsthemes", paste0(value$fileName, ".rstheme"))
 
-      conn <- file(expectedResultFile)
-      expected <- readLines(conn)
-      close(conn)
-
-      conn <- file(inputAceFile)
-      aceActualLines <- readLines(conn)
-      close(conn)
-
+      expected <- readLines(expectedResultFile, encoding = "UTF-8")
+      aceActualLines <- readLines(inputAceFile, encoding = "UTF-8")
+      
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
 
       # Check the css values
       infoStr = paste0("Theme: ", key)
-      expect_true(compareCss(parseCss(actual), parseCss(expected)), info = infoStr)
-
+      expect_true(compareCss(.rs.parseCss(actual), .rs.parseCss(expected), infoStr), info = infoStr)
+      
       # Check the metadata values
       expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
       expect_equal(getRsIsDark(actual), getRsIsDark(expected), fixed = TRUE, info = infoStr)
@@ -1626,16 +1512,15 @@ test_that_wrapped("convertTheme works correctly", {
          FALSE,
          FALSE)
 
-      f <- file(file.path(tempOutputDir, paste0(themeName, ".rstheme")))
-      actualCssLines <- readLines(f)
-      close(f)
-
-      f <- file(file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")))
-      expectedCssLines <- readLines(f)
-      close(f)
+      actualCssLines <- readLines(
+         file.path(tempOutputDir, paste0(themeName, ".rstheme")),
+         encoding = "UTF-8")
+      expectedCssLines <- readLines(
+         file.path(inputFileLocation, "rsthemes", paste0(themeDesc$fileName, ".rstheme")),
+         encoding = "UTF-8")
 
       infoStr <- paste("Theme:", themeName)
-      expect_true(compareCss(parseCss(actualCssLines), parseCss(expectedCssLines)), info = infoStr)
+      expect_true(compareCss(.rs.parseCss(actualCssLines), .rs.parseCss(expectedCssLines), infoStr), info = infoStr)
 
       # Check name values
       expectedName <- getRsThemeName(expectedCssLines)
@@ -1702,14 +1587,8 @@ test_that_wrapped("addTheme works correctly with local install", {
    expect_equal(actualName, themeName, info = infoStr)
    expect_true(file.exists(installPath), info = infoStr)
 
-   f <- file(installPath)
-   actualLines <- readLines(f)
-   close(f)
-
-   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
-   expectedLines <- readLines(f)
-   close(f)
-
+   actualLines <- readLines(installPath, encoding = "UTF-8")
+   expectedLines <- readLines(file.path(inputFileLocation, "rsthemes", fileName), encoding = "UTF-8")
    expect_equal(actualLines, expectedLines, info = infoStr)
 },
 BEFORE_FUN = setThemeLocations,
@@ -1755,14 +1634,8 @@ test_that_wrapped("addTheme works correctly with global install", {
    expect_equal(actualName, themeName, info = infoStr)
    expect_true(file.exists(installPath), info = infoStr)
 
-   f <- file(installPath)
-   actualLines <- readLines(f)
-   close(f)
-
-   f <- file(file.path(inputFileLocation, "rsthemes", fileName))
-   expectedLines <- readLines(f)
-   close(f)
-
+   actualLines <- readLines(installPath, encoding = "UTF-8")
+   expectedLines <- readLines(file.path(inputFileLocation, "rsthemes", fileName), encoding = "UTF-8")
    expect_equal(actualLines, expectedLines, info = infoStr)
 
    if (file.exists(installPath))
@@ -1802,29 +1675,24 @@ test_that_wrapped("addTheme gives error when the theme already exists", {
    expect_error(
       .rs.addTheme(themePath, FALSE, FALSE, FALSE),
       paste0(
-         "A file with the same name, \"",
-         themes[[40]]$fileName,
-         ".rstheme\", already exists in the target location. To add the theme anyway, try again with `force = TRUE`."))
+         "The specified theme, \"",
+         names(themes)[40],
+         "\", already exists in the target location. Please delete the existing theme and try again."))
 },
 BEFORE_FUN = setThemeLocations,
 AFTER_FUN = function()
 {
-   .rs.removeTheme(names(themes)[40], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[40], .rs.getThemes())
    unsetThemeLocations()
 })
 
 test_that_wrapped("addTheme works correctly with force = TRUE", {
    inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
    name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
+   exLines <- readLines(inputThemePath, encoding = "UTF-8")
    
-   f <- file(inputThemePath)
-   exLines <- readLines(f)
-   close(f)
-   
-   installedTheme <- .Call("rs_getThemes")[[tolower(name)]]
-   f <- file(.rs.getThemeDirFromUrl(installedTheme$url))
-   acLines <- readLines(f)
-   close(f)
+   installedTheme <- .rs.getThemes()[[tolower(name)]]
+   acLines <- readLines(.rs.getThemeDirFromUrl(installedTheme$url), encoding = "UTF-8")
    
    expect_equal(name, names(themes)[14])
    expect_equal(acLines, exLines)
@@ -1834,7 +1702,7 @@ BEFORE_FUN = function() {
    file.create(file.path(localInstallDir, paste0(themes[[14]]$fileName, ".rstheme")))
 },
 AFTER_FUN = function() {
-   .rs.removeTheme(names(themes)[14], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[14], .rs.getThemes())
    unsetThemeLocations()
 })
 
@@ -1856,7 +1724,7 @@ AFTER_FUN = unsetThemeLocations)
 
 # Test rs_getThemes ================================================================================
 test_that_wrapped("rs_getThemes gets default themes correctly", {
-   themeList <- .Call("rs_getThemes")
+   themeList <- .rs.getThemes()
    expect_equal(length(themeList), length(defaultThemes))
    .rs.enumerate(themeList, function(themeName, themeDetails) {
       infoStr <- paste("Theme:", themeDetails$name)
@@ -1886,7 +1754,7 @@ test_that_wrapped("rs_getThemes works correctly", {
                                    else paste0("theme/custom/local/", fileName)
       })
 
-   themeList <- .Call("rs_getThemes")
+   themeList <- .rs.getThemes()
    .rs.enumerate(addedThemes, function(themeName, themeLocation)
    {
       infoStr <- paste("Theme:", themeName)
@@ -1920,7 +1788,7 @@ AFTER_FUN = function() {
 test_that_wrapped("rs_getThemes location override works correctly", {
    # Nothing installed
    themeName <- "Dawn"
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/default/", defaultThemes[[themeName]]$fileName, ".rstheme"),
@@ -1933,7 +1801,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       FALSE,
       FALSE,
       TRUE)
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/custom/global/", expectedDawn$fileName, ".rstheme"),
@@ -1946,7 +1814,7 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       FALSE,
       FALSE,
       FALSE)
-   dawnTheme <- .Call("rs_getThemes")[[tolower(themeName)]]
+   dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
       paste0("theme/custom/local/", expectedDawn$fileName, ".rstheme"),
@@ -1958,14 +1826,14 @@ BEFORE_FUN = function() {
 },
 AFTER_FUN = function() {
    # Remove the theme from the local & global locations.
-   .rs.removeTheme(themeName, .Call("rs_getThemes"))
-   .rs.removeTheme(themeName, .Call("rs_getThemes"))
+   .rs.removeTheme(themeName, .rs.getThemes())
+   .rs.removeTheme(themeName, .rs.getThemes())
    unsetThemeLocations()
 })
 
 # Test removeTheme =================================================================================
 test_that_wrapped("removeTheme works correctly locally", {
-   .rs.removeTheme(names(themes)[19], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[19], .rs.getThemes())
    expect_false(file.exists(file.path(localInstallDir, paste0(themes[[19]]$fileName, ".rstheme"))))
 },
 BEFORE_FUN = function() {
@@ -1986,7 +1854,7 @@ AFTER_FUN = function() {
 })
 
 test_that_wrapped("removeTheme works correctly globally", {
-   .rs.removeTheme(names(themes)[22], .Call("rs_getThemes"))
+   .rs.removeTheme(names(themes)[22], .rs.getThemes())
    expect_false(file.exists(file.path(globalInstallDir, paste0(themes[[22]]$fileName, ".rstheme"))))
 },
 BEFORE_FUN = function() {
@@ -2009,7 +1877,7 @@ AFTER_FUN = function() {
 
 test_that_wrapped("removeTheme gives correct error when unable to remove locally", {
    expect_error(
-      suppressWarnings(.rs.removeTheme(names(themes)[5], .Call("rs_getThemes"))),
+      suppressWarnings(.rs.removeTheme(names(themes)[5], .rs.getThemes())),
       "Please check your file system permissions.",
       fixed = TRUE)
 },
@@ -2033,7 +1901,7 @@ AFTER_FUN = function() {
 
 test_that_wrapped("removeTheme gives correct error when unable to remove globally", {
    expect_error(
-      suppressWarnings(.rs.removeTheme(names(themes)[32], .Call("rs_getThemes"))),
+      suppressWarnings(.rs.removeTheme(names(themes)[32], .rs.getThemes())),
       "The specified theme is installed for all users. Please contact your system administrator to remove the theme.",
       fixed = TRUE)
 },

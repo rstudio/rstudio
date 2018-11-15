@@ -1293,6 +1293,18 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
    return r::sexp::create(s_paramsFiles[file], &rProtect);
 }
 
+SEXP rs_getWebsiteOutputDir()
+{
+   SEXP absolutePathSEXP = R_NilValue;
+
+   FilePath outputDir(module_context::websiteOutputDir());
+   if (!outputDir.empty())
+   {
+      r::sexp::Protect protect;
+      absolutePathSEXP = r::sexp::create(outputDir.absolutePath(), &protect);
+   }
+   return absolutePathSEXP;
+}
 
 void onShutdown(bool terminatedNormally)
 {
@@ -1366,11 +1378,8 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_paramsFileForRmd" ;
-   methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_paramsFileForRmd);
+   RS_REGISTER_CALL_METHOD(rs_getWebsiteOutputDir);
 
    initEnvironment();
 

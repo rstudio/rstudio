@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Chun
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOpenWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowRegisteredEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
 import com.google.inject.Inject;
@@ -117,8 +118,10 @@ public class ChunkWindowManager
       String chunkId = event.getChunkId();
 
       satelliteChunks_.add(new Pair<String, String>(docId, chunkId));
-
       events_.fireEventToAllSatellites(event);
+
+      ChunkSatelliteWindowRegisteredEvent registeredEvent = new ChunkSatelliteWindowRegisteredEvent(docId, chunkId);
+      events_.fireEvent(registeredEvent);
    }
 
    @Override

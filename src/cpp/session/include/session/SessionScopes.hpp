@@ -136,9 +136,51 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
    return core::Success();
 }
 
-inline std::string toFilePath(const core::r_util::ProjectId& projectId,
-                              const core::FilePath& userScratchPath,
-                              const core::FilePath& sharedStoragePath)
+bool isSharedProject(const core::FilePath& sharedStoragePath,
+                     const core::r_util::ProjectId& projectId,
+                     bool* pHasAccess)
+{
+#ifndef _WIN32
+   core::FilePath projectEntryPath =
+         sharedStoragePath.complete(kProjectSharedDir)
+                          .complete(projectId.asString() + kProjectEntryExt);
+   if (projectEntryPath.exists())
+   {
+      // an entry exists, meaning this particular project is shared
+      // determine if we can access it
+      core::system::isFileReadable(projectEntryPath, pHasAccess);
+      return true;
+   }
+   else
+      return false;
+#else
+   return false; // project sharing not supported on Windows
+#endif
+}
+
+bool isSharedProject(const core::FilePath& sharedStoragePath,
+                     const core::r_util::ProjectId& projectId,
+                     core::FilePath* pProjectEntryPath,
+                     bool* pReadable,
+                     bool* pOwnedByEffectiveUser)
+{
+   bool shared = isSharedProject(sharedStoragePath, projectId, pReadable);
+   if (!shared)
+      return false;
+
+   *pProjectEntryPath =
+         sharedStoragePath.complete(kProjectSharedDir)
+                          .complete(projectId.asString() + kProjectEntryExt);
+
+   struct stat st;
+   *pOwnedByEffectiveUser = ::stat(pProjectEntryPath->absolutePath().c_str(), &st) == 0 &&
+                            st.st_uid == ::geteuid();
+   return true;
+}
+
+std::string toFilePath(const core::r_util::ProjectId& projectId,
+                       const core::FilePath& userScratchPath,
+                       const core::FilePath& sharedStoragePath)
 {
    // try the map first; it contains both our own projects and shared projects
    // that we've opened
@@ -147,11 +189,16 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
    std::map<std::string,std::string>::iterator it;
 
    // use fully qualified project ID (user + path) if we don't own this project
-   // and shared storage is provisioned
+   // and it's a shared project that we have access to
+   core::FilePath projectEntryPath;
+   bool hasAccess = false;
+   bool ownedByEffectiveUser = false;
    bool useQualifiedId = 
            !projectId.userId().empty() &&
-           projectId.userId() != core::r_util::obfuscatedUserId(::geteuid()) &&
-           sharedStoragePath.complete(kProjectSharedDir).exists();
+           sharedStoragePath.complete(kProjectSharedDir).exists() &&
+           isSharedProject(sharedStoragePath, projectId, &projectEntryPath, &hasAccess, &ownedByEffectiveUser) &&
+           hasAccess &&
+           !ownedByEffectiveUser;
 
    // if it did, use the fully qualified name; otherwise, use just the project
    // ID (our own projects are stored unqualified in the map)
@@ -169,9 +216,6 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
    {
       // this project does not belong to us; see if it has an entry in shared
       // storage
-      core::FilePath projectEntryPath =
-            sharedStoragePath.complete(kProjectSharedDir)
-                             .complete(projectId.asString() + kProjectEntryExt);
       if (projectEntryPath.exists())
       {
          // extract the path from the entry
@@ -370,33 +414,6 @@ inline std::string projectIdToProject(
       return session::projectIdToFilePath(userScratchPath, sharedStoragePath)
                                          (projectId);
 }
-
-inline bool isSharedProject(const core::FilePath& sharedStoragePath,
-                            const core::r_util::ProjectId& projectId,
-                            bool* pHasAccess)
-{
-#ifndef _WIN32
-   core::FilePath projectEntryPath =
-         sharedStoragePath.complete(kProjectSharedDir)
-                          .complete(projectId.asString() + kProjectEntryExt);
-   if (projectEntryPath.exists())
-   {
-      // an entry exists, meaning this particular project is shared
-      // determine if we can access it
-
-      // TODO: do we need some alternate implementation for Windows?
-#ifndef _WIN32
-      core::system::isFileReadable(projectEntryPath, pHasAccess);
-#endif
-      return true;
-   }
-   else
-      return false;
-#else
-   return false; // project sharing not supported on Windows
-#endif
-}
-
 
 } // namespace session
 } // namespace rstudio

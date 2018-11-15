@@ -76,7 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCloseAllWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowRegisteredEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
@@ -123,7 +123,7 @@ public class TextEditingTargetNotebook
                           PinnedLineWidget.Host,
                           SourceDocAddedEvent.Handler,
                           RenderFinishedEvent.Handler,
-                          ChunkSatelliteWindowOpenedEvent.Handler
+                          ChunkSatelliteWindowRegisteredEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetChunks chunks,
@@ -309,7 +309,7 @@ public class TextEditingTargetNotebook
       releaseOnDismiss_.add(
             events_.addHandler(SourceDocAddedEvent.TYPE, this));
       releaseOnDismiss_.add(
-            events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this));
+            events_.addHandler(ChunkSatelliteWindowRegisteredEvent.TYPE, this));
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
@@ -914,7 +914,7 @@ public class TextEditingTargetNotebook
    }
 
    @Override
-   public void onChunkSatelliteWindowOpened(ChunkSatelliteWindowOpenedEvent event)
+   public void onChunkSatelliteWindowRegistered(ChunkSatelliteWindowRegisteredEvent event)
    {
       String docId = event.getDocId();
       String chunkId = event.getChunkId();

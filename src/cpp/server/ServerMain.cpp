@@ -71,7 +71,7 @@ namespace overlay {
 
 Error initialize();
 Error startup();
-Error reloadConfiguration();
+bool reloadConfiguration();
 void shutdown();
 bool requireLocalR();
 
@@ -158,7 +158,7 @@ void pageNotFoundHandler(const http::Request& request,
 {
    std::ostringstream os;
    std::map<std::string, std::string> vars;
-   vars["request_uri"] = request.uri();
+   vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
 
    FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).childPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
@@ -261,6 +261,10 @@ void httpServerAddHandlers()
 
 void reloadConfiguration()
 {
+   // swallow the output for now
+   // open source currently has no configuration reload options
+   // so displaying it as successful would be confusing to those users
+   // as no action would have occurred
    overlay::reloadConfiguration();
 }
 
@@ -452,7 +456,7 @@ int main(int argc, char * const argv[])
       // daemonize if requested
       if (options.serverDaemonize())
       {
-         Error error = core::system::daemonize();
+         Error error = core::system::daemonize(options.serverPidFile());
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -483,7 +487,7 @@ int main(int argc, char * const argv[])
       core::system::crypto::initialize();
 
       // initialize secure cookie module
-      error = core::http::secure_cookie::initialize();
+      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

@@ -115,8 +115,10 @@ private:
    
 void initialize()
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    // load global error string table
    ::ERR_load_crypto_strings();
+#endif
 }
    
 Error HMAC_SHA2(const std::string& data,
@@ -163,7 +165,7 @@ Error HMAC_SHA2(const std::string& data,
 Error sha256(const std::string& message,
              std::string* pHash)
 {
-   SHA256_CTX shaCtx = {0};
+   SHA256_CTX shaCtx;
    int ret = SHA256_Init(&shaCtx);
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);

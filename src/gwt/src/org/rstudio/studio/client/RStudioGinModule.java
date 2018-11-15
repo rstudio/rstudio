@@ -105,6 +105,7 @@ import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationPanel;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
+import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -422,6 +423,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FindInFilesServerOperations.class).to(RemoteServer.class);
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
+      bind(SqlServerOperations.class).to(RemoteServer.class);
       bind(ShinyServerOperations.class).to(RemoteServer.class);
       bind(PlumberServerOperations.class).to(RemoteServer.class);
       bind(RSConnectServerOperations.class).to(RemoteServer.class);

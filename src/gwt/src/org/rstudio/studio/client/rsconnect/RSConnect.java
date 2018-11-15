@@ -43,6 +43,7 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCancelledEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
@@ -91,7 +92,8 @@ public class RSConnect implements SessionInitHandler,
                                   RSConnectActionEvent.Handler,
                                   RSConnectDeployInitiatedEvent.Handler,
                                   RSConnectDeploymentCompletedEvent.Handler,
-                                  RSConnectDeploymentFailedEvent.Handler
+                                  RSConnectDeploymentFailedEvent.Handler,
+                                  RSConnectDeploymentCancelledEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, RSConnect> {}
@@ -129,6 +131,7 @@ public class RSConnect implements SessionInitHandler,
       events.addHandler(RSConnectDeployInitiatedEvent.TYPE, this); 
       events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this); 
       events.addHandler(RSConnectDeploymentFailedEvent.TYPE, this);
+      events.addHandler(RSConnectDeploymentCancelledEvent.TYPE, this);
       
       // satellite windows don't get session init events, so initialize the
       // session here
@@ -610,6 +613,43 @@ public class RSConnect implements SessionInitHandler,
       {
          display_.openWindow(event.getUrl());
       }
+   }
+   
+   @Override
+   public void onRSConnectDeploymentCancelled(
+         RSConnectDeploymentCancelledEvent event)
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+            "Stop deployment?", 
+            "Do you want to stop the deployment process? If the server has already " +
+            "received the content, it will still be published.",
+            false, // include cancel
+            () -> {
+                server_.cancelPublish(new ServerRequestCallback<Boolean>()
+                {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Error Stopping Deployment", 
+                           error.getMessage());
+                  }
+
+                  @Override
+                  public void onResponseReceived(Boolean result)
+                  {
+                     if (!result)
+                     {
+                       display_.showErrorMessage("Could not cancel deployment", 
+                             "The deployment could not be cancelled; it is not running, or termination failed.");
+                     }
+                  }
+                });
+            }, 
+            null, 
+            null, 
+            "Stop deployment", 
+            "Cancel", 
+            false);
    }
 
    @Override

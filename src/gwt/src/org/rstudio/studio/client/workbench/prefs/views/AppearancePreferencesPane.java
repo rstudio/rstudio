@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -126,9 +127,20 @@ public class AppearancePreferencesPane extends PreferencesPane
          
          zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
       
-         String[] fonts = DesktopInfo.getFixedWidthFontList().split("\\n");
+         String fontList = DesktopInfo.getFixedWidthFontList();
+         
+         String[] fonts = fontList.isEmpty()
+               ? new String[] {}
+               : fontList.split("\\n");
+               
+         String fontFaceLabel = fontList.isEmpty()
+               ? "Editor font (loading...):"
+               : "Editor font:";
 
-         fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
+         if (fontList.isEmpty())
+            registerFontListReadyCallback();
+         
+         fontFace_ = new SelectWidget(fontFaceLabel, fonts, fonts, false, false, false);
          fontFace_.getListBox().setWidth("95%");
 
          String value = DesktopInfo.getFixedWidthFont();
@@ -268,7 +280,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
    
-   private void removeTheme(String themeName, AceThemes themes)
+   private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
       AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
       if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
@@ -279,12 +291,22 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          themes.removeTheme(
             themeName,
-            errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage));
-         updateThemes(currentTheme.getName(), themes);
+            errorMessage -> showCantRemoveThemeDialog(themeName, errorMessage),
+            () ->
+            {
+               updateThemes(currentTheme.getName(), themes);
+               afterOperation.execute();
+            });
       }
    }
    
-   private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
+   private void removeTheme(String themeName, AceThemes themes)
+   {
+      // No after operation necessary.
+      removeTheme(themeName, themes, () -> {});
+   }
+   
+   private void doAddTheme(String inputPath, AceThemes themes, boolean isTmTheme)
    {
       if (isTmTheme)
          dependencyManager_.withThemes(
@@ -298,6 +320,40 @@ public class AppearancePreferencesPane extends PreferencesPane
             inputPath,
             result -> updateThemes(result, themes),
             error -> showCantAddThemeDialog(inputPath, error));
+      
+   }
+   
+   private void addTheme(String inputPath, AceThemes themes, boolean isTmTheme)
+   {
+      // Get the theme name and check if it's in the current list of themes.
+      themes.getThemeName(
+         inputPath,
+         name ->
+         {
+            if (themeList_.containsKey(name))
+            {
+               if (themeList_.get(name).isLocalCustomTheme())
+               {
+                  showDuplicateThemeError(
+                     name,
+                     () -> removeTheme(
+                        name,
+                        themes,
+                        () -> doAddTheme(inputPath, themes, isTmTheme)));
+               }
+               else
+               {
+                  showDuplicateThemeWarning(
+                     name,
+                     () -> doAddTheme(inputPath, themes, isTmTheme));
+               }
+            }
+            else
+            {
+               doAddTheme(inputPath, themes, isTmTheme);
+            }
+         },
+         error -> showCantAddThemeDialog(inputPath, error));
    }
    
    private void setThemes(AceThemes themes)
@@ -431,6 +487,39 @@ public class AppearancePreferencesPane extends PreferencesPane
          false);
    }
    
+   private void showDuplicateThemeError(String themeName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("There is an existing theme with the same name as the new theme in the current")
+         .append(" location. Would you like remove the existing theme, \"")
+         .append(themeName)
+         .append("\", and add the new theme?");
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_ERROR,
+         "Duplicate Theme In Same Location",
+         msg.toString(),
+         continueOperation,
+         false);
+   }
+   
+   private void showDuplicateThemeWarning(String themeName, Operation continueOperation)
+   {
+      StringBuilder msg = new StringBuilder();
+      msg.append("There is an existing theme with the same name as the new theme, \"")
+         .append(themeName)
+         .append("\" in another location. The existing theme will be hidden but not removed.")
+         .append(" Removing the new theme later will un-hide the existing theme. Would you")
+         .append(" like to continue?");
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         "Duplicate Theme In Another Location",
+         msg.toString(),
+         continueOperation,
+         true);
+   }
+   
    @Override
    public ImageResource getIcon()
    {
@@ -486,6 +575,47 @@ public class AppearancePreferencesPane extends PreferencesPane
    public String getName()
    {
       return "Appearance";
+   }
+   
+   private final native void registerFontListReadyCallback()
+   /*-{
+   
+      var self = this;
+      $wnd.onFontListReady = $entry(function() {
+      	self.@org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane::onFontListReady()();
+      });
+   
+   }-*/;
+   
+   private void onFontListReady()
+   {
+      // NOTE: we use a short poll as we might receive this notification
+      // just before the Qt webchannel has been able to synchronize with
+      // the front-end
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         private int retryCount_ = 0;
+         
+         @Override
+         public boolean execute()
+         {
+            if (retryCount_++ > 20)
+               return false;
+            
+            String fonts = DesktopInfo.getFixedWidthFontList();
+            if (fonts.isEmpty())
+               return true;
+         
+            String[] fontList = fonts.split("\\n");
+            String value = fontFace_.getValue();
+            value = value.replaceAll("\\\"", "");
+            fontFace_.setLabel("Editor font:");
+            fontFace_.setChoices(fontList, fontList);
+            fontFace_.setValue(value);
+            return false;
+         }
+         
+      }, 100);
    }
 
    private final PreferencesDialogResources res_;

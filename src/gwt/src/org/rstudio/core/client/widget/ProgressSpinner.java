@@ -69,19 +69,24 @@ public class ProgressSpinner extends Composite
       // initialize canvas
       canvas_.setCoordinateSpaceWidth(COORD_SIZE);
       canvas_.setCoordinateSpaceHeight(COORD_SIZE);
-
-      // perform initial draw and start animation
-      redraw();
-      Scheduler.get().scheduleFixedPeriod(new Scheduler.RepeatingCommand()
-      {
-         @Override
-         public boolean execute()
-         {
-            frame_++;
-            if (isVisible()) redraw();
-            return !complete_;
-         }
-      }, FRAME_RATE_MS);
+   }
+   
+   @Override
+   public void setVisible(boolean visible)
+   {
+      if (visible)
+         startAnimating();
+      else
+         stopAnimating();
+      
+      super.setVisible(visible);
+   }
+   
+   @Override
+   public void onUnload()
+   {
+      stopAnimating();
+      super.onUnload();
    }
 
    public boolean isSupported()
@@ -89,14 +94,39 @@ public class ProgressSpinner extends Composite
       return canvas_ != null;
    }
    
-   public void detach()
-   {
-      complete_ = true;
-   }
-
    public void setColorType(int color)
    {
       colorType_ = color;
+   }
+   
+   public void startAnimating()
+   {
+      if (isAnimating_ || requestStopAnimating_)
+         return;
+      
+      isAnimating_ = true;
+      animate();
+      Scheduler.get().scheduleFixedPeriod(() -> { return animate(); }, FRAME_RATE_MS);
+   }
+   
+   public void stopAnimating()
+   {
+      requestStopAnimating_ = true;
+   }
+   
+   private boolean animate()
+   {
+      frame_++;
+      redraw();
+      
+      if (requestStopAnimating_)
+      {
+         requestStopAnimating_ = false;
+         isAnimating_ = false;
+         return false;
+      }
+      
+      return true;
    }
    
    private void redraw()
@@ -148,5 +178,6 @@ public class ProgressSpinner extends Composite
    private int colorType_;
 
    private int frame_ = 0;
-   private boolean complete_ = false;
+   private boolean isAnimating_ = false;
+   private boolean requestStopAnimating_ = false;
 }

@@ -20,11 +20,12 @@
 
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
-#include <boost/signals/connection.hpp>
+
+#include <core/BoostSignals.hpp>
+#include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/system/FileMonitor.hpp>
-#include <core/StringUtils.hpp>
-#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

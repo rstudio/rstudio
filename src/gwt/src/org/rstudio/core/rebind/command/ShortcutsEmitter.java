@@ -64,7 +64,6 @@ public class ShortcutsEmitter
          String shortcutValue = childEl.getAttribute("value");
          String title = childEl.getAttribute("title");
          String disableModes = childEl.getAttribute("disableModes");
-         String handlesEventPropagation = childEl.getAttribute("handlesEventPropagation");
 
          // Use null when we don't have a command associated with the shortcut,
          // otherwise refer to the function that returns the command 
@@ -80,8 +79,7 @@ public class ShortcutsEmitter
          for (String shortcut : shortcuts)
          {
             printShortcut(writer, condition, shortcut, 
-                  command, groupName_, title, disableModes,
-                  handlesEventPropagation);
+                  command, groupName_, title, disableModes);
          }
       }
    }
@@ -112,8 +110,7 @@ public class ShortcutsEmitter
                               String command,
                               String shortcutGroup,
                               String title,
-                              String disableModes,
-                              String handlesEventPropagation) throws UnableToCompleteException
+                              String disableModes) throws UnableToCompleteException
    {
       List<Pair<Integer, String>> keys = new ArrayList<Pair<Integer, String>>();
       for (String keyCombination : shortcut.split("\\s+"))
@@ -206,11 +203,6 @@ public class ShortcutsEmitter
          throw new UnableToCompleteException();
       }
       
-      if (handlesEventPropagation.equals("true"))
-      {
-         writer.println("ShortcutManager.INSTANCE.registerCommandHandlesEventPropagation(" + command + ");");
-      }
-
       if (!condition.isEmpty())
       {
          writer.outdent();

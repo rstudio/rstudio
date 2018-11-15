@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
@@ -28,6 +29,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -60,16 +62,43 @@ public class AceThemes
    
    private void applyTheme(Document document, final AceTheme theme)
    {
-      Element oldStyleEl = document.getElementById(linkId_);
-      if (oldStyleEl != null)
-         oldStyleEl.removeFromParent();
+      // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
+      int pathUpCount = 0;
+      String baseUrl = GWT.getHostPageBaseURL();
+      
+      // Strip any query out of the current URL since it isn't relevant to the path.
+      String currentUrl = document.getURL().split("\\?")[0];
+      if (!currentUrl.equals(baseUrl) &&
+         currentUrl.indexOf(baseUrl) == 0)
+      {
+         pathUpCount = currentUrl.substring(baseUrl.length()).split("/").length;
+      }
+      
+      // Build the URL.
+      StringBuilder urlBuilder = new StringBuilder();
+      for (int i = 0; i < pathUpCount; ++i)
+      {
+         urlBuilder.append("../");
+      }
+      urlBuilder.append(theme.getUrl())
+         .append("?dark=")
+         .append(theme.isDark() ? "1" : "0");
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
-      currentStyleEl.setHref(theme.getUrl() + "?dark=" + (theme.isDark() ? "1" : "0"));
-      document.getBody().appendChild(currentStyleEl);
+      currentStyleEl.setHref(urlBuilder.toString());
+   
+      Element oldStyleEl = document.getElementById(linkId_);
+      if (null != oldStyleEl)
+      {
+        document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+      }
+      else
+      {
+         document.getBody().appendChild(currentStyleEl);
+      }
       
       if(theme.isDark())
          document.getBody().addClassName("editor_dark");
@@ -88,7 +117,12 @@ public class AceThemes
             // synchronize the effective background color with the desktop
             if (Desktop.isDesktop())
             {
+               // find 'rstudio_container' element (note that this may not exist
+               // in some satellite windows; e.g. the Git window)
                Element el = Document.get().getElementById("rstudio_container");
+               if (el == null)
+                  return;
+               
                Style style = DomUtils.getComputedStyles(el);
                String color = style.getBackgroundColor();
                RGBColor parsed = RGBColor.fromCss(color);
@@ -99,6 +133,13 @@ public class AceThemes
                colors.set(2, parsed.blue());
                Desktop.getFrame().setBackgroundColor(colors);
                Desktop.getFrame().syncToEditorTheme(theme.isDark());
+
+               el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
+               style = DomUtils.getComputedStyles(el);
+               color = style.getBackgroundColor();
+               parsed = RGBColor.fromCss(color);
+
+               Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
             }
          }
       }.schedule(100);
@@ -139,7 +180,10 @@ public class AceThemes
       });
    }
    
-   public void addTheme(String themeLocation, Consumer<String> stringConsumer, Consumer<String> errorMessageConsumer)
+   public void addTheme(
+      String themeLocation,
+      Consumer<String> stringConsumer,
+      Consumer<String> errorMessageConsumer)
    {
       themeServerOperations_.addTheme(new ServerRequestCallback<String>()
       {
@@ -157,7 +201,10 @@ public class AceThemes
       }, themeLocation);
    }
    
-   public void removeTheme(String themeName, Consumer<String> errorMessageConsumer)
+   public void removeTheme(
+      String themeName,
+      Consumer<String> errorMessageConsumer,
+      Operation afterOperation)
    {
       if (!themes_.containsKey(themeName))
       {
@@ -176,6 +223,7 @@ public class AceThemes
                public void onResponseReceived(Void response)
                {
                   themes_.remove(themeName);
+                  afterOperation.execute();
                }
                
                @Override
@@ -186,6 +234,31 @@ public class AceThemes
             },
             themeName);
       }
+   }
+   
+   // This function can be used to get the name of a theme without adding it to RStudio. It is not
+   // used to get the name of an existing theme.
+   public void getThemeName(
+      String themeLocation,
+      Consumer<String> stringConsumer,
+      Consumer<String> errorMessageConsumer)
+   {
+      themeServerOperations_.getThemeName(
+         new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String result)
+            {
+               stringConsumer.accept(result);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               errorMessageConsumer.accept(error.getUserMessage());
+            }
+         },
+         themeLocation);
    }
 
    private ThemeServerOperations themeServerOperations_;

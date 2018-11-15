@@ -31,4 +31,9 @@ public class JobConstants
    // special job actions
    public final static String ACTION_STOP = "stop";
    public final static String ACTION_INFO = "info";
+   
+   // job types
+   public final static int JOB_TYPE_UNKNOWN = 0;
+   public final static int JOB_TYPE_SESSION = 1;
+   public final static int JOB_TYPE_LAUNCHER = 2;
 }

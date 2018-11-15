@@ -40,6 +40,9 @@ public:
    RVersion(const std::string& number, const core::system::Options& environment)
       : number_(number), environment_(environment)
    {
+      setLabel(std::string());
+      setModule(std::string());
+      setPrelaunchScript(std::string());
    }
 
 public:
@@ -65,30 +68,21 @@ public:
    void setLabel(const std::string& label)
    {
       label_ = label;
-      if (label.empty())
-         core::system::unsetenv(&environment_, "RSTUDIO_R_VERSION_LABEL");
-      else
-         core::system::setenv(&environment_, "RSTUDIO_R_VERSION_LABEL", label);
+      core::system::setenv(&environment_, "RSTUDIO_R_VERSION_LABEL", label);
    }
 
    const std::string& module() const { return module_; }
    void setModule(const std::string& module)
    {
       module_ = module;
-      if (module.empty())
-         core::system::unsetenv(&environment_, "RSTUDIO_R_MODULE");
-      else
-         core::system::setenv(&environment_, "RSTUDIO_R_MODULE", module);
+      core::system::setenv(&environment_, "RSTUDIO_R_MODULE", module);
    }
 
    const std::string& prelaunchScript() const { return prelaunchScript_; }
    void setPrelaunchScript(const std::string& prelaunchScript)
    {
       prelaunchScript_ = prelaunchScript;
-      if (prelaunchScript.empty())
-         core::system::unsetenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT");
-      else
-         core::system::setenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT", prelaunchScript);
+      core::system::setenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT", prelaunchScript);
    }
 
    bool operator<(const RVersion& other) const

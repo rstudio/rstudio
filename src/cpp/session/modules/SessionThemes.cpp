@@ -26,7 +26,6 @@
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -48,14 +47,11 @@ namespace session {
 namespace modules {
 namespace themes {
 
+namespace {
+
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
-
-namespace {
-
-const std::string kGridResourcePrefix = "grid_resource/";
-const std::string kPythonPrefix = "python/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -139,7 +135,11 @@ void getThemesInLocation(
       {
          if (themeFile.hasExtensionLowerCase(".rstheme"))
          {
+#ifdef _WIN32
+            const std::wstring k_themeFileStr = themeFile.absolutePathW();
+#else
             const std::string k_themeFileStr = themeFile.canonicalPath();
+#endif
             std::ifstream themeIFStream(k_themeFileStr);
             std::string themeContents(
                (std::istreambuf_iterator<char>(themeIFStream)),
@@ -242,11 +242,7 @@ FilePath getLocalCustomThemePath()
       return FilePath(kLocalPathAlt);
    }
 
-#ifdef _WIN32
-   return core::system::userHomePath().childPath(".R\\rstudio\\themes");
-#else
-   return core::system::userHomePath().childPath(".R/rstudio/themes/");
-#endif
+   return module_context::userHomePath().childPath(".R/rstudio/themes/");
 }
 
 /**
@@ -463,11 +459,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         kDefaultThemeLocation;
+   std::string prefix = "/" + kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
 }
@@ -483,11 +475,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         kGlobalCustomThemeLocation;
+   std::string prefix = "/" + kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
@@ -506,11 +494,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         kLocalCustomThemeLocation;
+   std::string prefix = "/" + kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
@@ -529,6 +513,7 @@ Error initialize()
    // links have a different prefix.
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, session::options().rResourcesPath().childPath("themes").childPath("compile-themes.R").absolutePath()))
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))

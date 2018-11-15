@@ -71,7 +71,6 @@ git merge \
     origin/patch/remove-webfont-2 \
     origin/patch/other-modes \
     origin/patch/dont-bundle-textmate-theme \
-    origin/bugfix/vim-ex-command-spellcheck \
     origin/bugfix/vim-join-lines \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
@@ -108,6 +107,7 @@ git merge \
     origin/patch/accent-input \
     origin/patch/tokenizer-onmatch-line \
     origin/patch/ipad-arrow-keys \
+    origin/patch/r-search-highlight \
     -m "merge once more"
 
 ## git merge \

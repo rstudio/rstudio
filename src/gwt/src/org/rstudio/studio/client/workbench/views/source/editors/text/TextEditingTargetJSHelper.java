@@ -39,13 +39,16 @@ public class TextEditingTargetJSHelper
    }
    
    
-   public void previewJS(EditingTarget editingTarget)
+   public boolean previewJS(EditingTarget editingTarget)
    {
       TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
          docDisplay_.getCode(),
          "preview",
          "//"
       );
+      
+      if (!previewSource.hasCommentHeader())
+         return false;
 
       if (!previewSource.getFunction().equals("r2d3"))
       {
@@ -70,6 +73,8 @@ public class TextEditingTargetJSHelper
             }
          );
       }
+      
+      return true;
    }
    
    private GlobalDisplay display_;

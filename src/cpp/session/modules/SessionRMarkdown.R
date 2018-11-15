@@ -133,7 +133,13 @@
    outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
    outputFormat <- rmarkdown:::create_output_format(outputFormat$name, outputFormat$options)
    outputFile <- rmarkdown:::pandoc_output_file(target, outputFormat$pandoc)
-   outputPath <- file.path(dirname(target), outputFile) 
+
+   # determine location of output file, accounting for possibility of a website project which
+   # puts the output in a different location than the source file
+   outputDir <- .Call("rs_getWebsiteOutputDir")
+   if (is.null(outputDir))
+      outputDir <- dirname(target)
+   outputPath <- file.path(outputDir, outputFile)
    
    # ensure output file exists
    fileExists <- file.exists(outputPath)
@@ -273,6 +279,8 @@
 
 .rs.addJsonRpcHandler("convert_from_yaml", function(yaml)
 {
+   Encoding(yaml) <- "UTF-8"
+
    data <- list()
    parseError <- ""
    parseSucceeded <- FALSE

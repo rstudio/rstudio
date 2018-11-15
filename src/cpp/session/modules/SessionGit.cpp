@@ -682,7 +682,7 @@ public:
       std::vector<std::string> lines;
 
       std::string output;
-      Error error = runGit(gitArgs() << "branch" << "-a", &output);
+      Error error = runGit(gitArgs() << "branch" << "--no-color" << "-a", &output);
       if (error)
          return error;
       lines = split(output);

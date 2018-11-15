@@ -1,17 +1,24 @@
 OWD <- getwd()
-URL <- "https://www.openssl.org/source/old/1.0.2/openssl-1.0.2m.tar.gz"
+URL <- "https://www.openssl.org/source/openssl-1.0.2p.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
 
 source("../tools.R")
 dir.create("logs", showWarnings = FALSE)
 options(log.dir = normalizePath("logs", winslash = "/"))
 
-if (!file.exists("C:/Perl/bin"))
+# try to find a perl installation directory
+perl <- head(Filter(file.exists, c("C:/Perl64/bin", "C:/Perl/bin")), n = 1)
+if (length(perl) == 0)
    fatal("No perl installation detected (please install ActiveState Perl from https://www.activestate.com/activeperl/downloads)")
 
+# try to find MSVC 2017
+msvc <- "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build"
+if (!file.exists(msvc))
+   fatal("No MSVC 2017 installation detected (please install Visual Studio 2017)")
+
 PATH$prepend("../tools")
-PATH$prepend("C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC")
-PATH$prepend("C:/Perl/bin")
+PATH$prepend(msvc)
+PATH$prepend(perl)
 
 # download and extract
 if (!file.exists(basename(URL))) {
