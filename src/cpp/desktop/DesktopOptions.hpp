@@ -74,6 +74,9 @@ public:
    bool disableGpuDriverBugWorkarounds() const;
    void setDisableGpuDriverBugWorkarounds(bool disable);
 
+   bool useFontConfigDatabase() const;
+   void setUseFontConfigDatabase(bool use);
+
 #ifdef _WIN32
    // If "", then use automatic detection
    QString rBinDir() const;

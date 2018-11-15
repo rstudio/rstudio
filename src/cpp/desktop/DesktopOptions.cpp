@@ -311,6 +311,17 @@ void Options::setDisableGpuDriverBugWorkarounds(bool disable)
    settings_.setValue(QStringLiteral("general.disableGpuDriverBugWorkarounds"), disable);
 }
 
+bool Options::useFontConfigDatabase() const
+{
+   QVariant use = settings_.value(QStringLiteral("general.useFontConfigDatabase"), true);
+   return use.toBool();
+}
+
+void Options::setUseFontConfigDatabase(bool use)
+{
+   settings_.setValue(QStringLiteral("general.useFontConfigDatabase"), use);
+}
+
 #ifdef _WIN32
 QString Options::rBinDir() const
 {
