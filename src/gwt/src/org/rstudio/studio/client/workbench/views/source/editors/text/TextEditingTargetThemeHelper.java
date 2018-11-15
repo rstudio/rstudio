@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.TimerUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -23,7 +24,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetThemeHelper
@@ -31,27 +31,22 @@ public class TextEditingTargetThemeHelper
    public TextEditingTargetThemeHelper(final TextEditingTarget editingTarget,
                                        final EventBus eventBus)
    {
-      // do an initial sync after 100ms (to allow initial render)
-      new Timer() {
-         @Override
-         public void run()
-         {
-            // do the sync
-            syncToEditorTheme(editingTarget);
-            
-            // register for notification on subsquent changes
-            eventBus.addHandler(
+      TimerUtil.singleShot(100, () -> {
+         
+         // do the sync
+         syncToEditorTheme(editingTarget);
+
+         // register for notification on subsequent changes
+         eventBus.addHandler(
                EditorThemeChangedEvent.TYPE,
-               new EditorThemeChangedEvent.Handler()
-               {
-                  @Override
-                  public void onEditorThemeChanged(EditorThemeChangedEvent e)
-                  {
+               (EditorThemeChangedEvent event) -> {
+                  
+                  TimerUtil.singleShot(100, () -> {
                      syncToEditorTheme(editingTarget);
-                  }
+                  });
+                  
                });
-         }
-      }.schedule(100);;
+      });
    }
    
    public HandlerRegistration addEditorThemeStyleChangedHandler(
