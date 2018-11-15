@@ -229,8 +229,11 @@
    # force knitr styling on 'standalone' widget (will be overridden by sizing policy
    # in dynamic environments; this ensures that the 'preview' will be displayed as
    # though the widget were generated through 'rmarkdown::render()')
+   #
+   # note that this make assumptions about the widget structure that might not be
+   # true in all cases so we wrap this in tryCatch
    embedded <- htmlwidgets:::toHTML(x, standalone = FALSE, knitrOptions = knitrOptions)
-   html[[1]]$children[[1]][[2]]$attribs$style <- embedded[[1]][[2]]$attribs$style
+   .rs.tryCatch(html[[1]]$children[[1]][[2]]$attribs$style <- embedded[[1]][[2]]$attribs$style)
    
    # split up into parts
    div <- html[[1]]$children[[1]]
