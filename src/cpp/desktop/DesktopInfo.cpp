@@ -110,42 +110,19 @@ void buildFontDatabase()
    // than asking Qt to build the font database on demand)
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
-   Error error = core::system::runCommand("fc-list :spacing=100 -f '%{fullname}\n' | sort | uniq", options, &result);
-   if (!error)
+   Error error = core::system::runCommand(
+            "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
+            options,
+            &result);
+
+   bool didReturnFonts =
+         error == Success() &&
+         result.exitStatus == EXIT_SUCCESS &&
+         !result.stdOut.empty();
+
+   if (didReturnFonts)
    {
-      std::vector<std::string> fonts;
-      for (const std::string& line : core::algorithm::split(result.stdOut, "\n"))
-      {
-         if (line.empty())
-            continue;
-
-         // if a font has multiple names for different languages (e.g. some Japanese fonts
-         // have names in both English + Japanese) then just take the first reported name
-         auto idx = line.find(',');
-         auto font = (idx == std::string::npos) ? line : line.substr(0, idx);
-
-         // remove a trailing 'Regular'
-         if (boost::algorithm::ends_with(font, " Regular"))
-            font = font.substr(0, font.length() - strlen(" Regular"));
-
-         // TODO: right now, we just use the full font name as-is; we should instead
-         // collect fonts alongside their supported styles and apply those separately
-         // in the front-end (e.g. setting all of 'font', 'font-style' and 'font-weight'
-         // as appropriate for the selected font). until then, screen out font variants
-         // with explicit weighting / styling
-         if (boost::algorithm::ends_with(font, " Bold") ||
-             boost::algorithm::ends_with(font, " Oblique") ||
-             boost::algorithm::ends_with(font, " Italic"))
-         {
-            continue;
-         }
-
-         // add the font
-         fonts.push_back(font);
-      }
-
-      QString fontList = QString::fromStdString(core::algorithm::join(fonts, "\n"));
-      s_fixedWidthFontList = fontList;
+      s_fixedWidthFontList = QString::fromStdString(result.stdOut);
       return;
    }
 
