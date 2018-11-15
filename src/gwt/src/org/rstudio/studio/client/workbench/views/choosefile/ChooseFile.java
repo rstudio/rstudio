@@ -50,34 +50,50 @@ public class ChooseFile implements ChooseFileHandler
    
    public void onChooseFile(ChooseFileEvent event)
    {
-      fileDialogs_.openFile(
-            "Choose File",
-            fsContext_,
-            workbenchContext_.getCurrentWorkingDir(),
+      ProgressOperationWithInput<FileSystemItem> operation =
             new ProgressOperationWithInput<FileSystemItem>()
+      {
+         public void execute(FileSystemItem input,
+                             ProgressIndicator progress)
+         {
+            String message, path;
+            if (input != null)
             {
-               public void execute(FileSystemItem input,
-                                   ProgressIndicator progress)
-               {
-                  String message, path;
-                  if (input != null)
-                  {
-                     message = "Saving...";
-                     path = input.getPath();
-                  }
-                  else
-                  {
-                     message = "Cancelling...";
-                     path = null;
-                  }
-                  
-                  progress.onProgress(message);
-                  server_.chooseFileCompleted(
-                        path,
-                        new VoidServerRequestCallback(
-                              progress));
-               }
-            });
+               message = "Saving...";
+               path = input.getPath();
+            }
+            else
+            {
+               message = "Cancelling...";
+               path = null;
+            }
+
+            progress.onProgress(message);
+            server_.chooseFileCompleted(
+                  path,
+                  new VoidServerRequestCallback(
+                        progress));
+         }
+      };
+      
+      if (event.getNewFile())
+      {
+         fileDialogs_.saveFile(
+               "Choose File",
+               fsContext_,
+               workbenchContext_.getCurrentWorkingDir(),
+               "",
+               false,
+               operation);
+      }
+      else
+      {
+         fileDialogs_.openFile(
+               "Choose File",
+               fsContext_,
+               workbenchContext_.getCurrentWorkingDir(),
+               operation);
+      }
    }
    
    private final ChooseFileServerOperations server_;
