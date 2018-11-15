@@ -82,6 +82,7 @@
 * Add button to open profiler output in an external browser (#1657)
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
+* RStudio uses the fontconfig database to list monospace fonts when available (Linux only; #3897)
 * Upgrade embedded Pandoc to 2.3.1 (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
@@ -93,7 +94,7 @@
 * New command 'Pull with Rebase' to pull and rebase a branch in a single step (#2151)
 * Click on promises in the Environment pane now calls `force` on the promise
 * Add Rename command to File menu for quick rename of current file (#2199)
-* Numeric filtering in data viewer shows histogram/value distribution and supports user-entered values (#2230)
+* Numeric filtering in Data Viewer shows histogram/value distribution and supports user-entered values (#2230)
 * Improved support for custom `knitr` engines in R Notebooks (#2401)
 * Add support for viewing external web URLs in the Viewer pane (#2252)
 * Add option to disable drag-and-drop for text in the editor (#2428)
@@ -110,6 +111,7 @@
 * Make it possible to stop a runaway content publishing process (#3787)
 * Update OpenSSL on Windows to 1.0.2p (#3606)
 * Add UTF-8 support in custom login page HTML (#3830)
+* Diagnostics system better understands usage of `.` in magrittr pipes (#3835)
 
 ### Bug Fixes
 
@@ -120,6 +122,7 @@
 * Fix issue where Build pane would get 'stuck' on failed Rcpp::compileAttributes() call (#1601)
 * Fix low/no-contrast colors with HTML widgets in notebooks with a dark theme (#1615)
 * Fix invalid YAML in some cases when changing R Markdown output type via dialog (#1609)
+* Fix issue with mis-encoded YAML header when changing R Markdown output type (#1537)
 * Fix error when quitting while a function named `q()` is present (#1647)
 * Fix crash when executing multiple R Notebook chunks with a failing Rcpp chunk (#1668)
 * Fix missing blank lines in code chunks in R Notebook preview (#1556)
@@ -136,7 +139,8 @@
 * Fix empty column titles when viewing matrices without column names (#2086)
 * Fix error when pressing F1 on non-function autocomplete results (#2127)
 * Fix hang when autocompleting filenames in large directories (#2236)
-* Fix inability to copy content from Viewer pane and data viewer in IE11 (#2351)
+* Fix inability to copy content from Viewer pane and Data Viewer in IE11 (#2351)
+* Fix performance regression when viewing large datasets in Data Viewer (#3887)
 * Fix errant addition of `msys-ssh` to path on non-Windows platforms (#2352)
 * Fix buggy behavior with \r when ANSI colors are present (#2387)
 * Fix external process slowness (git, etc.) when open file limit `RLIMIT_NOFILE` is high (#2470)
@@ -150,6 +154,8 @@
 * Fix incorrect NEWS links in Packages pane (#3082)
 * Fix encoding issue with snippets containing non-ASCII text (#3111)
 * Fix persistence of Evaluate Chunks in Directory global option (#3356)
+* Fix file.choose(new = TRUE) to properly request new file name (#3903)
+* Fix 'Copy Plot to Clipboard' functionality when IDE is zoomed (#3853)
 
 ### RStudio Server Pro
 
