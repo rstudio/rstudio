@@ -139,3 +139,7 @@ options(profvis.output_path = NULL)
 
 # configure profvis to not delete generated profiles
 options(profvis.keep_output = TRUE)
+
+# indicate that we're not in a notebook by default
+options(rstudio.notebook.executing = FALSE)
+
