@@ -31,7 +31,7 @@
     
     .succeeded .state
     {
-        color: #5dbd77;
+        color: #3db057;
     }
     
     .cancelled .state,
