@@ -50,6 +50,11 @@
 }
 
 .%cssClass% .ace_fold {
-    background-color: %fold%;
-    border-color: %foreground%;
+  background-color: %fold%;
+  border-color: %foreground%;
 }
+
+.%cssClass& .ace_invisible {
+  color: %invisible%;
+}
+
