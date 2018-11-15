@@ -105,25 +105,29 @@ void buildFontDatabaseImpl()
 void buildFontDatabase()
 {
 #ifdef Q_OS_LINUX
-   // if fontconfig is installed, we can use it to query monospace
-   // fonts using its own cache (and it should be much more performant
-   // than asking Qt to build the font database on demand)
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(
-            "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
-            options,
-            &result);
 
-   bool didReturnFonts =
-         error == Success() &&
-         result.exitStatus == EXIT_SUCCESS &&
-         !result.stdOut.empty();
-
-   if (didReturnFonts)
+   if (desktop::options().useFontConfigDatabase())
    {
-      s_fixedWidthFontList = QString::fromStdString(result.stdOut);
-      return;
+      // if fontconfig is installed, we can use it to query monospace
+      // fonts using its own cache (and it should be much more performant
+      // than asking Qt to build the font database on demand)
+      core::system::ProcessOptions options;
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(
+               "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
+               options,
+               &result);
+
+      bool didReturnFonts =
+            error == Success() &&
+            result.exitStatus == EXIT_SUCCESS &&
+            !result.stdOut.empty();
+
+      if (didReturnFonts)
+      {
+         s_fixedWidthFontList = QString::fromStdString(result.stdOut);
+         return;
+      }
    }
 
 #endif
