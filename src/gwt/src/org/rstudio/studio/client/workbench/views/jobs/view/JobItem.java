@@ -32,6 +32,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -53,23 +54,36 @@ public class JobItem extends Composite
    
    public interface JobResources extends ClientBundle
    {
-      @Source("idle_2x.png")
-      ImageResource jobIdle();
-
-      @Source("running_2x.png")
-      ImageResource jobRunning();
-
-      @Source("succeeded_2x.png")
-      ImageResource jobSucceeded();
-
-      @Source("failed_2x.png")
-      ImageResource jobFailed();
+      @Source("spinner_2x.png")
+      ImageResource jobSpinner();
 
       @Source("select_2x.png")
       ImageResource jobSelect();
 
       @Source("info_2x.png")
       ImageResource jobInfo();
+   }
+   
+   public interface Styles extends CssResource
+   {
+      String item();
+      String metadata();
+      String name();
+      String running();
+      String succeeded();
+      String cancelled();
+      String pending();
+      String state();
+      String idle();
+      String progressHost();
+      String elapsed();
+      String spinner();
+      String outer();
+      String panel();
+      String select();
+      String status();
+      String progress();
+      String failed();
    }
 
    public JobItem(final Job job)
@@ -83,6 +97,7 @@ public class JobItem extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
+      spinner_.setResource(new ImageResource2x(RESOURCES.jobSpinner()));
 
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
@@ -107,7 +122,6 @@ public class JobItem extends Composite
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
       
-      running_.addStyleName("rstudio-themes-background");
       outer_.addStyleName("rstudio-themes-border");
       
       update(job);
@@ -117,14 +131,54 @@ public class JobItem extends Composite
    {
       // cache reference to job
       job_ = job;
+      
+      String clazz = "";
+      String state = "";
+
+      switch(job_.state)
+      {
+         case JobConstants.STATE_RUNNING:
+            clazz = styles_.running();
+            state = "Running";
+            break;
+         case JobConstants.STATE_IDLE:
+            clazz = styles_.idle();
+            state = "Idle";
+            break;
+         case JobConstants.STATE_CANCELLED:
+            clazz = styles_.cancelled();
+            state = "Cancelled";
+            break;
+         case JobConstants.STATE_FAILED:
+            clazz = styles_.failed();
+            state = "Failed";
+            break;
+         case JobConstants.STATE_SUCCEEDED:
+            clazz = styles_.succeeded();
+            state = "Succeeded";
+            break;
+      }
+
+      // apply the style appropriate for the current state to the row 
+      panel_.setStyleName(styles_.panel() + " " + clazz);
+      
+      // if the job is completed, show when
+      if (job_.completed != 0)
+      {
+         state += " " + StringUtil.friendlyDateTime(new Date(job_.completed * 1000));
+      }
+      state_.setText(state);
 
       // sync status and progress
       status_.setText(job.status);
       
-      // show progress bar if the job is running
+      // show progress bar if the job is running and has a progress bar
       running_.setVisible(
             job.max > 0 && 
             job_.state == JobConstants.STATE_RUNNING);
+      
+      // show the state if we're not showing the progress bar
+      state_.setVisible(!running_.isVisible());
       
       // show stop button if job has a "stop" action, and is not completed
       stop_.setVisible(
@@ -138,23 +192,8 @@ public class JobItem extends Composite
          progress_.setProgress(percent);
       }
       
-      // sync image
-      switch(job.state)
-      {
-         case JobConstants.STATE_IDLE:
-            state_.setResource(new ImageResource2x(RESOURCES.jobIdle()));
-            break;
-         case JobConstants.STATE_RUNNING:
-            state_.setResource(new ImageResource2x(RESOURCES.jobRunning()));
-            break;
-         case JobConstants.STATE_CANCELLED:
-         case JobConstants.STATE_FAILED:
-            state_.setResource(new ImageResource2x(RESOURCES.jobFailed()));
-            break;
-         case JobConstants.STATE_SUCCEEDED:
-            state_.setResource(new ImageResource2x(RESOURCES.jobSucceeded()));
-            break;
-      }
+      // show spinner if actively executing
+      spinner_.setVisible(job.state == JobConstants.STATE_RUNNING);
       
       // sync elapsed time to current time
       syncTime((int)((new Date()).getTime() * 0.001));
@@ -189,12 +228,14 @@ public class JobItem extends Composite
    
    @UiField ProgressBar progress_;
    @UiField Image select_;
-   @UiField Image state_;
+   @UiField Image spinner_;
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
+   @UiField Label state_;
    @UiField VerticalPanel running_;
    @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
+   @UiField Styles styles_;
 }
