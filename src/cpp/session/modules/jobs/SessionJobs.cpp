@@ -56,8 +56,7 @@ bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 }
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
-      SEXP estimateSEXP, SEXP estimateRemainingSEXP, SEXP runningSEXP, SEXP autoRemoveSEXP,
-      SEXP groupSEXP, SEXP showSEXP, SEXP launcherJobSEXP)
+      SEXP runningSEXP, SEXP autoRemoveSEXP, SEXP groupSEXP, SEXP showSEXP, SEXP launcherJobSEXP)
 {
    // convert to native types
    std::string name   = r::sexp::safeAsString(nameSEXP, "");
