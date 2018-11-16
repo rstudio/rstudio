@@ -384,13 +384,18 @@ int main(int argc, char* argv[])
       static std::vector<char*> arguments(argv, argv + argc);
 
 #ifndef RSTUDIO_PACKAGE_BUILD
-      // fix-up for development builds run from 'desktop' folder
-      QDir pwd = QDir::current();
-      if (pwd.path().endsWith(QStringLiteral("/desktop")))
+      // find the build directory root
+      QDir dir = QDir::current();
+      do
       {
-         pwd.cdUp();
-         QDir::setCurrent(pwd.path());
-      }
+         QString path = dir.filePath(QStringLiteral("CMakeCache.txt"));
+         if (QFile(path).exists())
+         {
+            QDir::setCurrent(dir.path());
+            break;
+         }
+
+      } while (dir.cdUp());
 #endif
       
       initializeLang();
