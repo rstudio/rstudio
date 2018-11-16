@@ -36,6 +36,15 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
@@ -133,6 +142,10 @@ public class CodeSearchOracle extends SuggestOracle
          // exact match of previous query
          if (request.getQuery() == res.getQuery())
          {
+            // swallow next mouseover
+            swallowNextMouseOverEvent();
+            
+            // present completions
             callback.onSuggestionsReady(request, 
                                         new Response(res.getSuggestions()));
             return;
@@ -181,6 +194,9 @@ public class CodeSearchOracle extends SuggestOracle
             
             // sort suggestions
             sortSuggestions(suggestions, query);
+            
+            // swallow next mouseover
+            swallowNextMouseOverEvent();
             
             // return suggestions
             callback.onSuggestionsReady(request, new Response(suggestions));
@@ -338,6 +354,9 @@ public class CodeSearchOracle extends SuggestOracle
                // return suggestions
                if (!invalidationToken_.isInvalid())
                {
+                  // swallow next mouseover
+                  swallowNextMouseOverEvent();
+            
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
                }
@@ -438,6 +457,81 @@ public class CodeSearchOracle extends SuggestOracle
       return newSuggestions;
    }
    
+   private final void swallowNextMouseOverEvent()
+   {
+      if (previewHandler_ != null)
+      {
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
+      }
+      
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         private EventTarget target_;
+         private EventTarget related_;
+         
+         int screenX_;
+         int screenY_;
+         int clientX_;
+         int clientY_;
+         
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            int eventType = preview.getTypeInt();
+
+            // if we get a mouseover event, save the event target (we'll re-fire
+            // it if the user moves the mouse later)
+            if (eventType == Event.ONMOUSEOVER)
+            {
+               NativeEvent event = preview.getNativeEvent();
+               
+               // cancel the event
+               event.stopPropagation();
+               event.preventDefault();
+               
+               // save event target
+               target_ = event.getEventTarget();
+               related_ = event.getRelatedEventTarget();
+               
+               screenX_ = event.getScreenX();
+               screenY_ = event.getScreenY();
+               clientX_ = event.getClientX();
+               clientY_ = event.getClientY();
+               
+               // bail
+               return;
+            }
+
+            // if the user begins interacting with the mouse, remove this handler
+            // and refire the previously-suppressed mouseover event (if any)
+            if (eventType == Event.ONMOUSEDOWN ||
+                eventType == Event.ONMOUSEUP ||
+                eventType == Event.ONMOUSEMOVE)
+            {
+               previewHandler_.removeHandler();
+               
+               if (target_ != null)
+               {
+                  Scheduler.get().scheduleFinally(() -> {
+                     Element targetEl = Element.as(target_);
+                     NativeEvent overEvent = Document.get().createMouseOverEvent(
+                           0,
+                           screenX_, screenY_,
+                           clientX_, clientY_,
+                           false, false, false, false,
+                           0, Element.as(related_));
+
+                     targetEl.dispatchEvent(overEvent);
+                  });
+               }
+               
+               return;
+            }
+         }
+      });
+   }
+   
    private final Invalidation searchInvalidation_ = new Invalidation();
    
    private final CodeSearchServerOperations server_ ;
@@ -446,6 +540,8 @@ public class CodeSearchOracle extends SuggestOracle
    
    private final ArrayList<SearchResult> resultCache_ = 
                                              new ArrayList<SearchResult>();
+   
+   private HandlerRegistration previewHandler_;
    
    private class SearchResult
    {
