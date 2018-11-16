@@ -986,6 +986,8 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 				language.sInfoPostFix;
 		}
 
+		sOut = sOut.replace('_MAXCOLS_', !!window.dataTableMaxColumns ? window.dataTableMaxColumns : '');
+
 		var callback = language.fnInfoCallback;
 		if ( callback ) {
 			sOut = callback.call( dt.oInstance,
