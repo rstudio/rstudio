@@ -21,9 +21,9 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
- 
+#include <session/jobs/JobsApi.hpp>
+
 #include "ScriptJob.hpp"
-#include "JobsApi.hpp"
 
 #define kProgressDelim  "__"
 #define kProgressStart  kProgressDelim "rs_progress_0" kProgressDelim " " 
@@ -79,7 +79,7 @@ private:
          LOG_ERROR(error);
 
       // add the job -- currently idle until we get some content from it
-      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, JobTypeSession, false, actions, true);
+      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
       
       std::string importRdata = "NULL";
       std::string exportRdata = "NULL";

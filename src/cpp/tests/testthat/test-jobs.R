@@ -141,3 +141,11 @@ test_that("custom job actions are executed", {
    expect_equal(1, mutable)
 })
 
+test_that("job tags can be set and retrieved", {
+   theTags <- c("one", "two", "four")
+   jobId <- .rs.api.addJob(name = "job11", tags=theTags)
+   jobs <- .rs.invokeRpc("get_jobs")
+   job <- jobs[[jobId]]
+   expect_true(sum(job[["tags"]] == theTags) == length(theTags))
+})
+
