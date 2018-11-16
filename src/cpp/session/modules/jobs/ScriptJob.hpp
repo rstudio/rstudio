@@ -16,7 +16,7 @@
 #ifndef SESSION_SCRIPT_JOB_HPP
 #define SESSION_SCRIPT_JOB_HPP
 
-#include "Job.hpp"
+#include <session/jobs/Job.hpp>
 
 namespace rstudio {
 namespace core {

@@ -16,7 +16,7 @@
 #ifndef SESSION_JOBS_HPP
 #define SESSION_JOBS_HPP
 
-#include "Job.hpp"
+#include <session/jobs/Job.hpp>
 
 namespace rstudio {
 namespace core {
@@ -30,6 +30,7 @@ namespace modules {
 namespace jobs {
 
 boost::shared_ptr<Job> addJob(
+      const std::string& id,
       const std::string& name,
       const std::string& status,
       const std::string& group,
@@ -38,7 +39,20 @@ boost::shared_ptr<Job> addJob(
       JobType type,
       bool autoRemove,
       SEXP actions,
-      bool show);
+      bool show,
+      std::vector<std::string> tags);
+
+boost::shared_ptr<Job> addJob(
+      const std::string& name,
+      const std::string& status,
+      const std::string& group,
+      int progress,
+      JobState state,
+      JobType type,
+      bool autoRemove,
+      SEXP actions,
+      bool show,
+      std::vector<std::string> tags);
 
 void removeJob(boost::shared_ptr<Job> pJob);
 
@@ -55,6 +69,8 @@ void setJobStatus(boost::shared_ptr<Job> pJob, const std::string& status);
 core::json::Object jobsAsJson();
 
 void removeAllJobs();
+
+void removeAllLocalJobs();
 
 void removeCompletedJobs();
 

@@ -1,5 +1,5 @@
 /*
- * SessionJob.cpp
+ * Job.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,6 +13,8 @@
  *
  */
 
+#include <session/jobs/Job.hpp>
+
 #include <ctime>
 
 #include <boost/make_shared.hpp>
@@ -21,8 +23,6 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RExec.hpp>
-
-#include "Job.hpp"
 
 #define kJobId          "id"
 #define kJobName        "name"
@@ -36,6 +36,7 @@
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
 #define kJobShow        "show"
+#define kJobTags        "tags"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -60,7 +61,8 @@ Job::Job(const std::string& id,
          JobType type,
          bool autoRemove,
          SEXP actions,
-         bool show):
+         bool show,
+         const std::vector<std::string>& tags):
    id_(id), 
    name_(name),
    status_(status),
@@ -75,7 +77,8 @@ Job::Job(const std::string& id,
    autoRemove_(autoRemove),
    listening_(false),
    show_(show),
-   actions_(actions)
+   actions_(actions),
+   tags_(tags)
 {
    setState(state);
 }
@@ -135,6 +138,11 @@ JobType Job::type() const
    return type_;
 }
 
+std::vector<std::string> Job::tags() const
+{
+   return tags_;
+}
+
 json::Object Job::toJson() const
 {
    Error error;
@@ -188,6 +196,7 @@ json::Object Job::toJson() const
    }
 
    job["actions"] = actions;
+   job[kJobTags] = json::toJsonArray(tags_);
 
    return job;
 }
@@ -209,7 +218,8 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobCompleted, &completed,
       kJobState,     &state,
       kJobType,      &type,
-      kJobShow,      &pJob->show_);
+      kJobShow,      &pJob->show_,
+      kJobTags,      &pJob->tags_);
    if (error)
       return error;
 

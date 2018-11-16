@@ -13,9 +13,8 @@
  *
  */
 
+#include <session/jobs/JobsApi.hpp>
 #include <session/SessionModuleContext.hpp>
- 
-#include "JobsApi.hpp"
 
 enum JobUpdateType
 {
@@ -87,20 +86,35 @@ boost::shared_ptr<Job> addJob(
       JobType type,
       bool autoRemove,
       SEXP actions,
-      bool show)
+      bool show,
+      std::vector<std::string> tags)
 {
    // find an unused job id
    std::string id;
    do
    {
       id = core::system::generateShortenedUuid();
-   }
-   while(s_jobs.find(id) != s_jobs.end());
+   } while (s_jobs.find(id) != s_jobs.end());
+   return addJob(id, name, status, group, progress, state, type, autoRemove, actions, show, tags);
+}
 
+boost::shared_ptr<Job> addJob(
+      const std::string& id,
+      const std::string& name,
+      const std::string& status,
+      const std::string& group,
+      int progress,
+      JobState state,
+      JobType type,
+      bool autoRemove,
+      SEXP actions,
+      bool show,
+      std::vector<std::string> tags)
+{
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
          id, name, status, group, 0 /* completed units */, 
-         progress, state, type, autoRemove, actions, show);
+         progress, state, type, autoRemove, actions, show, tags);
 
    // cache job and notify client
    s_jobs[id] = pJob;
@@ -156,6 +170,21 @@ void removeAllJobs()
    s_jobs.clear();
 }
 
+void removeAllLocalJobs()
+{
+   for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
+   {
+      if (it->second->type() == JobType::JobTypeSession)
+      {
+         it->second->cleanup();
+         notifyClient(JobRemoved, it->second);
+         it = s_jobs.erase(it);
+      }
+      else
+         ++it;
+   }
+}
+
 void removeCompletedJobs()
 {
    // collect completed jobs
@@ -185,7 +214,7 @@ bool localJobsRunning()
 {
    for (auto& job: s_jobs)
    {
-      if (!job.second->complete())
+      if (job.second->type() == JobType::JobTypeSession && !job.second->complete())
       {
          return true;
       }

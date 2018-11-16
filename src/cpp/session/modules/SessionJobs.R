@@ -24,8 +24,8 @@
 # API functions --------------------------------------------------------------
 
 .rs.addApiFunction("addJob", function(name, status = "", progressUnits = 0L,
-      actions = NULL, running = FALSE, autoRemove = TRUE, group = "", show = TRUE, 
-      launcherJob = FALSE) {
+      actions = NULL, running = FALSE, autoRemove = TRUE, group = "", show = TRUE,
+      launcherJob = FALSE, tags = NULL) {
 
    # validate arguments
    if (missing(name))
@@ -35,7 +35,7 @@
 
    # begin tracking job
    .Call("rs_addJob", name, status, progressUnits,
-      actions, running, autoRemove, group, show, launcherJob, PACKAGE = "(embedding)")
+      actions, running, autoRemove, group, show, launcherJob, tags, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("removeJob", function(job) {
