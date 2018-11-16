@@ -43,6 +43,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 5;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job1);
       
@@ -70,6 +71,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 5;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job1);
       Job job2 = new Job()
@@ -83,6 +85,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 9;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job2);
       LocalJobProgress progress = JobManager.summarizeProgress(state);
@@ -112,6 +115,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 10;
          max = 10;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job1);
       Job job2 = new Job()
@@ -125,6 +129,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 2;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job2);
       LocalJobProgress progress = JobManager.summarizeProgress(state);
@@ -155,6 +160,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 10;
          max = 10;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job1);
       
@@ -170,6 +176,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 4;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job2);
       
@@ -185,6 +192,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 0;
          max = 0;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(job3);
       LocalJobProgress progress = JobManager.summarizeProgress(state);
@@ -199,7 +207,7 @@ public class JobManagerTests extends GWTTestCase
 
    /**
     * Tests a complicated situation:
-    * 
+    *
     * - 2 completed jobs
     *   - 1 that finished before any jobs (A)
     *   - 1 that completed after the current set began running (B)
@@ -207,7 +215,7 @@ public class JobManagerTests extends GWTTestCase
     *   - 1 with ranged progress (C)
     *   - 1 without ranged progress (D)
     * - 1 job not yet started (E)
-    * 
+    *
     * The progress meter should correctly aggregate the data from jobs B, C, and
     * D, while ignoring A and E.
     */
@@ -226,6 +234,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 10;
          max = 10;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobA);
 
@@ -241,6 +250,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 10;
          max = 10;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobB);
       
@@ -256,6 +266,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 5;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobC);
 
@@ -271,6 +282,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 0;
          max = 0;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobD);
 
@@ -286,6 +298,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 0;
          max = 0;
          state = JobConstants.STATE_IDLE;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobE);
 
@@ -319,6 +332,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 10;
          max = 10;
          state = JobConstants.STATE_SUCCEEDED;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobA);
 
@@ -334,6 +348,7 @@ public class JobManagerTests extends GWTTestCase
          progress = 5;
          max = 10;
          state = JobConstants.STATE_RUNNING;
+         type = JobConstants.JOB_TYPE_SESSION;
       }};
       state.addJob(jobB);
 
