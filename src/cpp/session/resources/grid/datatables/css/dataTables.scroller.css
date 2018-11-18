@@ -37,8 +37,3 @@ div.DTS div.dataTables_scrollFoot {
 div.DTS div.dataTables_scrollBody {
 	z-index: 2;
 }
-
-div.DTS div.dataTables_scroll {
-	background: url('../images/loading-background.png') repeat 0 0;
-}
-
