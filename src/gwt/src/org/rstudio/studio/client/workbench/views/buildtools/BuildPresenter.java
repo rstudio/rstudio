@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import com.google.inject.Provider;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
@@ -103,6 +105,7 @@ public class BuildPresenter extends BasePresenter
                          DependencyManager dependencyManager,
                          SourceBuildHelper sourceBuildHelper,
                          TerminalHelper terminalHelper,
+                         Provider<JobManager> pJobManager,
                          FilesServerOperations fileServer)
    {
       super(display);
@@ -116,6 +119,7 @@ public class BuildPresenter extends BasePresenter
       fileTypeRegistry_ = fileTypeRegistry;
       sourceBuildHelper_ = sourceBuildHelper;
       terminalHelper_ = terminalHelper;
+      pJobManager_ = pJobManager;
       session_ = session;
       dependencyManager_ = dependencyManager;
       fileServer_ = fileServer;
@@ -394,14 +398,18 @@ public class BuildPresenter extends BasePresenter
          return;
       }
       
-      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() {
-         @Override
-         public void execute()
+      // check for running jobs
+      pJobManager_.get().promptForTermination((confirmed) ->
+      {
+         if (confirmed)
          {
-            executeBuildNoBusyCheck(type, subType);
+            terminalHelper_.warnBusyTerminalBeforeCommand(() ->
+                  executeBuildNoBusyCheck(type, subType),
+                  "Build", "Terminal jobs will be terminated. Are you sure?",
+                  uiPrefs_.terminalBusyMode().getValue());
          }
-      }, "Build", "Terminal jobs will be terminated. Are you sure?", 
-            uiPrefs_.terminalBusyMode().getValue());
+      });
+
    }
 
    private void executeBuildNoBusyCheck(final String type, final String subType)
@@ -500,4 +508,5 @@ public class BuildPresenter extends BasePresenter
    private final SourceBuildHelper sourceBuildHelper_;
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
+   private final Provider<JobManager> pJobManager_;
 }
