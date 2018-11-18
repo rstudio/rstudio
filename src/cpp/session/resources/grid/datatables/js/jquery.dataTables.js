@@ -927,7 +927,11 @@
 	
 				for ( j=0, jLen=aTargets.length ; j<jLen ; j++ )
 				{
-					if ( typeof aTargets[j] === 'number' && aTargets[j] < 0 )
+					if ( typeof aTargets[j] === 'number' && aTargets[j] >= 0 && j < columns.length )
+					{
+						fn( j, def );
+					}
+					else if ( typeof aTargets[j] === 'number' && aTargets[j] < 0 )
 					{
 						/* Negative integer, right to left column counting */
 						fn( columns.length+aTargets[j], def );
