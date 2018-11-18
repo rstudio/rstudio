@@ -24,9 +24,8 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/jobs/JobsApi.hpp>
 
-#include "Job.hpp"
-#include "JobsApi.hpp"
 #include "ScriptJob.hpp"
 #include "SessionJobs.hpp"
 
@@ -56,7 +55,7 @@ bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 }
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
-      SEXP runningSEXP, SEXP autoRemoveSEXP, SEXP groupSEXP, SEXP showSEXP, SEXP launcherJobSEXP)
+      SEXP runningSEXP, SEXP autoRemoveSEXP, SEXP groupSEXP, SEXP showSEXP, SEXP launcherJobSEXP, SEXP tagsSEXP)
 {
    // convert to native types
    std::string name   = r::sexp::safeAsString(nameSEXP, "");
@@ -67,10 +66,12 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    JobType type       = r::sexp::asLogical(launcherJobSEXP) ? JobTypeLauncher : JobTypeSession;
    bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
    bool show          = r::sexp::asLogical(showSEXP);
-      
+   std::vector<std::string> tags;
+   r::sexp::fillVectorString(tagsSEXP, &tags);
+
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show);
+      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show, tags);
 
    // return job id
    r::sexp::Protect protect;
@@ -371,8 +372,7 @@ Error executeJobAction(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
-   // currently no jobs can survive a suspend, so let the client know they're all finished
-   removeAllJobs();
+   removeAllLocalJobs();
 }
 
 void onResume(const Settings& settings)
@@ -390,7 +390,7 @@ void onClientInit()
 
 void onShutdown(bool terminatedNormally)
 {
-   removeAllJobs();
+   removeAllLocalJobs();
 }
 
 } // anonymous namespace

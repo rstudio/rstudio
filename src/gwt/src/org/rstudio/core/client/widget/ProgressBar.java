@@ -43,6 +43,12 @@ public class ProgressBar extends Composite
    
    public void setProgress(int units, int max)
    {
+      if (max == 0)
+      {
+         // avoid div/0 if max of zero
+         max = 1;
+         units = 0;
+      }
       double percent = ((double)units / (double)max) * 100.0;
       setProgress(percent);
    }
