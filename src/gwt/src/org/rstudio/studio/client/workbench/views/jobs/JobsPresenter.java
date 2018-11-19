@@ -63,6 +63,7 @@ public class JobsPresenter extends BasePresenter
       void hideJobOutput(String id, boolean animate);
       void syncElapsedTime(int timestamp);
       void bringToFront();
+      void setShowJobsTabPref(boolean show);
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -72,7 +73,6 @@ public class JobsPresenter extends BasePresenter
                         JobsServerOperations server,
                         Binder binder,
                         Commands commands,
-                        EventBus events,
                         GlobalDisplay globalDisplay,
                         Provider<JobManager> pJobManager,
                         EventBus eventBus)
@@ -139,7 +139,10 @@ public class JobsPresenter extends BasePresenter
       
       // if there are no jobs, go ahead and let the tab close
       if (jobs.isEmpty())
+      {
+         display_.setShowJobsTabPref(false);
          onConfirmed.execute();
+      }
 
       // count the number of running session jobs
       long running = jobs.stream()
@@ -158,6 +161,7 @@ public class JobsPresenter extends BasePresenter
       }
       
       // done, okay to close
+      display_.setShowJobsTabPref(false);
       onConfirmed.execute();
    }
    
