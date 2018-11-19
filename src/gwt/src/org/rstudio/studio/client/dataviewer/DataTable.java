@@ -151,7 +151,7 @@ public class DataTable
 
       for (int i = 0; i < COLUMN_VIEW_BUTTONS.length; i++)
       {
-         columnButton = new SimpleButton(COLUMN_VIEW_BUTTONS[i]);
+         columnButton = new SimpleButton(COLUMN_VIEW_BUTTONS[i], true);
          columnButton.addClickHandler(clickHandlers[i]);
          columnButton.setVisible(false);
          toolbar.addLeftWidget(columnButton);
@@ -367,9 +367,9 @@ public class DataTable
    private boolean filtered_ = false;
 
    private static String COLUMN_VIEW_BUTTONS[] = {
-      "\u2B70",
-      "\uD83E\uDC20",
-      "\uD83E\uDC22",
-      "\u2B72"
+      "<i class=\"icon-angle-double-left \"></i>",
+      "<i class=\"icon-angle-left \"></i>",
+      "<i class=\"icon-angle-right \"></i>",
+      "<i class=\"icon-angle-double-right \"></i>"
    };
 }
