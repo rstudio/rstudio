@@ -2469,7 +2469,7 @@ body.ubuntu_mono .searchBox {
 .dataTableColumnWidget {
    font-size: 10px;
    border: none;
-   width: 50px;
+   width: 60px;
    background-color: transparent;
    text-align: center;
    padding-left: 0px !important; /* unfortunately top-level theme styles override class styles in specificity */
