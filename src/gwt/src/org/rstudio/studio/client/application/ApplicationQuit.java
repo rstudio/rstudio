@@ -492,19 +492,22 @@ public class ApplicationQuit implements SaveActionChangedHandler,
      
    @Handler
    public void onRestartR()
-   {   
-      terminalHelper_.warnBusyTerminalBeforeCommand(new Command() 
-      {
-         @Override
-         public void execute()
+   {
+         // check for running jobs
+         pJobManager_.get().promptForTermination((confirmed) ->
          {
-            boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
-            eventBus_.fireEvent(new SuspendAndRestartEvent(
-                  SuspendOptions.createSaveMinimal(saveChanges),
-                  null));  
-         }
-      }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
-         pUiPrefs_.get().terminalBusyMode().getValue());
+            if (confirmed)
+            {
+               terminalHelper_.warnBusyTerminalBeforeCommand(() ->
+               {
+                  boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
+                  eventBus_.fireEvent(new SuspendAndRestartEvent(
+                        SuspendOptions.createSaveMinimal(saveChanges),
+                        null));
+               }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
+                  pUiPrefs_.get().terminalBusyMode().getValue());
+            }
+         });
    }
    
    @Handler
