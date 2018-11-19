@@ -16,7 +16,7 @@
 #ifndef SESSION_PLOTS_HPP
 #define SESSION_PLOTS_HPP
 
-#include <boost/signals.hpp>
+#include <core/BoostSignals.hpp>
 
 namespace rstudio {
 namespace core {
@@ -35,9 +35,9 @@ core::Error initialize();
 
 struct Events : boost::noncopyable
 {
-   boost::signal<void()> onBeforeNewPlot;
-   boost::signal<void()> onBeforeNewGridPage;
-   boost::signal<void()> onNewPlot;
+   RSTUDIO_BOOST_SIGNAL<void()> onBeforeNewPlot;
+   RSTUDIO_BOOST_SIGNAL<void()> onBeforeNewGridPage;
+   RSTUDIO_BOOST_SIGNAL<void()> onNewPlot;
 };
 
 Events& events();

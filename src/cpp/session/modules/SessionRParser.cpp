@@ -408,7 +408,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    if (!failed)
    {
       DEBUG("--- Found function in pkgInfo index: " << *fnInfo.binding());
-      return fnInfo.performsNse();
+      return bool(fnInfo.performsNse());
    }
    
    // Handle some special cases first.
@@ -1133,11 +1133,28 @@ public:
       // chain. If so, then we implicitly set the first argument as that object.
       if (isPipeOperator(cursor.previousSignificantToken()))
       {
+         // If magrittr sees a '.' at the top level (ie: used standalone as
+         // an argument) it treats that as a request to move the 'lhs' to
+         // that position. (This is not true when '.' is used as part of
+         // a more complicated expression)
+         bool usesTopLevelDot = core::algorithm::contains(unnamedArguments, ".");
+         if (!usesTopLevelDot)
+         {
+            for (auto&& item : namedArguments)
+            {
+               if (item.second == ".")
+               {
+                  usesTopLevelDot = true;
+                  break;
+               }
+            }
+         }
+
          std::string chainHead = cursor.getHeadOfPipeChain();
-         if (!chainHead.empty())
+         if (!chainHead.empty() && !usesTopLevelDot)
             unnamedArguments.insert(unnamedArguments.begin(), chainHead);
       }
-      
+
       DEBUG_BLOCK("Named, Unnamed Arguments")
       {
          LOG_OBJECT(namedArguments);

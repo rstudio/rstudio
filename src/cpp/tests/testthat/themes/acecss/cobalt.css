@@ -107,6 +107,7 @@
 }
 
 .ace-cobalt .ace_markup.ace_heading {
+  font-weight:bold;
   color: #C8E4FD;
   background-color: #001221
 }

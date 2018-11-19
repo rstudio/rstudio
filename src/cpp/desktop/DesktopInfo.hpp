@@ -16,6 +16,7 @@
 #ifndef DESKTOP_DESKTOP_INFO_HPP
 #define DESKTOP_DESKTOP_INFO_HPP
 
+#include <QApplication>
 #include <QObject>
 #include <QString>
 
@@ -29,41 +30,67 @@ class DesktopInfo : public QObject
     Q_OBJECT
 
 Q_SIGNALS:
+   void fixedWidthFontListChanged(QString fontList);
+   void fixedWidthFontChanged(QString font);
+   void proportionalFontChanged(QString font);
+   void desktopSynctexViewerChanged(QString viewer);
    void sumatraPdfExePathChanged(QString value);
-   void fixedWidthFontListChanged(QString value);
    void zoomLevelChanged(double value);
    void chromiumDevtoolsPortChanged(quint16 value);
+
+public:
+   void onClose();
 
 public:
    explicit DesktopInfo(QObject* parent = nullptr);
 
    Q_INVOKABLE QString getPlatform();
-   Q_PROPERTY(QString platform READ getPlatform CONSTANT)
+   Q_PROPERTY(QString platform
+              READ getPlatform
+              CONSTANT)
 
    Q_INVOKABLE QString getVersion();
-   Q_PROPERTY(QString version READ getVersion CONSTANT)
+   Q_PROPERTY(QString version
+              READ getVersion
+              CONSTANT)
 
    Q_INVOKABLE QString getScrollingCompensationType();
-   Q_PROPERTY(QString scrollingCompensationType READ getScrollingCompensationType CONSTANT)
+   Q_PROPERTY(QString scrollingCompensationType
+              READ getScrollingCompensationType
+              CONSTANT)
+
+   Q_INVOKABLE bool desktopHooksAvailable();
+   Q_PROPERTY(bool desktopHooksAvailable
+              READ desktopHooksAvailable
+              CONSTANT)
 
    Q_INVOKABLE QString getFixedWidthFontList();
-   Q_INVOKABLE void setFixedWidthFontList(QString list);
+   Q_INVOKABLE void setFixedWidthFontList(QString fontList);
    Q_PROPERTY(QString fixedWidthFontList
               READ getFixedWidthFontList
               WRITE setFixedWidthFontList
               NOTIFY fixedWidthFontListChanged)
 
    Q_INVOKABLE QString getFixedWidthFont();
-   Q_PROPERTY(QString fixedWidthFont READ getFixedWidthFont CONSTANT)
+   Q_INVOKABLE void setFixedWidthFont(QString font);
+   Q_PROPERTY(QString fixedWidthFont
+              READ getFixedWidthFont
+              WRITE setFixedWidthFont
+              NOTIFY fixedWidthFontChanged)
 
    Q_INVOKABLE QString getProportionalFont();
-   Q_PROPERTY(QString proportionalFont READ getProportionalFont CONSTANT)
+   Q_INVOKABLE void setProportionalFont(QString font);
+   Q_PROPERTY(QString proportionalFont
+              READ getProportionalFont
+              WRITE setProportionalFont
+              NOTIFY proportionalFontChanged)
 
    Q_INVOKABLE QString getDesktopSynctexViewer();
-   Q_PROPERTY(QString desktopSynctexViewer READ getDesktopSynctexViewer CONSTANT)
-
-   Q_INVOKABLE bool desktopHooksAvailable();
-   Q_PROPERTY(bool desktopHooksAvailable READ desktopHooksAvailable CONSTANT)
+   Q_INVOKABLE void setDesktopSynctexViewer(QString viewer);
+   Q_PROPERTY(QString desktopSynctexViewer
+              READ getDesktopSynctexViewer
+              WRITE setDesktopSynctexViewer
+              NOTIFY desktopSynctexViewerChanged)
 
    Q_INVOKABLE QString getSumatraPdfExePath();
    Q_INVOKABLE void setSumatraPdfExePath(QString path);
@@ -89,8 +116,8 @@ public:
 
 inline DesktopInfo& desktopInfo()
 {
-   static DesktopInfo instance;
-   return instance;
+   static DesktopInfo* instance = new DesktopInfo(qApp);
+   return *instance;
 }
 
 } // end namespace desktop

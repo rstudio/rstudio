@@ -128,6 +128,13 @@ public class DataEditingTarget extends UrlContentEditingTarget
       view_.onDeactivate();
       isActive_ = false;
    }
+
+   @Override
+   public void onDismiss(int dismissType)
+   {
+      // explicitly avoid calling super method as we don't
+      // have an associated content URL to clean up
+   }
    
    private void doQueuedRefresh(boolean onActivate)
    {

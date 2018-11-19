@@ -165,7 +165,7 @@ Error executeRcppEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
+   RSTUDIO_BOOST_SCOPED_CONNECTION consoleHandler =
          module_context::events().onConsoleOutput.connect(
             boost::bind(chunkConsoleOutputHandler,
                         _1,
@@ -242,7 +242,7 @@ Error executeStanEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
+   RSTUDIO_BOOST_SCOPED_CONNECTION consoleHandler =
          module_context::events().onConsoleOutput.connect(
             boost::bind(chunkConsoleOutputHandler,
                         _1,
@@ -264,7 +264,15 @@ Error executeStanEngineChunk(const std::string& docId,
       return Success();
    }
    RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
-   
+
+   // write input code to cache
+   error = appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            targetPath);
+   if (error)
+      LOG_ERROR(error);
+
    // evaluate engine options (so we can pass them through to stan call)
    r::sexp::Protect protect;
    SEXP engineOptsSEXP = R_NilValue;
@@ -386,7 +394,7 @@ Error executeSqlEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
+   RSTUDIO_BOOST_SCOPED_CONNECTION consoleHandler =
          module_context::events().onConsoleOutput.connect(
             boost::bind(chunkConsoleOutputHandler,
                         _1,
@@ -591,7 +599,7 @@ Error runUserDefinedEngine(const std::string& docId,
       }
    };
    
-   boost::signals::scoped_connection handler =
+   RSTUDIO_BOOST_SCOPED_CONNECTION handler =
          module_context::events().onConsoleOutput.connect(consoleHandler);
    
    // run the user-defined engine

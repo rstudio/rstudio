@@ -36,12 +36,6 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
-QFontDatabase& fontDatabase()
-{
-   static QFontDatabase instance;
-   return instance;
-}
-
 #ifdef Q_OS_WIN
 
 void reattachConsoleIfNecessary()
@@ -129,35 +123,7 @@ bool isGnomeDesktop()
 
 QString getFixedWidthFontList()
 {
-   QFontDatabase& db = desktop::fontDatabase();
-   QStringList fonts;
-   for (const QString& family : db.families())
-   {
-      
-#ifdef _WIN32
-      // screen out annoying Qt warnings when attempting to
-      // initialize incompatible fonts
-      static std::set<std::string> blacklist = {
-         "8514oem",
-         "Fixedsys",
-         "Modern",
-         "MS Sans Serif",
-         "MS Serif",
-         "Roman",
-         "Script",
-         "Small Fonts",
-         "System",
-         "Terminal"
-      };
-
-      if (blacklist.count(family.toStdString()))
-         continue;
-#endif
-
-      if (isFixedWidthFont(QFont(family, 12)))
-         fonts.append(family);
-   }
-   return fonts.join(QStringLiteral("\n"));
+   return desktopInfo().getFixedWidthFontList();
 }
 
 #endif

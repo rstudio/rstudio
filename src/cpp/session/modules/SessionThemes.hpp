@@ -18,11 +18,6 @@
 namespace rstudio {
 namespace core {
    class Error;
-
-namespace http {
-   class Request;
-   class Response;
-}
 }
 }
 
@@ -30,25 +25,6 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace themes {
-
-// These constants and URI handlers need to be public so that they can be registered in
-// DataViewer.cpp before the /grid_resource handler is registered or they won't be invoked (because
-// their path is also a regex match for the less specific `/grid_resource` path). A better long term
-// solution would be to order the set of URI handlers with a reverse lexographical order so that the
-// most specific path always appears first (or use a lexographical order with a reverse search).
-
-extern const std::string kDefaultThemeLocation;
-extern const std::string kGlobalCustomThemeLocation;
-extern const std::string kLocalCustomThemeLocation;
-
-void handleDefaultThemeRequest(const core::http::Request& request,
-                                     core::http::Response* pResponse);
-
-void handleGlobalCustomThemeRequest(const core::http::Request& request,
-                                          core::http::Response* pResponse);
-
-void handleLocalCustomThemeRequest(const core::http::Request& request,
-                                          core::http::Response* pResponse);
 
 core::Error initialize();
 

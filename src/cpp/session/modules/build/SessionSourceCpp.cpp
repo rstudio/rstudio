@@ -15,11 +15,11 @@
 
 #include "SessionSourceCpp.hpp"
 
-#include <boost/signal.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>

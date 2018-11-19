@@ -59,6 +59,7 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
    boolean hasOutput();
    boolean hasPlots();
    boolean hasErrors();
+   boolean hasHtmlWidgets();
    
    // notify of size changes
    void onResize();

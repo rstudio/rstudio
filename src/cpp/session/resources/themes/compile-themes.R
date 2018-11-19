@@ -1,5 +1,165 @@
-## Default operator colors to use for light, dark themes. These should be
-## a grey tone that remains distinctive on either dark or light backgrounds.
+#
+#  compile-themes.R
+#
+# Copyright (C) 2018 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+.rs.addFunction("parseCss", function(lines)
+{
+   css <- list()
+   
+   # Split any lines with "\n" for proper parsing.
+   cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", lines), c("\n"), perl = TRUE))
+   
+   currKey = NULL
+   isLastDescForKey <- FALSE
+   inCommentBlock <- FALSE
+   candidateKey <- NULL
+   for (currLine in cssLines)
+   {
+      orgLine <- currLine
+      
+      # We use this to still parse the code before the start of the comment, if any.
+      startCommentBlock <- FALSE
+      
+      # Remove all in-line comments.
+      currLine <- gsub("/\\*.*?\\*/", "", currLine)
+      
+      # If we're not in a comment block and the current line has a comment opener, start the comment
+      # block and update the line by removing the commented section. This allows for CSS before the
+      # start of a comment. Note that this comment can't be contained wholly on a single line
+      # because of the gsub above this.
+      if (!inCommentBlock && grepl("/\\*", currLine))
+      {
+         startCommentBlock <- TRUE
+         currLine <- sub("/\\*.*$", "", currLine)
+      }
+      
+      # If we're in a comment block and the current line has a comment closer, end the comment block
+      # and update the line by removing the commented section. This allows for CSS after the end of
+      # a comment.
+      if (inCommentBlock && grepl("\\*/", currLine))
+      {
+         inCommentBlock <- FALSE
+         currLine <- sub("^.*?\\*/", "", currLine)
+      }
+      
+      if (!inCommentBlock)
+      {
+         # Check for a change of key. A "key" in this context is the name of a CSS rule block. For example, in
+         # .ace_editor {
+         #     font-weight: bold;
+         #     color: #AAAAAA
+         # }
+         # ".ace_editor" is the key and "font-weight: bold" and "color: #AAAAAA" are descriptions for that key.
+         if (grepl("^\\s*\\.[^\\{]+\\{", currLine))
+         {
+            candidateKey <- paste(
+               candidateKey, 
+               regmatches(
+                  currLine,
+                  regexec("^\\s*([^\\{]*?)\\s*\\{", currLine))[[1]][2],
+               sep = " ")
+            candidateKey <- gsub("^\\s*|\\s*$", "", candidateKey, perl = TRUE)
+            
+            if (!grepl("^\\s*$", candidateKey))
+            {
+               if (!is.null(currKey))
+               {
+                  warning("Malformed CSS: ", orgLine, ". No closing bracket for last block.")
+               }
+               currKey <- candidateKey
+               candidateKey <- NULL
+               
+               css[[currKey]] <- list()
+               currLine <- sub("^\\s*[^\\{]*?\\s*\\{", "", currLine)
+            }
+         }
+         
+         # If there is currently a key, look for it's descriptions.
+         if (!is.null(currKey))
+         {
+            # Determine if we're at the end of the block and remove the closing bracket to be able
+            # to parse anything that comes before it on the same line.
+            if (grepl("\\}", currLine))
+            {
+               isLastDescForKey <- TRUE
+               currLine <- sub("^([^\\}]*)\\}\\s*$", "\\1", currLine)
+               if (grepl("\\}", currLine))
+               {
+                  warning("Maformed CSS: ", orgLine, ". Extra closing brackets.")
+               }
+            }
+            
+            # Look for a : on the line. CSS rules always have the format "name: style", so this
+            # indicates there is a description on this line..
+            if (grepl(":", currLine))
+            {
+               # Split on the rule separator. There may be multiple descriptions on one line.
+               descValues <- strsplit(currLine, "\\s*;\\s*")[[1]]
+               for (value in descValues)
+               {
+                  # If there is a non-empty value, parse the description.
+                  if (value != "")
+                  {
+                     # Strip whitespace and ;, if any, and then split on :.
+                     desc <- strsplit(sub("^\\s*([^;]+);?\\s*$", "\\1", value), "\\s*:\\s*")[[1]]
+                     if (length(desc) != 2)
+                     {
+                        warning("Malformed CSS: ", orgLine, ". Invalid element within block.")
+                     }
+                     else
+                     {
+                        css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
+                     }
+                  }
+               }
+            }
+            # If the line doesn't contain a description and is non-empty, it is malformed.
+            else if (!grepl("^\\s*$", currLine))
+            {
+               warning("Malformd CSS: ", orgLine, ". Unexpected non-css line.")
+            }
+         }
+         else if (!grepl("^\\s*$", currLine))
+         {
+            if (is.null(candidateKey))
+            {
+               candidateKey <- currLine
+            }
+            else
+            {
+               # selectors for CSS rule blocks may be split over multiple lines.
+               candidateKey <- paste(candidateKey, currLine)
+            }
+         }
+         
+         # If we've finished a block, reset the key and the block-end indicator.
+         if (isLastDescForKey)
+         {
+            currKey <- NULL
+            isLastDescForKey <- FALSE
+         }
+         
+         # If we started a comment block this line, update the inCommentBlock status so we ignore
+         # all lines until the end of the comment block is found.
+         if (startCommentBlock)
+         {
+            inCommentBlock <- TRUE
+         }
+      }
+   }
+   
+   css
+})
 
 .rs.addFunction("add_operator_color", function(content, name, isDark = FALSE, overrideMap = list()) {
    color <- overrideMap[[name]]
@@ -26,35 +186,91 @@
    )
 })
 
-## Utility colors for parsing hex colors
-.rs.addFunction("parse_css_color", function(value) {
-   unlist(lapply(value, function(x) {
-      if (grepl("^\\s*rgb", x, perl = TRUE)) 
+# Converts a color to an array of the RGB values of the color.
+#
+# @param color    The color to convert.
+#
+# Returns the RGB color.
+.rs.addFunction("getRgbColor", function(color) {
+   if (is.vector(color) && any(is.integer(color))) 
+   {
+      if (length(color) != 3) 
       {
-         stripped <- gsub("^.*\\((.*)\\)$", "\\1", x)
-         splat <- strsplit(stripped, "\\s*,\\s*", perl = TRUE)[[1]]
-         c(
-            red = as.numeric(splat[[1]]),
-            green = as.numeric(splat[[2]]),
-            blue = as.numeric(splat[[3]])
-         )
+         stop(
+            "expected 3 values for RGB color, not ",
+            length(color),
+            call. = FALSE)
       }
-      else 
+      colorVec <- color
+   }
+   else if (substr(color, 0, 1) == "#") 
+   {
+      if (nchar(color) != 7)
       {
-         col2rgb(value)[, 1]
+         stop(
+            "hex representation of RGB values should have the format \"#RRGGBB\", where `RR`, `GG` and `BB` are in [0x00, 0xFF]. Found: ",
+            color,
+            call. = FALSE)
       }
-   }))
+      else
+      {
+         colorVec <- sapply(
+            c(substr(color, 2, 3), substr(color, 4, 5), substr(color, 6, 7)),
+            function(str) { strtoi(str, 16L) },
+            USE.NAMES = FALSE)
+      }
+   }
+   else if (grepl("^rgba?", color))
+   {
+      matches = regmatches(color, regexec("\\(([^,\\)]+),([^,\\)]+),([^,\\)]+)", color))[[1]]
+      if (length(matches) != 4)
+      {
+         stop(
+            "non-hex representation of RGB values should have the format \"rgb(R, G, B)\" or \"rgba(R, G, B, A)\" where `R`, `G`, and `B` are integer values in [0, 255] and `A` is decimal value in [0, 1.0]. Found: ",
+            color,
+            call. = FALSE)
+      }
+      colorVec <- strtoi(matches[2:4])
+   }
+   else
+   {
+      stop(
+         "supplied color has an invalid format: ",
+         color,
+         ". Expected \"#RRGGBB\", \"rgb(R, G, B) or \"rgba(R, G, B, A)\", where `RR`, `GG` and `BB` are in [0x00, 0xFF], `R`, `G`, and `B` are integer values in [0, 255], and `A` is decimal value in [0, 1.0]",
+         call. = FALSE)
+   }
+   
+   # Check for inconsistencies.
+   invalidMsg <- paste0("invalid color supplied: ", color, ". ")
+   if (any(is.na(colorVec)) || any(!is.integer(colorVec)))
+   {
+      stop(
+         invalidMsg,
+         "One or more RGB values could not be converted to an integer",
+         call. = FALSE)
+   }
+   if (any(colorVec < 0))
+   {
+      stop(invalidMsg, "RGB value cannot be negative", call. = FALSE)
+   }
+   if (any(colorVec > 255))
+   {
+      stop(invalidMsg, "RGB value cannot be greater than 255", call. = FALSE)
+   }
+   
+   colorVec
 })
 
 .rs.addFunction("format_css_color", function(color) {
    sprintf("rgb(%s, %s, %s)",
-           color[["red"]],
-           color[["green"]],
-           color[["blue"]])
+           color[1],
+           color[2],
+           color[3])
 })
 
 .rs.addFunction("color_as_hex", function(color) {
-   paste("#", paste(toupper(as.hexmode(as.integer(color))), collapse = ""), sep = "")
+   paste("#", paste(format(as.hexmode(as.integer(color[1:3])), upper.case = TRUE, width = 2), collapse = ""), sep = "")
 })
 
 # Strip color from field
@@ -66,11 +282,29 @@
    }
 })
 
-.rs.addFunction("mix_colors", function(x, y, p) {
-   setNames(as.integer(
-      (p * x) +
-         ((1 - p) * y)
-   ), c("red", "green", "blue"))
+# Mixes two colors together.
+#
+# @param color1   The first color.
+# @param color2   The second color.
+# @param alpha1   The alpha of the first color.
+# @param alpha2   The alpha of the second color.
+# 
+# Returns the mixed color in string format.
+.rs.addFunction("mixColors", function(color1, color2, alpha1, alpha2 = NULL) {
+   c1rgb <- .rs.getRgbColor(color1)
+   c2rgb <- .rs.getRgbColor(color2)
+   
+   if (is.null(alpha2))
+   {
+      alpha2 = 1 - alpha1
+   }
+   
+   .rs.color_as_hex(
+      c(
+         ceiling(alpha1 * c1rgb[[1]] + alpha2 * c2rgb[[1]]),
+         ceiling(alpha1 * c1rgb[[2]] + alpha2 * c2rgb[[2]]),
+         ceiling(alpha1 * c1rgb[[3]] + alpha2 * c2rgb[[3]]),
+         sep = ","))
 })
 
 .rs.addFunction("add_content", function(content, ..., replace)
@@ -757,8 +991,6 @@
 })
 
 .rs.addFunction("compile_theme", function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
-   library("highlight")
-   
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", lines)
    stripped <- grep("^\\.", stripped, value = TRUE)
@@ -771,80 +1003,27 @@
    ## There may (should) be a rule for just '.ace-<theme> { ... }'; we need
    ## to preserve this theme, but apply it to the '.ace_editor' directly.
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
-   content <- gsub(regex, ".ace_editor {", lines)
-   
-   ## Copy ace_editor as ace_editor_theme
-   regex <- paste("^\\.ace_editor \\{$", sep = "")
    content <- gsub(regex, paste(
       ".ace_editor",
       ".rstudio-themes-flat.ace_editor_theme .profvis-flamegraph",
       ".rstudio-themes-flat.ace_editor_theme", 
       ".rstudio-themes-flat .ace_editor_theme {",
-      sep = ", "), content)
+      sep = ", "), lines)
    
    ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
    content <- gsub(regex, "", content)
    
-   ## Modify the CSS so the parser can handle it.
-   modified <- c()
-   blockStarts <- grep("{", content, fixed = TRUE)
-   blockEnds <- grep("}", content, fixed = TRUE)
+   ## Parse the css
+   parsed <- .rs.parseCss(lines = content)
+   names(parsed)[grep("^\\.ace_editor(,.*|)$", names(parsed), perl = TRUE)] <- "ace_editor"
    
-   pairs <- Map(c, blockStarts, blockEnds)
-   for (pair in pairs) {
-      
-      start <- pair[[1]]
-      end <- pair[[2]]
-      
-      ## Figure out what classes are associated with this block.
-      classesEnd <- start
-      index <- start - 1
-      if (index > 0 && grepl(",\\s*$", content[index])) {
-         while (index > 0 && grepl(",\\s*$", content[index]))
-            index <- index - 1
-         classesStart <- index + 1
-      } else {
-         classesStart <- classesEnd
-      }
-      
-      subContent <- content[classesStart:classesEnd]
-      subContent[length(subContent)] <- gsub(
-         "\\s*\\{.*", "",
-         subContent[length(subContent)]
-      )
-      
-      allClasses <- strsplit(paste(subContent, collapse = " "),
-                             split = "\\s*,\\s*",
-                             perl = TRUE)[[1]]
-      
-      thisBlock <- gsub(".*\\s*\\{.*", "{", content[start:end])
-      
-      # Ensure all CSS lines end with a semicolon.
-      range <- 2:(length(thisBlock) - 1)
-      thisBlock[range] <-
-         paste(
-            gsub(";\\s*", "", thisBlock[range]),
-            ";",
-            sep = ""
-         )
-      
-      blockPasted <- paste(thisBlock, collapse = "\n")
-      for (class in allClasses) {
-         modified <- c(modified, paste(class, blockPasted))
-      }
-   }
-   
-   ## Parse the modified CSS.
-   modified <- unlist(strsplit(modified, "\n", fixed = TRUE))
-   parsed <- suppressWarnings(highlight::css.parser(lines = modified))
-   
-   if (!any(grepl("^ace_keyword", names(parsed)))) {
+   if (!any(grepl("^\\.ace_keyword", names(parsed)))) {
       warning("No field 'ace_keyword' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
-   key <- grep("^ace_keyword", names(parsed), value = TRUE)[[1]]
+   key <- grep("^\\.ace_keyword\\s*$", names(parsed), value = TRUE)[[1]]
    keywordColor <- parsed[[key]]$color
    if (is.null(keywordColor)) {
       warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)
@@ -861,7 +1040,7 @@
    
    ## Coloring for brackets, discarding the ace bounding box shown
    ## on highlight.
-   layerName <- "ace_marker-layer .ace_bracket"
+   layerName <- ".ace_marker-layer .ace_bracket"
    if (!(layerName %in% names(parsed))) {
       warning("Expected rule for '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
@@ -899,29 +1078,26 @@
    
    
    ## Generate a color used for chunks, e.g. in .Rmd documents.
-   backgroundRgb <- .rs.parse_css_color(background)
-   foregroundRgb <- .rs.parse_css_color(foreground)
-   
    ## Determine an appropriate mixing proportion, and override for certain
    ## themes.
    mix <- .rs.get_chunk_bg_color(name, isDark, chunkBgPropOverrideMap)
    
-   mergedColor <- .rs.mix_colors(
-      backgroundRgb,
-      foregroundRgb,
+   mergedColor <- .rs.mixColors(
+      background,
+      foreground,
       mix
    )
    
    content <- c(
       content,
-      .rs.create_line_marker_rule(".ace_foreign_line", .rs.color_as_hex(mergedColor))
+      .rs.create_line_marker_rule(".ace_foreign_line", mergedColor)
    )
    
    ## Generate a color used for 'debugging' backgrounds.
    if (!any(grepl(".ace_active_debug_line", content, fixed = TRUE)))
    {
-      debugPrimary <- .rs.parse_css_color("#FFDE38")
-      debugBg <- .rs.color_as_hex(.rs.mix_colors(backgroundRgb, debugPrimary, 0.5))
+      debugPrimary <- "#FFDE38"
+      debugBg <- .rs.mixColors(background, debugPrimary, 0.5)
    
       content <- c(
          content,
@@ -935,8 +1111,7 @@
    ## Dark backgrounds need a bit more contrast than light ones for
    ## a nice visual display.
    mixingProportion <- if (isDark) 0.8 else 0.9
-   errorBgColor <-
-      .rs.color_as_hex(.rs.mix_colors(backgroundRgb, foregroundRgb, mixingProportion))
+   errorBgColor <- .rs.mixColors(background, foreground, mixingProportion)
    
    content <- c(
       content,

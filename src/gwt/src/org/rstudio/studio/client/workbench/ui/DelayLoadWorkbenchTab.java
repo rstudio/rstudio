@@ -1,7 +1,7 @@
 /*
  * DelayLoadWorkbenchTab.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,8 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
@@ -145,6 +147,10 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       assert !initialized_;
 
       initialized_ = true;
+
+      // Assign a unique ID to the pane based on its title
+      ElementIds.assignElementId(pane.getElement(), 
+            ElementIds.WORKBENCH_PANEL + "_" + ElementIds.idSafeString(title_));
 
       pane.ensureWidget();
       panel.add(pane);

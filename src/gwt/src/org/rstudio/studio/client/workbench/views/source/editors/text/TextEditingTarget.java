@@ -5197,18 +5197,8 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
-                     if (docDisplay_.hasBreakpoints())
-                     {
-                        hideBreakpointWarningBar();
-                     }
-                     consoleDispatcher_.executeSourceCommand(
-                           getPath(),
-                           fileType_,
-                           docUpdateSentinel_.getEncoding(),
-                           activeCodeIsAscii(),
-                           forceEcho ? true : echo,
-                           prefs_.focusConsoleAfterExec().getValue(),
-                           docDisplay_.hasBreakpoints());   
+                     executeRSourceCommand(forceEcho ? true : echo, 
+                        prefs_.focusConsoleAfterExec().getValue());
                   }
                };
             
@@ -5450,9 +5440,9 @@ public class TextEditingTarget implements
       }); 
    }
 
-   void customSource()
+   boolean customSource()
    {
-      rHelper_.customSource(TextEditingTarget.this);
+      return rHelper_.customSource(TextEditingTarget.this);
    }
    
    void renderRmd()
@@ -6278,28 +6268,41 @@ public class TextEditingTarget implements
                {
                   previewFromR();
                }
-               else if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
-               {
-                  customSource();
-               }
                else
                {
-                  if (docDisplay_.hasBreakpoints())
-                  {
-                     hideBreakpointWarningBar();
-                  }
-                  consoleDispatcher_.executeSourceCommand(
-                                             docUpdateSentinel_.getPath(), 
-                                             fileType_,
-                                             docUpdateSentinel_.getEncoding(), 
-                                             activeCodeIsAscii(),
-                                             false,
-                                             false,
-                                             docDisplay_.hasBreakpoints());
+                  executeRSourceCommand(false, false);
                }
             }
          }
       };
+   }
+   
+   private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
+   {
+      // Hide breakpoint warning bar if visible (since we will re-evaluate
+      // breakpoints after source)
+      if (docDisplay_.hasBreakpoints())
+      {
+         hideBreakpointWarningBar();
+      }
+
+      if (fileType_.isR() && extendedType_ == SourceDocument.XT_R_CUSTOM_SOURCE)
+      {
+         // If this R script looks like it has a custom source
+         // command, try to execute it; if successful, we're done.
+         if (customSource())
+            return;
+      }
+
+      // Execute the R source() command
+      consoleDispatcher_.executeSourceCommand(
+                                 docUpdateSentinel_.getPath(), 
+                                 fileType_,
+                                 docUpdateSentinel_.getEncoding(), 
+                                 activeCodeIsAscii(),
+                                 forceEcho,
+                                 focusAfterExec,
+                                 docDisplay_.hasBreakpoints());
    }
 
    public void checkForExternalEdit()

@@ -13,6 +13,7 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -42,11 +43,13 @@ public class JobsPane extends WorkbenchPane
 {
    @Inject
    public JobsPane(Commands commands,
+                   UIPrefs uiPrefs,
                    final EventBus events)
    {
       super("Jobs");
       commands_ = commands;
       events_ = events;
+      uiPrefs_ = uiPrefs;
 
       allJobs_ = new ToolbarButton(
             commands.helpBack().getImageResource(), evt ->
@@ -247,6 +250,23 @@ public class JobsPane extends WorkbenchPane
          progress_.updateElapsed(timestamp);
       }
    }
+   
+   @Override
+   public void bringToFront()
+   {
+      setShowJobsTabPref(true);
+      super.bringToFront();
+   }
+   
+   @Override
+   public void setShowJobsTabPref(boolean show)
+   {
+      if (uiPrefs_.showJobsTab().getValue() != show)
+      {
+         uiPrefs_.showJobsTab().setGlobalValue(show);
+         uiPrefs_.writeUIPrefs();
+      }
+   }
 
    // Private methods ---------------------------------------------------------
    
@@ -301,4 +321,5 @@ public class JobsPane extends WorkbenchPane
    // injected
    final Commands commands_;
    final EventBus events_;
+   final UIPrefs uiPrefs_;
 }

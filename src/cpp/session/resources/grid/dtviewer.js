@@ -23,6 +23,9 @@ var table;
 // the column definitions from the server
 var cols;
 
+// the column widths (on initial draw)
+var origColWidths = [];
+
 // dismiss the active filter popup, if any
 var dismissActivePopup = null;
 
@@ -71,6 +74,60 @@ var activeColumnInfo = {
 
 // manually adjusted widths of each column
 var manualWidths = [];
+
+// offset from which to start rendering columns
+var columnOffset = 0;
+
+// maximum number of columns to draw
+// the default is maintained separately for view element considerations
+var defaultMaxColumns = 50;
+var maxColumns = defaultMaxColumns;
+
+// boolean for whether bootstrapping is occurring, used to
+// rate limit certain events
+var bootstrapping = false;
+
+// helper for creating a tag with properties + content
+// (created as a string)
+var createTag = function(tag, content, attributes) {
+
+  // if content is an object and attributes is undefined,
+  // treat this as request to create tag with attributes
+  // but no content
+  if (typeof content === 'object' && typeof attributes === 'undefined')
+  {
+    attributes = content;
+    content = '';
+  }
+
+  // ensure attributes is an object
+  attributes = attributes || {};
+
+  // compute inner attributes
+  var parts = [];
+  for (var key in attributes) {
+
+    // extract value
+    var value = attributes[key];
+
+    // join arrays of values
+    if (Object.prototype.toString.call(value) === '[object Array]')
+      value = value.join(' ');
+
+    // skip non-string values
+    if (typeof value !== 'string')
+      continue;
+
+    // push attribute
+    parts.push(key + '="' + value.replace(/"/g, "&quot;") + '"')
+  }
+
+  // build the final html
+  var opener = '<' + tag + ' ' + parts.join(' ') + '>';
+  var closer = '</' + tag + '>';
+  return opener + (content || '') + closer;
+
+}
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -205,13 +262,28 @@ var renderCellContents = function(data, type, row, meta, clazz) {
 };
 
 var renderCellClass = function (data, type, row, meta, clazz) {
-  var title = null;
-  if (typeof(data) === "string") 
-     title = data.replace(/\"/g, "&quot;");
 
-  return '<span title="' + title + '">' +
-    renderCellContents(data, type, row, meta, clazz) +
-    '</span>';
+  // render cell contents
+  var contents = renderCellContents(data, type, row, meta, clazz);
+
+  // compute classes for tag
+  var classes = [clazz];
+
+  // treat data with more than 10 characters as 'long'
+  if (contents.length >= 10)
+    classes.push('largeCell');
+
+  // compute title (if any)
+  var title;
+  if (typeof data === "string")
+    title = data;
+
+  // produce tag
+  return createTag('span', contents, {
+    'class': classes,
+    'title': title
+  });
+
 };
 
 // render a number cell
@@ -337,6 +409,9 @@ var preDrawCallback = function() {
 };
 
 var postDrawCallback = function() {
+  // cols might not be initialized at this point
+  if (!cols) { return; }
+
   var indicator = $(".DTS_Loading");
   if (indicator) {
       indicator.removeClass("showLoading");
@@ -905,14 +980,41 @@ var initDataTableLoad = function(result) {
       postInitActions[actionName]();
     }
   }
+
+  bootstrapping = false;
 };
 
 var initDataTable = function(resCols, data) {
+
   if (resCols.error) {
     showError(cols.error);
     return;
   }
+
+  // an issue was discovered late in the RStudio v1.2 release cycle whereby
+  // attempts to render data tables containing large numbers could fail, due to
+  // an issue wherein our JSON serializer would incorrectly serialize large
+  // numbers. to avoid churning the JSON serializer so close to release, we
+  // instead transmit these columns as strings and then convert back to numeric
+  // here.
+  for (var i = 0; i < resCols.length; i++) {
+    var entry = resCols[i];
+    if (entry.hasOwnProperty("col_breaks")) {
+      var col_breaks = entry["col_breaks"];
+      for (var j = 0; j < col_breaks.length; j++) {
+        if (typeof col_breaks[j] === "string")
+          col_breaks[j] = parseFloat(col_breaks[j]);
+      }
+    }
+  }
+
+  // save reference to column data
   cols = resCols;
+  
+  // due to the jquery magic done in dataTables with rewriting variables and
+  // the amount of window parameters we're already using this is a sane fit
+  // for setting a constant from dtviewer to dataTables
+  window.dataTableMaxColumns = Math.max(0, cols.length - 1); 
 
   // look up the query parameters
   var parsedLocation = parseLocationUrl();
@@ -926,16 +1028,21 @@ var initDataTable = function(resCols, data) {
      "text": []
   }
 
-  // add each column
+  // add each column, offset this and only add as many as current maxColumns
   var thead = document.getElementById("data_cols");
-  for (var j = 0; j < cols.length; j++) {
+  for (j = 0; j < cols.length && j <= maxColumns + columnOffset; j++) {
     // create table header
-    thead.appendChild(createHeader(j, cols[j]));
+    thead.appendChild(createHeader(j <= 0 ? j : j + columnOffset, cols[j]));
     var colType = cols[j].col_type;
     if (colType === "numeric" || colType === "data.frame" || colType === "list") {
       typeIndices[colType].push(j);
     } else {
       typeIndices["text"].push(j);
+    }
+
+    // start at 0 for the dummy column but then one time increment by initialIndex
+    if (j <= 0) {
+      j = columnOffset;
     }
   }
   addResizeHandlers(thead);
@@ -955,6 +1062,8 @@ var initDataTable = function(resCols, data) {
         d.obj = obj;
         d.cache_key = cacheKey;
         d.show = "data";
+        d.column_offset = columnOffset;
+        d.max_columns = maxColumns;
       },
       "error": function(jqXHR) {
         if (jqXHR.responseText[0] !== "{")
@@ -1047,6 +1156,9 @@ var initDataTable = function(resCols, data) {
   });
 
   initDataTableLoad();
+
+  // update the GWT column widget
+  window.columnFrameCallback(columnOffset, maxColumns);
 };
 
 var debouncedSearch = debounce(function(text) {
@@ -1087,12 +1199,17 @@ var addResizeHandlers = function(ele) {
    var initColWidth = null;   // the initial width of the column
    var initTableWidth = null; // the initial width of the table
    var boundsExceeded = 0;
-   var minColWidth = 40;
 
    var applyDelta = function(delta) {
       var colWidth = initColWidth + delta;
 
-      // don't allow resizing beneath minimum size
+      // don't allow resizing beneath minimum size. prefer
+      // the original column width, but for large columns allow
+      // resizing to minimum of 100 pixels
+      var minColWidth = origColWidths[col] || 50;
+      if (minColWidth > 100)
+         minColWidth = 100;
+
       if (delta < 0 && colWidth < minColWidth) {
          boundsExceeded += delta;
          return;
@@ -1171,6 +1288,10 @@ var addResizeHandlers = function(ele) {
          initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
          initTableWidth = $("#rsGridData").width();
          boundsExceeded = 0;
+
+         if (typeof origColWidths[col] === 'undefined')
+            origColWidths[col] = initColWidth;
+
          $("#rsGridData td:nth-child(" + col + ")").css(
             "border-right-color", "#A0A0FF");
          evt.preventDefault();
@@ -1218,6 +1339,8 @@ var addResizeHandlers = function(ele) {
 // 5. initialize the data table
 var bootstrap = function(data) {
 
+  boostrapping = true;
+
   // dismiss any active popups
   if (dismissActivePopup)
     dismissActivePopup(true);
@@ -1225,6 +1348,7 @@ var bootstrap = function(data) {
   // clean state
   table = null;   
   cols = null;
+  origColWidths = [];
   dismissActivePopup = null;
   cachedSearch = "";
   cachedFilterValues = [];
@@ -1311,7 +1435,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
     if (dismissActivePopup)
       dismissActivePopup(true);
   }
-  for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
+  for (var i = 0; i < thead.children.length; i++) {
     var colIdx = i + (rowNumbers ? 0 : 1);
     var col = cols[colIdx];
     var th = thead.children[i];
@@ -1454,6 +1578,9 @@ window.setOption = function(option, value) {
     case "listViewerCallback":
       window.listViewerCallback = value;
       break;
+    case "columnFrameCallback":
+      window.columnFrameCallback = value;
+      break;
   }
 };
 
@@ -1463,9 +1590,69 @@ window.dataViewerCallback = function(row, col) { alert("No viewer for data at " 
 // default viewer for list cells
 window.listViewerCallback = function(row, col) { alert("No viewer for list at " + col + ", " + row  + "."); };
 
+// callback for updating the GWT column widget
+window.columnFrameCallback = function() {};
+
 window.getActiveColumn = function() {
   return activeColumnInfo;
 };
+
+window.nextColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  var newOffset = Math.max(0, Math.min(cols.length - 1 - maxColumns, columnOffset + maxColumns));
+  if (columnOffset != newOffset) {
+    columnOffset = newOffset;
+    bootstrap();
+  }
+}
+
+window.prevColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  var newOffset = Math.max(0, Math.min(cols.length - 1 - maxColumns, columnOffset - maxColumns));
+  if (columnOffset != newOffset) {
+    columnOffset = newOffset;
+    bootstrap();
+  }
+}
+
+window.firstColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  if (columnOffset != 0) {
+    columnOffset = 0;
+    bootstrap();
+  }
+}
+
+window.lastColumnPage = function() {
+  if (bootstrapping) { return; }
+
+  if (columnOffset != cols.length - 1 - maxColumns) {
+    columnOffset = cols.length - 1 - maxColumns;
+    bootstrap();
+  }
+}
+
+window.setOffsetAndMaxColumns = function(newOffset, newMax) {
+  if (bootstrapping) { return; }
+  if (newOffset >= cols.length) { return; }
+
+  if (newOffset > 0) {
+    columnOffset = newOffset;
+  }
+  if (newMax > 0) {
+    newMax = Math.min(cols.length - 1 - newOffset, newMax);
+    maxColumns = newMax;
+  }
+  bootstrap();
+}
+
+// return whether to show the column frame UI elements
+window.isLimitedColumnFrame = function() {
+  return cols.length > defaultMaxColumns;
+}
 
 var parsedLocation = parseLocationUrl();
 var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";

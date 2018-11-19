@@ -34,6 +34,9 @@ public class Job
    
    // the job's state (idle, running, completed, etc.)
    public int state;
+
+   // the job's type (session, launcher)
+   public int type;
    
    // the number of progress units the job has completed so far
    public int progress;
@@ -61,4 +64,7 @@ public class Job
 
    // whether the job pane should should be shown at start
    public boolean show;
+
+   // the job's tags
+   public JsArrayString tags;
 }

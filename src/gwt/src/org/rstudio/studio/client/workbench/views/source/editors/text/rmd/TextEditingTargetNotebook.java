@@ -964,8 +964,8 @@ public class TextEditingTargetNotebook
          initialChunkDefs_ = null;
          
          // sync to editor style changes
-         editingTarget_.addEditorThemeStyleChangedHandler(
-                                       TextEditingTargetNotebook.this);
+         releaseOnDismiss_.add(
+               editingTarget_.addEditorThemeStyleChangedHandler(TextEditingTargetNotebook.this));
          
          // read and/or set initial render width
          lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();

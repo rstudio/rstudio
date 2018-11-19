@@ -4622,6 +4622,19 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void forgetRSConnectDeployments(String sourceFile,
+                                          String outputFile,
+                                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(sourceFile)
+            .add(outputFile)
+            .get();
+      
+      sendRequest(RPC_SCOPE, FORGET_RSCONNECT_DEPLOYMENTS, params, requestCallback);
+   }
+   
+   @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
          String server, String appName, String appTitle, String appId,
@@ -4639,6 +4652,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
+            requestCallback);
+   }
+   
+   @Override
+   public void cancelPublish(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            CANCEL_PUBLISH,
             requestCallback);
    }
    
@@ -5622,7 +5643,7 @@ public class RemoteServer implements Server
 
    @Override
    public void startJob(JobLaunchSpec spec, 
-                        ServerRequestCallback<Void> callback)
+                        ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(spec));
@@ -5633,6 +5654,30 @@ public class RemoteServer implements Server
    public void clearJobs(ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, "clear_jobs", callback);
+   }
+
+   @Override
+   public void getLauncherJobsEnabled(ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(RPC_SCOPE, "launcher_jobs_enabled", callback);
+   }
+   
+   @Override
+   public void startLauncherJobStatusStream(String jobId,
+                                            ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      sendRequest(RPC_SCOPE, "launcher_jobs_start_status_stream", params, callback);
+   }
+  
+   @Override
+   public void stopLauncherJobStatusStream(String jobId,
+                                           ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      sendRequest(RPC_SCOPE, "launcher_jobs_stop_status_stream", params, callback);
    }
 
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
@@ -6107,7 +6152,9 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
    private static final String GET_RSCONNECT_APP = "get_rsconnect_app";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
+   private static final String FORGET_RSCONNECT_DEPLOYMENTS = "forget_rsconnect_deployments";
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
+   private static final String CANCEL_PUBLISH = "cancel_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_SERVER_URLS = "get_server_urls";

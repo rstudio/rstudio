@@ -47,15 +47,11 @@ namespace session {
 namespace modules {
 namespace themes {
 
+namespace {
+
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
-
-namespace {
-
-const std::string kGridResourcePrefix = "grid_resource/";
-const std::string kPythonPrefix = "python/";
-const std::string kProfilesPrefix = "profiles/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -463,12 +459,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
 void handleDefaultThemeRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
-         kDefaultThemeLocation;
+   std::string prefix = "/" + kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    pResponse->setCacheableFile(getDefaultThemePath().childPath(fileName), request);
 }
@@ -484,12 +475,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
-         kGlobalCustomThemeLocation;
+   std::string prefix = "/" + kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
@@ -508,12 +494,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 {
    // Note: we probably want to return a warning code instead of success so the client has the
    // ability to pop up a warning dialog or something to the user.
-   std::string prefix =
-         "/" +
-         (boost::contains(request.uri(), kGridResourcePrefix) ? kGridResourcePrefix : "") +
-         (boost::contains(request.uri(), kPythonPrefix) ? kPythonPrefix : "") +
-         (boost::contains(request.uri(), kProfilesPrefix) ? kProfilesPrefix : "") +
-         kLocalCustomThemeLocation;
+   std::string prefix = "/" + kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
    pResponse->setCacheableFile(
@@ -532,6 +513,7 @@ Error initialize()
    // links have a different prefix.
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, session::options().rResourcesPath().childPath("themes").childPath("compile-themes.R").absolutePath()))
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))

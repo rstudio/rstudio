@@ -134,8 +134,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          "Converting Theme",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("xml2", "1.2.0"),
-            Dependency.cranPackage("highlight", "0.4.7.2")
+            Dependency.cranPackage("xml2", "1.2.0")
          },
          true,
          succeeded ->
@@ -153,7 +152,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          new Dependency[] {
             Dependency.cranPackage("htmltools", "0.3.6"),
             Dependency.cranPackage("htmlwidgets", "1.2", true),
-            Dependency.cranPackage("r2d3", "0.2.0", true)
+            Dependency.cranPackage("jsonlite", "0.9.19"),
+            Dependency.cranPackage("r2d3", "0.2.2", true)
          },
          true,
          succeeded ->
@@ -224,8 +224,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
-      // deps.add(Dependency.cranPackage("rsconnect", "0.8.8"));
-      deps.add(Dependency.embeddedPackage("rsconnect"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.8.11"));
       
       withDependencies(
         "Publishing",
@@ -293,12 +292,12 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.18"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
       deps.add(Dependency.cranPackage("rprojroot", "1.0"));
-      deps.add(Dependency.cranPackage("rmarkdown", "1.9"));
+      deps.add(Dependency.cranPackage("mime", "0.5"));
+      deps.add(Dependency.cranPackage("rmarkdown", "1.10"));
       return deps;
    }
    
@@ -392,20 +391,24 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    }
 
    private ArrayList<Dependency> shinyDependencies()
-         {
+   {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
-      deps.add(Dependency.cranPackage("httpuv", "1.3.3"));
-      deps.add(Dependency.cranPackage("mime", "0.3"));
+      deps.add(Dependency.cranPackage("httpuv", "1.4.4"));
+      deps.add(Dependency.cranPackage("mime", "0.5"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
       deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("shiny", "1.0", true));
+      deps.add(Dependency.cranPackage("promises", "1.0.1"));
+      deps.add(Dependency.cranPackage("crayon", "1.3.4"));
+      deps.add(Dependency.cranPackage("rlang", "0.2.2"));
+      deps.add(Dependency.cranPackage("later", "0.7.2"));
+      deps.add(Dependency.cranPackage("shiny", "1.2.0", true));
       return deps;
-         }
+   }
    
    @Override
    public void onInstallShiny(InstallShinyEvent event)
@@ -422,8 +425,9 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             progressCaption,
             userPrompt,
             new Dependency[] {
-                  Dependency.cranPackage("reticulate", "1.6"),
-                  Dependency.cranPackage("png", "0.1-7")
+                  Dependency.cranPackage("jsonlite", "0.9.19"),
+                  Dependency.cranPackage("png", "0.1-7"),
+                  Dependency.cranPackage("reticulate", "1.10"),
             },
             true,
             new CommandWithArg<Boolean>()

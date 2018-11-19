@@ -21,9 +21,9 @@
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
-#include <boost/signals.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
@@ -321,35 +321,35 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
-   boost::signal<void (core::json::Object*)> onSessionInfo;
-   boost::signal<void ()>                    onClientInit;
-   boost::signal<void ()>                    onBeforeExecute;
-   boost::signal<void(const std::string&)>   onConsolePrompt;
-   boost::signal<void(const std::string&)>   onConsoleInput;
-   boost::signal<void(const std::string&, const std::string&)>  
+   RSTUDIO_BOOST_SIGNAL<void (core::json::Object*)> onSessionInfo;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onClientInit;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onBeforeExecute;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsolePrompt;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsoleInput;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>  
                                              onActiveConsoleChanged;
-   boost::signal<void (ConsoleOutputType, const std::string&)>
+   RSTUDIO_BOOST_SIGNAL<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
-   boost::signal<void()>                     onUserInterrupt;
-   boost::signal<void (ChangeSource)>        onDetectChanges;
-   boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
-   boost::signal<void(bool)>                 onDeferredInit;
-   boost::signal<void(bool)>                 afterSessionInitHook;
-   boost::signal<void(bool)>                 onBackgroundProcessing;
-   boost::signal<void(bool)>                 onShutdown;
-   boost::signal<void ()>                    onQuit;
-   boost::signal<void ()>                    onDestroyed;
-   boost::signal<void (const std::vector<std::string>&)>
+   RSTUDIO_BOOST_SIGNAL<void()>                     onUserInterrupt;
+   RSTUDIO_BOOST_SIGNAL<void (ChangeSource)>        onDetectChanges;
+   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onSourceEditorFileSaved;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onDeferredInit;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                 afterSessionInitHook;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onBackgroundProcessing;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onShutdown;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onQuit;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onDestroyed;
+   RSTUDIO_BOOST_SIGNAL<void (const std::vector<std::string>&)>
                                              onLibPathsChanged;
-   boost::signal<void (const std::string&)>  onPackageLoaded;
-   boost::signal<void ()>                    onPackageLibraryMutated;
-   boost::signal<void ()>                    onPreferencesSaved;
-   boost::signal<void (const server_core::DistributedEvent&)>
+   RSTUDIO_BOOST_SIGNAL<void (const std::string&)>  onPackageLoaded;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onPackageLibraryMutated;
+   RSTUDIO_BOOST_SIGNAL<void ()>                    onPreferencesSaved;
+   RSTUDIO_BOOST_SIGNAL<void (const server_core::DistributedEvent&)>
                                              onDistributedEvent;
-   boost::signal<void (core::FilePath)>      onPermissionsChanged;
+   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onPermissionsChanged;
 
    // signal for detecting extended type of documents
-   boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
+   RSTUDIO_BOOST_SIGNAL<std::string(boost::shared_ptr<source_database::SourceDocument>),
                  firstNonEmpty<std::string> > onDetectSourceExtendedType;
 };
 

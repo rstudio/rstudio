@@ -36,13 +36,16 @@ public class TextEditingTargetSqlHelper
    }
    
    
-   public void previewSql(EditingTarget editingTarget)
+   public boolean previewSql(EditingTarget editingTarget)
    {
       TextEditingTargetCommentHeaderHelper previewSource = new TextEditingTargetCommentHeaderHelper(
          docDisplay_.getCode(),
          "preview",
          "--"
       );
+      
+      if (!previewSource.hasCommentHeader())
+         return false;
 
       if (previewSource.getFunction().length() == 0)
       {
@@ -60,6 +63,8 @@ public class TextEditingTargetSqlHelper
             }
          }
       );
+      
+      return true;
    }
    private DocDisplay docDisplay_;
    private SqlServerOperations server_;

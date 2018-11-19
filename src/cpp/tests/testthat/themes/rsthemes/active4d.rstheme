@@ -55,10 +55,12 @@
 }
 
 .ace_keyword {
+  font-weight: bold;
   color: #006699
 }
 
 .ace_keyword.ace_operator {
+  font-weight: bold;
   color: #006699
 }
 
@@ -71,6 +73,7 @@
 }
 
 .ace_support.ace_function {
+  font-weight: bold;
   color: #45AE34
 }
 
@@ -100,6 +103,7 @@
 }
 
 .ace_variable {
+  font-weight: bold;
   color: #0053FF
 }
 
@@ -129,20 +133,20 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #F5F5F5;
+  background-color: #F6F6F6;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #FFEE9B;
+  background-color: #FFEF9C;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #EBEBEB;
+  background-color: #ECECEC;
 }
 .ace_console_error {
-  background-color: #EBEBEB;
+  background-color: #ECECEC;
 }
 .terminal {
   background-color: #FFFFFF;

@@ -1,5 +1,5 @@
 /*
- * SessionJob.cpp
+ * Job.cpp
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -13,6 +13,8 @@
  *
  */
 
+#include <session/jobs/Job.hpp>
+
 #include <ctime>
 
 #include <boost/make_shared.hpp>
@@ -22,19 +24,19 @@
 
 #include <r/RExec.hpp>
 
-#include "Job.hpp"
-
 #define kJobId          "id"
 #define kJobName        "name"
 #define kJobStatus      "status"
 #define kJobProgress    "progress"
 #define kJobMax         "max"
 #define kJobState       "state"
+#define kJobType        "type"
 #define kJobRecorded    "recorded"
 #define kJobStarted     "started"
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
 #define kJobShow        "show"
+#define kJobTags        "tags"
 
 #define kJobStateIdle      "idle"
 #define kJobStateRunning   "running"
@@ -56,14 +58,17 @@ Job::Job(const std::string& id,
          int progress, 
          int max,
          JobState state,
+         JobType type,
          bool autoRemove,
          SEXP actions,
-         bool show):
+         bool show,
+         const std::vector<std::string>& tags):
    id_(id), 
    name_(name),
    status_(status),
    group_(group),
    state_(JobIdle),
+   type_(type),
    progress_(progress),
    max_(max),
    recorded_(::time(0)),
@@ -72,13 +77,15 @@ Job::Job(const std::string& id,
    autoRemove_(autoRemove),
    listening_(false),
    show_(show),
-   actions_(actions)
+   actions_(actions),
+   tags_(tags)
 {
    setState(state);
 }
 
 Job::Job():
    state_(JobIdle),
+   type_(JobTypeSession),
    progress_(0),
    max_(0),
    recorded_(::time(0)),
@@ -126,6 +133,16 @@ JobState Job::state() const
     return state_; 
 }
 
+JobType Job::type() const
+{
+   return type_;
+}
+
+std::vector<std::string> Job::tags() const
+{
+   return tags_;
+}
+
 json::Object Job::toJson() const
 {
    Error error;
@@ -139,6 +156,7 @@ json::Object Job::toJson() const
    job[kJobProgress]   = progress_;
    job[kJobMax]        = max_;
    job[kJobState]      = static_cast<int>(state_);
+   job[kJobType]       = static_cast<int>(type_);
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
@@ -178,6 +196,7 @@ json::Object Job::toJson() const
    }
 
    job["actions"] = actions;
+   job[kJobTags] = json::toJsonArray(tags_);
 
    return job;
 }
@@ -186,6 +205,7 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
 {
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>();
    int state = static_cast<int>(JobIdle);
+   int type = static_cast<int>(JobTypeSession);
    boost::int64_t recorded = 0, started = 0, completed = 0;
    Error error = json::readObject(src,
       kJobId,        &pJob->id_,
@@ -197,12 +217,15 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobStarted,   &started,
       kJobCompleted, &completed,
       kJobState,     &state,
-      kJobShow,      &pJob->show_);
+      kJobType,      &type,
+      kJobShow,      &pJob->show_,
+      kJobTags,      &pJob->tags_);
    if (error)
       return error;
 
    // convert to types that aren't JSON friendly
    pJob->state_     = static_cast<JobState>(state);
+   pJob->type_      = static_cast<JobType>(type);
    pJob->recorded_  = static_cast<time_t>(recorded);
    pJob->started_   = static_cast<time_t>(started);
    pJob->completed_ = static_cast<time_t>(started);

@@ -75,9 +75,9 @@ public:
    const std::string& name() const { return name_; }
    const boost::optional<std::string>& defaultValue() const { return defaultValue_; }
    boost::tribool hasDefault() const { return hasDefault_; }
-   bool isUsed() const { return isUsed_; }
+   bool isUsed() const { return bool(isUsed_); }
    void setIsUsed(bool value) { isUsed_ = value; }
-   bool isMissingnessHandled() const { return isMissingnessHandled_; }
+   bool isMissingnessHandled() const { return bool(isMissingnessHandled_); }
    void setMissingnessHandled(bool value) { isMissingnessHandled_ = value; }
    
 private:
@@ -130,7 +130,7 @@ public:
    
    bool isPrimitive()
    {
-      return isPrimitive_ == true;
+      return bool(isPrimitive_);
    }
    
    void setIsPrimitive(bool isPrimitive)

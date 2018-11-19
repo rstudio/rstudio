@@ -15,8 +15,6 @@
 
 #include "SessionHelp.hpp"
 
-#include "SessionThemes.hpp"
-
 #include <algorithm>
 
 #include <boost/regex.hpp>
@@ -993,9 +991,6 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
-      (bind(registerUriHandler, kPythonLocation + "/" + themes::kDefaultThemeLocation, themes::handleDefaultThemeRequest))
-      (bind(registerUriHandler, kPythonLocation + "/" + themes::kGlobalCustomThemeLocation, themes::handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, kPythonLocation + "/" + themes::kLocalCustomThemeLocation, themes::handleLocalCustomThemeRequest))
       (bind(registerUriHandler, kPythonLocation, handlePythonHelpRequest))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();

@@ -927,16 +927,9 @@
 	
 				for ( j=0, jLen=aTargets.length ; j<jLen ; j++ )
 				{
-					if ( typeof aTargets[j] === 'number' && aTargets[j] >= 0 )
+					if ( typeof aTargets[j] === 'number' && aTargets[j] >= 0 && j < columns.length )
 					{
-						/* Add columns that we don't yet know about */
-						while( columns.length <= aTargets[j] )
-						{
-							_fnAddColumn( oSettings );
-						}
-	
-						/* Integer, basic index */
-						fn( aTargets[j], def );
+						fn( j, def );
 					}
 					else if ( typeof aTargets[j] === 'number' && aTargets[j] < 0 )
 					{
@@ -3221,6 +3214,7 @@
 			replace(/_START_/g, formatter.call( settings, start ) ).
 			replace(/_END_/g,   formatter.call( settings, settings.fnDisplayEnd() ) ).
 			replace(/_MAX_/g,   formatter.call( settings, settings.fnRecordsTotal() ) ).
+			replace(/_MAXCOLS_/g, formatter.call( settings, !!window.dataTableMaxColumns ? window.dataTableMaxColumns : '' ) ).
 			replace(/_TOTAL_/g, formatter.call( settings, vis ) ).
 			replace(/_PAGE_/g,  formatter.call( settings, all ? 1 : Math.ceil( start / len ) ) ).
 			replace(/_PAGES_/g, formatter.call( settings, all ? 1 : Math.ceil( vis / len ) ) );
@@ -11091,7 +11085,7 @@
 			 *      } );
 			 *    } );
 			 */
-			"sInfo": "Showing _START_ to _END_ of _TOTAL_ entries",
+			"sInfo": "Showing _START_ to _END_ of _TOTAL_ entries, _MAXCOLS_ total columns",
 	
 	
 			/**

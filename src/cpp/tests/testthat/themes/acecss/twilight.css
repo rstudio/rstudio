@@ -117,6 +117,7 @@
 }
 
 .ace-twilight .ace_entity.ace_name.ace_function {
+  font-weight: bold;
   color: #AC885B
 }
 

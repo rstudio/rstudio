@@ -24,20 +24,18 @@
 # API functions --------------------------------------------------------------
 
 .rs.addApiFunction("addJob", function(name, status = "", progressUnits = 0L,
-      actions = NULL, estimate = 0L, estimateRemaining = FALSE, running = FALSE, 
-      autoRemove = TRUE, group = "", show = TRUE) {
+      actions = NULL, running = FALSE, autoRemove = TRUE, group = "", show = TRUE,
+      launcherJob = FALSE, tags = NULL) {
 
    # validate arguments
    if (missing(name))
       stop("Cannot add a job without a name.")
    if (!is.integer(progressUnits) || progressUnits < 0L || progressUnits > 1000000L)
       stop("progressUnits must be an integer between 1 and 1000000, or 0 to disable progress.")
-   if (isTRUE(estimateRemaining) && identical(progressUnits, 0))
-      stop("Must specify progressUnits in order to estimate remaining time.")
 
    # begin tracking job
    .Call("rs_addJob", name, status, progressUnits,
-      actions, estimate, estimateRemaining, running, autoRemove, group, show, PACKAGE = "(embedding)")
+      actions, running, autoRemove, group, show, launcherJob, tags, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("removeJob", function(job) {
@@ -92,7 +90,7 @@
                                             encoding = "unknown",
                                             workingDir = NULL, 
                                             importEnv = FALSE,
-                                            exportEnv = FALSE) {
+                                            exportEnv = "") {
    if (missing(path))
       stop("Must specify path to R script to run.")
    if (!file.exists(path))

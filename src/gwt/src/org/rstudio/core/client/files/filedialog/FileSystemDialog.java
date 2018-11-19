@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -37,7 +38,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.application.Desktop;
 
 public abstract class FileSystemDialog extends ModalDialogBase
       implements SelectionCommitHandler<FileSystemItem>, 
@@ -116,8 +116,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
          addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
       }
 
-      addOkButton(new ThemedButton(buttonName, event -> maybeAccept()));
-      addCancelButton(
+      ThemedButton okButton = new ThemedButton(buttonName, event -> maybeAccept());
+      ElementIds.assignElementId(okButton.getElement(), 
+            ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
+      addOkButton(okButton);
+      
+      ThemedButton cancelButton = 
          new ThemedButton("Cancel",
          event -> {
             if (invokeOperationEvenOnCancel_)
@@ -125,7 +129,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
                operation_.execute(null, FileSystemDialog.this);
             }
             closeDialog();
-         }));
+         });
+      ElementIds.assignElementId(cancelButton.getElement(), 
+            ElementIds.FILE_CANCEL_BUTTON + "_" + ElementIds.idSafeString(buttonName));
+      addCancelButton(cancelButton);
 
       addDomHandler(event ->
          {
@@ -343,7 +350,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (!StringUtil.isNullOrEmpty(filter))
       {
          Pattern listPattern = Pattern.create("\\(([^)]+)\\)");
-         Pattern singlePattern = Pattern.create("\\*([^\\s]*)");
+         Pattern singlePattern = Pattern.create("\\*([^\\s]+)");
          Match listMatch = listPattern.match(filter, 0);
          while (listMatch != null)
          {
@@ -361,13 +368,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    private static boolean extensionMatchesFilters(String extension, List<String> filterExtensions)
    {
+      if (filterExtensions.isEmpty())
+         return true;
+      
       for (String filter: filterExtensions)
-      {
          if (filter.equalsIgnoreCase(extension))
-         {
             return true;
-         }
-      }
       
       return false;
    }

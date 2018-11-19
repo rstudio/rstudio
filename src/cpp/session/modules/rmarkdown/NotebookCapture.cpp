@@ -16,6 +16,8 @@
 #include "SessionRmdNotebook.hpp"
 #include "NotebookCapture.hpp"
 
+#include <boost/make_shared.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {

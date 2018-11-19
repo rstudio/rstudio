@@ -38,12 +38,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
-#include <boost/signals.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
+#include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
 #include <core/ConfigUtils.hpp>
 #include <core/FilePath.hpp>

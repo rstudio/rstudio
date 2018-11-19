@@ -34,10 +34,6 @@ table.dataTable tbody td {
     border-bottom: 1px solid #cfd4d8;
     border-right: 1px solid #cfd4d8;
     font-size: 11px;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .rstudio-themes-flat table.dataTable tbody td  {
@@ -313,6 +309,14 @@ th:focus {
     text-align: right;
 }
 
+.largeCell {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
 .rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
     background: rgba(255, 255, 255, 0.15);
     color: #FFF;
@@ -336,7 +340,7 @@ th:focus {
     display: table;
 }
 
-.headerCell {
+.cell, .headerCell {
     position: relative;
 }
 
@@ -438,6 +442,10 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
     width: 5px;
     cursor: ew-resize;
     z-index: 5;
+}
+
+.cell .resizer {
+    right: -7px;
 }
 
 .headerCell .resizer {

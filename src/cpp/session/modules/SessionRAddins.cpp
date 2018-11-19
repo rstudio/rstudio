@@ -45,7 +45,7 @@ namespace r_addins {
 
 namespace {
 
-boost::signals::connection s_consolePromptHandler;
+RSTUDIO_BOOST_CONNECTION s_consolePromptHandler;
 
 bool isDevtoolsLoadAllActive()
 {

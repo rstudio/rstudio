@@ -42,6 +42,12 @@ enum JobState {
    JobStateMax   = JobFailed
 };
 
+enum JobType {
+   JobTypeUnknown = 0,
+   JobTypeSession = 1,
+   JobTypeLauncher = 2
+};
+
 class Job
 {
 public:
@@ -54,9 +60,11 @@ public:
        int progress, 
        int max,
        JobState state,
+       JobType type,
        bool autoRemove,
        SEXP actions,
-       bool show);
+       bool show,
+       const std::vector<std::string>& tags);
 
    // job ID (machine-generated)
    std::string id() const;
@@ -79,6 +87,12 @@ public:
    // the current state of the job
    JobState state() const;
 
+   // type of job
+   JobType type() const;
+
+   // job tags
+   std::vector<std::string> tags() const;
+
    // whether the job is complete
    bool complete() const;
 
@@ -90,7 +104,6 @@ public:
 
    // execute a custom (user-defined) action
    core::Error executeAction(const std::string& name);
-   void setActions(SEXP actions);
 
    // add and retrieve output
    void addOutput(const std::string& output, bool error); 
@@ -130,6 +143,7 @@ private:
    std::string group_;
 
    JobState state_;
+   JobType type_;
 
    int progress_;
    int max_;
@@ -143,6 +157,8 @@ private:
    bool show_;
 
    r::sexp::PreservedSEXP actions_;
+
+   std::vector<std::string> tags_;
 };
 
 

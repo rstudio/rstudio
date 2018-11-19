@@ -1,0 +1,8 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:with field='res' type='org.rstudio.core.client.widget.SimpleButton.Resources'/>
+   <button class="{res.styles.simpleButton}">
+       <div ui:field='content_'></div>
+   </button>
+</ui:UiBinder>

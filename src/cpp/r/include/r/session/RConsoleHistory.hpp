@@ -20,8 +20,8 @@
 
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
-#include <boost/signal.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/json/Json.hpp>
 
 namespace rstudio {
@@ -44,7 +44,7 @@ class ConsoleHistory : boost::noncopyable
 public:
    typedef boost::circular_buffer<std::string>::value_type value_type;
    typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
-   typedef boost::signal<void (const std::string&)> AddSignal;
+   typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&)> AddSignal;
 
 private:
    ConsoleHistory();
@@ -86,8 +86,7 @@ public:
    core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
    core::Error saveToFile(const core::FilePath& filePath) const;
    
-   boost::signals::connection connectOnAdd(
-                                 const AddSignal::slot_function_type& slot)
+   RSTUDIO_BOOST_CONNECTION connectOnAdd(const AddSignal::slot_function_type& slot)
    {
       return onAdd_.connect(slot);
    }

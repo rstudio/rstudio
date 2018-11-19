@@ -540,7 +540,7 @@ void PlotManager::clear()
 
 
 
-boost::signal<void ()>& PlotManager::onShowManipulator()
+RSTUDIO_BOOST_SIGNAL<void ()>& PlotManager::onShowManipulator()
 {
    return plotManipulatorManager().onShowManipulator();
 }

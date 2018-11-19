@@ -45,8 +45,6 @@
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-#include "../SessionThemes.hpp"
-
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
 #endif
@@ -65,6 +63,9 @@
 
 // special cell values
 #define SPECIAL_CELL_NA 0
+
+// default max value for columns to return unless client requests more
+#define MAX_COLUMNS 50
 
 using namespace rstudio::core;
 
@@ -492,20 +493,25 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
 
+   // Parameters from the client to delimit the column slice to return
+   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
+   int maxColumns = http::util::fieldValue<int>(fields, "max_columns", MAX_COLUMNS);
+
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
+
    int filteredNRow = 0;
 
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
-   for (int i = 1; i <= ncol; i++) 
+   for (int i = 1; i <= ncol; i++)
    {
-      std::string filterVal = http::util::urlDecode( 
+      std::string filterVal = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields,
-                  "columns[" + boost::lexical_cast<std::string>(i) + "]" 
+                  "columns[" + boost::lexical_cast<std::string>(i) + "]"
                   "[search][value]", ""));
-      if (!filterVal.empty()) 
+      if (!filterVal.empty())
       {
          hasFilter = true;
       }
@@ -585,7 +591,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       }
    }
 
-   // apply new row count if we've tansformed the data (or need to)
+   // apply new row count if we've transformed the data (or need to)
    filteredNRow = needsTransform || hasTransform ?
       safeDim(dataSEXP, DIM_ROWS) : 
       nrow;
@@ -594,18 +600,21 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    length = std::min(length, filteredNRow - start);
 
    // DataTables uses 0-based indexing, but R uses 1-based indexing
-   start ++;
+   start++;
 
    // extract the portion of the column vector requested by the client
-   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
+   int numFormattedColumns = ncol - columnOffset < maxColumns ? ncol - columnOffset : maxColumns;
+   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
    protect.add(formattedDataSEXP);
-   for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
+
+   int initialIndex = 0 + columnOffset;
+   for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
    {
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP || 
+      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP ||
           Rf_isNull(columnSEXP))
       {
-         throw r::exec::RErrorException("No data in column " + 
+         throw r::exec::RErrorException("No data in column " +
                boost::lexical_cast<std::string>(i));
       }
       SEXP formattedColumnSEXP;
@@ -616,10 +625,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.summary());
-      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
-    }
+      SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
+   }
 
-   // format the row names 
+   // format the row names
    SEXP rownamesSEXP;
    r::exec::RFunction(".rs.formatRowNames", dataSEXP, start, length)
       .call(&rownamesSEXP, &protect);
@@ -653,7 +662,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-         if (columnSEXP != NULL && 
+         if (columnSEXP != NULL &&
              TYPEOF(columnSEXP) != NILSXP &&
              !Rf_isNull(columnSEXP))
          {
@@ -664,7 +673,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
             {
                rowData.push_back(Rf_translateCharUTF8(stringSEXP));
             }
-            else if (stringSEXP == NA_STRING) 
+            else if (stringSEXP == NA_STRING)
             {
                rowData.push_back(SPECIAL_CELL_NA);
             }
@@ -734,7 +743,7 @@ Error getGridData(const http::Request& request,
       {
          LOG_ERROR(error);
       }
-      
+
       // couldn't find the original object
       if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
@@ -752,7 +761,6 @@ Error getGridData(const http::Request& request,
          {
             dataSEXP = PRVALUE(dataSEXP);
          }
-      
          if (show == "cols")
          {
             result = getCols(dataSEXP);
@@ -762,7 +770,6 @@ Error getGridData(const http::Request& request,
             result = getData(dataSEXP, fields);
          }
       }
-
    }
    catch(r::exec::RErrorException& e)
    {
@@ -787,7 +794,7 @@ Error getGridData(const http::Request& request,
    // \v, there's little to be gained here in trying to marshal them to the
    // viewer.
    std::string output = ostr.str();
-   for (size_t i = 0; i < output.size(); i++) 
+   for (size_t i = 0; i < output.size(); i++)
    {
       char c = output[i];
       // These ranges for control character values come from empirical testing
@@ -796,7 +803,7 @@ Error getGridData(const http::Request& request,
          output[i] = ' ';
       }
    }
- 
+
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
    pResponse->setBody(output);
@@ -1026,18 +1033,6 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
       (bind(registerUriHandler, "/grid_data", getGridData))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kDefaultThemeLocation,
-          session::modules::themes::handleDefaultThemeRequest))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kGlobalCustomThemeLocation,
-          session::modules::themes::handleGlobalCustomThemeRequest))
-      (bind(
-          registerUriHandler,
-          kGridResourceLocation + session::modules::themes::kLocalCustomThemeLocation,
-          session::modules::themes::handleLocalCustomThemeRequest))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 
    Error error = initBlock.execute();

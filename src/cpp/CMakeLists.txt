@@ -102,7 +102,7 @@ if(UNIX)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
       add_definitions(-fPIC)
       if(CMAKE_BUILD_TYPE STREQUAL Debug)
-         add_definitions(-O1)
+         add_definitions(-O0)
          add_definitions(-D_GLIBCXX_ASSERTIONS)
       endif()
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -Wl,-z,relro,-z,now")
@@ -157,15 +157,12 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
 endif()
 
 # default Boost versions
-if (WIN32)
-   set(BOOST_VERSION 1.65.1)
-else()
-   set(BOOST_VERSION 1.63.0)
-endif()
-
-# override if necessary
-if (RSTUDIO_BOOST_VERSION)
-   set(BOOST_VERSION "${RSTUDIO_BOOST_VERSION}")
+if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
+   if (WIN32)
+      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.65.1)
+   else()
+      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.63.0)
+   endif()
 endif()
 
 # disable Boost Signals deprecation warning
@@ -195,21 +192,27 @@ if(UNIX)
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${BOOST_VERSION} REQUIRED)
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+      if(NOT Boost_VERSION LESS 106900)
+         list(REMOVE_ITEM BOOST_LIBS signals)
+      endif()
 
       # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
       foreach(BOOST_LIB ${BOOST_LIBS})
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
       endforeach()
-      message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}")
+      message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}")
    else()
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
-      find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
-      message(STATUS "Using system Boost ${BOOST_VERSION}")
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+      if(NOT Boost_VERSION LESS 106900)
+         list(REMOVE_ITEM BOOST_LIBS signals)
+      endif()
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
    endif()
 
-   # WIN32 BOOST
+# WIN32 BOOST
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
@@ -222,14 +225,26 @@ else()
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_65_1")
-   find_package(Boost ${BOOST_VERSION} REQUIRED)
+   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
       list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")
    endforeach()
-   message(STATUS "Using RStudio-provided Boost ${BOOST_VERSION}: ${BOOST_ROOT}")
+   message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}: ${BOOST_ROOT}")
 endif()
 
+# allow opt-in to using Boost.Signals2
+# TODO: remove this in RStudio v1.3 and port to signals2
+if(NOT RSTUDIO_BOOST_SIGNALS_VERSION)
+   if (Boost_VERSION LESS 106900)
+      set(RSTUDIO_BOOST_SIGNALS_VERSION 1)
+   else()
+      set(RSTUDIO_BOOST_SIGNALS_VERSION 2)
+   endif()
+endif()
+
+message(STATUS "Using Boost.Signals version ${RSTUDIO_BOOST_SIGNALS_VERSION}")
+add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION})
 
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})

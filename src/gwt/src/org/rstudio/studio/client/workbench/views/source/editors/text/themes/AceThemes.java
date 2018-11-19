@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
@@ -61,16 +62,43 @@ public class AceThemes
    
    private void applyTheme(Document document, final AceTheme theme)
    {
-      Element oldStyleEl = document.getElementById(linkId_);
-      if (oldStyleEl != null)
-         oldStyleEl.removeFromParent();
+      // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
+      int pathUpCount = 0;
+      String baseUrl = GWT.getHostPageBaseURL();
+      
+      // Strip any query out of the current URL since it isn't relevant to the path.
+      String currentUrl = document.getURL().split("\\?")[0];
+      if (!currentUrl.equals(baseUrl) &&
+         currentUrl.indexOf(baseUrl) == 0)
+      {
+         pathUpCount = currentUrl.substring(baseUrl.length()).split("/").length;
+      }
+      
+      // Build the URL.
+      StringBuilder urlBuilder = new StringBuilder();
+      for (int i = 0; i < pathUpCount; ++i)
+      {
+         urlBuilder.append("../");
+      }
+      urlBuilder.append(theme.getUrl())
+         .append("?dark=")
+         .append(theme.isDark() ? "1" : "0");
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
-      currentStyleEl.setHref(theme.getUrl() + "?dark=" + (theme.isDark() ? "1" : "0"));
-      document.getBody().appendChild(currentStyleEl);
+      currentStyleEl.setHref(urlBuilder.toString());
+   
+      Element oldStyleEl = document.getElementById(linkId_);
+      if (null != oldStyleEl)
+      {
+        document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+      }
+      else
+      {
+         document.getBody().appendChild(currentStyleEl);
+      }
       
       if(theme.isDark())
          document.getBody().addClassName("editor_dark");

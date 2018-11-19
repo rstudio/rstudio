@@ -17,7 +17,6 @@
 #define DESKTOP_UTILS_HPP
 
 #include <QFileDialog>
-#include <QFontDatabase>
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QUrl>
@@ -35,8 +34,6 @@ namespace rstudio {
 namespace desktop {
 
 class MainWindow;
-
-QFontDatabase& fontDatabase();
 
 void reattachConsoleIfNecessary();
 

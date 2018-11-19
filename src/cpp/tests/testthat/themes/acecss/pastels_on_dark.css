@@ -69,6 +69,7 @@
 }
 
 .ace-pastels-on-dark .ace_constant.ace_language {
+  font-weight: bold;
   color: #DE8E30
 }
 
@@ -85,11 +86,13 @@
 }
 
 .ace-pastels-on-dark .ace_invalid {
+  font-weight: bold;
   color: #F8F8F8;
   background-color: rgba(86, 45, 86, 0.75)
 }
 
 .ace-pastels-on-dark .ace_invalid.ace_illegal {
+  font-weight: bold;
   color: #F8F8F8;
   background-color: rgba(86, 45, 86, 0.75)
 }
@@ -121,9 +124,5 @@
 }
  
 .ace-pastels-on-dark .ace_support.ace_type {
-  color: #8F938F
-}
- 
-.ace-pastels-on-dark .ace_variable {
   color: #8F938F
 }

@@ -51,6 +51,7 @@ import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -559,7 +560,31 @@ public class RSConnectPublishButton extends Composite
             publishMenu_.addItem(menuItem);
          }
          
+         publishMenu_.addItem(new MenuItem(
+               AppCommand.formatMenuLabel(null, "Clear List", null),
+               true,
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     String appLabel = StringUtil.isNullOrEmpty(contentPath_)
+                           ? "this application"
+                           : "'" + contentPath_ + "'";
+                     
+                     display_.showYesNoMessage(
+                           GlobalDisplay.MSG_INFO,
+                           "Clear List",
+                           "Are you sure you want to remove all local deployment history for " + appLabel + "?",
+                           false,
+                           () -> { forgetDeployment(); },
+                           null,
+                           false);
+                  }
+               }));
+         
          publishMenu_.addSeparator();
+         
          publishMenu_.addItem(new MenuItem(
                AppCommand.formatMenuLabel(
                      commands_.rsconnectDeploy().getImageResource(), 
@@ -836,6 +861,36 @@ public class RSConnectPublishButton extends Composite
                callback.onPopupMenu(menu);
          }
       });
+   }
+   
+   private void forgetDeployment()
+   {
+      server_.forgetRSConnectDeployments(
+            contentPath_,
+            StringUtil.notNull(outputPath_),
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  populateDeployments(true);
+                  
+                  String appLabel = StringUtil.isNullOrEmpty(contentPath_)
+                        ? "this application"
+                        : "'" + contentPath_ + "'";
+                  
+                  display_.showMessage(
+                        GlobalDisplay.MSG_INFO,
+                        "Clear List",
+                        "Local deployment history for " + appLabel + " successfully removed.");
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
 
    // fetch render output info if necessary and then fire deployment event

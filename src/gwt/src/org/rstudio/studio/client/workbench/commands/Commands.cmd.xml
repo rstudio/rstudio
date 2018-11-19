@@ -30,10 +30,6 @@ well as menu structures (for main menu and popup menus).
       "background": always operates on main window, but in the background
       "<satellite name>": operates on named satellite; sent to the main window
         for processing unless fired from the named satellite
-  @handlesEventPropagation: Whether the command itself handles event propagation.
-     This is primarily used by commands which may be active and dispatched to,
-     but opt not to handle the event, thereby allowing the browser default
-     behavior in response to the pressed key.
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -314,6 +310,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activateJobs"/>
          
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -458,6 +455,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="clearTerminalScrollbackBuffer"/>
             <cmd refid="closeTerminal"/>
           </menu>
+         <menu label="_Jobs">
+            <cmd refid="startJob"/>
+            <cmd refid="clearJobs"/>
+          </menu>
          <menu label="Addins">
             <cmd refid="browseAddins"/>
          </menu>
@@ -590,7 +591,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
-         <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet" handlesEventPropagation="true" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -1253,6 +1253,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel = "Show Co_nnections"
         windowMode="main"/>
         
+   <cmd id="activateJobs"
+        label="Show Jobs Pane"
+        menuLabel = "Show _Jobs"
+        windowMode="main"/>
+         
    <cmd id="layoutZoomSource"
         checkable="true"
         label="Zoom Source"
@@ -3296,7 +3301,7 @@ well as menu structures (for main menu and popup menus).
     <cmd id="startJob"
          menuLabel="Start Job..."
          buttonLabel="Start Job"
-         desc="Run an R script as a job"
+         desc="Run a background job"
          windowMode="main"/>
 
     <cmd id="sourceAsJob"

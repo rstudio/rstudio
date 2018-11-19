@@ -24,9 +24,8 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/jobs/JobsApi.hpp>
 
-#include "Job.hpp"
-#include "JobsApi.hpp"
 #include "ScriptJob.hpp"
 #include "SessionJobs.hpp"
 
@@ -56,8 +55,7 @@ bool lookupJob(SEXP jobSEXP, boost::shared_ptr<Job> *pJob)
 }
 
 SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP actionsSEXP,
-      SEXP estimateSEXP, SEXP estimateRemainingSEXP, SEXP runningSEXP, SEXP autoRemoveSEXP,
-      SEXP groupSEXP, SEXP showSEXP) 
+      SEXP runningSEXP, SEXP autoRemoveSEXP, SEXP groupSEXP, SEXP showSEXP, SEXP launcherJobSEXP, SEXP tagsSEXP)
 {
    // convert to native types
    std::string name   = r::sexp::safeAsString(nameSEXP, "");
@@ -65,12 +63,15 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    std::string group  = r::sexp::safeAsString(groupSEXP, "");
    int progress       = r::sexp::asInteger(progressUnitsSEXP);
    JobState state     = r::sexp::asLogical(runningSEXP) ? JobRunning : JobIdle;
+   JobType type       = r::sexp::asLogical(launcherJobSEXP) ? JobTypeLauncher : JobTypeSession;
    bool autoRemove    = r::sexp::asLogical(autoRemoveSEXP);
    bool show          = r::sexp::asLogical(showSEXP);
-      
+   std::vector<std::string> tags;
+   r::sexp::fillVectorString(tagsSEXP, &tags);
+
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, autoRemove, actionsSEXP, show);
+      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show, tags);
 
    // return job id
    r::sexp::Protect protect;
@@ -371,8 +372,7 @@ Error executeJobAction(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
-   // currently no jobs can survive a suspend, so let the client know they're all finished
-   removeAllJobs();
+   removeAllLocalJobs();
 }
 
 void onResume(const Settings& settings)
@@ -390,7 +390,7 @@ void onClientInit()
 
 void onShutdown(bool terminatedNormally)
 {
-   removeAllJobs();
+   removeAllLocalJobs();
 }
 
 } // anonymous namespace
@@ -409,16 +409,16 @@ bool isSuspendable()
 core::Error initialize()
 {
    // register API handlers
-   RS_REGISTER_CALL_METHOD(rs_addJob, 9);
-   RS_REGISTER_CALL_METHOD(rs_removeJob, 1);
-   RS_REGISTER_CALL_METHOD(rs_setJobProgress, 2);
-   RS_REGISTER_CALL_METHOD(rs_addJobProgress, 2);
-   RS_REGISTER_CALL_METHOD(rs_setJobStatus, 2);
-   RS_REGISTER_CALL_METHOD(rs_setJobState, 2);
-   RS_REGISTER_CALL_METHOD(rs_addJobOutput, 3);
-   RS_REGISTER_CALL_METHOD(rs_runScriptJob, 5);
-   RS_REGISTER_CALL_METHOD(rs_stopScriptJob, 1);
-   RS_REGISTER_CALL_METHOD(rs_executeJobAction, 2);
+   RS_REGISTER_CALL_METHOD(rs_addJob);
+   RS_REGISTER_CALL_METHOD(rs_removeJob);
+   RS_REGISTER_CALL_METHOD(rs_setJobProgress);
+   RS_REGISTER_CALL_METHOD(rs_addJobProgress);
+   RS_REGISTER_CALL_METHOD(rs_setJobStatus);
+   RS_REGISTER_CALL_METHOD(rs_setJobState);
+   RS_REGISTER_CALL_METHOD(rs_addJobOutput);
+   RS_REGISTER_CALL_METHOD(rs_runScriptJob);
+   RS_REGISTER_CALL_METHOD(rs_stopScriptJob);
+   RS_REGISTER_CALL_METHOD(rs_executeJobAction);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));

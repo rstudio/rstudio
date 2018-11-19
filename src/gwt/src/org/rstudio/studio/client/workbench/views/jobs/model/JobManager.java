@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +27,8 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -67,7 +69,8 @@ public class JobManager implements JobRefreshEvent.Handler,
                      Binder binder,
                      JobsServerOperations server,
                      GlobalDisplay display,
-                     Provider<SourceWindowManager> pSourceManager)
+                     Provider<SourceWindowManager> pSourceManager,
+                     LauncherJobManager launcherJobManager)
    {
       events_ = events;
       pSession_ = pSession;
@@ -75,6 +78,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       server_ = server;
       display_ = display;
       pSourceManager_ = pSourceManager;
+      launcherJobManager_ = launcherJobManager;
       binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(JobRefreshEvent.TYPE, this);
@@ -198,11 +202,15 @@ public class JobManager implements JobRefreshEvent.Handler,
       boolean running = false;
       
       // flatten job list to an array while looking for a running job
-      ArrayList<Job> jobs = new ArrayList<Job>();
+      ArrayList<Job> jobs = new ArrayList<>();
       for (String id: state.iterableKeys())
       {
-         // push job into array
          Job job = state.getJob(id);
+         
+         if (job.type != JobConstants.JOB_TYPE_SESSION)
+            continue;
+         
+         // push session jobs into array
          jobs.add(job);
          
          // remember if we found a running job
@@ -225,9 +233,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       // 4. Work forwards (new jobs) until we find one that does not overlap
       
       // sort by start time
-      Collections.sort(jobs, (Job j1, Job j2) -> {
-         return j1.started - j2.started;
-      });
+      jobs.sort(Comparator.comparingInt((Job j) -> j.started));
       
       // find index of first running job
       int idxRunning;
@@ -317,7 +323,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    public List<Job> getJobs()
    {
-      List<Job> jobs = new ArrayList<Job>();
+      List<Job> jobs = new ArrayList<>();
       for (String id: state_.iterableKeys())
          jobs.add(state_.getJob(id));
       return jobs;
@@ -330,12 +336,12 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    public void promptForTermination(CommandWithArg<Boolean> onConfirmed)
    {
-      // compute list of jobs that are running
-      List<Job> running = new ArrayList<Job>();
+      // compute list of session jobs that are running
+      List<Job> running = new ArrayList<>();
       for (String id: state_.iterableKeys())
       {
          Job job = state_.getJob(id);
-         if (job.completed == 0)
+         if (job.type == JobConstants.JOB_TYPE_SESSION && job.completed == 0)
          {
             running.add(job);
          }
@@ -349,8 +355,8 @@ public class JobManager implements JobRefreshEvent.Handler,
       }
       
       JobQuitDialog dialog = new JobQuitDialog(running,
-            (confirmed) -> { onConfirmed.execute(confirmed); },
-            () -> { onConfirmed.execute(false); });
+            onConfirmed::execute,
+            () -> onConfirmed.execute(false));
       dialog.showModal();
    }
 
@@ -358,7 +364,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(String path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job", 
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job",
             path,
             spec ->
             {
@@ -369,9 +375,15 @@ public class JobManager implements JobRefreshEvent.Handler,
                {
                   spec.setEncoding(doc.getEncoding());
                }
-               
+
                // tell the server to start running this script
-               server_.startJob(spec, new VoidServerRequestCallback());
+               server_.startJob(spec, new ServerRequestCallback<String>() {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             });
       dialog.showModal();
    }
@@ -402,7 +414,7 @@ public class JobManager implements JobRefreshEvent.Handler,
          elapsed_.cancel();
    }
 
-   Timer elapsed_ = new Timer()
+   private final Timer elapsed_ = new Timer()
    {
       @Override
       public void run()
@@ -422,4 +434,5 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
    private final GlobalDisplay display_;
+   private final LauncherJobManager launcherJobManager_;
 }

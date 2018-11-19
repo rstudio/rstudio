@@ -74,6 +74,43 @@ public class StringUtil
 
       return DATE_FORMAT.format(date);
    }
+   
+   /**
+    * Formats a datetime object according to how long ago it occurred; recent
+    * datetimes are just shown as times, and less recent times are shown with
+    * more complete information.
+    * 
+    * @param date The datetime to format.
+    * @return A string representing the datetime object.
+    */
+   public static String friendlyDateTime(Date date)
+   {
+      if (date == null)
+         return "";
+      Date now = new Date();
+      
+      String format = "";
+
+      if (DateTimeFormat.getFormat("MMM d").format(date) ==
+          DateTimeFormat.getFormat("MMM d").format(now))
+      {
+         // it's today, so just show the time
+         format = "h:mm a";
+      }
+      else if (DateTimeFormat.getFormat("yyyy").format(date) ==
+               DateTimeFormat.getFormat("yyyy").format(now))
+      {
+         // it's not today, but in the last year, so show the date too
+         format = "MMM d, h:mm a";
+      }
+      else
+      {
+         // happened last year, probably don't care about the time
+         format = "MMM d, yyyy";
+      }
+      
+      return DateTimeFormat.getFormat(format).format(date);
+   }
 
    public static String formatFileSize(long size)
    {

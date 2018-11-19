@@ -19,6 +19,8 @@
 #include <boost/system/error_code.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
+#include <core/BoostSignals.hpp>
+
 namespace rstudio {
 namespace r {
 namespace session {
@@ -56,8 +58,8 @@ struct is_error_code_enum<rstudio::r::session::graphics::errc::errc_t>
 #include <vector>
 
 #include <boost/function.hpp>
-#include <boost/signal.hpp>
 
+#include <core/BoostSignals.hpp>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
@@ -162,7 +164,7 @@ public:
    virtual void clear() = 0;
 
    // subscribe to showManipulator event
-   virtual boost::signal<void ()>& onShowManipulator() = 0;
+   virtual RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator() = 0;
 
    // set manipulator values
    virtual void setPlotManipulatorValues(const core::json::Object& values) = 0;
