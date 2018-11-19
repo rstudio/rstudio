@@ -9,6 +9,13 @@
 .dataGridCell input[type=checkbox] {
    margin-top: 0;
    margin-bottom: 0;
+   zoom: 1.000001;
+}
+
+.rstudio-themes-flat .dataGridCell input[type=checkbox] {
+   margin-top: 0;
+   margin-bottom: 0;
+   zoom: 1;
 }
 
 .dataGridLastColumnHeader {
