@@ -4171,6 +4171,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onRunSelectionAsJob()
+   {
+      codeExecution_.runSelectionAsJob();
+   }
+   
+   @Handler
    void onExecuteCurrentLine()
    {
       codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_LINE);

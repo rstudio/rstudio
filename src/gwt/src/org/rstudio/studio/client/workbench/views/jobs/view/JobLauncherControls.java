@@ -47,10 +47,19 @@ public class JobLauncherControls extends Composite
       exportEnv_.addItem("To results object in global environment", "local");
    }
    
-   public void setScriptPath(String path)
+   public void setScriptPath(FileSystemItem path)
    {
-      file_.setText(path);
-      dir_.setText(FileSystemItem.createFile(path).getParentPathString());
+      file_.setText(path.getPath());
+   }
+   
+   public void setWorkingDir(FileSystemItem dir)
+   {
+      dir_.setText(dir.getPath());
+   }
+   
+   public void hideScript()
+   {
+      file_.setVisible(false);
    }
    
    public String scriptPath()
