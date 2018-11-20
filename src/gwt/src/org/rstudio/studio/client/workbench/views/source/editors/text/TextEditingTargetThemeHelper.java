@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 
@@ -23,35 +26,28 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetThemeHelper
 {  
    public TextEditingTargetThemeHelper(final TextEditingTarget editingTarget,
-                                       final EventBus eventBus)
+                                       final EventBus eventBus,
+                                       final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       // do an initial sync after 100ms (to allow initial render)
-      new Timer() {
-         @Override
-         public void run()
-         {
-            // do the sync
-            syncToEditorTheme(editingTarget);
-            
-            // register for notification on subsquent changes
-            eventBus.addHandler(
-               EditorThemeChangedEvent.TYPE,
-               new EditorThemeChangedEvent.Handler()
-               {
-                  @Override
-                  public void onEditorThemeChanged(EditorThemeChangedEvent e)
-                  {
-                     syncToEditorTheme(editingTarget);
-                  }
-               });
-         }
-      }.schedule(100);;
+      Timers.singleShot(100, () -> {
+
+         // do the sync
+         syncToEditorTheme(editingTarget);
+
+         // register for notification on subsquent changes
+         releaseOnDismiss.add(
+               eventBus.addHandler(
+                     EditorThemeChangedEvent.TYPE,
+                     (EditorThemeChangedEvent e) -> {
+                        syncToEditorTheme(editingTarget);
+                     }));
+      });
    }
    
    public HandlerRegistration addEditorThemeStyleChangedHandler(
