@@ -6,17 +6,9 @@ If you're experiencing behavior that appears to be a bug in RStudio, you're welc
 
 2. Is your issue a bug rather than a question? If you're having general trouble with RStudio or have questions for the RStudio community, the [RStudio Community Forum](https://community.rstudio.com/c/rstudio-ide) is an excellent resource.
 
-3. Are you the first person to report this issue? [Search the issue list](https://github.com/rstudio/rstudio/issues) to find out. If you aren't, the most helpful thing you can do is vote for the existing issue (add a reaction to it), and optionally add a comment describing your own experience.
+3. Are you the first person to report this issue? [Search the issue list](https://github.com/rstudio/rstudio/issues) to find out. If you aren't, the most helpful thing you can do is vote for the existing issue (add a +1 reaction to it), and optionally add a comment describing your own experience.
 
-When you're ready to file an issue, please do the following:
-
-1. If at all possible, include a [minimal working example](https://en.wikipedia.org/wiki/Minimal_Working_Example) which will reproduce the bug. If you're unable to reproduce consistently, then please do your best to provide us a set of actions, or other steps that seem to be correlated with the issue you are seeing. 
-
-2. Indicate your operating system, exact version of RStudio (from *Help | About RStudio*) and the output of `sessionInfo()` in R.
-
-3. If appropriate, include screenshots, any relevant log files, and a [diagnostic report](https://support.rstudio.com/hc/en-us/articles/200321257-Running-a-Diagnostics-Report).
-
-Label your issue with **bug**. We appreciate you taking the time to file a report; detailed bug reports from the community help us tremendously!
+When you're ready to file an issue, see our [guide to writing good bug reports](https://github.com/rstudio/rstudio/wiki/Writing-Good-Bug-Reports) for more on how to write a great bug report.
 
 ## Enhancements
 
