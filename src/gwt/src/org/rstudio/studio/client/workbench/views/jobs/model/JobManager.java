@@ -378,6 +378,16 @@ public class JobManager implements JobRefreshEvent.Handler,
             () -> onConfirmed.execute(false));
       dialog.showModal();
    }
+   
+   public void startTracking()
+   {
+      launcherJobManager_.startTrackingAllJobStatuses();
+   }
+   
+   public void stopTracking()
+   {
+      launcherJobManager_.stopTrackingAllJobStatuses();
+   }
 
    // Private methods ---------------------------------------------------------
    

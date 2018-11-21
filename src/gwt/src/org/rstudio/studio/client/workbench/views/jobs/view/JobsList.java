@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -45,6 +46,13 @@ public class JobsList extends Composite
       updateVisibility();
    }
    
+   @Override
+   protected void onUnload()
+   {
+      RStudioGinjector.INSTANCE.getJobManager().stopTracking();
+      super.onUnload();
+   }
+   
    public void addJob(Job job)
    {
       if (jobs_.containsKey(job.id))
@@ -52,6 +60,24 @@ public class JobsList extends Composite
       JobItem item = new JobItem(job);
       jobs_.put(job.id, item);
       list_.insert(item, 0);
+      updateVisibility();
+   }
+   
+   public void insertJob(Job job)
+   {
+      if (jobs_.containsKey(job.id))
+         return;
+      JobItem item = new JobItem(job);
+      jobs_.put(job.id, item);
+      
+      // keep list sorted with most recently recorded jobs first
+      int i;
+      for (i = 0; i < list_.getWidgetCount(); i++)
+      {
+         if (((JobItem)list_.getWidget(i)).getJob().recorded <= job.recorded)
+            break;
+      }
+      list_.insert(item, i);
       updateVisibility();
    }
    

@@ -94,6 +94,17 @@ public class JobItem extends Composite
                RStudioGinjector.INSTANCE.getEventBus().fireEvent(
                      new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
             });
+      
+      stopOrKill_ = new ToolbarButton(
+            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
+            {
+               // TODO: different UI that exposes both "stop" and "kill" if the job
+               // supports it. Probably a dialog with a "Force" checkbox which is
+               // always deselected by default. Fires ACTION_KILL if checkbox
+               // is selected, otherwise ACTION_STOP.
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+            });
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
@@ -186,23 +197,46 @@ public class JobItem extends Composite
             state_.setText(job.status);
             running_.setVisible(false);
          }
+         else
+         {
+            running_.setVisible(false);
+         }
       }
       else
       {
          // not running; hide the progress area
          running_.setVisible(false);
       }
-
       
       // show the state if we're not showing the progress bar
       state_.setVisible(!running_.isVisible());
       
-      // show stop button if job has a "stop" action, and is not completed
-      stop_.setVisible(
-            JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
-            job_.completed == 0);
+      // show appropriate stop button if job has a "stop" (and optional "kill")
+      // action, and is not completed
+      if (job_.completed == 0)
+      {
+         boolean hasStop = JsArrayUtil.jsArrayStringContains(job_.actions,
+               JobConstants.ACTION_STOP);
+         boolean hasKill = JsArrayUtil.jsArrayStringContains(job_.actions,
+               JobConstants.ACTION_KILL);
+         if (hasStop && hasKill)
+         {
+            stop_.setVisible(false);
+            stopOrKill_.setVisible(true);
+         }
+         else if (hasStop)
+         {
+            stop_.setVisible(true);
+            stopOrKill_.setVisible(false);
+         }
+      }
+      else
+      {
+         stop_.setVisible(false);
+         stopOrKill_.setVisible(false);
+      }
       
-      // udpate progress bar if it's showing
+      // update progress bar if it's showing
       if (running_.isVisible())
       {
          double percent = ((double)job.progress / (double)job.max) * 100.0;
@@ -254,5 +288,6 @@ public class JobItem extends Composite
    @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
+   @UiField(provided=true) ToolbarButton stopOrKill_;
    @UiField Styles styles_;
 }

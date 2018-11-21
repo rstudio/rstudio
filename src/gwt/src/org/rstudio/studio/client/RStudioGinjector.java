@@ -109,6 +109,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -312,4 +313,5 @@ public interface RStudioGinjector extends Ginjector
    PlumberViewerTypePopupMenu getPlumberViewerTypePopupMenu();
    PlumberAPISatellite getPlumberAPISatellite();
    PlumberAPI getPlumberAPI();
+   JobManager getJobManager();
 }

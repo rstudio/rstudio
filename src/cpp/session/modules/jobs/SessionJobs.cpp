@@ -359,6 +359,16 @@ Error setJobListening(const json::JsonRpcRequest& request,
    if (!lookupJob(id, &pJob))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
+   if (pJob->type() == JobType::JobTypeLauncher)
+   {
+      error = r::exec::RFunction(".rs.launcher.streamOutput")
+            .addParam(id)
+            .addParam(listening)
+            .call();
+      if (error)
+         return error;
+   }
+
    // if listening started, return the output so far
    if (listening)
    {

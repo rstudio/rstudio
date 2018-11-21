@@ -93,6 +93,14 @@ bool parseUtcTimeFromIsoString(const std::string& timeStr,
                                        pOutTime);
 }
 
+const std::string kIso8601Format {"%Y-%m-%dT%H:%M:%S%FZ"};
+
+bool parseUtcTimeFromIso8601String(const std::string& timeStr,
+                                   boost::posix_time::ptime *pOutTime)
+{
+   return parseUtcTimeFromFormatString(timeStr, kIso8601Format, pOutTime);
+}
+
 bool parseUtcTimeFromFormatString(const std::string& timeStr,
                                   const std::string& formatStr,
                                   boost::posix_time::ptime *pOutTime)

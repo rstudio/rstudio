@@ -22,7 +22,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
@@ -90,7 +90,7 @@ public class JobsPane extends WorkbenchPane
       switch(type)
       {
          case JobConstants.JOB_ADDED:
-            list_.addJob(job);
+            list_.insertJob(job);
             
             if (job.show)
             {
@@ -150,17 +150,14 @@ public class JobsPane extends WorkbenchPane
          return;
 
       // make an array of all the jobs on the server
-      ArrayList<Job> items = new ArrayList<Job>();
+      ArrayList<Job> items = new ArrayList<>();
       for (String id: jobs.iterableKeys())
       {
-         items.add((Job)jobs.getElement(id));
+         items.add(jobs.getElement(id));
       }
       
       // sort jobs by most recently recorded first
-      Collections.sort(items, (j1, j2) -> 
-      {
-          return j1.recorded - j2.recorded;
-      });
+      items.sort(Comparator.comparingInt(j -> j.recorded));
       
       // add each to the panel
       for (Job job: items)
@@ -194,10 +191,8 @@ public class JobsPane extends WorkbenchPane
       }
 
       // show the output pane
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight, animate, () -> 
-      {
-         installJobToolbar();
-      });
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight,
+            animate, this::installJobToolbar);
       
       // save job id as current job
       current_ = id;
@@ -230,10 +225,8 @@ public class JobsPane extends WorkbenchPane
          return;
       }
       
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft, animate, () -> 
-      {
-         installMainToolbar();
-      });
+      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft,
+            animate, this::installMainToolbar);
       
       current_ = null;
    }
@@ -308,18 +301,18 @@ public class JobsPane extends WorkbenchPane
    }
 
    // widgets
-   JobOutputPanel output_;
-   JobsList list_;
-   SlidingLayoutPanel panel_;
-   Toolbar toolbar_;
-   ToolbarButton allJobs_;
-   JobProgress progress_;
+   private JobOutputPanel output_;
+   private JobsList list_;
+   private SlidingLayoutPanel panel_;
+   private final Toolbar toolbar_;
+   private final ToolbarButton allJobs_;
+   private JobProgress progress_;
 
    // internal state
-   String current_;
+   private String current_;
 
    // injected
-   final Commands commands_;
-   final EventBus events_;
-   final UIPrefs uiPrefs_;
+   private final Commands commands_;
+   private final EventBus events_;
+   private final UIPrefs uiPrefs_;
 }

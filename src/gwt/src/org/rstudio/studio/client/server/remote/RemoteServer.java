@@ -5657,12 +5657,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getLauncherJobsEnabled(ServerRequestCallback<Boolean> callback)
-   {
-      sendRequest(RPC_SCOPE, "launcher_jobs_enabled", callback);
-   }
-   
-   @Override
    public void startLauncherJobStatusStream(String jobId,
                                             ServerRequestCallback<Void> callback)
    {
@@ -5678,6 +5672,12 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(jobId));
       sendRequest(RPC_SCOPE, "launcher_jobs_stop_status_stream", params, callback);
+   }
+   
+   @Override
+   public void refreshLauncherJobs(ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, "launcher_jobs_refresh", callback);
    }
 
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
