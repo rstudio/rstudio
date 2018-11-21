@@ -1,7 +1,7 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -181,6 +182,19 @@ public class EditingTargetCodeExecution
             true,
             null,
             false);
+   }
+   
+   public void runSelectionAsJob()
+   {
+      Range selectionRange = docDisplay_.getSelectionRange();
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
+      {
+         // nothing to execute; don't guess
+         return;
+      }
+      String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      events_.fireEvent(new JobRunSelectionEvent(target_.getPath(), code));
    }
    
    public void executeRange(Range range)

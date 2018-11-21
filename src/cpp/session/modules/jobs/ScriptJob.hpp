@@ -33,17 +33,33 @@ namespace jobs {
 class ScriptLaunchSpec 
 {
 public:
-   ScriptLaunchSpec(const core::FilePath& path,
+   // A script consisting of a named code snippet
+   ScriptLaunchSpec(
+         const std::string& name,
+         const std::string& code,
+         const core::FilePath& workingDir,
+         bool importEnv,
+         const std::string& exportEnv);
+
+   // A script consisting of an R file on disk
+   ScriptLaunchSpec(
+         const std::string& name,
+         const core::FilePath& path,
          const std::string& encoding,
          const core::FilePath& workingDir,
          bool importEnv,
          const std::string& exportEnv);
+
+   std::string name();
+   std::string code();
    core::FilePath path();
    std::string encoding();
    core::FilePath workingDir();
    bool importEnv();
    std::string exportEnv();
 private:
+   std::string name_;
+   std::string code_;
    core::FilePath path_;
    std::string encoding_;
    core::FilePath workingDir_;
