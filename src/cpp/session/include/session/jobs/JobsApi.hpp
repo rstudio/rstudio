@@ -31,6 +31,9 @@ namespace jobs {
 
 boost::shared_ptr<Job> addJob(
       const std::string& id,
+      time_t recorded,
+      time_t started,
+      time_t completed,
       const std::string& name,
       const std::string& status,
       const std::string& group,

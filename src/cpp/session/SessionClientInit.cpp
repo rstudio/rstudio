@@ -40,6 +40,7 @@
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/overlay/SessionOverlay.hpp"
 
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
@@ -421,6 +422,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
 
    sessionInfo["job_state"] = modules::jobs::jobState();
+
+   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsEnabled();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

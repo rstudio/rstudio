@@ -31,6 +31,7 @@ public class JobConstants
    // special job actions
    public final static String ACTION_STOP = "stop";
    public final static String ACTION_INFO = "info";
+   public final static String ACTION_KILL = "kill";
    
    // job types
    public final static int JOB_TYPE_UNKNOWN = 0;

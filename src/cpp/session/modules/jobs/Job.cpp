@@ -51,7 +51,10 @@ namespace session {
 namespace modules { 
 namespace jobs {
 
-Job::Job(const std::string& id, 
+Job::Job(const std::string& id,
+         time_t recorded,
+         time_t started,
+         time_t completed,
          const std::string& name,
          const std::string& status,
          const std::string& group,
@@ -71,11 +74,12 @@ Job::Job(const std::string& id,
    type_(type),
    progress_(progress),
    max_(max),
-   recorded_(::time(0)),
-   started_(0),
-   completed_(0),
+   recorded_(recorded),
+   started_(started),
+   completed_(completed),
    autoRemove_(autoRemove),
    listening_(false),
+   saveOutput_(false),
    show_(show),
    actions_(actions),
    tags_(tags)
@@ -93,6 +97,7 @@ Job::Job():
    completed_(0),
    autoRemove_(true),
    listening_(false),
+   saveOutput_(true),
    show_(true),
    actions_(R_NilValue)
 {
@@ -266,14 +271,18 @@ void Job::setState(JobState state)
       return;
 
    // if transitioning away from idle, set start time
-   if (state_ == JobIdle && state != JobIdle)
+   // if we don't already have it
+   if (state_ == JobIdle && state != JobIdle && started_ == 0)
+   {
       started_ = ::time(0);
+   }
 
    // record new state
    state_ = state;
 
    // if transitioned to a complete state, save finished time
-   if (complete())
+   // if we don't already have it
+   if (complete() && completed_ == 0)
       completed_ = ::time(0);
 }
 
@@ -284,7 +293,12 @@ void Job::setListening(bool listening)
 
 bool Job::complete() const
 {
-   return state_ != JobIdle && state_ != JobRunning;
+   return completedState(state_);
+}
+
+bool Job::completedState(JobState state)
+{
+   return state != JobIdle && state != JobRunning;
 }
 
 bool Job::autoRemove() const
@@ -324,11 +338,8 @@ FilePath Job::outputCacheFile()
 
 void Job::addOutput(const std::string& output, bool asError)
 {
-   // look up output file
-   Error error;
-   FilePath outputFile = outputCacheFile();
-   int type = asError ? 
-            module_context::kCompileOutputError : 
+   int type = asError ?
+            module_context::kCompileOutputError :
             module_context::kCompileOutputNormal;
 
    // let the client know, if the client happens to be listening (the client doesn't listen by
@@ -343,6 +354,13 @@ void Job::addOutput(const std::string& output, bool asError)
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobOutput, data));
    }
+
+   if (!saveOutput_)
+      return;
+
+   // look up output file
+   Error error;
+   FilePath outputFile = outputCacheFile();
 
    // create parent folder if necessary
    if (!outputFile.parent().exists())

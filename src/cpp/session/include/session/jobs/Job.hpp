@@ -53,7 +53,10 @@ class Job
 public:
    Job();
 
-   Job(const std::string& id, 
+   Job(const std::string& id,
+       time_t recorded,
+       time_t started,
+       time_t completed,
        const std::string& name,
        const std::string& status,
        const std::string& group,
@@ -95,6 +98,7 @@ public:
 
    // whether the job is complete
    bool complete() const;
+   static bool completedState(JobState state);
 
    // whether the job should be cleaned up automatically when complete
    bool autoRemove() const;
@@ -154,6 +158,7 @@ private:
 
    bool autoRemove_;
    bool listening_;
+   bool saveOutput_;
    bool show_;
 
    r::sexp::PreservedSEXP actions_;

@@ -109,10 +109,10 @@ public class JobsPresenter extends BasePresenter
    public void onJobSelection(final JobSelectionEvent event)
    {
       Job job = pJobManager_.get().getJob(event.id());
-      if (JsArrayUtil.jsArrayStringContains(job.actions, "info"))
+      if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {
          if (event.selected())
-            eventBus_.fireEvent(new JobExecuteActionEvent(event.id(), "info"));
+            eventBus_.fireEvent(new JobExecuteActionEvent(event.id(), JobConstants.ACTION_INFO));
       }
       else
       {
@@ -131,6 +131,20 @@ public class JobsPresenter extends BasePresenter
    public void onJobElapsedTick(JobElapsedTickEvent event)
    {
       display_.syncElapsedTime(event.timestamp());
+   }
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      pJobManager_.get().stopTracking();
+   }
+   
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      pJobManager_.get().startTracking();
    }
    
    public void confirmClose(Command onConfirmed)

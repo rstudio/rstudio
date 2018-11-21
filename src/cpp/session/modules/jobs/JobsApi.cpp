@@ -95,11 +95,14 @@ boost::shared_ptr<Job> addJob(
    {
       id = core::system::generateShortenedUuid();
    } while (s_jobs.find(id) != s_jobs.end());
-   return addJob(id, name, status, group, progress, state, type, autoRemove, actions, show, tags);
+   return addJob(id, ::time(0), 0, 0, name, status, group, progress, state, type, autoRemove, actions, show, tags);
 }
 
 boost::shared_ptr<Job> addJob(
       const std::string& id,
+      time_t recorded,
+      time_t started,
+      time_t completed,
       const std::string& name,
       const std::string& status,
       const std::string& group,
@@ -113,7 +116,7 @@ boost::shared_ptr<Job> addJob(
 {
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
-         id, name, status, group, 0 /* completed units */, 
+         id, recorded, started, completed, name, status, group, 0 /* completed units */,
          progress, state, type, autoRemove, actions, show, tags);
 
    // cache job and notify client
