@@ -569,6 +569,7 @@ public abstract class
    public abstract AppCommand sourceAsJob();
    public abstract AppCommand clearJobs();
    public abstract AppCommand activateJobs();
+   public abstract AppCommand runSelectionAsJob();
 
    // Other
    public abstract AppCommand checkSpelling();

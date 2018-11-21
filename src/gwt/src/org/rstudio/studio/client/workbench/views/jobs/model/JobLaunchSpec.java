@@ -24,6 +24,10 @@ public class JobLaunchSpec extends JavaScriptObject
       return this.path;
    }-*/;
    
+   public final native String code() /*-{
+      return this.code;
+   }-*/;
+   
    public final native String encoding() /*-{
       return this.encoding;
    }-*/;
@@ -45,13 +49,31 @@ public class JobLaunchSpec extends JavaScriptObject
    }-*/;
    
    public final native static JobLaunchSpec create(
+      String name,
       String path,
       String encoding,
       String workingDir,
       boolean importEnv,
       String exportEnv) /*-{
-      return { "path": path,
+      return { "name": name,
+               "path": path,
+               "code": "",
                "encoding": encoding,
+               "working_dir": workingDir,
+               "import_env": importEnv,
+               "export_env": exportEnv };
+   }-*/;
+
+   public final native static JobLaunchSpec create(
+      String name,
+      String code,
+      String workingDir,
+      boolean importEnv,
+      String exportEnv) /*-{
+      return { "name": name,
+               "code": code,
+               "path": "",
+               "encoding": "",
                "working_dir": workingDir,
                "import_env": importEnv,
                "export_env": exportEnv };
