@@ -67,6 +67,7 @@ public:
        bool autoRemove,
        SEXP actions,
        bool show,
+       bool saveOutput,
        const std::vector<std::string>& tags);
 
    // job ID (machine-generated)

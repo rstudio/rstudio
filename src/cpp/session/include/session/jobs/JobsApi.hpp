@@ -43,6 +43,7 @@ boost::shared_ptr<Job> addJob(
       bool autoRemove,
       SEXP actions,
       bool show,
+      bool saveOutput,
       std::vector<std::string> tags);
 
 boost::shared_ptr<Job> addJob(
