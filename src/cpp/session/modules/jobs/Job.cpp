@@ -36,6 +36,7 @@
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
 #define kJobShow        "show"
+#define kJobSaveOutput  "saveoutput"
 #define kJobTags        "tags"
 
 #define kJobStateIdle      "idle"
@@ -166,7 +167,8 @@ json::Object Job::toJson() const
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
-   job[kJobShow]  = static_cast<int64_t>(show_);
+   job[kJobShow]       = static_cast<int64_t>(show_);
+   job[kJobSaveOutput] = static_cast<int64_t>(saveOutput_);
 
    // amend with computed elapsed time
    if (started_ >= recorded_ && started_ > completed_)
@@ -226,6 +228,11 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobType,      &type,
       kJobShow,      &pJob->show_,
       kJobTags,      &pJob->tags_);
+   if (error)
+      return error;
+   
+   error = json::readObject(src,
+      kJobSaveOutput, &pJob->saveOutput_);
    if (error)
       return error;
 
@@ -325,6 +332,11 @@ time_t Job::completed() const
 bool Job::show() const
 {
    return show_;
+}
+
+bool Job::saveOutput() const
+{
+   return saveOutput_;
 }
 
 FilePath Job::jobCacheFolder()

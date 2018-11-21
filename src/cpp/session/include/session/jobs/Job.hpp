@@ -116,6 +116,9 @@ public:
 
    // whether the job pane should should be shown at start
    bool show() const;
+   
+   // whether the job should persist its output
+   bool saveOutput() const;
 
    // timing
    time_t recorded() const;
