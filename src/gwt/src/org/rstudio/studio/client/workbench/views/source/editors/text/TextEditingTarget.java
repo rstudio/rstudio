@@ -1285,7 +1285,7 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
 
-      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
+      themeHelper_ = new TextEditingTargetThemeHelper(this, events_, releaseOnDismiss_);
       
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
