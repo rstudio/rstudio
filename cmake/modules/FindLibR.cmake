@@ -122,9 +122,29 @@ else()
 
       # call dll2lib.R to ensure export files are generated
       execute_process(
-         COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe" "dll2lib.R"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
-         RESULT_VARIABLE LIBR_DLL2LIB_RESULT)
+          
+         COMMAND
+            "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe"
+            "dll2lib.R"
+            "${CMAKE_C_COMPILER}"
+            
+         WORKING_DIRECTORY
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+         
+         OUTPUT_VARIABLE
+            LIBR_DLL2LIB_STDOUT
+
+         ERROR_VARIABLE
+            LIBR_DLL2LIB_STDERR
+         
+         RESULT_VARIABLE
+            LIBR_DLL2LIB_RESULT)
+
+      if(NOT LIBR_DLL2LIB_RESULT EQUAL 0)
+         message(STATUS "${LIBR_DLL2LIB_STDOUT}")
+         message(STATUS "${LIBR_DLL2LIB_STDERR}")
+         message(FATAL_ERROR "Failed to generate .lib files for R DLLs!")
+      endif()
 
    endif()
 
