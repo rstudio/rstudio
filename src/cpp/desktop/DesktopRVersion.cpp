@@ -434,11 +434,15 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
       // restart the application.
       if (renderingEngine != dialog.renderingEngine())
       {
-         QMessageBox::information(
-                  nullptr,
-                  QStringLiteral("Rendering Engine Changed"),
-                  QStringLiteral("The desktop rendering engine has been changed. Please "
-                                 "restart RStudio for these changes to take affect."));
+         QMessageBox* messageBox = new QMessageBox(nullptr);
+         messageBox->setAttribute(Qt::WA_DeleteOnClose, true);
+         messageBox->setIcon(QMessageBox::Information);
+         messageBox->setWindowIcon(QIcon(QStringLiteral(":/icons/RStudio.ico")));
+         messageBox->setWindowTitle(QStringLiteral("Rendering Engine Changed"));
+         messageBox->setText(QStringLiteral(
+                  "The desktop rendering engine has been changed. "
+                  "Please restart RStudio for these changes to take effect."));
+         messageBox->exec();
          
          return QString();
       }
