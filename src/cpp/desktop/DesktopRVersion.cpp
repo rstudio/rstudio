@@ -17,6 +17,7 @@
 #include <windows.h>
 
 #include <QtAlgorithms>
+#include <QMessageBox>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -415,9 +416,10 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
    // Either forceUi was true, xor the manually specified R version is
    // no longer valid, xor we tried to autodetect and failed.
    // Now we show the dialog and make the user choose.
+   QString renderingEngine = desktop::options().desktopRenderingEngine();
    ChooseRHome dialog(allRVersions(QList<RVersion>() << rVersion), parent);
    dialog.setVersion(rVersion);
-   dialog.setRenderingEngine(desktop::options().desktopRenderingEngine());
+   dialog.setRenderingEngine(renderingEngine);
    if (dialog.exec() == QDialog::Accepted)
    {
       // Keep in mind this value might be "", if the user indicated
@@ -427,6 +429,20 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
       options.setRBinDir(rVersion.binDir());
       options.setDesktopRenderingEngine(dialog.renderingEngine());
 
+      // If we changed the rendering engine, we'll have to restart
+      // RStudio. Show the user a message and request that they
+      // restart the application.
+      if (renderingEngine != dialog.renderingEngine())
+      {
+         QMessageBox::information(
+                  nullptr,
+                  QStringLiteral("Rendering Engine Changed"),
+                  QStringLiteral("The desktop rendering engine has been changed. Please "
+                                 "restart RStudio for these changes to take affect."));
+         
+         return QString();
+      }
+      
       // Recurse. The ChooseRHome dialog should've validated that
       // the values are acceptable, so this recursion will never
       // go more than one level deep (i.e. this call should never
