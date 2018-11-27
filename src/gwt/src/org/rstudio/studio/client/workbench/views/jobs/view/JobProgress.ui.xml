@@ -4,11 +4,16 @@
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
 	
-	.name, .elapsed
+	.name, .elapsed, .status
 	{
 		text-overflow: ellipsis;
 		overflow: hidden;
 		word-wrap: nowrap;
+	}
+	
+	.status
+	{
+		color: #808080;
 	}
 	
 	.host
@@ -30,10 +35,13 @@
 		        width="20%">
 			<g:Label styleName="{style.name}" ui:field="name_"></g:Label>
 		</g:cell>
-		<g:cell horizontalAlignment="ALIGN_CENTER" 
+		<g:cell horizontalAlignment="ALIGN_RIGHT" 
 		        verticalAlignment="ALIGN_MIDDLE"
 		        width="70%">
-			<rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
+			<g:HTMLPanel styleName="{style.host}">
+				<g:Label styleName="{style.status}" ui:field="status_"></g:Label>
+				<rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
+			</g:HTMLPanel>
 		</g:cell>
 		<g:cell horizontalAlignment="ALIGN_RIGHT" 
 		        verticalAlignment="ALIGN_MIDDLE"

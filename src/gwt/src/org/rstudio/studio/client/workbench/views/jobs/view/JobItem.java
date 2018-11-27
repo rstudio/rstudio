@@ -144,29 +144,24 @@ public class JobItem extends Composite
       job_ = job;
       
       String clazz = "";
-      String state = "";
+      String state = JobConstants.stateDescription(job_.state);
 
       switch(job_.state)
       {
          case JobConstants.STATE_RUNNING:
             clazz = styles_.running();
-            state = "Running";
             break;
          case JobConstants.STATE_IDLE:
             clazz = styles_.idle();
-            state = "Idle";
             break;
          case JobConstants.STATE_CANCELLED:
             clazz = styles_.cancelled();
-            state = "Cancelled";
             break;
          case JobConstants.STATE_FAILED:
             clazz = styles_.failed();
-            state = "Failed";
             break;
          case JobConstants.STATE_SUCCEEDED:
             clazz = styles_.succeeded();
-            state = "Succeeded";
             break;
       }
 
@@ -227,6 +222,12 @@ public class JobItem extends Composite
          else if (hasStop)
          {
             stop_.setVisible(true);
+            stopOrKill_.setVisible(false);
+         }
+         else
+         {
+            // can't stop OR kill
+            stop_.setVisible(false);
             stopOrKill_.setVisible(false);
          }
       }

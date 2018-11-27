@@ -130,7 +130,7 @@ public class JobsPane extends WorkbenchPane
                      progress_ = new JobProgress();
                      toolbar_.addLeftWidget(progress_);
                   }
-                  progress_.showProgress(new LocalJobProgress(job));
+                  progress_.showJob(job);
                }
             }
             break;
@@ -190,12 +190,12 @@ public class JobsPane extends WorkbenchPane
          progress_ = null;
       }
 
+      // save job id as current job
+      current_ = id;
+
       // show the output pane
       panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight,
             animate, this::installJobToolbar);
-      
-      // save job id as current job
-      current_ = id;
    }
 
    @Override
@@ -281,7 +281,7 @@ public class JobsPane extends WorkbenchPane
          // show progress
          progress_ = new JobProgress();
          toolbar_.addLeftWidget(progress_);
-         progress_.showProgress(new LocalJobProgress(job));
+         progress_.showJob(job);
 
          // if job is complete, mark that
          if (job.completed > 0)
