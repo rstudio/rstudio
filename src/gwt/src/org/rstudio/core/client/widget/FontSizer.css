@@ -4,14 +4,25 @@
    line-height: 1.45;
 }
 
- @if rstudio.desktop true { .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
-      line-height: 1.20;
+@if rstudio.desktop true {
+
+   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
+      line-height: 1.2;
    }
- }
- @else { .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
+
+} @elif user.agent gecko1_8 {
+
+   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
+      line-height: 1.2;
+   }
+
+} @else {
+
+   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
       line-height: 1.1;
    }
- }
+
+}
 
 .ubuntu_mono .normalSize, .ubuntu_mono .normalSize td, .ubuntu_mono .normalSize pre {
    line-height: 1.2;
