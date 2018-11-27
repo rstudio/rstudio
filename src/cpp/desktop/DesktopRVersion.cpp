@@ -22,6 +22,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/RegistryKey.hpp>
 
+#include "DesktopInfo.hpp"
 #include "DesktopChooseRHome.hpp"
 
 #ifndef KEY_WOW64_32KEY
@@ -414,16 +415,17 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
    // Either forceUi was true, xor the manually specified R version is
    // no longer valid, xor we tried to autodetect and failed.
    // Now we show the dialog and make the user choose.
-
    ChooseRHome dialog(allRVersions(QList<RVersion>() << rVersion), parent);
-   dialog.setValue(rVersion);
+   dialog.setVersion(rVersion);
+   dialog.setRenderingEngine(desktop::options().desktopRenderingEngine());
    if (dialog.exec() == QDialog::Accepted)
    {
       // Keep in mind this value might be "", if the user indicated
       // they want to use the system default. The dialog won't let
       // itself be accepted unless a valid installation is detected.
-      rVersion = dialog.value();
+      rVersion = dialog.version();
       options.setRBinDir(rVersion.binDir());
+      options.setDesktopRenderingEngine(dialog.renderingEngine());
 
       // Recurse. The ChooseRHome dialog should've validated that
       // the values are acceptable, so this recursion will never

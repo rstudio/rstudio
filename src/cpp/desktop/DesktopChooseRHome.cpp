@@ -32,6 +32,18 @@ using namespace rstudio::desktop;
 
 namespace {
 
+static std::map<std::string, std::string> s_engineValueTolabel = {
+   {"auto", "Auto-detect (recommended)"},
+   {"desktop", "Desktop OpenGL"},
+   {"software", "Software"}
+};
+
+static std::map<std::string, std::string> s_engineLabelToValue = {
+   {"Auto-detect (recommended)", "auto"},
+   {"Desktop OpenGL", "desktop"},
+   {"Software", "software"}
+};
+
 QListWidgetItem* toItem(const RVersion& version)
 {
    QListWidgetItem* pItem = new QListWidgetItem();
@@ -55,13 +67,20 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     pOK_(nullptr)
 {
     ui->setupUi(this);
-
+    
     setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
     setWindowFlags(
           (windowFlags() | Qt::Dialog)
           & ~Qt::WindowContextHelpButtonHint
           );
+    
+    QStringList engines = {
+       QStringLiteral("Auto-detect (recommended)"),
+       QStringLiteral("Desktop OpenGL"),
+       QStringLiteral("Software")
+    };
+    ui->comboRenderingEngines->addItems(engines);
 
     pOK_ = new QPushButton(QString::fromUtf8("OK"));
     ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
@@ -239,6 +258,8 @@ void ChooseRHome::done(int r)
             }
          }
       }
+      
+      
    }
 
    this->QDialog::done(r);
@@ -254,7 +275,7 @@ void ChooseRHome::validateSelection()
 
    if (ui->radioCustom->isChecked())
    {
-      pOK_->setEnabled(this->value().isValid());
+      pOK_->setEnabled(this->version().isValid());
    }
    else
    {
@@ -267,7 +288,7 @@ void ChooseRHome::onModeChanged()
    validateSelection();
 }
 
-RVersion ChooseRHome::value()
+RVersion ChooseRHome::version()
 {
    if (!ui->radioCustom->isChecked())
       return QString();
@@ -279,7 +300,7 @@ RVersion ChooseRHome::value()
              : toVersion(selectedItems.at(0));
 }
 
-void ChooseRHome::setValue(const RVersion& value)
+void ChooseRHome::setVersion(const RVersion& value)
 {
    if (value.isEmpty())
    {
@@ -296,3 +317,20 @@ void ChooseRHome::setValue(const RVersion& value)
    }
 }
 
+QString ChooseRHome::renderingEngine()
+{
+   std::string entry = ui->comboRenderingEngines->currentText().toStdString();
+   if (s_engineLabelToValue.count(entry))
+      return QString::fromStdString(s_engineLabelToValue[entry]);
+   else
+      return QStringLiteral("auto");
+}
+
+void ChooseRHome::setRenderingEngine(const QString& renderingEngine)
+{
+   std::string engine = renderingEngine.toStdString();
+   if (s_engineValueTolabel.count(engine))
+      ui->comboRenderingEngines->setCurrentText(QString::fromStdString(s_engineValueTolabel[engine]));
+   else
+      ui->comboRenderingEngines->setCurrentText(QStringLiteral("Auto-detect (recommended)"));
+}
