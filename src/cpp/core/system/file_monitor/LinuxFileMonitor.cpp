@@ -441,13 +441,14 @@ Handle registerMonitor(const core::FilePath& filePath,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
 {
-   // create and allocate FileEventContext (create auto-ptr in case we
-   // return early, we'll call release later before returning)
+   // create and allocate FileEventContext
+   // (also pack into unique_ptr to auto-delete if we return early;
+   // we'll relinquish ownership if we successfully register the monitor)
    FileEventContext* pContext = new FileEventContext();
    pContext->rootPath = filePath;
    pContext->recursive = recursive;
    pContext->filter = filter;
-   std::auto_ptr<FileEventContext> autoPtrContext(pContext);
+   std::unique_ptr<FileEventContext> contextScope(pContext);
 
    // init file descriptor
 #ifdef HAVE_INOTIFY_INIT1
@@ -498,7 +499,7 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // we are going to pass the context pointer to the client (as the Handle)
    // so we release it here to relinquish ownership
-   autoPtrContext.release();
+   contextScope.release();
 
    // notify the caller that we have successfully registered
    callbacks.onRegistered(pContext->handle, pContext->fileTree);
