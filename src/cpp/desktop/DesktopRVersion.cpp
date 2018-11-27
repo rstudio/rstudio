@@ -444,6 +444,10 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
                   "Please restart RStudio for these changes to take effect."));
          messageBox->exec();
          
+         // Return an intentionally invalid R version. This will cause
+         // the calling code to quit before attempting to load the
+         // rest of the IDE surface (as there's nothing to be done
+         // without a valid R version)
          return QString();
       }
       
