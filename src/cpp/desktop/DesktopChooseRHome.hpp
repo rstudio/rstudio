@@ -35,8 +35,11 @@ public:
    ~ChooseRHome();
 
    // "" means auto-detect
-   rstudio::desktop::RVersion value();
-   void setValue(const rstudio::desktop::RVersion& value);
+   rstudio::desktop::RVersion version();
+   void setVersion(const rstudio::desktop::RVersion& version);
+   
+   QString renderingEngine();
+   void setRenderingEngine(const QString& renderingEngine);
 
 protected Q_SLOTS:
    void chooseOther();

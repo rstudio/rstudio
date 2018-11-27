@@ -17,11 +17,13 @@
 #include <windows.h>
 
 #include <QtAlgorithms>
+#include <QMessageBox>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/RegistryKey.hpp>
 
+#include "DesktopInfo.hpp"
 #include "DesktopChooseRHome.hpp"
 
 #ifndef KEY_WOW64_32KEY
@@ -414,17 +416,37 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
    // Either forceUi was true, xor the manually specified R version is
    // no longer valid, xor we tried to autodetect and failed.
    // Now we show the dialog and make the user choose.
-
+   QString renderingEngine = desktop::options().desktopRenderingEngine();
    ChooseRHome dialog(allRVersions(QList<RVersion>() << rVersion), parent);
-   dialog.setValue(rVersion);
+   dialog.setVersion(rVersion);
+   dialog.setRenderingEngine(renderingEngine);
    if (dialog.exec() == QDialog::Accepted)
    {
       // Keep in mind this value might be "", if the user indicated
       // they want to use the system default. The dialog won't let
       // itself be accepted unless a valid installation is detected.
-      rVersion = dialog.value();
+      rVersion = dialog.version();
       options.setRBinDir(rVersion.binDir());
+      options.setDesktopRenderingEngine(dialog.renderingEngine());
 
+      // If we changed the rendering engine, we'll have to restart
+      // RStudio. Show the user a message and request that they
+      // restart the application.
+      if (renderingEngine != dialog.renderingEngine())
+      {
+         QMessageBox* messageBox = new QMessageBox(nullptr);
+         messageBox->setAttribute(Qt::WA_DeleteOnClose, true);
+         messageBox->setIcon(QMessageBox::Information);
+         messageBox->setWindowIcon(QIcon(QStringLiteral(":/icons/RStudio.ico")));
+         messageBox->setWindowTitle(QStringLiteral("Rendering Engine Changed"));
+         messageBox->setText(QStringLiteral(
+                  "The desktop rendering engine has been changed. "
+                  "Please restart RStudio for these changes to take effect."));
+         messageBox->exec();
+         
+         return QString();
+      }
+      
       // Recurse. The ChooseRHome dialog should've validated that
       // the values are acceptable, so this recursion will never
       // go more than one level deep (i.e. this call should never
