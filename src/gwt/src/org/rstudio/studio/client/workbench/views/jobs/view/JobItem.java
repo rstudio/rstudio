@@ -224,6 +224,12 @@ public class JobItem extends Composite
             stop_.setVisible(true);
             stopOrKill_.setVisible(false);
          }
+         else
+         {
+            // can't stop OR kill
+            stop_.setVisible(false);
+            stopOrKill_.setVisible(false);
+         }
       }
       else
       {
