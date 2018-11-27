@@ -157,7 +157,7 @@
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.flexPanel}">
-        <g:Label text="File/Url:" styleName="{style.topImportLabel}"/>
+        <g:Label text="File/URL:" styleName="{style.topImportLabel}"/>
         <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
                                     styleName="{style.fileChooser}"/>
         <g:HTMLPanel styleName="{style.dataPreviewHeader}">
