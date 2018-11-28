@@ -1,29 +1,7 @@
+args <- commandArgs(TRUE)
 
-# Put MSVC tools on the PATH.
-# TODO: let CMake set this path for us
-dirs <- c(
-   
-   # for Jenkins
-   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.14.26428/bin/HostX64/x64",
-   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.15.26726/bin/HostX64/x64",
-   
-   # for local installs
-   "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/HostX64/x64",
-   "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.15.26726/bin/HostX64/x64"
-   
-)
-
-found <- FALSE
-for (dir in dirs) {
-   if (file.exists(dir)) {
-      Sys.setenv(PATH = paste(dir, Sys.getenv("PATH"), sep = ";"))
-      found <- TRUE
-      break
-   }
-}
-
-if (!found)
-   stop("Failed to discover path to MSVC 2017 tools")
+# Put the path containing the C compiler on the PATH.
+Sys.setenv(PATH = paste(dirname(args[1]), Sys.getenv("PATH"), sep = ";"))
 
 # Find R DLLs.
 dlls <- list.files(R.home("bin"), pattern = "dll$", full.names = TRUE)

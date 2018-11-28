@@ -869,7 +869,7 @@ public class RSConnectDeploy extends Composite
          return;
       }
 
-      // ternery operator maps to appropriate files to list for deployment:
+      // ternary operator maps to appropriate files to list for deployment:
       // website code    - website code directory 
       // static website  - website build directory
       // document        - R Markdown document

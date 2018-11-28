@@ -202,7 +202,14 @@ std::string assignOutputUrl(const std::string& outputFile)
          websiteDir = FilePath(websiteOutputDir);
       }
    }
-   if (!websiteDir.empty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(outputPath.parent()))
+
+   // figure out the project directory
+   FilePath projDir = outputPath.parent();
+   if (projDir.filename() == "_site")
+      projDir = projDir.parent();
+
+   // detect whether we're creating a book output vs. a website page
+   if (!websiteDir.empty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(projDir))
    {
       // if we're creating a '.pdf', detect the created book appropriately
       FilePath indexPath;

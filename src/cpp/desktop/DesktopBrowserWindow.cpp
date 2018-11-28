@@ -214,5 +214,20 @@ WebPage* BrowserWindow::opener()
    return pOpener_;
 }
 
+void BrowserWindow::showEvent(QShowEvent* event)
+{
+   QMainWindow::showEvent(event);
+
+   // work around a Qt 5.12 issue where windows don't render when first shown
+   // (they just appear as a blank screen until resized or prompted otherwise)
+#if QT_VERSION == QT_VERSION_CHECK(5, 12, 0)
+   QTimer::singleShot(0, [this]() {
+      resize(width() - 1, height() - 1);
+      resize(width() + 1, height() + 1);
+   });
+#endif
+
+}
+
 } // namespace desktop
 } // namespace rstudio

@@ -19,8 +19,11 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 
 public class LauncherJobManager
 {
-   void launcherJobsFeatureAvailable(SimpleRequestCallback<Boolean> callback)
+   void startTrackingAllJobStatuses()
    {
-      callback.onResponseReceived(false);
+   }
+   
+   void stopTrackingAllJobStatuses()
+   {
    }
 }

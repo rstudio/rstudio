@@ -53,7 +53,10 @@ class Job
 public:
    Job();
 
-   Job(const std::string& id, 
+   Job(const std::string& id,
+       time_t recorded,
+       time_t started,
+       time_t completed,
        const std::string& name,
        const std::string& status,
        const std::string& group,
@@ -64,6 +67,7 @@ public:
        bool autoRemove,
        SEXP actions,
        bool show,
+       bool saveOutput,
        const std::vector<std::string>& tags);
 
    // job ID (machine-generated)
@@ -95,6 +99,7 @@ public:
 
    // whether the job is complete
    bool complete() const;
+   static bool completedState(JobState state);
 
    // whether the job should be cleaned up automatically when complete
    bool autoRemove() const;
@@ -111,6 +116,9 @@ public:
 
    // whether the job pane should should be shown at start
    bool show() const;
+   
+   // whether the job should persist its output
+   bool saveOutput() const;
 
    // timing
    time_t recorded() const;
@@ -154,6 +162,7 @@ private:
 
    bool autoRemove_;
    bool listening_;
+   bool saveOutput_;
    bool show_;
 
    r::sexp::PreservedSEXP actions_;

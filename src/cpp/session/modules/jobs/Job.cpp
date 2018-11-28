@@ -36,6 +36,7 @@
 #define kJobCompleted   "completed"
 #define kJobElapsed     "elapsed"
 #define kJobShow        "show"
+#define kJobSaveOutput  "saveoutput"
 #define kJobTags        "tags"
 
 #define kJobStateIdle      "idle"
@@ -51,7 +52,10 @@ namespace session {
 namespace modules { 
 namespace jobs {
 
-Job::Job(const std::string& id, 
+Job::Job(const std::string& id,
+         time_t recorded,
+         time_t started,
+         time_t completed,
          const std::string& name,
          const std::string& status,
          const std::string& group,
@@ -62,6 +66,7 @@ Job::Job(const std::string& id,
          bool autoRemove,
          SEXP actions,
          bool show,
+         bool saveOutput,
          const std::vector<std::string>& tags):
    id_(id), 
    name_(name),
@@ -71,11 +76,12 @@ Job::Job(const std::string& id,
    type_(type),
    progress_(progress),
    max_(max),
-   recorded_(::time(0)),
-   started_(0),
-   completed_(0),
+   recorded_(recorded),
+   started_(started),
+   completed_(completed),
    autoRemove_(autoRemove),
    listening_(false),
+   saveOutput_(saveOutput),
    show_(show),
    actions_(actions),
    tags_(tags)
@@ -93,6 +99,7 @@ Job::Job():
    completed_(0),
    autoRemove_(true),
    listening_(false),
+   saveOutput_(true),
    show_(true),
    actions_(R_NilValue)
 {
@@ -160,7 +167,8 @@ json::Object Job::toJson() const
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
-   job[kJobShow]  = static_cast<int64_t>(show_);
+   job[kJobShow]       = static_cast<int64_t>(show_);
+   job[kJobSaveOutput] = static_cast<int64_t>(saveOutput_);
 
    // amend with computed elapsed time
    if (started_ >= recorded_ && started_ > completed_)
@@ -222,6 +230,11 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobTags,      &pJob->tags_);
    if (error)
       return error;
+   
+   error = json::readObject(src,
+      kJobSaveOutput, &pJob->saveOutput_);
+   if (error)
+      return error;
 
    // convert to types that aren't JSON friendly
    pJob->state_     = static_cast<JobState>(state);
@@ -266,14 +279,18 @@ void Job::setState(JobState state)
       return;
 
    // if transitioning away from idle, set start time
-   if (state_ == JobIdle && state != JobIdle)
+   // if we don't already have it
+   if (state_ == JobIdle && state != JobIdle && started_ == 0)
+   {
       started_ = ::time(0);
+   }
 
    // record new state
    state_ = state;
 
    // if transitioned to a complete state, save finished time
-   if (complete())
+   // if we don't already have it
+   if (complete() && completed_ == 0)
       completed_ = ::time(0);
 }
 
@@ -284,7 +301,12 @@ void Job::setListening(bool listening)
 
 bool Job::complete() const
 {
-   return state_ != JobIdle && state_ != JobRunning;
+   return completedState(state_);
+}
+
+bool Job::completedState(JobState state)
+{
+   return state != JobIdle && state != JobRunning;
 }
 
 bool Job::autoRemove() const
@@ -312,6 +334,11 @@ bool Job::show() const
    return show_;
 }
 
+bool Job::saveOutput() const
+{
+   return saveOutput_;
+}
+
 FilePath Job::jobCacheFolder()
 {
    return module_context::sessionScratchPath().complete("jobs");
@@ -324,11 +351,8 @@ FilePath Job::outputCacheFile()
 
 void Job::addOutput(const std::string& output, bool asError)
 {
-   // look up output file
-   Error error;
-   FilePath outputFile = outputCacheFile();
-   int type = asError ? 
-            module_context::kCompileOutputError : 
+   int type = asError ?
+            module_context::kCompileOutputError :
             module_context::kCompileOutputNormal;
 
    // let the client know, if the client happens to be listening (the client doesn't listen by
@@ -343,6 +367,13 @@ void Job::addOutput(const std::string& output, bool asError)
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobOutput, data));
    }
+
+   if (!saveOutput_)
+      return;
+
+   // look up output file
+   Error error;
+   FilePath outputFile = outputCacheFile();
 
    // create parent folder if necessary
    if (!outputFile.parent().exists())

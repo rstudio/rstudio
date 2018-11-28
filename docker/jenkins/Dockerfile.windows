@@ -17,7 +17,7 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
 
 # install some deps via chocolatey
 RUN choco install -y cmake --version 3.12.1 --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; ` 
-  choco install -y jdk8 --version 8.0.181; `
+  choco install -y jdk8 --version 8.0.191; `
   choco install -y ant --version 1.10.5; `
   choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
   choco install -y 7zip --version 18.5.0.20180730

@@ -55,6 +55,8 @@ public:
      WebPage* opener();
 
 protected:
+     void showEvent(QShowEvent* event) override;
+
      WebView* pView_;
      QToolBar* pToolbar_;
      QString getName();

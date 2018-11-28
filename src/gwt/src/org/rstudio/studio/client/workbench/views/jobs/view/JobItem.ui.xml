@@ -161,7 +161,10 @@
                             <g:Label styleName="{styles_.elapsed}" ui:field="elapsed_"></g:Label>
                         </g:cell>
                         <g:cell width="20px" horizontalAlignment="ALIGN_CENTER" verticalAlignment="ALIGN_MIDDLE">
-                            <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+                            <g:HorizontalPanel height="100%">
+                                <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+                                <rw:ToolbarButton ui:field="stopOrKill_"></rw:ToolbarButton>
+                            </g:HorizontalPanel>
                         </g:cell>
                     </g:HorizontalPanel>
                 </g:VerticalPanel>

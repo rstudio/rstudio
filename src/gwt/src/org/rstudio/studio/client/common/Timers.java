@@ -1,5 +1,5 @@
 /*
- * SessionOverlay.cpp
+ * Timers.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,34 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common;
 
-#include "SessionOverlay.hpp"
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
-#include <core/Error.hpp>
-
-using namespace rstudio::core ;
-
-namespace rstudio {
-namespace session {  
-namespace modules {
-namespace overlay {
-
-Error initialize()
+public class Timers
 {
-   return Success();
+   public static final void singleShot(int delayMs, final Command command)
+   {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            command.execute();
+         }
+      }.schedule(delayMs);
+   }
 }
-
-bool isSuspendable()
-{
-   return true;
-}
-
-bool launcherJobsEnabled()
-{
-   return false;
-}
-
-} // namespace overlay
-} // namespace modules
-} // namespace session
-} // namespace rstudio

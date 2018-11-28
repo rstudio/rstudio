@@ -18,6 +18,7 @@
 #include <r/RExec.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -79,7 +80,7 @@ private:
          LOG_ERROR(error);
 
       // add the job -- currently idle until we get some content from it
-      job_ = addJob(spec_.path().filename(), "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
+      job_ = addJob(spec_.name(), "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
       
       std::string importRdata = "NULL";
       std::string exportRdata = "NULL";
@@ -111,6 +112,36 @@ private:
          FilePath::tempFilePath(&export_);
          exportRdata = "'" + string_utils::utf8ToSystem(export_.absolutePath()) + "'";
       }
+
+      std::string path;
+      if (spec_.code().empty())
+      {
+         // no code specified to run, so we're running an R script
+         path = spec_.path().absolutePath();
+      }
+      else
+      {
+         // code specified; inject it into a temporary file
+         error = FilePath::tempFilePath(&tempCode_);
+         if (!error)
+         {
+            error = writeStringToFile(tempCode_, spec_.code());
+         }
+
+         if (error)
+         {
+            // emit the error to the job, and allow it to run with no code (so the only result
+            // will be this error)
+            job_->addOutput("Error writing code to file " + tempCode_.absolutePath() + ": " +
+                            error.summary() + "\n", true);
+         }
+         path = tempCode_.absolutePath();
+      }
+
+      // determine encoding
+      std::string encoding = "UTF-8";
+      if (!spec_.encoding().empty())
+          encoding = spec_.encoding();
       
       // form the command to send to R
       std::string cmd = "source('" +
@@ -120,8 +151,8 @@ private:
                                     .complete("SourceWithProgress.R").absolutePath())) + 
          "'); sourceWithProgress(script = '" +
          string_utils::utf8ToSystem(
-               string_utils::singleQuotedStrEscape(spec_.path().absolutePath())) + "', "
-         "encoding = '" + spec_.encoding() + "', "
+               string_utils::singleQuotedStrEscape(path)) + "', "
+         "encoding = '" + encoding + "', "
          "con = stdout(), "
          "importRdata = " + importRdata + ", "
          "exportRdata = " + exportRdata + ");";
@@ -260,6 +291,7 @@ private:
       // clean up temporary files, if we used them
       import_.removeIfExists();
       export_.removeIfExists();
+      tempCode_.removeIfExists();
 
       // run caller-provided completion function
       onComplete_();
@@ -300,6 +332,7 @@ private:
    bool completed_;
    FilePath import_;
    FilePath export_;
+   FilePath tempCode_;
    boost::function<void()> onComplete_;
 };
 
@@ -309,13 +342,29 @@ std::vector<boost::shared_ptr<ScriptJob> > s_scripts;
 } // anonymous namespace
 
 ScriptLaunchSpec::ScriptLaunchSpec(
+      const std::string& name,
       const core::FilePath& path,
       const std::string& encoding,
       const core::FilePath& workingDir,
       bool importEnv,
       const std::string& exportEnv):
+   name_(name),
    path_(path),
    encoding_(encoding),
+   workingDir_(workingDir),
+   importEnv_(importEnv),
+   exportEnv_(exportEnv)
+{
+}
+
+ScriptLaunchSpec::ScriptLaunchSpec(
+      const std::string& name,
+      const std::string& code,
+      const core::FilePath& workingDir,
+      bool importEnv,
+      const std::string& exportEnv):
+   name_(name),
+   code_(code),
    workingDir_(workingDir),
    importEnv_(importEnv),
    exportEnv_(exportEnv)
@@ -335,6 +384,16 @@ FilePath ScriptLaunchSpec::workingDir()
 std::string ScriptLaunchSpec::exportEnv()
 {
    return exportEnv_;
+}
+
+std::string ScriptLaunchSpec::code()
+{
+   return code_;
+}
+
+std::string ScriptLaunchSpec::name()
+{
+   return name_;
 }
 
 bool ScriptLaunchSpec::importEnv()

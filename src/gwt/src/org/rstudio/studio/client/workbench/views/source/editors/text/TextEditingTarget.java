@@ -1285,7 +1285,7 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
 
-      themeHelper_ = new TextEditingTargetThemeHelper(this, events_);
+      themeHelper_ = new TextEditingTargetThemeHelper(this, events_, releaseOnDismiss_);
       
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
@@ -4168,6 +4168,12 @@ public class TextEditingTarget implements
          codeExecution_.sendSelectionToTerminal(true);
       else
          codeExecution_.executeSelection(true);
+   }
+   
+   @Handler
+   void onRunSelectionAsJob()
+   {
+      codeExecution_.runSelectionAsJob();
    }
    
    @Handler

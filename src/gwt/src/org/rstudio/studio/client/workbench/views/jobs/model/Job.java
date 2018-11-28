@@ -64,6 +64,9 @@ public class Job
 
    // whether the job pane should should be shown at start
    public boolean show;
+   
+   // whether the job should persist its output
+   public boolean saveoutput;
 
    // the job's tags
    public JsArrayString tags;

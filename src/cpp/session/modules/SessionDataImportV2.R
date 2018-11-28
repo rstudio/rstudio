@@ -216,7 +216,7 @@
                      numeric = "\"numeric\"",
                      date = "\"date\"",
                      character = "\"text\"",
-                     skip = "\"blank\""
+                     skip = "\"skip\""
                   )
                }
             }
