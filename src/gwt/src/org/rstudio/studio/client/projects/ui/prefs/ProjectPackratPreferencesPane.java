@@ -226,7 +226,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       final ProgressIndicator indicator = getProgressIndicator();
       
-      indicator.onProgress("Verifying prequisites...");
+      indicator.onProgress("Verifying prerequisites...");
       
       server_.getPackratPrerequisites(
         new ServerRequestCallback<PackratPrerequisites>() {
