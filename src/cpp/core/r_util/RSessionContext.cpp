@@ -244,7 +244,7 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/?");
+   static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)");
 
    boost::smatch match;
    if (regex_utils::search(url, match, re))
