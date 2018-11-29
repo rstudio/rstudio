@@ -2153,10 +2153,21 @@ public class TextEditingTarget implements
    @Override
    public void verifySqlPrerequisites()
    {
-      verifySqlPrequisites(null);
+      verifyPreviewSqlPrerequisites(null);
+   }
+
+   private void verifyPreviewSqlPrerequisites(final Command command) 
+   {
+      dependencyManager_.withRSQLite("Previewing SQL scripts", new Command() {
+         @Override
+         public void execute() {
+            if (command != null)
+               command.execute();
+         }
+      });
    }
    
-   private void verifySqlPrequisites(final Command command) 
+   private void verifySqlPrerequisites(final Command command) 
    {
       dependencyManager_.withDBI("Previewing SQL scripts", new Command() {
          @Override
@@ -5431,7 +5442,7 @@ public class TextEditingTarget implements
 
    void previewSql()
    {
-      verifySqlPrequisites(new Command() {
+      verifySqlPrerequisites(new Command() {
          @Override
          public void execute()
          {
