@@ -2151,12 +2151,12 @@ public class TextEditingTarget implements
    }
 
    @Override
-   public void verifySqlPrerequisites()
+   public void verifyNewSqlPrerequisites()
    {
-      verifyPreviewSqlPrerequisites(null);
+      verifyNewSqlPrerequisites(null);
    }
 
-   private void verifyPreviewSqlPrerequisites(final Command command) 
+   private void verifyNewSqlPrerequisites(final Command command) 
    {
       dependencyManager_.withRSQLite("Previewing SQL scripts", new Command() {
          @Override

@@ -1403,7 +1403,7 @@ public class Source implements InsertSourceHandler,
            @Override
            public void execute(EditingTarget target)
            {
-              target.verifySqlPrerequisites(); 
+              target.verifyNewSqlPrerequisites(); 
               target.setSourceOnSave(true);
            }
          }
