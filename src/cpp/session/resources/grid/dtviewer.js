@@ -1650,8 +1650,6 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
   bootstrap();
 }
 
-window.whatsup = 10;
-
 // return whether to show the column frame UI elements
 window.isLimitedColumnFrame = function() {
   return cols.length > defaultMaxColumns;
