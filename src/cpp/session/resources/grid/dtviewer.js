@@ -1013,9 +1013,10 @@ var initDataTable = function(resCols, data) {
   
   // due to the jquery magic done in dataTables with rewriting variables and
   // the amount of window parameters we're already using this is a sane fit
-  // for setting a constant from dtviewer to dataTables
+  // for setting constants from dtviewer to dataTables
   window.dataTableMaxColumns = Math.max(0, cols.length - 1); 
-
+  window.dataTableColumnOffset = columnOffset;
+  
   // look up the query parameters
   var parsedLocation = parseLocationUrl();
   var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
@@ -1648,6 +1649,8 @@ window.setOffsetAndMaxColumns = function(newOffset, newMax) {
   }
   bootstrap();
 }
+
+window.whatsup = 10;
 
 // return whether to show the column frame UI elements
 window.isLimitedColumnFrame = function() {
