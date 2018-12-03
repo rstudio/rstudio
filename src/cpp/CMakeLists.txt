@@ -367,6 +367,14 @@ else()
       if(RSTUDIO_DESKTOP)
          add_subdirectory(diagnostics)
          add_subdirectory(desktop)
+      endif()
+
+      # add this after desktop so it is not included in fixup_bundle
+      # processing which we do in desktop
+      add_subdirectory(session)
+
+      # configure desktop files
+      if(RSTUDIO_DESKTOP)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
          if(NOT WIN32)
             configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
@@ -380,10 +388,6 @@ else()
             configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
          endif()
       endif()
-
-      # add this after desktop so it is not included in fixup_bundle
-      # processing which we do in desktop
-      add_subdirectory(session)
 
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
