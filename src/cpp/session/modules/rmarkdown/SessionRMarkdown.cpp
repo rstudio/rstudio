@@ -685,12 +685,13 @@ private:
           && !module_context::isPdfLatexInstalled())
       {
          enqueRenderOutput(module_context::kCompileOutputError,
-            "\nNo TeX installation detected (TeX is required "
+            "\nNo LaTeX installation detected (LaTeX is required "
             "to create PDF output). You should install "
-            "a recommended TeX distribution for your platform:\n\n"
-            "  Windows: MiKTeX (Complete) - http://miktex.org/2.9/setup\n"
-            "  (NOTE: Be sure to download the Complete rather than Basic installation)\n\n"
-            "  Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/\n"
+            "a LaTeX distribution for your platform: "
+            "https://www.latex-project.org/get/\n\n"
+            "  If you are not sure, you may install TinyTeX in R: tinytex::install_tinytex()\n\n"
+            "  Otherwise consider MiKTeX on Windows - http://miktex.org\n\n"
+            "  MacTeX on macOS - https://tug.org/mactex/\n"
             "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
             "  Linux: Use system package manager\n\n");
       }
