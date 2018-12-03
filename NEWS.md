@@ -83,7 +83,7 @@
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
 * RStudio uses the fontconfig database to list monospace fonts when available (Linux only; #3897)
-* Upgrade embedded Pandoc to 2.3.1 (#1807)
+* Upgrade embedded Pandoc to 2.5 (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
