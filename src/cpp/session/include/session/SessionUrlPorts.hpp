@@ -23,6 +23,10 @@ namespace rstudio {
 namespace session {
 namespace url_ports {
 
+void setPortToken(const std::string& token);
+
+std::string portToken();
+
 std::string mapUrlPorts(const std::string& url);
 
 }  // namespace url_ports

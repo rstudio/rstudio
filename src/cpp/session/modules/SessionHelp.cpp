@@ -49,6 +49,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "presentation/SlideRequestHandler.hpp"
 
@@ -229,7 +230,7 @@ bool handleLocalHttpUrl(const std::string& url)
    std::string path;
    if (options().programMode() == kSessionProgramModeServer &&
        server_core::portmapPathForLocalhostUrl(url, 
-            persistentState().portToken(), &path))
+            url_ports::portToken(), &path))
    {
       module_context::enqueClientEvent(browseUrlEvent(path));
       return true;

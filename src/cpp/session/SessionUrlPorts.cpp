@@ -25,6 +25,27 @@
 namespace rstudio {
 namespace session {
 namespace url_ports {
+namespace {
+
+// cached port token; typically set during client init from a cookie
+static std::string s_portToken;
+
+}
+
+void setPortToken(const std::string& token)
+{
+   s_portToken = token;
+}
+
+std::string portToken()
+{
+#ifdef RSTUDIO_SERVER
+   // in server mode, use the default token if we don't have one defined
+   return s_portToken.empty() ? kDefaultPortToken : s_portToken;
+#else
+   return s_portToken;
+#endif
+}
 
 // given a url, return a portmap path if applicable (i.e. we're in server
 // mode and the path needs port mapping), and the unmodified url otherwise
@@ -35,7 +56,7 @@ std::string mapUrlPorts(const std::string& url)
    {
       // see if we can form a portmap path for this url
       std::string path;
-      if (server_core::portmapPathForLocalhostUrl(url, persistentState().portToken(), &path))
+      if (server_core::portmapPathForLocalhostUrl(url, portToken(), &path))
          return path;
    }
 #endif

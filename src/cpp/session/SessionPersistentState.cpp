@@ -130,26 +130,6 @@ void PersistentState::setActiveEnvironmentName(std::string environmentName)
    settings_.set("activeEnvironmentName", environmentName);
 }
 
-
-std::string PersistentState::portToken() const
-{
-   return settings_.get("portToken", 
-#ifdef RSTUDIO_SERVER
-   // on RStudio Server, we have a fallback default so that we're guaranteed to have a port token to
-   // work with (better a predictable obfuscated value than a raw or busted one)
-   kDefaultPortToken
-#else
-   // Desktop doesn't use port tokens
-   ""
-#endif
-   );
-}
-
-void PersistentState::setPortToken(const std::string& token)
-{
-   settings_.set("portToken", token);
-}
-
 std::string PersistentState::getStoredHash(const std::string& hashName) const
 {
    return settings_.get(hashName + "Hash", "");

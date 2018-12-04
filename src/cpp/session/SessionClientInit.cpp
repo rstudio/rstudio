@@ -61,6 +61,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionUrlPorts.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
@@ -120,7 +121,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
    else
    {
-      persistentState().setPortToken(portTokenCookie);
+      url_ports::setPortToken(portTokenCookie);
    }
 #endif
 
