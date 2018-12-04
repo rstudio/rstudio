@@ -386,9 +386,7 @@ SignalBlocker::~SignalBlocker()
    
 Error clearSignalMask()
 {
-   sigset_t blockNoneMask;
-   sigemptyset(&blockNoneMask);
-   int result = ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, NULL);
+   int result = signal_safe::clearSignalMask();
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
    else
@@ -786,6 +784,13 @@ int permanentlyDropPriv(UidType newUid)
 int restoreRoot()
 {
    return ::setuid(0);
+}
+
+int clearSignalMask()
+{
+   sigset_t blockNoneMask;
+   sigemptyset(&blockNoneMask);
+   return ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, NULL);
 }
 
 } // namespace signal_safe

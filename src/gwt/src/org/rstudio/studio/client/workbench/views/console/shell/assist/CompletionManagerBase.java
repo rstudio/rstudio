@@ -395,6 +395,7 @@ public abstract class CompletionManagerBase
    public void detach()
    {
       removeHandlers();
+      suggestTimer_.cancel();
       snippets_.detach();
       popup_.hide();
    }

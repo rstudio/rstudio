@@ -773,6 +773,15 @@ Error clearSignalMask()
 {
    return Success();
 }
+
+namespace signal_safe {
+
+int clearSignalMask()
+{
+   return 0;
+}
+
+}
    
 Error handleSignal(SignalType signal, void (*handler)(int))
 {

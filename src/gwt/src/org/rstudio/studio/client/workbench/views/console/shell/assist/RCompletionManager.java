@@ -257,6 +257,7 @@ public class RCompletionManager implements CompletionManager
       handlers_.removeHandler();
       sigTipManager_.detach();
       snippets_.detach();
+      suggestTimer_.cancel();
       popup_.hide();
    }
 
