@@ -88,6 +88,8 @@ void closeNonStdFileDescriptors(rlim_t fdLimit);
 // must be paired with a call to closeChildFileDescriptorsFrom in the parent
 void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit);
 
+int clearSignalMask();
+
 } // namespace signal_safe
 
 void closeStdFileDescriptors();

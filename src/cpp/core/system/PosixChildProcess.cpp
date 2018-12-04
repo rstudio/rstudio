@@ -748,6 +748,11 @@ Error ChildProcess::run()
                ::_exit(kThreadSafeForkErrorExit);
          }
 
+         // clear signal mask so that child process does not unintentionally
+         // block any signals that our parent is blocking
+         if (signal_safe::clearSignalMask() != 0)
+            ::_exit(kThreadSafeForkErrorExit);
+
          // close pipe end that we do not need
          // this is not critical and as such, is best effort
          // no error checking is done as a result
