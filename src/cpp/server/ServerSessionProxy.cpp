@@ -774,16 +774,35 @@ void proxyLocalhostRequest(
    // call request filter if we have one
    invokeRequestFilter(&request);
 
-   // extract the port
+   // extract the (scrambled) port, which consists of 8 hex digits
    std::string pMap = ipv6 ? "/p6/" : "/p/";
-   boost::regex re(pMap + "(\\d+)/");
+   boost::regex re(pMap + "([a-fA-F0-9]{8})(/|$)");
    boost::smatch match;
    if (!regex_utils::search(request.uri(), match, re))
    {
       ptrConnection->response().setNotFoundError(request);
       return;
    }
-   std::string port = match[1];
+
+   // extract the port token
+   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie);
+   if (portToken.empty())
+   {
+      // we'll try the default token if no token was supplied on the request
+      portToken = kDefaultPortToken;
+   }
+
+   // unscramble the port using the token
+   int portNum = server_core::detransformPort(portToken, match[1]);
+   if (portNum < 0)
+   {
+      // act as though there's no content here if we can't determine the correct port
+      ptrConnection->response().setNotFoundError(request);
+      return;
+   }
+
+   std::string port = safe_convert::numberToString(portNum);
+
 
    // strip the port part of the uri
    using namespace boost::algorithm;

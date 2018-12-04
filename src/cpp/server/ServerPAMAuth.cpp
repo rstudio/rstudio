@@ -38,6 +38,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerPortToken.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
@@ -308,6 +309,9 @@ void setSignInCookies(const core::http::Request& request,
 
    // add cross site request forgery detection cookie
    auth::csrf::setCSRFTokenCookie(request, expiry, "", pResponse);
+
+   // add port token cookie for obscuring localhost ports
+   auth::port::setPortTokenCookie(request, expiry, pResponse);
 }
 
 void doSignIn(const http::Request& request,

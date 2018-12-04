@@ -59,6 +59,13 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
     echo Running 'core' tests...
     $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN
     checkUnitTestFailure
+
+    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests ]
+    then
+        echo Running 'server_core' tests...
+        $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests
+        checkUnitTestFailure
+    fi
 fi
 
 # Setup for rsession tests

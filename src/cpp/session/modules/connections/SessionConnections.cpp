@@ -36,6 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
@@ -549,7 +550,7 @@ SEXP rs_embeddedViewer(SEXP urlSEXP)
 {
    std::string url = r::sexp::safeAsString(urlSEXP);
 
-   std::string mappedUrl = module_context::mapUrlPorts(url);
+   std::string mappedUrl = url_ports::mapUrlPorts(url);
 
    json::Object dataJson;
    dataJson["url"] = mappedUrl;
