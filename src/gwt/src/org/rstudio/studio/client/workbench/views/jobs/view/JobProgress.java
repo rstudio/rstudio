@@ -64,6 +64,7 @@ public class JobProgress extends Composite
       {
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
+         status_.setVisible(false);
       }
       else
       {
