@@ -47,6 +47,7 @@ set (CORE_SOURCE_FILES
    Hash.cpp
    HtmlUtils.cpp
    Log.cpp
+   LogOptions.cpp
    LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp

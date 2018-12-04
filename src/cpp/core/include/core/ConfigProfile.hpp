@@ -84,6 +84,10 @@ public:
 
    core::Error parseString(const std::string& profileStr);
 
+   // gets the names defined for a particular level in the configuration file
+   // must only be called after a call to load()
+   std::vector<std::string> getLevelNames(uint32_t level) const;
+
    // gets a param's value given the level values for each level
    // see unit tests for more examples
    template <typename T>
@@ -134,7 +138,6 @@ public:
 
       return Success();
    }
-
 
 private:
    typedef std::map<std::string, boost::any> DefaultParamValuesMap;

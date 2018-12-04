@@ -26,6 +26,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
@@ -42,6 +43,35 @@ enum FileMode
    EveryoneReadWriteMode,
    EveryoneReadWriteExecuteMode
 };
+
+namespace {
+
+int octalStrToFileMode(const std::string& fileModeStr)
+{
+   return safe_convert::stringTo<int>(fileModeStr, 0666, std::oct);
+}
+
+} // anonymous namespace
+
+inline Error changeFileMode(const FilePath& filePath, mode_t mode)
+{
+   // change the mode
+   errno = 0;
+   if (::chmod(filePath.absolutePath().c_str(), mode) < 0)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
+   else
+      return Success();
+}
+
+inline Error changeFileMode(const FilePath& filePath,
+                            const std::string& fileModeStr)
+{
+   return changeFileMode(filePath, octalStrToFileMode(fileModeStr));
+}
 
 inline Error changeFileMode(const FilePath& filePath,
                             FileMode fileMode,
@@ -90,16 +120,7 @@ inline Error changeFileMode(const FilePath& filePath,
    if (stickyBit)
       mode |= S_ISVTX;
 
-   // change the mode
-   errno = 0;
-   if (::chmod(filePath.absolutePath().c_str(), mode) < 0)
-   {
-      Error error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", filePath);
-      return error;
-   }
-   else
-      return Success();
+   return changeFileMode(filePath, mode);
 }
 
 inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)

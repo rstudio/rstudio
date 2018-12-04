@@ -64,17 +64,18 @@
 #include <core/Algorithm.hpp>
 #include <core/DateTime.hpp>
 #include <core/Error.hpp>
-#include <core/Log.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FileLogWriter.hpp>
+
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
+#include <core/LogOptions.hpp>
 #include <core/SyslogLogWriter.hpp>
-#include <core/StderrLogWriter.hpp>
 #include <core/StringUtils.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Thread.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
@@ -109,8 +110,6 @@ Error ignoreSig(int signal)
       return Success();
    }
 }
-
-
    
 int signalForType(SignalType type)
 {
@@ -183,67 +182,84 @@ Error realPath(const std::string& path, FilePath* pRealPath)
   *pRealPath = FilePath(realPath);
    return Success();
 }
-
-
-namespace {
-
-// main log writer
-LogWriter* s_pLogWriter = NULL;
-
-// additional log writers
-std::vector<boost::shared_ptr<LogWriter> > s_logWriters;
-
-} // anonymous namespace
      
 void initHook()
 {
 }
 
-void initializeSystemLog(const std::string& programIdentity, int logLevel)
-{
-   if (s_pLogWriter)
-      delete s_pLogWriter;
+// statics defined in System.cpp
+extern boost::shared_ptr<LogOptions> s_logOptions;
+extern boost::mutex s_loggingMutex;
+extern std::string s_programIdentity;
 
-   s_pLogWriter = new SyslogLogWriter(programIdentity, logLevel);
+Error initializeSystemLog(const std::string& programIdentity,
+                          int logLevel,
+                          bool enableConfigReload)
+{
+   LOCK_MUTEX(s_loggingMutex)
+   {
+      // create default syslog logger options
+      SysLoggerOptions options;
+      s_logOptions.reset(new LogOptions(programIdentity, logLevel, kLoggerTypeSysLog, options));
+      s_programIdentity = programIdentity;
+
+      Error error = initLog();
+      if (error)
+         return error;
+   }
+   END_LOCK_MUTEX
+
+   if (enableConfigReload)
+      initializeLogConfigReload();
+
+   return Success();
 }
 
-void initializeStderrLog(const std::string& programIdentity, int logLevel)
-{
-   if (s_pLogWriter)
-      delete s_pLogWriter;
+namespace {
 
-   s_pLogWriter = new StderrLogWriter(programIdentity, logLevel);
+void logConfigReloadThreadFunc(sigset_t waitMask)
+{
+   for(;;)
+   {
+      // wait for SIGHUP
+      int sig = 0;
+      int result = ::sigwait(&waitMask, &sig);
+      if (result != 0)
+         return;
+
+      if (sig == SIGHUP)
+      {
+         LOG_INFO_MESSAGE("Reloading logging configuration...");
+
+         Error error = reinitLog();
+         if (error)
+         {
+            LOG_ERROR(error);
+            LOG_ERROR_MESSAGE("Failed to reload logging configuration");
+         }
+         else
+         {
+            LOG_INFO_MESSAGE("Successfully reloaded logging configuration");
+         }
+      }
+   }
 }
 
-void initializeLog(const std::string& programIdentity,
-                   int logLevel,
-                   const FilePath& logDir)
+} // anonymous namespace
+
+void initializeLogConfigReload()
 {
-   if (s_pLogWriter)
-      delete s_pLogWriter;
+   // block the SIGHUP signal
+   sigset_t waitMask;
+   sigemptyset(&waitMask);
+   sigaddset(&waitMask, SIGHUP);
 
-   s_pLogWriter = new FileLogWriter(programIdentity, logLevel, logDir);
-}
+   int result = ::pthread_sigmask(SIG_BLOCK, &waitMask, NULL);
+   if (result != 0)
+      return;
 
-void setLogToStderr(bool logToStderr)
-{
-   if (s_pLogWriter)
-      s_pLogWriter->setLogToStderr(logToStderr);
-}
-
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
-{
-   s_logWriters.push_back(pLogWriter);
-}
-
-void log(LogLevel logLevel, const std::string& message)
-{
-   if (s_pLogWriter)
-      s_pLogWriter->log(logLevel, message);
-
-   std::for_each(s_logWriters.begin(),
-                 s_logWriters.end(),
-                 boost::bind(&LogWriter::log, _1, logLevel, message));
+   // start a thread to handle the SIGHUP signal
+   boost::thread thread(boost::bind(logConfigReloadThreadFunc, waitMask));
 }
    
 Error ignoreTerminalSignals()
@@ -2689,7 +2705,6 @@ Error restoreRoot()
 {
    return restorePrivImpl(0);
 }
-
 
 } // namespace system
 } // namespace core

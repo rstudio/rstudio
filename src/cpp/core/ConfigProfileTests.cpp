@@ -25,10 +25,9 @@ TEST_CASE("config profile")
 {
    SECTION("can parse single level")
    {
-      std::string profileStr =
-          "[*]\n"
-          "param=val\n"
-          "param2=val2";
+      std::string profileStr = R"([*]
+          param=val
+          param2=val2)";
 
       ConfigProfile profile;
       profile.addSections({{0, "*"}});
@@ -58,17 +57,16 @@ TEST_CASE("config profile")
 
    SECTION("can parse two levels")
    {
-      std::string profileStr =
-          "[*]\n"
-          "param=val\n"
-          "param2=val2\n"
-          "\n"
-          "[@user]\n"
-          "param=user-param\n"
-          "param3=user-param3\n"
-          "\n"
-          "[@admin]\n"
-          "adminParam=admin-param";
+      std::string profileStr = R"([*]
+          param=val
+          param2=val2
+
+          [@user]
+          param=user-param
+          param3=user-param3
+
+          [@admin]"
+          adminParam=admin-param)";
 
       ConfigProfile profile;
       profile.addSections({{0, "*"},
@@ -123,21 +121,20 @@ TEST_CASE("config profile")
 
    SECTION("can parse three levels")
    {
-      std::string profileStr =
-          "[*]\n"
-          "param=val\n"
-          "param2=val2\n"
-          "\n"
-          "[@user]\n"
-          "param=user-param\n"
-          "param3=user-param3\n"
-          "\n"
-          "[@admin]\n"
-          "adminParam=admin-param\n"
-          "param3=admin-param3"
-          "\n"
-          "[bdylan]\n"
-          "adminParam=bad-admin";
+      std::string profileStr = R"([*]
+          param=val
+          param2=val2
+
+          [@user]
+          param=user-param
+          param3=user-param3
+
+          [@admin]
+          adminParam=admin-param
+          param3=admin-param3
+
+          [bdylan]
+          adminParam=bad-admin)";
 
       ConfigProfile profile;
       profile.addSections({{0, "*"},
@@ -241,6 +238,49 @@ TEST_CASE("config profile")
                                {2, "bdylan"}});
       REQUIRE_FALSE(error);
       REQUIRE(boolNeverUsedParam);
+   }
+
+   SECTION("Can get level names")
+   {
+      std::string profileStr = R"([*]
+          param=val
+          param2=val2
+
+          [@user]
+          param=user-param
+          param3=user-param3
+
+          [@admin]
+          adminParam=admin-param
+          param3=admin-param3
+
+          [bdylan]
+          adminParam=bad-admin)";
+
+      ConfigProfile profile;
+      profile.addSections({{0, "*"},
+                          {1, "@"},
+                          {2, std::string()}});
+
+      profile.addParams("param", std::string(),
+                        "param2", std::string(),
+                        "param3", std::string(),
+                        "adminParam", std::string(),
+                        "neverUsedParam", std::string("never used"),
+                        "booleanNotUsed", true);
+
+      Error error = profile.parseString(profileStr);
+      REQUIRE_FALSE(error);
+
+      std::vector<std::string> level1Names = profile.getLevelNames(1);
+      REQUIRE(level1Names.size() == 2);
+      REQUIRE(std::find(level1Names.begin(), level1Names.end(), "user") != level1Names.end());
+      REQUIRE(std::find(level1Names.begin(), level1Names.end(), "admin") != level1Names.end());
+
+      std::vector<std::string> level2Names = profile.getLevelNames(2);
+      REQUIRE(level2Names.size() == 1);
+      REQUIRE(std::find(level2Names.begin(), level2Names.end(), "bdylan") != level2Names.end());
+      REQUIRE(std::find(level2Names.begin(), level2Names.end(), "bdaylan") == level2Names.end());
    }
 }
 
