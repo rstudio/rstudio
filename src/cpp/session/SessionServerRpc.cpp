@@ -17,6 +17,8 @@
 
 #include <core/json/JsonRpc.hpp>
 #include <core/http/URL.hpp>
+#include <core/Thread.hpp>
+
 #include <server_core/SocketRpc.hpp>
 
 #include <r/RExec.hpp>
@@ -81,6 +83,18 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
    return result;
 }
 
+// once flag for lazy initializing async RPC thread
+boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
+
+// io_service for performing RPC work on the thread
+boost::asio::io_service s_ioService;
+
+void rpcWorkerThreadFunc()
+{
+   boost::asio::io_service::work work(s_ioService);
+   s_ioService.run();
+}
+
 } // anonymous namespace
 
 Error invokeServerRpc(const std::string& endpoint,
@@ -108,6 +122,62 @@ Error invokeServerRpc(const std::string& endpoint,
          // valid url - combine url path with requested endpoint
          return socket_rpc::invokeRpc(url.hostname(), url.portStr(), url.protocol() == "https",
                                       url.path() + endpoint, request, pResult);
+      }
+   }
+}
+
+
+
+void invokeServerRpcAsync(const std::string& endpoint,
+                          const json::Object& request,
+                          const socket_rpc::RpcResultHandler& onResult,
+                          const socket_rpc::RpcErrorHandler& onError)
+{
+   // start RPC worker thread if it hasn't already been started
+   boost::call_once(s_threadOnce,
+                    boost::bind(core::thread::safeLaunchThread,
+                                rpcWorkerThreadFunc,
+                                nullptr));
+
+   std::string serverAddress = options().getOverlayOption(kRServerAddress);
+
+   if (serverAddress.empty())
+   {
+      return socket_rpc::invokeRpcAsync(s_ioService,
+                                        FilePath(kServerRpcSocketPath),
+                                        endpoint,
+                                        request,
+                                        onResult,
+                                        onError);
+   }
+   else
+   {
+      http::URL url(serverAddress);
+
+      if (!url.isValid())
+      {
+         // not a valid url - we assume this is just a hostname or IP address
+         std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
+         return socket_rpc::invokeRpcAsync(s_ioService,
+                                           serverAddress,
+                                           tcpPort,
+                                           false,
+                                           endpoint,
+                                           request,
+                                           onResult,
+                                           onError);
+      }
+      else
+      {
+         // valid url - combine url path with requested endpoint
+         return socket_rpc::invokeRpcAsync(s_ioService,
+                                           url.hostname(),
+                                           url.portStr(),
+                                           url.protocol() == "https",
+                                           url.path() + endpoint,
+                                           request,
+                                           onResult,
+                                           onError);
       }
    }
 }
