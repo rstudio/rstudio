@@ -53,6 +53,7 @@
 
 #include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
+#include <server_core/UrlPorts.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionInvalidScope.hpp>

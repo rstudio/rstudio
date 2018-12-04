@@ -25,6 +25,7 @@ set (SERVER_CORE_SOURCE_FILES
    SecureKeyFile.cpp
    sessions/SessionSignature.cpp
    system/Pam.cpp
+   UrlPorts.cpp
 )
 
 # define server core include dir
@@ -34,6 +35,7 @@ set(SERVER_CORE_INCLUDE_DIRS ${SERVER_CORE_INCLUDE_DIRS} include)
 include_directories(
    ${SERVER_CORE_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${TESTS_INCLUDE_DIR}
    ${CORE_SOURCE_DIR}/include
 )
 
@@ -45,4 +47,20 @@ target_link_libraries(
    rstudio-server-core
    rstudio-core
    ${SERVER_CORE_SYSTEM_LIBRARIES}
-)
+)	
+
+# define executable (for running unit tests)
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+    file(GLOB_RECURSE SERVER_CORE_TEST_FILES "*Tests.cpp")
+    add_executable(rstudio-server-core-tests
+      TestMain.cpp
+      ${SERVER_CORE_TEST_FILES}
+      ${SERVER_CORE_HEADER_FILES}
+   )
+    target_link_libraries(rstudio-server-core-tests
+      rstudio-core
+      rstudio-server-core
+      ${Boost_LIBRARIES}
+      ${CORE_SYSTEM_LIBRARIES}
+   )
+endif()
