@@ -15,6 +15,7 @@
 
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionOptions.hpp>
 #include "session-config.h"
 
 #ifdef RSTUDIO_SERVER
@@ -30,10 +31,13 @@ namespace url_ports {
 std::string mapUrlPorts(const std::string& url)
 {
 #ifdef RSTUDIO_SERVER
-   // see if we can form a portmap path for this url
-   std::string path;
-   if (server_core::portmapPathForLocalhostUrl(url, persistentState().portToken(), &path))
-      return path;
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      // see if we can form a portmap path for this url
+      std::string path;
+      if (server_core::portmapPathForLocalhostUrl(url, persistentState().portToken(), &path))
+         return path;
+   }
 #endif
    return url;
 }

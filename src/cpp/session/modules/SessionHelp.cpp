@@ -227,7 +227,8 @@ bool handleLocalHttpUrl(const std::string& url)
    
    // see if we can form a portmap path for this url
    std::string path;
-   if (server_core::portmapPathForLocalhostUrl(url, 
+   if (options().programMode() == kSessionProgramModeServer &&
+       server_core::portmapPathForLocalhostUrl(url, 
             persistentState().portToken(), &path))
    {
       module_context::enqueClientEvent(browseUrlEvent(path));
