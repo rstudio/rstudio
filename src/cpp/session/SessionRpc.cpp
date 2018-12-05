@@ -18,11 +18,19 @@
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
+#include "session-config.h"
+
+#include <session/SessionUrlPorts.hpp>
+#include <session/SessionOptions.hpp>
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/UrlPorts.hpp>
+#endif
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -261,6 +269,20 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    using namespace boost::posix_time; 
    ptime executeStartTime = microsec_clock::universal_time();
    
+#ifdef RSTUDIO_SERVER
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      // server-only: if we were supplied a port token as a cookie value, update our internal token
+      // cache. we need to do this on every RPC since it is possible to sign out and sign in 
+      // again between RPCs, which changes the token.
+      std::string portTokenCookie = ptrConnection->request().cookieValue(kPortTokenCookie);
+      if (portTokenCookie != url_ports::portToken())
+      {
+         url_ports::setPortToken(portTokenCookie);
+      }
+   }
+#endif
+
    // execute the method
    auto it = s_pJsonRpcMethods->find(request.method);
    if (it != s_pJsonRpcMethods->end())

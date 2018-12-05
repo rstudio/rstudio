@@ -112,19 +112,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
    }
 
-#ifdef RSTUDIO_SERVER
-   // set port token from cookie; don't set one if the cookie is empty. 
-   std::string portTokenCookie = ptrConnection->request().cookieValue(kPortTokenCookie);
-   if (portTokenCookie.empty())
-   {
-      LOG_WARNING_MESSAGE("No port token supplied; using default port token.");
-   }
-   else
-   {
-      url_ports::setPortToken(portTokenCookie);
-   }
-#endif
-
    // prepare session info 
    json::Object sessionInfo ;
    sessionInfo["clientId"] = clientId;
