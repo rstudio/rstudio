@@ -415,7 +415,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(FileSystemItem path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job",
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Session Job",
             path.getName(),
             path,
             spec ->
