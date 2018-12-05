@@ -342,7 +342,7 @@
       query <- gsub(".*\\*\\/", "", query)
     }
 
-    grepl("^\\s*(INSERT|UPDATE|DELETE|CREATE).*", query, ignore.case = TRUE)
+    grepl("^\\s*(INSERT|UPDATE|DELETE|CREATE|DROP).*", query, ignore.case = TRUE)
   }
 
   # precreate directories if needed
