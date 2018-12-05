@@ -61,17 +61,12 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
-#include <session/SessionUrlPorts.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
 #include "session-config.h"
-
-#ifdef RSTUDIO_SERVER
-#include <server_core/UrlPorts.hpp>
-#endif
 
 using namespace rstudio::core;
 
