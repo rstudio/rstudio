@@ -16,16 +16,24 @@
 #ifndef SESSION_SERVER_RPC_HPP
 #define SESSION_SERVER_RPC_HPP
 
+#include <core/Error.hpp>
+#include <core/json/Json.hpp>
+#include <server_core/SocketRpc.hpp>
+
 namespace rstudio {
 namespace session {
 namespace server_rpc {
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
-
 core::Error invokeServerRpc(const std::string& endpoint,
                             const core::json::Object& request,
                             core::json::Value* pResult);
+
+// invokes RPC asynchronously
+// callbacks are run on a background thread (not the main thread!)
+void invokeServerRpcAsync(const std::string& endpoint,
+                          const core::json::Object& request,
+                          const server_core::socket_rpc::RpcResultHandler& onResult,
+                          const server_core::socket_rpc::RpcErrorHandler& onError);
 
 core::Error initialize();
 

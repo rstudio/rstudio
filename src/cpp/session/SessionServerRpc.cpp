@@ -19,8 +19,6 @@
 #include <core/http/URL.hpp>
 #include <core/Thread.hpp>
 
-#include <server_core/SocketRpc.hpp>
-
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
