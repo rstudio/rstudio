@@ -82,7 +82,6 @@ std::string transformPort(const std::string& token, int port)
 {
    uint32_t multiplier;
    uint64_t key;
-   std::cerr << "transform port " << port << " with token '" << token << "'" << std::endl;
    if (splitToken(token, &multiplier, &key))
    {
       // transform, multiply, xor, and return
@@ -102,7 +101,6 @@ int detransformPort(const std::string& token, const std::string& port)
 {
    uint32_t multiplier;
    uint64_t key;
-   std::cerr << "detransform port " << port << " with token '" << token << "'" << std::endl;
    if (splitToken(token, &multiplier, &key))
    {
       try
