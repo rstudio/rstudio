@@ -49,10 +49,7 @@ public class StanCompletionManager extends CompletionManagerBase
                                 CodeToolsServerOperations server,
                                 CompletionContext context)
    {
-      super(popup, docDisplay, context);
-      
-      docDisplay_ = docDisplay;
-      server_ = server;
+      super(popup, docDisplay, server, context);
       context_ = context;
       
       sigTips_ = new SignatureToolTipManager(docDisplay)
@@ -245,8 +242,6 @@ public class StanCompletionManager extends CompletionManagerBase
       };
    }
    
-   private final DocDisplay docDisplay_;
-   private final CodeToolsServerOperations server_;
    private final CompletionContext context_;
    
    private final SignatureToolTipManager sigTips_;
