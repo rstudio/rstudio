@@ -404,7 +404,10 @@
   # execute query -- when we are printing with an enforced max.print we
   # use dbFetch so as to only pull down the required number of records
   query <- interpolate_from_env(conn, sql)
-  if (is.null(varname) && max.print > 0 && !is_sql_update_query(query)) {
+  if (is_sql_update_query(query)) {
+    DBI::dbExecute(conn, query)
+    data <- NULL
+  } else if (is.null(varname) && max.print > 0) {
     res <- DBI::dbSendQuery(conn, query)
     data <- DBI::dbFetch(res, n = max.print)
     DBI::dbClearResult(res)
@@ -416,7 +419,7 @@
   if (!is.null(varname)) {
     assign(varname, data, envir = globalenv())
   }
-  else {
+  else if(!is.null(data)) {
     x <- data
     save(
       x, 
