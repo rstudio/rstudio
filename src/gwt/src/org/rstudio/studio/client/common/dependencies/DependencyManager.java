@@ -858,6 +858,27 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "DBI",
          userAction,
          new Dependency[] {
+            Dependency.cranPackage("DBI", "0.8")
+         },
+         true,
+         new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+      );
+   }
+
+   public void withRSQLite(String userAction, final Command command)
+   {
+      withDependencies(
+        "RSQLite",
+         userAction,
+         new Dependency[] {
             Dependency.cranPackage("DBI", "0.8"),
             Dependency.cranPackage("RSQLite", "2.1.0")
          },
