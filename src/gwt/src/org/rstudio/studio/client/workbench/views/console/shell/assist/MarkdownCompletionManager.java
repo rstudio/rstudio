@@ -14,20 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
 public class MarkdownCompletionManager extends CompletionManagerBase
                                        implements CompletionManager
 {
 
-   public MarkdownCompletionManager(CompletionPopupDisplay popup,
-                                    DocDisplay docDisplay,
+   public MarkdownCompletionManager(DocDisplay docDisplay,
+                                    CompletionPopupDisplay popup,
                                     CodeToolsServerOperations server,
                                     CompletionContext context)
    {
       super(popup, docDisplay, server, context);
+      
+      context_ = context;
    }
 
    @Override
@@ -45,6 +49,33 @@ public class MarkdownCompletionManager extends CompletionManagerBase
    @Override
    public void getCompletions(String line, CompletionRequestContext context)
    {
+      // check for completion of href
+      if (getCompletionsHref(context))
+         return;
    }
+   
+   private boolean getCompletionsHref(CompletionRequestContext context)
+   {
+      Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (token == null)
+         return false;
+      
+      boolean isMarkupHref =
+            token.hasType("markup.href") ||
+            (token.hasType("text") && token.valueEquals("]("));
+      
+      if (!isMarkupHref)
+         return false;
+            
+      JsObject data = JsObject.createJsObject();
+      data.setString("token", token.hasType("markup.href") ? token.getValue() : "");
+      data.setString("path", context_.getPath());
+      data.setString("id", context_.getId());
+      server_.markdownGetCompletions(COMPLETION_HREF, data, context);
+      return true;
+   }
+   
+   private static final int COMPLETION_HREF = 1;
 
+   private final CompletionContext context_;
 }

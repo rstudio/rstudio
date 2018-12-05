@@ -986,6 +986,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   public void markdownGetCompletions(int completionType,
+                                      JavaScriptObject completionData,
+                                      ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completionType)
+            .add(completionData)
+            .get();
+      
+      sendRequest(RPC_SCOPE, MARKDOWN_GET_COMPLETIONS, params, requestCallback);
+   }
+   
    public void pythonGetCompletions(String line,
                                     PythonCompletionContext context,
                                     ServerRequestCallback<Completions> requestCallback)
@@ -6090,6 +6102,8 @@ public class RemoteServer implements Server
    
    private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
+   
+   private static final String MARKDOWN_GET_COMPLETIONS = "markdown_get_completions";
    
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
