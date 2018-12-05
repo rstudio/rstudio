@@ -27,7 +27,7 @@ namespace session {
 namespace url_ports {
 namespace {
 
-// cached port token; typically set during client init from a cookie
+// cached port token; we updated this when receive a port token with an RPC request
 static std::string s_portToken;
 
 }
