@@ -16,6 +16,8 @@
 #ifndef SESSION_OVERLAY_HPP
 #define SESSION_OVERLAY_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -30,6 +32,9 @@ namespace overlay {
 bool isSuspendable();
 
 bool launcherJobsEnabled();
+
+void streamLauncherOutput(const std::string& jobId,
+                          bool listening);
 
 core::Error initialize();
    
