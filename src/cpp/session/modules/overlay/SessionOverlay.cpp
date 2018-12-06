@@ -39,6 +39,11 @@ bool launcherJobsEnabled()
    return false;
 }
 
+void streamLauncherOutput(const std::string& jobId,
+                          bool listening)
+{
+}
+
 } // namespace overlay
 } // namespace modules
 } // namespace session
