@@ -458,8 +458,8 @@ well as menu structures (for main menu and popup menus).
           </menu>
          <menu label="_Jobs">
             <cmd refid="startJob"/>
-            <separator/>
             <cmd refid="clearJobs"/>
+            <separator/>
             <cmd refid="hideCompletedJobs"/>
           </menu>
          <menu label="Addins">
@@ -3300,24 +3300,24 @@ well as menu structures (for main menu and popup menus).
          windowMode="main"/>
 
     <cmd id="startJob"
-         menuLabel="Start Session Job..."
-         buttonLabel="Start Session Job"
-         desc="Run a background session job"
+         menuLabel="Start Local Job..."
+         buttonLabel="Start Local Job"
+         desc="Run a background local job"
          windowMode="main"/>
 
     <cmd id="sourceAsJob"
-         menuLabel="Source as Session Job..."
-         desc="Run the current R script as a session job"
+         menuLabel="Source as Local Job..."
+         desc="Run the current R script as a local job"
          windowMode="any"/>
 
     <cmd id="clearJobs"
-         menuLabel="Clear Session Jobs"
-         desc="Clean up all completed session jobs"
+         menuLabel="Clear Local Jobs"
+         desc="Clean up all completed local jobs"
          windowMode="main"/>
         
     <cmd id="runSelectionAsJob"
-         menuLabel="Run Selection as Session Job"
-         desc="Run the selected code as a session job"
+         menuLabel="Run Selection as Local Job"
+         desc="Run the selected code as a local job"
          windowMode="any"/>
 
     <cmd id="hideCompletedJobs"

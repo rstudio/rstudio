@@ -342,7 +342,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
 Error clearJobs(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   removeCompletedSessionJobs();
+   removeCompletedLocalJobs();
    return Success();
 }
 
@@ -396,7 +396,7 @@ Error executeJobAction(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
-   removeAllSessionJobs();
+   removeAllLocalJobs();
 }
 
 void onResume(const Settings& settings)
@@ -414,7 +414,7 @@ void onClientInit()
 
 void onShutdown(bool terminatedNormally)
 {
-   removeAllSessionJobs();
+   removeAllLocalJobs();
 }
 
 } // anonymous namespace
@@ -427,7 +427,7 @@ core::json::Object jobState()
 bool isSuspendable()
 {
    // don't suspend while we're running session jobs
-   return !sessionJobsRunning();
+   return !localJobsRunning();
 }
 
 core::Error initialize()

@@ -187,8 +187,8 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION, 
-            "Remove Completed Session Jobs",
-            "Do you want to remove completed session jobs from the list of jobs?\n\nYou can't undo this.",
+            "Remove Completed Local Jobs",
+            "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.",
             false, // include cancel
             () ->  server_.clearJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
