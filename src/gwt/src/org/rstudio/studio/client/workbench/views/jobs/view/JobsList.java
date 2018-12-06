@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -28,6 +29,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class JobsList extends Composite
 {
@@ -39,11 +41,38 @@ public class JobsList extends Composite
 
    public JobsList()
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       jobs_ = new HashMap<String, JobItem>();
 
       initWidget(uiBinder.createAndBindUi(this));
+      
+      // register handler for hide completed jobs pref
+      uiPrefs_.hideCompletedJobs().addValueChangeHandler(hide ->
+      {
+         if (list_ == null)
+            return;
 
+         for (Widget widget : list_)
+         {
+            if (widget instanceof JobItem)
+            {
+               JobItem item = (JobItem) widget;
+               if (item.getJob().completed != 0)
+               {
+                  item.setVisible(!hide.getValue());
+               }
+            }
+         }
+      });
+ 
       updateVisibility();
+   }
+   
+   @Inject
+   private void initialize(UIPrefs uiPrefs)
+   {
+      uiPrefs_ = uiPrefs;
    }
    
    @Override
@@ -130,4 +159,7 @@ public class JobsList extends Composite
    @UiField ScrollPanel scroll_;
 
    private final Map<String, JobItem> jobs_;
+   
+   // Injected ----
+   UIPrefs uiPrefs_;
 }

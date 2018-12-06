@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
@@ -75,6 +76,7 @@ public class JobsPresenter extends BasePresenter
                         Commands commands,
                         GlobalDisplay globalDisplay,
                         Provider<JobManager> pJobManager,
+                        UIPrefs uiPrefs,
                         EventBus eventBus)
    {
       super(display);
@@ -82,9 +84,19 @@ public class JobsPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       pJobManager_ = pJobManager;
+      uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
+      commands_ = commands;
       binder.bind(commands, this);
-   }
+   
+      commands_.hideCompletedJobs().setChecked(uiPrefs.hideCompletedJobs().getValue());
+      
+      // register handler for hide completed jobs pref
+      uiPrefs_.hideCompletedJobs().addValueChangeHandler(hide ->
+      {
+         commands_.hideCompletedJobs().setChecked(hide.getValue());
+      });
+    }
 
    @Override
    public void onJobUpdated(JobUpdatedEvent event)
@@ -185,6 +197,15 @@ public class JobsPresenter extends BasePresenter
       display_.bringToFront();
    }
    
+   @Handler
+   public void onHideCompletedJobs()
+   {
+      boolean newValue = !uiPrefs_.hideCompletedJobs().getValue();
+      uiPrefs_.hideCompletedJobs().setGlobalValue(newValue);
+      commands_.hideCompletedJobs().setChecked(newValue);
+      uiPrefs_.writeUIPrefs();
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void setJobState(JobState state)
@@ -239,5 +260,7 @@ public class JobsPresenter extends BasePresenter
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private final Provider<JobManager> pJobManager_;
+   private final UIPrefs uiPrefs_;
+   private final Commands commands_;
    private final EventBus eventBus_;
 }

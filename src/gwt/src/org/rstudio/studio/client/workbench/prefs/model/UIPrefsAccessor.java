@@ -688,6 +688,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_jobs_tab", true);
    }
    
+   public PrefValue<Boolean> hideCompletedJobs()
+   {
+      return bool("hide_completed_jobs", false);
+   }
+   
    public static final int BUSY_DETECT_ALWAYS = 0;
    public static final int BUSY_DETECT_NEVER = 1;
    public static final int BUSY_DETECT_WHITELIST = 2;

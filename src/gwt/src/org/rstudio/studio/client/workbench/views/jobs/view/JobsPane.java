@@ -13,13 +13,16 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UIPrefMenuItem;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
-import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -296,7 +299,20 @@ public class JobsPane extends WorkbenchPane
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+
+      // More
+      StandardIcons icons = StandardIcons.INSTANCE;
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
+            uiPrefs_.hideCompletedJobs(), true, "Hide Completed Jobs", uiPrefs_));
+      
+      ToolbarButton moreButton = new ToolbarButton("More",
+                                                  new ImageResource2x(icons.more_actions2x()),
+                                                  moreMenu);
+
+      toolbar_.addLeftWidget(moreButton);
       progress_ = null;
    }
 

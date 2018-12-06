@@ -74,13 +74,13 @@ core::json::Object jobsAsJson();
 
 void removeAllJobs();
 
-void removeAllLocalJobs();
+void removeAllSessionJobs();
 
-void removeCompletedJobs();
+void removeCompletedSessionJobs();
 
 void endAllJobStreaming();
 
-bool localJobsRunning();
+bool sessionJobsRunning();
 
 } // namespace jobs
 } // namespace modules
