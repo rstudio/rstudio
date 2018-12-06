@@ -13,7 +13,9 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UIPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -263,6 +265,12 @@ public class JobsPane extends WorkbenchPane
          uiPrefs_.writeUIPrefs();
       }
    }
+   
+   @Override
+   public void refreshPaneStatusMessage()
+   {
+      paneStatus_.setText(uiPrefs_.hideCompletedJobs().getValue() ? "(previously completed jobs hidden)" : "");
+   }
 
    // Private methods ---------------------------------------------------------
    
@@ -305,13 +313,19 @@ public class JobsPane extends WorkbenchPane
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
       moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
       moreMenu.addItem(new UIPrefMenuItem<Boolean>(
-            uiPrefs_.hideCompletedJobs(), true, "Hide Completed Jobs", uiPrefs_));
+            uiPrefs_.hideCompletedJobs(), true, "Hide Previously Completed Jobs", uiPrefs_));
       
       ToolbarButton moreButton = new ToolbarButton("More",
                                                   new ImageResource2x(icons.more_actions2x()),
                                                   moreMenu);
 
       toolbar_.addLeftWidget(moreButton);
+      
+      toolbar_.addLeftSeparator();
+      paneStatus_ = new Label();
+      paneStatus_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar_.addLeftWidget(paneStatus_);
+      refreshPaneStatusMessage();
       progress_ = null;
    }
 
@@ -321,6 +335,7 @@ public class JobsPane extends WorkbenchPane
    private SlidingLayoutPanel panel_;
    private final Toolbar toolbar_;
    private final ToolbarButton allJobs_;
+   private Label paneStatus_;
    private JobProgress progress_;
 
    // internal state

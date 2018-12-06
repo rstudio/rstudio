@@ -3322,7 +3322,7 @@ well as menu structures (for main menu and popup menus).
 
     <cmd id="hideCompletedJobs"
          checkable="true"
-         menuLabel="Hide Completed Jobs"
-         desc="Hide all completed jobs"
+         menuLabel="Hide Previously Completed Jobs"
+         desc="Hide all previously completed jobs"
          windowMode="main"/>
  </commands>

@@ -65,6 +65,7 @@ public class JobsPresenter extends BasePresenter
       void syncElapsedTime(int timestamp);
       void bringToFront();
       void setShowJobsTabPref(boolean show);
+      void refreshPaneStatusMessage();
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -94,6 +95,7 @@ public class JobsPresenter extends BasePresenter
       // register handler for hide completed jobs pref
       uiPrefs_.hideCompletedJobs().addValueChangeHandler(hide ->
       {
+         display_.refreshPaneStatusMessage();
          commands_.hideCompletedJobs().setChecked(hide.getValue());
       });
     }
