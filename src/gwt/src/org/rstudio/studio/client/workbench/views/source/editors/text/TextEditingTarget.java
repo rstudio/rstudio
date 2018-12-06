@@ -816,12 +816,10 @@ public class TextEditingTarget implements
                   boolean enabled = e.getState() == 
                         DocTabDragStateChangedEvent.STATE_NONE;
                   
-                  // disable drag/drop if disabled in preferences
-                  if (enabled)
-                     enabled = prefs.enableTextDrag().getValue();
-                  
-                  // update editor surface
-                  docDisplay_.setDragEnabled(enabled);
+                  // make editor read only while we're dragging and dropping
+                  // tabs; otherwise the editor surface will accept a tab drop
+                  // as text
+                  docDisplay_.setReadOnly(!enabled);
                }
             });
       
