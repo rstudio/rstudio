@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -88,7 +89,7 @@ public class ApplicationClientInit
             }
          }                                    
       };
-      server_.clientInit(rpcRequestCallback);
+      server_.clientInit(GWT.getHostPageBaseURL(), rpcRequestCallback);
                                     
       
       // wait for 60 seconds then ask the user if they want to issue an 

@@ -319,12 +319,15 @@ public class RemoteServer implements Server
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
 
-   public void clientInit(
+   public void clientInit(String baseURL,
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
       // send init request (record clientId and version contained in response)
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(baseURL));
       sendRequest(RPC_SCOPE, 
                   CLIENT_INIT, 
+                  params,
                   new ServerRequestCallback<SessionInfo>() {
 
          public void onResponseReceived(SessionInfo sessionInfo)

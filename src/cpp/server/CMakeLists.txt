@@ -41,7 +41,6 @@ set(SERVER_SOURCE_FILES
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerCSRFToken.cpp
-   auth/ServerPortToken.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp

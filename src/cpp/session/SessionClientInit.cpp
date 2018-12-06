@@ -52,6 +52,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/Cookie.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -79,6 +80,51 @@ extern "C" const char *locale2charset(const char *);
 namespace rstudio {
 namespace session {
 namespace client_init {
+namespace {
+
+#ifdef RSTUDIO_SERVER
+Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
+      boost::shared_ptr<http::Cookie>* pCookie)
+{
+   // extract the base URL
+   json::JsonRpcRequest request;
+   Error error = parseJsonRpcRequest(ptrConnection->request().body(), &request);
+   if (error)
+      return error;
+   std::string baseURL;
+
+   error = json::readParams(request.params, &baseURL);
+   if (error)
+      return error;
+
+   // generate a new port token
+   persistentState().setPortToken(server_core::generateNewPortToken());
+
+   // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
+   // specific to this session's URL since it's possible for different sessions (paths) to use
+   // different tokens on the same server.
+   std::size_t pos = baseURL.find('/', 9);
+   std::string path = "/";
+   if (pos != std::string::npos)
+   {
+      path = baseURL.substr(pos);
+   }
+
+   // create the cookie; don't set an expiry date as this will be a session cookie
+   *pCookie = boost::make_shared<http::Cookie>(
+            ptrConnection->request(), 
+            kPortTokenCookie, 
+            persistentState().portToken(), 
+            path,  
+            true, // HTTP only -- client doesn't get to read this token
+            baseURL.substr(0, 5) == "https" // secure if using HTTPS
+         );
+
+   return Success();
+}
+#endif
+
+} // anonymous namespace
 
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
@@ -110,19 +156,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       std::string referer = ptrConnection->request().headerValue("referer");
       core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
    }
-
-#ifdef RSTUDIO_SERVER
-   // set port token from cookie; don't set one if the cookie is empty. 
-   std::string portTokenCookie = ptrConnection->request().cookieValue(kPortTokenCookie);
-   if (portTokenCookie.empty())
-   {
-      LOG_WARNING_MESSAGE("No port token supplied; using default port token.");
-   }
-   else
-   {
-      persistentState().setPortToken(portTokenCookie);
-   }
-#endif
 
    // prepare session info 
    json::Object sessionInfo ;
@@ -444,12 +477,33 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    module_context::events().onSessionInfo(&sessionInfo);
 
-   // send response  (we always set kEventsPending to false so that the client
+   // create response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
-   json::JsonRpcResponse jsonRpcResponse ;
+   json::JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setField(kEventsPending, "false");
-   jsonRpcResponse.setResult(sessionInfo) ;
-   ptrConnection->sendJsonRpcResponse(jsonRpcResponse);
+   jsonRpcResponse.setResult(sessionInfo);
+
+   // set response
+   core::http::Response response;
+   core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+
+#ifdef RSTUDIO_SERVER
+   if (options.programMode() == kSessionProgramModeServer)
+   {
+      boost::shared_ptr<http::Cookie> pCookie;
+      Error error = makePortTokenCookie(ptrConnection, &pCookie);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else if (pCookie)
+      {
+         response.addCookie(*pCookie);
+      }
+   }
+#endif
+
+   ptrConnection->sendResponse(response);
 
    // complete initialization of session
    init::ensureSessionInitialized();
