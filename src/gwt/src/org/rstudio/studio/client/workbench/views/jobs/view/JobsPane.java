@@ -304,7 +304,6 @@ public class JobsPane extends WorkbenchPane
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
       moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
-      moreMenu.addSeparator();
       moreMenu.addItem(new UIPrefMenuItem<Boolean>(
             uiPrefs_.hideCompletedJobs(), true, "Hide Completed Jobs", uiPrefs_));
       
