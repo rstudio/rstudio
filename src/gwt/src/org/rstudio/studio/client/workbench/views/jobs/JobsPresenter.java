@@ -178,11 +178,11 @@ public class JobsPresenter extends BasePresenter
       if (running > 0)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Jobs Still Running", 
+               "Local Jobs Still Running", 
                "The Jobs tab cannot be closed while there " +
                (running > 1 ?
-                  "are unfinished jobs" : "is an unfinished job") + "." +
-               "\n\nWait until all jobs have completed.");
+                  "are unfinished local jobs" : "is an unfinished local job") + "." +
+               "\n\nWait until all local jobs have completed.");
          return;
       }
       

@@ -426,7 +426,7 @@ core::json::Object jobState()
 
 bool isSuspendable()
 {
-   // don't suspend while we're running session jobs
+   // don't suspend while we're running local jobs
    return !localJobsRunning();
 }
 
