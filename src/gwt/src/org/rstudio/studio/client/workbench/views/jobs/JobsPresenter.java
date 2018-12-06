@@ -204,7 +204,6 @@ public class JobsPresenter extends BasePresenter
    {
       boolean newValue = !uiPrefs_.hideCompletedJobs().getValue();
       uiPrefs_.hideCompletedJobs().setGlobalValue(newValue);
-      commands_.hideCompletedJobs().setChecked(newValue);
       uiPrefs_.writeUIPrefs();
    }
    
