@@ -570,6 +570,7 @@ public abstract class
    public abstract AppCommand clearJobs();
    public abstract AppCommand activateJobs();
    public abstract AppCommand runSelectionAsJob();
+   public abstract AppCommand hideCompletedJobs();
 
    // Other
    public abstract AppCommand checkSpelling();

@@ -195,13 +195,13 @@ void removeAllLocalJobs()
    }
 }
 
-void removeCompletedJobs()
+void removeCompletedLocalJobs()
 {
    // collect completed jobs
    std::vector<boost::shared_ptr<Job> > completed;
    for (auto& job: s_jobs)
    {
-      if (job.second->complete())
+      if (job.second->complete() && job.second->type() == JobType::JobTypeSession)
          completed.push_back(job.second);
    }
 

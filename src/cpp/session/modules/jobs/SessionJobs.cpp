@@ -342,7 +342,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
 Error clearJobs(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   removeCompletedJobs();
+   removeCompletedLocalJobs();
    return Success();
 }
 

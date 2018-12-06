@@ -13,13 +13,18 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
+import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UIPrefMenuItem;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
-import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -260,6 +265,12 @@ public class JobsPane extends WorkbenchPane
          uiPrefs_.writeUIPrefs();
       }
    }
+   
+   @Override
+   public void refreshPaneStatusMessage()
+   {
+      paneStatus_.setText(uiPrefs_.hideCompletedJobs().getValue() ? "(previously completed jobs hidden)" : "");
+   }
 
    // Private methods ---------------------------------------------------------
    
@@ -296,7 +307,25 @@ public class JobsPane extends WorkbenchPane
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+
+      // More
+      StandardIcons icons = StandardIcons.INSTANCE;
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
+      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
+            uiPrefs_.hideCompletedJobs(), true, "Hide Previously Completed Jobs", uiPrefs_));
+      
+      ToolbarButton moreButton = new ToolbarButton("More",
+                                                  new ImageResource2x(icons.more_actions2x()),
+                                                  moreMenu);
+
+      toolbar_.addLeftWidget(moreButton);
+      
+      toolbar_.addLeftSeparator();
+      paneStatus_ = new Label();
+      paneStatus_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar_.addLeftWidget(paneStatus_);
+      refreshPaneStatusMessage();
       progress_ = null;
    }
 
@@ -306,6 +335,7 @@ public class JobsPane extends WorkbenchPane
    private SlidingLayoutPanel panel_;
    private final Toolbar toolbar_;
    private final ToolbarButton allJobs_;
+   private Label paneStatus_;
    private JobProgress progress_;
 
    // internal state

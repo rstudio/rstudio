@@ -76,7 +76,7 @@ void removeAllJobs();
 
 void removeAllLocalJobs();
 
-void removeCompletedJobs();
+void removeCompletedLocalJobs();
 
 void endAllJobStreaming();
 

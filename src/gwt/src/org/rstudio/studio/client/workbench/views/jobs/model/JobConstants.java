@@ -34,9 +34,8 @@ public class JobConstants
    
    // job types
    public final static int JOB_TYPE_UNKNOWN = 0;
-   public final static int JOB_TYPE_SESSION = 1;
-   public final static int JOB_TYPE_LAUNCHER = 2;
-   
+   public final static int JOB_TYPE_SESSION = 1; // local job, child of rsession
+   public final static int JOB_TYPE_LAUNCHER = 2; // cluster job via job launcher
    
    public final static String stateDescription(int state)
    {

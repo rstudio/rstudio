@@ -44,8 +44,8 @@ enum JobState {
 
 enum JobType {
    JobTypeUnknown = 0,
-   JobTypeSession = 1,
-   JobTypeLauncher = 2
+   JobTypeSession = 1, // local job, child of rsession
+   JobTypeLauncher = 2 // cluster job via job launcher
 };
 
 class Job
