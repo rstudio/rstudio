@@ -36,11 +36,7 @@ public class SqlCompletionManager extends CompletionManagerBase
                                CodeToolsServerOperations server,
                                CompletionContext context)
    {
-      super(popup, docDisplay, context);
-      
-      docDisplay_ = docDisplay;
-      server_ = server;
-      context_ = context;
+      super(popup, docDisplay, server, context);
    }
    
    @Override
@@ -330,8 +326,4 @@ public class SqlCompletionManager extends CompletionManagerBase
    }
    
    private static final Pattern RE_SQL_PREVIEW = Pattern.create("^-{2,}\\s*!preview\\s+conn\\s*=\\s*(.*)$", "");
-   
-   private final DocDisplay docDisplay_;
-   private final CodeToolsServerOperations server_;
-   private final CompletionContext context_;
 }

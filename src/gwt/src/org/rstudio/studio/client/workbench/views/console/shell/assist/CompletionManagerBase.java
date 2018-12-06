@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -64,12 +65,14 @@ public abstract class CompletionManagerBase
    
    public CompletionManagerBase(CompletionPopupDisplay popup,
                                 DocDisplay docDisplay,
+                                CodeToolsServerOperations server,
                                 CompletionContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       popup_ = popup;
       docDisplay_ = docDisplay;
+      server_ = server;
       
       invalidation_ = new Invalidation();
       completionCache_ = new CompletionCache();
@@ -889,8 +892,9 @@ public abstract class CompletionManagerBase
       private final Timer timer_;
    }
    
-   private final CompletionPopupDisplay popup_;
-   private final DocDisplay docDisplay_;
+   protected final CompletionPopupDisplay popup_;
+   protected final DocDisplay docDisplay_;
+   protected final CodeToolsServerOperations server_;
    
    private final Invalidation invalidation_;
    private final CompletionCache completionCache_;

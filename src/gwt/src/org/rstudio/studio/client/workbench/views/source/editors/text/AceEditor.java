@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.DelegatingCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.MarkdownCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
@@ -755,6 +756,16 @@ public class AceEditor implements DocDisplay,
                         fileType_.canExecuteChunks() ? rnwContext_ : null,
                            editor,
                            false));
+               }
+               
+               // Markdown completion manager
+               if (fileType_.isMarkdown() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.MARKDOWN, new MarkdownCompletionManager(
+                        editor,
+                        new CompletionPopupPanel(),
+                        server_,
+                        context_));
                }
                
                // Python completion manager
