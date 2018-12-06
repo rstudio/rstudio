@@ -1,7 +1,7 @@
 /*
  * ChunkOutputStream.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -256,16 +257,22 @@ public class ChunkOutputStream extends FlowPanel
       });
 
       themeColors_ = ChunkOutputWidget.getEditorColors();
-      afterRender_ = new Command()
+      
+      afterRender_ = () -> 
       {
-         @Override
-         public void execute()
-         {
-            ChunkHtmlPage.syncThemeTextColor(themeColors_, frame.getDocument().getBody());
-         }
+         ChunkHtmlPage.syncThemeTextColor(themeColors_, frame.getDocument().getBody());
       };
 
-      frame.runAfterRender(afterRender_);
+      // when the frame loads, sync its text color -- note that a frame may load
+      // more than once as it's reloaded if gets moved around in the DOM
+      Event.sinkEvents(frame.getElement(), Event.ONLOAD);
+      Event.setEventListener(frame.getElement(), e ->
+      {
+         if (Event.ONLOAD == e.getTypeInt())
+         {
+            afterRender_.execute();
+         }
+      });
    }
 
    @Override

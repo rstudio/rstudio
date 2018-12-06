@@ -1,7 +1,7 @@
 /*
  * ChunkHtmlPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -105,7 +106,14 @@ public class ChunkHtmlPage extends ChunkOutputPage
          }
       };
 
-      frame_.runAfterRender(afterRender_);
+      Event.sinkEvents(frame_.getElement(), Event.ONLOAD);
+      Event.setEventListener(frame_.getElement(), e ->
+      {
+         if (Event.ONLOAD == e.getTypeInt() && themeColors_ != null)
+         {
+            afterRender_.execute();
+         }
+      });
    }
    
    public static void syncThemeTextColor(Colors themeColors, Element body)
