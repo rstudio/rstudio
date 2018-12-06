@@ -1,5 +1,7 @@
 [Unit]
 Description=RStudio Server
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=forking
