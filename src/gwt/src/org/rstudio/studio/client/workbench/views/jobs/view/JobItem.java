@@ -95,7 +95,7 @@ public class JobItem extends Composite
                      new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
             });
       
-      stopOrKill_ = new ToolbarButton(
+      launcherStop_ = new ToolbarButton(
             RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
             {
                // TODO: different UI that exposes both "stop" and "kill" if the job
@@ -206,35 +206,26 @@ public class JobItem extends Composite
       // show the state if we're not showing the progress bar
       state_.setVisible(!running_.isVisible());
       
-      // show appropriate stop button if job has a "stop" (and optional "kill")
-      // action, and is not completed
+      // show stop button if job has a "stop" action, and is not completed
       if (job_.completed == 0)
       {
-         boolean hasStop = JsArrayUtil.jsArrayStringContains(job_.actions,
-               JobConstants.ACTION_STOP);
-         boolean hasKill = JsArrayUtil.jsArrayStringContains(job_.actions,
-               JobConstants.ACTION_KILL);
-         if (hasStop && hasKill)
+         if (job_.type == JobConstants.JOB_TYPE_LAUNCHER)
          {
             stop_.setVisible(false);
-            stopOrKill_.setVisible(true);
-         }
-         else if (hasStop)
-         {
-            stop_.setVisible(true);
-            stopOrKill_.setVisible(false);
+            launcherStop_.setVisible(true);
          }
          else
          {
-            // can't stop OR kill
-            stop_.setVisible(false);
-            stopOrKill_.setVisible(false);
+            stop_.setVisible(
+                  JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
+                  job_.completed == 0);
+            launcherStop_.setVisible(false);
          }
       }
       else
       {
          stop_.setVisible(false);
-         stopOrKill_.setVisible(false);
+         launcherStop_.setVisible(false);
       }
       
       // update progress bar if it's showing
@@ -289,6 +280,6 @@ public class JobItem extends Composite
    @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
-   @UiField(provided=true) ToolbarButton stopOrKill_;
+   @UiField(provided=true) ToolbarButton launcherStop_;
    @UiField Styles styles_;
 }
