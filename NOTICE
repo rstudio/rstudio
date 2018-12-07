@@ -3634,13 +3634,3 @@ all icons packaged as web and desktop font files.
 Code — MIT License
 In the Font Awesome Free download, the MIT license applies to 
 all non-font and non-icon files.
-
-Attribution
-Attribution is required by MIT, SIL OLF, and CC BY licenses. Downloaded
-Font Awesome Free files already contain embedded comments with sufficient 
-attribution, so you shouldn't need to do anything additional when using these 
-files normally.
-
-We've kept attribution comments terse, so we ask that you do not actively work 
-to remove them from files, especially code. They're a great way for folks to 
-learn about Font Awesome.
