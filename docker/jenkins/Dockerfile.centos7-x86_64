@@ -62,7 +62,7 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.11.1 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.0 && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 

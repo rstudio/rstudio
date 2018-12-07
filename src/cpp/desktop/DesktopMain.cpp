@@ -499,7 +499,7 @@ int main(int argc, char* argv[])
          if (!stdOut.empty())
          {
             // NOTE: temporarily backed out as it appears the rasterization
-            // issues do not occur anymore with Qt 5.11.1; re-enable if we
+            // issues do not occur anymore with Qt 5.12.0; re-enable if we
             // receive more reports in the wild.
             //
             // https://github.com/rstudio/rstudio/issues/2176
