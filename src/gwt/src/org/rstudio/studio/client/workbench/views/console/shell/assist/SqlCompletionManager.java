@@ -237,6 +237,7 @@ public class SqlCompletionManager extends CompletionManagerBase
          return false;
       
       String table = sqlIdentifierValue(it);
+      ctx.schemas.push("");
       ctx.tables.push(table);
       return true;
    }
