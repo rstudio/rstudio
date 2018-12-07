@@ -440,17 +440,6 @@ int main(int argc, char* argv[])
       static char enableViewport[] = "--enable-viewport";
       arguments.push_back(enableViewport);
       
-#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
-      
-#ifndef NDEBUG
-      // disable web security for development builds (so we can
-      // get access to sourcemaps)
-      static char disableWebSecurity[] = "--disable-web-security";
-      arguments.push_back(disableWebSecurity);
-#endif
-      
-#endif
-      
       // disable chromium renderer accessibility by default (it can cause
       // slowdown when used in conjunction with some applications; see e.g.
       // https://github.com/rstudio/rstudio/issues/1990)
@@ -462,14 +451,6 @@ int main(int argc, char* argv[])
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
-
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5,10,1))
-      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
-      // https://bugreports.qt.io/browse/QTBUG-67023
-      // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
-      arguments.push_back(noSandbox);
-#endif
 
 #ifdef Q_OS_MAC
       // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
