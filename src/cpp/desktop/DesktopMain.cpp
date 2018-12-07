@@ -478,65 +478,6 @@ int main(int argc, char* argv[])
       // https://github.com/rstudio/rstudio/issues/1953
       static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
       arguments.push_back(disableCompositorPref);
-      
-      // disable GPU features for certain machine configurations. see e.g.
-      //
-      // https://bugs.chromium.org/p/chromium/issues/detail?id=773705
-      // https://github.com/rstudio/rstudio/issues/2093
-      // https://github.com/rstudio/rstudio/issues/3148
-      //
-      // because the issue seems to only affect certain video cards on macOS
-      // High Sierra, we scope that change to that particular configuration
-      // for now (we can expand this list if more users report issues)
-      {
-         core::system::ProcessResult processResult;
-         core::system::runCommand(
-                  "/usr/sbin/system_profiler SPDisplaysDataType",
-                  core::system::ProcessOptions(),
-                  &processResult);
-
-         std::string stdOut = processResult.stdOut;
-         if (!stdOut.empty())
-         {
-            // NOTE: temporarily backed out as it appears the rasterization
-            // issues do not occur anymore with Qt 5.12.0; re-enable if we
-            // receive more reports in the wild.
-            //
-            // https://github.com/rstudio/rstudio/issues/2176
-            
-            /*
-            std::vector<std::string> rasterBlacklist = {
-               "NVIDIA GeForce GT 650M",
-               "NVIDIA GeForce GT 750M",
-               "Intel Iris Graphics 6100"
-            };
-
-            for (const std::string& entry : rasterBlacklist)
-            {
-               if (stdOut.find(entry) != std::string::npos)
-               {
-                  static char disableGpuRasterization[] = "--disable-gpu-rasterization";
-                  arguments.push_back(disableGpuRasterization);
-                  break;
-               }
-            }
-            */
-            
-            std::vector<std::string> gpuBlacklist = {
-               "AMD FirePro"
-            };
-            
-            for (const std::string& entry : gpuBlacklist)
-            {
-               if (stdOut.find(entry) != std::string::npos)
-               {
-                  static char disableGpu[] = "--disable-gpu";
-                  arguments.push_back(disableGpu);
-                  break;
-               }
-            }
-         }
-      }
 #endif
       
       // allow users to supply extra command-line arguments
