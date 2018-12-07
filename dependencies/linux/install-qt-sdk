@@ -21,7 +21,7 @@ if [ -z "$QT_SDK_BINARY" ]; then
     QT_SDK_BINARY=qt-unified-linux-x64-3.0.5-online.run
 fi
 if [ -z "$QT_PACKAGES" ]; then
-    QT_PACKAGES=qt.qt5.5111.gcc_64,qt.qt5.5111.qtwebengine,qt.qt5.5111.qtwebengine.gcc_64
+    QT_PACKAGES=qt.qt5.5120.gcc_64,qt.qt5.5120.qtwebengine,qt.qt5.5120.qtwebengine.gcc_64
 fi
 if [ -z "$QT_SDK_CUSTOM" ]; then
     echo Using online Qt installer
