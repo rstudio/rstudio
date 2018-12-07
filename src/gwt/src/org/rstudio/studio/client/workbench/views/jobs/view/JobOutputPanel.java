@@ -41,13 +41,13 @@ public class JobOutputPanel extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       // initially empty
-      output_.setVisible(false);
-      empty_.setVisible(true);
+      clearOutput();
    }
    
    public void clearOutput()
    {
       output_.clearOutput();
+      output_.setVisible(false);
       empty_.setVisible(true);
    }
    
@@ -58,6 +58,9 @@ public class JobOutputPanel extends Composite
    
    public void showOutput(CompileOutput output, boolean scrollToBottom)
    {
+      if (output.getOutput().isEmpty())
+         return;
+      
       // make sure output is visible
       empty_.setVisible(false);
       output_.setVisible(true);
