@@ -56,6 +56,12 @@ enum AutoCloseMode
    NeverAutoClose = 2, // never auto-close
 };
 
+enum SerializationMode
+{
+   ClientSerialization = 0, // serialize for front-end client
+   PersistentSerialization = 1  // serialize for persistent storage
+};
+
 extern const int kDefaultMaxOutputLines;
 extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
@@ -190,7 +196,7 @@ public:
    void setTrackEnv(bool trackEnv) { trackEnv_ = trackEnv; }
    bool getTrackEnv() const { return trackEnv_; }
 
-   core::json::Object toJson() const;
+   core::json::Object toJson(SerializationMode serialMode) const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
    static std::string loadConsoleProcessMetadata();

@@ -49,7 +49,7 @@ std::vector<std::string> getAllHandles();
 std::pair<int, std::string> nextTerminalName();
 
 // Get list of all process metadata
-core::json::Array allProcessesAsJson();
+core::json::Array allProcessesAsJson(SerializationMode serialMode);
 
 // Persist the list of ConsoleProcesses.
 void saveConsoleProcesses();

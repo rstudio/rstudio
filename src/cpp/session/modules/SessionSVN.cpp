@@ -360,7 +360,7 @@ void runSvnAsync(const ShellArgs& args,
 
    // notify the client about the console process
    json::Object data;
-   data["process_info"] = pCP->toJson();
+   data["process_info"] = pCP->toJson(console_process::ClientSerialization);
    data["target_window"] = ask_pass::activeWindow();
    ClientEvent event(client_events::kConsoleProcessCreated, data);
    module_context::enqueClientEvent(event);
@@ -996,7 +996,7 @@ Error svnUpdate(const json::JsonRpcRequest& request,
 
    maybeAttachPasswordManager(pCP);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1065,7 +1065,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
 
    maybeAttachPasswordManager(pCP);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }

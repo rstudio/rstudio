@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -730,9 +730,9 @@ void ConsoleProcess::setZombie()
    saveConsoleProcesses();
 }
 
-core::json::Object ConsoleProcess::toJson() const
+core::json::Object ConsoleProcess::toJson(SerializationMode serialMode) const
 {
-   return procInfo_->toJson();
+   return procInfo_->toJson(serialMode);
 }
 
 ConsoleProcessPtr ConsoleProcess::fromJson(
@@ -993,9 +993,9 @@ bool ConsoleProcess::useWebsockets()
                      session::userSettings().terminalWebsockets();
 }
 
-core::json::Array processesAsJson()
+core::json::Array processesAsJson(SerializationMode serialMode)
 {
-   return allProcessesAsJson();
+   return allProcessesAsJson(serialMode);
 }
 
 Error initialize()

@@ -312,7 +312,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
    sessionInfo["console_processes"] =
-         console_process::processesAsJson();
+         console_process::processesAsJson(console_process::ClientSerialization);
 
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32

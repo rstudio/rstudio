@@ -678,7 +678,7 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
             pCPI);
 
    // return console process
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
    return Success();
 }
 

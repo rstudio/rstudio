@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -198,7 +198,7 @@ public:
 
    void setShowOnOutput(bool showOnOutput) const { procInfo_->setShowOnOutput(showOnOutput); }
 
-   core::json::Object toJson() const;
+   core::json::Object toJson(SerializationMode serialMode) const;
    static ConsoleProcessPtr fromJson( core::json::Object& obj);
 
    void onReceivedInput(const std::string& input);
@@ -281,7 +281,7 @@ private:
    core::terminal::PrivateCommand envCaptureCmd_;
 };
 
-core::json::Array processesAsJson();
+core::json::Array processesAsJson(SerializationMode serialMode);
 core::Error initialize();
 
 } // namespace console_process
