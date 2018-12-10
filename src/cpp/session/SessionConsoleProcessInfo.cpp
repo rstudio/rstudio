@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,16 @@
 #include <core/system/System.hpp>
 #include <core/text/TermBufferParser.hpp>
 
+#include "session-config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/UrlPorts.hpp>
+#endif
+
 #include <session/SessionConsoleProcessPersist.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionPersistentState.hpp>
+#include <session/SessionOptions.hpp>
 
 using namespace rstudio::core;
 
@@ -180,7 +188,7 @@ void ConsoleProcessInfo::deleteEnvFile() const
    console_persist::deleteEnvFile(handle_);
 }
 
-core::json::Object ConsoleProcessInfo::toJson() const
+core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) const
 {
    json::Object result;
    result["handle"] = handle_;
@@ -211,6 +219,21 @@ core::json::Object ConsoleProcessInfo::toJson() const
    result["zombie"] = zombie_;
    result["track_env"] = trackEnv_;
 
+
+#ifdef RSTUDIO_SERVER
+   // in server mode, we may need to provide the client with an obscured form of the port when
+   // connecting via websockets
+   if (options().programMode() == kSessionProgramModeServer &&
+       serialMode == ClientSerialization &&
+       channelMode_ == Websocket)
+   {
+      auto port = safe_convert::stringTo<int>(channelId_);
+      if (port)
+      {
+         result["channel_id"] = server_core::transformPort(persistentState().portToken(), *port);
+      }
+   }
+#endif
    return result;
 }
 

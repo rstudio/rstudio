@@ -120,7 +120,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
       return systemError(json::errc::ParamInvalid, ERROR_LOCATION);
    }
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }

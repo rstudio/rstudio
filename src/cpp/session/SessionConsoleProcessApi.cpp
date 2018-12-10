@@ -177,7 +177,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
 
    // notify the client so it adds this new terminal to the UI list and starts it
    json::Object eventData;
-   eventData["process_info"] = ptrProc->toJson();
+   eventData["process_info"] = ptrProc->toJson(ClientSerialization);
    eventData["show"] = show;
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
@@ -520,7 +520,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
 
    // notify the client so it adds this new terminal to the UI list
    json::Object eventData;
-   eventData["process_info"] = ptrProc->toJson();
+   eventData["process_info"] = ptrProc->toJson(ClientSerialization);
    eventData["show"] = show;
    ClientEvent addTerminalEvent(client_events::kAddTerminal, eventData);
    module_context::enqueClientEvent(addTerminalEvent);
@@ -934,7 +934,7 @@ Error startTerminal(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 
-   pResponse->setResult(ptrProc->toJson());
+   pResponse->setResult(ptrProc->toJson(ClientSerialization));
 
    return Success();
 }
