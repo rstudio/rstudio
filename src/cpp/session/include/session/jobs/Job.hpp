@@ -64,6 +64,7 @@ public:
        int max,
        JobState state,
        JobType type,
+       const std::string& cluster,
        bool autoRemove,
        SEXP actions,
        bool show,
@@ -93,6 +94,9 @@ public:
 
    // type of job
    JobType type() const;
+
+   // cluster for launcher jobs
+   std::string cluster() const;
 
    // job tags
    std::vector<std::string> tags() const;
@@ -152,6 +156,7 @@ private:
 
    JobState state_;
    JobType type_;
+   std::string cluster_;
 
    int progress_;
    int max_;

@@ -430,6 +430,7 @@ public class TextFileType extends EditableFileType
       
       if (isR())
       {
+         results.add(commands.sourceAsLauncherJob());
          results.add(commands.sourceAsJob());
       }
 

@@ -91,6 +91,13 @@
         animation: spinner 2s linear infinite;
     }
     
+    .jobType
+    {
+        width: 20px;
+        height: 18px;
+        border: 0px;
+    }
+
     .outer
     {
         width: 100%;
@@ -156,6 +163,9 @@
                                     </g:cell>
                                 </g:VerticalPanel>
                             </g:VerticalPanel>
+                        </g:cell>
+                        <g:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE" width="20px">
+                            <g:Image styleName="{styles_.jobType}" ui:field="jobType_"></g:Image>
                         </g:cell>
                         <g:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE" width="80px">
                             <g:Label styleName="{styles_.elapsed}" ui:field="elapsed_"></g:Label>

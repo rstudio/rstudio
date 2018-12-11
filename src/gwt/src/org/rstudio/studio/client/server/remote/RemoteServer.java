@@ -5695,6 +5695,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "launcher_jobs_refresh", callback);
    }
 
+   @Override
+   public void stopLauncherJob(String jobId,
+                               boolean kill,
+                               ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      params.set(1, JSONBoolean.getInstance(kill));
+      sendRequest(RPC_SCOPE, "launcher_jobs_stop_job", params, callback);
+   }
+
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE,

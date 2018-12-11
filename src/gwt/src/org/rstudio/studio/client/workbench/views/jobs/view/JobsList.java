@@ -89,6 +89,10 @@ public class JobsList extends Composite
       JobItem item = new JobItem(job);
       jobs_.put(job.id, item);
       list_.insert(item, 0);
+      
+      if (job.completed != 0 && uiPrefs_.hideCompletedJobs().getValue())
+         item.setVisible(false);
+
       updateVisibility();
    }
    
@@ -107,6 +111,10 @@ public class JobsList extends Composite
             break;
       }
       list_.insert(item, i);
+      
+      if (job.completed != 0 && uiPrefs_.hideCompletedJobs().getValue())
+         item.setVisible(false);
+      
       updateVisibility();
    }
    

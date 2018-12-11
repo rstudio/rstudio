@@ -802,6 +802,11 @@ public class Application implements ApplicationEventHandlers
       {
          removeProjectCommands();
       }
+      
+      if (!sessionInfo.getLauncherJobsEnabled())
+      {
+         removeJobLauncherCommands();
+      }
 
       if (!sessionInfo.getAllowPackageInstallation())
       {
@@ -1092,6 +1097,13 @@ public class Application implements ApplicationEventHandlers
       commands_.projectMru13().remove();
       commands_.projectMru14().remove();
     }
+
+   private void removeJobLauncherCommands()
+   {
+      commands_.startLauncherJob().remove();
+      commands_.sourceAsLauncherJob().remove();
+      commands_.runSelectionAsLauncherJob().remove();
+   }
 
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

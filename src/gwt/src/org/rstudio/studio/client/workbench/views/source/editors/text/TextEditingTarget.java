@@ -136,6 +136,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -4182,7 +4183,13 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsJob()
    {
-      codeExecution_.runSelectionAsJob();
+      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+   }
+   
+   @Handler
+   void onRunSelectionAsLauncherJob()
+   {
+      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
    }
    
    @Handler
@@ -5100,6 +5107,15 @@ public class TextEditingTarget implements
       saveThenExecute(null, () ->
       {
          events_.fireEvent(new JobRunScriptEvent(getPath()));
+      });
+   }
+   
+   @Handler
+   public void onSourceAsLauncherJob()
+   {
+      saveThenExecute(null, () ->
+      {
+         events_.fireEvent(new LauncherJobRunScriptEvent(getPath()));
       });
    }
    
