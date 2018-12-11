@@ -37,6 +37,7 @@ private:
    // close of the socket (this is because the current version of httpuv
    // expects a close from the client end of the socket). however, don't
    // do this for Jetty (as it often doesn't send a Content-Length header)
+   // and do not do it if we are streaming chunked encoding
    virtual bool stopReadingAndRespond()
    {
       std::string server = response_.headerValue("Server");
@@ -46,7 +47,8 @@ private:
       }
       else
       {
-         return response_.body().length() >= response_.contentLength();
+         return !chunkedEncoding_ &&
+                (response_.body().length() >= response_.contentLength());
       }
    }
 
