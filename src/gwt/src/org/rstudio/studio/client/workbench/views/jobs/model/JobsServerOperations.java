@@ -29,4 +29,5 @@ public interface JobsServerOperations
    void startLauncherJobStatusStream(String jobId, ServerRequestCallback<Void> callback);
    void stopLauncherJobStatusStream(String jobId, ServerRequestCallback<Void> callback);
    void refreshLauncherJobs(ServerRequestCallback<Void> callback);
+   void stopLauncherJob(String jobId, boolean kill, ServerRequestCallback<Void> callback);
 }

@@ -239,6 +239,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
+         <cmd refid="runSelectionAsLauncherJob"/>
          <cmd refid="runSelectionAsJob"/>
          <cmd refid="sendToTerminal"/>
          <separator/>
@@ -457,6 +458,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="closeTerminal"/>
           </menu>
          <menu label="_Jobs">
+            <cmd refid="startLauncherJob"/>
+            <separator/>
             <cmd refid="startJob"/>
             <cmd refid="clearJobs"/>
             <separator/>
@@ -3318,6 +3321,22 @@ well as menu structures (for main menu and popup menus).
     <cmd id="runSelectionAsJob"
          menuLabel="Run Selection as Local Job"
          desc="Run the selected code as a local job"
+         windowMode="any"/>
+
+    <cmd id="startLauncherJob"
+         menuLabel="Start Launcher Job..."
+         buttonLabel="Start Launcher Job"
+         desc="Run a background job on a cluster"
+         windowMode="main"/>
+
+    <cmd id="sourceAsLauncherJob"
+         menuLabel="Source as Launcher Job..."
+         desc="Run the current R script on a cluster"
+         windowMode="any"/>
+
+    <cmd id="runSelectionAsLauncherJob"
+         menuLabel="Run Selection as Launcher Job"
+         desc="Run the selected code as a launcher job"
          windowMode="any"/>
 
     <cmd id="hideCompletedJobs"

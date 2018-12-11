@@ -40,6 +40,7 @@ boost::shared_ptr<Job> addJob(
       int progress,
       JobState state,
       JobType type,
+      const std::string& cluster,
       bool autoRemove,
       SEXP actions,
       bool show,

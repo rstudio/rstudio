@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobRunSelectionEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -184,7 +185,7 @@ public class EditingTargetCodeExecution
             false);
    }
    
-   public void runSelectionAsJob()
+   public void runSelectionAsJob(boolean useJobLauncher)
    {
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -194,7 +195,10 @@ public class EditingTargetCodeExecution
          return;
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
-      events_.fireEvent(new JobRunSelectionEvent(target_.getPath(), code));
+      if (useJobLauncher)
+         events_.fireEvent(new LauncherJobRunSelectionEvent(target_.getPath(), code));
+      else
+         events_.fireEvent(new JobRunSelectionEvent(target_.getPath(), code));
    }
    
    public void executeRange(Range range)
