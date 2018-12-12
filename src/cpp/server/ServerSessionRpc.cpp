@@ -156,13 +156,14 @@ void addHandler(const std::string &prefix,
       s_pSessionRpcServer->addHandler(
                prefix, boost::bind(validationHandler, handler, _1));
 
-      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
+      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/) ||
+          job_launcher::launcherJobsEnabled(false /* checkLicense*/))
       {
-         // if we're using job launcher sessions, we need to handle RPCs
-         // from within the regular http server since sessions will be
-         // on different machines - we add the handler to both because
-         // at any time, the launcher licensing field could change, and
-         // so sessions need to be able to communicate effectively in both
+         // if we're using job launcher for sessions and/or ad-hoc jobs,
+         // we need to handle RPCs from within the regular http server since
+         // sessions or jobs might be  on different machines. We add the handler
+         // to both because at any time, the launcher licensing field could change,
+         // and so sessions need to be able to communicate effectively in both
          // launcher and non-launcher modes
          server::server()->addHandler(
                   prefix, boost::bind(validationHandler, handler, _1));
