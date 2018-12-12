@@ -43,6 +43,22 @@ rstudio-server force-suspend-all
 # check lsb release
 LSB_RELEASE=`lsb_release --id --short`
 
+# disable apparmor profile if it exists
+if test -e /etc/apparmor.d/rstudio-server
+then
+   if test $LSB_RELEASE = "Ubuntu"
+   then
+      # disable the existing apparmor profile as we no longer support apparmor
+      # disabling it ensures it is not deleted in case it was modified locally
+      ln -s /etc/apparmor.d/rstudio-server /etc/apparmor.d/disable/
+      apparmor_parser -R /etc/apparmor.d/rstudio-server 2>/dev/null
+   else
+      # delete the profile entirely on non-Ubuntu platforms as it has been known to cause issues
+      rm -f /etc/apparmor.d/rstudio-server
+      invoke-rc.d apparmor reload 2>/dev/null
+   fi
+fi
+
 # determine which init system is in use
 # a variation on:
 # https://wiki.ubuntu.com/SystemdForUpstartUsers#How_to_identify_which_init_system_you_are_currently_booting_with
