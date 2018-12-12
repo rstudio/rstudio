@@ -176,10 +176,11 @@ void initHook()
    ::ExitProcess(exitCode);
 }
 
-void initializeSystemLog(const std::string& programIdentity,
-                         int logLevel,
-                         bool enableConfigReload)
+Error initializeSystemLog(const std::string& programIdentity,
+                          int logLevel,
+                          bool enableConfigReload)
 {
+   return Success();
 }
 
 void initializeLogConfigReload()
