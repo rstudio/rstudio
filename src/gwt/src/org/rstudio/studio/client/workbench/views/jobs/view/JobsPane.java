@@ -13,13 +13,22 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
+import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UIPrefMenuItem;
+import org.rstudio.studio.client.common.icons.StandardIcons;
+import com.google.inject.Provider;
+import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobTypeSelectedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
-import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,10 +48,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class JobsPane extends WorkbenchPane 
-                      implements JobsPresenter.Display
+                      implements JobsPresenter.Display,
+                                 JobTypeSelectedEvent.Handler
 {
    @Inject
    public JobsPane(Commands commands,
+                   Provider<Session> pSession,
                    UIPrefs uiPrefs,
                    final EventBus events)
    {
@@ -50,6 +61,9 @@ public class JobsPane extends WorkbenchPane
       commands_ = commands;
       events_ = events;
       uiPrefs_ = uiPrefs;
+      pSession_ = pSession;
+      
+      events.addHandler(JobTypeSelectedEvent.TYPE, this);
 
       allJobs_ = new ToolbarButton(
             commands.helpBack().getImageResource(), evt ->
@@ -118,20 +132,13 @@ public class JobsPane extends WorkbenchPane
             list_.updateJob(job);
             if (job.id == current_)
             {
-               if (job.completed > 0 && progress_ != null)
+               // update progress
+               if (progress_ == null)
                {
-                  progress_.setComplete();
+                  progress_ = new JobProgress();
+                  toolbar_.addLeftWidget(progress_);
                }
-               else
-               {
-                  // update progress
-                  if (progress_ == null)
-                  {
-                     progress_ = new JobProgress();
-                     toolbar_.addLeftWidget(progress_);
-                  }
-                  progress_.showJob(job);
-               }
+               progress_.showJob(job);
             }
             break;
             
@@ -261,6 +268,48 @@ public class JobsPane extends WorkbenchPane
       }
    }
 
+   @Override
+   public void onJobTypeSelected(JobTypeSelectedEvent event)
+   {
+      // Try to leave the pref at default value, which shows "job launcher" button
+      // when job-launcher is available, otherwise shows regular session jobs
+      // button. Save explicit pref value only if user has switched away from the
+      // current default.
+      int currentSetting = uiPrefs_.defaultJobsMode().getValue();
+      int currentDefault = pSession_.get().getSessionInfo().getLauncherJobsEnabled() ?
+            JobConstants.JOB_TYPE_LAUNCHER : JobConstants.JOB_TYPE_SESSION;
+      int selectedType = event.jobType();
+      
+      boolean changeSetting = false;
+      if (currentSetting == JobConstants.JOB_TYPE_UNKNOWN /* proxy for "default" */)
+      {
+         if (selectedType != currentDefault)
+         {
+            changeSetting = true;
+         }
+      }
+      else if (selectedType != currentSetting)
+      {
+         changeSetting = true;
+      }
+      
+      if (changeSetting)
+      {
+         uiPrefs_.defaultJobsMode().setGlobalValue(event.jobType());
+         uiPrefs_.writeUIPrefs();
+         
+         // update toolbar "start job" button to match their choice
+         if (current_ == null)
+            installMainToolbar();
+      }
+   }
+   
+   @Override
+   public void refreshPaneStatusMessage()
+   {
+      paneStatus_.setText(uiPrefs_.hideCompletedJobs().getValue() ? "(previously completed jobs hidden)" : "");
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void installJobToolbar()
@@ -282,21 +331,62 @@ public class JobsPane extends WorkbenchPane
          progress_ = new JobProgress();
          toolbar_.addLeftWidget(progress_);
          progress_.showJob(job);
-
-         // if job is complete, mark that
-         if (job.completed > 0)
-         {
-            progress_.setComplete();
-         }
       }
    }
    
    private void installMainToolbar()
    {
       toolbar_.removeAllWidgets();
-      toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      if (pSession_.get().getSessionInfo().getLauncherJobsEnabled())
+      {
+         // include dropdown for selection of job-type, and set "run job"
+         // button to reflect user's last choice (or the default)
+         ToolbarButton runButton;
+         switch (uiPrefs_.defaultJobsMode().getValue())
+         {
+            case JobConstants.JOB_TYPE_UNKNOWN: // represents "default" mode
+            case JobConstants.JOB_TYPE_LAUNCHER:
+               runButton = commands_.startLauncherJob().createToolbarButton();
+               break;
+               
+            case JobConstants.JOB_TYPE_SESSION:
+            default:
+               runButton = commands_.startJob().createToolbarButton();
+               break;
+         }
+         runButton.addStyleName(ThemeStyles.INSTANCE.launcherJobRunButton());
+         toolbar_.addLeftWidget(runButton);
+         
+         ToolbarPopupMenuButton runJobMenuButton = new ToolbarPopupMenuButton(false, false);
+         runJobMenuButton.addMenuItem(commands_.startLauncherJob().createMenuItem(false), "");
+         runJobMenuButton.addMenuItem(commands_.startJob().createMenuItem(false), "");
+         toolbar_.addLeftWidget(runJobMenuButton);
+      }
+      else
+      {
+         toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      }
+      
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+
+      // More
+      StandardIcons icons = StandardIcons.INSTANCE;
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
+      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
+            uiPrefs_.hideCompletedJobs(), true, "Hide Previously Completed Jobs", uiPrefs_));
+      
+      ToolbarButton moreButton = new ToolbarButton("More",
+                                                  new ImageResource2x(icons.more_actions2x()),
+                                                  moreMenu);
+
+      toolbar_.addLeftWidget(moreButton);
+      
+      toolbar_.addLeftSeparator();
+      paneStatus_ = new Label();
+      paneStatus_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar_.addLeftWidget(paneStatus_);
+      refreshPaneStatusMessage();
       progress_ = null;
    }
 
@@ -306,6 +396,7 @@ public class JobsPane extends WorkbenchPane
    private SlidingLayoutPanel panel_;
    private final Toolbar toolbar_;
    private final ToolbarButton allJobs_;
+   private Label paneStatus_;
    private JobProgress progress_;
 
    // internal state
@@ -315,4 +406,5 @@ public class JobsPane extends WorkbenchPane
    private final Commands commands_;
    private final EventBus events_;
    private final UIPrefs uiPrefs_;
+   private final Provider<Session> pSession_;
 }

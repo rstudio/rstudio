@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobTypeSelectedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobQuitDialog;
@@ -187,8 +188,8 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION, 
-            "Remove Completed Jobs", 
-            "Do you want to remove completed jobs from the list of jobs?\n\nYou can't undo this.", 
+            "Remove Completed Local Jobs",
+            "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.",
             false, // include cancel
             () ->  server_.clearJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
@@ -415,7 +416,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(FileSystemItem path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Job",
+      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
             path.getName(),
             path,
             spec ->
@@ -427,6 +428,9 @@ public class JobManager implements JobRefreshEvent.Handler,
                {
                   spec.setEncoding(doc.getEncoding());
                }
+
+               // broadcast type of job the user chose to run
+               events_.fireEvent(new JobTypeSelectedEvent(JobConstants.JOB_TYPE_SESSION));
 
                // tell the server to start running this script
                server_.startJob(spec, new ServerRequestCallback<String>() {

@@ -2038,47 +2038,6 @@ std::string resourceFileAsString(const std::string& fileName)
    return fileContents;
 }
 
-bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
-{
-   // match an http URL (ipv4 localhost or ipv6 localhst) and extract the port
-   boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1|::1|\\[::1\\]):([0-9]+)(/.*)?");
-   boost::smatch match;
-   if (regex_utils::search(url, match, re))
-   {
-      bool ipv6 = (url.find("::1") != std::string::npos);
-
-      // calculate the path
-      std::string path = match[2];
-      if (path.empty())
-         path = "/";
-      std::string portPath = ipv6 ? "p6/" : "p/";
-      path = portPath + match[1] + path;
-      *pPath = path;
-
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
-// given a url, return a portmap path if applicable (i.e. we're in server
-// mode and the path needs port mapping), and the unmodified url otherwise
-std::string mapUrlPorts(const std::string& url)
-{
-   // if we are in server mode then we need to do port mapping
-   if (session::options().programMode() != kSessionProgramModeServer)
-      return url;
-
-   // see if we can form a portmap path for this url
-   std::string path;
-   if (portmapPathForLocalhostUrl(url, &path))
-      return path;
-
-   return url;
-}
-
 // given a pair of paths, return the second in the context of the first
 std::string pathRelativeTo(const FilePath& sourcePath,
                            const FilePath& targetPath)

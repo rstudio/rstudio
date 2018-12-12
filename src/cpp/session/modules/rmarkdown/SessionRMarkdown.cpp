@@ -47,6 +47,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -548,7 +549,7 @@ private:
                startedJson["target_file"] =
                      module_context::createAliasedPath(targetFile_);
                startedJson["output_format"] = outputFormat_;
-               std::string url(module_context::mapUrlPorts(matches[1].str()));
+               std::string url(url_ports::mapUrlPorts(matches[1].str()));
 
                // add a / to the URL if it doesn't have one already
                // (typically portmapped URLs do, but the raw URL returned by

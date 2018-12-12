@@ -2453,6 +2453,10 @@ body.ubuntu_mono .searchBox {
 
 }
 
+.launcherJobRunButton {
+   margin-right: 0px;
+}
+
 .rstudio-themes-flat .rstudio-themes-dark .consoleClearButton,
 .rstudio-themes-flat .rstudio-themes-dark .terminalClearButton {
    opacity: 0.5;

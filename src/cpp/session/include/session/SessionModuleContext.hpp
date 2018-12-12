@@ -464,10 +464,6 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 
 std::string resourceFileAsString(const std::string& fileName);
 
-bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
-
-std::string mapUrlPorts(const std::string& url);
-
 std::string pathRelativeTo(const core::FilePath& sourcePath,
                            const core::FilePath& targetPath);
 

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
@@ -64,6 +65,7 @@ public class JobsPresenter extends BasePresenter
       void syncElapsedTime(int timestamp);
       void bringToFront();
       void setShowJobsTabPref(boolean show);
+      void refreshPaneStatusMessage();
    }
    
    public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
@@ -75,6 +77,7 @@ public class JobsPresenter extends BasePresenter
                         Commands commands,
                         GlobalDisplay globalDisplay,
                         Provider<JobManager> pJobManager,
+                        UIPrefs uiPrefs,
                         EventBus eventBus)
    {
       super(display);
@@ -82,9 +85,20 @@ public class JobsPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       pJobManager_ = pJobManager;
+      uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
+      commands_ = commands;
       binder.bind(commands, this);
-   }
+   
+      commands_.hideCompletedJobs().setChecked(uiPrefs.hideCompletedJobs().getValue());
+      
+      // register handler for hide completed jobs pref
+      uiPrefs_.hideCompletedJobs().addValueChangeHandler(hide ->
+      {
+         display_.refreshPaneStatusMessage();
+         commands_.hideCompletedJobs().setChecked(hide.getValue());
+      });
+    }
 
    @Override
    public void onJobUpdated(JobUpdatedEvent event)
@@ -166,11 +180,11 @@ public class JobsPresenter extends BasePresenter
       if (running > 0)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Jobs Still Running", 
+               "Local Jobs Still Running", 
                "The Jobs tab cannot be closed while there " +
                (running > 1 ?
-                  "are unfinished jobs" : "is an unfinished job") + "." +
-               "\n\nWait until all jobs have completed.");
+                  "are unfinished local jobs" : "is an unfinished local job") + "." +
+               "\n\nWait until all local jobs have completed.");
          return;
       }
       
@@ -183,6 +197,14 @@ public class JobsPresenter extends BasePresenter
    public void onActivateJobs()
    {
       display_.bringToFront();
+   }
+   
+   @Handler
+   public void onHideCompletedJobs()
+   {
+      boolean newValue = !uiPrefs_.hideCompletedJobs().getValue();
+      uiPrefs_.hideCompletedJobs().setGlobalValue(newValue);
+      uiPrefs_.writeUIPrefs();
    }
    
    // Private methods ---------------------------------------------------------
@@ -239,5 +261,7 @@ public class JobsPresenter extends BasePresenter
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private final Provider<JobManager> pJobManager_;
+   private final UIPrefs uiPrefs_;
+   private final Commands commands_;
    private final EventBus eventBus_;
 }

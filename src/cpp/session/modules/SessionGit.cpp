@@ -1708,7 +1708,7 @@ Error vcsCreateBranch(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1752,7 +1752,7 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1770,7 +1770,7 @@ Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
    
    return Success();
 }
@@ -1853,7 +1853,7 @@ Error vcsCommit(const json::JsonRpcRequest& request,
       return error;
    }
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1868,7 +1868,7 @@ Error vcsPush(const json::JsonRpcRequest& request,
 
    ask_pass::setActiveWindow(request.sourceWindow);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1888,7 +1888,7 @@ Error vcsPushBranch(const json::JsonRpcRequest& request,
 
    ask_pass::setActiveWindow(request.sourceWindow);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1903,7 +1903,7 @@ Error vcsPull(const json::JsonRpcRequest& request,
 
    ask_pass::setActiveWindow(request.sourceWindow);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -1918,7 +1918,7 @@ Error vcsPullRebase(const json::JsonRpcRequest& request,
 
    ask_pass::setActiveWindow(request.sourceWindow);
 
-   pResponse->setResult(pCP->toJson());
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }

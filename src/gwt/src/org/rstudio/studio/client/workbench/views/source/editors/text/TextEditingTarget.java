@@ -136,6 +136,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -816,12 +817,10 @@ public class TextEditingTarget implements
                   boolean enabled = e.getState() == 
                         DocTabDragStateChangedEvent.STATE_NONE;
                   
-                  // disable drag/drop if disabled in preferences
-                  if (enabled)
-                     enabled = prefs.enableTextDrag().getValue();
-                  
-                  // update editor surface
-                  docDisplay_.setDragEnabled(enabled);
+                  // make editor read only while we're dragging and dropping
+                  // tabs; otherwise the editor surface will accept a tab drop
+                  // as text
+                  docDisplay_.setReadOnly(!enabled);
                }
             });
       
@@ -2151,12 +2150,23 @@ public class TextEditingTarget implements
    }
 
    @Override
-   public void verifySqlPrerequisites()
+   public void verifyNewSqlPrerequisites()
    {
-      verifySqlPrequisites(null);
+      verifyNewSqlPrerequisites(null);
+   }
+
+   private void verifyNewSqlPrerequisites(final Command command) 
+   {
+      dependencyManager_.withRSQLite("Previewing SQL scripts", new Command() {
+         @Override
+         public void execute() {
+            if (command != null)
+               command.execute();
+         }
+      });
    }
    
-   private void verifySqlPrequisites(final Command command) 
+   private void verifySqlPrerequisites(final Command command) 
    {
       dependencyManager_.withDBI("Previewing SQL scripts", new Command() {
          @Override
@@ -4173,7 +4183,13 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsJob()
    {
-      codeExecution_.runSelectionAsJob();
+      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+   }
+   
+   @Handler
+   void onRunSelectionAsLauncherJob()
+   {
+      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
    }
    
    @Handler
@@ -5095,6 +5111,15 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   public void onSourceAsLauncherJob()
+   {
+      saveThenExecute(null, () ->
+      {
+         events_.fireEvent(new LauncherJobRunScriptEvent(getPath()));
+      });
+   }
+   
+   @Handler
    void onProfileCode()
    {
       dependencyManager_.withProfvis("The profiler", new Command()
@@ -5431,7 +5456,7 @@ public class TextEditingTarget implements
 
    void previewSql()
    {
-      verifySqlPrequisites(new Command() {
+      verifySqlPrerequisites(new Command() {
          @Override
          public void execute()
          {

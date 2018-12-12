@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -686,6 +687,16 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> showJobsTab()
    {
       return bool("show_jobs_tab", true);
+   }
+   
+   public PrefValue<Boolean> hideCompletedJobs()
+   {
+      return bool("hide_completed_jobs", false);
+   }
+   
+   public PrefValue<Integer> defaultJobsMode()
+   {
+      return integer("default_jobs_mode", JobConstants.JOB_TYPE_UNKNOWN);
    }
    
    public static final int BUSY_DETECT_ALWAYS = 0;

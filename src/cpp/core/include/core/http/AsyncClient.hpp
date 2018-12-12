@@ -92,10 +92,10 @@ class AsyncClient :
 public:
    AsyncClient(boost::asio::io_service& ioService,
                bool logToStderr = false)
-      : ioService_(ioService),
+      : chunkedEncoding_(false),
+        ioService_(ioService),
         connectionRetryContext_(ioService),
         logToStderr_(logToStderr),
-        chunkedEncoding_(false),
         closed_(false)
    {
    }
@@ -708,6 +708,7 @@ private:
 
 protected:
    http::Response response_;
+   bool chunkedEncoding_;
 
 private:
    boost::asio::io_service& ioService_;
@@ -719,7 +720,6 @@ private:
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
    ChunkHandler chunkHandler_;
-   bool chunkedEncoding_;
 
    boost::shared_ptr<ChunkState> chunkState_;
 

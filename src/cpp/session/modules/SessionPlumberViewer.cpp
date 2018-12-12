@@ -30,6 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "plumber/SessionPlumber.hpp"
 
@@ -49,7 +50,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
 
    // enque the event
    json::Object dataJson;
-   dataJson["url"] = module_context::mapUrlPorts(url);
+   dataJson["url"] = url_ports::mapUrlPorts(url);
    dataJson["path"] = module_context::createAliasedPath(plumberPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;

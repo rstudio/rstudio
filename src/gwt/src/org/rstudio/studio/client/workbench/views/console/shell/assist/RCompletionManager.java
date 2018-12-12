@@ -1326,27 +1326,6 @@ public class RCompletionManager implements CompletionManager
       context.setToken(token);
    }
    
-   private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
-         String line)
-   {
-      int index = line.lastIndexOf('(');
-      String token = line.substring(index + 1);
-      
-      AutocompletionContext result = new AutocompletionContext(
-            token,
-            token,
-            AutocompletionContext.TYPE_FILE);
-      
-      // NOTE: we overload the meaning of the function call string for file
-      // completions, to signal whether we should generate files relative to
-      // the current working directory, or to the file being used for
-      // completions
-      result.setFunctionCallString("useFile");
-      return result;
-      
-   }
-   
-   
    private void addAutocompletionContextForNamespace(
          String token,
          AutocompletionContext context)
@@ -1430,12 +1409,6 @@ public class RCompletionManager implements CompletionManager
       
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
-      
-      // If we're in Markdown mode and have an appropriate string, try to get
-      // file completions
-      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
-            firstLine.matches(".*\\[.*\\]\\(.*"))
-         return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // Get the token at the cursor position.
       String tokenRegex = ".*[^" +

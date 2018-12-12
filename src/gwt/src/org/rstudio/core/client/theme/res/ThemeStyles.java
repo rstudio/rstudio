@@ -210,4 +210,6 @@ public interface ThemeStyles extends CssResource
    String menuCheckable();
    
    String noLogo();
+   
+   String launcherJobRunButton();
 }

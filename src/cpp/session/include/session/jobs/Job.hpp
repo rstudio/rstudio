@@ -44,8 +44,8 @@ enum JobState {
 
 enum JobType {
    JobTypeUnknown = 0,
-   JobTypeSession = 1,
-   JobTypeLauncher = 2
+   JobTypeSession = 1, // local job, child of rsession
+   JobTypeLauncher = 2 // cluster job via job launcher
 };
 
 class Job
@@ -64,6 +64,7 @@ public:
        int max,
        JobState state,
        JobType type,
+       const std::string& cluster,
        bool autoRemove,
        SEXP actions,
        bool show,
@@ -93,6 +94,9 @@ public:
 
    // type of job
    JobType type() const;
+
+   // cluster for launcher jobs
+   std::string cluster() const;
 
    // job tags
    std::vector<std::string> tags() const;
@@ -152,6 +156,7 @@ private:
 
    JobState state_;
    JobType type_;
+   std::string cluster_;
 
    int progress_;
    int max_;

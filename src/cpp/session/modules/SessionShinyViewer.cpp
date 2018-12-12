@@ -29,9 +29,11 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUrlPorts.hpp>
 #include <session/SessionUserSettings.hpp>
 
 #include "shiny/SessionShiny.hpp"
+#include "session-config.h"
 
 using namespace rstudio::core;
 
@@ -61,7 +63,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
 
    // enque the event
    json::Object dataJson;
-   dataJson["url"] = module_context::mapUrlPorts(url);
+   dataJson["url"] = url_ports::mapUrlPorts(url);
    dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;

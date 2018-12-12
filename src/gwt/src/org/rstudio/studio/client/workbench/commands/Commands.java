@@ -570,6 +570,12 @@ public abstract class
    public abstract AppCommand clearJobs();
    public abstract AppCommand activateJobs();
    public abstract AppCommand runSelectionAsJob();
+   public abstract AppCommand hideCompletedJobs();
+
+   // Launcher Jobs
+   public abstract AppCommand startLauncherJob();
+   public abstract AppCommand sourceAsLauncherJob();
+   public abstract AppCommand runSelectionAsLauncherJob();
 
    // Other
    public abstract AppCommand checkSpelling();

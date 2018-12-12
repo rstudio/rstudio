@@ -29,6 +29,8 @@
 #include "ScriptJob.hpp"
 #include "SessionJobs.hpp"
 
+#include "../modules/overlay/SessionOverlay.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -340,7 +342,7 @@ Error runScriptJob(const json::JsonRpcRequest& request,
 Error clearJobs(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   removeCompletedJobs();
+   removeCompletedLocalJobs();
    return Success();
 }
 
@@ -360,14 +362,7 @@ Error setJobListening(const json::JsonRpcRequest& request,
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
    if (pJob->type() == JobType::JobTypeLauncher)
-   {
-      error = r::exec::RFunction(".rs.launcher.streamOutput")
-            .addParam(id)
-            .addParam(listening)
-            .call();
-      if (error)
-         return error;
-   }
+      modules::overlay::streamLauncherOutput(id, listening);
 
    // if listening started, return the output so far
    if (listening)

@@ -442,6 +442,7 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
       sourceMenu.addSeparator();
+      sourceMenu.addItem(commands_.sourceAsLauncherJob().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceAsJob().createMenuItem(false));
          
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);

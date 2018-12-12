@@ -242,7 +242,7 @@ TEST_CASE("ConsoleProcessInfo")
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
                                   altActive, cwd, cols, rows, zombie, trackEnv);
 
-      core::json::Object origJson = cpiOrig.toJson();
+      core::json::Object origJson = cpiOrig.toJson(PersistentSerialization);
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
             ConsoleProcessInfo::fromJson(origJson);
       CHECK(pCpiRestored);

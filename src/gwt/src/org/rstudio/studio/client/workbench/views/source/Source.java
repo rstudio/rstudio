@@ -383,6 +383,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.notebookToggleExpansion());
       dynamicCommands_.add(commands.sendToTerminal());
       dynamicCommands_.add(commands.renameSourceDoc());
+      dynamicCommands_.add(commands.sourceAsLauncherJob());
       dynamicCommands_.add(commands.sourceAsJob());
       for (AppCommand command : dynamicCommands_)
       {
@@ -1403,7 +1404,7 @@ public class Source implements InsertSourceHandler,
            @Override
            public void execute(EditingTarget target)
            {
-              target.verifySqlPrerequisites(); 
+              target.verifyNewSqlPrerequisites(); 
               target.setSourceOnSave(true);
            }
          }
