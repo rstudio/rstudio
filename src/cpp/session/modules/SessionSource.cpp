@@ -239,6 +239,11 @@ Error openDocument(const json::JsonRpcRequest& request,
       return Success();
    }
 
+   // prefer UTF-8 encoding for R Markdown documents if no
+   // encoding is set
+   if (type == "r_markdown" && encoding == "")
+      encoding = "UTF-8";
+
    // set the doc contents to the specified file
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
    pDoc->setEncoding(encoding);
