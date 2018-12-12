@@ -2457,8 +2457,8 @@ public class TextEditingTarget implements
       
       final String encoding = StringUtil.firstNotNullOrEmpty(new String[] {
             encodingOverride,
-            preferredDocumentEncoding,
             docUpdateSentinel_.getEncoding(),
+            preferredDocumentEncoding,
             prefs_.defaultEncoding().getValue()
       });
 
