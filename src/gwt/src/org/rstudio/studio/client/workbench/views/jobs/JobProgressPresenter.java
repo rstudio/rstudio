@@ -31,7 +31,6 @@ public class JobProgressPresenter implements JobElapsedTickEvent.Handler,
       void updateElapsed(int timestamp);
       void showProgress(LocalJobProgress progress);
       void showJob(Job job);
-      void setComplete();
    }
    
    @Inject
@@ -64,10 +63,5 @@ public class JobProgressPresenter implements JobElapsedTickEvent.Handler,
       display_.showJob(job);
    }
    
-   public void setComplete()
-   {
-      display_.setComplete();
-   }
-
    private final Display display_;
 }

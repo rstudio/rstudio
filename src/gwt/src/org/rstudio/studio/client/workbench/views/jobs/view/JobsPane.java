@@ -132,20 +132,13 @@ public class JobsPane extends WorkbenchPane
             list_.updateJob(job);
             if (job.id == current_)
             {
-               if (job.completed > 0 && progress_ != null)
+               // update progress
+               if (progress_ == null)
                {
-                  progress_.setComplete();
+                  progress_ = new JobProgress();
+                  toolbar_.addLeftWidget(progress_);
                }
-               else
-               {
-                  // update progress
-                  if (progress_ == null)
-                  {
-                     progress_ = new JobProgress();
-                     toolbar_.addLeftWidget(progress_);
-                  }
-                  progress_.showJob(job);
-               }
+               progress_.showJob(job);
             }
             break;
             
@@ -338,12 +331,6 @@ public class JobsPane extends WorkbenchPane
          progress_ = new JobProgress();
          toolbar_.addLeftWidget(progress_);
          progress_.showJob(job);
-
-         // if job is complete, mark that
-         if (job.completed > 0)
-         {
-            progress_.setComplete();
-         }
       }
    }
    
