@@ -218,8 +218,16 @@ Error openDocument(const json::JsonRpcRequest& request,
    error = json::readParam(request.params, 2, &encoding);
    if (error && error.code() != core::json::errc::ParamTypeMismatch)
       return error ;
+
    if (encoding.empty())
-      encoding = ::locale2charset(NULL);
+   {
+      // prefer UTF-8 encoding for R Markdown documents if no
+      // encoding is set
+      if (type == "r_markdown" && encoding == "")
+         encoding = "UTF-8";
+      else
+         encoding = ::locale2charset(NULL);
+   }
    
    // ensure the file exists
    FilePath documentPath = module_context::resolveAliasedPath(path);
@@ -238,11 +246,6 @@ Error openDocument(const json::JsonRpcRequest& request,
                                  "be opened by the source editor.");
       return Success();
    }
-
-   // prefer UTF-8 encoding for R Markdown documents if no
-   // encoding is set
-   if (type == "r_markdown" && encoding == "")
-      encoding = "UTF-8";
 
    // set the doc contents to the specified file
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
