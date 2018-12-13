@@ -23,6 +23,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -62,6 +63,9 @@ public class JobItem extends Composite
 
       @Source("info_2x.png")
       ImageResource jobInfo();
+   
+      @Source("launcher_2x.png")
+      ImageResource launcherJobType();
    }
    
    public interface Styles extends CssResource
@@ -84,6 +88,7 @@ public class JobItem extends Composite
       String status();
       String progress();
       String failed();
+      String jobType();
    }
 
    public JobItem(final Job job)
@@ -95,21 +100,32 @@ public class JobItem extends Composite
                      new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
             });
       
-      stopOrKill_ = new ToolbarButton(
+      launcherStop_ = new ToolbarButton(
             RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
             {
                // TODO: different UI that exposes both "stop" and "kill" if the job
                // supports it. Probably a dialog with a "Force" checkbox which is
-               // always deselected by default. Fires ACTION_KILL if checkbox
-               // is selected, otherwise ACTION_STOP.
-               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+               // always deselected by default.
+               
+               // TODO: also figure out how to incorporate "cancel", which is used
+               // to stop a job that is still being scheduled; maybe handle that
+               // entirely server-side?
+               RStudioGinjector.INSTANCE.getServer().stopLauncherJob(
+                     job.id, false /*kill*/, new VoidServerRequestCallback());
             });
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
       spinner_.setResource(new ImageResource2x(RESOURCES.jobSpinner()));
-
+      
+      if (job.type == JobConstants.JOB_TYPE_LAUNCHER)
+      {
+         jobType_.setResource(new ImageResource2x(RESOURCES.launcherJobType()));
+         jobType_.setTitle("Cluster: " + job.cluster);
+      }
+      else
+         jobType_.setVisible(false);
+      
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {
@@ -206,35 +222,26 @@ public class JobItem extends Composite
       // show the state if we're not showing the progress bar
       state_.setVisible(!running_.isVisible());
       
-      // show appropriate stop button if job has a "stop" (and optional "kill")
-      // action, and is not completed
+      // show stop button if job has a "stop" action, and is not completed
       if (job_.completed == 0)
       {
-         boolean hasStop = JsArrayUtil.jsArrayStringContains(job_.actions,
-               JobConstants.ACTION_STOP);
-         boolean hasKill = JsArrayUtil.jsArrayStringContains(job_.actions,
-               JobConstants.ACTION_KILL);
-         if (hasStop && hasKill)
+         if (job_.type == JobConstants.JOB_TYPE_LAUNCHER)
          {
             stop_.setVisible(false);
-            stopOrKill_.setVisible(true);
-         }
-         else if (hasStop)
-         {
-            stop_.setVisible(true);
-            stopOrKill_.setVisible(false);
+            launcherStop_.setVisible(true);
          }
          else
          {
-            // can't stop OR kill
-            stop_.setVisible(false);
-            stopOrKill_.setVisible(false);
+            stop_.setVisible(
+                  JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
+                  job_.completed == 0);
+            launcherStop_.setVisible(false);
          }
       }
       else
       {
          stop_.setVisible(false);
-         stopOrKill_.setVisible(false);
+         launcherStop_.setVisible(false);
       }
       
       // update progress bar if it's showing
@@ -281,6 +288,7 @@ public class JobItem extends Composite
    @UiField ProgressBar progress_;
    @UiField Image select_;
    @UiField Image spinner_;
+   @UiField Image jobType_;
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
@@ -289,6 +297,6 @@ public class JobItem extends Composite
    @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
-   @UiField(provided=true) ToolbarButton stopOrKill_;
+   @UiField(provided=true) ToolbarButton launcherStop_;
    @UiField Styles styles_;
 }

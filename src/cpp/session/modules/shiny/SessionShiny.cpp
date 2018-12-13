@@ -30,6 +30,7 @@
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #define kShinyTypeNone       "none"
 #define kShinyTypeDirectory  "shiny-dir"
@@ -370,7 +371,7 @@ SEXP rs_showShinyGadgetDialog(SEXP captionSEXP,
 
    // get transformed URL
    std::string url = r::sexp::safeAsString(urlSEXP);
-   url = module_context::mapUrlPorts(url);
+   url = url_ports::mapUrlPorts(url);
 
    // get preferred width and height
    int preferredWidth = r::sexp::asInteger(preferredWidthSEXP);

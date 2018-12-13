@@ -61,6 +61,10 @@ public:
    void setStoredHash(const std::string& hashName, 
                       const std::string& hashValue);
 
+   // port scrambling token
+   std::string portToken() const;
+   void setPortToken(const std::string& token);
+
    // get underlying settings
    core::Settings& settings() { return settings_; }
 

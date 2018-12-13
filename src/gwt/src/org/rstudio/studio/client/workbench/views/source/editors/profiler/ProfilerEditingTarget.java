@@ -220,7 +220,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    @Override
-   public void verifySqlPrerequisites()
+   public void verifyNewSqlPrerequisites()
    {
    }
 

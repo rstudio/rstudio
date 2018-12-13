@@ -31,6 +31,7 @@
 #define kJobMax         "max"
 #define kJobState       "state"
 #define kJobType        "type"
+#define kJobCluster     "cluster"
 #define kJobRecorded    "recorded"
 #define kJobStarted     "started"
 #define kJobCompleted   "completed"
@@ -63,6 +64,7 @@ Job::Job(const std::string& id,
          int max,
          JobState state,
          JobType type,
+         const std::string& cluster,
          bool autoRemove,
          SEXP actions,
          bool show,
@@ -74,6 +76,7 @@ Job::Job(const std::string& id,
    group_(group),
    state_(JobIdle),
    type_(type),
+   cluster_(cluster),
    progress_(progress),
    max_(max),
    recorded_(recorded),
@@ -145,6 +148,11 @@ JobType Job::type() const
    return type_;
 }
 
+std::string Job::cluster() const
+{
+   return cluster_;
+}
+
 std::vector<std::string> Job::tags() const
 {
    return tags_;
@@ -164,6 +172,7 @@ json::Object Job::toJson() const
    job[kJobMax]        = max_;
    job[kJobState]      = static_cast<int>(state_);
    job[kJobType]       = static_cast<int>(type_);
+   job[kJobCluster]    = cluster_;
    job[kJobRecorded]   = static_cast<int64_t>(recorded_);
    job[kJobStarted]    = static_cast<int64_t>(started_);
    job[kJobCompleted]  = static_cast<int64_t>(completed_);
@@ -232,7 +241,8 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       return error;
    
    error = json::readObject(src,
-      kJobSaveOutput, &pJob->saveOutput_);
+      kJobSaveOutput, &pJob->saveOutput_,
+      kJobCluster, &pJob->cluster_);
    if (error)
       return error;
 
@@ -351,6 +361,10 @@ FilePath Job::outputCacheFile()
 
 void Job::addOutput(const std::string& output, bool asError)
 {
+   // don't bother the client with empty output events
+   if (output.empty())
+      return;
+
    int type = asError ?
             module_context::kCompileOutputError :
             module_context::kCompileOutputNormal;

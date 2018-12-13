@@ -224,7 +224,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
-      deps.add(Dependency.cranPackage("rsconnect", "0.8.11"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.8.12"));
       
       withDependencies(
         "Publishing",
@@ -856,6 +856,27 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       withDependencies(
         "DBI",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("DBI", "0.8")
+         },
+         true,
+         new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+      );
+   }
+
+   public void withRSQLite(String userAction, final Command command)
+   {
+      withDependencies(
+        "RSQLite",
          userAction,
          new Dependency[] {
             Dependency.cranPackage("DBI", "0.8"),

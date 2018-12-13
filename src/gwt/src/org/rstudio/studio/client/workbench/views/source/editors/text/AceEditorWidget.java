@@ -1131,12 +1131,7 @@ public class AceEditorWidget extends Composite
    
    public void setDragEnabled(boolean enabled)
    {
-      // the ACE API currently provides no way to disable dropping text 
-      // from external sources specifically (the dragEnabled option affects
-      // only internal ACE dragging); for now, just put the whole editor into
-      // read-only mode while dragging, which prevents it from accepting the
-      // text 
-      editor_.setReadOnly(!enabled);
+      editor_.setDragEnabled(enabled);
    }
    
    public LineWidgetManager getLineWidgetManager()

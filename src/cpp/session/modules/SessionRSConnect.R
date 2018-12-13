@@ -15,6 +15,12 @@
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
 {
+  # for R files, assume that the containing directory is treated as the
+  # application path as opposed to the file itself
+  ext <- tolower(tools::file_ext(sourcePath))
+  if (identical(ext, "r"))
+    sourcePath <- dirname(sourcePath)
+  
   rsconnect::forgetDeployment(appPath = sourcePath, force = TRUE)
 })
 

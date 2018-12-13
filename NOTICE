@@ -35,6 +35,7 @@ used by these components are included below):
 - ansi-regex
 - RapidJSON
 - msinttypes
+- fontawesome
 
 RStudio also includes a binary copy of libclang. This component is
 licensed to you under the University of Illinois/NCSA Open Source
@@ -3400,3 +3401,24 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS AND CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+fontawesome
+-----------------------------------------------------------------------
+Font Awesome Free License
+Last updated on July 12, 2018
+
+Font Awesome Pro License
+Font Awesome Free is free, open source, and GPL friendly. 
+You can use it for commercial projects, open source projects, or really 
+almost whatever you want.
+
+Icons — CC BY 4.0 License
+In the Font Awesome Free download, the CC BY 4.0 license applies to 
+all icons packaged as .svg and .js files types.
+
+Fonts — SIL OFL 1.1 License
+In the Font Awesome Free download, the SIL OLF license applies to 
+all icons packaged as web and desktop font files.
+
+Code — MIT License
+In the Font Awesome Free download, the MIT license applies to 
+all non-font and non-icon files.

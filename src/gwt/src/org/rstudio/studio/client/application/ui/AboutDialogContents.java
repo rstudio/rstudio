@@ -23,6 +23,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
@@ -59,13 +60,20 @@ public class AboutDialogContents extends Composite
       noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
       
-      if (editionInfo.proLicense() && Desktop.isDesktop())
+      if (editionInfo.proLicense())
       {
-         noticeBox.setVisibleLines(9);
-         licenseBox.setVisibleLines(3);
-         licenseLabel.setVisible(true);
-         licenseBox.setVisible(true);
-         licenseBox.setText("Loading...");
+         // no need to show GPL notice in pro edition
+         gplNotice.setVisible(false);
+
+         if (Desktop.isDesktop())
+         {
+             // load license status in desktop mode
+             noticeBox.setVisibleLines(9);
+             licenseBox.setVisibleLines(3);
+             licenseLabel.setVisible(true);
+             licenseBox.setVisible(true);
+             licenseBox.setText("Loading...");
+         }
       }
    }
    
@@ -85,6 +93,7 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField TextArea noticeBox;
+   @UiField HTMLPanel gplNotice;
    @UiField Label licenseLabel;
    @UiField TextArea licenseBox;
    @UiField Label productName;

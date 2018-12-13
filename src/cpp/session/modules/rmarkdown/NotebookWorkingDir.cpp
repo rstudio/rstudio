@@ -105,7 +105,7 @@ void DirCapture::onExprComplete()
                currentDir.absolutePath() + " inside a notebook chunk. The "
                "working directory will be reset when the chunk is finished "
                "running. Use the knitr root.dir option in the setup chunk " 
-               "to change the working directory for notebook chunks.");
+               "to change the working directory for notebook chunks.\n");
          
          // don't show warning more than once per chunk
          warned_ = true;

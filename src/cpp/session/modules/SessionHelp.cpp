@@ -48,10 +48,16 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "presentation/SlideRequestHandler.hpp"
 
 #include "SessionHelpHome.hpp"
+#include "session-config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/UrlPorts.hpp>
+#endif
 
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
@@ -215,18 +221,20 @@ bool handleLocalHttpUrl(const std::string& url)
       return true;
    }
 
+#ifdef RSTUDIO_SERVER
    // other localhost URLs can benefit from port mapping -- we map them
    // all since if we don't do any mapping they'll just fail hard
-   if (session::options().programMode() == kSessionProgramModeServer)
+   
+   // see if we can form a portmap path for this url
+   std::string path;
+   if (options().programMode() == kSessionProgramModeServer &&
+       server_core::portmapPathForLocalhostUrl(url, 
+            persistentState().portToken(), &path))
    {
-      // see if we can form a portmap path for this url
-      std::string path;
-      if (module_context::portmapPathForLocalhostUrl(url, &path))
-      {
-         module_context::enqueClientEvent(browseUrlEvent(path));
-         return true;
-      }
+      module_context::enqueClientEvent(browseUrlEvent(path));
+      return true;
    }
+#endif
 
    // wasn't a url of interest
    return false;

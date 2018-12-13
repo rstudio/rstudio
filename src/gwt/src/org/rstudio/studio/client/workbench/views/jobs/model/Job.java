@@ -35,8 +35,11 @@ public class Job
    // the job's state (idle, running, completed, etc.)
    public int state;
 
-   // the job's type (session, launcher)
+   // the job's type (local session, launcher)
    public int type;
+   
+   // launcher cluster (empty for local session jobs)
+   public String cluster;
    
    // the number of progress units the job has completed so far
    public int progress;

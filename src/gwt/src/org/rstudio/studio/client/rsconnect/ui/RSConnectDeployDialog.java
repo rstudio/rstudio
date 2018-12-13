@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -140,11 +141,14 @@ public class RSConnectDeployDialog
    
    private void onDeploy()
    {
+      final ProgressIndicator indicator = addProgressIndicator();
+      indicator.onProgress("Deploying...");
       contents_.validateResult(new OperationWithInput<Boolean>()
       {
          @Override
          public void execute(Boolean valid)
          {
+            indicator.onCompleted();
             if (valid)
             {
                connect_.fireRSConnectPublishEvent(

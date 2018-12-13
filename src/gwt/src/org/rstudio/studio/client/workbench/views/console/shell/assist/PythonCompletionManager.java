@@ -36,11 +36,7 @@ public class PythonCompletionManager extends CompletionManagerBase
                                   CodeToolsServerOperations server,
                                   CompletionContext context)
    {
-      super(popup, docDisplay, context);
-      
-      docDisplay_ = docDisplay;
-      server_ = server;
-      context_ = context;
+      super(popup, docDisplay, server, context);
    }
    
    @Override
@@ -284,9 +280,4 @@ public class PythonCompletionManager extends CompletionManagerBase
    
    private static final Pattern RE_IMPORT_AS =
          Pattern.create("^\\s*import\\s+([\\w._]+)\\s+as\\s+([\\w._]+)\\s*(?:#.*|$)", "");
-   
-   private final DocDisplay docDisplay_;
-   private final CodeToolsServerOperations server_;
-   private final CompletionContext context_;
-   
 }

@@ -26,6 +26,7 @@
 #  define test_that SECTION
 #  define expect_true(x) CHECK((x))
 #  define expect_false(x) CHECK_FALSE((x))
+#  define expect_equal(x,y) REQUIRE((x) == (y))
 
 # endif
 

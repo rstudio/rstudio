@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -82,6 +83,11 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          ServerRequestCallback<JsObject> callback);
    
    void executeUserCommand(String name, ServerRequestCallback<Void> callback);
+   
+   void markdownGetCompletions(
+         int completionType,
+         JavaScriptObject completionData,
+         ServerRequestCallback<Completions> requestCallback);
    
    void pythonGetCompletions(
          String line,

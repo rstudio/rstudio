@@ -30,6 +30,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "ViewerHistory.hpp"
 
@@ -52,7 +53,7 @@ void viewerNavigate(const std::string& url,
                     bool bringToFront)
 {
    // record the url (for reloads)
-   s_currentUrl = module_context::mapUrlPorts(url);
+   s_currentUrl = url_ports::mapUrlPorts(url);
    s_isHTMLWidget = isHTMLWidget;
 
    // enque the event

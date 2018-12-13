@@ -60,30 +60,35 @@ public class JobProgress extends Composite
    public void showJob(Job job)
    {
       name_.setText(job.name);
-      if (job.max > 0)
+      String status = JobConstants.stateDescription(job.state);
+      if (job.completed > 0)
       {
+         // Job is not running; show its completion status and time
+         progress_.setVisible(false);
+         status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
+         elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
+      }
+      else if (job.max > 0)
+      {
+         // Job is running and has a progress bar; show it and hide the status indicator
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
+         status_.setVisible(false);
       }
       else
       {
+         // Job is running but does not have progress; show the status field
          progress_.setVisible(false);
          status_.setVisible(true);
-         String status = JobConstants.stateDescription(job.state);
-         if (job.completed > 0)
-         {
-            // Job is not running; show its completion status and time
-            status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
-            elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
-         }
-         else if (!StringUtil.isNullOrEmpty(job.status))
+         if (!StringUtil.isNullOrEmpty(job.status))
          {
             // Still running; show its status
             status = job.status;
          }
-         status_.setText(status);
       }
+      status_.setText(status);
       jobProgress_ = new LocalJobProgress(job);
+      complete_ = job.completed > 0;
    }
 
    @Override
@@ -94,13 +99,6 @@ public class JobProgress extends Composite
       
       int delta = timestamp - jobProgress_.received();
       elapsed_.setText(StringUtil.conciseElaspedTime(jobProgress_.elapsed() + delta));
-   }
-
-   @Override
-   public void setComplete()
-   {
-      progress_.setVisible(false);
-      complete_ = true;
    }
 
    @UiField Label name_;

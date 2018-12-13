@@ -26,7 +26,8 @@ import com.google.gwt.core.client.JsArray;
 public interface ApplicationServerOperations extends PrefsServerOperations
 {   
    // establish new session for this client
-   void clientInit(ServerRequestCallback<SessionInfo> requestCallback);
+   void clientInit(String baseURL, 
+           ServerRequestCallback<SessionInfo> requestCallback);
 
    // interrupt the current session
    void interrupt(ServerRequestCallback<Void> requestCallback);

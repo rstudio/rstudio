@@ -1,7 +1,7 @@
 /*
  * SessionPersistentState.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,12 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include "session-config.h"
+
+#ifdef RSTUDIO_SERVER
+#include <server_core/UrlPorts.hpp>
+#endif
 
 using namespace rstudio::core ;
 
@@ -122,6 +128,26 @@ std::string PersistentState::activeEnvironmentName() const
 void PersistentState::setActiveEnvironmentName(std::string environmentName)
 {
    settings_.set("activeEnvironmentName", environmentName);
+}
+
+
+std::string PersistentState::portToken() const
+{
+   return settings_.get("portToken", 
+#ifdef RSTUDIO_SERVER
+   // on RStudio Server, we have a fallback default so that we're guaranteed to have a port token to
+   // work with (better a predictable obfuscated value than a raw or busted one)
+   kDefaultPortToken
+#else
+   // Desktop doesn't use port tokens
+   ""
+#endif
+   );
+}
+
+void PersistentState::setPortToken(const std::string& token)
+{
+   settings_.set("portToken", token);
 }
 
 std::string PersistentState::getStoredHash(const std::string& hashName) const

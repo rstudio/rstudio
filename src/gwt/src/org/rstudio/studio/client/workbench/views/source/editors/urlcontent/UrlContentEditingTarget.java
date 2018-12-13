@@ -180,7 +180,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    @Override
-   public void verifySqlPrerequisites()
+   public void verifyNewSqlPrerequisites()
    {
    }
       

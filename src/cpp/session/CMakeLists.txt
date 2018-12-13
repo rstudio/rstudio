@@ -90,6 +90,7 @@ set (SESSION_SOURCE_FILES
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
    SessionUriHandlers.cpp
+   SessionUrlPorts.cpp
    SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp

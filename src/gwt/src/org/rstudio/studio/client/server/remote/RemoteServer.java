@@ -319,12 +319,15 @@ public class RemoteServer implements Server
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
 
-   public void clientInit(
+   public void clientInit(String baseURL,
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
       // send init request (record clientId and version contained in response)
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(baseURL));
       sendRequest(RPC_SCOPE, 
                   CLIENT_INIT, 
+                  params,
                   new ServerRequestCallback<SessionInfo>() {
 
          public void onResponseReceived(SessionInfo sessionInfo)
@@ -984,6 +987,18 @@ public class RemoteServer implements Server
                   GET_COMPLETIONS,
                   params,
                   requestCallback);
+   }
+   
+   public void markdownGetCompletions(int completionType,
+                                      JavaScriptObject completionData,
+                                      ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completionType)
+            .add(completionData)
+            .get();
+      
+      sendRequest(RPC_SCOPE, MARKDOWN_GET_COMPLETIONS, params, requestCallback);
    }
    
    public void pythonGetCompletions(String line,
@@ -5680,6 +5695,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "launcher_jobs_refresh", callback);
    }
 
+   @Override
+   public void stopLauncherJob(String jobId,
+                               boolean kill,
+                               ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(jobId));
+      params.set(1, JSONBoolean.getInstance(kill));
+      sendRequest(RPC_SCOPE, "launcher_jobs_stop_job", params, callback);
+   }
+
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE,
@@ -6090,6 +6116,8 @@ public class RemoteServer implements Server
    
    private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
+   
+   private static final String MARKDOWN_GET_COMPLETIONS = "markdown_get_completions";
    
    private static final String PYTHON_GET_COMPLETIONS = "python_get_completions";
    private static final String PYTHON_GO_TO_DEFINITION = "python_go_to_definition";
