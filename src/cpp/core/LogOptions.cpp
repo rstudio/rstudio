@@ -210,7 +210,7 @@ Error LogOptions::read()
 #else
    // desktop - read user file first, and only read admin file if the user file does not exist
    FilePath optionsFile = core::system::userSettingsPath(core::system::userHomePath(),
-                                                         "R",
+                                                         "RStudio-Desktop",
                                                          false).complete("logging.conf");
    if (!optionsFile.exists())
       #ifdef _WIN32

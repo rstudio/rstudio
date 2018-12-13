@@ -106,7 +106,7 @@ std::string s_programIdentity;
 boost::shared_ptr<LogOptions> s_logOptions;
 
 // mutex for logging synchronization
-boost::mutex s_loggingMutex;
+boost::recursive_mutex s_loggingMutex;
 
 namespace {
 
@@ -179,7 +179,7 @@ void initializeSecondaryLogWriters()
 
 LogLevel lowestLogLevel()
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       if (!s_logOptions)
          return kLogLevelWarning;
@@ -208,7 +208,7 @@ Error initLog()
 
 Error reinitLog()
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       return initLog();
    }
@@ -221,7 +221,7 @@ Error initializeStderrLog(const std::string& programIdentity,
                           int logLevel,
                           bool enableConfigReload)
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default stderr logger options
       StdErrLoggerOptions options;
@@ -245,7 +245,7 @@ Error initializeLog(const std::string& programIdentity,
                     const FilePath& logDir,
                     bool enableConfigReload)
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default file logger options
       FileLoggerOptions options;
@@ -267,7 +267,7 @@ Error initializeLog(const std::string& programIdentity,
 
 void setLogToStderr(bool logToStderr)
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       if (s_pLogWriter)
          s_pLogWriter->setLogToStderr(logToStderr);
@@ -291,7 +291,7 @@ void log(LogLevel logLevel,
          const std::string& message,
          const std::string& logSection)
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       bool logToMainLogger = true;
 

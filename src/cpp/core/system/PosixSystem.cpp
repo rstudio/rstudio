@@ -189,14 +189,14 @@ void initHook()
 
 // statics defined in System.cpp
 extern boost::shared_ptr<LogOptions> s_logOptions;
-extern boost::mutex s_loggingMutex;
+extern boost::recursive_mutex s_loggingMutex;
 extern std::string s_programIdentity;
 
 Error initializeSystemLog(const std::string& programIdentity,
                           int logLevel,
                           bool enableConfigReload)
 {
-   LOCK_MUTEX(s_loggingMutex)
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default syslog logger options
       SysLoggerOptions options;
