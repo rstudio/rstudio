@@ -2451,9 +2451,14 @@ public class TextEditingTarget implements
          final String encodingOverride,
          final CommandWithArg<String> command)
    {
+      String preferredDocumentEncoding = null;
+      if (docDisplay_.getFileType().isRmd())
+         preferredDocumentEncoding = "UTF-8";
+      
       final String encoding = StringUtil.firstNotNullOrEmpty(new String[] {
             encodingOverride,
             docUpdateSentinel_.getEncoding(),
+            preferredDocumentEncoding,
             prefs_.defaultEncoding().getValue()
       });
 
