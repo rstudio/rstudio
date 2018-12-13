@@ -36,8 +36,12 @@
       props$project_path
    else if (identical(workingDirProp, "current"))
       getwd()
-   else
-      dirname(path)
+   
+   # check for NULL working dir (don't include as part of if-else check above
+   # since some documents may not have an associated project and yet could
+   # be configured to use a project directory)
+   if (is.null(workingDir))
+      workingDir <- dirname(path)
    
    # determine dirname, basename (need to handle trailing slashes properly
    # so can't just use dirname / basename)
