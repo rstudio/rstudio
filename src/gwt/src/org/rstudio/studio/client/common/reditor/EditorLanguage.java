@@ -1,7 +1,7 @@
 /*
  * EditorLanguage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,6 +74,8 @@ public class EditorLanguage
          "ace/mode/toml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
          "ace/mode/xml", false, false);
+   public static final EditorLanguage LANG_SCSS = new EditorLanguage(
+         "ace/mode/scss", false, true);
    
    public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);

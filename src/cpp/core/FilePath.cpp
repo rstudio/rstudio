@@ -422,6 +422,7 @@ MimeType s_mimeTypes[] =
    { "htm",   "text/html" },
    { "html",  "text/html" },
    { "css",   "text/css" },
+   { "scss",  "text/scss" },
    { "gif",   "image/gif" },
    { "jpg",   "image/jpeg" },
    { "jpeg",  "image/jpeg" },

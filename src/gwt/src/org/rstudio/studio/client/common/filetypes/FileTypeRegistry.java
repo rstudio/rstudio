@@ -78,7 +78,6 @@ public class FileTypeRegistry
    public static final TextFileType STAN = new StanFileType();
    
    public static final TextFileType MERMAID = new MermaidFileType();
-   
    public static final TextFileType GRAPHVIZ = new GraphvizFileType();
 
 
@@ -126,6 +125,12 @@ public class FileTypeRegistry
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
                           new ImageResource2x(ICONS.iconCss2x()),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false, false);
+
+   public static final TextFileType SCSS =
+         new TextFileType("scss", "SCSS", EditorLanguage.LANG_SCSS, ".scss",
+                          new ImageResource2x(ICONS.iconScss2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
@@ -359,6 +364,7 @@ public class FileTypeRegistry
       register("*.htm", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.html", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
+      register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
       register("*.rmd", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
