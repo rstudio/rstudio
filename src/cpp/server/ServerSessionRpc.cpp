@@ -1,7 +1,7 @@
 /*
  * ServerSessionRpc.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,21 +72,24 @@ void writeInvalidRequest(boost::shared_ptr<core::http::AsyncConnection> pConnect
 // used when clients are sending RPC via TCP
 // ensures messages are sent from a trusted (logged in) user
 bool validateSecureCookie(boost::shared_ptr<core::http::AsyncConnection> pConnection,
-                          std::string* pUser)
+                          std::string* pUser,
+                          bool fallbackAllowed)
 {
    const http::Request& request = pConnection->request();
 
    std::string cookieValue = request.cookieValueFromHeader(kRstudioRpcCookieHeader);
    if (cookieValue.empty())
    {
-      LOG_WARNING_MESSAGE("No auth cookie supplied for server RPC call");
+      if (!fallbackAllowed)
+         LOG_WARNING_MESSAGE("No auth cookie supplied for server RPC call");
       return false;
    }
 
    std::string user = core::http::secure_cookie::readSecureCookie(cookieValue);
    if (user.empty())
    {
-      LOG_WARNING_MESSAGE("Invalid auth cookie supplied for server RPC call");
+      if (!fallbackAllowed)
+         LOG_WARNING_MESSAGE("Invalid auth cookie supplied for server RPC call");
       return false;
    }
 
@@ -94,8 +97,11 @@ bool validateSecureCookie(boost::shared_ptr<core::http::AsyncConnection> pConnec
    return true;
 }
 
+// validation requiring Rpc secrets
 void validationHandler(
       const auth::SecureAsyncUriHandlerFunction& handler,
+      http::AsyncUriHandlerFunction unauthorizedResponseFunction,
+      bool fallbackAllowed, // failure should not be logged
       boost::shared_ptr<core::http::AsyncConnection> pConnection)
 {
    std::string username;
@@ -107,9 +113,9 @@ void validationHandler(
    // if there is no secret, check for a message signature instead
    if (secret.empty())
    {
-      if (!validateSecureCookie(pConnection, &username))
+      if (!validateSecureCookie(pConnection, &username, fallbackAllowed))
       {
-         writeInvalidRequest(pConnection);
+         unauthorizedResponseFunction(pConnection);
          return;
       }
    }
@@ -118,9 +124,12 @@ void validationHandler(
       // used for traditional unix socket mode
       if (secret != s_sessionSharedSecret)
       {
-         LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
-                             "secret " + secret);
-         writeInvalidRequest(pConnection);
+         if (!fallbackAllowed)
+         {
+            LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
+                                "secret " + secret);
+         }
+         unauthorizedResponseFunction(pConnection);
          return;
       }
 
@@ -134,7 +143,7 @@ void validationHandler(
          {
             LOG_WARNING_MESSAGE("Couldn't determine user for Server RPC request");
             LOG_ERROR(error);
-            writeInvalidRequest(pConnection);
+            unauthorizedResponseFunction(pConnection);
             return;
          }
 
@@ -146,6 +155,19 @@ void validationHandler(
    handler(username, pConnection);
 }
 
+// given a request which has been confirmed to have valid login cookie,
+// perform additional validation before invoking the handler
+void validationLoginHandler(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> pConnection,
+      auth::SecureAsyncUriHandlerFunction handler)
+{
+   // TODO (gary)
+   // check CSRF token
+   // double check that URL includes session context
+   handler(username, pConnection);
+}
+
 } // anonymous namespace
 
 void addHandler(const std::string &prefix,
@@ -154,19 +176,61 @@ void addHandler(const std::string &prefix,
    if (s_pSessionRpcServer)
    {
       s_pSessionRpcServer->addHandler(
-               prefix, boost::bind(validationHandler, handler, _1));
+               prefix, boost::bind(validationHandler,
+                                   handler,
+                                   writeInvalidRequest,
+                                   false /*fallbackAllowed*/,
+                                   _1));
 
-      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/) ||
-          job_launcher::launcherJobsEnabled(false /* checkLicense*/))
+      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
       {
-         // if we're using job launcher for sessions and/or ad-hoc jobs,
-         // we need to handle RPCs from within the regular http server since
-         // sessions or jobs might be  on different machines. We add the handler
-         // to both because at any time, the launcher licensing field could change,
-         // and so sessions need to be able to communicate effectively in both
+         // if we're using job launcher sessions, we need to handle RPCs
+         // from within the regular http server since sessions will be
+         // on different machines - we add the handler to both because
+         // at any time, the launcher licensing field could change, and
+         // so sessions need to be able to communicate effectively in both
          // launcher and non-launcher modes
          server::server()->addHandler(
-                  prefix, boost::bind(validationHandler, handler, _1));
+                  prefix, boost::bind(validationHandler,
+                                      handler,
+                                      writeInvalidRequest,
+                                      false /*fallbackAllowed*/,
+                                      _1));
+      }
+   }
+}
+
+void addHttpProxyHandler(const std::string &prefix,
+                         const auth::SecureAsyncUriHandlerFunction &handler)
+{
+   if (s_pSessionRpcServer)
+   {
+      s_pSessionRpcServer->addHandler(
+               prefix, boost::bind(validationHandler,
+                                   handler,
+                                   writeInvalidRequest,
+                                   false /*fallbackAllowed*/,
+                                   _1));
+
+      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/) ||
+          job_launcher::launcherJobsEnabled(false /*checkLicense*/))
+      {
+         // handle RPCs from the rstudio http server either with RPC secret
+         // or login cookie. First invoke the RPC validationHandler, but have
+         // it invoke the secureAsyncHttpHandler on failure, which will then do
+         // the login-cookie check and if successful, invoke validationLoginHandler to perform
+         // additional checks before finally invoking the intended handler!
+         auto cookieCheckHandler = [handler](boost::shared_ptr<core::http::AsyncConnection> pConnection)
+         {
+            auth::secureAsyncHttpHandler(boost::bind(validationLoginHandler, _1, _2, handler))(pConnection);
+         };
+
+         server::server()->addHandler(
+               prefix, boost::bind(validationHandler,
+                                   handler,
+                                   cookieCheckHandler,
+                                   true /*fallbackAllowed*/,
+                                   _1));
       }
    }
 }

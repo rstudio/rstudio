@@ -1,7 +1,7 @@
 /*
  * ServerSessionRpc.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,8 +35,18 @@ namespace session_rpc {
    
 core::Error initialize();
 core::Error startup();
+
+// use to add session-rpc handler requiring RPC secret to be present; this is what
+// you should use unless there's a well-understood scenario where relaxed
+// security is acceptable (see addBrowserHttpProxyhandler)
 void addHandler(const std::string& prefix,
                 const auth::SecureAsyncUriHandlerFunction& handler);
+
+// use to add session-rpc handler that falls back to checking for regular
+// login cookie when RPC secret not found
+void addHttpProxyHandler(const std::string &prefix,
+                         const auth::SecureAsyncUriHandlerFunction &handler);
+
 void addPeriodicCommand(boost::shared_ptr<core::PeriodicCommand> pCmd);
 
 } // namespace acls
