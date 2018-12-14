@@ -112,6 +112,7 @@
 * Update OpenSSL on Windows to 1.0.2p (#3606)
 * Add UTF-8 support in custom login page HTML (#3830)
 * Diagnostics system better understands usage of `.` in magrittr pipes (#3835)
+* Add support for Syntactically Awesome Stylesheets (SASS and SCSS) files (#4040)
 
 ### Bug Fixes
 
