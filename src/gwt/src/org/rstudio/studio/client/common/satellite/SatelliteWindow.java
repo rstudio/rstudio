@@ -24,6 +24,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.events.SatelliteWindowEventHandlers;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -57,6 +59,17 @@ public abstract class SatelliteWindow extends Composite
 
       // create application panel
       mainPanel_ = new LayoutPanel();
+      
+      // Register an event handler for themes so it will be triggered after a
+      // UIPrefsChangedEvent updates the theme. Do this after SessionInit (if we
+      // do it beforehand we'll trigger the event before the SessionInfo object
+      // arrives with the theme settings)
+      pEventBus.get().addHandler(SessionInitEvent.TYPE, (evt) ->
+      {
+         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+         uiPrefs.theme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+         uiPrefs.getFlatTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+      });
        
       // init widget
       initWidget(mainPanel_);
