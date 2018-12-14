@@ -134,6 +134,12 @@ public class FileTypeRegistry
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
+   public static final TextFileType SASS =
+         new TextFileType("sass", "SASS", EditorLanguage.LANG_SASS, ".sass",
+                          new ImageResource2x(ICONS.iconScss2x()),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false, false);
+
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
@@ -364,6 +370,7 @@ public class FileTypeRegistry
       register("*.htm", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.html", HTML, new ImageResource2x(icons.iconHTML2x()));
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
+      register("*.sass", SASS, new ImageResource2x(icons.iconScss2x()));
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));

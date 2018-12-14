@@ -76,6 +76,8 @@ public class EditorLanguage
          "ace/mode/xml", false, false);
    public static final EditorLanguage LANG_SCSS = new EditorLanguage(
          "ace/mode/scss", false, true);
+   public static final EditorLanguage LANG_SASS = new EditorLanguage(
+         "ace/mode/sass", false, true);
    
    public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);
