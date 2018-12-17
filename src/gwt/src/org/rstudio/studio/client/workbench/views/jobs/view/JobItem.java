@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -23,6 +24,8 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
@@ -110,8 +113,20 @@ public class JobItem extends Composite
                // TODO: also figure out how to incorporate "cancel", which is used
                // to stop a job that is still being scheduled; maybe handle that
                // entirely server-side?
-               RStudioGinjector.INSTANCE.getServer().stopLauncherJob(
-                     job.id, false /*kill*/, new VoidServerRequestCallback());
+               RStudioGinjector.INSTANCE.getServer().controlLauncherJob(
+                     job.id, "stop", new ServerRequestCallback<Boolean>()
+               {
+                  @Override
+                  public void onResponseReceived(Boolean started)
+                  {
+                  }
+      
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             });
       initWidget(uiBinder.createAndBindUi(this));
       

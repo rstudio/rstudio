@@ -576,4 +576,10 @@ public class SessionInfo extends JavaScriptObject
       return this.r_libs_user;
    }-*/;
    
+   /**
+    * @return project identifier (only meaningful in RStudio Server Pro)
+    */
+   public final native String getProjectId() /*-{
+      return this.project_id;
+   }-*/;
 }
