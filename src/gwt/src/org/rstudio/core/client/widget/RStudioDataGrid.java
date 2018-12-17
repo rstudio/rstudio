@@ -63,7 +63,11 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       // assigned class, and have all their style attributes applied inline, so
       // instead we scan the attached DOM subtree and change the inline styles.
       Element parent = getElement().getParentElement().getParentElement();
-      List<Node> matches = DomUtils.findNodes(parent, 10, true, false, node -> 
+      List<Node> matches = DomUtils.findNodes(parent, 
+            10,     // Max results 
+            3,      // Recurse depth 
+            false,  // Check siblings
+            node -> 
       {
          // Ignore text nodes, etc.
          if (node.getNodeType() != Node.ELEMENT_NODE)
