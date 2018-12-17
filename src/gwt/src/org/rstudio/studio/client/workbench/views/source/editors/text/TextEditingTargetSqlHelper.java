@@ -14,9 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.remote.Expected;
 import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import com.google.inject.Inject;
@@ -30,8 +35,10 @@ public class TextEditingTargetSqlHelper
    }
    
    @Inject
-   void initialize(SqlServerOperations server)
+   void initialize(GlobalDisplay display,
+                   SqlServerOperations server)
    {
+      display_ = display;
       server_ = server;
    }
    
@@ -59,13 +66,34 @@ public class TextEditingTargetSqlHelper
             @Override
             public void execute(String command)
             {
-               server_.previewSql(command, new VoidServerRequestCallback());
+               server_.previewSql(command, new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String message)
+                  {
+                     if (!StringUtil.isNullOrEmpty(message))
+                     {
+                        display_.showErrorMessage(
+                              "Error Previewing SQL",
+                              message);
+                     }
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
          }
       );
       
       return true;
    }
+   
    private DocDisplay docDisplay_;
+   
+   private GlobalDisplay display_;
    private SqlServerOperations server_;
 }
