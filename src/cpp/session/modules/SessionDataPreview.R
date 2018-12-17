@@ -15,7 +15,14 @@
 
 .rs.addJsonRpcHandler("preview_sql", function(code)
 {
-   eval(parse(text = code), envir = globalenv())
+   status <- .rs.tryCatch(eval(parse(text = code), envir = globalenv()))
+   if (inherits(status, "error")) {
+      reason <- conditionMessage(status)
+      message <- paste("An unknown error occured: ", .rs.truncate(reason))
+      return(.rs.scalar(message))
+   }
+   
+   invisible(status)
 })
 
 .rs.addFunction("previewDataFrame", function(data, script)
@@ -34,8 +41,9 @@
    )
 
    .rs.enqueClientEvent("data_output_completed", preview)
-
+   
    invisible(NULL)
+
 })
 
 .rs.addFunction("previewSql", function(conn, statement, ...)
@@ -50,12 +58,23 @@
    statement <- gsub("--[^\n]*\n+", "", statement)
 
    # force the connection to let DBI and others initialize S3
-   conn <- force(conn)
+   conn <- .rs.tryCatch(force(conn))
+   if (inherits(conn, "error")) {
+      msg <- paste("Failed to retrieve connection:", conditionMessage(conn))
+      return(.rs.scalar(msg))
+   }
 
    # fetch at most 100 records as a preview
-   rs <- DBI::dbSendQuery(conn, statement = statement, ...)
-   data <- DBI::dbFetch(rs, n = 1000)
-   DBI::dbClearResult(rs)
+   status <- .rs.tryCatch({
+      rs <- DBI::dbSendQuery(conn, statement = statement, ...)
+      data <- DBI::dbFetch(rs, n = 1000)
+      DBI::dbClearResult(rs)
+   })
+   
+   if (inherits(status, "error")) {
+      msg <- paste("Failed to query database:", conditionMessage(status))
+      return(.rs.scalar(msg))
+   }
 
    .rs.previewDataFrame(data, script)
 })

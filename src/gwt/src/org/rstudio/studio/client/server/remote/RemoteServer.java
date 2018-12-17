@@ -1161,7 +1161,7 @@ public class RemoteServer implements Server
    
    @Override
    public void previewSql(String command,
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(command));
