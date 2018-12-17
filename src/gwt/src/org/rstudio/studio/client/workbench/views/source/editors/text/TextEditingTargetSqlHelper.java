@@ -21,7 +21,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.remote.Expected;
 import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import com.google.inject.Inject;
