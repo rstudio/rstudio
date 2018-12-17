@@ -3124,13 +3124,13 @@ public class RemoteServer implements Server
              retryHandler);
 
    }
-      
+
    // lowest level sendRequest method -- called from the main workbench
    // in two scenarios: direct internal call and servicing a proxied
    // request from a satellite window
    private RpcRequest sendRequest(String sourceWindow,
-                                  String scope, 
-                                  String method, 
+                                  String scope,
+                                  String method,
                                   JSONArray params,
                                   JSONObject kwparams,
                                   boolean redactLog,
@@ -5673,20 +5673,26 @@ public class RemoteServer implements Server
 
    @Override
    public void startLauncherJobStatusStream(String jobId,
-                                            ServerRequestCallback<Void> callback)
+                                            ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(jobId));
-      sendRequest(RPC_SCOPE, "launcher_jobs_start_status_stream", params, callback);
+      String jobSessionId = session_.getSessionInfo().getProjectId() +
+            session_.getSessionInfo().getSessionId();
+      params.set(0, new JSONString(jobSessionId));
+      params.set(1, new JSONString(jobId));
+      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "start_status_stream", params, callback);
    }
   
    @Override
    public void stopLauncherJobStatusStream(String jobId,
-                                           ServerRequestCallback<Void> callback)
+                                           ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(jobId));
-      sendRequest(RPC_SCOPE, "launcher_jobs_stop_status_stream", params, callback);
+      String jobSessionId = session_.getSessionInfo().getProjectId() +
+            session_.getSessionInfo().getSessionId();
+      params.set(0, new JSONString(jobSessionId));
+      params.set(1, new JSONString(jobId));
+      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "stop_status_stream", params, callback);
    }
    
    @Override
@@ -5696,14 +5702,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void stopLauncherJob(String jobId,
-                               boolean kill,
-                               ServerRequestCallback<Void> callback)
+   public void controlLauncherJob(String jobId,
+                                  String operation,
+                                  ServerRequestCallback<Boolean> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(jobId));
-      params.set(1, JSONBoolean.getInstance(kill));
-      sendRequest(RPC_SCOPE, "launcher_jobs_stop_job", params, callback);
+      params.set(1, new JSONString(operation));
+      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "control_job", params, callback);
    }
 
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
@@ -5835,6 +5841,7 @@ public class RemoteServer implements Server
    private static final String LOG_SCOPE = "log";
    private static final String META_SCOPE = "meta";
    private static final String FILE_SHOW = "file_show";
+   private static final String JOB_LAUNCHER_RPC_SCOPE = "job_launcher_rpc";
 
    // session methods
    private static final String CLIENT_INIT = "client_init";

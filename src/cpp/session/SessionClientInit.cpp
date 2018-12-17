@@ -475,6 +475,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsEnabled();
 
+   sessionInfo["project_id"] = session::options().sessionScope().project();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client
