@@ -626,7 +626,27 @@ public class DomUtils
                                boolean siblings, 
                                NodePredicate filter)
    {
-      List<Node> results = findNodes(start, 1, recursive, siblings, filter);
+      List<Node> results = findNodes(start, 1, recursive ? 99 : 0, siblings, filter);
+      if (results.isEmpty())
+         return null;
+      return results.get(0);
+   }
+   
+   /**
+    * Finds a node that matches the predicate.
+    * 
+    * @param start The node from which to start.
+    * @param depth The maximum recursive depth
+    * @param siblings If true, looks at the next sibling from "start".
+    * @param filter The predicate that determines a match.
+    * @return The first matching node encountered in documented order, or null.
+    */
+   public static Node findNode(Node start, 
+                               int depth, 
+                               boolean siblings, 
+                               NodePredicate filter)
+   {
+      List<Node> results = findNodes(start, 1, depth, siblings, filter);
       if (results.isEmpty())
          return null;
       return results.get(0);
@@ -637,14 +657,14 @@ public class DomUtils
     * 
     * @param start The node from which to start.
     * @param max The maximum number of nodes to find.
-    * @param recursive If true, recurses into child nodes.
+    * @param depth The maximum recursive depth.
     * @param siblings If true, looks at the next sibling from "start".
     * @param filter The predicate that determines a match.
     * @return The first matching node encountered in documented order, or null.
     */
    public static List<Node> findNodes(Node start,
                                       int max,
-                                      boolean recursive,
+                                      int depth,
                                       boolean siblings,
                                       NodePredicate filter)
    {
@@ -661,11 +681,11 @@ public class DomUtils
             return results;
       }
       
-      if (recursive)
+      if (depth > 0)
       {
          remaining = max - results.size();
          List<Node> matched = findNodes(start.getFirstChild(), remaining,
-               true, true, filter);
+               depth - 1, true, filter);
          results.addAll(matched);
       }
       
@@ -673,7 +693,7 @@ public class DomUtils
       {
          remaining = max - results.size();
          List<Node> matched = findNodes(start.getNextSibling(), remaining,
-               recursive, true, filter);
+               depth, true, filter);
          results.addAll(matched);
       }
       
