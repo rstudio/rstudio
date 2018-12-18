@@ -96,17 +96,24 @@ public:
 
    core::Error initialize();
 
-public:
    // these functions can be called even when there is no project
    bool hasProject() const { return !file_.empty(); }
 
+   // Path to the .RProj file representing the project
    const core::FilePath& file() const { return file_; }
+
+   // Path to the directory in which the project resides
    const core::FilePath& directory() const { return directory_; }
+
+   // Path to the project user scratch path; user-specific and stored in .Rproj.user
    const core::FilePath& scratchPath() const { return scratchPath_; }
-   const core::FilePath& sharedScratchPath() const 
-   { 
-      return sharedScratchPath_; 
-   }
+
+   // Path to storage shared among users; stored in .Rproj.user
+   const core::FilePath& sharedScratchPath() const { return sharedScratchPath_; }
+
+   // Path to external user and project-specific storage folder outside .Rproj.user (in e.g.
+   // .rstudio or .rstudio-desktop)
+   const core::FilePath& externalStoragePath() const { return storagePath_; }
 
    core::FilePath oldScratchPath() const;
    core::FilePath websitePath() const;
@@ -217,6 +224,7 @@ private:
    core::FilePath directory_;
    core::FilePath scratchPath_;
    core::FilePath sharedScratchPath_;
+   core::FilePath storagePath_;
    core::r_util::RProjectConfig config_;
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;

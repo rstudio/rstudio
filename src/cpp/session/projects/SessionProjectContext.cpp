@@ -35,6 +35,7 @@
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionScopes.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -42,6 +43,8 @@
 #include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
+
+#define kStorageFolder "projects"
 
 using namespace rstudio::core;
 
@@ -410,7 +413,9 @@ Error ProjectContext::initialize()
             "rs_hasFileMonitor",
             (DL_FUNC) rs_hasFileMonitor,
             0);
-   
+
+   std::string projectId(kProjectNone);
+
    if (hasProject())
    {
       // update activeSession
@@ -440,12 +445,20 @@ Error ProjectContext::initialize()
          module_context::events().onDeferredInit.connect(
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));
       }
+
+      // compute project ID
+      projectId = projectToProjectId(module_context::userScratchPath(), FilePath(),
+            directory().absolutePath()).id();
    }
    else
    {
       // update activeSession
       activeSession().setProject(kProjectNone);
    }
+
+   // compute storage path from project ID
+   storagePath_ = module_context::userScratchPath().complete(kStorageFolder).complete(projectId);
+   
    return Success();
 }
 

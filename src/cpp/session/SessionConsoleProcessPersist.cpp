@@ -21,6 +21,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
 
@@ -66,11 +67,14 @@ void initialize()
    if (session::options().multiSession() &&
        session::options().programMode() == kSessionProgramModeServer)
    {
+      // In multi-session mode, persist per session
       s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
    }
    else
    {
-      s_consoleProcPath = module_context::scopedScratchPath().complete(kConsoleDir);
+      // In single-session mode, persist in external project storage (not internally in the project
+      // since contents include environment values and can be sensitive)
+      s_consoleProcPath = projects::projectContext().externalStoragePath().complete(kConsoleDir);
    }
 
    Error error = s_consoleProcPath.ensureDirectory();
