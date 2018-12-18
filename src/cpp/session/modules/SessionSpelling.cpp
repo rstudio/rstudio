@@ -61,7 +61,6 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
    return r::sexp::create(isCorrect, &rProtect);
 }
 
-
 json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 {
    json::Object dictJson;
@@ -262,6 +261,22 @@ void onUserSettingsChanged()
    syncSpellingEngineDictionaries();
 }
 
+SEXP rs_dictionariesPath()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(
+            options().hunspellDictionariesPath().absolutePath(),
+            &protect);
+}
+
+SEXP rs_userDictionariesPath()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(
+            userDictionariesDir().absolutePath(),
+            &protect);
+}
+
 } // anonymous namespace
 
 
@@ -299,11 +314,10 @@ core::json::Object spellingPrefsContextAsJson()
 
 Error initialize()
 {
-   R_CallMethodDef methodDef;
-   methodDef.name = "rs_checkSpelling" ;
-   methodDef.fun = (DL_FUNC) rs_checkSpelling ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_checkSpelling);
+   RS_REGISTER_CALL_METHOD(rs_dictionariesPath);
+   RS_REGISTER_CALL_METHOD(rs_userDictionariesPath);
+
 
    // initialize spelling engine
    using namespace rstudio::core::spelling;
