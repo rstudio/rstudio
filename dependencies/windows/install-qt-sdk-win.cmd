@@ -3,7 +3,7 @@
 setlocal EnableDelayedExpansion
 
 set QT_VERSION=5.11.1
-set QT_SDK_BINARY=qt-unified-windows-x86-3.0.5-online.exe
+set QT_SDK_BINARY=qt-unified-windows-x86-3.0.6-online.exe
 set QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/%QT_SDK_BINARY%
 set QT_SCRIPT=qt-noninteractive-install-win.qs
 
