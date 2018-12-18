@@ -97,6 +97,7 @@
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/SessionClientEventService.hpp>
+#include <session/SessionUrlPorts.hpp>
 #include <session/RVersionSettings.hpp>
 
 #include "SessionAddins.hpp"
@@ -484,6 +485,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // content urls
       (content_urls::initialize)
+
+      // URL port transformations
+      (url_ports::initialize)
 
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))

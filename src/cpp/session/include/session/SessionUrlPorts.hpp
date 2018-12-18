@@ -20,10 +20,18 @@
 #include <string>
 
 namespace rstudio {
+namespace core {
+   class Error;
+}
+}
+
+namespace rstudio {
 namespace session {
 namespace url_ports {
 
 std::string mapUrlPorts(const std::string& url);
+
+core::Error initialize();
 
 }  // namespace url_ports
 }  // namespace session
