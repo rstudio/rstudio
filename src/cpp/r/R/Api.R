@@ -753,3 +753,11 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("buildToolsExec", function(expr) {
    .rs.withBuildTools(expr)
 })
+
+.rs.addApiFunction("dictionariesPath", function() {
+   .Call("rs_dictionariesPath", PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("userDictionariesPath", function() {
+   .Call("rs_userDictionariesPath", PACKAGE = "(embedding)")
+})
