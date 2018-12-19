@@ -761,3 +761,9 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("userDictionariesPath", function() {
    .Call("rs_userDictionariesPath", PACKAGE = "(embedding)")
 })
+
+# translate a local URL into an externally accessible URL on RStudio Server
+.rs.addApiFunction("translateLocalUrl", function(url, absolute = FALSE) {
+  .Call("rs_translateLocalUrl", url, absolute, PACKAGE = "(embedding)")
+})
+

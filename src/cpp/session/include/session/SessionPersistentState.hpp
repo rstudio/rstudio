@@ -1,7 +1,7 @@
 /*
  * SessionPersistentState.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,10 @@ public:
    // active-client-id
    std::string activeClientId();
    std::string newActiveClientId();
+
+   // browser-facing url of active client
+   std::string activeClientUrl() const;
+   void setActiveClientUrl(const std::string& url);
    
    // abend
    bool hadAbend();
