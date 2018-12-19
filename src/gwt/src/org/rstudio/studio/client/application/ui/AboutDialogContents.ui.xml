@@ -63,7 +63,9 @@
 	   
 	   .outerProductInfo {
 	      text-align: center;
+	      width: 580px;
 	   }
+
 		.licenseLabel {
 			font-size: 12pt;
 			font-weight: bold;
