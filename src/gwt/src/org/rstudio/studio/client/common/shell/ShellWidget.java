@@ -263,7 +263,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/);
+
+      String errClass;
+      if (error.startsWith("Error:")) {
+        errClass = getErrorClass();
+      } else if (error.startsWith("Warning:")) {
+        errClass = getWarningClass();
+      } else {
+        errClass = styles_.output();
+      }
+
+      output(error, errClass, true /*isError*/, false /*ignoreLineCount*/);
 
       // Pick up the elements emitted to the console by this call. If we get 
       // extended information for this error, we'll need to swap out the simple 
@@ -383,6 +393,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       return styles_.error() + " " + 
              RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+   }
+
+   private String getWarningClass()
+   {
+      return styles_.error() + " " +
+             RStudioGinjector.INSTANCE.getUIPrefs().getThemeWarningClass();
    }
 
    /**

@@ -74,6 +74,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_spaces_for_tab", true);
    }
 
+   public String getThemeWarningClass()
+   {
+         return " ace_constant ace_numeric";
+   }
+
    // NOTE: UserSettings.cpp depends on the name of this value
    public PrefValue<Integer> numSpacesForTab()
    {
