@@ -60,6 +60,9 @@ public class SpellingPreferencesPane extends PreferencesPane
       
       add(checkboxPref("Ignore words with numbers",
                        prefs.ignoreWordsInUppercase()));
+
+      add(checkboxPref("Use real time spellchecking",
+         prefs.realtimeSpellchecking()));
    }
 
    

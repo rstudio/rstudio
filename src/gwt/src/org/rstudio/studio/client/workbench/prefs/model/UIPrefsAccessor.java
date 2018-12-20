@@ -499,7 +499,12 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("ignore_uppercase_words", true);
    }
-   
+
+   public PrefValue<Boolean> realtimeSpellchecking()
+   {
+      return bool("realtime_spellchecking", false);
+   }
+
    public PrefValue<Boolean> ignoreWordsWithNumbers()
    {
       return bool("ignore_words_with_numbers", true);

@@ -31,7 +31,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -81,7 +81,7 @@ public class CheckSpelling
       HasClickHandlers getCancelButton();
    }
 
-   public CheckSpelling(SpellChecker spellChecker,
+   public CheckSpelling(TypoSpellChecker spellChecker,
                         DocDisplay docDisplay,
                         Display view,
                         ProgressDisplay progressDisplay,
@@ -396,7 +396,7 @@ public class CheckSpelling
 }
    }
 
-   private final SpellChecker spellChecker_;
+   private final TypoSpellChecker spellChecker_;
    private final DocDisplay docDisplay_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;

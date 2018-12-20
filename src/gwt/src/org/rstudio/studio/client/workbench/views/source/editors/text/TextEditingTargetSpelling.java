@@ -22,7 +22,7 @@ import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
-import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
@@ -31,14 +31,14 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public class TextEditingTargetSpelling implements SpellChecker.Context
+public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
    public TextEditingTargetSpelling(DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;
-      spellChecker_ = new SpellChecker(this);
+      typoSpellChecker_ = new TypoSpellChecker(this);
       
    }
    
@@ -47,7 +47,7 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
       if (isSpellChecking_)
          return;
       isSpellChecking_ = true;
-      new CheckSpelling(spellChecker_, docDisplay_,
+      new CheckSpelling(typoSpellChecker_, docDisplay_,
                         new SpellingDialog(),
                         new InitialProgressDialog(1000),
                         new ResultCallback<Void, Exception>()
@@ -133,7 +133,7 @@ public class TextEditingTargetSpelling implements SpellChecker.Context
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
-   private final SpellChecker spellChecker_;
+   private final TypoSpellChecker typoSpellChecker_;
  
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = 
                                     new ArrayList<HandlerRegistration>();
