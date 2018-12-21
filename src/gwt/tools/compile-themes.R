@@ -1,12 +1,5 @@
 #!/usr/bin/env Rscript
 
-if (!require("highlight", quietly = TRUE)) {
-   install.packages("highlight")
-   if (!require("highlight")) {
-      stop("This script requires 'highlight' in order to run!")
-   }
-}
-
 if (!"tools:rstudio" %in% search())
 {
    # Needed to source the file below.
