@@ -1015,6 +1015,10 @@ public class ClientEventDispatcher
             PlumberAPIParams data = event.getData();
             eventBus_.dispatchEvent(new PlumberAPIStatusEvent(data, true));
          }
+         else if (type == ClientEvent.ComputeThemeColors)
+         {
+            eventBus_.dispatchEvent(new ComputeThemeColorsEvent());
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

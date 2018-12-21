@@ -107,7 +107,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
-                      Provider<AceThemes> pAceThemes,
+                      Provider<ApplicationThemes> pAppThemes,
                       Provider<ProductEditionInfo> pEdition)
    {
       // save references
@@ -125,8 +125,8 @@ public class Application implements ApplicationEventHandlers
       pClientInit_ = pClientInit;
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
-      pAceThemes_ = pAceThemes;
       pEdition_ = pEdition;
+      pAppThemes_ = pAppThemes;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -149,7 +149,6 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
-      events.addHandler(ThemeChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -664,14 +663,6 @@ public class Application implements ApplicationEventHandlers
       view_.showSessionAbendWarning();
    }
    
-   @Override
-   public void onThemeChanged(ThemeChangedEvent event)
-   {
-      RStudioThemes.initializeThemes(uiPrefs_.get(),
-                                     Document.get(),
-                                     rootPanel_.getElement());
-   }
-   
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
@@ -763,13 +754,8 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
-      // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
-      // set the initial theme.
-      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      events_.fireEvent(new ThemeChangedEvent());
-
-      pAceThemes_.get();
+      // Initialize application theme system
+      pAppThemes_.get().initializeThemes(rootPanel_.getElement());
 
       // subscribe to ClientDisconnected event (wait to do this until here
       // because there were spurious ClientDisconnected events occurring
@@ -1119,8 +1105,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationClientInit> pClientInit_;
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
-   private final Provider<AceThemes> pAceThemes_;
    private final Provider<ProductEditionInfo> pEdition_;
+   private final Provider<ApplicationThemes> pAppThemes_;
    
    private AboutDialog aboutDialog_;
    

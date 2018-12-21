@@ -240,6 +240,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kNewDocumentWithCode;
       else if (name == "available_packages_ready")
          type = session::client_events::kAvailablePackagesReady;
+      else if (name == "compute_theme_colors")
+         type = session::client_events::kComputeThemeColors;
 
       if (type != -1)
       {

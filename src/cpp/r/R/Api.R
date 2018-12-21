@@ -721,10 +721,23 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       "Classic"
    )
 
+   # default/fallback theme colors 
+   foreground <- "#000000";
+   background <- "#FFFFFF";
+
+   # attempt to read colors from browser
+   colors <- .Call("rs_getThemeColors", PACKAGE = "(embedding)")
+   if (!is.null(colors)) {
+      foreground <- colors$foreground
+      background <- colors$background
+   }
+
    list(
       editor = theme$name,
       global = global,
-      dark = theme$isDark
+      dark = theme$isDark,
+      foreground = foreground,
+      background = background
    )
 })
 

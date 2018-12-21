@@ -130,6 +130,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -5802,6 +5803,15 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void setComputedThemeColors(String foreground, String background, VoidServerRequestCallback callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(foreground));
+      params.set(1, new JSONString(background));
+      sendRequest(RPC_SCOPE, SET_COMPUTED_THEME_COLORS, params, callback);
+   }
+
+   @Override
    public void replaceCommentHeader(String command,
                                     String path,
                                     String code,
@@ -6277,6 +6287,7 @@ public class RemoteServer implements Server
    private static final String ADD_THEME = "add_theme";
    private static final String REMOVE_THEME = "remove_theme";
    private static final String GET_THEME_NAME = "get_theme_name";
+   private static final String SET_COMPUTED_THEME_COLORS = "set_computed_theme_colors";
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
 }
