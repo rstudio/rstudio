@@ -79,20 +79,32 @@ if(UNIX)
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
    if(APPLE)
+
       # if present, set osx deployment target variables from environment vars
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
          set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
          message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
       endif()
+
       if(NOT $ENV{CMAKE_OSX_DEPLOYMENT_TARGET} STREQUAL "")
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
+
+      # default to macOS 10.12 as a deployment target
+      if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+         set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
+      endif()
+
       # Figure out what version of Mac OS X this is. Unfortunately 
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
-      EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+      # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+
    endif()
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)
