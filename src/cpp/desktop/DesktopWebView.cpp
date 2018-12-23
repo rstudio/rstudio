@@ -39,6 +39,8 @@ namespace desktop {
 
 namespace {
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+
 class DevToolsWindow : public QMainWindow
 {
 public:
@@ -69,6 +71,8 @@ private:
 };
 
 std::map<QWebEnginePage*, DevToolsWindow*> s_devToolsWindows;
+
+#endif
 
 } // end anonymous namespace
 
@@ -253,11 +257,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          
       case QWebEngineContextMenuData::MediaTypeAudio:
          
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
          if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
-         
+#endif
+
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
@@ -268,11 +274,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          
       case QWebEngineContextMenuData::MediaTypeVideo:
          
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
          if (data.mediaFlags().testFlag(QWebEngineContextMenuData::MediaPaused))
             menu->addAction(label(tr("&Play")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
-         
+#endif
+
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
@@ -324,6 +332,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       menu->addAction(selectAll);
    }
    
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
    menu->addSeparator();
    menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(label(tr("I&nspect element")), [&]() {
@@ -348,6 +357,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       // we have a window; invoke Inspect Element now
       webPage()->triggerAction(QWebEnginePage::InspectElement);
    });
+#endif
    
    menu->setAttribute(Qt::WA_DeleteOnClose, true);
    
