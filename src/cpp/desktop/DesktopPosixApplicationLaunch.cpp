@@ -21,6 +21,8 @@
 #include <core/r_util/RUserData.hpp>
 
 #include <QKeyEvent>
+#include <QTimer>
+#include <QWindow>
 
 namespace rstudio {
 namespace desktop {
@@ -45,7 +47,25 @@ public:
 protected:
    bool eventFilter(QObject* object, QEvent* event) override
    {
-      if (event->type() == QEvent::KeyPress)
+      // Work around an issue with Qt 5.12, where windows are blank when initially shown.
+      //
+      // https://github.com/rstudio/rstudio/issues/4086
+      //
+      // This logic is implemented as part of the global event filter (rather
+      // than overriding the BrowserWindow show) so that _all_ windows created
+      // can receive this workaround, including the DevTools window.
+      if (event->type() == QEvent::Show)
+      {
+         QTimer::singleShot(0, [object]() {
+            QWindow* window = qobject_cast<QWindow*>(object);
+            if (window)
+            {
+               window->resize(window->width() - 1, window->height());
+               window->resize(window->width() + 1, window->height());
+            }
+         });
+      }
+      else if (event->type() == QEvent::KeyPress)
       {
          auto* keyEvent = static_cast<QKeyEvent*>(event);
          auto modifiers = keyEvent->modifiers();
