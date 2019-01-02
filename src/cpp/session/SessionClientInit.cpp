@@ -480,6 +480,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["project_id"] = session::options().sessionScope().project();
 
+   if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))
+   {
+      sessionInfo["license_message"] =
+            "There are more concurrent users of RStudio Server Pro than your license supports. "
+            "Please obtain an updated license to continue using the product.";
+   }
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client

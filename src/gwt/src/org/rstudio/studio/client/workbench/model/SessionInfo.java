@@ -175,6 +175,10 @@ public class SessionInfo extends JavaScriptObject
       return this.system_encoding;
    }-*/;
 
+   public final native String getLicenseMessage() /*-{
+      return this.license_message;
+   }-*/;
+
    public final boolean isVcsEnabled()
    {
       return !StringUtil.isNullOrEmpty(getVcsName());

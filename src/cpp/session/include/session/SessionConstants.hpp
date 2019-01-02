@@ -34,6 +34,7 @@
 #define kRStudioVersion                   "RSTUDIO_VERSION"
 #define kRSessionRsaPublicKey             "RSTUDIO_SESSION_RSA_PUBLIC_KEY"
 #define kRSessionRsaPrivateKey            "RSTUDIO_SESSION_RSA_PRIVATE_KEY"
+#define kRStudioSessionUserLicenseSoftLimitReached "RSTUDIO_SESSION_USER_LICENSE_SOFT_LIMIT_REACHED"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
