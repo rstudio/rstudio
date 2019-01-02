@@ -105,6 +105,8 @@
 #define kSessionProxyDefaultPort   "8789"
 #define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
 
+#define kSessionUserLicenseSoftLimitReached  "session-user-license-soft-limit-reached"
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";
