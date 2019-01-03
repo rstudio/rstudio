@@ -390,6 +390,11 @@ public class JobManager implements JobRefreshEvent.Handler,
       launcherJobManager_.stopTrackingAllJobStatuses();
    }
 
+   public void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
+   {
+      launcherJobManager_.controlLauncherJob(jobId, operation, callback);
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)

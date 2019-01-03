@@ -1,5 +1,5 @@
 /*
- * LauncherJobManager.java
+ * AdaptObject.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,23 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.core.client.jsonrpc;
 
-package org.rstudio.studio.client.workbench.views.jobs.model;
+import com.google.gwt.core.client.JavaScriptObject;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-
-public class LauncherJobManager
+/**
+ * Creates a JavaScriptObject from a jsinterop-based (@JsType isNative) object.
+ */
+public class AdaptObject extends JavaScriptObject
 {
-   void startTrackingAllJobStatuses()
-   {
-   }
-   
-   void stopTrackingAllJobStatuses()
+   protected AdaptObject()
    {
    }
 
-   void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
-   {
-      callback.onResponseReceived(false);
-   }
+   public final static native AdaptObject fromJsInterop(Object obj) /*-{
+      return obj;
+   }-*/;
 }
