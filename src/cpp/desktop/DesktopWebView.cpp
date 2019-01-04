@@ -357,6 +357,16 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       // we have a window; invoke Inspect Element now
       webPage()->triggerAction(QWebEnginePage::InspectElement);
    });
+#else
+   
+# ifndef NDEBUG
+   
+   menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
+   menu->addSeparator();
+   menu->addAction(label(tr("I&nspect element")), [&]() { triggerPageAction(QWebEnginePage::InspectElement); });
+   
+# endif
+   
 #endif
    
    menu->setAttribute(Qt::WA_DeleteOnClose, true);

@@ -87,8 +87,8 @@ then
    if [ "$PLATFORM" == "Darwin" ]
    then
 
-     BJAM_CXXFLAGS="cxxflags=-fPIC -std=c++11 -mmacosx-version-min=10.12"
-     BJAM_LDFLAGS=""
+     BJAM_CXXFLAGS="cxxflags=-fPIC -std=c++11"
+     BJAM_LDFLAGS=""     
 
      sudo ./bjam              \
         "${BOOST_BJAM_FLAGS}" \
