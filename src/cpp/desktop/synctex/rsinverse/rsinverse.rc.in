@@ -13,7 +13,7 @@ BEGIN
             VALUE "FileDescription",  "RStudio Inverse Search\0"
             VALUE "FileVersion",      "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
             VALUE "InternalName",     "rsinverse\0"
-            VALUE "LegalCopyright",   "Copyright (C) 2009-18 by RStudio, Inc.\0"
+            VALUE "LegalCopyright",   "Copyright (C) 2009-19 by RStudio, Inc.\0"
             VALUE "LegalTrademarks",  "RStudio (TM) is a trademark of RStudio, Inc.\0"
             VALUE "OriginalFilename", "rsinverse.exe\0"
             VALUE "ProductName",      "RStudio\0"
