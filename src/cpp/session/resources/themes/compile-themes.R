@@ -1,7 +1,7 @@
 #
 #  compile-themes.R
 #
-# Copyright (C) 2018 by RStudio, Inc.
+# Copyright (C) 2019 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -192,9 +192,163 @@
 #
 # Returns the RGB color.
 .rs.addFunction("getRgbColor", function(color) {
-   if (is.vector(color) && any(is.integer(color))) 
+
+   # Named CSS colors we can decode. Source:
+   # https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+   namedCssColors <- list(
+      black                  = c(0L, 0L, 0L),
+      silver                 = c(192L, 192L, 192L),
+      gray                   = c(128L, 128L, 128L),
+      white                  = c(255L, 255L, 255L),
+      maroon                 = c(128L, 0L, 0L),
+      red                    = c(255L, 0L, 0L),
+      purple                 = c(128L, 0L, 128L),
+      fuchsia                = c(255L, 0L, 255L),
+      green                  = c(0L, 128L, 0L),
+      lime                   = c(0L, 255L, 0L),
+      olive                  = c(128L, 128L, 0L),
+      yellow                 = c(255L, 255L, 0L),
+      navy                   = c(0L, 0L, 128L),
+      blue                   = c(0L, 0L, 255L),
+      teal                   = c(0L, 128L, 128L),
+      aqua                   = c(0L, 255L, 255L),
+      orange                 = c(255L, 165L, 0L),
+      aliceblue              = c(240L, 248L, 255L),
+      antiquewhite           = c(250L, 235L, 215L),
+      aquamarine             = c(127L, 255L, 212L),
+      azure                  = c(240L, 255L, 255L),
+      beige                  = c(245L, 245L, 220L),
+      bisque                 = c(255L, 228L, 196L),
+      blanchedalmond         = c(255L, 235L, 205L),
+      blueviolet             = c(138L, 43L, 226L),
+      brown                  = c(165L, 42L, 42L),
+      burlywood              = c(222L, 184L, 135L),
+      cadetblue              = c(95L, 158L, 160L),
+      chartreuse             = c(127L, 255L, 0L),
+      chocolate              = c(210L, 105L, 30L),
+      coral                  = c(255L, 127L, 80L),
+      cornflowerblue         = c(100L, 149L, 237L),
+      cornsilk               = c(255L, 248L, 220L),
+      crimson                = c(220L, 20L, 60L),
+      cyan                   = c(0L, 255L, 255L),
+      darkblue               = c(0L, 0L, 139L),
+      darkcyan               = c(0L, 139L, 139L),
+      darkgoldenrod          = c(184L, 134L, 11L),
+      darkgray               = c(169L, 169L, 169L),
+      darkgreen              = c(0L, 100L, 0L),
+      darkgrey               = c(169L, 169L, 169L),
+      darkkhaki              = c(189L, 183L, 107L),
+      darkmagenta            = c(139L, 0L, 139L),
+      darkolivegreen         = c(85L, 107L, 47L),
+      darkorange             = c(255L, 140L, 0L),
+      darkorchid             = c(153L, 50L, 204L),
+      darkred                = c(139L, 0L, 0L),
+      darksalmon             = c(233L, 150L, 122L),
+      darkseagreen           = c(143L, 188L, 143L),
+      darkslateblue          = c(72L, 61L, 139L),
+      darkslategray          = c(47L, 79L, 79L),
+      darkslategrey          = c(47L, 79L, 79L),
+      darkturquoise          = c(0L, 206L, 209L),
+      darkviolet             = c(148L, 0L, 211L),
+      deeppink               = c(255L, 20L, 147L),
+      deepskyblue            = c(0L, 191L, 255L),
+      dimgray                = c(105L, 105L, 105L),
+      dimgrey                = c(105L, 105L, 105L),
+      dodgerblue             = c(30L, 144L, 255L),
+      firebrick              = c(178L, 34L, 34L),
+      floralwhite            = c(255L, 250L, 240L),
+      forestgreen            = c(34L, 139L, 34L),
+      gainsboro              = c(220L, 220L, 220L),
+      ghostwhite             = c(248L, 248L, 255L),
+      gold                   = c(255L, 215L, 0L),
+      goldenrod              = c(218L, 165L, 32L),
+      greenyellow            = c(173L, 255L, 47L),
+      grey                   = c(128L, 128L, 128L),
+      honeydew               = c(240L, 255L, 240L),
+      hotpink                = c(255L, 105L, 180L),
+      indianred              = c(205L, 92L, 92L),
+      indigo                 = c(75L, 0L, 130L),
+      ivory                  = c(255L, 255L, 240L),
+      khaki                  = c(240L, 230L, 140L),
+      lavender               = c(230L, 230L, 250L),
+      lavenderblush          = c(255L, 240L, 245L),
+      lawngreen              = c(124L, 252L, 0L),
+      lemonchiffon           = c(255L, 250L, 205L),
+      lightblue              = c(173L, 216L, 230L),
+      lightcoral             = c(240L, 128L, 128L),
+      lightcyan              = c(224L, 255L, 255L),
+      lightgoldenrodyellow   = c(250L, 250L, 210L),
+      lightgray              = c(211L, 211L, 211L),
+      lightgreen             = c(144L, 238L, 144L),
+      lightgrey              = c(211L, 211L, 211L),
+      lightpink              = c(255L, 182L, 193L),
+      lightsalmon            = c(255L, 160L, 122L),
+      lightseagreen          = c(32L, 178L, 170L),
+      lightskyblue           = c(135L, 206L, 250L),
+      lightslategray         = c(119L, 136L, 153L),
+      lightslategrey         = c(119L, 136L, 153L),
+      lightsteelblue         = c(176L, 196L, 222L),
+      lightyellow            = c(255L, 255L, 224L),
+      limegreen              = c(50L, 205L, 50L),
+      linen                  = c(250L, 240L, 230L),
+      magenta                = c(255L, 0L, 255L),
+      mediumaquamarine       = c(102L, 205L, 170L),
+      mediumblue             = c(0L, 0L, 205L),
+      mediumorchid           = c(186L, 85L, 211L),
+      mediumpurple           = c(147L, 112L, 219L),
+      mediumseagreen         = c(60L, 179L, 113L),
+      mediumslateblue        = c(123L, 104L, 238L),
+      mediumspringgreen      = c(0L, 250L, 154L),
+      mediumturquoise        = c(72L, 209L, 204L),
+      mediumvioletred        = c(199L, 21L, 133L),
+      midnightblue           = c(25L, 25L, 112L),
+      mintcream              = c(245L, 255L, 250L),
+      mistyrose              = c(255L, 228L, 225L),
+      moccasin               = c(255L, 228L, 181L),
+      navajowhite            = c(255L, 222L, 173L),
+      oldlace                = c(253L, 245L, 230L),
+      olivedrab              = c(107L, 142L, 35L),
+      orangered              = c(255L, 69L, 0L),
+      orchid                 = c(218L, 112L, 214L),
+      palegoldenrod          = c(238L, 232L, 170L),
+      palegreen              = c(152L, 251L, 152L),
+      paleturquoise          = c(175L, 238L, 238L),
+      palevioletred          = c(219L, 112L, 147L),
+      papayawhip             = c(255L, 239L, 213L),
+      peachpuff              = c(255L, 218L, 185L),
+      peru                   = c(205L, 133L, 63L),
+      pink                   = c(255L, 192L, 203L),
+      plum                   = c(221L, 160L, 221L),
+      powderblue             = c(176L, 224L, 230L),
+      rosybrown              = c(188L, 143L, 143L),
+      royalblue              = c(65L, 105L, 225L),
+      saddlebrown            = c(139L, 69L, 19L),
+      salmon                 = c(250L, 128L, 114L),
+      sandybrown             = c(244L, 164L, 96L),
+      seagreen               = c(46L, 139L, 87L),
+      seashell               = c(255L, 245L, 238L),
+      sienna                 = c(160L, 82L, 45L),
+      skyblue                = c(135L, 206L, 235L),
+      slateblue              = c(106L, 90L, 205L),
+      slategray              = c(112L, 128L, 144L),
+      slategrey              = c(112L, 128L, 144L),
+      snow                   = c(255L, 250L, 250L),
+      springgreen            = c(0L, 255L, 127L),
+      steelblue              = c(70L, 130L, 180L),
+      tan                    = c(210L, 180L, 140L),
+      thistle                = c(216L, 191L, 216L),
+      tomato                 = c(255L, 99L, 71L),
+      turquoise              = c(64L, 224L, 208L),
+      violet                 = c(238L, 130L, 238L),
+      wheat                  = c(245L, 222L, 179L),
+      whitesmoke             = c(245L, 245L, 245L),
+      yellowgreen            = c(154L, 205L, 50L),
+      rebeccapurple          = c(102L, 51L, 153L)
+   )
+
+   if (is.vector(color) && any(is.integer(color)))
    {
-      if (length(color) != 3) 
+      if (length(color) != 3)
       {
          stop(
             "expected 3 values for RGB color, not ",
@@ -231,6 +385,10 @@
             call. = FALSE)
       }
       colorVec <- strtoi(matches[2:4])
+   }
+   else if (color %in% names(namedCssColors))
+   {
+      colorVec <- namedCssColors[[color]]
    }
    else
    {
@@ -1023,8 +1181,11 @@
       return(c())
    }
    
-   key <- grep("^\\.ace_keyword\\s*$", names(parsed), value = TRUE)[[1]]
-   keywordColor <- parsed[[key]]$color
+   key <- grep("^\\.ace_keyword\\s*$", names(parsed), value = TRUE)
+   keywordColor <- NULL
+   if (length(key) > 0) {
+      keywordColor <- parsed[[key[[1]]]]$color
+   }
    if (is.null(keywordColor)) {
       warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)
       return(c())
