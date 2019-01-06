@@ -244,24 +244,27 @@ public class ImagePreviewer
       String srcPath = imgSrcPathFromHref(sentinel, href);
       final Image image = new Image(srcPath);
       image.addStyleName(RES.styles().image());
-      
-      // parse and inject attributes
-      Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
       final Element imgEl = image.getElement();
-      for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
-      {
-         String key = entry.getKey();
-         String val = entry.getValue();
-         if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
-            continue;
-         imgEl.setAttribute(key, val);
-      }
       
-      if (!parsedAttributes.getIdentifier().isEmpty())
-         imgEl.setId(parsedAttributes.getIdentifier());
+      // parse and inject attributes, if we have any
+      if (attributes != null)
+      {
+         Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
+         for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
+         {
+            String key = entry.getKey();
+            String val = entry.getValue();
+            if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+               continue;
+            imgEl.setAttribute(key, val);
+         }
 
-      for (String className : parsedAttributes.getClasses())
-         imgEl.addClassName(className);
+         if (!parsedAttributes.getIdentifier().isEmpty())
+            imgEl.setId(parsedAttributes.getIdentifier());
+
+         for (String className : parsedAttributes.getClasses())
+            imgEl.addClassName(className);
+      }
       
       // add load handlers to image
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
