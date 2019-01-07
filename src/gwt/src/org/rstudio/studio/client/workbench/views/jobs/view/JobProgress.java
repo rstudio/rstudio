@@ -67,6 +67,7 @@ public class JobProgress extends Composite
          progress_.setVisible(false);
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
+         status_.setVisible(true);
       }
       else if (job.max > 0)
       {
