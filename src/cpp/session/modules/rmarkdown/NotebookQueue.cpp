@@ -673,7 +673,7 @@ private:
 // since we already manage the lifetime of the queue appropriately
 // we use a raw pointer and let it leak if the user attempts to quit R
 // while the notebook queue is running
-static NotebookQueue* s_queue;
+static NotebookQueue* s_queue = nullptr;
 
 Error updateExecQueue(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
