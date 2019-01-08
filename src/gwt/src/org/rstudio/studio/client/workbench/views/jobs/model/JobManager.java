@@ -1,7 +1,7 @@
 /*
  * JobManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -399,9 +399,8 @@ public class JobManager implements JobRefreshEvent.Handler,
    
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
-      String name = (path == null ? "Current" : path.getName()) + " selection";
       JobLauncherDialog dialog = new JobLauncherDialog("Run Selection as Job",
-            name,
+            JobLauncherDialog.JobSource.Selection,
             path,
             workingDir,
             code,
@@ -422,7 +421,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    private void showJobLauncherDialog(FileSystemItem path)
    {
       JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
-            path.getName(),
+            JobLauncherDialog.JobSource.Script,
             path,
             spec ->
             {
