@@ -71,14 +71,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
       String jobName;
       if (source_ == JobSource.Selection)
       {
-         if (StringUtil.isNullOrEmpty(controls_.scriptPath()))
-         {
-            jobName = "Current selection";
-         }
-         else
-         {
-            jobName = FileSystemItem.getNameFromPath(controls_.scriptPath()) + " selection";
-         }
+         jobName = computeSelectionJobName(controls_.scriptPath());
       }
       else 
       {
@@ -116,6 +109,18 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    protected Widget createMainWidget()
    {
       return controls_;
+   }
+   
+   public static String computeSelectionJobName(String path)
+   {
+      if (StringUtil.isNullOrEmpty(path))
+      {
+         return "Current selection";
+      }
+      else
+      {
+         return FileSystemItem.getNameFromPath(path) + " selection";
+      }
    }
    
    private final String code_;
