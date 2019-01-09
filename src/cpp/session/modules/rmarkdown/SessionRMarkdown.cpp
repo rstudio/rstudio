@@ -515,7 +515,9 @@ private:
                              renderOptions);
       
       // un-escape unicode escapes
+#ifdef _WIN32
       cmd = boost::algorithm::replace_all_copy(cmd, "\\\\u{", "\\u{");
+#endif
       
       // environment
       core::system::Options environment;
