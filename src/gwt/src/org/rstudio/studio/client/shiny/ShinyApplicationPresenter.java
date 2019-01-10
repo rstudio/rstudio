@@ -119,9 +119,13 @@ public class ShinyApplicationPresenter implements
    }
    
    private native void initializeEvents() /*-{  
-      var thiz = this;   
+      var thiz = this;
+
+      // we observed in some cases the "unload" event not firing when
+      // windows were closed in response to interrupts; "beforeunload"
+      // appears to be more reliable
       $wnd.addEventListener(
-            "unload",
+            "beforeunload",
             $entry(function() {
                thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
             }),
