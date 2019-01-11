@@ -382,16 +382,16 @@ public:
    typedef Member value_type;
 
    friend class iterator;
-   class iterator: public std::iterator<std::bidirectional_iterator_tag,   // iterator_category
-                                        Member,                            // value_type
-                                        long,                              // difference_type
-                                        const Member*,                     // pointer
-                                        Member>                            // reference
+   class iterator: public std::iterator<std::bidirectional_iterator_tag,            // iterator_category
+                                        Member,                                     // value_type
+                                        std::ptrdiff_t,                             // difference_type
+                                        const Member*,                              // pointer
+                                        Member>                                     // reference
    {
    public:
       friend class Object;
 
-      explicit iterator(const Object* parent, long num = 0) :
+      explicit iterator(const Object* parent, std::ptrdiff_t num = 0) :
          parent_(parent), num_(num) {}
 
       iterator(const iterator& other) :
@@ -406,7 +406,7 @@ public:
 
       iterator& operator++()
       {
-         if (num_ < parent_->get_impl().MemberCount())
+         if (static_cast<rapidjson::SizeType>(num_) < parent_->get_impl().MemberCount())
             ++num_;
 
          return *this;
@@ -446,7 +446,7 @@ public:
 
       reference operator*() const
       {
-         if (num_ >= parent_->get_impl().MemberCount())
+         if (static_cast<rapidjson::SizeType>(num_) >= parent_->get_impl().MemberCount())
             return Member();
 
          auto iter = parent_->get_impl().MemberBegin() + num_;
@@ -455,7 +455,7 @@ public:
 
    private:
       const Object* parent_;
-      long num_;
+      std::ptrdiff_t num_;
    };
 
    typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -470,7 +470,7 @@ public:
    }
 
    iterator begin() const { return iterator(this, 0); }
-   iterator end() const { return iterator(this, size()); }
+   iterator end() const { return iterator(this, static_cast<std::ptrdiff_t>(size())); }
    reverse_iterator rbegin() const { return reverse_iterator(end()); }
    reverse_iterator rend() const { return reverse_iterator(begin()); }
 
@@ -552,25 +552,25 @@ public:
 
    Value operator[](size_t index) const
    {
-      ValueType& value = get_impl()[index];
+      ValueType& value = get_impl()[static_cast<rapidjson::SizeType>(index)];
       return Value(static_cast<DocumentType&>(value));
    }
 
    class iterator: public std::iterator<std::bidirectional_iterator_tag,   // iterator_category
                                         Value,                             // value_type
-                                        long,                              // difference_type
+                                        std::ptrdiff_t,                    // difference_type
                                         const Value*,                      // pointer
                                         Value>                             // reference
    {
    public:
       friend class Array;
 
-      explicit iterator(const Array* parent, long num = 0) :
+      explicit iterator(const Array* parent, std::ptrdiff_t num = 0) :
          parent_(parent), num_(num) {}
 
       iterator& operator++()
       {
-         if (num_ < parent_->get_impl().Size())
+         if (static_cast<rapidjson::SizeType>(num_) < parent_->get_impl().Size())
             ++num_;
 
          return *this;
@@ -610,7 +610,7 @@ public:
 
       reference operator*() const
       {
-         if (num_ >= parent_->get_impl().Size())
+         if (static_cast<rapidjson::SizeType>(num_) >= parent_->get_impl().Size())
             return Value();
 
          auto iter = parent_->get_impl().Begin() + num_;
@@ -619,7 +619,7 @@ public:
 
    private:
       const Array* parent_;
-      long num_;
+      std::ptrdiff_t num_;
    };
 
    typedef std::reverse_iterator<iterator> reverse_iterator;
