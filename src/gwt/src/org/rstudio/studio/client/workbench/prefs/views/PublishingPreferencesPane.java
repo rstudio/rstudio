@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -228,6 +229,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
       add(caBundlePath_);
 
+      add(spacedBefore(new HelpLink("Troubleshooting Deployments", 
+            "troubleshooting_deployments")));
+      
       server_.hasOrphanedAccounts(new ServerRequestCallback<Double>()
       {
          @Override
