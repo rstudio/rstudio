@@ -1,7 +1,7 @@
 /*
  * JobItem.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -24,10 +23,9 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobStopEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
@@ -105,27 +103,8 @@ public class JobItem extends Composite
       launcherStop_ = new ToolbarButton(
             RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
             {
-               // TODO: different UI that exposes both "stop" and "kill" if the job
-               // supports it. Probably a dialog with a "Force" checkbox which is
-               // always deselected by default.
-               
-               // TODO: also figure out how to incorporate "cancel", which is used
-               // to stop a job that is still being scheduled; maybe handle that
-               // entirely server-side?
-               RStudioGinjector.INSTANCE.getJobManager().controlLauncherJob(
-                     job.id, "stop", new ServerRequestCallback<Boolean>()
-               {
-                  @Override
-                  public void onResponseReceived(Boolean result)
-                  {
-                  }
-      
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+                     new LauncherJobStopEvent(job.id, getJob().state));
             });
       initWidget(uiBinder.createAndBindUi(this));
       
