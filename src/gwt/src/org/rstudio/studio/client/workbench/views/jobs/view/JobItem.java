@@ -127,13 +127,19 @@ public class JobItem extends Composite
       
       select_.setResource(detailsImage);
 
-      ClickHandler selectJob = evt -> 
+      ClickHandler selectJob = evt ->
       {
          if (DomUtils.isDescendant(
                Element.as(evt.getNativeEvent().getEventTarget()),
-               running_.getElement()))
+               running_.getElement()) ||
+             DomUtils.isDescendant(
+               Element.as(evt.getNativeEvent().getEventTarget()),
+                   stop_.getElement()) ||
+             DomUtils.isDescendant(
+                   Element.as(evt.getNativeEvent().getEventTarget()),
+                   launcherStop_.getElement()))
          {
-            // ignore clicks occurring inside the progress area
+            // ignore clicks occurring inside the progress area, or the stop button
             return;
          }
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(
