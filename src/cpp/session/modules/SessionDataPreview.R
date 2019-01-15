@@ -15,12 +15,35 @@
 
 .rs.addJsonRpcHandler("preview_sql", function(code)
 {
-   status <- .rs.tryCatch(eval(parse(text = code), envir = globalenv()))
-   if (inherits(status, "error")) {
-      reason <- conditionMessage(status)
-      message <- paste("An unknown error occured: ", .rs.truncate(reason))
-      return(.rs.scalar(message))
+   # helper function for reporting errors
+   onError <- function(reason) {
+      .rs.scalar(.rs.truncate(reason))
    }
+   
+   # parse the user-provided code
+   parsed <- .rs.tryCatch(parse(text = code)[[1]])
+   if (inherits(parsed, "error"))
+      return(onError("Failed to parse SQL preview comment."))
+   
+   # substitute missing arguments for NULL, so that match.call
+   # does what we expect
+   for (i in seq_along(parsed))
+      if (identical(parsed[[i]], quote(expr = )))
+         parsed[i] <- list(NULL)
+
+   # attempt to match the call
+   matched <- .rs.tryCatch(match.call(.rs.previewSql, parsed))
+   if (inherits(matched, "error"))
+      return(onError("Unexpected SQL preview comment."))
+   
+   # validate that the user provided a connection
+   if (is.null(matched$conn))
+      return(onError("No connection was specified in SQL preview comment."))
+   
+   # okay, try to evaluate it
+   status <- .rs.tryCatch(eval(parsed, envir = globalenv()))
+   if (inherits(status, "error"))
+      return(onError(conditionMessage(status)))
    
    invisible(status)
 })
