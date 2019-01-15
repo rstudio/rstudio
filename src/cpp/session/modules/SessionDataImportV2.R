@@ -685,7 +685,7 @@
    }
 
    list(
-      data = unname(data),
+      data = unname(as.list(data)),
       columns = columns
    )
 })
