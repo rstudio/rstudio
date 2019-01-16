@@ -190,7 +190,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       page.initialize(initialData_);
 
-      //
+      // LayoutPanel sets all parent divs to overflow: hidden which doesn't let use
+      // scroll anything inside our wizard tables.
       if (page.getElement().getParentElement() != null)
       {
          page.getElement().getParentElement().getStyle().setOverflow(Style.Overflow.VISIBLE);
