@@ -421,5 +421,5 @@ public class RStudio implements EntryPoint
    }
    
    private Command dismissProgressAnimation_;
-   private HasClickHandlers reloadInSafeMode_;
+   private SimpleButton reloadInSafeMode_;
 }

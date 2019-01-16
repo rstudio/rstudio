@@ -48,24 +48,26 @@ static std::string s_launcherToken;
 void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
 {
    // we only do this when establishing new sessions via client_init
-   if (!boost::algorithm::ends_with(request().uri(), "client_init"))
+   if (!boost::algorithm::ends_with(request.uri(), "client_init"))
       return;
 
    // parse the request (okay if it fails, none of the below is critical)
    json::JsonRpcRequest clientInit;
-   Error error = json::parseJsonRpcRquest(request.body(), &clientInit);
+   Error error = json::parseJsonRpcRequest(request.body(), &clientInit);
    if (error)
       return;
    
    // read parameters from the request if present
    int restoreWorkspace = -1;
-   json::getOptionalParam<int>(request.kwparams, "restore_workspace", -1, &restoreWorkspace);
+   json::getOptionalParam<int>(clientInit.kwparams, "restore_workspace", -1, &restoreWorkspace);
    if (restoreWorkspace != -1)
-      pArgs->push_back("--r-restore-workspace", restoreWorkspace);
+      pArgs->push_back(std::make_pair("--r-restore-workspace", 
+               safe_convert::numberToString(restoreWorkspace)));
    int runRprofile = -1;
-   json::getOptionalParam<int>(request.kwparams, "run_rprofile", -1, &runRprofile);
+   json::getOptionalParam<int>(clientInit.kwparams, "run_rprofile", -1, &runRprofile);
    if (runRprofile != -1)
-      pArgs->push_back("--r-run-rprofile", runRprofile);
+      pArgs->push_back(std::make_pair("--r-run-rprofile", 
+            safe_convert::numberToString(runRprofile)));
 }
 
 core::system::ProcessConfig sessionProcessConfig(
@@ -236,7 +238,6 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    core::system::Options args;
    readRequestArgs(request, &args);
    std::cerr << "process launch request " << request << std::endl;
-   std::cerr << "using args " << args << std::endl;
 
    // determine launch options
    r_util::SessionLaunchProfile profile;

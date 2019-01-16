@@ -58,6 +58,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -219,9 +220,12 @@ public class Application implements ApplicationEventHandlers
 
       if (safeReloadButton != null)
       {
+         // when the reload button is clicked, abort the pending launch
          safeReloadButton.addClickHandler(evt -> 
          {
-            pClientInit_.get().execute(callback, options, retryOnTransmissionError);;
+            pClientInit_.get().retry(callback, SessionInitOptions.create(
+                  SessionInitOptions.RESTORE_WORKSPACE_NO, 
+                  SessionInitOptions.RUN_RPROFILE_NO));
          });
       }
 

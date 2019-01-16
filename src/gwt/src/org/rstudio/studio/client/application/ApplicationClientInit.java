@@ -42,6 +42,33 @@ public class ApplicationClientInit
       execute(requestCallback, null, true);
    }
    
+   public void retry(final ServerRequestCallback<SessionInfo> requestCallback,
+                     final SessionInitOptions options)
+   {
+      // cancel the in-flight request, if any
+      if (rpcRequestCallback_ != null)
+      {
+         rpcRequestCallback_.cancel();
+         rpcRequestCallback_ = null;
+      }
+
+      // abort the pending launch
+      server_.abort(null, new ServerRequestCallback<Void>() {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            // re-attempt the launch with the new options
+            execute(requestCallback, options, true);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            requestCallback.onError(error);     
+         }
+      });
+   }
+   
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback,
                        final SessionInitOptions options,
                        final boolean retryOnTransmissionError)
@@ -51,8 +78,7 @@ public class ApplicationClientInit
       timeoutTimer_ = null;
       
       // send the request
-      final ServerRequestCallback<SessionInfo> rpcRequestCallback = 
-                                 new ServerRequestCallback<SessionInfo>() {
+      rpcRequestCallback_ = new ServerRequestCallback<SessionInfo>() {
          @Override
          public void onResponseReceived(SessionInfo sessionInfo)
          {
@@ -91,7 +117,7 @@ public class ApplicationClientInit
             }
          }                                    
       };
-      server_.clientInit(GWT.getHostPageBaseURL(), null, rpcRequestCallback);
+      server_.clientInit(GWT.getHostPageBaseURL(), null, rpcRequestCallback_);
                                     
       
       // wait for 60 seconds then ask the user if they want to issue an 
@@ -104,7 +130,7 @@ public class ApplicationClientInit
             timedOut_ = true;
             
             // cancel our request
-            rpcRequestCallback.cancel();
+            rpcRequestCallback_.cancel();
             
             // ask the user if they want to attempt to interrupt the server
             globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
@@ -194,4 +220,5 @@ public class ApplicationClientInit
    private final GlobalDisplay globalDisplay_ ;
    private Timer timeoutTimer_ = null;
    private boolean timedOut_ = false;
+   private ServerRequestCallback<SessionInfo> rpcRequestCallback_;
 }
