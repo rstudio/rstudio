@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class NewConnectionNavigationPage 
    extends WizardNavigationPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionNavigationPage(String title,
+   NewConnectionNavigationPage(String title,
                                       String subTitle,
                                       ImageResource icon,
                                       NewConnectionContext context,
@@ -61,24 +61,14 @@ public class NewConnectionNavigationPage
             icon,
             null, 
             createPages(context),
-            new WizardNavigationPageProducer<NewConnectionContext, ConnectionOptions>()
-            {
-               @Override
-               public Widget createMainWidget(ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages)
-               {
-                  return createWidget(pages, warning);
-               }
-            });
+            (p) -> createWidget(p, warning)
+      );
    }
    
-   private static ArrayList<WizardPage<NewConnectionContext, 
-                                       ConnectionOptions>> 
+   private static ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>>
            createPages(NewConnectionContext context)
    {
-      ArrayList<WizardPage<NewConnectionContext, 
-                           ConnectionOptions>> pages =
-                           new ArrayList<WizardPage<NewConnectionContext, 
-                                                    ConnectionOptions>>();
+      ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages = new ArrayList<>();
 
       for(NewConnectionInfo connectionInfo: context.getConnectionsList()) {
          if (!connectionInfo.getLicensed() || 
@@ -114,7 +104,7 @@ public class NewConnectionNavigationPage
          extends Composite
          implements HasWizardPageSelectionHandler<NewConnectionContext, ConnectionOptions>
    {
-      public Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
+      Selector(final ArrayList<WizardPage<NewConnectionContext, ConnectionOptions>> pages,
                       String warning)
       {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
