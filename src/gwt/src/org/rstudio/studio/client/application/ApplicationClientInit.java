@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -38,10 +39,11 @@ public class ApplicationClientInit
    
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback)
    {
-      execute(requestCallback, true);
+      execute(requestCallback, null, true);
    }
    
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback,
+                       final SessionInitOptions options,
                        final boolean retryOnTransmissionError)
    {
       // reset internal state 
@@ -78,7 +80,7 @@ public class ApplicationClientInit
                      public void run()
                      {
                         // retry (specify flag to ensure we only retry once)
-                        execute(requestCallback, false);
+                        execute(requestCallback, options, false);
                      }
                   }.schedule(1000);
                }
@@ -89,7 +91,7 @@ public class ApplicationClientInit
             }
          }                                    
       };
-      server_.clientInit(GWT.getHostPageBaseURL(), rpcRequestCallback);
+      server_.clientInit(GWT.getHostPageBaseURL(), null, rpcRequestCallback);
                                     
       
       // wait for 60 seconds then ask the user if they want to issue an 

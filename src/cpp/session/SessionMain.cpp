@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -218,6 +218,12 @@ namespace session {
 
 bool disableExecuteRprofile()
 {
+   // check for session-specific override
+   if (options().rRunRprofile() == kRunRprofileNo)
+      return true;
+   if (options().rRunRprofile() == kRunRprofileYes)
+      return false;
+
    bool disableExecuteRprofile = false;
 
    const projects::ProjectContext& projContext = projects::projectContext();
@@ -1357,6 +1363,12 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
+   // check options for session-specific override
+   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
+      return false;
+   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
+      return true;
+   
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())

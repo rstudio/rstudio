@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -239,6 +239,16 @@ public:
    std::string rDocDirOverride()
    {
       return std::string(rDocDirOverride_.c_str());
+   }
+
+   int rRestoreWorkspace()
+   {
+      return rRestoreWorkspace_;
+   }
+
+   int rRunRprofile()
+   {
+      return rRunRprofile_;
    }
    
    std::string defaultRVersion()
@@ -673,6 +683,8 @@ private:
    std::string rDocDirOverride_;
    std::string defaultRVersion_;
    std::string defaultRVersionHome_;
+   int rRestoreWorkspace_;
+   int rRunRprofile_;
    
    // limits
    int limitFileUploadSizeMb_;

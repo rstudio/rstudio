@@ -321,6 +321,7 @@ public class RemoteServer implements Server
    }
 
    public void clientInit(String baseURL,
+                     SessionInitOptions options,
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
       // send init request (record clientId and version contained in response)
@@ -329,6 +330,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, 
                   CLIENT_INIT, 
                   params,
+                  options == null ? null : new JSONObject(options),
                   new ServerRequestCallback<SessionInfo>() {
 
          public void onResponseReceived(SessionInfo sessionInfo)

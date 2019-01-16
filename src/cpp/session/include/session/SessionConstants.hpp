@@ -107,6 +107,14 @@
 
 #define kSessionUserLicenseSoftLimitReached  "session-user-license-soft-limit-reached"
 
+#define kRestoreWorkspaceNo       0
+#define kRestoreWorkspaceYes      1
+#define kRestoreWorkspaceDefault  2
+
+#define kRunRprofileNo       0
+#define kRunRprofileYes      1
+#define kRunRprofileDefault  2
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";

@@ -21,11 +21,16 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -41,6 +46,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
+import org.rstudio.core.client.widget.ProgressCallback;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
@@ -48,6 +54,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
@@ -112,7 +119,7 @@ public class RStudio implements EntryPoint
       maybeDelayLoadApplication(this);
    }
    
-   private Command showProgress()
+   private Command showProgress(ProgressCallback callback)
    {
       final Label background = new Label();
       background.getElement().getStyle().setZIndex(1000);
@@ -133,14 +140,30 @@ public class RStudio implements EntryPoint
          str.append("width=24 height=24");
       str.append("/>");
       final SimplePanel progressPanel = new SimplePanel();
-      final Element div = progressPanel.getElement();
+      Element div = progressPanel.getElement();
       div.setInnerHTML(str.toString());
+      ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
+
+      final VerticalPanel vertical = new VerticalPanel();
+      vertical.add(progressPanel);
+      vertical.setCellHorizontalAlignment(progressPanel, VerticalPanel.ALIGN_CENTER);
+
+      if (callback != null)
+      {
+         final Button actionButton = new Button();
+         actionButton.addClickHandler(evt -> callback.callback().execute());
+         actionButton.setText(callback.action());
+         vertical.add(actionButton);
+         vertical.setCellHorizontalAlignment(actionButton, VerticalPanel.ALIGN_CENTER);
+      }
+      
+      div = vertical.getElement();
       div.getStyle().setWidth(100, Style.Unit.PCT);
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
       div.getStyle().setZIndex(1000);
-      ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
-      rootPanel.add(progressPanel);
+
+      rootPanel.add(vertical);
      
       return new Command()
       {
@@ -148,7 +171,7 @@ public class RStudio implements EntryPoint
          {
             try
             {
-               rootPanel.remove(progressPanel);
+               rootPanel.remove(vertical);
                rootPanel.remove(background);
             }
             catch (Exception e)
@@ -210,7 +233,19 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication()
    {
-      dismissProgressAnimation_ = showProgress();
+      ProgressCallback callback = null;
+      
+      // if we are loading the main window, add a button for bailing out and
+      // retrying in safe mode
+      String view = Window.Location.getParameter("view");
+      if (StringUtil.isNullOrEmpty(view))
+      {
+         callback = new ProgressCallback("Retry in Safe Mode",
+               () -> { Debug.devlog("retry"); });
+      }
+
+      dismissProgressAnimation_ = showProgress(callback);
+
       final SerializedCommandQueue queue = new SerializedCommandQueue();
       
       // TODO (gary) This early loading of XTermWidget dependencies needs to be
