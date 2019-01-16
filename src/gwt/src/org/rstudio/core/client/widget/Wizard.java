@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -24,16 +25,11 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -56,64 +52,43 @@ public class Wizard<I,T> extends ModalDialog<T>
       resetOkButtonCaption();
       setOkButtonVisible(false);
       
-      addCloseHandler(new CloseHandler<PopupPanel>()
-      {
-         @Override
-         public void onClose(CloseEvent<PopupPanel> arg0)
-         {
-            cleanupPage(firstPage_);
-         }
-      });
+      addCloseHandler((arg0) -> cleanupPage(firstPage_));
 
       // add next button
-      nextButton_ = new ThemedButton("Next", new ClickHandler()
+      nextButton_ = new ThemedButton("Next", (arg0) ->
       {
-         @Override
-         public void onClick(ClickEvent arg0)
+         if (activePage_ instanceof WizardIntermediatePage<?,?>)
          {
-            if (activePage_ instanceof WizardIntermediatePage<?,?>) 
+            final WizardIntermediatePage<I, T> page =
+                  (WizardIntermediatePage<I, T>) activePage_;
+
+            // collect input from this page asynchronously and advance when
+            // we have input
+            page.collectIntermediateInput(getProgressIndicator(), (input) ->
             {
-               final WizardIntermediatePage<I, T> page = 
-                     (WizardIntermediatePage<I, T>) activePage_;
-               
-               // collect input from this page asynchronously and advance when
-               // we have input
-               page.collectIntermediateInput(getProgressIndicator(), 
-                     new OperationWithInput<T>()
+               // prevent re-entrance
+               if (validating_)
+                  return;
+
+               validating_ = true;
+               try
+               {
+                  page.validateAsync(input, (valid) ->
+                  {
+                     validating_ = false;
+                     if (valid)
                      {
-                        @Override
-                        public void execute(final T input)
-                        {
-                           // prevent re-entrancy
-                           if (validating_)
-                              return;
-                           
-                           validating_ = true;
-                           try
-                           {
-                              page.validateAsync(input, 
-                                    new OperationWithInput<Boolean>()
-                              {
-                                 @Override
-                                 public void execute(Boolean valid)
-                                 {
-                                    validating_ = false;
-                                    if (valid)
-                                    {
-                                       intermediateResult_ = input;
-                                       page.advance();
-                                    }
-                                 }
-                              });
-                           }
-                           catch (Exception e)
-                           {
-                              validating_ = false;
-                              Debug.logException(e);
-                           }
-                        }
-                     });
-            }
+                        intermediateResult_ = input;
+                        page.advance();
+                     }
+                  });
+               }
+               catch (Exception e)
+               {
+                  validating_ = false;
+                  Debug.logException(e);
+               }
+            });
          }
       });
       nextButton_.setVisible(false);
@@ -124,11 +99,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    @Override
    protected void onUnload()
    {
-      activePage_.onDeactivate(new Operation() {
-         public void execute() {
-         }
-      });
-
+      activePage_.onDeactivate(() -> {});
       super.onUnload();
    }
    
@@ -175,13 +146,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       kTopMargin - 2, Unit.PX,
                                       bkImg.getHeight(), Unit.PX);
       backButton_.setVisible(false);
-      backButton_.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            goBack();
-         }
-      });
+      backButton_.addClickHandler((event) -> goBack());
       
       // second page caption label
       pageCaptionLabel_ = new Label();
@@ -217,23 +182,22 @@ public class Wizard<I,T> extends ModalDialog<T>
    private void addAndInitializePage(WizardPage<I,T> page, boolean visible)
    {
       page.setSize("100%", "100%");
-      
+
       bodyPanel_.add(page);
       bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
       bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
       bodyPanel_.setWidgetVisible(page, visible);
       
       page.initialize(initialData_);
-      
-      CommandWithArg<WizardPage<I,T>> showPageCmd = 
-            new CommandWithArg<WizardPage<I,T>>() 
+
+      // LayoutPanel sets all parent divs to overflow: hidden which doesn't let us
+      // scroll anything inside our wizard tables.
+      if (page.getElement().getParentElement() != null)
       {
-         @Override
-         public void execute(WizardPage<I, T> page)
-         {
-            showPage(page);
-         };
-      };
+         page.getElement().getParentElement().getStyle().setOverflow(Style.Overflow.VISIBLE);
+      }
+
+      CommandWithArg<WizardPage<I,T>> showPageCmd = this::showPage;
 
       if (page instanceof WizardNavigationPage<?,?>)
       {
@@ -248,9 +212,9 @@ public class Wizard<I,T> extends ModalDialog<T>
       ArrayList<WizardPage<I,T>> subPages = page.getSubPages();
       if (subPages != null)
       {
-         for (int i = 0; i < subPages.size(); i++)
+         for (WizardPage<I,T>subpage:subPages)
          {
-            addAndInitializePage(subPages.get(i), false);
+            addAndInitializePage(subpage, false);
          }
       }
    }
@@ -261,8 +225,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       WizardPage<I,T> inputPage = activeInputPage();
       if (inputPage != null)
       {
-         T input = ammendInput(inputPage.collectInput());
-         return input;
+         return amendInput(inputPage.collectInput());
       }
       else
          return null;
@@ -278,14 +241,10 @@ public class Wizard<I,T> extends ModalDialog<T>
          validating_ = true;
          try
          {
-            inputPage.validateAsync(input, new OperationWithInput<Boolean>()
+            inputPage.validateAsync(input, (in) ->
             {
-               @Override
-               public void execute(Boolean input)
-               {
-                  validating_ = false;
-                  onValidated.execute(input);
-               }
+               validating_ = false;
+               onValidated.execute(in);
             });
          }
          catch (Exception e)
@@ -295,7 +254,9 @@ public class Wizard<I,T> extends ModalDialog<T>
          }
       }
       else
+      {
          onValidated.execute(false);
+      }
    }
    
    @Override
@@ -376,9 +337,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             onCompleted.execute(); 
          }
          @Override
-         public void onLayout(Layer layer, double progress)
-         {
-         }
+         public void onLayout(Layer layer, double progress) {}
       });
    }
    
@@ -388,54 +347,44 @@ public class Wizard<I,T> extends ModalDialog<T>
       if (!page.acceptNavigation())
          return;
 
-      page.onBeforeActivate(new Operation() {
-         public void execute() {
-            // give the page the currently accumulated result, if any
-            page.setIntermediateResult(intermediateResult_);
-                  
-            // determine behavior based on whether this is standard page or 
-            // a navigation page
-            final boolean okButtonVisible = pageIsFinal(page);
-            activeParentNavigationPage_ = activePage_;
-            
-            activePage_.onDeactivate(new Operation() {
-               public void execute() {
-                  animate(activePage_, page, true, new Command() {
-                     @Override
-                     public void execute()
-                     {
-                        // set active page
-                        activePage_ = page;
+      page.onBeforeActivate(() ->
+      {
+         // give the page the currently accumulated result, if any
+         page.setIntermediateResult(intermediateResult_);
 
-                        page.setNextPageEnabled(new OperationWithInput<Boolean>() {
-                           public void execute(Boolean enabled) {
-                              setNextButtonEnabled(enabled);
-                           }
-                        });
-                        
-                        // update header
-                        subCaptionLabel_.setVisible(false);
-                        backButton_.setVisible(true);
-                        pageCaptionLabel_.setText(page.getPageCaption());
-                        pageCaptionLabel_.setVisible(true);
-                        
-                        // make ok button visible
-                        setOkButtonVisible(okButtonVisible);
-                        
-                        // if this is an intermediate page, make Next visible
-                        setNextButtonState(page);
-                        
-                        // let wizard and page know that the new page is active
-                        onPageActivated(page, okButtonVisible);
-                        page.onActivate(getProgressIndicator());
-                        
-                        // set focus
-                        FocusHelper.setFocusDeferred(page);
-                     }
-                  });
-               }
-            });
-         }
+         // determine behavior based on whether this is standard page or
+         // a navigation page
+         final boolean okButtonVisible = pageIsFinal(page);
+         activeParentNavigationPage_ = activePage_;
+
+         activePage_.onDeactivate(() ->
+            animate(activePage_, page, true, () ->
+               {
+                  // set active page
+                  activePage_ = page;
+
+                  page.setNextPageEnabled((enabled) -> setNextButtonEnabled(enabled));
+
+                  // update header
+                  subCaptionLabel_.setVisible(false);
+                  backButton_.setVisible(true);
+                  pageCaptionLabel_.setText(page.getPageCaption());
+                  pageCaptionLabel_.setVisible(true);
+
+                  // make ok button visible
+                  setOkButtonVisible(okButtonVisible);
+
+                  // if this is an intermediate page, make Next visible
+                  setNextButtonState(page);
+
+                  // let wizard and page know that the new page is active
+                  onPageActivated(page, okButtonVisible);
+                  page.onActivate(getProgressIndicator());
+
+                  // set focus
+                  FocusHelper.setFocusDeferred(page);
+            })
+         );
       }, this);
    }
    
@@ -461,37 +410,32 @@ public class Wizard<I,T> extends ModalDialog<T>
       activeParentNavigationPage_ = null;
       
       onPageDeactivated(activePage_);
-      activePage_.onDeactivate(new Operation() {
-         public void execute() {
-            animate(activePage_, toWidget, false, new Command() {
-               @Override
-               public void execute()
-               {
-                  // update active page
-                  activePage_ = newActivePage;
-                  
-                  // update header
-                  subCaptionLabel_.setVisible(newActivePage == firstPage_);
-                  pageCaptionLabel_.setVisible(
-                        newActivePage != firstPage_ && isNavigationPage);
-                  pageCaptionLabel_.setText(pageCaptionLabel);
-                  
-                  setNextButtonState(newActivePage);
-                  backButton_.setVisible(
-                        newActivePage != firstPage_);
+      activePage_.onDeactivate(() ->
+         animate(activePage_, toWidget, false, () ->
+         {
+            // update active page
+            activePage_ = newActivePage;
 
-                  // make ok button invisible
-                  setOkButtonVisible(false);
-                  
-                  // call hook
-                  onSelectorActivated();
-                  
-                  // set focus
-                  focusWidget.focus();
-               }
-            });
-         }
-      });
+            // update header
+            subCaptionLabel_.setVisible(newActivePage == firstPage_);
+            pageCaptionLabel_.setVisible(
+               newActivePage != firstPage_ && isNavigationPage);
+            pageCaptionLabel_.setText(pageCaptionLabel);
+
+            setNextButtonState(newActivePage);
+            backButton_.setVisible(
+               newActivePage != firstPage_);
+
+            // make ok button invisible
+            setOkButtonVisible(false);
+
+            // call hook
+            onSelectorActivated();
+
+            // set focus
+            focusWidget.focus();
+         })
+      );
    }
    
    protected void onPageActivated(WizardPage<I,T> page, boolean okButtonVisible)
@@ -506,7 +450,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    {
    }
 
-   protected T ammendInput(T input)
+   protected T amendInput(T input)
    {
       return input;
    }
@@ -579,8 +523,8 @@ public class Wizard<I,T> extends ModalDialog<T>
    private ThemedButton nextButton_;
    
    private LayoutPanel bodyPanel_;
-   private WizardPage<I,T> firstPage_ = null;
-   private WizardPage<I,T> activePage_ = null;
+   private WizardPage<I,T> firstPage_;
+   private WizardPage<I,T> activePage_;
    private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;
    private boolean validating_ = false;
