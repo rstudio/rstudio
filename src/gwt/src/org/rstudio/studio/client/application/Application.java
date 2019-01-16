@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -155,6 +156,7 @@ public class Application implements ApplicationEventHandlers
    }
      
    public void go(final RootLayoutPanel rootPanel, 
+                  final HasClickHandlers safeReloadButton,
                   final Command dismissLoadingProgress)
    {
       rootPanel_ = rootPanel;
@@ -164,10 +166,8 @@ public class Application implements ApplicationEventHandlers
 
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-
-      // attempt init
-      pClientInit_.get().execute(
-                              new ServerRequestCallback<SessionInfo>() {
+      
+      final ServerRequestCallback<SessionInfo> callback = new ServerRequestCallback<SessionInfo>() {
 
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
@@ -215,7 +215,18 @@ public class Application implements ApplicationEventHandlers
             globalDisplay_.showErrorMessage("RStudio Initialization Error",
                                             error.getUserMessage());
          }
-      }) ;
+      };
+
+      if (safeReloadButton != null)
+      {
+         safeReloadButton.addClickHandler(evt -> 
+         {
+            pClientInit_.get().execute(callback, options, retryOnTransmissionError);;
+         });
+      }
+
+      // attempt init
+      pClientInit_.get().execute(callback);
    }  
    
    @Handler

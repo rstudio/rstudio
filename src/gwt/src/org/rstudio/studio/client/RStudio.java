@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -31,6 +32,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -49,6 +51,7 @@ import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressCallback;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
+import org.rstudio.core.client.widget.SimpleButton;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -119,7 +122,7 @@ public class RStudio implements EntryPoint
       maybeDelayLoadApplication(this);
    }
    
-   private Command showProgress(ProgressCallback callback)
+   private Command showProgress(Widget progressAction)
    {
       final Label background = new Label();
       background.getElement().getStyle().setZIndex(1000);
@@ -148,13 +151,10 @@ public class RStudio implements EntryPoint
       vertical.add(progressPanel);
       vertical.setCellHorizontalAlignment(progressPanel, VerticalPanel.ALIGN_CENTER);
 
-      if (callback != null)
+      if (progressAction != null)
       {
-         final Button actionButton = new Button();
-         actionButton.addClickHandler(evt -> callback.callback().execute());
-         actionButton.setText(callback.action());
-         vertical.add(actionButton);
-         vertical.setCellHorizontalAlignment(actionButton, VerticalPanel.ALIGN_CENTER);
+         vertical.add(progressAction);
+         vertical.setCellHorizontalAlignment(progressAction, VerticalPanel.ALIGN_CENTER);
       }
       
       div = vertical.getElement();
@@ -233,18 +233,15 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication()
    {
-      ProgressCallback callback = null;
-      
       // if we are loading the main window, add a button for bailing out and
       // retrying in safe mode
       String view = Window.Location.getParameter("view");
       if (StringUtil.isNullOrEmpty(view))
       {
-         callback = new ProgressCallback("Retry in Safe Mode",
-               () -> { Debug.devlog("retry"); });
+         reloadInSafeMode_ = new SimpleButton("Reload in Safe Mode");
       }
 
-      dismissProgressAnimation_ = showProgress(callback);
+      dismissProgressAnimation_ = showProgress(reloadInSafeMode_);
 
       final SerializedCommandQueue queue = new SerializedCommandQueue();
       
@@ -351,6 +348,7 @@ public class RStudio implements EntryPoint
       {
          RStudioGinjector.INSTANCE.getApplication().go(
                RootLayoutPanel.get(),
+               reloadInSafeMode_,
                dismissProgressAnimation_);
       }
    }
@@ -423,4 +421,5 @@ public class RStudio implements EntryPoint
    }
    
    private Command dismissProgressAnimation_;
+   private HasClickHandlers reloadInSafeMode_;
 }
