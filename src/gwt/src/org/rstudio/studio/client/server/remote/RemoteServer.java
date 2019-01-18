@@ -1816,6 +1816,7 @@ public class RemoteServer implements Server
                                 boolean isProject, 
                                 String directory,
                                 RVersionSpec rVersion,
+                                JavaScriptObject launchSpec,
                                 ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
@@ -1824,6 +1825,8 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(directory));
       params.set(3, rVersion != null ? new JSONObject(rVersion) :
                                        JSONNull.getInstance());
+      params.set(4, launchSpec != null ? new JSONObject(launchSpec) :
+            JSONNull.getInstance());
       sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
    }
    

@@ -1,7 +1,7 @@
 /*
  * ApplicationServerOperations.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.model;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -83,6 +84,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
          boolean isProject, 
          String directory,
          RVersionSpec rVersion,
+         JavaScriptObject launchSpec, // LaunchSpec object as JavaScriptObject
          ServerRequestCallback<String> callback);
    
    void getActiveSessions(
