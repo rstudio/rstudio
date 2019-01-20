@@ -392,9 +392,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # find which packages are currently attached (be careful to handle
    # cases where package is installed into multiple libraries)
-   loaded <-
+   #
+   # we suppress warnings here as 'find.packages(.packages())' can warn
+   # if a package that is attached is no longer actually installed
+   loaded <- suppressWarnings(
       normalizePath(file.path(info$LibPath, info$Package), winslash = "/", mustWork = FALSE) %in%
       normalizePath(find.package(.packages(), quiet = TRUE), winslash = "/", mustWork = FALSE)
+   )
    
    # extract fields relevant to us
    packages <- data.frame(
