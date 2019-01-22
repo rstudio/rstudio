@@ -1535,10 +1535,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # get the directory and read packages.rds
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
    rds <- file.path(dir, "packages.rds")
-   packages <- readRDS(rds)
    
-   # add it to the cache
-   .rs.availablePackagesEnv[[reposString]] <- packages
+   # attempt to read the database and add it to the cache
+   packages <- .rs.tryCatch(readRDS(rds))
+   if (!inherits(packages, "error"))
+      .rs.availablePackagesEnv[[reposString]] <- packages
    
    # remove state directory and mark as no longer pending
    unlink(dir, recursive = TRUE)
