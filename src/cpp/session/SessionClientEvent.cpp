@@ -536,6 +536,10 @@ std::string ClientEvent::typeName() const
          return "plumber_viewer";
       case client_events::kComputeThemeColors:
          return "compute_theme_colors";
+      case client_events::kRequestDocumentClose:
+         return "request_document_close";
+      case client_events::kRequestDocumentCloseCompleted:
+         return "request_document_close_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

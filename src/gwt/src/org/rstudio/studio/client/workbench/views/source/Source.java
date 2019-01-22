@@ -600,6 +600,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
       events.addHandler(RequestDocumentSaveEvent.TYPE, this);
+      events.addHandler(RequestDocumentCloseEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()

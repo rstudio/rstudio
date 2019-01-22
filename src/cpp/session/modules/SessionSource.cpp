@@ -1,7 +1,7 @@
 /*
  * SessionSource.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1271,7 +1271,7 @@ SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP forceSXP) {
 
    ClientEvent event(client_events::kRequestDocumentClose, jsonData);
    
-   return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentClose), protect);
+   return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentClose), &protect);
 }
 
 SEXP rs_readSourceDocument(SEXP idSEXP)
@@ -1349,6 +1349,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
    RS_REGISTER_CALL_METHOD(rs_readSourceDocument, 1);
+   RS_REGISTER_CALL_METHOD(rs_requestDocumentClose, 2);
 
    // install rpc methods
    using boost::bind;
