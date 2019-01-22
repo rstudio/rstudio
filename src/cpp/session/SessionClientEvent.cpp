@@ -193,6 +193,8 @@ const int kNewDocumentWithCode = 174;
 const int kPlumberViewer = 175;
 const int kAvailablePackagesReady = 176;
 const int kComputeThemeColors = 177;
+const int kRequestDocumentClose = 178;
+const int kRequestDocumentCloseCompleted = 179;
 }
 
 void ClientEvent::init(int type, const json::Value& data)

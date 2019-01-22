@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -196,7 +197,8 @@ public class Source implements InsertSourceHandler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
                              GetEditorContextEvent.Handler,
-                             RequestDocumentSaveEvent.Handler
+                             RequestDocumentSaveEvent.Handler,
+                             RequestDocumentCloseEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -4577,11 +4579,8 @@ public class Source implements InsertSourceHandler,
       onShowProfiler(event);
    }
    
-   @Override
-   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   private void saveDocumentIds(JsArrayString ids, final CommandWithArg<Boolean> onSaveCompleted)
    {
-      final JsArrayString ids = event.getDocumentIds();
-      
       // we use a timer that fires the document save completed event,
       // just to ensure the server receives a response even if something
       // goes wrong during save or some client-side code throws. unfortunately
@@ -4594,12 +4593,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void run()
          {
-            if (SourceWindowManager.isMainSourceWindow())
-            {
-               server_.requestDocumentSaveCompleted(
-                     savedSuccessfully.get(),
-                     new VoidServerRequestCallback());
-            }
+            onSaveCompleted.execute(savedSuccessfully.get());
          }
       };
       completedTimer.schedule(5000);
@@ -4625,6 +4619,73 @@ public class Source implements InsertSourceHandler,
             idSet.add(id);
          
          saveUnsavedDocuments(idSet, onCompleted);
+      }
+   }
+   
+   @Override
+   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   {
+      saveDocumentIds(event.getDocumentIds(), success -> 
+      {
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            server_.requestDocumentSaveCompleted(success,
+                  new VoidServerRequestCallback());
+         }
+      });
+   }
+   
+   @Override
+   public void onRequestDocumentClose(RequestDocumentCloseEvent event)
+   {
+      JsArrayString ids = event.getDocumentIds();
+      Command closeEditors = () ->
+      {
+         // Close each of the requested tabs
+         for (EditingTarget target: editors_)
+         {
+           if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
+           {
+              view_.closeTab(target.asWidget(), false /* non interactive */);
+           }
+         }
+         
+         // Let the server know we've completed the task
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            server_.requestDocumentCloseCompleted(true,
+                  new VoidServerRequestCallback());
+         }
+      };
+
+      if (event.getForce())
+      {
+         // If force-closing, just close the windows immediately
+         closeEditors.execute();
+      }
+      else
+      {
+         // Not force-closing, so give the user the chance to save any unsaved
+         // documents before closing the tab(s). We do this in batch mode (vs.
+         // each tab individually) so the user is presented with a summary of
+         // the files to be closed/saved.
+         saveDocumentIds(ids, success ->
+         {
+            if (success)
+            {
+               // All unsaved changes saved; OK to close
+               closeEditors.execute();
+            }
+            else
+            {
+               // We didn't save (or the user cancelled), so let the server know
+               if (SourceWindowManager.isMainSourceWindow())
+               {
+                  server_.requestDocumentCloseCompleted(false,
+                        new VoidServerRequestCallback());
+               }
+            }
+         });
       }
    }
    

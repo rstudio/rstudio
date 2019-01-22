@@ -533,6 +533,15 @@
    invisible(NULL)
 })
 
+.rs.addApiFunction("documentClose", function(id = NULL, force = FALSE) {
+   # If no ID is specified, try to look up the active document.
+   if (is.null(id)) {
+      context <- .rs.api.getActiveDocumentContext()
+      id <- context$id
+   }
+   .Call("rs_requestDocumentClose", id, force, PACKAGE = "(embedding)")
+})
+
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    value <- .rs.readUiPref("ansi_console_mode")
    if (is.null(value) || value != 1) FALSE else TRUE

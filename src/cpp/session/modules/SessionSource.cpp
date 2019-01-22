@@ -66,6 +66,7 @@ using namespace session::source_database;
 namespace {
 
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
+module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
 
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                     core::json::Object* pDocJson)
@@ -1222,12 +1223,9 @@ SEXP rs_fileEdit(SEXP fileSEXP)
    return R_NilValue;
 }
 
-SEXP rs_requestDocumentSave(SEXP idsSEXP)
+void fillIds(SEXP idsSEXP, json::Object *pJsonData) 
 {
-   r::sexp::Protect protect;
-   
-   json::Object jsonData;
-   
+   json::Object& jsonData = *pJsonData;
    jsonData["ids"] = json::Value();
    if (TYPEOF(idsSEXP) == STRSXP)
    {
@@ -1235,18 +1233,45 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
       r::sexp::fillVectorString(idsSEXP, &ids);
       jsonData["ids"] = json::toJsonArray(ids);
    }
-   
+}
+
+bool waitForSuccess(ClientEvent& event, module_context::WaitForMethodFunction& waitMethod) 
+{
    json::JsonRpcRequest request;
-   ClientEvent event(client_events::kRequestDocumentSave, jsonData);
-   if (!s_waitForRequestDocumentSave(&request, event))
-      return r::sexp::create(false, &protect);
+   if (!waitMethod(&request, event))
+      return false;
    
    bool success = false;
    Error error = json::readParams(request.params, &success);
    if (error)
       LOG_ERROR(error);
    
-   return r::sexp::create(success, &protect);
+   return success;
+}
+
+SEXP rs_requestDocumentSave(SEXP idsSEXP)
+{
+   r::sexp::Protect protect;
+   
+   json::Object jsonData;
+   fillIds(idsSEXP, &jsonData);
+   
+   ClientEvent event(client_events::kRequestDocumentSave, jsonData);
+
+   return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentSave), &protect);
+}
+
+SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP forceSXP) {
+   r::sexp::Protect protect;
+   
+   json::Object jsonData;
+   fillIds(idsSEXP, &jsonData);
+
+   jsonData["force"] = r::sexp::asLogical(forceSXP);
+
+   ClientEvent event(client_events::kRequestDocumentClose, jsonData);
+   
+   return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentClose), protect);
 }
 
 SEXP rs_readSourceDocument(SEXP idSEXP)
@@ -1318,6 +1343,8 @@ Error initialize()
    // register waitfor methods
    s_waitForRequestDocumentSave =
          module_context::registerWaitForMethod("request_document_save_completed");
+   s_waitForRequestDocumentClose =
+         module_context::registerWaitForMethod("request_document_close_completed");
 
    RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
