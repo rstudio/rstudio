@@ -94,6 +94,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
@@ -1018,6 +1019,11 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.ComputeThemeColors)
          {
             eventBus_.dispatchEvent(new ComputeThemeColorsEvent());
+         }
+         else if (type == ClientEvent.RequestDocumentClose)
+         {
+            RequestDocumentCloseEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new RequestDocumentCloseEvent(data));
          }
          else
          {

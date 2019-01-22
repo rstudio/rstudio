@@ -1249,6 +1249,33 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
    return r::sexp::create(success, &protect);
 }
 
+SEXP rs_requestDocumentClose(SEXP idsSEXP)
+{
+   r::sexp::Protect protect;
+
+   json::Object jsonData;
+
+   jsonData["ids"] = json::Value();
+   if (TYPEOF(idsSEXP) == STRSXP)
+   {
+      std::vector<std::string> ids;
+      r::sexp::fillVectorString(idsSEXP, &ids);
+      jsonData["ids"] = json::toJsonArray(ids);
+   }
+
+   json::JsonRpcRequest request;
+   ClientEvent event(client_events::kRequestDocumentClose, jsonData);
+   if (!s_waitForRequestDocumentSave(&request, event))
+      return r::sexp::create(false, &protect);
+
+   bool success = false;
+   Error error = json::readParams(request.params, &success);
+   if (error)
+      LOG_ERROR(error);
+
+   return r::sexp::create(success, &protect);
+}
+
 SEXP rs_readSourceDocument(SEXP idSEXP)
 {
    std::string id = r::sexp::asString(idSEXP);
@@ -1321,6 +1348,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
+   RS_REGISTER_CALL_METHOD(rs_requestDocumentClose, 1);
    RS_REGISTER_CALL_METHOD(rs_readSourceDocument, 1);
 
    // install rpc methods

@@ -193,6 +193,7 @@ const int kNewDocumentWithCode = 174;
 const int kPlumberViewer = 175;
 const int kAvailablePackagesReady = 176;
 const int kComputeThemeColors = 177;
+const int kRequestDocumentClose = 178;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -534,6 +535,8 @@ std::string ClientEvent::typeName() const
          return "plumber_viewer";
       case client_events::kComputeThemeColors:
          return "compute_theme_colors";
+      case client_events::kRequestDocumentClose:
+         return "request_document_close";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

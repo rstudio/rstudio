@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
@@ -98,6 +97,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -196,7 +196,9 @@ public class Source implements InsertSourceHandler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
                              GetEditorContextEvent.Handler,
-                             RequestDocumentSaveEvent.Handler
+                             RequestDocumentSaveEvent.Handler,
+                             RequestDocumentCloseEvent.Handler
+                             
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -598,6 +600,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
       events.addHandler(RequestDocumentSaveEvent.TYPE, this);
+      events.addHandler(RequestDocumentCloseEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -4580,8 +4583,48 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onRequestDocumentSave(RequestDocumentSaveEvent event)
    {
+      requestDocumentSave(event.getDocumentIds(), null);
+   }
+   
+   @Override
+   public void onRequestDocumentClose(RequestDocumentCloseEvent event)
+   {
       final JsArrayString ids = event.getDocumentIds();
       
+      // if no document ids were supplied, do nothing (and tell the
+      // server we did nothing successfully)
+      if (ids == null || ids.length() == 0)
+      {
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            server_.requestDocumentSaveCompleted(
+                  true,
+                  new VoidServerRequestCallback());
+         }
+      }
+      
+      // request document save, and then close those documents
+      requestDocumentSave(ids, () -> {
+         
+         // close documents after save
+         final Set<String> idSet = new HashSet<>();
+         for (String id : JsUtil.asIterable(ids))
+            idSet.add(id);
+      
+         for (EditingTarget target : editors_)
+         {
+            if (idSet.contains(target.getId()))
+            {
+               view_.closeTab(target.asWidget(), false);
+            }
+         };
+         
+      });
+   }
+   
+   private void requestDocumentSave(final JsArrayString ids,
+                                    final Command onSaveCompleted)
+   {
       // we use a timer that fires the document save completed event,
       // just to ensure the server receives a response even if something
       // goes wrong during save or some client-side code throws. unfortunately
@@ -4611,6 +4654,8 @@ public class Source implements InsertSourceHandler,
          {
             savedSuccessfully.set(true);
             completedTimer.schedule(0);
+            if (onSaveCompleted != null)
+               onSaveCompleted.execute();
          }
       };
       
@@ -4626,6 +4671,7 @@ public class Source implements InsertSourceHandler,
          
          saveUnsavedDocuments(idSet, onCompleted);
       }
+      
    }
    
    private void inEditorForPath(String path, 
