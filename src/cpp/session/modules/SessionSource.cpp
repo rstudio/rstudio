@@ -1261,13 +1261,13 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
    return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentSave), &protect);
 }
 
-SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP forceSXP) {
+SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
    r::sexp::Protect protect;
    
    json::Object jsonData;
    fillIds(idsSEXP, &jsonData);
 
-   jsonData["force"] = r::sexp::asLogical(forceSXP);
+   jsonData["save"] = r::sexp::asLogical(saveSXP);
 
    ClientEvent event(client_events::kRequestDocumentClose, jsonData);
    

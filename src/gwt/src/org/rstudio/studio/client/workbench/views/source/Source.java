@@ -4659,17 +4659,9 @@ public class Source implements InsertSourceHandler,
          }
       };
 
-      if (event.getForce())
+      if (event.getSave())
       {
-         // If force-closing, just close the windows immediately
-         closeEditors.execute();
-      }
-      else
-      {
-         // Not force-closing, so give the user the chance to save any unsaved
-         // documents before closing the tab(s). We do this in batch mode (vs.
-         // each tab individually) so the user is presented with a summary of
-         // the files to be closed/saved.
+         // Saving, so save unsaved documents before closing the tab(s).
          saveDocumentIds(ids, success ->
          {
             if (success)
@@ -4687,6 +4679,11 @@ public class Source implements InsertSourceHandler,
                }
             }
          });
+      }
+      else
+      {
+         // If not saving, just close the windows immediately
+         closeEditors.execute();
       }
    }
    

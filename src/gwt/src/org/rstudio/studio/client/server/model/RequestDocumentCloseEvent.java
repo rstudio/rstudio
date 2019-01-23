@@ -32,9 +32,9 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
          return this["ids"];
       }-*/;
 
-      public native final boolean getForce()
+      public native final boolean getSave()
       /*-{
-         return this["force"];
+         return this["save"];
       }-*/;
    }
    
@@ -48,9 +48,9 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       return data_.getDocumentIds();
    }
    
-   public boolean getForce()
+   public boolean getSave()
    {
-      return data_.getForce();
+      return data_.getSave();
    }
    
    private final Data data_;
