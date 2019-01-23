@@ -4643,12 +4643,15 @@ public class Source implements InsertSourceHandler,
       Command closeEditors = () ->
       {
          // Close each of the requested tabs
-         for (EditingTarget target: editors_)
+         if (ids != null)
          {
-           if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
-           {
-              view_.closeTab(target.asWidget(), false /* non interactive */);
-           }
+            for (EditingTarget target: editors_)
+            {
+              if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
+              {
+                 view_.closeTab(target.asWidget(), false /* non interactive */);
+              }
+            }
          }
          
          // Let the server know we've completed the task
