@@ -67,7 +67,7 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl-dev, libclang-dev, ")
   
 endif()
 

@@ -28,7 +28,7 @@ RUN apt-get update -y && apt-get install -y \
     libffi-dev \
     uuid-dev \
     make \
-    libssl1.0-dev \
+    libssl-dev \
     libpango-1.0-0 \
     r-base \
     rrdtool \

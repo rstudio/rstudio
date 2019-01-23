@@ -206,15 +206,19 @@ if (UNIX)
       endif()
    endif()
 
-   find_package(OpenSSL REQUIRED QUIET)
-   set(CORE_SYSTEM_LIBRARIES
-         ${CORE_SYSTEM_LIBRARIES}
-         ${OPENSSL_LIBRARIES}
+   # OpenSSL not required on Linux Desktop builds
+   # (QtWebEngine can resolve it dynamically)
+   if(RSTUDIO_SERVER OR WIN32 OR APPLE)
+      find_package(OpenSSL REQUIRED QUIET)
+      set(CORE_SYSTEM_LIBRARIES
+            ${CORE_SYSTEM_LIBRARIES}
+            ${OPENSSL_LIBRARIES}
+         )
+      set(CORE_INCLUDE_DIRS
+         ${CORE_INCLUDE_DIRS}
+         ${OPENSSL_INCLUDE_DIR}
       )
-   set(CORE_INCLUDE_DIRS
-      ${CORE_INCLUDE_DIRS}
-      ${OPENSSL_INCLUDE_DIR}
-   )
+   endif()
 
    if(RSTUDIO_SERVER)
       find_package(PAM REQUIRED)
