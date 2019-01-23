@@ -1,7 +1,7 @@
 /*
  * ActiveSession.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.core.client.js.JsObject;
 
 public class ActiveSession extends JavaScriptObject
 {
@@ -68,5 +69,21 @@ public class ActiveSession extends JavaScriptObject
    
    public native final String getRVersionHome() /*-{
       return this.r_version_home;
+   }-*/;
+   
+   public native final String getLabel() /*-{
+      return this.label;
+   }-*/;
+   
+   public native final int getSuspendedSize() /*-{
+      return this.suspend_size || 0;
+   }-*/;
+   
+   public final native JsObject getLaunchParameters() /*-{
+      return this.launch_parameters;
+   }-*/;
+   
+   public final native String getSessionId() /*-{
+      return this.id;
    }-*/;
 }

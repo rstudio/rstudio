@@ -1,7 +1,7 @@
 /*
  * RpcRequest.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ public class RpcRequest
                      JSONArray params, 
                      JSONObject kwparams,
                      boolean redactLog,
+                     String resultFieldName,
                      String sourceWindow,
                      String clientId,
                      String clientVersion)
@@ -45,6 +46,7 @@ public class RpcRequest
       params_ = params ;
       kwparams_ = kwparams;
       redactLog_ = redactLog;
+      resultFieldName_ = resultFieldName;
       if (sourceWindow != null)
          sourceWindow_ = new JSONString(sourceWindow);
       else
@@ -223,7 +225,16 @@ public class RpcRequest
    {
       return redactLog_;
    }
-
+   
+   /**
+    * @return If null, use standard "result" field for Rpc result, otherwise
+    *         use value as name of the result field
+    */
+   public String getResultFieldName()
+   {
+      return resultFieldName_;
+   }
+   
    public String getSourceWindow()
    {
       if (sourceWindow_ == null)
@@ -252,7 +263,8 @@ public class RpcRequest
    final private String method_ ;
    final private JSONArray params_ ;
    final private JSONObject kwparams_;
-   private final boolean redactLog_;
+   final private boolean redactLog_;
+   final private String resultFieldName_;
    final private JSONString sourceWindow_;
    final private JSONString clientId_;
    final private JSONString clientVersion_;
