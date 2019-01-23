@@ -1004,7 +1004,7 @@ public:
       std::string remote, merge;
       if (remoteMerge(branch, &remote, &merge))
       {
-         args << remote << merge;
+         args << remote << ("HEAD:" + merge);
       }
 
       return createConsoleProc(args, "Git Push", ppCP);
