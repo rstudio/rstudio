@@ -105,6 +105,9 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void setSessionLabel(String label,
          ServerRequestCallback<Void> requestCallback);
    
+   void deleteSessionDir(String sessionId,
+                         ServerRequestCallback<Void> requestCallback);
+   
    void findProjectInFolder(String folder,
          ServerRequestCallback<String> requestCallback);
 }
