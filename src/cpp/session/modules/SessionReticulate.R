@@ -639,7 +639,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 {
    os <- reticulate::import("os", convert = TRUE)
    token <- gsub("^['\"]|['\"]$", "", token)
-   expanded <- .rs.resolveAliasedPath(token)
+   expanded <- path.expand(token)
    
    # find the index of the last slash -- everything following is
    # the completion token; everything before is the directory to
