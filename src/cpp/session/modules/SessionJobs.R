@@ -87,6 +87,7 @@
 })
 
 .rs.addApiFunction("runScriptJob", function(path, 
+                                            name = NULL,
                                             encoding = "unknown",
                                             workingDir = NULL, 
                                             importEnv = FALSE,
@@ -95,7 +96,7 @@
       stop("Must specify path to R script to run.")
    if (!file.exists(path))
       stop("The R script '", path, "' does not exist.")
-   .Call("rs_runScriptJob", path, encoding, workingDir, importEnv, exportEnv, 
+   .Call("rs_runScriptJob", path, name, encoding, workingDir, importEnv, exportEnv, 
          PACKAGE = "(embedding)")
 })
 
