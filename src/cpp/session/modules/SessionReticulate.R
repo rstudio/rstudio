@@ -1323,9 +1323,13 @@ html.heading = _heading
    if (inherits(object, "error"))
       return(error)
    
-   # extract argument names using inspect
+   # extract argument names using inspect (note that this can fail for
+   # some Python function types; e.g. builtin Python functions)
    inspect <- reticulate::import("inspect", convert = TRUE)
-   spec <- inspect$getargspec(object)
+   spec <- .rs.tryCatch(inspect$getargspec(object))
+   if (inherits(spec, "error"))
+      return(error)
+   
    args <- spec$args
    
    # attempt to scrape parameter documentation
