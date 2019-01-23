@@ -157,6 +157,7 @@
 * Fix persistence of Evaluate Chunks in Directory global option (#3356)
 * Fix file.choose(new = TRUE) to properly request new file name (#3903)
 * Fix 'Copy Plot to Clipboard' functionality when IDE is zoomed (#3853)
+* Fix early evaluation of `ALTREP` objects (#4171)
 
 ### RStudio Server Pro
 
