@@ -60,9 +60,6 @@ public class JobItem extends Composite
 
       @Source("select_2x.png")
       ImageResource jobSelect();
-
-      @Source("info_2x.png")
-      ImageResource jobInfo();
    
       @Source("launcher_2x.png")
       ImageResource launcherJobType();
