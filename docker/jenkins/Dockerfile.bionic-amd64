@@ -7,7 +7,7 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
-    && apt-get install -y gnupg \
+    && apt-get install -y gnupg1 \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9 \
     && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list \
     && apt-get update
