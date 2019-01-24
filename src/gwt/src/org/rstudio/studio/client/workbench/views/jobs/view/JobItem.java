@@ -85,6 +85,7 @@ public class JobItem extends Composite
       String outer();
       String panel();
       String select();
+      String noSelect();
       String status();
       String progress();
       String failed();
@@ -122,7 +123,7 @@ public class JobItem extends Composite
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {
-         detailsImage = new ImageResource2x(RESOURCES.jobInfo());
+         select_.addStyleName(styles_.noSelect());
       }
       
       select_.setResource(detailsImage);

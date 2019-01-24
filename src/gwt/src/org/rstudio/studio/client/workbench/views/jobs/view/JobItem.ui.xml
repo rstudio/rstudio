@@ -120,6 +120,12 @@
         margin-left: 10px;
         margin-top: 2px;
     }
+
+    .noSelect
+    {
+        visibility: hidden;
+        width: 0px;
+    }
     
     .name, .status
     {
@@ -179,7 +185,7 @@
                     </g:HorizontalPanel>
                 </g:VerticalPanel>
             </g:cell>
-            <g:cell width="30px" verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_CENTER">
+            <g:cell verticalAlignment="ALIGN_MIDDLE" horizontalAlignment="ALIGN_CENTER">
                 <g:Image styleName="{styles_.select}" ui:field="select_"></g:Image>
             </g:cell>
         </g:HorizontalPanel>
