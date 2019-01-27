@@ -3494,7 +3494,7 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(sourceWindow, scope, method, params, redactLog, responseCallback) {
+         function(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback) {
             server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback);
          }
       ); 
