@@ -175,7 +175,8 @@ void validationLoginHandler(
    }
    else if (headerToken != cookieToken)
    {
-      LOG_WARNING_MESSAGE("Mismatched CSRF tokens in request for " + request.uri());
+      LOG_WARNING_MESSAGE("Mismatched CSRF tokens in request for " + request.uri() + 
+            " (" + headerToken + ", " + cookieToken + ")");
       writeInvalidRequest(pConnection);
    }
    else
