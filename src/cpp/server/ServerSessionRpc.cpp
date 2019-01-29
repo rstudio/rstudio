@@ -1,7 +1,7 @@
 /*
  * ServerSessionRpc.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,10 +162,26 @@ void validationLoginHandler(
       boost::shared_ptr<core::http::AsyncConnection> pConnection,
       auth::SecureAsyncUriHandlerFunction handler)
 {
-   // TODO (gary)
-   // check CSRF token
-   // double check that URL includes session context
-   handler(username, pConnection);
+   // validate CSRF token by comparing the header token with the cookie. since these RPCs are not
+   // serviced by the session itself (which provides CSRF validation via the session's client ID),
+   // we take this additional precaution
+   const core::http::Request& request = pConnection->request();
+   std::string headerToken = request.headerValue("X-CSRF-Token");
+   std::string cookieToken = request.cookieValue("csrf-token");
+   if (headerToken.empty())
+   {
+      LOG_WARNING_MESSAGE("Attempt to request URL " + request.uri() + " without CSRF token");
+      writeInvalidRequest(pConnection);
+   }
+   else if (headerToken != cookieToken)
+   {
+      LOG_WARNING_MESSAGE("Mismatched CSRF tokens in request for " + request.uri());
+      writeInvalidRequest(pConnection);
+   }
+   else
+   {
+      handler(username, pConnection);
+   }
 }
 
 } // anonymous namespace
