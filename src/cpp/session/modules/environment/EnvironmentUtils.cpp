@@ -1,7 +1,7 @@
 /*
  * EnvironmentUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/RSxpInfo.hpp>
+#include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -60,6 +62,25 @@ json::Value descriptionOfVar(SEXP var)
 bool isUnevaluatedPromise (SEXP var)
 {
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
+}
+
+bool isAltrep(SEXP var)
+{
+   // Get the current version. If working with R < 3.5.0, then we aren't working with an ALTREP
+   // object (as they were introduced in 3.5.0)
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
+   if (version < r_util::RVersionNumber(3, 5, 0))
+      return false;
+
+   // Reject nulls
+   if (var == NULL || var == R_NilValue)
+      return false;
+
+   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
+   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(var);
+
+   // Select the bit referring to the ALTREP flag
+   return info.alt;
 }
 
 // convert a language variable to a value. language variables are special in
@@ -139,7 +160,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       json::Value val;
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(".rs.describeObject",
-                  env, var.first)
+                  env, var.first, !isAltrep(varSEXP))
                   .call(&description, &protect);
       if (error)
          LOG_ERROR(error);

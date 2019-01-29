@@ -31,8 +31,10 @@
    {                                                                           \
       boost::lock_guard<boost::mutex> lock(m);
 
-#define RECURSIVE_LOCK_MUTEX(m) try {\
-   boost::lock_guard<boost::recursive_mutex> lock(m);
+#define RECURSIVE_LOCK_MUTEX(m)                                                \
+   try                                                                         \
+   {                                                                           \
+      boost::lock_guard<boost::recursive_mutex> lock(m);
 
 #define END_LOCK_MUTEX                                                         \
    }                                                                           \
@@ -41,7 +43,8 @@
       Error threadError(boost::thread_error::ec_from_exception(e),             \
                         ERROR_LOCATION);                                       \
       LOG_ERROR(threadError);                                                  \
-   }
+   }                                                                           \
+   CATCH_UNEXPECTED_EXCEPTION
 
 namespace rstudio {
 namespace core {

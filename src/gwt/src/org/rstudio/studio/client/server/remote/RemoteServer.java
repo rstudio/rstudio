@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -284,7 +284,7 @@ public class RemoteServer implements Server
       // start event listener
       serverEventListener_.start();
       
-      // register satallite callback
+      // register satellite callback
       registerSatelliteCallback();
    }
    
@@ -1451,13 +1451,13 @@ public class RemoteServer implements Server
    
    public void copyFile(FileSystemItem sourceFile,
                         FileSystemItem targetFile,
-                        boolean ovewrite,
+                        boolean overwrite,
                         ServerRequestCallback<Void> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(sourceFile.getPath()));
       paramArray.set(1, new JSONString(targetFile.getPath()));
-      paramArray.set(2, JSONBoolean.getInstance(ovewrite));
+      paramArray.set(2, JSONBoolean.getInstance(overwrite));
       
       sendRequest(RPC_SCOPE, COPY_FILE, paramArray, requestCallback);
    }
@@ -1816,6 +1816,7 @@ public class RemoteServer implements Server
                                 boolean isProject, 
                                 String directory,
                                 RVersionSpec rVersion,
+                                JavaScriptObject launchSpec,
                                 ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
@@ -1824,6 +1825,8 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(directory));
       params.set(3, rVersion != null ? new JSONObject(rVersion) :
                                        JSONNull.getInstance());
+      params.set(4, launchSpec != null ? new JSONObject(launchSpec) :
+            JSONNull.getInstance());
       sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
    }
    
@@ -1841,6 +1844,14 @@ public class RemoteServer implements Server
              ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, SET_SESSION_LABEL, hostPageUrl, callback);
+   }
+   
+   @Override
+   public void deleteSessionDir(
+             String sessionId,
+             ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, DELETE_SESSION_DIR, sessionId, callback);
    }
 
    @Override
@@ -2195,6 +2206,17 @@ public class RemoteServer implements Server
       params.set(0, JSONBoolean.getInstance(isSuccessfulSave));
       sendRequest(RPC_SCOPE,
                   REQUEST_DOCUMENT_SAVE_COMPLETED,
+                  params,
+                  requestCallback);
+   }
+
+   public void requestDocumentCloseCompleted(boolean isSuccessfulClose,
+                                            ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(isSuccessfulClose));
+      sendRequest(RPC_SCOPE,
+                  REQUEST_DOCUMENT_CLOSE_COMPLETED,
                   params,
                   requestCallback);
    }
@@ -2876,7 +2898,7 @@ public class RemoteServer implements Server
       // satellite windows should never call getEvents directly!
       if (Satellite.isCurrentWindowSatellite())
       {
-         Debug.log("Satellite window shoudl not call getEvents!");
+         Debug.log("Satellite window should not call getEvents!");
          assert false;
       }
       
@@ -2885,8 +2907,9 @@ public class RemoteServer implements Server
       return sendRequest(EVENTS_SCOPE,
                          "get_events",
                          params,
-                         null,
-                         false,
+                         null, // kwParams
+                         false, // redactLog
+                         null, // resultFieldName
                          requestCallback,
                          retryHandler);
    }
@@ -2901,14 +2924,14 @@ public class RemoteServer implements Server
       eventBus_.fireEvent(event);
    }
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 ServerRequestCallback<T> requestCallback)
    {
       sendRequest(scope, method, new JSONArray(), null, requestCallback);
    }
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 boolean param,
                                 ServerRequestCallback<T> requestCallback)
@@ -2918,7 +2941,7 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, requestCallback);
    }
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 long param,
                                 ServerRequestCallback<T> requestCallback)
@@ -2928,7 +2951,7 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, requestCallback);
    }
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 String param,
                                 ServerRequestCallback<T> requestCallback)
@@ -2943,7 +2966,7 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, requestCallback);
    }
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 String param1,
                                 String param2,
@@ -2962,7 +2985,7 @@ public class RemoteServer implements Server
    }
 
 
-   private <T> void sendRequest(String scope,
+   protected <T> void sendRequest(String scope,
                                 String method,
                                 JavaScriptObject param,
                                 ServerRequestCallback<T> requestCallback)
@@ -2976,7 +2999,7 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, requestCallback);
    }
 
-   private <T> void sendRequest(final String scope,
+   protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
@@ -2984,16 +3007,26 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, false, requestCallback);
    }
 
-   private <T> void sendRequest(final String scope,
+   protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final JSONObject kwparams,
                                 final ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, params, kwparams,false, requestCallback);
+      sendRequest(scope, method, params, kwparams, false, requestCallback);
    }
 
-   private <T> void sendRequest(final String scope,
+   protected <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final JSONObject kwparams,
+                                final String resultFieldName,
+                                final ServerRequestCallback<T> requestCallback)
+   {
+      sendRequest(scope, method, params, kwparams, false, resultFieldName, requestCallback);
+   }
+
+   protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final boolean redactLog,
@@ -3003,24 +3036,35 @@ public class RemoteServer implements Server
 
    }
 
-   private <T> void sendRequest(final String scope,
+   protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final JSONObject kwparams,
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> cb)
    {
+      sendRequest(scope, method, params, kwparams, redactLog, null, cb);
+   }
+   
+   protected <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final JSONObject kwparams,
+                                final boolean redactLog,
+                                final String resultFieldName,
+                                final ServerRequestCallback<T> cb)
+   {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
       if (Satellite.isCurrentWindowSatellite())
       {
-         sendRequestViaMainWorkbench(scope, method, params, kwparams, redactLog, cb);
+         sendRequestViaMainWorkbench(scope, method, params, kwparams, redactLog, resultFieldName, cb);
 
       }
       // otherwise just a standard request with single retry
       else
       {
-         sendRequestWithRetry(scope, method, params, kwparams, redactLog, cb);
+         sendRequestWithRetry(scope, method, params, kwparams, redactLog, resultFieldName, cb);
       }
       
    }
@@ -3031,6 +3075,7 @@ public class RemoteServer implements Server
                                  final JSONArray params,
                                  final JSONObject kwparams,
                                  final boolean redactLog,
+                                 final String resultFieldName,
                                  final ServerRequestCallback<T> requestCallback)
    {
       // retry handler (make the same call with the same params. ensure that
@@ -3045,7 +3090,8 @@ public class RemoteServer implements Server
                         method, 
                         params,
                         kwparams,
-                        redactLog, 
+                        redactLog,
+                        resultFieldName,
                         requestCallback, 
                         null);
          }
@@ -3058,6 +3104,7 @@ public class RemoteServer implements Server
                         modifiedRequest.getParams(),
                         modifiedRequest.getKwparams(),
                         modifiedRequest.getRedactLog(),
+                        modifiedRequest.getResultFieldName(),
                         requestCallback,
                         null);
          }
@@ -3074,19 +3121,21 @@ public class RemoteServer implements Server
                   method, 
                   params,
                   kwparams,
-                  redactLog, 
+                  redactLog,
+                  resultFieldName,
                   requestCallback, 
                   retryHandler);
    }
 
    // sendRequest method called for internal calls from main workbench
    // (as opposed to proxied calls from satellites)
-   private <T> RpcRequest sendRequest(
+   protected <T> RpcRequest sendRequest(
                               String scope,
                               String method,
                               JSONArray params,
                               JSONObject kwparams,
                               boolean redactLog,
+                              String resultFieldName,
                               final ServerRequestCallback<T> requestCallback,
                               RetryHandler retryHandler)
    { 
@@ -3097,6 +3146,7 @@ public class RemoteServer implements Server
             params,
             kwparams,
             redactLog,
+            resultFieldName,
             new RpcResponseHandler() 
             {
                @Override
@@ -3117,7 +3167,11 @@ public class RemoteServer implements Server
                   {
                      clearSessionRelaunchPending();
 
-                     T result = response.<T> getResult();
+                     T result;
+                     if (resultFieldName == null)
+                        result = response.getResult();
+                     else
+                        result = response.getField(resultFieldName);
                      requestCallback.onResponseReceived(result);
                   }
                }
@@ -3129,12 +3183,13 @@ public class RemoteServer implements Server
    // lowest level sendRequest method -- called from the main workbench
    // in two scenarios: direct internal call and servicing a proxied
    // request from a satellite window
-   private RpcRequest sendRequest(String sourceWindow,
+   protected RpcRequest sendRequest(String sourceWindow,
                                   String scope,
                                   String method,
                                   JSONArray params,
                                   JSONObject kwparams,
                                   boolean redactLog,
+                                  String resultFieldName,
                                   final RpcResponseHandler responseHandler,
                                   final RetryHandler retryHandler)
    {      
@@ -3151,6 +3206,7 @@ public class RemoteServer implements Server
                                              params,
                                              kwparams,
                                              redactLog,
+                                             resultFieldName,
                                              sourceWindow,
                                              clientId_,
                                              clientVersion_);
@@ -3327,6 +3383,7 @@ public class RemoteServer implements Server
                                                      request.getParams(),
                                                      kwParams,
                                                      request.getRedactLog(),
+                                                     request.getResultFieldName(),
                                                      request.getSourceWindow(),
                                                      request.getClientId(),
                                                      request.getClientVersion());
@@ -3429,7 +3486,7 @@ public class RemoteServer implements Server
    }
 
    
-   // the following sequence of calls enables marsahlling of remote server
+   // the following sequence of calls enables marshalling of remote server
    // requests from satellite windows back into the main workbench window
    
    // this code sets up the sendRemoteServerRequest global callback within
@@ -3437,8 +3494,8 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, responseCallback);
+         function(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback);
          }
       ); 
    }-*/;
@@ -3450,6 +3507,7 @@ public class RemoteServer implements Server
                                         final String method,
                                         final JavaScriptObject params,
                                         final boolean redactLog,
+                                        final String resultFieldName,
                                         final JavaScriptObject responseCallback)
    {  
       // get the WindowEx from the sourceWindow
@@ -3496,7 +3554,8 @@ public class RemoteServer implements Server
                         method, 
                         jsonParams,
                         null,
-                        redactLog, 
+                        redactLog,
+                        resultFieldName,
                         responseHandler, 
                         null);
          }
@@ -3510,6 +3569,7 @@ public class RemoteServer implements Server
                         modifiedRequest.getParams(),
                         modifiedRequest.getKwparams(),
                         modifiedRequest.getRedactLog(),
+                        modifiedRequest.getResultFieldName(),
                         responseHandler,
                         null);
          }
@@ -3527,7 +3587,8 @@ public class RemoteServer implements Server
                   method, 
                   jsonParams,
                   null,
-                  redactLog, 
+                  redactLog,
+                  resultFieldName,
                   responseHandler, 
                   retryHandler);
    }
@@ -3544,9 +3605,11 @@ public class RemoteServer implements Server
                                JSONArray params,
                                JSONObject kwparams,
                                boolean redactLog,
+                               String resultFieldName,
                                final ServerRequestCallback<T> requestCallback)
    {
       assert kwparams == null : "kwparams was not null for sendRequestViaMainWorkbench - not currently supported";
+      assert resultFieldName == null : "resultFieldName was not null for sendRequestViaMainWorkbench - not currently supported";
 
       JSONObject request = new JSONObject();
       request.put("method", new JSONString(method));
@@ -3562,7 +3625,8 @@ public class RemoteServer implements Server
             method, 
             params.getJavaScriptObject(),
             kwparams == null ? JavaScriptObject.createObject() : kwparams.getJavaScriptObject(),
-            redactLog, 
+            redactLog,
+            resultFieldName,
             new RpcResponseHandler() {
                @Override
                public void onResponseReceived(RpcResponse response)
@@ -3596,6 +3660,7 @@ public class RemoteServer implements Server
                                     JavaScriptObject params,
                                     JavaScriptObject kwparams,
                                     boolean redactLog,
+                                    String resultFieldName,
                                     RpcResponseHandler handler) /*-{
       
       var responseCallback = new Object();
@@ -3608,6 +3673,7 @@ public class RemoteServer implements Server
                                           method, 
                                           params,
                                           redactLog,
+                                          resultFieldName,
                                           responseCallback);
    }-*/;
 
@@ -5673,46 +5739,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void startLauncherJobStatusStream(String jobId,
-                                            ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      String jobSessionId = session_.getSessionInfo().getProjectId() +
-            session_.getSessionInfo().getSessionId();
-      params.set(0, new JSONString(jobSessionId));
-      params.set(1, new JSONString(jobId));
-      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "start_status_stream", params, callback);
-   }
-  
-   @Override
-   public void stopLauncherJobStatusStream(String jobId,
-                                           ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      String jobSessionId = session_.getSessionInfo().getProjectId() +
-            session_.getSessionInfo().getSessionId();
-      params.set(0, new JSONString(jobSessionId));
-      params.set(1, new JSONString(jobId));
-      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "stop_status_stream", params, callback);
-   }
-   
-   @Override
-   public void refreshLauncherJobs(ServerRequestCallback<Void> callback)
-   {
-      sendRequest(RPC_SCOPE, "launcher_jobs_refresh", callback);
-   }
-
-   @Override
-   public void controlLauncherJob(String jobId,
-                                  String operation,
-                                  ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(jobId));
-      params.set(1, new JSONString(operation));
-      sendRequest(JOB_LAUNCHER_RPC_SCOPE, "control_job", params, callback);
-   }
-
    public void hasShinyTestDependenciesInstalled(ServerRequestCallback<Boolean> callback)
    {
       sendRequest(RPC_SCOPE,
@@ -5837,11 +5863,11 @@ public class RemoteServer implements Server
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
 
-   private final Session session_;
-   private final EventBus eventBus_;
+   protected final Session session_;
+   protected final EventBus eventBus_;
 
    // url scopes
-   private static final String RPC_SCOPE = "rpc";
+   protected static final String RPC_SCOPE = "rpc";
    private static final String FILES_SCOPE = "files";
    private static final String EVENTS_SCOPE = "events";
    private static final String UPLOAD_SCOPE = "upload";
@@ -5851,7 +5877,6 @@ public class RemoteServer implements Server
    private static final String LOG_SCOPE = "log";
    private static final String META_SCOPE = "meta";
    private static final String FILE_SHOW = "file_show";
-   private static final String JOB_LAUNCHER_RPC_SCOPE = "job_launcher_rpc";
 
    // session methods
    private static final String CLIENT_INIT = "client_init";
@@ -5975,6 +6000,7 @@ public class RemoteServer implements Server
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
    private static final String SET_SESSION_LABEL = "set_session_label";
+   private static final String DELETE_SESSION_DIR = "delete_session_dir";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
    private static final String CREATE_PROJECT_FILE = "create_project_file";
@@ -5997,6 +6023,7 @@ public class RemoteServer implements Server
    private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String REQUEST_DOCUMENT_SAVE_COMPLETED = "request_document_save_completed";
+   private static final String REQUEST_DOCUMENT_CLOSE_COMPLETED = "request_document_close_completed";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
    private static final String GET_DOCUMENT_PROPERTIES = "get_document_properties";
    private static final String REVERT_DOCUMENT = "revert_document";

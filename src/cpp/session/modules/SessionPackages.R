@@ -390,8 +390,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # combine into a data.frame
    info <- .rs.rbindList(parts)
    
-   # find which packages are loaded
-   info$Loaded <- info$Package %in% loadedNamespaces()
+   # find which packages are currently attached (be careful to handle
+   # cases where package is installed into multiple libraries)
+   #
+   # we suppress warnings here as 'find.packages(.packages())' can warn
+   # if a package that is attached is no longer actually installed
+   loaded <- suppressWarnings(
+      normalizePath(file.path(info$LibPath, info$Package), winslash = "/", mustWork = FALSE) %in%
+      normalizePath(find.package(.packages(), quiet = TRUE), winslash = "/", mustWork = FALSE)
+   )
    
    # extract fields relevant to us
    packages <- data.frame(
@@ -401,7 +408,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       library_index    = match(info$LibPath, .libPaths(), nomatch = 0L),
       version          = info$Version,
       desc             = info$Title,
-      loaded           = info$Loaded,
+      loaded           = loaded,
       source           = info$Source,
       browse_url       = info$BrowseUrl,
       check.rows       = TRUE,
@@ -1528,10 +1535,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # get the directory and read packages.rds
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
    rds <- file.path(dir, "packages.rds")
-   packages <- readRDS(rds)
    
-   # add it to the cache
-   .rs.availablePackagesEnv[[reposString]] <- packages
+   # attempt to read the database and add it to the cache
+   packages <- .rs.tryCatch(readRDS(rds))
+   if (!inherits(packages, "error"))
+      .rs.availablePackagesEnv[[reposString]] <- packages
    
    # remove state directory and mark as no longer pending
    unlink(dir, recursive = TRUE)

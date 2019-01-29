@@ -1623,11 +1623,14 @@ private:
          }
 
          // if this is a package build then try to clean up a left
-         // behind 00LOCK directory
+         // behind 00LOCK directory. note that R uses the directory name
+         // and not the actual package name for the lockfile (and these can
+         // and do differ in some cases)
          if (!pkgInfo_.empty() && !libPaths_.empty())
          {
+            std::string pkgFolder = projects::projectContext().buildTargetPath().filename();
             FilePath libPath = libPaths_[0];
-            FilePath lockPath = libPath.childPath("00LOCK-" + pkgInfo_.name());
+            FilePath lockPath = libPath.childPath("00LOCK-" + pkgFolder);
             lockPath.removeIfExists();
          }
          

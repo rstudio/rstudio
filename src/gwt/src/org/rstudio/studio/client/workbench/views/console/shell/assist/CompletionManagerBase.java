@@ -400,6 +400,7 @@ public abstract class CompletionManagerBase
       removeHandlers();
       suggestTimer_.cancel();
       snippets_.detach();
+      invalidation_.invalidate();
       popup_.hide();
    }
    

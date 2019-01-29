@@ -668,7 +668,12 @@ private:
    boost::shared_ptr<core::thread::ThreadsafeQueue<std::string> > pInput_;
 };
 
-static boost::shared_ptr<NotebookQueue> s_queue;
+// NOTE: we previously used a shared pointer here but this caused
+// issues with deletion of the static object during program shutdown;
+// since we already manage the lifetime of the queue appropriately
+// we use a raw pointer and let it leak if the user attempts to quit R
+// while the notebook queue is running
+static NotebookQueue* s_queue = nullptr;
 
 Error updateExecQueue(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
@@ -705,7 +710,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
    // create queue if it doesn't exist
    if (!s_queue)
-      s_queue = boost::make_shared<NotebookQueue>();
+      s_queue = new NotebookQueue;
 
    // add the queue and process after the RPC returns 
    s_queue->add(pQueue);
@@ -725,7 +730,8 @@ void onConsolePrompt(const std::string& prompt)
    // clean up queue if it's finished executing
    if (s_queue && s_queue->complete())
    {
-      s_queue.reset();
+      delete s_queue;
+      s_queue = nullptr;
    }
 }
 
@@ -734,7 +740,8 @@ void onUserInterrupt()
    if (s_queue)
    {
       s_queue->clear();
-      s_queue.reset();
+      delete s_queue;
+      s_queue = nullptr;
    }
 }
 

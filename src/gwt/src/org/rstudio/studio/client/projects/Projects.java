@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -955,9 +955,9 @@ public class Projects implements OpenProjectFileHandler,
                " owner to request access.";
       }       
       
-      ArrayList<String> buttons = new ArrayList<String>();
+      ArrayList<String> buttons = new ArrayList<>();
       buttons.add("OK");
-      ArrayList<Operation> ops = new ArrayList<Operation>();
+      ArrayList<Operation> ops = new ArrayList<>();
       ops.add(new Operation()
       {
          @Override
@@ -1068,6 +1068,7 @@ public class Projects implements OpenProjectFileHandler,
                     true,
                     project.getParentPathString(), 
                     rVersion,
+                    null, // launchSpec
         new SimpleRequestCallback<String>() {
 
          @Override

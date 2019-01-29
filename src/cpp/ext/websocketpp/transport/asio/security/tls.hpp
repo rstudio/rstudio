@@ -307,6 +307,8 @@ protected:
      */
     lib::error_code translate_ec(boost::system::error_code ec) {
         if (ec.category() == boost::asio::error::get_ssl_category()) {
+#ifdef SSL_R_SHORT_READ
+            // OpenSSL 1.0
             if (ERR_GET_REASON(ec.value()) == SSL_R_SHORT_READ) {
                 return make_error_code(transport::error::tls_short_read);
             } else {
@@ -314,6 +316,10 @@ protected:
                 // more. Pass through as TLS generic.
                 return make_error_code(transport::error::tls_error);
             }
+#else
+            // OpenSSL 1.1
+            return make_error_code(transport::error::tls_error);
+#endif
         } else {
             // We don't know any more information about this error so pass
             // through

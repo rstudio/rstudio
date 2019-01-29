@@ -184,6 +184,7 @@ class ClientEvent extends JavaScriptObject
    public static final String AvailablePackagesReady = "available_packages_ready";
    public static final String PlumberViewer = "plumber_viewer";
    public static final String ComputeThemeColors = "compute_theme_colors";
+   public static final String RequestDocumentClose = "request_document_close";
 
    protected ClientEvent()
    {

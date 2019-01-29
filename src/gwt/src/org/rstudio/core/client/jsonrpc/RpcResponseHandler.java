@@ -1,7 +1,7 @@
 /*
  * RpcResponseHandler.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,5 +16,28 @@ package org.rstudio.core.client.jsonrpc;
 
 public abstract class RpcResponseHandler
 {
+   /**
+    * Determine Rpc Response from the standard "result" field
+    */
+   public RpcResponseHandler()
+   {
+      resultFieldName_ = null;
+   }
+   
+   /**
+    * Determine Rpc Response from the specified field
+    */
+   public RpcResponseHandler(String resultFieldName)
+   {
+      resultFieldName_ = resultFieldName;
+   }
+   
    public abstract void onResponseReceived(RpcResponse response);
+   
+   public String getResultFieldName()
+   {
+      return resultFieldName_;
+   }
+   
+   private final String resultFieldName_;
 }

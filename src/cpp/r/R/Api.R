@@ -503,9 +503,16 @@
 })
 
 .rs.addApiFunction("documentSave", function(id = NULL) {
+   # If no ID is specified, try to save the active editor.
    if (is.null(id)) {
-      context <- .rs.api.getActiveDocumentContext()
-      id <- context$id
+      context <- .rs.api.getSourceEditorContext()
+      if (!is.null(context)) {
+         id <- context$id
+      }
+   }
+   if (is.null(id)) {
+      # No ID specified and no document open; succeed without meaning
+      return(TRUE)
    }
    .Call("rs_requestDocumentSave", id, PACKAGE = "(embedding)")
 })
@@ -531,6 +538,21 @@
    ))
 
    invisible(NULL)
+})
+
+.rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {
+   # If no ID is specified, try to close the active editor.
+   if (is.null(id)) {
+      context <- .rs.api.getSourceEditorContext()
+      if (!is.null(context)) {
+         id <- context$id
+      }
+   }
+   if (is.null(id)) {
+      # No ID specified and no document open; succeed without meaning
+      return(TRUE)
+   }
+   .Call("rs_requestDocumentClose", id, save, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getConsoleHasColor", function(name) {
