@@ -38,7 +38,7 @@ mkdir -p /var/lib/rstudio-server/body
 mkdir -p /var/lib/rstudio-server/proxy
 
 # suspend all sessions
-rstudio-server force-suspend-all
+rstudio-server force-suspend-all > /dev/null 2>&1
 
 # check lsb release
 LSB_RELEASE=`lsb_release --id --short`
