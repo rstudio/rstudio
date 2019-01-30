@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -1024,6 +1025,11 @@ public class ClientEventDispatcher
          {
             RequestDocumentCloseEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new RequestDocumentCloseEvent(data));
+         }
+         else if (type == ClientEvent.ExecuteAppCommand)
+         {
+            ExecuteAppCommandEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ExecuteAppCommandEvent(data));
          }
          else
          {

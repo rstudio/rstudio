@@ -802,3 +802,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
   .Call("rs_translateLocalUrl", url, absolute, PACKAGE = "(embedding)")
 })
 
+# execute an arbitrary RStudio application command (AppCommand)
+.rs.addApiFunction("executeCommand", function(commandId, quiet = FALSE) {
+  .Call("rs_executeAppCommand", commandId, quiet, PACKAGE = "(embedding)")
+})
+

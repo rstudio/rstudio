@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,17 @@ namespace rstudioapi {
 namespace {
 module_context::WaitForMethodFunction s_waitForShowDialog;
 module_context::WaitForMethodFunction s_waitForOpenFileDialog;
+
+SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
+{
+   json::Object data;
+   data["command"] = r::sexp::safeAsString(commandSEXP);
+   data["quiet"] = r::sexp::asLogical(quietSEXP);
+   ClientEvent event(client_events::kExecuteAppCommand, data);
+   module_context::enqueClientEvent(event);
+   return R_NilValue;
+}
+
 } // end anonymous namespace
 
 
@@ -198,8 +209,9 @@ Error initialize()
    s_waitForShowDialog     = registerWaitForMethod("rstudioapi_show_dialog_completed");
    s_waitForOpenFileDialog = registerWaitForMethod("open_file_dialog_completed");
 
-   RS_REGISTER_CALL_METHOD(rs_showDialog, 8);
-   RS_REGISTER_CALL_METHOD(rs_openFileDialog, 6);
+   RS_REGISTER_CALL_METHOD(rs_showDialog);
+   RS_REGISTER_CALL_METHOD(rs_openFileDialog);
+   RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
 
    return Success();
 }
