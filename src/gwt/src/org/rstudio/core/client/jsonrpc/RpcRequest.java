@@ -22,6 +22,8 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
+import org.rstudio.studio.client.application.ApplicationCsrfToken;
+import org.rstudio.studio.client.application.Desktop;
 
 // NOTE: RpcRequest is an immutable object (all fields are marked final).
 // this means that it is safe to re-submit an RpcRequest since the 
@@ -89,6 +91,12 @@ public class RpcRequest
       builder.setHeader("Accept", "application/json");
       String requestId = Integer.toString(Random.nextInt());
       builder.setHeader("X-RS-RID", requestId);
+      
+      // in server mode, append a CSRF token for request validation
+      if (!Desktop.isDesktop())
+      {
+         builder.setHeader("X-CSRF-Token", ApplicationCsrfToken.getCsrfToken());
+      }
       
       // send request
       try

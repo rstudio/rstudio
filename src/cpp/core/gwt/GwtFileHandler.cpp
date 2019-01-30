@@ -131,6 +131,11 @@ void handleFileRequest(const std::string& wwwLocalPath,
       // gwt prefix
       vars["gwt_prefix"] = gwtPrefix;
 
+      // CSRF token
+      vars["csrf_token"] = string_utils::htmlEscape(
+            request.cookieValue("csrf-token"), 
+            true /* isAttribute */);
+
       // don't allow main page to be framed by other domains (clickjacking
       // defense)
       pResponse->setFrameOptionHeaders(frameOptions);

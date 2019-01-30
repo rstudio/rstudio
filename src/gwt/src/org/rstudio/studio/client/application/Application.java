@@ -30,7 +30,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -59,7 +58,6 @@ import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -81,7 +79,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -293,10 +290,9 @@ public class Application implements ApplicationEventHandlers
       form.setAction(absoluteUrl("auth-sign-out", true));
       form.getStyle().setDisplay(Display.NONE);
       
-      // read the CSRF token from the cookie and place it in the form
       InputElement csrfToken = DocumentEx.get().createHiddenInputElement();
       csrfToken.setName(CSRF_TOKEN_FIELD);
-      csrfToken.setValue(Cookies.getCookie(CSRF_TOKEN_FIELD));
+      csrfToken.setValue(ApplicationCsrfToken.getCsrfToken());
       form.appendChild(csrfToken);
       
       // append the form to the document and submit it
