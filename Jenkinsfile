@@ -219,6 +219,10 @@ try {
           trigger_external_build('IDE/macos')
           trigger_external_build('IDE/windows')
         }
+        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
+          trigger_external_build('IDE/macos-v1.3')
+          trigger_external_build('IDE/windows-v1.3')
+        }
         parallel parallel_containers
 
         // trigger downstream pro artifact builds if we're finished building
