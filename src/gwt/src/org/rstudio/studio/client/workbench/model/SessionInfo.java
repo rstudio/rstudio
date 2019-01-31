@@ -175,6 +175,10 @@ public class SessionInfo extends JavaScriptObject
       return this.system_encoding;
    }-*/;
 
+   public final native String getLicenseMessage() /*-{
+      return this.license_message;
+   }-*/;
+
    public final boolean isVcsEnabled()
    {
       return !StringUtil.isNullOrEmpty(getVcsName());
@@ -576,4 +580,10 @@ public class SessionInfo extends JavaScriptObject
       return this.r_libs_user;
    }-*/;
    
+   /**
+    * @return project identifier (only meaningful in RStudio Server Pro)
+    */
+   public final native String getProjectId() /*-{
+      return this.project_id;
+   }-*/;
 }

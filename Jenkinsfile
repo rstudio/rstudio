@@ -141,10 +141,13 @@ try {
           [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'opensuse',   arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: ''],
+          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: ''],
           [os: 'trusty',     arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'trusty',     arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'xenial',     arch: 'amd64',  flavor: 'desktop', variant: ''],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: ''],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '']
         ]

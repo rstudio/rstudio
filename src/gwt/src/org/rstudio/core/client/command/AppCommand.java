@@ -697,7 +697,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
-   private static final String WINDOW_MODE_BACKGROUND = "background";
-   private static final String WINDOW_MODE_MAIN = "main";
-   private static final String WINDOW_MODE_ANY = "any";
+
+   public static final String WINDOW_MODE_BACKGROUND = "background";
+   public static final String WINDOW_MODE_MAIN = "main";
+   public static final String WINDOW_MODE_ANY = "any";
 }

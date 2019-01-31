@@ -48,7 +48,7 @@ void registerAll();
       int n = ::rstudio::r::routines::internal::n_arguments(__NAME__); \
       R_CallMethodDef callMethodDef;                                   \
       callMethodDef.name = #__NAME__;                                  \
-      callMethodDef.fun = (DL_FUNC) __NAME__;                          \
+      callMethodDef.fun = reinterpret_cast<DL_FUNC>(__NAME__);         \
       callMethodDef.numArgs = n;                                       \
       ::rstudio::r::routines::addCallMethod(callMethodDef);            \
    } while (false)

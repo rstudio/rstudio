@@ -188,8 +188,8 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
    BrowserWindow* pWindow = nullptr;
    bool show = true;
 
-   // check if this is target="_blank";
-   if (type == QWebEnginePage::WebWindowType::WebBrowserTab)
+   // check if this is target="_blank" from an IDE window
+   if (!baseUrl_.isEmpty() && type == QWebEnginePage::WebWindowType::WebBrowserTab)
    {
       // QtWebEngine behavior is to open a new browser window and send it the 
       // acceptNavigationRequest we use to redirect to system browser; don't want

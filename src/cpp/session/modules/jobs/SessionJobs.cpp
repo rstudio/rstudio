@@ -192,7 +192,7 @@ SEXP rs_addJobOutput(SEXP jobSEXP, SEXP outputSEXP, SEXP errorSEXP)
    return R_NilValue;
 }
 
-SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP exportEnv)
+SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importEnv, SEXP exportEnv)
 {
    r::sexp::Protect protect;
    std::string filePath = r::sexp::safeAsString(path, "");
@@ -220,10 +220,18 @@ SEXP rs_runScriptJob(SEXP path, SEXP encoding, SEXP dir, SEXP importEnv, SEXP ex
       r::exec::error("The requested working directory '" + workingDir + "' does not exist.");
    }
 
-   std::string id;
    FilePath scriptFilePath = module_context::resolveAliasedPath(filePath);
+
+   std::string jobName(r::sexp::safeAsString(name));
+   if (jobName.empty())
+   {
+      // no name was supplied for the job, so derive one from the filename
+      jobName = scriptFilePath.filename();
+   }
+
+   std::string id;
    startScriptJob(ScriptLaunchSpec(
-            scriptFilePath.filename(),
+            jobName,
             scriptFilePath,
             r::sexp::safeAsString(encoding),
             module_context::resolveAliasedPath(workingDir),

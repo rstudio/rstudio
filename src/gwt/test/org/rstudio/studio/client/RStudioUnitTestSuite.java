@@ -1,7 +1,7 @@
 /*
  * RStudioUnitTestSuite.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
+import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
@@ -47,6 +48,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(URIUtilsTests.class);
       // Disabled in v1.3 due to failures. See #4249.
       // suite.addTestSuite(RChunkHeaderParserTests.class);
+      suite.addTestSuite(SessionScopeTests.class);
       return suite;
    }
 }

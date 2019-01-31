@@ -112,6 +112,7 @@
 * Update OpenSSL on Windows to 1.0.2p (#3606)
 * Add UTF-8 support in custom login page HTML (#3830)
 * Diagnostics system better understands usage of `.` in magrittr pipes (#3835)
+* Add support for Syntactically Awesome Stylesheets (SASS and SCSS) files (#4040)
 
 ### Bug Fixes
 
@@ -156,6 +157,7 @@
 * Fix persistence of Evaluate Chunks in Directory global option (#3356)
 * Fix file.choose(new = TRUE) to properly request new file name (#3903)
 * Fix 'Copy Plot to Clipboard' functionality when IDE is zoomed (#3853)
+* Fix early evaluation of `ALTREP` objects (#4171)
 
 ### RStudio Server Pro
 

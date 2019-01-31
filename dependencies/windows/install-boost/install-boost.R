@@ -29,7 +29,7 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.7z"
+boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/boost_1_65_1.7z"
 output_name <- sprintf("boost-1.65.1-win-msvc141-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)

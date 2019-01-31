@@ -69,6 +69,10 @@ public:
    {
    }
 
+   virtual ~FileStreamResponse()
+   {
+   }
+
    Error initialize()
    {
       return file_.open_r(&fileStream_);
@@ -110,7 +114,6 @@ private:
    FilePath file_;
    boost::shared_ptr<std::istream> fileStream_;
    std::streamsize bufferSize_;
-   bool useGzip_;
    bool padding_;
 
    uint64_t totalRead_;
@@ -134,6 +137,10 @@ public:
       bufferSize_(bufferSize),
       compressionType_(compressionType),
       finished_(false)
+   {
+   }
+
+   virtual ~ZlibCompressionStreamResponse()
    {
    }
 

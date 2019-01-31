@@ -52,9 +52,9 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
 
 # install qt (note that we are using the current directory's context)
 RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; ` 
-  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.11.1-msvc2017_64.7z', 'c:\QtSDK-5.11.1-msvc2017_64.7z'); `
-  7z x c:\QtSDK-5.11.1-msvc2017_64.7z -oc:\ ; `
-  Remove-Item c:\QtSDK-5.11.1-msvc2017_64.7z -Force
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.12.0-msvc2017_64.7z', 'c:\QtSDK-5.12.0-msvc2017_64.7z'); `
+  7z x c:\QtSDK-5.12.0-msvc2017_64.7z -oc:\ ; `
+  Remove-Item c:\QtSDK-5.12.0-msvc2017_64.7z -Force
     
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'

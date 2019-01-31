@@ -1151,7 +1151,7 @@ public class AceEditor implements DocDisplay,
             false,
             true,
             true,
-            true,
+            false,
             getCursorPosition(),
             null,
             false);

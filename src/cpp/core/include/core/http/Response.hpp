@@ -110,6 +110,8 @@ struct StreamBuffer
 class StreamResponse
 {
 public:
+   virtual ~StreamResponse() {}
+
    virtual Error initialize() = 0;
    virtual boost::shared_ptr<StreamBuffer> nextBuffer() = 0;
 };

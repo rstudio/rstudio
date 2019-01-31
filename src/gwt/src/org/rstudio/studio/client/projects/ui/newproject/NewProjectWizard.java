@@ -97,7 +97,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    }
    
    @Override
-   protected NewProjectResult ammendInput(NewProjectResult result)
+   protected NewProjectResult amendInput(NewProjectResult result)
    {
       if (result != null)
       {

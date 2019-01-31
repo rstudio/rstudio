@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class LauncherJobManager
 {
@@ -25,5 +25,10 @@ public class LauncherJobManager
    
    void stopTrackingAllJobStatuses()
    {
+   }
+
+   void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
+   {
+      callback.onResponseReceived(false);
    }
 }

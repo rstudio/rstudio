@@ -97,6 +97,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    if (error)
       return error;
 
+   // save the base URL to persistent state (for forming absolute URLs)
+   persistentState().setActiveClientUrl(baseURL);
+
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
 
@@ -474,6 +477,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["job_state"] = modules::jobs::jobState();
 
    sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsEnabled();
+
+   sessionInfo["project_id"] = session::options().sessionScope().project();
+
+   if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))
+   {
+      sessionInfo["license_message"] =
+            "There are more concurrent users of RStudio Server Pro than your license supports. "
+            "Please obtain an updated license to continue using the product.";
+   }
 
    module_context::events().onSessionInfo(&sessionInfo);
 

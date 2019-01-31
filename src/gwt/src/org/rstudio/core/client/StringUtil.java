@@ -1343,10 +1343,42 @@ public class StringUtil
       
       return string;
    }
+
+   /**
+    * @param path string to encode
+    * @param encodeLeadingTilde if false, don't encode leading ~
+    * @return Escaped string that can be passed on bash command-line.
+    *
+    * Determined special characters to encode from bash manpage.
+    *
+    * Does not support embedded newlines. Posix only.
+    */
+   public static final String escapeBashPath(String path, boolean encodeLeadingTilde)
+   {
+      if (StringUtil.isNullOrEmpty(path))
+         return "";
+   
+      String prefix = "";
+      if (!encodeLeadingTilde && path.startsWith("~"))
+      {
+         prefix = "~";
+         path = path.substring(1);
+      }
+
+      return prefix + BASH_RESERVED_CHAR.replaceAll(path, new ReplaceOperation()
+      {
+         @Override
+         public String replace(Match m)
+         {
+            return "\\" + m.getValue();
+         }
+      });
+   }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
+   private static final Pattern BASH_RESERVED_CHAR = Pattern.create("[^a-zA-Z0-9,._+@%/-]");
 }

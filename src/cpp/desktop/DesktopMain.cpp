@@ -463,14 +463,6 @@ int main(int argc, char* argv[])
          arguments.push_back(disableRendererAccessibility);
       }
 
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5,10,1))
-      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
-      // https://bugreports.qt.io/browse/QTBUG-67023
-      // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
-      arguments.push_back(noSandbox);
-#endif
-
 #ifdef Q_OS_MAC
       // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
       // be used too aggressively on Retina displays on macOS, with the side effect that the
@@ -537,6 +529,14 @@ int main(int argc, char* argv[])
             }
          }
       }
+#endif
+
+#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
+      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
+      // https://bugreports.qt.io/browse/QTBUG-67023
+      // https://bugreports.qt.io/browse/QTBUG-66346
+      static char noSandbox[] = "--no-sandbox";
+      arguments.push_back(noSandbox);
 #endif
       
       // allow users to supply extra command-line arguments

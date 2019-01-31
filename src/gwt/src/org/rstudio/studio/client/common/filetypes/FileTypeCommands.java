@@ -93,6 +93,8 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.SH);
       types.add(FileTypeRegistry.HTML);
       types.add(FileTypeRegistry.CSS);
+      types.add(FileTypeRegistry.SASS);
+      types.add(FileTypeRegistry.SCSS);
       types.add(FileTypeRegistry.JS);
       types.add(FileTypeRegistry.CPP);
       types.add(FileTypeRegistry.PYTHON);

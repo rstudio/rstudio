@@ -263,7 +263,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
 #endif
-         
+
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
@@ -280,7 +280,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
          else
             menu->addAction(label(tr("&Pause")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaPlayPause); });
 #endif
-         
+
          menu->addAction(label(tr("&Loop")),            [&]() { triggerPageAction(QWebEnginePage::ToggleMediaLoop); });
          menu->addAction(label(tr("Toggle &controls")), [&]() { triggerPageAction(QWebEnginePage::ToggleMediaControls); });
          menu->addSeparator();
@@ -333,7 +333,6 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
    }
    
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-   
    menu->addSeparator();
    menu->addAction(label(tr("&Reload")), [&]() { triggerPageAction(QWebEnginePage::Reload); });
    menu->addAction(label(tr("I&nspect element")), [&]() {
@@ -358,7 +357,6 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
       // we have a window; invoke Inspect Element now
       webPage()->triggerAction(QWebEnginePage::InspectElement);
    });
-   
 #else
    
 # ifndef NDEBUG

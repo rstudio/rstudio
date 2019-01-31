@@ -527,7 +527,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       final TimedProgressIndicator progress = new TimedProgressIndicator(
             globalDisplay_.getProgressIndicator("Error"));
-      progress.onTimedProgress("Restarting R", 1000);
+      progress.onTimedProgress("Restarting R...", 1000);
       
       final Operation onRestartComplete = new Operation() {
          @Override

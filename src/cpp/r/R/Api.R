@@ -503,9 +503,16 @@
 })
 
 .rs.addApiFunction("documentSave", function(id = NULL) {
+   # If no ID is specified, try to save the active editor.
    if (is.null(id)) {
-      context <- .rs.api.getActiveDocumentContext()
-      id <- context$id
+      context <- .rs.api.getSourceEditorContext()
+      if (!is.null(context)) {
+         id <- context$id
+      }
+   }
+   if (is.null(id)) {
+      # No ID specified and no document open; succeed without meaning
+      return(TRUE)
    }
    .Call("rs_requestDocumentSave", id, PACKAGE = "(embedding)")
 })
@@ -531,6 +538,21 @@
    ))
 
    invisible(NULL)
+})
+
+.rs.addApiFunction("documentClose", function(id = NULL, save = TRUE) {
+   # If no ID is specified, try to close the active editor.
+   if (is.null(id)) {
+      context <- .rs.api.getSourceEditorContext()
+      if (!is.null(context)) {
+         id <- context$id
+      }
+   }
+   if (is.null(id)) {
+      # No ID specified and no document open; succeed without meaning
+      return(TRUE)
+   }
+   .Call("rs_requestDocumentClose", id, save, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getConsoleHasColor", function(name) {
@@ -721,10 +743,23 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       "Classic"
    )
 
+   # default/fallback theme colors 
+   foreground <- "#000000";
+   background <- "#FFFFFF";
+
+   # attempt to read colors from browser
+   colors <- .Call("rs_getThemeColors", PACKAGE = "(embedding)")
+   if (!is.null(colors)) {
+      foreground <- colors$foreground
+      background <- colors$background
+   }
+
    list(
       editor = theme$name,
       global = global,
-      dark = theme$isDark
+      dark = theme$isDark,
+      foreground = foreground,
+      background = background
    )
 })
 
@@ -753,3 +788,22 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("buildToolsExec", function(expr) {
    .rs.withBuildTools(expr)
 })
+
+.rs.addApiFunction("dictionariesPath", function() {
+   .Call("rs_dictionariesPath", PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("userDictionariesPath", function() {
+   .Call("rs_userDictionariesPath", PACKAGE = "(embedding)")
+})
+
+# translate a local URL into an externally accessible URL on RStudio Server
+.rs.addApiFunction("translateLocalUrl", function(url, absolute = FALSE) {
+  .Call("rs_translateLocalUrl", url, absolute, PACKAGE = "(embedding)")
+})
+
+# execute an arbitrary RStudio application command (AppCommand)
+.rs.addApiFunction("executeCommand", function(commandId, quiet = FALSE) {
+  .Call("rs_executeAppCommand", commandId, quiet, PACKAGE = "(embedding)")
+})
+

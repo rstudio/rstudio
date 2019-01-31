@@ -1850,7 +1850,7 @@ assign(x = ".rs.acCompletionTypes",
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
    if (isConsole && .rs.reticulate.replIsActive())
-      return(.rs.rpc.python_get_completions(line))
+      return(.rs.rpc.python_get_completions(line, NULL))
    
    # Inject 'params' into the global env to provide for completions in
    # parameterized R Markdown documents

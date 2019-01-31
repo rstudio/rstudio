@@ -30,7 +30,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -59,7 +58,6 @@ import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -81,7 +79,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -107,7 +104,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationClientInit> pClientInit,
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
-                      Provider<AceThemes> pAceThemes,
+                      Provider<ApplicationThemes> pAppThemes,
                       Provider<ProductEditionInfo> pEdition)
    {
       // save references
@@ -125,8 +122,8 @@ public class Application implements ApplicationEventHandlers
       pClientInit_ = pClientInit;
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
-      pAceThemes_ = pAceThemes;
       pEdition_ = pEdition;
+      pAppThemes_ = pAppThemes;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -149,7 +146,6 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
-      events.addHandler(ThemeChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -294,10 +290,9 @@ public class Application implements ApplicationEventHandlers
       form.setAction(absoluteUrl("auth-sign-out", true));
       form.getStyle().setDisplay(Display.NONE);
       
-      // read the CSRF token from the cookie and place it in the form
       InputElement csrfToken = DocumentEx.get().createHiddenInputElement();
       csrfToken.setName(CSRF_TOKEN_FIELD);
-      csrfToken.setValue(Cookies.getCookie(CSRF_TOKEN_FIELD));
+      csrfToken.setValue(ApplicationCsrfToken.getCsrfToken());
       form.appendChild(csrfToken);
       
       // append the form to the document and submit it
@@ -664,14 +659,6 @@ public class Application implements ApplicationEventHandlers
       view_.showSessionAbendWarning();
    }
    
-   @Override
-   public void onThemeChanged(ThemeChangedEvent event)
-   {
-      RStudioThemes.initializeThemes(uiPrefs_.get(),
-                                     Document.get(),
-                                     rootPanel_.getElement());
-   }
-   
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
@@ -763,13 +750,8 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
-      // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
-      // set the initial theme.
-      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      events_.fireEvent(new ThemeChangedEvent());
-
-      pAceThemes_.get();
+      // Initialize application theme system
+      pAppThemes_.get().initializeThemes(rootPanel_.getElement());
 
       // subscribe to ClientDisconnected event (wait to do this until here
       // because there were spurious ClientDisconnected events occurring
@@ -1119,8 +1101,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationClientInit> pClientInit_;
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
-   private final Provider<AceThemes> pAceThemes_;
    private final Provider<ProductEditionInfo> pEdition_;
+   private final Provider<ApplicationThemes> pAppThemes_;
    
    private AboutDialog aboutDialog_;
    

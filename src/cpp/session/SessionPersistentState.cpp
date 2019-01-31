@@ -98,6 +98,16 @@ std::string PersistentState::newActiveClientId()
    }
 }
 
+std::string PersistentState::activeClientUrl() const
+{
+   return settings_.get("activeClientUrl", "");
+}
+
+void PersistentState::setActiveClientUrl(const std::string& url)
+{
+   settings_.set("activeClientUrl", url);
+}
+
 // abend tracking only applies to server mode
 
 bool PersistentState::hadAbend() 

@@ -2333,3 +2333,13 @@
 {
    if (is.null(x)) y else x
 })
+
+.rs.addFunction("truncate", function(string, n = 200, marker = "<...>")
+{
+   if (nchar(string) <= n)
+      return(string)
+   
+   truncated <- substring(string, 1, n - nchar(marker))
+   return(paste(truncated, marker))
+   
+})
