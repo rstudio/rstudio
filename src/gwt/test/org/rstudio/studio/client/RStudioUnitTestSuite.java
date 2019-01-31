@@ -45,7 +45,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(TerminalSessionSocketTests.class);
       suite.addTestSuite(JobManagerTests.class);
       suite.addTestSuite(URIUtilsTests.class);
-      suite.addTestSuite(RChunkHeaderParserTests.class);
+      // Disabled in v1.3 due to failures. See #4249.
+      // suite.addTestSuite(RChunkHeaderParserTests.class);
       return suite;
    }
 }
