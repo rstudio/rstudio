@@ -338,7 +338,8 @@ public class RSConnect implements SessionInitHandler,
             publishAsStatic(input);
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_WEBSITE)
+      else if (input.getContentType() == CONTENT_TYPE_WEBSITE ||
+               (input.getContentType() == CONTENT_TYPE_DOCUMENT && input.isWebsiteRmd()))
       {
          if (input.hasDocOutput())
          {
