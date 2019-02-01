@@ -188,6 +188,15 @@ public class GeneralPreferencesPane extends PreferencesPane
                    prefs_.checkForUpdates(), true /*defaultSpaced*/));
       }
 
+      // crash reporting - only show in desktop mode
+      enableCrashReporting_ = new CheckBox("Send automated crash reports to RStudio");
+      if (Desktop.isDesktop())
+      {
+         lessSpaced(enableCrashReporting_);
+         enableCrashReporting_.setEnabled(session.getSessionInfo().getCrashHandlerSettingsModifiable());
+         basic.add(enableCrashReporting_);
+      }
+
       VerticalPanel advanced = new VerticalPanel();
 
       showServerHomePage_ = new SelectWidget(
@@ -247,7 +256,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                prefs_.autoExpandErrorTracebacks(),
                false /*defaultSpaced*/)));
       }
-      
+
       if (Desktop.isDesktop())
       {
          Label osLabel = headerLabel("OS Integration");
@@ -307,8 +316,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
       }
       
-      
-      
       Label otherLabel = headerLabel("Other");
       if (!firstHeader)
          spacedBefore(otherLabel);
@@ -327,7 +334,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       rProfileOnResume_.setEnabled(false);
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
-      
+
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
       tabPanel.add(basic, "Basic");
@@ -399,6 +406,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          rememberRVersionForProjects_.setValue(
                                    generalPrefs.getRestoreProjectRVersion()); 
       }
+
+      enableCrashReporting_.setValue(generalPrefs.getEnableCrashReporting());
      
       // projects prefs
       ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
@@ -493,7 +502,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                                          dirChooser_.getText(),
                                                          getDefaultRVersion(),
                                                          getRestoreProjectRVersion(),
-                                                         showLastDotValue_.getValue());
+                                                         showLastDotValue_.getValue(),
+                                                         enableCrashReporting_.getValue());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -598,6 +608,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
+   private CheckBox enableCrashReporting_;
    private final UIPrefs prefs_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;

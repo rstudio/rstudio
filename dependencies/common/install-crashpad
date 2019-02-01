@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+#
+# install-crashpad
+#
+# Copyright (C) 2019 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir 
+INSTALL_DIR=`pwd`
+
+# vars
+RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
+DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_DIR/depot_tools
+LLVM_VERSION=4.0.0
+LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
+CLANG_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/cfe-$LLVM_VERSION.src.tar.xz
+LLVM_DIR=$RSTUDIO_TOOLS_DIR/llvm-$LLVM_VERSION
+LLVM_BIN_DIR=$LLVM_DIR/build/bin
+CRASHPAD_DIR=$RSTUDIO_TOOLS_DIR/crashpad
+CRASHPAD_BIN_DIR=$CRASHPAD_DIR/crashpad/out/Default
+
+# install google depot_tools if not already installed
+# these tools are necessary to properly checkout and build crashpad
+if ! test -e $DEPOT_TOOLS_DIR
+then
+   mkdir -p $DEPOT_TOOLS_DIR
+   cd $DEPOT_TOOLS_DIR
+
+   git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git .
+else
+   echo "depot_tools already installed in $DEPOT_TOOLS_DIR"
+fi
+
+# build clang
+# we do not do this on OSX because the system Clang should be sufficient
+if [[ "$OSTYPE" != "darwin"* ]]; then
+   if ! test -e $LLVM_BIN_DIR
+   then
+      cd $RSTUDIO_TOOLS_DIR
+
+      if ! test -e $LLVM_DIR
+      then
+         wget $LLVM_SOURCE_URL
+         wget $CLANG_SOURCE_URL
+
+         tar xvf llvm-$LLVM_VERSION.src.tar.xz
+         tar xvf cfe-$LLVM_VERSION.src.tar.xz
+         mv llvm-$LLVM_VERSION.src llvm-$LLVM_VERSION
+         mv cfe-$LLVM_VERSION.src llvm-$LLVM_VERSION/tools/clang
+      fi
+      		
+      cd $LLVM_DIR
+      mkdir -p build && cd build
+      cmake ../ -DLLVM_BUILD_TYPE=Release
+      make ${MAKEFLAGS:=-j3} 
+   else
+      echo "clang already installed in $LLVM_BIN_DIR"
+   fi
+else
+   echo "Using system clang"
+fi
+
+# install crashpad if we aren't already installed
+if ! test -e $CRASHPAD_BIN_DIR
+then
+   mkdir -p $CRASHPAD_DIR
+   cd $CRASHPAD_DIR
+
+   # put depot tools on our path, otherwise they don't run properly
+   export PATH=$PATH:$DEPOT_TOOLS_DIR
+
+   # download crashpad using google tools
+   fetch crashpad || sync crashpad
+
+   # add the rstudio fork and switch to the rstudio branch which
+   # contains all of the patches we need to make it work for us
+   cd crashpad
+   git remote add rstudio https://github.com/rstudio/crashpad.git || true
+   git fetch rstudio
+   git checkout rstudio || true
+   
+   # add custom built clang to path so it can be picked up by crashpad build
+   export PATH=$LLVM_BIN_DIR:$PATH
+
+   # build crashpad
+   $DEPOT_TOOLS_DIR/gn gen out/Default
+
+   if [[ "$OSTYPE" = "darwin"* ]]; then
+      # on macos, we need to specify the minimum os target to support
+      echo "mac_deployment_target=\"10.12\"" > out/Default/args.gn
+      $DEPOT_TOOLS_DIR/gn gen out/Default
+   fi
+
+   $DEPOT_TOOLS_DIR/ninja -C out/Default
+
+   # fix up permissions (if run as root, bin dir will be unreadable by others)
+   chmod -R 755 out
+else
+   echo "crashpad already installed in $CRASHPAD_BIN_DIR"
+fi
+
+# back to install dir
+cd $INSTALL_DIR

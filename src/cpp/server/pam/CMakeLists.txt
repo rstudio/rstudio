@@ -36,7 +36,7 @@ include_directories(
 
 
 # define executable
-add_executable(rserver-pam ${PAM_SOURCE_FILES} ${PAM_HEADER_FILES})
+add_stripped_executable(rserver-pam ${PAM_SOURCE_FILES} ${PAM_HEADER_FILES})
 
 # add origin rpath for suse/sles
 if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
@@ -50,6 +50,7 @@ target_link_libraries(rserver-pam
    rstudio-core
    rstudio-server-core
    ${PAM_LIBRARIES}
+   ${CRASHPAD_LIBRARIES}
 )
 
 # installation rules

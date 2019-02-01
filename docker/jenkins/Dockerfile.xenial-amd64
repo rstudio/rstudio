@@ -65,6 +65,14 @@ RUN cd /tmp \
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN /bin/bash /tmp/install-dependencies
+
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
@@ -73,10 +81,6 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
-
-# install cmake
-COPY package/linux/install-dependencies /tmp/
-RUN /bin/bash /tmp/install-dependencies
 
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/

@@ -404,6 +404,10 @@ public class SessionInfo extends JavaScriptObject
       return this.launcher_session;
    }-*/;
 
+   public final native boolean getCrashHandlerSettingsModifiable() /*-{
+      return this.crash_handler_settings_modifiable;
+   }-*/;
+
    public final native JsObject getLaunchParameters() /*-{
       return this.launch_parameters;
    }-*/;

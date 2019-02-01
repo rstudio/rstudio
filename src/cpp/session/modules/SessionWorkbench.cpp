@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Error.hpp>
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
@@ -282,7 +283,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    // read and set general prefs
    int saveAction;
    bool loadRData, rProfileOnResume, restoreProjectRVersion, showLastDotValue;
-   bool reuseSessionsForProjectLinks;
+   bool reuseSessionsForProjectLinks, enableCrashReporting;
    std::string initialWorkingDir, showUserHomePage;
    json::Object defaultRVersionJson;
    error = json::readObject(generalPrefs,
@@ -294,7 +295,8 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "initial_working_dir", &initialWorkingDir,
                             "default_r_version", &defaultRVersionJson,
                             "restore_project_r_version", &restoreProjectRVersion,
-                            "show_last_dot_value", &showLastDotValue);
+                            "show_last_dot_value", &showLastDotValue,
+                            "enable_crash_reporting", &enableCrashReporting);
    if (error)
       return error;
 
@@ -327,6 +329,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    {
       ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
       module_context::enqueClientEvent(refreshEvent);
+   }
+
+   // enable or disable crash reporting - we only do this in
+   // desktop mode (as it should not be overrideable in server mode)
+   // and only if we are currently configured to use the user setting
+   // (meaning no admin settings exist)
+   if (crash_handler::configSource() == crash_handler::ConfigSource::User &&
+       session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      error = crash_handler::setUserHandlerEnabled(enableCrashReporting);
+      if (error)
+         LOG_ERROR(error);
    }
 
    // sync underlying R save action
@@ -555,6 +569,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["default_r_version"] = defaultRVersionJson;
    generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
    generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
+   generalPrefs["enable_crash_reporting"] = crash_handler::isHandlerEnabled();
 
    // get history prefs
    json::Object historyPrefs;

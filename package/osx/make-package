@@ -28,7 +28,7 @@ rm -f CMakeCache.txt
 rm -rf build/_CPack_Packages
 
 cmake -DRSTUDIO_TARGET=Desktop \
-      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
       -DGWT_WWW_DIR="$BUILD_DIR/gwt/www" \

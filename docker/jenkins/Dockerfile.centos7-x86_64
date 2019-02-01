@@ -50,6 +50,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
