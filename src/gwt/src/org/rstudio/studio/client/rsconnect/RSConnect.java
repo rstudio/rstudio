@@ -180,7 +180,9 @@ public class RSConnect implements SessionInitHandler,
          return false;
       
       String extension = FileSystemItem.getExtensionFromPath(filename).toLowerCase();
-      return StringUtil.equals(extension, ".html") || StringUtil.equals(extension, ".htm");
+      return StringUtil.equals(extension, ".html") || 
+             StringUtil.equals(extension, ".htm") ||
+             StringUtil.equals(extension, ".nb.html");
    }
 
    private void publishAsRPubs(RSConnectActionEvent event)
