@@ -230,7 +230,7 @@ void addHttpProxyHandler(const std::string &prefix,
                                    _1));
 
       if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/) ||
-          job_launcher::launcherJobsEnabled(false /*checkLicense*/))
+          job_launcher::launcherJobsEnabled(job_launcher::JobsEnabledCheck::CHECK_MINIMAL))
       {
          // handle RPCs from the rstudio http server either with RPC secret
          // or login cookie. First invoke the RPC validationHandler, but have
