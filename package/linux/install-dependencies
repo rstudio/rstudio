@@ -2,9 +2,22 @@
 
 set -e
 
-# install cmake
+# install cmake if not already installed or version is too low
+install_cmake=false
 if ! command -v cmake &> /dev/null; then
-	CMAKE_VERSION=cmake-3.4.3
+   install_cmake=true
+else 
+   cmake_version=$(cmake --version | grep -oP "cmake version \K[\w.]+")
+   version_array=(${cmake_version//./ })
+   if ((${version_array[0]} < 3)) || 
+      ( ((${version_array[0]} == 3)) && ((${version_array[1]} < 4)) ) ||
+      ( ((${version_array[0]} == 3)) && ((${version_array[1]} == 4)) && ((${version_array[2]} < 3)) ); then
+      install_cmake=true
+   fi
+fi
+
+if $install_cmake ; then
+ 	CMAKE_VERSION=cmake-3.4.3
 	CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
 	wget http://www.cmake.org/files/v3.4/$CMAKE_TARBALL
 	tar xf $CMAKE_TARBALL
@@ -12,6 +25,11 @@ if ! command -v cmake &> /dev/null; then
 	./bootstrap 
 	make
 	sudo make install
+        
+        # after installing the new cmake, we need to forget the old locations
+        # otherwise, cmake will crash
+        hash -r
+
 	cd ..
 	rm -rf $CMAKE_VERSION
 	rm -f $CMAKE_TARBALL
