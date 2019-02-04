@@ -73,7 +73,7 @@ else
 fi
 
 # install crashpad if we aren't already installed
-if ! test -e $CRASHPAD_BIN_DIR
+if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
 then
    mkdir -p $CRASHPAD_DIR
    cd $CRASHPAD_DIR
