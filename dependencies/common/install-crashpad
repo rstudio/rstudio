@@ -64,7 +64,7 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
       cd $LLVM_DIR
       mkdir -p build && cd build
       cmake ../ -DLLVM_BUILD_TYPE=Release
-      make ${MAKEFLAGS:=-j3} 
+      make
    else
       echo "clang already installed in $LLVM_BIN_DIR"
    fi
