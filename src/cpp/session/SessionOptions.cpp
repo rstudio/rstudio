@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -292,7 +292,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "allow presentation commands")
       ("allow-full-ui",
          value<bool>(&allowFullUI_)->default_value(true),
-       "allow full standalone ui mode");
+       "allow full standalone ui mode")
+      ("allow-launcher-jobs",
+         value<bool>(&allowLauncherJobs_)->default_value(true),
+         "allow running jobs via launcher");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
