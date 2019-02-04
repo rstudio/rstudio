@@ -90,6 +90,7 @@ then
    git remote add rstudio https://github.com/rstudio/crashpad.git || true
    git fetch rstudio
    git checkout rstudio || true
+   git pull
    
    # add custom built clang to path so it can be picked up by crashpad build
    export PATH=$LLVM_BIN_DIR:$PATH
