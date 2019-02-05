@@ -18,8 +18,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
@@ -39,7 +42,8 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;
       typoSpellChecker_ = new TypoSpellChecker(this);
-      
+
+      docDisplay_.addKeyDownHandler(new InputKeyDownHandler());
    }
    
    public void checkSpelling()
@@ -87,7 +91,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public ArrayList<String> readDictionary()
    {
-      ArrayList<String> ignoredWords = new ArrayList<String>();
+      ArrayList<String> ignoredWords = new ArrayList<>();
       String ignored = docUpdateSentinel_.getProperty(IGNORED_WORDS);
       if (ignored != null)
       {
@@ -119,7 +123,16 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
    }
-   
+
+   private final class InputKeyDownHandler implements KeyDownHandler
+   {
+      public void onKeyDown(KeyDownEvent event)
+      {
+         Debug.log("here we are, finally: " + event.getNativeKeyCode());
+         event.preventDefault();
+         event.stopPropagation();
+      }
+   }
 
    @Override
    public void releaseOnDismiss(HandlerRegistration handler)

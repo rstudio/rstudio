@@ -80,7 +80,6 @@ public class SpellingCustomDictionariesWidget extends Composite
                    FileDialogs fileDialogs,
                    RemoteFileSystemContext fileSystemContext)
    {
-      spellingService_ = spellingService;
       globalDisplay_= globalDisplay;
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
@@ -120,10 +119,11 @@ public class SpellingCustomDictionariesWidget extends Composite
                      return;
                   
                   progressIndicator_.onProgress("Adding dictionary...");
-                  
-                  spellingService_.addCustomDictionary(
-                                                  input.getPath(), 
-                                                  customDictRequestCallback_);
+
+                  // TODO: add custom dictionary
+//                  spellingService_.addCustomDictionary(
+//                                                  input.getPath(),
+//                                                  customDictRequestCallback_);
                }
                
             }); 
@@ -150,10 +150,11 @@ public class SpellingCustomDictionariesWidget extends Composite
                      public void execute()
                      {
                         progressIndicator_.onProgress("Removing dictionary...");
-                        
-                        spellingService_.removeCustomDictionary(
-                                                  dictionary, 
-                                                  customDictRequestCallback_);
+
+                        // TODO: remove custom dictionary
+                        //spellingService_.removeCustomDictionary(
+                        //                          dictionary,
+                        //                          customDictRequestCallback_);
                      }
                   },
                   false);
@@ -189,7 +190,6 @@ public class SpellingCustomDictionariesWidget extends Composite
    
    private final ListBox listBox_;
    private ProgressIndicator progressIndicator_;
-   private SpellingService spellingService_;
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;

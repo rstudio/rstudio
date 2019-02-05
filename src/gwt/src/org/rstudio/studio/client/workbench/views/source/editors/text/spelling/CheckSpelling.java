@@ -14,32 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.ResultCallback;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,96 +91,58 @@ public class CheckSpelling
       initialCursorPos_ = docDisplay_.createAnchor(currentPos_);
       wrapped_ = false;
 
-      view_.getChangeButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
+      view_.getChangeButton().addClickHandler((ClickEvent event) ->
          {
             doReplacement(view_.getReplacement().getText());
             findNextMisspelling();
-         }
       });
 
-      view_.getChangeAllButton().addClickHandler(new ClickHandler()
+      view_.getChangeAllButton().addClickHandler((ClickEvent event) ->
       {
-         @Override
-         public void onClick(ClickEvent event)
+         if (!view_.getMisspelledWord().getText().equals(view_.getReplacement().getText()))
          {
-            if (view_.getMisspelledWord().getText() != view_.getReplacement().getText())
-            {
-               changeAll_.put(view_.getMisspelledWord().getText(),
-                              view_.getReplacement().getText());
-            }
-            doReplacement(view_.getReplacement().getText());
-            findNextMisspelling();
+            changeAll_.put(view_.getMisspelledWord().getText(),
+                           view_.getReplacement().getText());
          }
+         doReplacement(view_.getReplacement().getText());
+         findNextMisspelling();
       });
 
-      view_.getSkipButton().addClickHandler(new ClickHandler()
+      view_.getSkipButton().addClickHandler((ClickEvent event) ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            currentPos_ = docDisplay_.getCursorPosition();
-            findNextMisspelling();
-         }
+         currentPos_ = docDisplay_.getCursorPosition();
+         findNextMisspelling();
       });
 
-      view_.getIgnoreAllButton().addClickHandler(new ClickHandler()
+      view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            spellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
-            currentPos_ = docDisplay_.getCursorPosition();
-            findNextMisspelling();
-         }
+         spellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
+         currentPos_ = docDisplay_.getCursorPosition();
+         findNextMisspelling();
       });
 
-      view_.getAddButton().addClickHandler(new ClickHandler()
+      view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            spellChecker_.addToUserDictionary(
-                  view_.getMisspelledWord().getText());
-            currentPos_ = docDisplay_.getCursorPosition();
-            findNextMisspelling();
-         }
+         spellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
+         currentPos_ = docDisplay_.getCursorPosition();
+         findNextMisspelling();
       });
 
-      view_.getSuggestionList().addChangeHandler(new ChangeHandler()
+      view_.getSuggestionList().addChangeHandler((ChangeEvent event) ->
       {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            String replacement = view_.getSelectedSuggestion();
-            if (replacement != null)
-               view_.getReplacement().setText(replacement);
-         }
+         String replacement = view_.getSelectedSuggestion();
+         if (replacement != null) view_.getReplacement().setText(replacement);
       });
 
-      view_.addCloseHandler(new CloseHandler<PopupPanel>()
-      {
-         @Override
-         public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
-         {
-            cancel();
-         }
-      });
+      view_.addCloseHandler((CloseEvent<PopupPanel> popupPanelCloseEvent) -> cancel());
 
-      progressDisplay_.getCancelButton().addClickHandler(new ClickHandler()
+      progressDisplay_.getCancelButton().addClickHandler((ClickEvent event) ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            cancel();
-            progressDisplay_.hide();
-         }
+         cancel();
+         progressDisplay_.hide();
       });
 
       progressDisplay_.show();
-
       findNextMisspelling();
    }
 
@@ -229,6 +185,10 @@ public class CheckSpelling
             wordRanges.add(r);
             words.add(docDisplay_.getTextForRange(r));
 
+            SourcePosition startPos = SourcePosition.create(r.getStart().getRow(), r.getStart().getColumn());
+            SourcePosition endPos = SourcePosition.create(r.getEnd().getRow(), r.getEnd().getColumn());
+            docDisplay_.highlightDebugLocation(startPos, endPos, true);
+
             // Check a maximum of N words at a time
             if (wordRanges.size() == 100)
                break;
@@ -255,14 +215,7 @@ public class CheckSpelling
 
                   currentPos_ = wordRanges.get(wordRanges.size()-1).getEnd();
                   // Everything spelled correctly, continue
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        findNextMisspelling();
-                     }
-                  });
+                  Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
                }
             });
          }
@@ -350,41 +303,23 @@ public class CheckSpelling
          // time the renderloop runs). If we don't wait, then misspelled words
          // at the end of the document will result in misreported cursor bounds,
          // meaning we'll be avoiding a completely incorrect region.
-         Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+         Scheduler.get().scheduleFixedDelay(() ->
          {
-            @Override
-            public boolean execute()
+            showDialog(docDisplay_.getCursorBounds());
+
+            view_.focusReplacement();
+
+            String[] suggestions = spellChecker_.suggestionList(word);
+            view_.setSuggestions(suggestions);
+            if (suggestions.length > 0)
             {
-               showDialog(docDisplay_.getCursorBounds());
-
+               view_.getReplacement().setText(suggestions[0]);
                view_.focusReplacement();
-
-               spellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
-               {
-                  @Override
-                  public void onResponseReceived(
-                        JsArrayString response)
-                  {
-                     String[] suggestions = JsUtil.toStringArray(response);
-                     view_.setSuggestions(suggestions);
-                     if (suggestions.length > 0)
-                     {
-                        view_.getReplacement().setText(suggestions[0]);
-                        view_.focusReplacement();
-                     }
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
-
-               return false;
             }
+
+            return false;
          }, 100);
-      }
+     }
       catch (Exception e)
       {
          Debug.log(e.toString());
@@ -393,7 +328,7 @@ public class CheckSpelling
                "Check Spelling",
                "An error has occurred:\n\n" + e.getMessage());
          callback_.onFailure(e);
-}
+      }
    }
 
    private final TypoSpellChecker spellChecker_;
@@ -403,7 +338,7 @@ public class CheckSpelling
    private final ResultCallback<org.rstudio.studio.client.server.Void, Exception> callback_;
    private final Anchor initialCursorPos_;
 
-   private final HashMap<String, String> changeAll_ = new HashMap<String, String>();
+   private final HashMap<String, String> changeAll_ = new HashMap<>();
 
    private Position currentPos_;
 

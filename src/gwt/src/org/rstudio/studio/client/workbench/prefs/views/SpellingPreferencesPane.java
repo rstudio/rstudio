@@ -55,19 +55,15 @@ public class SpellingPreferencesPane extends PreferencesPane
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
             
-      add(checkboxPref("Ignore words in UPPERCASE",
-                        prefs.ignoreWordsInUppercase()));
+      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreWordsInUppercase()));
       
-      add(checkboxPref("Ignore words with numbers",
-                       prefs.ignoreWordsInUppercase()));
+      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsInUppercase()));
 
-      add(checkboxPref("Use real time spellchecking",
-         prefs.realtimeSpellchecking()));
+      add(checkboxPref("Use real time spellchecking", prefs.realTimeSpellChecking()));
    }
 
    
-   private CommandWithArg<String> onInstallLanguages_ 
-                                                = new CommandWithArg<String>()
+   private CommandWithArg<String> onInstallLanguages_ = new CommandWithArg<String>()
    {
       @Override
       public void execute(String progress)
