@@ -73,9 +73,11 @@ def s3_upload(type, flavor, os, arch) {
       sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
-  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
-  }
+  // update daily build redirect; currently disabled for 1.3
+  // 
+  // withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+  //   sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+  // }
 }
 
 def jenkins_user_build_args() {
