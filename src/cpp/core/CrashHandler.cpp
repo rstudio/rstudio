@@ -59,7 +59,7 @@ Error setUserHandlerEnabled(bool)
 #include <crashpad/client/settings.h>
 
 #define kCrashHandlingEnabled         "crash-handling-enabled"
-#define kCrashHandlingEnabledDefault  false
+#define kCrashHandlingEnabledDefault  true
 #define kCrashDatabasePath            "crash-db-path"
 #define kCrashDatabasePathDefault     ""
 #define kUploadUrl                    "upload-url"
