@@ -153,7 +153,7 @@ try {
         ]
         containers = limit_builds(containers)
         // create the version we're about to build
-        node('docker') {
+        node('docker-4x') {
             stage('set up versioning') {
                 prepareWorkspace()
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
@@ -194,7 +194,7 @@ try {
             def index = i
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
-                node('ide') {
+                node('docker-4x') {
                     stage('prepare ws/container'){
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
