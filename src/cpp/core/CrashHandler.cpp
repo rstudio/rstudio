@@ -29,14 +29,14 @@ namespace rstudio {
 namespace core {
 namespace crash_handler {
 
-Error initialize()
+Error initialize(ProgramMode programMode)
 {
    return Success();
 }
 
 ConfigSource configSource()
 {
-   return Default;
+   return ConfigSource::Default;
 }
 
 bool isHandlerEnabled()
