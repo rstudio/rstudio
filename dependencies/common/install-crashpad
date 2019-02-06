@@ -17,6 +17,13 @@
 
 set -e
 
+# check for presence of flag to skip installation
+# older platforms are unable to build crashpad and may request to skip it
+if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
+   echo "Skipping crashpad install"
+   exit 0
+fi
+
 # install dir 
 INSTALL_DIR=`pwd`
 

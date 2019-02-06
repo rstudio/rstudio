@@ -52,21 +52,12 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# install python 2.7 (needed to build clang)
-RUN wget http://python.org/ftp/python/2.7.14/Python-2.7.14.tar.xz
-RUN tar xf Python-2.7.14.tar.xz
-RUN cd Python-2.7.14 && ./configure --prefix=/usr/local --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib" && make && make altinstall
-RUN alias python="/usr/local/bin/python2.7"
-
-# install crashpad and its dependencies
-COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad
-
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
 # install common dependencies
+ENV RSTUDIO_DISABLE_CRASHPAD=1
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
