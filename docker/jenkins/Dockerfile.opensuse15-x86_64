@@ -27,6 +27,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     pam-devel \
     pango-devel \
     python \
+    python-xml \
     R \
     rpm-build \
     sudo \
