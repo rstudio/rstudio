@@ -50,11 +50,24 @@ else
    echo "depot_tools already installed in $DEPOT_TOOLS_DIR"
 fi
 
-# build clang
+# build clang if the system does not already have it or the system version is too low
 # we do not do this on OSX because the system Clang should be sufficient
+use_system_clang=true
 if [[ "$OSTYPE" != "darwin"* ]]; then
-   if ! test -e $LLVM_BIN_DIR
+   if ! command -v clang &> /dev/null; then
+      use_system_clang=false
+   else
+      clang_version=$(clang --version | grep -oP "clang version \K[\w.]+")
+      version_array=(${clang_version//./ })
+      if ((${version_array[0]} < 4)); then
+         use_system_clang=false
+         echo "System clang version ${clang_version} is too low. Need > 4.0.0"
+      fi
+   fi
+
+   if ! $use_system_clang && ! test -e $LLVM_BIN_DIR
    then
+      echo "Insufficient system clang - building clang from source..."
       cd $RSTUDIO_TOOLS_DIR
 
       if ! test -e $LLVM_DIR
@@ -72,6 +85,7 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
       mkdir -p build && cd build
       cmake ../ -DLLVM_BUILD_TYPE=Release
       make
+      echo "clang built successfully"
    else
       echo "clang already installed in $LLVM_BIN_DIR"
    fi
@@ -99,8 +113,10 @@ then
    git checkout rstudio || true
    git pull
    
-   # add custom built clang to path so it can be picked up by crashpad build
-   export PATH=$LLVM_BIN_DIR:$PATH
+   if ! $use_system_clang; then
+      # add custom built clang to path so it can be picked up by crashpad build
+      export PATH=$LLVM_BIN_DIR:$PATH
+   fi
 
    # build crashpad
    $DEPOT_TOOLS_DIR/gn gen out/Default

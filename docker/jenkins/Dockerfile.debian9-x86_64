@@ -14,6 +14,7 @@ RUN apt-get update -y && apt-get install -y \
     ant \
     libboost-all-dev \
     bzip2 \
+    clang-4.0 \
     debsigs \
     dpkg-sig \
     expect \
@@ -24,6 +25,7 @@ RUN apt-get update -y && apt-get install -y \
     openjdk-8-jdk  \
     libacl1-dev \
     libcap-dev \
+    libcurl-dev \
     libpam0g-dev \
     libffi-dev \
     uuid-dev \
@@ -51,6 +53,9 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# create a symlink from clang-4.0 to clang so that it can be found on the path when building crashpad
+RUN ln -s /usr/bin/clang-4.0 /usr/bin/clang
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/

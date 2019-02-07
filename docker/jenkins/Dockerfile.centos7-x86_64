@@ -17,6 +17,7 @@ RUN yum install -y \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
+    libcurl-devel \
     libffi \
     libuuid-devel \
     libXcursor-devel \
@@ -38,6 +39,13 @@ RUN yum install -y \
     xml-commons-apis \
     zlib-devel
 
+# add scl repo and install additional dependencies
+RUN yum install -y \
+    centos-release-scl
+
+RUN yum install -y \
+    llvm-toolset-7
+
 # sudo defaults to requiretty on centos7
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 
@@ -52,7 +60,7 @@ RUN bash /tmp/install-dependencies
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad
+RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad"
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

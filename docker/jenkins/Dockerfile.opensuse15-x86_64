@@ -8,6 +8,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
+    clang \
     expect \
     fakeroot \
     gcc \
@@ -17,6 +18,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libacl-devel \
     libattr-devel \
     libcap-devel \
+    libcurl-devel \
     libuser-devel \
     libuuid-devel \
     libXcursor-devel \
