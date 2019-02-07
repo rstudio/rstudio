@@ -25,7 +25,7 @@ RUN apt-get update -y && apt-get install -y \
     openjdk-8-jdk  \
     libacl1-dev \
     libcap-dev \
-    libcurl-dev \
+    libcurl4-openssl-dev \
     libpam0g-dev \
     libffi-dev \
     uuid-dev \

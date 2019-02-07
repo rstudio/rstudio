@@ -32,7 +32,7 @@ RUN apt-get update && \
     libacl1-dev \
     libbz2-dev \
     libcap-dev \
-    libcurl-devel \
+    libcurl4-openssl-dev \
     libfuse2 \
     libgtk-3-0 \
     libgl1-mesa-dev \
