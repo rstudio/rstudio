@@ -481,7 +481,7 @@ install(DIRECTORY "resources/connections"
 
 # install pandoc
 if(WIN32)
-   set(PANDOC_VERSION "2.5" CACHE INTERNAL "Pandoc version")
+   set(PANDOC_VERSION "2.6" CACHE INTERNAL "Pandoc version")
 else()
    set(PANDOC_VERSION "2.3.1" CACHE INTERNAL "Pandoc version")
 endif()
