@@ -101,8 +101,8 @@ std::string utf8ToConsole(const std::string& string)
       int n = ::wctomb(buffer, wide[i]);
       
       // use Unicode escaping for characters that cannot be represented
-      // as well as for upper ASCII
-      if (n == -1 || static_cast<unsigned char>(buffer[0]) > 127)
+      // as well as for single-byte upper ASCII
+      if (n == -1 || (n == 1 && static_cast<unsigned char>(buffer[0]) > 127))
       {
          output << "\\u{" << std::hex << wide[i] << "}";
       }
