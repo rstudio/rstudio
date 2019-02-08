@@ -87,7 +87,11 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
       make
       echo "clang built successfully"
    else
-      echo "clang already installed in $LLVM_BIN_DIR"
+      if ! $use_system_clang; then
+         echo "clang already installed in $LLVM_BIN_DIR"
+      else
+         echo "Using system clang"
+      fi
    fi
 else
    echo "Using system clang"
