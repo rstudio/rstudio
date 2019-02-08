@@ -205,6 +205,72 @@ Error parseDcfFile(const std::string& dcfFileContents,
                        pUserErrMsg);
 }
 
+Error parseMultiDcfFile(const std::string& dcfFileContents,
+                        bool preserveKeyCase,
+                        const boost::function<Error (const std::map<std::string, std::string> &)>& handleEntry)
+{
+   // split out multiple DCF entries one at a time
+   // entries are separated by a blank line
+   // (consisting of a newline character, any amount of spaces or tabs, and another newline character)
+   boost::sregex_token_iterator iter(dcfFileContents.begin(),
+                                     dcfFileContents.end(),
+                                     boost::regex("\n[\\t ]*\n"),
+                                     -1);
+   boost::sregex_token_iterator end;
+
+   for (; iter != end; ++iter)
+   {
+      // split dcf chunk into separate lines (delineated by newline character)
+      std::vector<std::string> entryLines;
+      boost::algorithm::split(entryLines, *iter, boost::is_any_of("\n"));
+
+      // check if the lines are all comments or whitespace
+      // if so, then we will skip this entry
+      bool skipEntry = true;
+      for(const std::string& line : entryLines)
+      {
+         std::string trimmedLine = string_utils::trimWhitespace(line);
+
+         // check if line is a comment or purely whitespace
+         if (trimmedLine.empty() || (trimmedLine.size() > 0 && trimmedLine.at(0) == '#'))
+            continue;
+
+         skipEntry = false;
+         break;
+      }
+
+      if (!skipEntry)
+      {
+         std::map<std::string, std::string> fields;
+         std::string err;
+
+         Error error = text::parseDcfFile(*iter, preserveKeyCase, &fields, &err);
+         if (error)
+            return error;
+
+         error = handleEntry(fields);
+         if (error)
+            return error;
+      }
+   }
+
+   return Success();
+}
+
+Error parseMultiDcfFile(const FilePath& dcfFilePath,
+                        bool preserveKeyCase,
+                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry)
+{
+   std::string contents;
+   Error error = readStringFromFile(dcfFilePath,
+                                    &contents,
+                                    string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   return parseMultiDcfFile(contents, preserveKeyCase, handleEntry);
+}
+
 std::string dcfMultilineAsFolded(const std::string& line)
 {
    return boost::algorithm::trim_copy(

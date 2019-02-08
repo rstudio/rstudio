@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -477,7 +477,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["job_state"] = modules::jobs::jobState();
 
-   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsEnabled();
+   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
 
    // crash handler settings
    bool canModifyCrashSettings =
