@@ -17,7 +17,6 @@
 #define CORE_COLLECTION_LRU_CACHE_HPP
 
 #include <map>
-#include <memory>
 #include <deque>
 
 #include <core/Error.hpp>
