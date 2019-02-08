@@ -54,8 +54,8 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# create a symlink from clang-4.0 to clang so that it can be found on the path when building crashpad
-RUN ln -s /usr/bin/clang-4.0 /usr/bin/clang
+# add clang to system path
+ENV PATH=/usr/lib/llvm-4.0/bin:$PATH
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
