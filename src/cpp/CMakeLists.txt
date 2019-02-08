@@ -296,10 +296,12 @@ else()
    set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/lib_md")
 endif()
 
-# find crashpad libraries, ensuring the client library is the first one found
-# otherwise, the link order will be incorrect
+# find crashpad libraries, ensuring the correct link order
 if(UNIX)
-   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*client.a" "${CRASHPAD_LIBRARY_DIR}/*.a")
+   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*libclient.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*libutil.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*libbase.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*.a")
 
    if(APPLE)
       # add necessary macos frameworks so crashpad applications can link correctly
