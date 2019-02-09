@@ -240,6 +240,10 @@ try {
           trigger_external_build('IDE/macos-pro')
           trigger_external_build('IDE/windows-pro')
         }
+        else if (env.JOB_NAME == 'IDE/pro-pipeline/v1.3') {
+          trigger_external_build('IDE/macos-v1.3-pro')
+          trigger_external_build('IDE/windows-v1.3-pro')
+        }
 
         slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
