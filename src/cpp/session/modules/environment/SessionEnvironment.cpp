@@ -203,6 +203,21 @@ SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
    return r::sexp::create(hasPtr, &protect);
 }
 
+// Does an object contain an ALTREP anywhere? ALTREP (alternative representation) objects often
+// require special treatment.
+SEXP rs_hasAltrep(SEXP obj)
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(hasAltrep(obj), &protect);
+}
+
+// Is an object an R ALTREP object? 
+SEXP rs_isAltrep(SEXP obj)
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(isAltrep(obj), &protect);
+}
+
 // Construct a simulated source reference from a context containing a
 // function being debugged, and either the context containing the current
 // invocation or a string containing the last debug ouput from R.
@@ -1072,7 +1087,9 @@ Error initialize()
    methodDef.numArgs = 3;
    r::routines::addCallMethod(methodDef);
 
-   RS_REGISTER_CALL_METHOD(rs_hasExternalPointer, 2);
+   RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
+   RS_REGISTER_CALL_METHOD(rs_hasAltrep);
+   RS_REGISTER_CALL_METHOD(rs_isAltrep);
 
    // subscribe to events
    using boost::bind;
