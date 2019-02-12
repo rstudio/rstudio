@@ -29,6 +29,10 @@
    token <- data$token
    path <- data$path
    
+   # if we don't have a path, bail
+   if (is.null(path))
+      return(.rs.emptyCompletions())
+   
    # figure out working directory
    props <- .rs.getSourceDocumentProperties(path)
    workingDirProp <- props$properties$working_dir

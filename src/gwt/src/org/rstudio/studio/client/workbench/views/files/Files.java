@@ -388,10 +388,14 @@ public class Files
          return;
       }
 
+      FileSystemItem initialFile = selectedFiles.get(0);
+      if (initialFile.isDirectory())
+         initialFile = initialFile.getParentPath();
+      
       view_.showFilePicker(
                         "Choose Destination", 
                         fileSystemContext_,
-                        selectedFiles.get(0),
+                        initialFile,
                         new ProgressOperationWithInput<FileSystemItem>() {
 
          public void execute(FileSystemItem targetFile,

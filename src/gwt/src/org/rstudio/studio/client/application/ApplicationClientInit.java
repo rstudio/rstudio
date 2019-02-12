@@ -1,7 +1,7 @@
 /*
  * ApplicationClientInit.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,13 +36,15 @@ public class ApplicationClientInit
       globalDisplay_ = globalDisplay;
    }
    
-   public void execute(final ServerRequestCallback<SessionInfo> requestCallback)
+   public void execute(boolean showLongInitDialog,
+                       final ServerRequestCallback<SessionInfo> requestCallback)
    {
-      execute(requestCallback, true);
+      execute(requestCallback, true, showLongInitDialog);
    }
    
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback,
-                       final boolean retryOnTransmissionError)
+                       final boolean retryOnTransmissionError,
+                       final boolean showLongInitDialog)
    {
       // reset internal state 
       timedOut_ = false;
@@ -78,7 +80,7 @@ public class ApplicationClientInit
                      public void run()
                      {
                         // retry (specify flag to ensure we only retry once)
-                        execute(requestCallback, false);
+                        execute(requestCallback, false, showLongInitDialog);
                      }
                   }.schedule(1000);
                }
@@ -91,6 +93,8 @@ public class ApplicationClientInit
       };
       server_.clientInit(GWT.getHostPageBaseURL(), rpcRequestCallback);
                                     
+      if (!showLongInitDialog)
+         return;
       
       // wait for 60 seconds then ask the user if they want to issue an 
       // interrupt to the server
