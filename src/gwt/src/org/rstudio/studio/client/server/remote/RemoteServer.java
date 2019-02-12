@@ -2880,6 +2880,19 @@ public class RemoteServer implements Server
    // RemoveServerEventListener
 
 
+   boolean isDisconnected(String scope)
+   {
+      if (scope == JOB_LAUNCHER_RPC_SCOPE)
+      {
+         // no concept of being disconnected for launcher scope
+         return false;
+      }
+      else
+      {
+         return isDisconnected();
+      }
+   }
+   
    boolean isDisconnected()
    {
       return disconnected_;
@@ -3211,7 +3224,7 @@ public class RemoteServer implements Server
                                              clientId_,
                                              clientVersion_);
       
-      if (isDisconnected())
+      if (isDisconnected(scope))
          return rpcRequest;
 
       // send the request
@@ -3219,7 +3232,7 @@ public class RemoteServer implements Server
          public void onError(RpcRequest request, RpcError error)
          {
             // ignore errors if we are disconnected
-            if (isDisconnected())           
+            if (isDisconnected(scope))
                return;
             
             // if we have a retry handler then see if we can resolve the
@@ -3245,7 +3258,7 @@ public class RemoteServer implements Server
          {
             // ignore response if we are disconnected
             //   - handler was cancelled
-            if (isDisconnected()) 
+            if (isDisconnected(scope))
                  return;
                    
             // check for error
@@ -5877,6 +5890,7 @@ public class RemoteServer implements Server
    private static final String LOG_SCOPE = "log";
    private static final String META_SCOPE = "meta";
    private static final String FILE_SHOW = "file_show";
+   protected static final String JOB_LAUNCHER_RPC_SCOPE = "job_launcher_rpc";
 
    // session methods
    private static final String CLIENT_INIT = "client_init";

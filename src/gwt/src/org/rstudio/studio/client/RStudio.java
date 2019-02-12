@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,11 +22,14 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -37,6 +40,7 @@ import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
@@ -48,6 +52,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
@@ -104,8 +109,8 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 
 public class RStudio implements EntryPoint
-{  
-   public void onModuleLoad() 
+{
+   public void onModuleLoad()
    {
       Debug.injectDebug();
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
@@ -119,9 +124,9 @@ public class RStudio implements EntryPoint
       background.getElement().getStyle().setBackgroundColor("#e1e2e5");
       final RootLayoutPanel rootPanel = RootLayoutPanel.get();
       rootPanel.add(background);
-      rootPanel.setWidgetTopBottom(background, 0, Style.Unit.PX, 
+      rootPanel.setWidgetTopBottom(background, 0, Style.Unit.PX,
                                                0, Style.Unit.PX);
-      rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX, 
+      rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX,
                                                0, Style.Unit.PX);
       
       String progressUrl = ProgressImages.createLargeGray().getUrl();
@@ -135,20 +140,78 @@ public class RStudio implements EntryPoint
       final SimplePanel progressPanel = new SimplePanel();
       final Element div = progressPanel.getElement();
       div.setInnerHTML(str.toString());
-      div.getStyle().setWidth(100, Style.Unit.PCT);
-      div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
-      div.getStyle().setZIndex(1000);
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
-      rootPanel.add(progressPanel);
-     
+   
+      final VerticalPanel statusPanel = new VerticalPanel();
+      final Element statusDiv = statusPanel.getElement();
+      statusDiv.getStyle().setWidth(100, Style.Unit.PCT);
+      statusDiv.getStyle().setMarginTop(200, Style.Unit.PX);
+      statusDiv.getStyle().setProperty("textAlign", "center");
+      statusDiv.getStyle().setZIndex(1000);
+      
+      statusPanel.add(progressPanel);
+      
+      if (ApplicationAction.isLauncherSession())
+      {
+         VerticalPanel messagePanel = new VerticalPanel();
+         Element messageDiv = messagePanel.getElement();
+         messageDiv.getStyle().setWidth(100, Style.Unit.PCT);
+         messageDiv.getStyle().setMarginTop(12, Style.Unit.PX);
+         messageDiv.getStyle().setProperty("textAlign", "center");
+         
+         String fontFamily = ThemeFonts.getProportionalFont();
+         String fontSize = "font-size: 12px;";
+         
+         Label launcherLabel = new Label("Waiting for session to launch...");
+         launcherLabel.getElement().getStyle().setWidth(100, Style.Unit.PCT);
+         launcherLabel.getElement().getStyle().setProperty("textAlign", "center");
+         launcherLabel.getElement().getStyle().setProperty("fontFamily", fontFamily);
+         launcherLabel.getElement().getStyle().setProperty("fontSize", fontSize);
+         launcherLabel.getElement().getStyle().setMarginBottom(8, Style.Unit.PX);
+         messagePanel.add(launcherLabel);
+         
+         HTML homeLabel = new HTML(
+               "You may continue waiting here or monitor from " +
+               "<a title=\"Return to RStudio Server Home Page\" " +
+               "href=\"../../home\">RStudio Server Home</a>.");
+            
+         homeLabel.getElement().getStyle().setWidth(100, Style.Unit.PCT);
+         homeLabel.getElement().getStyle().setProperty("textAlign", "center");
+         homeLabel.getElement().getStyle().setProperty("fontFamily", fontFamily);
+         homeLabel.getElement().getStyle().setProperty("fontSize", fontSize);
+         messagePanel.add(homeLabel);
+         
+         statusPanel.add(messagePanel);
+         messagePanel.setVisible(false);
+         
+         // Wait a bit to keep things uncluttered for typical load,
+         // then show message so they know things are happening, including
+         // a link back to the home page
+         showStatusTimer_ = new Timer()
+         {
+            public void run()
+            {
+               messagePanel.setVisible(true);
+            }
+         };
+         showStatusTimer_.schedule(3000);
+      }
+
+      rootPanel.add(statusPanel);
+      
       return new Command()
       {
          public void execute()
          {
             try
             {
-               rootPanel.remove(progressPanel);
+               if (showStatusTimer_ != null)
+               {
+                  showStatusTimer_.cancel();
+                  showStatusTimer_ = null;
+               }
+               rootPanel.remove(statusPanel);
                rootPanel.remove(background);
             }
             catch (Exception e)
@@ -388,4 +451,5 @@ public class RStudio implements EntryPoint
    }
    
    private Command dismissProgressAnimation_;
+   private Timer showStatusTimer_;
 }
