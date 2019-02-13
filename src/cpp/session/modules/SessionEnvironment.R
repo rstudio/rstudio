@@ -650,4 +650,13 @@
    .rs.valueContents(get(objName, env));
 })
 
+.rs.addFunction("isAltrep", function(var)
+{
+   .Call("rs_isAltrep", var, PACKAGE="(embedding)")
+})
+
+.rs.addFunction("hasAltrep", function(var)
+{
+   .Call("rs_hasAltrep", var, PACKAGE="(embedding)")
+})
 

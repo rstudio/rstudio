@@ -30,7 +30,7 @@ public class ShellPane extends ShellWidget implements Shell.Display
    @Inject
    public ShellPane(final AceEditor editor, UIPrefs uiPrefs, EventBus events)
    {
-      super(editor, events);
+      super(editor, uiPrefs, events);
 
       editor.setDisableOverwrite(true);
       
