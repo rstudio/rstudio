@@ -75,6 +75,7 @@
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"
 #define kWebSocketLogLevel                "websocket-log-level"
+#define kWebSocketHandshakeTimeout        "websocket-handshake-timeout"
 
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 

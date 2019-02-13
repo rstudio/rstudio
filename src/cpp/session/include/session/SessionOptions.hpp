@@ -552,7 +552,12 @@ public:
    {
       return webSocketLogLevel_;
    }
-    
+   
+   int webSocketHandshakeTimeoutMs() const
+   {
+      return webSocketHandshakeTimeoutMs_;
+
+   }
    bool packageOutputInPackageFolder() const
    {
       return packageOutputToPackageFolder_;   
@@ -664,6 +669,7 @@ private:
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
    int webSocketLogLevel_;
+   int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
 

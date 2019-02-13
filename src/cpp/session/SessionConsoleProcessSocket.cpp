@@ -111,11 +111,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
 
       pwsServer_->init_asio();
       
-      // Increase websocketpp handshake timeouts to 15 seconds (default is 5). Could set to
-      // zero and eliminate altogether, but they could be helpful in reducing load under a
-      // DOS attack.
-      pwsServer_->set_open_handshake_timeout(15000);
-      pwsServer_->set_close_handshake_timeout(15000);
+      pwsServer_->set_open_handshake_timeout(session::options().webSocketHandshakeTimeoutMs());
+      pwsServer_->set_close_handshake_timeout(session::options().webSocketHandshakeTimeoutMs());
 
       pwsServer_->set_message_handler(
                boost::bind(&ConsoleProcessSocket::onMessage, this, &*pwsServer_, _1, _2));

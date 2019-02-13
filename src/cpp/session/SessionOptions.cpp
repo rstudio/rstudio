@@ -247,9 +247,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kWebSocketLogLevel,
        value<int>(&webSocketLogLevel_)->default_value(0),
        "WebSocket log level (0=none, 1=errors, 2=activity, 3=all)")
-       (kPackageOutputInPackageFolder,
-         value<bool>(&packageOutputToPackageFolder_)->default_value(false),
-         "devtools check and devtools build output to package project folder");
+      (kWebSocketHandshakeTimeout,
+       value<int>(&webSocketHandshakeTimeoutMs_)->default_value(5000),
+       "WebSocket protocol handshake timeout (ms)")
+      (kPackageOutputInPackageFolder,
+       value<bool>(&packageOutputToPackageFolder_)->default_value(false),
+       "devtools check and devtools build output to package project folder");
 
    // allow options
    options_description allow("allow");
