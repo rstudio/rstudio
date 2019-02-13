@@ -63,9 +63,6 @@ struct ConsoleProcessSocketConnectionCallbacks
 
    // invoked when connection closes
    boost::function<void ()> onConnectionClosed;
-   
-   // invoked when connection fails to connect
-   boost::function<void (const std::string& errorMessage)> onConnectionFailed;
 };
 
 typedef websocketpp::server<websocketpp::config::asio> terminalServer;
