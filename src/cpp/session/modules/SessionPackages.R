@@ -1429,7 +1429,25 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # is the directory old? if so, assume the prior R process launched
    # to produce available.packages crashed or similar
    info <- file.info(dir)
-   diff <- difftime(Sys.time(), info$mtime, units = "secs")
+   time <- info$mtime
+   
+   # in some cases, mtime may not be available -- in that case, fall
+   # back to the time that was serialized when the process was launched
+   #
+   # https://github.com/rstudio/rstudio/issues/4312
+   #
+   # if all-else fails, just use the current time. this effectively means
+   # that we will never mark the directory as 'stale', which means that
+   # the dependency discovery feature may not work -- but at this point
+   # there's not much else we can do
+   if (is.na(time)) {
+      time <- .rs.tryCatch(readRDS(file.path(dir, "time.rds")))
+      if (inherits(time, "error"))
+         time <- Sys.time()
+   }
+   
+   # check to see if the directory is 'stale'
+   diff <- difftime(Sys.time(), time, units = "secs")
    if (diff > 120)
       return("STALE")
    
@@ -1480,6 +1498,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    dir <- tempfile("rstudio-available-packages-")
    dir.create(dir, showWarnings = FALSE)
    .rs.availablePackagesPendingEnv[[reposString]] <- dir
+   
+   # mtime may be unreliable (or access could fail in some cases) so
+   # instead serialize the current time to a file rather than relying on OS
+   saveRDS(Sys.time(), file = file.path(dir, "time.rds"))
    
    # move there
    owd <- setwd(dir)
