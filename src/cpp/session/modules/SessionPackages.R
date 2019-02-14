@@ -1433,9 +1433,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # in some cases, mtime may not be available -- in that case, fall
    # back to the time that was serialized when the process was launched
+   #
    # https://github.com/rstudio/rstudio/issues/4312
-   if (is.na(time))
-      time <- readRDS(file.path(dir, "time.rds"))
+   #
+   # if all-else fails, just use the current time. this effectively means
+   # that we will never mark the directory as 'stale', which means that
+   # the dependency discovery feature may not work -- but at this point
+   # there's not much else we can do
+   if (is.na(time)) {
+      time <- .rs.tryCatch(readRDS(file.path(dir, "time.rds")))
+      if (inherits(time, "error"))
+         time <- Sys.time()
+   }
    
    # check to see if the directory is 'stale'
    diff <- difftime(Sys.time(), time, units = "secs")
