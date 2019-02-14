@@ -579,6 +579,7 @@ public class AceEditor implements DocDisplay,
       {
          Desktop.getFrame().getClipboardText((String text) -> {
             replaceSelection(text);
+            setCursorPosition(getSelectionEnd());
          });
       }
       else
