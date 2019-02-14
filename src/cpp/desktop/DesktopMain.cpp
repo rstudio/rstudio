@@ -313,6 +313,12 @@ QString inferDefaultRenderingEngine()
       }
    }
 
+   if (::GetSystemMetrics(SM_REMOTESESSION))
+   {
+       // use software rendering over remote desktop
+       return QStringLiteral("software");
+   }
+
    return QStringLiteral("auto");
 }
 
