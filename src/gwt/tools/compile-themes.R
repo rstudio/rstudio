@@ -179,7 +179,7 @@ themeFiles <- list.files(
    pattern = "\\.css$"
 )
 
-## Process the theme files -- we strip out the name preceeding the theme,
+## Process the theme files -- we strip out the name preceding the theme,
 ## and then add some custom rules.
 for (themeFile in themeFiles) {
    content <- suppressWarnings(readLines(themeFile))
