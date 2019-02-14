@@ -283,6 +283,12 @@ QString inferDefaultRenderingEngine()
 
 QString inferDefaultRenderingEngine()
 {
+   if (::GetSystemMetrics(SM_REMOTESESSION))
+   {
+       // use software rendering over remote desktop
+       return QStringLiteral("software");
+   }
+
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
       "Intel(R) HD Graphics 520",
@@ -311,12 +317,6 @@ QString inferDefaultRenderingEngine()
             return QStringLiteral("software");
          }
       }
-   }
-
-   if (::GetSystemMetrics(SM_REMOTESESSION))
-   {
-       // use software rendering over remote desktop
-       return QStringLiteral("software");
    }
 
    return QStringLiteral("auto");
