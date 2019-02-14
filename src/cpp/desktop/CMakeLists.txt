@@ -74,7 +74,7 @@ if(NOT WIN32)
    endif()
 else()
    # Windows
-   set(QT_VERSION "5.12.0")
+   set(QT_VERSION "5.12.1")
    set(QT_VERSION_SUBDIR "${QT_VERSION}")   
    if(NOT QT_QMAKE_EXECUTABLE)
 
