@@ -2653,10 +2653,17 @@ public class TextEditingTarget implements
       boolean stripTrailingWhitespace = (projConfig_ == null)
             ? prefs_.stripTrailingWhitespace().getValue()
             : projConfig_.stripTrailingWhitespace();
+            
+      // override preference for certain files
+      boolean dontStripWhitespace =
+            fileType_.isMarkdown() ||
+            fileType_.isPython() ||
+            name_.getValue().equals("DESCRIPTION");
       
-      if (stripTrailingWhitespace &&
-          !fileType_.isMarkdown() &&
-          !name_.getValue().equals("DESCRIPTION"))
+      if (dontStripWhitespace)
+         stripTrailingWhitespace = false;
+      
+      if (stripTrailingWhitespace)
       {
          String code = docDisplay_.getCode();
          Pattern pattern = Pattern.create("[ \t]+$");
