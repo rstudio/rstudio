@@ -1,7 +1,7 @@
 #
 # test-themes.R
 #
-# Copyright (C) 2018 by RStudio, Inc.
+# Copyright (C) 2009-2019 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -115,7 +115,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
       # Check length
       acLen <- length(actual)
       exLen <- length(expected)
-      msg <- sprintf("elements than exepected. Actual: %d, Expected: %d", acLen, exLen)
+      msg <- sprintf("elements than expected. Actual: %d, Expected: %d", acLen, exLen)
       if (acLen < exLen)
       {
          cat(msgStart, "has fewer", msg, "\n")
@@ -151,7 +151,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
          }
          
          extraMsg <- sprintf(
-            "had %d unexepected elements with names: \n   \"%s\"",
+            "had %d unexpected elements with names: \n   \"%s\"",
             length(extraNames),
             paste0(extraNames, collapse = "\",\n   \""))
          missingMsg <- sprintf(
