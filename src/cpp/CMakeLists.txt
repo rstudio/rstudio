@@ -71,7 +71,7 @@ if(UNIX)
 
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
-                      -Wno-deprecated-declarations)
+                      -Wno-deprecated-declarations -fvisibility=hidden)
 
       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
       find_library(COCOA_LIBRARY NAMES Cocoa)
