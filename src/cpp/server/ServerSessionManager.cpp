@@ -237,7 +237,6 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    // translate querystring arguments into extra session args 
    core::system::Options args;
    readRequestArgs(request, &args);
-   std::cerr << "process launch request " << request << std::endl;
 
    // determine launch options
    r_util::SessionLaunchProfile profile;
