@@ -130,6 +130,7 @@ set (CORE_SOURCE_FILES
    text/DcfParser.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
+   zlib/zlib.cpp
 )
 
 # UNIX specific

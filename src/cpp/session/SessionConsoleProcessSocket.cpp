@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessSocket.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -87,9 +87,32 @@ Error ConsoleProcessSocket::ensureServerRunning()
    try
    {
       pwsServer_.reset(new terminalServer());
+     
+      switch (session::options().webSocketLogLevel())
+      {
+         case 0:
+         default:
+            pwsServer_->set_access_channels(websocketpp::log::alevel::none);
+            pwsServer_->set_error_channels(websocketpp::log::elevel::none);
+            break;
+         case 1:
+            pwsServer_->set_access_channels(websocketpp::log::alevel::none);
+            pwsServer_->set_error_channels(websocketpp::log::elevel::all);
+            break;
+         case 2:
+            pwsServer_->set_access_channels(websocketpp::log::alevel::access_core);
+            pwsServer_->set_error_channels(websocketpp::log::elevel::none);
+            break;
+         case 3:
+            pwsServer_->set_access_channels(websocketpp::log::alevel::all);
+            pwsServer_->set_error_channels(websocketpp::log::elevel::all);
+            break;
+      }
 
-      pwsServer_->set_access_channels(websocketpp::log::alevel::none);
       pwsServer_->init_asio();
+      
+      pwsServer_->set_open_handshake_timeout(session::options().webSocketHandshakeTimeoutMs());
+      pwsServer_->set_close_handshake_timeout(session::options().webSocketHandshakeTimeoutMs());
 
       pwsServer_->set_message_handler(
                boost::bind(&ConsoleProcessSocket::onMessage, this, &*pwsServer_, _1, _2));
@@ -99,6 +122,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
                boost::bind(&ConsoleProcessSocket::onClose, this, &*pwsServer_, _1));
       pwsServer_->set_open_handler(
                boost::bind(&ConsoleProcessSocket::onOpen, this, &*pwsServer_, _1));
+      pwsServer_->set_fail_handler(
+            boost::bind(&ConsoleProcessSocket::onFail, this, &*pwsServer_, _1));
 
       // try to bind to the given port
       do
@@ -348,6 +373,13 @@ void ConsoleProcessSocket::onHttp(terminalServer* s, websocketpp::connection_hdl
    // We could return diagnostics here if we had some, but for now just 404
    terminalServer::connection_ptr con = s->get_con_from_hdl(hdl);
    con->set_status(websocketpp::http::status_code::not_found);
+}
+
+void ConsoleProcessSocket::onFail(terminalServer* s, websocketpp::connection_hdl hdl)
+{
+   terminalServer::connection_ptr con = s->get_con_from_hdl(hdl);
+   std::string message = "Terminal websocket failure: " + con->get_ec().message();
+   LOG_ERROR_MESSAGE(message);
 }
 
 std::string ConsoleProcessSocket::getHandle(terminalServer* s, websocketpp::connection_hdl hdl)

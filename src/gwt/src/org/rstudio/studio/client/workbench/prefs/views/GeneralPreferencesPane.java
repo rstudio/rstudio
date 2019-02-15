@@ -321,9 +321,15 @@ public class GeneralPreferencesPane extends PreferencesPane
          spacedBefore(otherLabel);
       advanced.add(otherLabel);
       firstHeader = false;
+
       showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
       lessSpaced(showLastDotValue_);
       advanced.add(showLastDotValue_);
+
+      advanced.add(spaced(checkboxPref(
+            "Double-click to select words in Console pane", 
+            prefs_.consoleDoubleClickSelect())));
+      
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);

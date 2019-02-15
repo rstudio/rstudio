@@ -548,6 +548,16 @@ public:
       return webSocketConnectTimeout_;
    }
    
+   int webSocketLogLevel() const
+   {
+      return webSocketLogLevel_;
+   }
+   
+   int webSocketHandshakeTimeoutMs() const
+   {
+      return webSocketHandshakeTimeoutMs_;
+
+   }
    bool packageOutputInPackageFolder() const
    {
       return packageOutputToPackageFolder_;   
@@ -658,6 +668,8 @@ private:
    bool verifySignatures_;
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
+   int webSocketLogLevel_;
+   int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
 
