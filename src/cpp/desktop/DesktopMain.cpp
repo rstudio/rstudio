@@ -515,7 +515,9 @@ int main(int argc, char* argv[])
             */
             
             std::vector<std::string> gpuBlacklist = {
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
                "AMD FirePro"
+#endif
             };
             
             for (const std::string& entry : gpuBlacklist)
