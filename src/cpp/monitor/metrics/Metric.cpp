@@ -152,7 +152,7 @@ Error metricFromJson(const json::Object& multiMetricJson,
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
       MetricData dataItem;
-      json::Object valueObj = value.get_obj();
+      const json::Object& valueObj = value.get_obj();
       Error error = json::readObject(valueObj,
                                      "name", &dataItem.name,
                                      "value", &dataItem.value);

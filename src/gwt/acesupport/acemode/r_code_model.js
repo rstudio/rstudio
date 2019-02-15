@@ -1995,45 +1995,13 @@ var RCodeModel = function(session, tokenizer,
 
    this.$onDocChange = function(evt)
    {
-      var delta = evt.data;
+      this.$invalidateRow(evt.start.row);
+      if (evt.action === "insert")
+         this.$insertNewRows(evt.start.row, evt.end.row - evt.start.row);
+      else
+         this.$removeRows(evt.start.row, evt.end.row - evt.start.row);
 
-      if (delta.action === "insertLines")
-      {
-         this.$insertNewRows(delta.range.start.row,
-                             delta.range.end.row - delta.range.start.row);
-      }
-      else if (delta.action === "insertText")
-      {
-         if (this.$doc.isNewLine(delta.text))
-         {
-            this.$invalidateRow(delta.range.start.row);
-            this.$insertNewRows(delta.range.end.row, 1);
-         }
-         else
-         {
-            this.$invalidateRow(delta.range.start.row);
-         }
-      }
-      else if (delta.action === "removeLines")
-      {
-         this.$removeRows(delta.range.start.row,
-                          delta.range.end.row - delta.range.start.row);
-         this.$invalidateRow(delta.range.start.row);
-      }
-      else if (delta.action === "removeText")
-      {
-         if (this.$doc.isNewLine(delta.text))
-         {
-            this.$removeRows(delta.range.end.row, 1);
-            this.$invalidateRow(delta.range.start.row);
-         }
-         else
-         {
-            this.$invalidateRow(delta.range.start.row);
-         }
-      }
-
-      this.$scopes.invalidateFrom(delta.range.start);
+      this.$scopes.invalidateFrom(evt.start);
    };
    
    this.$invalidateRow = function(row)

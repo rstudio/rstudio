@@ -237,7 +237,7 @@ void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
    if (response.error().type() == json::ObjectType)
    {
       // formulate verbose error string
-      json::Object &err = response.error().get_obj();
+      json::Object& err = response.error().get_obj();
       std::string message = err["message"].get_str();
       if (err.find("error") != err.end())
          message += ", Error " + err["error"].get_str();

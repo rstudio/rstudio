@@ -102,7 +102,7 @@ void SlideNavigationList::complete()
    // if we don't have any sections then flatted the indents
    if (!hasSections_)
    {
-      BOOST_FOREACH(json::Value& slide, slides_)
+      for (json::Value slide : slides_)
       {
          slide.get_obj()["indent"] = 0;
       }

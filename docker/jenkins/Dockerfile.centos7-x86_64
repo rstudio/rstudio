@@ -17,6 +17,7 @@ RUN yum install -y \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
+    libcurl-devel \
     libffi \
     libuuid-devel \
     libXcursor-devel \
@@ -38,6 +39,21 @@ RUN yum install -y \
     xml-commons-apis \
     zlib-devel
 
+# add scl repo and install additional dependencies
+RUN yum install -y \
+    centos-release-scl
+
+RUN yum install -y \
+    llvm-toolset-7 \
+    devtoolset-3-gcc \
+    devtoolset-3-gcc-c++
+
+# update environment to use new compiler
+ENV PATH="/opt/rh/devtoolset-3/root/usr/bin:${PATH}"
+ENV CC="/opt/rh/devtoolset-3/root/usr/bin/gcc"
+ENV CXX="/opt/rh/devtoolset-3/root/usr/bin/c++"
+ENV CPP="/opt/rh/devtoolset-3/root/usr/bin/cpp"
+
 # sudo defaults to requiretty on centos7
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 
@@ -50,6 +66,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad"
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
@@ -57,7 +77,7 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
 
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/

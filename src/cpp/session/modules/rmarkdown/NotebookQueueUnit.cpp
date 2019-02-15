@@ -50,7 +50,7 @@ namespace {
 Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 {
    // process arrays
-   BOOST_FOREACH(const json::Value val, in) 
+   for (const json::Value val : in)
    {
       // ignore non-value types
       if (val.type() != json::ObjectType)

@@ -984,7 +984,7 @@ SEXP create(const json::Array& value, Protect* pProtect)
    pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.size()));
    
    // add each array element to it
-   for (json::Array::size_type i=0; i<value.size(); i++)
+   for (size_t i=0; i<value.size(); i++)
    {
       SEXP valueSEXP = create(value[i], pProtect);
       SET_VECTOR_ELT(listSEXP, i,  valueSEXP);
@@ -1004,16 +1004,13 @@ SEXP create(const json::Object& value, Protect* pProtect)
    
    // add each object field to it
    int index = 0;
-   for (json::Object::const_iterator 
-            it = value.begin();
-            it != value.end();
-            ++it)
+   for (const json::Member& member : value)
    {
       // set name
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.name().c_str()));
       
       // set value
-      SEXP valueSEXP = create(it->second, pProtect);
+      SEXP valueSEXP = create(member.value(), pProtect);
       SET_VECTOR_ELT(listSEXP, index,  valueSEXP);
       
       // increment element index

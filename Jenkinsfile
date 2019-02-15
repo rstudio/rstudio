@@ -7,7 +7,7 @@ properties([
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
-                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '2', description: 'RStudio Minor Version'),
+                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '3', description: 'RStudio Minor Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -73,9 +73,11 @@ def s3_upload(type, flavor, os, arch) {
       sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
-  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
-  }
+  // update daily build redirect; currently disabled for 1.3
+  // 
+  // withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+  //   sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+  // }
 }
 
 def jenkins_user_build_args() {
@@ -222,6 +224,10 @@ try {
           trigger_external_build('IDE/macos')
           trigger_external_build('IDE/windows')
         }
+        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
+          trigger_external_build('IDE/macos-v1.3')
+          trigger_external_build('IDE/windows-v1.3')
+        }
         parallel parallel_containers
 
         // trigger downstream pro artifact builds if we're finished building
@@ -233,6 +239,10 @@ try {
           trigger_external_build('IDE/monitor')
           trigger_external_build('IDE/macos-pro')
           trigger_external_build('IDE/windows-pro')
+        }
+        else if (env.JOB_NAME == 'IDE/pro-pipeline/v1.3') {
+          trigger_external_build('IDE/macos-v1.3-pro')
+          trigger_external_build('IDE/windows-v1.3-pro')
         }
 
         slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"

@@ -16,6 +16,7 @@
 project (SERVER)
 
 add_subdirectory(pam)
+add_subdirectory(crash-handler-proxy)
 
 # include files
 file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
@@ -153,7 +154,7 @@ include_directories(
 )
 
 # define executable
-add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
+add_stripped_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 # add origin rpath for suse/sles
 if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
@@ -167,6 +168,7 @@ target_link_libraries(rserver
    rstudio-core
    rstudio-server-core
    rstudio-monitor
+   ${CRASHPAD_LIBRARIES}
    ${SERVER_SYSTEM_LIBRARIES}
 )
 

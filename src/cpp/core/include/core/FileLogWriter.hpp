@@ -19,6 +19,7 @@
 #include <boost/thread.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/LogOptions.hpp>
 #include <core/LogWriter.hpp>
 
 namespace rstudio {
@@ -29,7 +30,8 @@ class FileLogWriter : public LogWriter
 public:
     FileLogWriter(const std::string& programIdentity,
                   int logLevel,
-                  const FilePath& logDir);
+                  const FileLoggerOptions& options,
+                  const std::string& logSection = std::string());
     virtual ~FileLogWriter();
 
     virtual void log(core::system::LogLevel level,
@@ -40,10 +42,13 @@ public:
 
 
 private:
+    void createFile();
     bool rotateLogFile();
+    void rotateLogFilePrivileged();
 
     std::string programIdentity_;
     int logLevel_;
+    FileLoggerOptions options_;
     FilePath logFile_;
     FilePath rotatedLogFile_;
     boost::mutex mutex_;

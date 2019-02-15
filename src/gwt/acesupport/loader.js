@@ -22,17 +22,23 @@
 
 define("rstudio/loader", ["require", "exports", "module"], function(require, exports, module) {
 
-var oop = require("ace/lib/oop");
-var event = require("ace/lib/event");
-var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
-var Editor = require("ace/editor").Editor;
 var EditSession = require("ace/edit_session").EditSession;
-var UndoManager = require("ace/undomanager").UndoManager;
-var Range = require("ace/range").Range;
-var Utils = require("mode/utils");
+var Editor = require("ace/editor").Editor;
+var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
 var ExpandSelection = require("util/expand_selection");
+var Range = require("ace/range").Range;
+var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+var TextMode = require("ace/mode/text").Mode;
+var UndoManager = require("ace/undomanager").UndoManager;
+var Utils = require("mode/utils");
+var event = require("ace/lib/event");
+var oop = require("ace/lib/oop");
 
 require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
+
+
+
+// RStudioEditor ----
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
@@ -129,6 +135,9 @@ oop.inherits(RStudioEditor, Editor);
 }).call(RStudioEditor.prototype);
 
 
+
+// RStudioEditSession ----
+
 var RStudioEditSession = function(text, mode) {
    EditSession.call(this, text, mode);
 };
@@ -223,6 +232,9 @@ oop.inherits(RStudioEditSession, EditSession);
 }).call(RStudioEditSession.prototype);
 
 
+
+// RStudioUndoManager ----
+
 var RStudioUndoManager = function() {
    UndoManager.call(this);
 };
@@ -235,22 +247,45 @@ oop.inherits(RStudioUndoManager, UndoManager);
    };
 }).call(RStudioUndoManager.prototype);
 
+
+
+// RStudioRenderer ----
+
+var RStudioRenderer = function(container, theme) {
+   Renderer.call(this, container, theme);
+};
+oop.inherits(RStudioRenderer, Renderer);
+
+(function() {
+
+   this.setTheme = function(theme) {
+
+      if (theme)
+         Renderer.prototype.setTheme.call(this, theme);
+
+   }
+
+}).call(RStudioRenderer.prototype);
+
+
+
 function loadEditor(container) {
    var env = {};
    container.env = env;
 
-   var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+   // Load the editor
+   var renderer = new RStudioRenderer(container, "");
+   var session = new RStudioEditSession("");
+   var editor = new RStudioEditor(renderer, session);
+   env.editor = editor;
 
-   var TextMode = require("ace/mode/text").Mode;
-   var theme = {}; // prevent default textmate theme from loading
-
-   env.editor = new RStudioEditor(new Renderer(container, theme), new RStudioEditSession(""));
-   var session = env.editor.getSession();
+   var session = editor.getSession();
    session.setMode(new TextMode());
    session.setUndoManager(new RStudioUndoManager());
 
    // Setup syntax checking
    var config = require("ace/config");
+   config.set("basePath", "ace");
    config.set("workerPath", "js/workers");
    config.setDefaultValue("session", "useWorker", false);
 

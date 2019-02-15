@@ -147,18 +147,14 @@ void FileLock::initialize(const Settings& settings)
    std::string logFile = settings.get("log-file");
    FileLock::s_logFile = FilePath(logFile);
    
-   // report when logging is enabled
-   if (loggingEnabled)
-   {
-      std::stringstream ss;
-      ss << "(PID " << ::getpid() << "): Initialized file locks ("
-         << "lock-type=" << lockTypeToString(FileLock::s_defaultType) << ", "
-         << "timeout-interval=" << FileLock::s_timeoutInterval.total_seconds() << "s, "
-         << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s, "
-         << "log-file=" << logFile << ")"
-         << std::endl;
-      FileLock::log(ss.str());
-   }
+   std::stringstream ss;
+   ss << "(PID " << ::getpid() << "): Initialized file locks ("
+      << "lock-type=" << lockTypeToString(FileLock::s_defaultType) << ", "
+      << "timeout-interval=" << FileLock::s_timeoutInterval.total_seconds() << "s, "
+      << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s, "
+      << "log-file=" << logFile << ")"
+      << std::endl;
+   FileLock::log(ss.str());
 
    std::string distributedLockingOption = core::system::getenv(kRStudioDistributedLockingEnabled);
    bool distributedLockingEnabled = (distributedLockingOption == "1");
@@ -172,13 +168,11 @@ void FileLock::initialize(const Settings& settings)
 
 void FileLock::log(const std::string& message)
 {
-   if (!isLoggingEnabled())
-      return;
-   
-   if (s_logFile.empty())
+   if (s_logFile.empty() || !isLoggingEnabled())
    {
-      // if we were constructed without a path, log to system logs
-      LOG_WARNING_MESSAGE(message);
+      // if we were constructed without a path, or file lock logging was not explicitly enabled
+      // (legacy option), then debug log to the in-proc logger
+      LOG_DEBUG_MESSAGE_NAMED(kFileLockingLogSection, message);
    }
    else
    {

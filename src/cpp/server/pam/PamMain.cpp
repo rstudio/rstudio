@@ -19,6 +19,7 @@
 
 #include <boost/format.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -60,6 +61,11 @@ int main(int argc, char * const argv[])
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
+      // catch unhandled exceptions
+      error = core::crash_handler::initialize();
       if (error)
          LOG_ERROR(error);
 

@@ -165,3 +165,4 @@ if not defined RSTUDIO_SKIP_QT (
   call install-qt-sdk-win.cmd
 )
 
+call install-crashpad.cmd

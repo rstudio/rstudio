@@ -34,6 +34,7 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
+   CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Error.cpp
@@ -47,6 +48,7 @@ set (CORE_SOURCE_FILES
    Hash.cpp
    HtmlUtils.cpp
    Log.cpp
+   LogOptions.cpp
    LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
@@ -80,9 +82,6 @@ set (CORE_SOURCE_FILES
    libclang/Utils.cpp
    json/Json.cpp
    json/JsonRpc.cpp
-   json/spirit/json_spirit_reader.cpp
-   json/spirit/json_spirit_value.cpp
-   json/spirit/json_spirit_writer.cpp
    http/Cookie.cpp
    http/Header.cpp
    http/Message.cpp
@@ -338,6 +337,7 @@ target_link_libraries(
    rstudio-core
    rstudio-core-hunspell
    ${Boost_LIBRARIES}
+   ${CRASHPAD_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
 

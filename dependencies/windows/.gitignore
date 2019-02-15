@@ -11,4 +11,5 @@ winutils/
 rtools*
 winpty*/
 openssl*/
+crashpad*/
 *.zip

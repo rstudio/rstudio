@@ -100,10 +100,10 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Start pty and a process")
    {
-      HANDLE hInWrite;
-      HANDLE hOutRead;
-      HANDLE hErrRead;
-      HANDLE hProcess;
+      HANDLE hInWrite = nullptr;
+      HANDLE hOutRead = nullptr;
+      HANDLE hErrRead = nullptr;
+      HANDLE hProcess = nullptr;
 
       Error err = pty.start(cmdExe, emptyArgs, options,
                             &hInWrite, &hOutRead, &hErrRead, &hProcess);
@@ -120,10 +120,10 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Start pty and a process with conerr")
    {
-      HANDLE hInWrite;
-      HANDLE hOutRead;
-      HANDLE hErrRead;
-      HANDLE hProcess;
+      HANDLE hInWrite = nullptr;
+      HANDLE hOutRead = nullptr;
+      HANDLE hErrRead = nullptr;
+      HANDLE hProcess = nullptr;
 
       ProcessOptions conerrOptions = options;
       conerrOptions.pseudoterminal.get().conerr = true;
@@ -143,9 +143,9 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Start pty but fail to start process")
    {
-      HANDLE hInWrite;
-      HANDLE hOutRead;
-      HANDLE hProcess;
+      HANDLE hInWrite = nullptr;
+      HANDLE hOutRead = nullptr;
+      HANDLE hProcess = nullptr;
 
       Error err = pty.start(
                "C:\\NoWindows\\system08\\huhcmd.exe", emptyArgs, options,
@@ -158,9 +158,9 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Capture output of a process")
    {
-      HANDLE hInWrite;
-      HANDLE hOutRead;
-      HANDLE hProcess;
+      HANDLE hInWrite = nullptr;
+      HANDLE hOutRead = nullptr;
+      HANDLE hProcess = nullptr;
       std::vector<std::string> args;
 
       args.push_back("/S");
@@ -197,9 +197,9 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Verify character-by-character send/receive")
    {
-      HANDLE hInWrite;
-      HANDLE hOutRead;
-      HANDLE hProcess;
+      HANDLE hInWrite = nullptr;
+      HANDLE hOutRead = nullptr;
+      HANDLE hProcess = nullptr;
 
       ProcessOptions plainOptions = options;
 

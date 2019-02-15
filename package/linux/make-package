@@ -25,7 +25,7 @@ fi
 # set build type( if necessary) and build dir
 if test -z "$CMAKE_BUILD_TYPE"
 then
-   CMAKE_BUILD_TYPE=Release
+   CMAKE_BUILD_TYPE=RelWithDebInfo
    BUILD_DIR=build-$1-$2
 else
    BUILD_DIR=build-$1-$2-$CMAKE_BUILD_TYPE

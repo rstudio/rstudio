@@ -1,7 +1,7 @@
 /*
  * JsonRpc.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@
 #include <core/Log.hpp>
 #include <core/http/Response.hpp>
 
-
 namespace rstudio {
 namespace core {
 namespace json {
@@ -28,69 +27,67 @@ namespace json {
 const char * const kRpcResult = "result";
 const char * const kRpcAsyncHandle = "asyncHandle";
 const char * const kRpcError = "error";
-const char * const kJsonContentType = "application/json" ;   
-   
+const char * const kJsonContentType = "application/json" ;
+
 Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest) 
 {
-   // json_spirit is not documented to throw an exceptions but surround 
-   // the code with an exception handling block just to be defensive...
    try 
    {
       // parse data and verify it contains an object
-      json::Value var;
-      if ( !json::parse(input, &var) || 
-           (var.type() != json::ObjectType) )
+      Value var;
+      if ( !parse(input, &var) ||
+           (var.type() != ObjectType) )
       {
-         return Error(errc::InvalidRequest, ERROR_LOCATION) ;
+         return Error(json::errc::InvalidRequest, ERROR_LOCATION) ;
       }
 
       // extract the fields
-      json::Object& requestObject = var.get_obj();
-      for (json::Object::const_iterator it = 
+      const Object& requestObject = var.get_obj();
+      for (Object::iterator it =
             requestObject.begin(); it != requestObject.end(); ++it)
       {
-         std::string fieldName = it->first ;
-         json::Value fieldValue = it->second ;
+         std::string fieldName = (*it).name();
+         Value fieldValue = (*it).value();
 
          if ( fieldName == "method" )
          {
-            if (fieldValue.type() != json::StringType)
-               return Error(errc::InvalidRequest, ERROR_LOCATION) ;
+            if (fieldValue.type() != StringType)
+               return Error(json::errc::InvalidRequest, ERROR_LOCATION) ;
 
             pRequest->method = fieldValue.get_str() ;
          }
          else if ( fieldName == "params" )
          {
-            if (fieldValue.type() != json::ArrayType)
-               return Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
+            if (fieldValue.type() != ArrayType)
+               return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
             pRequest->params = fieldValue.get_array();
          }
          else if ( fieldName == "kwparams" )
          {
-            if (fieldValue.type() != json::ObjectType)
-               return Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
+            if (fieldValue.type() != ObjectType)
+               return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
             pRequest->kwparams = fieldValue.get_obj();
          }
          else if (fieldName == "sourceWnd")
          {
-            if (fieldValue.type() != json::StringType)
-               return Error(errc::InvalidRequest, ERROR_LOCATION);
+            if (fieldValue.type() != StringType)
+               return Error(json::errc::InvalidRequest, ERROR_LOCATION);
 
             pRequest->sourceWindow = fieldValue.get_str();
          }
          else if (fieldName == "clientId" )
          {
-            if (fieldValue.type() != json::StringType)
-               return Error(errc::InvalidRequest, ERROR_LOCATION);
+            if (fieldValue.type() != StringType)
+               return Error(json::errc::InvalidRequest, ERROR_LOCATION);
             
             pRequest->clientId = fieldValue.get_str();
          }
          // legacy version field
          else if (fieldName == "version" )
          {
-            if (json::isType<double>(fieldValue))
+            if (isType<double>(fieldValue))
                pRequest->version = fieldValue.get_value<double>();
             else
                pRequest->version = 0;
@@ -98,7 +95,7 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
          // new version field
          else if (fieldName == "clientVersion")
          {
-            if (fieldValue.type() == json::StringType)
+            if (fieldValue.type() == StringType)
                pRequest->clientVersion = fieldValue.get_str();
             else
                pRequest->clientVersion = std::string();
@@ -107,13 +104,13 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
 
       // method is required
       if (pRequest->method.empty() )
-         return Error(errc::InvalidRequest, ERROR_LOCATION) ;
+         return Error(json::errc::InvalidRequest, ERROR_LOCATION) ;
 
       return Success() ;
    }
    catch(const std::exception& e)
    {
-      Error error = Error(errc::ParseError, ERROR_LOCATION);
+      Error error = Error(json::errc::ParseError, ERROR_LOCATION);
       error.addProperty("exception", e.what()) ;
       return error ;
    }
@@ -121,7 +118,7 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
 
 bool parseJsonRpcRequestForMethod(const std::string& input, 
                                   const std::string& method,
-                                  json::JsonRpcRequest* pRequest,
+                                  JsonRpcRequest* pRequest,
                                   http::Response* pResponse)
 {
    // parse request
@@ -136,7 +133,7 @@ bool parseJsonRpcRequestForMethod(const std::string& input,
    // check for method
    if (pRequest->method != method)
    {
-      Error methodError = Error(errc::MethodNotFound, ERROR_LOCATION);
+      Error methodError = Error(json::errc::MethodNotFound, ERROR_LOCATION);
       methodError.addProperty("method", pRequest->method);
       LOG_ERROR(methodError);
       setJsonRpcError(methodError, pResponse);
@@ -150,11 +147,26 @@ bool parseJsonRpcRequestForMethod(const std::string& input,
 namespace  {
 
 void copyErrorCodeToJsonError(const boost::system::error_code& code,
-                              json::Object* pError)
+                              Object* pError)
 {
    pError->operator[]("code") = code.value();
    pError->operator[]("message") = code.message();
 }   
+
+void setErrorProperties(Object& jsonError,
+                        const Error& error)
+{
+   if (error.properties().empty())
+      return;
+
+   Object properties;
+   for (const std::pair<std::string, std::string>& property : error.properties())
+   {
+      properties[property.first] = property.second;
+   }
+
+   jsonError["properties"] = properties;
+}
 
 }   
 
@@ -176,7 +188,7 @@ void JsonRpcResponse::runAfterResponse()
       afterResponse_();
 }
    
-json::Object JsonRpcResponse::getRawResponse()
+Object JsonRpcResponse::getRawResponse()
 {
    return response_;
 }
@@ -186,26 +198,28 @@ void JsonRpcResponse::write(std::ostream& os) const
    json::write(response_, os);
 }
    
-void JsonRpcResponse::setError(const Error& error, const json::Value& clientInfo)
+void JsonRpcResponse::setError(const Error& error,
+                               const Value& clientInfo,
+                               bool includeErrorProperties)
 {
    // remove result
-   response_.erase(kRpcResult);
-   response_.erase(kRpcAsyncHandle);
+   response_.erase(json::kRpcResult);
+   response_.erase(json::kRpcAsyncHandle);
 
    const boost::system::error_code& ec = error.code();
    
-   if ( ec.category() == jsonRpcCategory() )
+   if ( ec.category() == json::jsonRpcCategory() )
    {
-      setError(ec);
+      setError(ec, includeErrorProperties);
    }
    else
    {
       // execution error
-      json::Object jsonError ;
-      copyErrorCodeToJsonError(errc::ExecutionError, &jsonError);
+      Object jsonError ;
+      copyErrorCodeToJsonError(json::errc::ExecutionError, &jsonError);
       
       // populate sub-error field with error details
-      json::Object executionError;
+      Object executionError;
       executionError["code"] = ec.value();
       
       std::string errorCategoryName = ec.category().name();
@@ -226,25 +240,30 @@ void JsonRpcResponse::setError(const Error& error, const json::Value& clientInfo
          jsonError["client_info"] = clientInfo;
       }
 
+      // add error properties if requested
+      if (includeErrorProperties)
+         setErrorProperties(jsonError, error);
+
       // set error
-      setField(kRpcError, jsonError);
+      setField(json::kRpcError, jsonError);
    }      
 }
    
-void JsonRpcResponse::setError(const Error& error)
+void JsonRpcResponse::setError(const Error& error,
+                               bool includeErrorProperties)
 {   
-   setError(error, json::Value());
+   setError(error, Value(), includeErrorProperties);
 }
    
 void JsonRpcResponse::setError(const boost::system::error_code& ec,
-                               const json::Value& clientInfo)
+                               const Value& clientInfo)
 {
    // remove result
-   response_.erase(kRpcResult);
-   response_.erase(kRpcAsyncHandle);
+   response_.erase(json::kRpcResult);
+   response_.erase(json::kRpcAsyncHandle);
 
    // error from error code
-   json::Object error ;
+   Object error ;
    copyErrorCodeToJsonError(ec, &error);
 
    // client info if provided
@@ -254,10 +273,10 @@ void JsonRpcResponse::setError(const boost::system::error_code& ec,
    }
    
    // sub-error is null
-   error["error"] = json::Value();
-   
+   error["error"] = Value();
+
    // set error
-   setField(kRpcError, error);
+   setField(json::kRpcError, error);
 }
 
 void JsonRpcResponse::setRedirectError(const Error& error,
@@ -266,23 +285,23 @@ void JsonRpcResponse::setRedirectError(const Error& error,
    // set a standard error
    setError(error);
 
-   json::Object errorObj;
-   getField(kRpcError, &errorObj);
+   Object errorObj;
+   getField(json::kRpcError, &errorObj);
 
    // extend the error with redirect information
    errorObj["redirect_url"] = redirectUrl;
-   setField(kRpcError, errorObj);
+   setField(json::kRpcError, errorObj);
 }
    
 void JsonRpcResponse::setAsyncHandle(const std::string& handle)
 {
-   response_.erase(kRpcResult);
-   response_.erase(kRpcError);
+   response_.erase(json::kRpcResult);
+   response_.erase(json::kRpcError);
 
-   setField(kRpcAsyncHandle, handle);
+   setField(json::kRpcAsyncHandle, handle);
 }
 
-void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
+void setJsonRpcResponse(const JsonRpcResponse& jsonRpcResponse,
                         core::http::Response* pResponse)
 {
    // no cache!
@@ -293,7 +312,7 @@ void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
    // circumstances such as returning results to the GWT FileUpload widget
    // (which expects text/html)
    if (pResponse->contentType().empty())
-       pResponse->setContentType(kJsonContentType) ; 
+       pResponse->setContentType(json::kJsonContentType) ;
    
    // set body 
    std::stringstream responseStream ;
@@ -312,7 +331,7 @@ void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
 bool JsonRpcResponse::parse(const std::string& input,
                             JsonRpcResponse* pResponse)
 {
-   json::Value value;
+   Value value;
    bool valid = json::parse(input, &value);
    if (!valid)
       return false;
@@ -320,16 +339,16 @@ bool JsonRpcResponse::parse(const std::string& input,
    return parse(value, pResponse);
 }
 
-bool JsonRpcResponse::parse(const json::Value& value,
+bool JsonRpcResponse::parse(const Value& value,
                             JsonRpcResponse* pResponse)
 {
-   if (value.type() != json::ObjectType)
+   if (value.type() != ObjectType)
       return false;
 
    pResponse->response_ = value.get_obj();
    return true;
 }
- 
+
 class JsonRpcErrorCategory : public boost::system::error_category
 {
 public:
@@ -352,21 +371,21 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 {
    switch(ev)
    {
-      case errc::Success: 
+      case errc::Success:
          return "Method call succeeded" ;
 
       case errc::ConnectionError:
          return "Unable to connect to service" ;
-         
+
       case errc::Unavailable:
          return "Service currently unavailable";
-      
+
       case errc::Unauthorized:
          return "Client unauthorized" ;
-         
+
       case errc::InvalidClientId:
          return "Invalid client id";
-      
+
       case errc::ParseError:
          return "Invalid json or unexpected error occurred while parsing" ;
 
@@ -378,10 +397,10 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 
       case errc::ParamMissing:
          return "Parameter missing" ;
-         
+
       case errc::ParamTypeMismatch:
          return "Parameter type mismatch" ;
-         
+
       case errc::ParamInvalid:
          return "Parameter value invalid";
 
@@ -390,13 +409,13 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 
       case errc::ExecutionError:
          return "Error occurred while executing method" ;
-         
+
       case errc::TransmissionError:
          return "Error occurred during transmission";
-         
+
       case errc::InvalidClientVersion:
          return "Invalid client version";
-         
+
       case errc::ServerOffline:
          return "Server is offline";
 
@@ -421,10 +440,10 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 namespace {
 
 void runSynchronousFunction(const JsonRpcFunction& func,
-                            const core::json::JsonRpcRequest& request,
+                            const JsonRpcRequest& request,
                             const JsonRpcFunctionContinuation& continuation)
 {
-   core::json::JsonRpcResponse response;
+   JsonRpcResponse response;
    if (request.isBackgroundConnection)
       response.setSuppressDetectChanges(true);
    core::Error error = func(request, &response);

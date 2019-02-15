@@ -18,6 +18,7 @@
 #include <signal.h>
 
 #include <core/Error.hpp>
+#include <core/CrashHandler.hpp>
 #include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
@@ -80,6 +81,8 @@ bool requireLocalR();
 } // namespace rstudio
 
 namespace {
+
+const char * const kProgramIdentity = "rserver";
    
 bool mainPageFilter(const core::http::Request& request,
                     core::http::Response* pResponse)
@@ -259,13 +262,42 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
+Error initLog()
+{
+   return initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning, false);
+}
+
+bool reloadLoggingConfiguration()
+{
+   LOG_INFO_MESSAGE("Reloading logging configuration...");
+
+   Error error = initLog();
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Failed to reload logging configuration");
+      LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_INFO_MESSAGE("Successfully reloaded logging configuration");
+   }
+
+   return !static_cast<bool>(error);
+}
+
 void reloadConfiguration()
 {
-   // swallow the output for now
-   // open source currently has no configuration reload options
-   // so displaying it as successful would be confusing to those users
-   // as no action would have occurred
-   overlay::reloadConfiguration();
+   bool success = reloadLoggingConfiguration();
+   success = overlay::reloadConfiguration() && success;
+
+   if (success)
+   {
+      LOG_INFO_MESSAGE("Successfully reloaded all configuration");
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Configuration reload unsuccessful");
+   }
 }
 
 // bogus SIGCHLD handler (never called)
@@ -427,14 +459,16 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 } // namespace server
 } // namespace rstudio
 
-
 int main(int argc, char * const argv[]) 
 {
    try
    {
-      // initialize log
-      const char * const kProgramIdentity = "rserver";
-      initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
+      Error error = initLog();
+      if (error)
+      {
+         core::log::writeError(error, std::cerr);
+         return EXIT_FAILURE;
+      }
 
       // ignore SIGPIPE (don't log error because we should never call
       // syslog prior to daemonizing)
@@ -479,7 +513,7 @@ int main(int argc, char * const argv[])
       }
 
       // set working directory
-      Error error = FilePath(options.serverWorkingDir()).makeCurrentPath();
+      error = FilePath(options.serverWorkingDir()).makeCurrentPath();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -561,7 +595,7 @@ int main(int argc, char * const argv[])
       if (!runAsUser.empty())
       {
          // drop root priv
-         Error error = core::system::temporarilyDropPriv(runAsUser);
+         error = core::system::temporarilyDropPriv(runAsUser);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
@@ -575,6 +609,11 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
+
+      // catch unhandled exceptions
+      error = core::crash_handler::initialize();
+      if (error)
+         LOG_ERROR(error);
 
       // call overlay startup
       error = overlay::startup();

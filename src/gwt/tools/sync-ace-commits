@@ -1,123 +1,26 @@
-#!/bin/sh
-
-# This script is used to automate combining an upstream version of Ace
-# with the patches that we maintain.
-#
-# If you need to run this script, some prerequisites are required.
-# - Install Node.js and npm
-# - Run "sudo npm install --global dryice"
-#
-# To sync to a more recent upstream commit of Ace, update the "git checkout"
-# line below with the SHA-1 of the upstream commit. (Do NOT use a branch, for
-# example "upstream/master"; use the SHA-1 as it's the only thing guaranteed
-# never to change.) Then run this script.
-#
-# As upstream Ace evolves, inevitably they introduce changes that conflict
-# with the patches we maintain. To resolve these conflicts, go to the ./ace
-# subdirectory that this script creates, and:
-# - `git remote set-url origin git@github.com:rstudio/ace.git`
-#                               # Only need to do set-url once
-# - `git checkout <SHA-1>`      # Go to the upstream commit
-# - `git merge <bugfix-branch>` # Try merging
-# - If previous step SUCCEEDS, start at the top but try the next branch.
-# - If the merge FAILS:
-# - `git merge --abort`
-# - `git checkout -b <new-bugfix-branch>` # I use the old name plus a number
-# - `git merge <bugfix-branch>`
-# - Resolve the merge conflict as you usually would, and commit
-# - `git push -u origin <new-bugfix-branch>`
-# - Update this sync-ace-commits script to refer to the new bugfix branch
-# - Repeat all of these steps if you still get merge conflicts
-
+#!/usr/bin/env bash
 set -e
 
-if [ ! -d "./ace" ]; then
-    git clone https://github.com/rstudio/ace.git
-    cd ace
-    git remote add upstream https://github.com/ajaxorg/ace.git
-    cd ..
+BRANCH=rstudio/v1.3
+
+PROGRAMS=("git" "npm")
+for PROGRAM in "${PROGRAMS[@]}"; do
+    if ! command -v "${PROGRAM}" &> /dev/null; then
+        echo "program '${PROGRAM}' not found; exiting"
+    fi
+done
+
+# check out our copy of ace
+if [ ! -d rstudio-ace ]; then
+    git clone https://github.com/rstudio/rstudio-ace
 fi
 
-cd ace
-cd build
-git checkout -- .
-cd ..
-
-git fetch origin
-git fetch upstream
-
-# Point this to the upstream commit that we've tested
-# NOTE: This is a SHA1 for a commit after v1.1.8 release;
-# we take this to get better Vim support (e.g. block selection)
-git fetch && git checkout ed5c38b7c87cece4de1acc17912aa3043dd0b11a
-
-# Make sure node packages are up to date
-npm install
-
-# Update any submodules in the repo
+cd rstudio-ace
+git pull
+git reset --hard "${BRANCH}"
 git submodule update --init --recursive
-
-# Merge all the bugfix branches
-
-# NOTE: 'vim-commands' API merged upstream; should be unneeded with next Ace update
-# NOTE: 'no-core-commands' and 'vim-page-commands' should be unnecessary with next Ace update
-# NOTE: 'dont-warn-on-scroll' likely needs to be re-thought as
-#   Ace will (may?) be gaining new defaults in next release re: scroll behaviour
-
-git merge \
-    origin/bugfix/token-column \
-    origin/bugfix/vim-vertical-block-eol \
-    origin/bugfix/dont-place-text-area-offscreen \
-    origin/patch/remove-webfont-2 \
-    origin/patch/other-modes \
-    origin/patch/dont-bundle-textmate-theme \
-    origin/bugfix/vim-join-lines \
-    origin/bugfix/highlight-tags-error \
-    origin/bugfix/xml-tag-highlight \
-    origin/feature/vim-commands \
-    origin/bugfix/vim-fold-navigation \
-    origin/patch/no-core-commands \
-    origin/patch/vim-page-movement \
-    origin/patch/dont-warn-on-scroll \
-    origin/bugfix/vim-search-scrolling \
-    origin/patch/worker-timeout \
-    origin/patch/vim-colon-selection \
-    origin/patch/completion-throttling \
-    origin/patch/bundle-snippets \
-    origin/patch/cmd-click-multi-select \
-    origin/bugfix/firefox-fractional-height \
-    origin/patch/autocomplete-popup-blur \
-    -m "merge branches"
-
-# Need to merge separately to handle merge conflicts
-# note: ace-keyboard-activity will be part of Ace 1.2.1
-# note: vim-paragraph-object fixed upstream as well
-git merge --strategy-option theirs \
-	origin/patch/vim-Y-yank \
-	origin/patch/ace-keyboard-activity \
-	origin/patch/incremental-search \
-	origin/patch/vim-paragraph-object \
-	-m "merge again"
-
-git merge \
-    origin/patch/isearch-cursor-position \
-    origin/patch/line-widget-shift-click-exception \
-    origin/patch/line-widget-performance \
-    origin/patch/emacs-click-position \
-    origin/patch/accent-input \
-    origin/patch/tokenizer-onmatch-line \
-    origin/patch/ipad-arrow-keys \
-    origin/patch/r-search-highlight \
-    -m "merge once more"
-
-## git merge \
-##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
-
-## git merge \
-##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
-
-# Rebuild ace with new sources
-
+npm install
 cd ..
+
 ./build-ace
 

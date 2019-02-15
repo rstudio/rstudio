@@ -445,7 +445,7 @@ json::Array versionsToJson(const std::vector<RVersion>& versions)
 Error rVersionsFromJson(const json::Array& versionsJson,
                         std::vector<RVersion>* pVersions)
 {
-   BOOST_FOREACH(const json::Value& versionJson, versionsJson)
+   for (const json::Value& versionJson : versionsJson)
    {
       if (!json::isType<json::Object>(versionJson))
          return systemError(boost::system::errc::bad_message, ERROR_LOCATION);

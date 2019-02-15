@@ -22,8 +22,8 @@
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Log.hpp>
-
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/SafeConvert.hpp>
@@ -429,6 +429,11 @@ int main(int argc, char* argv[])
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
+      // catch unhandled exceptions
+      error = core::crash_handler::initialize(core::crash_handler::ProgramMode::Desktop);
       if (error)
          LOG_ERROR(error);
 

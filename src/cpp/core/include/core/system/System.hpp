@@ -51,10 +51,10 @@ namespace system {
 
 enum LogLevel 
 {
-   kLogLevelError = 0,
-   kLogLevelWarning = 1,
-   kLogLevelInfo = 2,
-   kLogLevelDebug = 3
+   kLogLevelDebug = 0,
+   kLogLevelInfo = 1,
+   kLogLevelWarning = 2,
+   kLogLevelError = 3
 };
 
 // portable realPath
@@ -197,15 +197,27 @@ FilePath systemSettingsPath(const std::string& appName, bool create);
 #endif // WIN32
 
 void initHook();
-// initialization (not thread safe, call from main thread at app startup)  
-void initializeSystemLog(const std::string& programIdentity, int logLevel);
-void initializeStderrLog(const std::string& programIdentity, int logLevel);
-void initializeLog(const std::string& programIdentity,
-                   int logLevel,
-                   const FilePath& logDir);
 
-Error setExitFunction(void (*exitFunction) (void));
-   
+// initialization
+Error initializeSystemLog(const std::string& programIdentity,
+                          int logLevel,
+                          bool enableConfigReload = true);
+
+Error initializeStderrLog(const std::string& programIdentity,
+                          int logLevel,
+                          bool enableConfigReload = true);
+
+Error initializeLog(const std::string& programIdentity,
+                    int logLevel,
+                    const FilePath& logDir,
+                    bool enableConfigReload = true);
+
+void initializeLogConfigReload();
+
+// common initialization functions - do not invoke directly
+Error initLog();
+Error reinitLog();
+
 // exit
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation);
 int exitFailure(const std::string& errMsg,
@@ -273,7 +285,21 @@ bool effectiveUserIsRoot();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);
 
 // log
-void log(LogLevel level, const std::string& message) ;
+void log(LogLevel level,
+         const char* message,
+         const std::string&logSection = std::string());
+
+void log(LogLevel level,
+         const std::string& message,
+         const std::string& logSection = std::string());
+
+void log(LogLevel level,
+         const boost::function<std::string()>& action,
+         const std::string& logSection = std::string());
+
+const char* logLevelToStr(LogLevel level);
+
+LogLevel lowestLogLevel();
 
 // filesystem
 bool isHiddenFile(const FilePath& filePath) ;
@@ -291,6 +317,7 @@ std::string generateShortenedUuid();
 // process info
 
 PidType currentProcessId();
+std::string currentProcessPidStr();
 
 Error executablePath(int argc, const char * argv[],
                      FilePath* pExecutablePath);

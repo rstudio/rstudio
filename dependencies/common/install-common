@@ -23,6 +23,7 @@ set -e
 ./install-boost
 ./install-pandoc
 ./install-packages
+./install-crashpad
 
 if [ -e install-overlay ]
 then

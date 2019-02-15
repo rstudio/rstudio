@@ -299,14 +299,14 @@ void NotebookDocQueue::setExternalChunks(const json::Object& chunks)
 
 std::string NotebookDocQueue::externalChunk(const std::string& label) const
 {
-   json::Object::const_iterator it = externalChunks_.find(label);
+   json::Object::iterator it = externalChunks_.find(label);
    std::string code;
    if (it == externalChunks_.end())
    {
       // no chunk with this label 
       return code;
    }
-   else if (it->second.type() != json::ArrayType)
+   else if ((*it).value().type() != json::ArrayType)
    {
       // the JSON object representing the external chunks should contain an
       // array of strings representing the lines of code in the chunk
@@ -315,7 +315,7 @@ std::string NotebookDocQueue::externalChunk(const std::string& label) const
    else
    {
       // extract each line of code
-      json::Array lines = it->second.get_array();
+      const json::Array& lines = (*it).value().get_array();
       for (size_t i = 0; i < lines.size(); i++) 
       {
          if (lines.at(i).type() == json::StringType)

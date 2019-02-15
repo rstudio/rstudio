@@ -59,7 +59,7 @@ Error cpuAffinityFromJson(const json::Array& affinityJson,
 {
    pAffinity->clear();
 
-   BOOST_FOREACH(const json::Value& val, affinityJson)
+   for (const json::Value& val : affinityJson)
    {
       if (!json::isType<bool>(val))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);

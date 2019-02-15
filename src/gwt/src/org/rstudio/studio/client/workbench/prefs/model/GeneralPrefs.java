@@ -30,7 +30,8 @@ public class GeneralPrefs extends JavaScriptObject
                                                   String initialWorkingDir,
                                                   RVersionSpec defaultRVersion,
                                                   boolean restoreProjectRVersion,
-                                                  boolean showLastDotValue) /*-{
+                                                  boolean showLastDotValue,
+                                                  boolean enableCrashReporting) /*-{
       var prefs = new Object();
       prefs.show_user_home_page = showUserHomePage;
       prefs.reuse_sessions_for_project_links = reuseSessionsForProjectLinks;
@@ -41,6 +42,7 @@ public class GeneralPrefs extends JavaScriptObject
       prefs.default_r_version = defaultRVersion;
       prefs.restore_project_r_version = restoreProjectRVersion;
       prefs.show_last_dot_value = showLastDotValue;
+      prefs.enable_crash_reporting = enableCrashReporting;
       return prefs ;
    }-*/;
 
@@ -78,5 +80,9 @@ public class GeneralPrefs extends JavaScriptObject
    
    public native final boolean getShowLastDotValue() /*-{
       return this.show_last_dot_value;
+   }-*/;
+
+   public native final boolean getEnableCrashReporting() /*-{
+      return this.enable_crash_reporting;
    }-*/;
 }

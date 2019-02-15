@@ -19,7 +19,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Types.hpp>
 
@@ -197,7 +197,7 @@ public:
    bool getTrackEnv() const { return trackEnv_; }
 
    core::json::Object toJson(SerializationMode serialMode) const;
-   static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
+   static boost::shared_ptr<ConsoleProcessInfo> fromJson(const core::json::Object& obj);
 
    static std::string loadConsoleProcessMetadata();
    static void deleteOrphanedLogs(bool (*validHandle)(const std::string&));

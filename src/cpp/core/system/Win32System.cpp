@@ -62,11 +62,6 @@ namespace core {
 namespace system {
 
 namespace {
-// main log writer
-LogWriter* s_pLogWriter = NULL;
-
-// additional log writers
-std::vector<boost::shared_ptr<LogWriter> > s_logWriters;
 
 Error initJobObject(bool* detachFromJob)
 {
@@ -181,46 +176,15 @@ void initHook()
    ::ExitProcess(exitCode);
 }
 
-void initializeSystemLog(const std::string& programIdentity, int logLevel)
+Error initializeSystemLog(const std::string& programIdentity,
+                          int logLevel,
+                          bool enableConfigReload)
 {
+   return Success();
 }
 
-void initializeStderrLog(const std::string& programIdentity, int logLevel)
+void initializeLogConfigReload()
 {
-   if (s_pLogWriter)
-      delete s_pLogWriter;
-
-   s_pLogWriter = new StderrLogWriter(programIdentity, logLevel);
-}
-
-
-void initializeLog(const std::string& programIdentity, int logLevel, const FilePath& settingsDir)
-{
-   if (s_pLogWriter)
-      delete s_pLogWriter;
-
-   s_pLogWriter = new FileLogWriter(programIdentity, logLevel, settingsDir);
-}
-
-void setLogToStderr(bool logToStderr)
-{
-   if (s_pLogWriter)
-      s_pLogWriter->setLogToStderr(logToStderr);
-}
-
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
-{
-   s_logWriters.push_back(pLogWriter);
-}
-
-void log(LogLevel logLevel, const std::string& message)
-{
-   if (s_pLogWriter)
-      s_pLogWriter->log(logLevel, message);
-
-   std::for_each(s_logWriters.begin(),
-                 s_logWriters.end(),
-                 boost::bind(&LogWriter::log, _1, logLevel, message));
 }
 
 bool isWin64()

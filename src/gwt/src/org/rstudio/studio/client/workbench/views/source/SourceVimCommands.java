@@ -42,7 +42,7 @@ public class SourceVimCommands
       });
      
       Vim.defineAction("selectNextTab", nextTab);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "gt",
          type: "action",
          action: "selectNextTab",
@@ -55,7 +55,7 @@ public class SourceVimCommands
       });
      
       Vim.defineAction("selectPreviousTab", prevTab);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "gT",
          type: "action",
          action: "selectPreviousTab",
@@ -177,14 +177,14 @@ public class SourceVimCommands
      });
      
      Vim.defineAction("reflowText", callback);
-     Vim.mapCommand({
+     Vim._mapCommand({
         keys: "gq",
         type: "action",
         action: "reflowText",
         isEdit: true,
         context: "visual"
      });
-     Vim.mapCommand({
+     Vim._mapCommand({
         keys: "gqq",
         type: "action",
         action: "reflowText",
@@ -204,7 +204,7 @@ public class SourceVimCommands
       
       Vim.defineAction("reindent", callback);
       
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "==",
          type: "action",
          action: "reindent",
@@ -212,7 +212,7 @@ public class SourceVimCommands
          context: "normal"
       });
       
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "=",
          type: "action",
          action: "reindent",
@@ -230,7 +230,7 @@ public class SourceVimCommands
      });
      
      Vim.defineAction("showHelpAtCursor", callback);
-     Vim.mapCommand({
+     Vim._mapCommand({
         keys: "K",
         type: "action",
         action: "showHelpAtCursor",
@@ -268,7 +268,7 @@ public class SourceVimCommands
       });
       
       Vim.defineMotion("expandSelection", expandCallback);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "v",
          type: "motion",
          motion: "expandSelection",
@@ -280,7 +280,7 @@ public class SourceVimCommands
       });
       
       Vim.defineMotion("shrinkSelection", shrinkCallback);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "V",
          type: "motion",
          motion: "shrinkSelection",
@@ -297,14 +297,14 @@ public class SourceVimCommands
       });
       
       Vim.defineAction("openNextFile", callback);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "]f",
          type: "action",
          action: "openNextFile",
          context: "normal"
       });
       
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "]f",
          type: "action",
          action: "openNextFile",
@@ -321,14 +321,14 @@ public class SourceVimCommands
       });
       
       Vim.defineAction("openPreviousFile", callback);
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "[f",
          type: "action",
          action: "openPreviousFile",
          context: "normal"
       });
       
-      Vim.mapCommand({
+      Vim._mapCommand({
          keys: "[f",
          type: "action",
          action: "openPreviousFile",

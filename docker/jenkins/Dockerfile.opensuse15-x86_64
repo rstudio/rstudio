@@ -8,6 +8,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
+    clang \
     expect \
     fakeroot \
     gcc \
@@ -17,6 +18,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libacl-devel \
     libattr-devel \
     libcap-devel \
+    libcurl-devel \
     libuser-devel \
     libuuid-devel \
     libXcursor-devel \
@@ -27,6 +29,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     pam-devel \
     pango-devel \
     python \
+    python-xml \
     R \
     rpm-build \
     sudo \
@@ -44,6 +47,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

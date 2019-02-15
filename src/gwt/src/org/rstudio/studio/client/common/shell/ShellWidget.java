@@ -176,8 +176,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
-      verticalPanel_.addStyleName("ace_text-layer");
-      verticalPanel_.addStyleName("ace_line");
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);

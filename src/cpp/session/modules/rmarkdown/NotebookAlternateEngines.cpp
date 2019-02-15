@@ -500,7 +500,7 @@ Error runUserDefinedEngine(const std::string& docId,
    htmlCaptureContext.onConsoleInput(code);
    
    // default to 'error=FALSE' when unset
-   if (!options.count("error"))
+   if (options.find("error") == options.end())
       options["error"] = false;
    
    // determine whether we want to emit warnings, errors in this chunk
@@ -753,12 +753,12 @@ Error executeAlternateEngineChunk(const std::string& docId,
 
    // read json chunk options
    std::map<std::string, std::string> options;
-   for (json::Object::const_iterator it = jsonChunkOptions.begin();
+   for (json::Object::iterator it = jsonChunkOptions.begin();
         it != jsonChunkOptions.end();
         ++it)
    {
-      if (it->second.type() == json::StringType)
-         options[it->first] = it->second.get_str();
+      if ((*it).value().type() == json::StringType)
+         options[(*it).name()] = (*it).value().get_str();
    }
 
    // set working directory

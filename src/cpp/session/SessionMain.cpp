@@ -42,6 +42,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Error.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
@@ -1657,6 +1658,22 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
+      // convenience flags for server and desktop mode
+      bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
+      bool serverMode = options.programMode() == kSessionProgramModeServer;
+
+      // catch unhandled exceptions
+      core::crash_handler::ProgramMode mode = serverMode ?
+               core::crash_handler::ProgramMode::Server :
+               core::crash_handler::ProgramMode::Desktop;
+      error = core::crash_handler::initialize(mode);
+      if (error)
+         LOG_ERROR(error);
+
+      // set program mode environment variable so any child processes
+      // (like rpostback) can determine what the program mode is
+      core::system::setenv(kRStudioProgramMode, options.programMode());
+
       // reflect stderr logging
       core::system::setLogToStderr(options.logStderr());
 
@@ -1673,10 +1690,6 @@ int main (int argc, char * const argv[])
 
       // initialize file lock config
       FileLock::initialize();
-
-      // convenience flags for server and desktop mode
-      bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
-      bool serverMode = options.programMode() == kSessionProgramModeServer;
 
       // re-initialize log for desktop mode
       if (desktopMode)

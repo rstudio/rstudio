@@ -20,36 +20,60 @@
 #include <core/system/System.hpp>
 #include <core/Thread.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#include <core/system/PosixChildProcess.hpp>
+#include <stdio.h>
+#endif
+
 namespace rstudio {
 namespace core {
 
 FileLogWriter::FileLogWriter(const std::string& programIdentity,
                              int logLevel,
-                             const FilePath& logDir)
+                             const FileLoggerOptions& options,
+                             const std::string& logSection)
                                 : programIdentity_(programIdentity),
-                                  logLevel_(logLevel)
+                                  logLevel_(logLevel),
+                                  options_(options)
 {
-   logDir.ensureDirectory();
+   options.logDir.ensureDirectory();
 
-   logFile_ = logDir.childPath(programIdentity + ".log");
-   rotatedLogFile_ = logDir.childPath(programIdentity + ".rotated.log");
+   std::string logFileName = programIdentity + ".";
 
+   if (!logSection.empty())
+   {
+      logFileName += (logSection + ".");
+   }
+
+   if (options.includePid)
+   {
+      std::string pidStr = core::system::currentProcessPidStr();
+      logFileName += (pidStr + ".");
+   }
+
+   logFile_ = options.logDir.childPath(logFileName + "log");
+   rotatedLogFile_ = options.logDir.childPath(logFileName + "rotated.log");
+
+   createFile();
+}
+
+FileLogWriter::~FileLogWriter()
+{
+}
+
+void FileLogWriter::createFile()
+{
    if (!logFile_.exists())
    {
       // swallow errors -- we can't log so it doesn't matter
       core::appendToFile(logFile_, "");
    }
-}
 
-FileLogWriter::~FileLogWriter()
-{
-   try
-   {
-      // we don't keep a file handle open so do nothing here
-   }
-   catch(...)
-   {
-   }
+   // attempt to set the desired file permissions
+#ifndef _WIN32
+   core::system::changeFileMode(logFile_, options_.fileMode);
+#endif
 }
 
 void FileLogWriter::log(core::system::LogLevel logLevel,
@@ -62,7 +86,7 @@ void FileLogWriter::log(const std::string& programIdentity,
                         core::system::LogLevel logLevel,
                         const std::string& message)
 {
-   if (logLevel > logLevel_)
+   if (logLevel < logLevel_)
       return;
 
    LOCK_MUTEX(mutex_)
@@ -75,25 +99,55 @@ void FileLogWriter::log(const std::string& programIdentity,
    END_LOCK_MUTEX
 }
 
-
-
-#define LOGMAX (2048*1024)  // rotate/remove every 2 megabytes
 bool FileLogWriter::rotateLogFile()
 {
-   if (logFile_.exists() && logFile_.size() > LOGMAX)
+   if (!options_.rotate)
+      return false;
+
+   if (logFile_.exists() && logFile_.size() > (1048576.0 * options_.maxSizeMb))
    {
-      // first remove the rotated log file if it exists (ignore errors because
-      // there's nothing we can do with them at this level)
-      rotatedLogFile_.removeIfExists();
+      Error error = rotatedLogFile_.removeIfExists();
+      if (error)
+      {
+         rotateLogFilePrivileged();
+      }
+      else
+      {
+         error = logFile_.move(rotatedLogFile_);
+         if (error)
+            rotateLogFilePrivileged();
+      }
 
-      // now rotate the log file
-      logFile_.move(rotatedLogFile_);
-
+      createFile();
       return true;
    }
    return false;
 }
 
+void FileLogWriter::rotateLogFilePrivileged()
+{
+   // note: on posix, when renaming a file to one that already exists
+   // the existing file is replaced atomically, so no prior delete is required
+#ifndef _WIN32
+   std::string fromFile = logFile_.absolutePath();
+   std::string toFile = rotatedLogFile_.absolutePath();
+
+   auto moveFunc = [=]()
+   {
+      // attempt to rotate the log file as the root user
+      // this is necessary in processes where we started as root
+      // (and created the log file as root) and then gave up our privilege
+      int err = 0;
+
+      if (::rename(fromFile.c_str(), toFile.c_str()) != 0)
+         err = errno;
+
+      return err;
+   };
+
+   core::system::forkAndRunPrivileged(moveFunc);
+#endif
+}
 
 } // namespace core
 } // namespace rstudio

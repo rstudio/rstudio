@@ -94,11 +94,11 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
                                           bool includeRenameNew = true)
 {
    std::vector<FilePath> results;
-   for (json::Array::const_iterator it = paths.begin();
+   for (json::Array::iterator it = paths.begin();
         it != paths.end();
         it++)
    {
-      results.push_back(resolveAliasedPath(it->get_str()));
+      results.push_back(resolveAliasedPath((*it).get_str()));
    }
    return results;
 }

@@ -147,11 +147,12 @@ public:
       if (json::parse(contents, &parsedJson) &&
           json::isType<json::Object>(parsedJson))
       {
-         json::Object addinsJson = parsedJson.get_obj();
+         const json::Object& addinsJson = parsedJson.get_obj();
 
-         BOOST_FOREACH(const std::string& key, addinsJson | boost::adaptors::map_keys)
+         for(const json::Member& member : addinsJson)
          {
-            json::Value valueJson = addinsJson.at(key);
+            const std::string& key = member.name();
+            const json::Value& valueJson = member.value();
             if (json::isType<json::Object>(valueJson))
             {
                bool interactive;

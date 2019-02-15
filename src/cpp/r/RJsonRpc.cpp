@@ -88,17 +88,14 @@ Error callRHandler(const std::string& functionName,
    
    // add params
    const core::json::Array& params = request.params;
-   for (core::json::Array::size_type i=0; i<params.size(); i++)
+   for (size_t i=0; i<params.size(); i++)
       rFunction.addParam(params[i]);
    
    // add kwparams
    const core::json::Object& kwparams = request.kwparams;
-   for (core::json::Object::const_iterator 
-        it = kwparams.begin();
-        it != kwparams.end();
-        ++it)
+   for (const core::json::Member& member : kwparams)
    {
-      rFunction.addParam(it->first, it->second);
+      rFunction.addParam(member.name(), member.value());
    }
    
    // call the function

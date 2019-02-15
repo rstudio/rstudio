@@ -55,19 +55,8 @@ oop.inherits(Mode, TextMode);
 
 (function() {
 
-   this.tokenRe = new RegExp("^["
-       + unicode.packages.L
-       + unicode.packages.Mn + unicode.packages.Mc
-       + unicode.packages.Nd
-       + unicode.packages.Pc + "._]+", "g"
-   );
-
-   this.nonTokenRe = new RegExp("^(?:[^"
-       + unicode.packages.L
-       + unicode.packages.Mn + unicode.packages.Mc
-       + unicode.packages.Nd
-       + unicode.packages.Pc + "._]|\\s])+", "g"
-   );
+   this.tokenRe = new RegExp("^[" + unicode.wordChars + "._]+", "g");
+   this.nonTokenRe = new RegExp("^(?:[^" + unicode.wordChars + "._]|\\s)+", "g");
 
    this.$complements = {
             "(": ")",

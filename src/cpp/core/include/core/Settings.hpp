@@ -57,6 +57,8 @@ public:
    void beginUpdate();
    void endUpdate();
 
+   const FilePath& filePath() const { return settingsFile_; }
+
 private:
    void writeSettings() ;
 

@@ -46,12 +46,9 @@
 #define LOG(__X__)                                                             \
    do                                                                          \
    {                                                                           \
-      if (::rstudio::core::FileLock::isLoggingEnabled())                       \
-      {                                                                        \
-         std::stringstream ss;                                                 \
-         ss << "(PID " << ::getpid() << "): " << __X__ << std::endl;           \
-         ::rstudio::core::FileLock::log(ss.str());                             \
-      }                                                                        \
+      std::stringstream ss;                                                    \
+      ss << "(PID " << ::getpid() << "): " << __X__ << std::endl;              \
+      ::rstudio::core::FileLock::log(ss.str());                                \
    } while (0)
 
 namespace rstudio {

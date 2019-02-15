@@ -158,6 +158,10 @@ void setEnvVar(const std::string& name, const std::string& value)
    if (name == "RSTUDIO_SESSION_ROUTE" && !core::system::getenv(name).empty())
       return;
 
+   // don't restore program mode value (should be set by session main initialization)
+   if (name == "RSTUDIO_PROGRAM_MODE" && !core::system::getenv(name).empty())
+      return;
+
    core::system::setenv(name, value);
 }
 

@@ -484,8 +484,8 @@ void loadDefinitionIndex()
       return;
    }
 
-   json::Array indexJson = indexValueJson.get_array();
-   BOOST_FOREACH(const json::Value& definitionsJson, indexJson)
+   const json::Array& indexJson = indexValueJson.get_array();
+   for (const json::Value& definitionsJson : indexJson)
    {
       if (!json::isType<json::Object>(definitionsJson))
       {

@@ -705,7 +705,6 @@ namespace {
 json::Array lintAsJson(const LintItems& items)
 {
    json::Array jsonArray;
-   jsonArray.reserve(items.size());
    
    BOOST_FOREACH(const LintItem& item, items)
    {

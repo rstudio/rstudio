@@ -55,7 +55,15 @@ Error ConfigProfile::load(const FilePath& filePath)
    if (error)
       return error;
 
-   return parseString(contents);
+   error = parseString(contents);
+   if (error)
+   {
+      std::string description = error.getProperty("description");
+      description += " in file " + filePath.absolutePath();
+      error.addOrUpdateProperty("description", description);
+   }
+
+   return error;
 }
 
 Error ConfigProfile::parseString(const std::string& profileStr)
@@ -76,6 +84,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
    }
 
    // build section overrides
+   std::vector<LevelValues> levels;
    for (const ptree::value_type& child : profileTree)
    {
       boost::optional<Level> matchingLevel;
@@ -110,7 +119,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
          {
             // we require every param to have a default value / be registered so error out here
             return systemError(boost::system::errc::protocol_error,
-                               "Unknown param specified: " + paramName,
+                               "Unknown param " + paramName + " specified",
                                ERROR_LOCATION);
          }
 
@@ -124,17 +133,35 @@ Error ConfigProfile::parseString(const std::string& profileStr)
       }
 
       std::string levelValue = child.first.substr(matchingLevel.get().second.size());
-      levels_.push_back({{matchingLevel.get().first, levelValue}, values});
+      levels.push_back({{matchingLevel.get().first, levelValue}, values});
    }
 
    // stable sort the levels in ascending level number
    // this will preserve the order of same-level section overrides
    std::stable_sort(
-            levels_.begin(),
-            levels_.end(),
+            levels.begin(),
+            levels.end(),
             [](const LevelValues& a, const LevelValues& b) { return a.first.first < b.first.first; });
 
+   // assign the temporary variable levels to the class member
+   // this assures that we can safely call this method multiple times, preserving the last
+   // good configuration in case we error out above due to invalid configuration
+   levels_ = levels;
+
    return Success();
+}
+
+std::vector<std::string> ConfigProfile::getLevelNames(uint32_t level) const
+{
+   std::vector<std::string> levelNames;
+
+   for (const LevelValues& value : levels_)
+   {
+      if (value.first.first == level)
+         levelNames.push_back(value.first.second);
+   }
+
+   return levelNames;
 }
 
 } // core

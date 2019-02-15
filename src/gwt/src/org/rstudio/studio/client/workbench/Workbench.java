@@ -162,7 +162,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
-      metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
+      metricsChangedCommand_ = new TimeBufferedCommand(500)
       {
          @Override
          protected void performAction(boolean shouldSchedulePassive)
