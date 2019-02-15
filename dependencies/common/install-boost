@@ -29,9 +29,9 @@ BOOST_VERSION=boost_1_69_0
 BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
-BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
+BOOST_MODULES="algorithm asio array bind build chrono circular_buffer config context crc
    date_time filesystem foreach format function interprocess iostreams
-   lambda lexical_cast optional program_options property_tree random range ref
+   lambda lexical_cast optional program_options predef property_tree random range ref
    regex scope_exit signals signals2 smart_ptr spirit string_algo system
    test thread tokenizer type_traits typeof unordered utility variant"
 
@@ -65,7 +65,7 @@ then
    cd $BOOST_VERSION
 
    # bootstrap boost
-   sudo ./bootstrap.sh --without-libraries=python
+   sudo ./bootstrap.sh
 
    # build bcp helper
    sudo ./b2 tools/bcp
@@ -81,7 +81,7 @@ then
    cd rstudio
 
    # bootstrap again
-   sudo ./bootstrap.sh --without-libraries=python
+   sudo ./bootstrap.sh
    
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
@@ -96,7 +96,6 @@ then
         toolset=clang         \
         "${BJAM_CXXFLAGS}"    \
         "${BJAM_LDFLAGS}"     \
-        --without-python      \
         variant=release       \
         threading=multi       \
         link=static           \
@@ -106,7 +105,6 @@ then
      sudo ./bjam                     \
         "${BOOST_BJAM_FLAGS}"        \
         --prefix="$BOOST_DIR"        \
-        --without-python             \
         variant=release              \
         cxxflags="-fPIC -std=c++11"  \
         install
