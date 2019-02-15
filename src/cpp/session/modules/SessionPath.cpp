@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
-#include <boost/regex.hpp>
 #include <boost/bind.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -66,19 +66,19 @@ void safeReadPathsFromFile(const FilePath& filePath,
       LOG_ERROR(error);
 }
 
-void addToPathIfNecessary(const std::string& entry, std::string* pPath)
+void addToPathIfNecessary(
+      const std::string& entry,
+      std::vector<std::string>* pPathComponents)
 {
-   // guard against user input which may not parse as a valid regular expression
-   try
-   {
-      if (!regex_search(*pPath, boost::regex("(^|:)" + entry + "/?($|:)")))
-      {
-         if (!pPath->empty())
-            pPath->push_back(':');
-         pPath->append(entry);
-      }
-   }
-   CATCH_UNEXPECTED_EXCEPTION;
+   auto it = std::find(
+            pPathComponents->begin(),
+            pPathComponents->end(),
+            entry);
+
+   if (it != pPathComponents->end())
+      return;
+
+   pPathComponents->push_back(entry);
 }
 
 } // anonymous namespace
@@ -109,27 +109,30 @@ Error initialize()
    }
 
    // build the PATH
-   std::string path = core::system::getenv("PATH");
+   std::vector<std::string> parts =
+         core::algorithm::split(core::system::getenv("PATH"), ":");
+
+   // add in components from paths.d etc.
    std::for_each(paths.begin(),
                  paths.end(),
-                 boost::bind(addToPathIfNecessary, _1, &path));
+                 boost::bind(addToPathIfNecessary, _1, &parts));
 
    // do we need to add /Library/TeX/texbin or /usr/texbin or (sometimes texlive
    // doesn't get this written into /etc/paths.d)
    FilePath libraryTexbinPath("/Library/TeX/texbin");
    if (libraryTexbinPath.exists())
-      addToPathIfNecessary(libraryTexbinPath.absolutePath(), &path);
+      addToPathIfNecessary(libraryTexbinPath.absolutePath(), &parts);
    FilePath texbinPath("/usr/texbin");
    if (texbinPath.exists())
-      addToPathIfNecessary(texbinPath.absolutePath(), &path);
+      addToPathIfNecessary(texbinPath.absolutePath(), &parts);
 
    // add /opt/local/bin if necessary
    FilePath optLocalBinPath("/opt/local/bin");
    if (optLocalBinPath.exists())
-      addToPathIfNecessary(optLocalBinPath.absolutePath(), &path);
+      addToPathIfNecessary(optLocalBinPath.absolutePath(), &parts);
 
    // set the path
-   core::system::setenv("PATH", path);
+   core::system::setenv("PATH", core::algorithm::join(parts, ":"));
 
    return Success();
 
