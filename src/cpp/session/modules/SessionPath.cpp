@@ -70,14 +70,20 @@ void addToPathIfNecessary(
       const std::string& entry,
       std::vector<std::string>* pPathComponents)
 {
-   auto it = std::find(
-            pPathComponents->begin(),
-            pPathComponents->end(),
-            entry);
+   // tolerate paths with trailing slashes
+   for (std::string item : {entry, entry + "/"})
+   {
+      auto it = std::find(
+               pPathComponents->begin(),
+               pPathComponents->end(),
+               item);
 
-   if (it != pPathComponents->end())
-      return;
+      // if we find the path component, bail (no need to add to PATH)
+      if (it != pPathComponents->end())
+         return;
+   }
 
+   // failed to find PATH component; add it to the PATH
    pPathComponents->push_back(entry);
 }
 
