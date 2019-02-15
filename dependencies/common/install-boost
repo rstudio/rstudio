@@ -24,8 +24,8 @@ INSTALL_DIR=`pwd`
 PLATFORM=`uname`
 
 # vars
-BOOST_VERSION_NUMBER=1.63.0
-BOOST_VERSION=boost_1_63_0
+BOOST_VERSION_NUMBER=1.69.0
+BOOST_VERSION=boost_1_69_0
 BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
@@ -39,7 +39,7 @@ BOOST_MODULES="algorithm asio array bind chrono circular_buffer context crc
 if ! test -e $BOOST_DIR
 then
    # download boost
-   BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/boost_1_63_0.tar.bz2
+   BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.tar.bz2
    if [ ! -f "$BOOST_TAR" ]; then
       if [ "$PLATFORM" == "Darwin" ]
       then

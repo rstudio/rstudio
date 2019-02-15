@@ -180,11 +180,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   if (WIN32)
-      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.65.1)
-   else()
-      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.63.0)
-   endif()
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.69.0)
 endif()
 
 # disable Boost Signals deprecation warning
@@ -207,7 +203,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_63_0)
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_69_0)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -240,13 +236,13 @@ else()
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
    set(BOOST_ARCH "64")
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc141-mt-1_65_1.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-release-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc141-mt-1_69_0.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc141-mt-gd-1_65_1.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-debug-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc141-mt-gd-1_69_0.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_65_1")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_69_0")
    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})

@@ -29,8 +29,8 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/boost_1_65_1.7z"
-output_name <- sprintf("boost-1.65.1-win-msvc141-%s-%s.zip", variant, link)
+boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.7z"
+output_name <- sprintf("boost-1.69.0-win-msvc141-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -71,22 +71,6 @@ if (!file.exists(boost_dirname)) {
    progress("Feel free to get up and grab a coffee.")
    exec("7z.exe", "x -mmt4", boost_filename)
    
-   
-   # Building RStudio using boost 1.65.1 and recent VS releases
-   # will output a warning "Unknown compiler version..." for each source file,
-   # Newer boost versions have this warning commented out, so let's do the 
-   # same until we upgrade to a newer boost release.
-   replace_one_line(file.path(boost_dirname, "boost", "config", "compiler", "visualc.hpp"),
-      '#     pragma message("Unknown compiler version - please run the configure tests and report the results")',
-      '#     // pragma message("Unknown compiler version - please run the configure tests and report the results")')
-   
-   # Building RStudio using boost 1.65.1 and recent VS releases will
-   # output many warnings of the form "warning STL4019: The member std::fpos::seekpos() is non-Standard...".
-   # This was fixed more recently in Boost: https://github.com/boostorg/iostreams/pull/57/files
-   # Apply that same fix to our build of Boost.
-   replace_one_line(file.path(boost_dirname, "boost", "iostreams", "detail", "config", "fpos.hpp"),
-                    '     !defined(_STLPORT_VERSION) && !defined(__QNX__) && !defined(_VX_CPU)',
-                    '     !defined(_STLPORT_VERSION) && !defined(__QNX__) && !defined(_VX_CPU) && !(defined(BOOST_MSVC) && _MSVC_STL_VERSION >= 141)')
 }
 
 # double-check that we generated the boost folder
