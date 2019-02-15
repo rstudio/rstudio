@@ -18,6 +18,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import org.rstudio.core.client.CsvReader;
@@ -27,13 +30,18 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+@SuppressWarnings("Duplicates") // TODO REMOVE THIS
 public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
    public TextEditingTargetSpelling(DocDisplay docDisplay,
@@ -43,9 +51,51 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       docUpdateSentinel_ = docUpdateSentinel;
       typoSpellChecker_ = new TypoSpellChecker(this);
 
-      docDisplay_.addKeyDownHandler(new InputKeyDownHandler());
+//      docDisplay_.addKeyDownHandler(new InputKeyDownHandler());
+//      docDisplay_.addClickHandler((event) -> Debug.log("clickity: " + event.getNativeButton()));
    }
-   
+
+   public JsArray<LintItem> getLint()
+   {
+      Iterable<Range> wordSource = docDisplay_.getWords(
+         docDisplay_.getFileType().getTokenPredicate(),
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(0, 0),
+         null);
+
+      final ArrayList<String> words = new ArrayList<>();
+      final ArrayList<Range> wordRanges = new ArrayList<>();
+
+      for (Range r : wordSource)
+      {
+         // Don't worry about pathologically long words
+         if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+            continue;
+
+         wordRanges.add(r);
+         words.add(docDisplay_.getTextForRange(r));
+      }
+
+      JsArray<LintItem> lint = JsArray.createArray().cast();
+      if (wordRanges.size() > 0)
+      {
+         for (int i = 0; i < words.size(); i++) {
+            String word = words.get(i);
+            if (!typoSpellChecker_.checkSpelling(word)) {
+               Range range = wordRanges.get(i);
+               lint.push(LintItem.create(
+                  range.getStart().getRow(),
+                  range.getStart().getColumn(),
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn(),
+                  "Spellcheck warning",
+                  "warning"));
+            }
+         }
+      }
+      return lint;
+   }
+
    public void checkSpelling()
    {
       if (isSpellChecking_)
@@ -128,9 +178,6 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    {
       public void onKeyDown(KeyDownEvent event)
       {
-         Debug.log("here we are, finally: " + event.getNativeKeyCode());
-         event.preventDefault();
-         event.stopPropagation();
       }
    }
 

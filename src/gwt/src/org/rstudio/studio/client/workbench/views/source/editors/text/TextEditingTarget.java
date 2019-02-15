@@ -7273,7 +7273,9 @@ public class TextEditingTarget implements
          }
       });
    }
-   
+
+   public TextEditingTargetSpelling getSpellingTarget() { return this.spelling_; }
+
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;

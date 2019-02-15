@@ -81,10 +81,16 @@ public class TypoSpellChecker
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
 
-      ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
-         typoNative = new TypoNative("en_US");
-      };
-      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()) .addCallback(loadTypoCallback);
+      ExternalJavaScriptLoader.Callback loadTypoCallback = () -> typoNative = new TypoNative("en_US");
+      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+   }
+
+   // Check the spelling of a single word, directly returning an
+   // array of suggestions for corrections. The array is empty if the
+   // word is deemed correct by the dictionary
+   public boolean checkSpelling(String word)
+   {
+      return typoNative.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)

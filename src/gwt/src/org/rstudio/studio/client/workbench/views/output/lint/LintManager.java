@@ -178,7 +178,7 @@ public class LintManager
    }
    
    private void lintActiveDocument(final LintContext context)
-   {  
+   {
       // don't lint if this is an unsaved document
       if (target_.getPath() == null)
          return;
@@ -212,11 +212,12 @@ public class LintManager
       if (context.token.isInvalid())
          return;
       
-      if (target_.getTextFileType().isCpp() ||
-          target_.getTextFileType().isC())
+      if (target_.getTextFileType().isCpp() || target_.getTextFileType().isC())
          performCppLintServerRequest(context);
-      else
+      else if (target_.getTextFileType().isR())
          performRLintServerRequest(context);
+      else if (target_.getTextFileType().isRmd())
+         showLint(context, JsArray.createArray().cast());
    }
 
    private void performCppLintServerRequest(final LintContext context)
@@ -306,30 +307,34 @@ public class LintManager
             });
    }
    
-   private void showLint(LintContext context,
-                         JsArray<LintItem> lint)
+   private void showLint(LintContext context, JsArray<LintItem> lint)
    {
       if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
          return;
-      
-      // Filter out items at the last cursor position, if the cursor
-      // hasn't moved.
-      if (context.excludeCurrentStatement &&
-          docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
+
+      JsArray<LintItem> finalLint;
+
+      // Filter out items at the last cursor position, if the cursor hasn't moved.
+      if (context.excludeCurrentStatement && docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
       {
+         finalLint = JsArray.createArray().cast();
          Position pos = context.cursorPosition;
-         JsArray<LintItem> filteredLint = JsArray.createArray().cast();
          for (int i = 0; i < lint.length(); i++)
             if (!lint.get(i).asRange().contains(pos))
-               filteredLint.push(lint.get(i));
-         
-         docDisplay_.showLint(filteredLint);
-         return;
+               finalLint.push(lint.get(i));
       }
-      
-      docDisplay_.showLint(lint);
-      return;
-      
+      else
+         finalLint = lint;
+
+      if (uiPrefs_.realTimeSpellChecking().getValue())
+      {
+         JsArray<LintItem> spellingLint = target_.getSpellingTarget().getLint();
+         for (int i = 0; i < spellingLint.length(); i++)
+         {
+            finalLint.push(spellingLint.get(i));
+         }
+      }
+      docDisplay_.showLint(finalLint);
    }
    
    public void schedule(int milliseconds)
