@@ -23,6 +23,7 @@ import java.util.Map;
 import com.google.gwt.json.client.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -331,7 +332,14 @@ public class RemoteServer implements Server
                   CLIENT_INIT, 
                   params,
                   options == null ? null : new JSONObject(options),
-                  new ServerRequestCallback<SessionInfo>() {
+                  new ServerRequestCallback<SessionInfo>() 
+      {
+         @Override
+         public void cancel()
+         {
+            super.cancel();
+            requestCallback.cancel();
+         }
 
          public void onResponseReceived(SessionInfo sessionInfo)
          {
@@ -3154,7 +3162,7 @@ public class RemoteServer implements Server
                               final ServerRequestCallback<T> requestCallback,
                               RetryHandler retryHandler)
    { 
-      return sendRequest(
+      final RpcRequest request = sendRequest(
             null,
             scope,
             method,
@@ -3193,6 +3201,11 @@ public class RemoteServer implements Server
              },
              retryHandler);
 
+      if (requestCallback != null)
+      {
+         requestCallback.onRequestInitiated(request);
+      }
+      return request;
    }
 
    // lowest level sendRequest method -- called from the main workbench
@@ -3517,7 +3530,7 @@ public class RemoteServer implements Server
    
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
-   private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
+   private RpcRequest sendRemoteServerRequest(final JavaScriptObject sourceWindow,
                                         final String scope,
                                         final String method,
                                         final JavaScriptObject params,
@@ -3597,7 +3610,7 @@ public class RemoteServer implements Server
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(getSourceWindowName(sourceWindow),
+      return sendRequest(getSourceWindowName(sourceWindow),
                   scope, 
                   method, 
                   jsonParams,

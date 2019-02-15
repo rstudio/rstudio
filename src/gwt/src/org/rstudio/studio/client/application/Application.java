@@ -217,20 +217,23 @@ public class Application implements ApplicationEventHandlers
                                             error.getUserMessage());
          }
       };
+      
+      final ApplicationClientInit clientInit = pClientInit_.get();
 
       if (safeReloadButton != null)
       {
          // when the reload button is clicked, abort the pending launch
          safeReloadButton.addClickHandler(evt -> 
          {
-            pClientInit_.get().retry(callback, SessionInitOptions.create(
+            clientInit.retry(callback, SessionInitOptions.create(
                   SessionInitOptions.RESTORE_WORKSPACE_NO, 
-                  SessionInitOptions.RUN_RPROFILE_NO));
+                  SessionInitOptions.RUN_RPROFILE_NO),
+                  showLongInitDialog);
          });
       }
 
       // attempt init
-      pClientInit_.get().execute(showLongInitDialog, callback);
+      clientInit.execute(callback, null, true, showLongInitDialog);
    }  
    
    @Handler

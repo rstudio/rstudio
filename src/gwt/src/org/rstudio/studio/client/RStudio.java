@@ -154,12 +154,6 @@ public class RStudio implements EntryPoint
       div.getStyle().setProperty("textAlign", "center");
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
    
-      if (progressAction != null)
-      {
-         statusPanel.add(progressAction);
-         statusPanel.setCellHorizontalAlignment(progressAction, VerticalPanel.ALIGN_CENTER);
-      }
-      
       final VerticalPanel statusPanel = new VerticalPanel();
       final Element statusDiv = statusPanel.getElement();
       statusDiv.getStyle().setWidth(100, Style.Unit.PCT);
@@ -168,6 +162,12 @@ public class RStudio implements EntryPoint
       statusDiv.getStyle().setZIndex(1000);
       
       statusPanel.add(progressPanel);
+
+      if (progressAction != null)
+      {
+         statusPanel.add(progressAction);
+         statusPanel.setCellHorizontalAlignment(progressAction, VerticalPanel.ALIGN_CENTER);
+      }
       
       if (ApplicationAction.isLauncherSession())
       {

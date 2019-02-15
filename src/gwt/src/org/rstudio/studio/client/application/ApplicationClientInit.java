@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
@@ -49,7 +50,8 @@ public class ApplicationClientInit
       }
 
       // abort the pending launch
-      server_.abort(null, new ServerRequestCallback<Void>() {
+      server_.abort(null, new ServerRequestCallback<Void>()
+      {
          @Override
          public void onResponseReceived(Void response)
          {
@@ -60,7 +62,7 @@ public class ApplicationClientInit
          @Override
          public void onError(ServerError error)
          {
-            requestCallback.onError(error);     
+            requestCallback.onError(error);
          }
       });
    }
@@ -72,11 +74,18 @@ public class ApplicationClientInit
    {
       // reset internal state 
       timedOut_ = false;
-      timeoutTimer_ = null;
+      cancelTimeoutTimer();
       
       // send the request
       rpcRequestCallback_ = new ServerRequestCallback<SessionInfo>()
       {
+         @Override
+         public void cancel()
+         {
+            super.cancel();
+            requestCallback.cancel();
+         }
+
          @Override
          public void onResponseReceived(SessionInfo sessionInfo)
          {
@@ -86,10 +95,11 @@ public class ApplicationClientInit
                requestCallback.onResponseReceived(sessionInfo);
             }
          }
+
          @Override
          public void onError(ServerError error)
          {
-            if (!timedOut_)
+            if (!timedOut_ && !cancelled())
             {
                cancelTimeoutTimer();
                
@@ -116,7 +126,7 @@ public class ApplicationClientInit
          }
       };
 
-      server_.clientInit(GWT.getHostPageBaseURL(), null, rpcRequestCallback_);
+      server_.clientInit(GWT.getHostPageBaseURL(), options, rpcRequestCallback_);
       
       if (!showLongInitDialog)
          return;
@@ -165,7 +175,7 @@ public class ApplicationClientInit
                      {
                         // if we get an error during interrupt then just
                         // forward the error on to the original handler
-                        requestCallback.onError(error);     
+                        requestCallback.onError(error);
                      }
                      
                   });
@@ -187,7 +197,7 @@ public class ApplicationClientInit
                "Keep Waiting",
                
                // default to No
-               false);              
+               false);
          }
       };
       
