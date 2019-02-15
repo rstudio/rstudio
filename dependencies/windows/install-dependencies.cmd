@@ -83,7 +83,7 @@ if not exist %OPENSSL_FILES:~0,-4% (
 )
 
 if not exist %BOOST_FILES:~0,-4%* (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_FILES%"
+  wget %WGET_ARGS% "%BASEURL%Boost/%BOOST_FILES%"
   echo Unzipping %BOOST_FILES%
   unzip %UNZIP_ARGS% "%BOOST_FILES%"
   del %BOOST_FILES%
