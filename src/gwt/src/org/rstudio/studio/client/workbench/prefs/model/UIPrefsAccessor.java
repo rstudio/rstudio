@@ -760,6 +760,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("git_diff_ignore_whitespace", false);
    }
    
+   public PrefValue<Boolean> consoleDoubleClickSelect()
+   {
+      return bool("console_double_click_select", false);
+   }
+   
    // Meant to be called when the satellite window receives the sessionInfo.
    protected void UpdateSessionInfo(SessionInfo sessionInfo)
    {

@@ -121,9 +121,17 @@ public class ShinyApplicationPresenter implements
    private native void initializeEvents() /*-{  
       var thiz = this;
 
-      // we observed in some cases the "unload" event not firing when
-      // windows were closed in response to interrupts; "beforeunload"
-      // appears to be more reliable
+      // we observed that sometimes (with RStudio Server) the 'unload' event was
+      // not fired on window closing, and yet 'beforeunload' was not fired with
+      // RStudio Desktop. to be safe, attach to both events and just properly handle
+      // the close request there
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
+            }),
+            true);
+
       $wnd.addEventListener(
             "beforeunload",
             $entry(function() {
@@ -139,6 +147,11 @@ public class ShinyApplicationPresenter implements
       // on browsers that don't permit manual event reactivation)
       if (satellite_.isReactivatePending())
          return;
+      
+      if (closed_)
+         return;
+      
+      closed_ = true;
       
       ShinyApplicationParams params = ShinyApplicationParams.create(
             params_.getPath(), 
@@ -171,6 +184,7 @@ public class ShinyApplicationPresenter implements
    private final UIPrefs prefs_;
    
    private ShinyApplicationParams params_;
+   private boolean closed_ = false;
    private boolean appStopped_ = false;
    private boolean popoutToBrowser_ = false;
 }

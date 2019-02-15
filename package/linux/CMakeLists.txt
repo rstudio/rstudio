@@ -46,7 +46,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, ")
 
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
@@ -67,7 +67,7 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, ")
   
 endif()
 

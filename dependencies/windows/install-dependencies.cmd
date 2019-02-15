@@ -20,7 +20,7 @@ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.0.2p.zip
 set BOOST_FILES=boost-1.65.1-win-msvc141.zip
 
-set PANDOC_VERSION=2.5
+set PANDOC_VERSION=2.6
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-x86_64
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
@@ -120,7 +120,7 @@ popd
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip
 if not exist "dictionaries\en_US.dic" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-dictionaries/%CORE_DICTIONARIES%"
+  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/dictionaries/%CORE_DICTIONARIES%"
   if exist "%CORE_DICTIONARIES%" (
      mkdir dictionaries
      echo Unzipping %CORE_DICTIONARIES%

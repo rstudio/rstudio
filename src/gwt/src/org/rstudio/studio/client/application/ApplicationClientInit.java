@@ -1,7 +1,7 @@
 /*
  * ApplicationClientInit.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,13 +37,9 @@ public class ApplicationClientInit
       globalDisplay_ = globalDisplay;
    }
    
-   public void execute(final ServerRequestCallback<SessionInfo> requestCallback)
-   {
-      execute(requestCallback, null, true);
-   }
-   
    public void retry(final ServerRequestCallback<SessionInfo> requestCallback,
-                     final SessionInitOptions options)
+                     final SessionInitOptions options,
+                     final boolean showLongInitDialog)
    {
       // cancel the in-flight request, if any
       if (rpcRequestCallback_ != null)
@@ -58,7 +54,7 @@ public class ApplicationClientInit
          public void onResponseReceived(Void response)
          {
             // re-attempt the launch with the new options
-            execute(requestCallback, options, true);
+            execute(requestCallback, options, true, showLongInitDialog);
          }
          
          @Override
@@ -71,14 +67,16 @@ public class ApplicationClientInit
    
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback,
                        final SessionInitOptions options,
-                       final boolean retryOnTransmissionError)
+                       final boolean retryOnTransmissionError,
+                       final boolean showLongInitDialog)
    {
       // reset internal state 
       timedOut_ = false;
       timeoutTimer_ = null;
       
       // send the request
-      rpcRequestCallback_ = new ServerRequestCallback<SessionInfo>() {
+      rpcRequestCallback_ = new ServerRequestCallback<SessionInfo>()
+      {
          @Override
          public void onResponseReceived(SessionInfo sessionInfo)
          {
@@ -106,7 +104,7 @@ public class ApplicationClientInit
                      public void run()
                      {
                         // retry (specify flag to ensure we only retry once)
-                        execute(requestCallback, options, false);
+                        execute(requestCallback, options, false, showLongInitDialog);
                      }
                   }.schedule(1000);
                }
@@ -115,10 +113,13 @@ public class ApplicationClientInit
                   requestCallback.onError(error);
                }
             }
-         }                                    
+         }
       };
+
       server_.clientInit(GWT.getHostPageBaseURL(), null, rpcRequestCallback_);
-                                    
+      
+      if (!showLongInitDialog)
+         return;
       
       // wait for 60 seconds then ask the user if they want to issue an 
       // interrupt to the server

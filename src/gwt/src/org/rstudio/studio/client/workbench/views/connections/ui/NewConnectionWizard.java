@@ -46,15 +46,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server)
    {
-      events.addHandler(NewConnectionWizardRequestCloseEvent.TYPE, 
-         new NewConnectionWizardRequestCloseEvent.Handler()
-      {
-         @Override
-         public void onNewConnectionWizardRequestClose(NewConnectionWizardRequestCloseEvent event)
-         {
-            closeDialog();
-         }
-      });
+      events.addHandler(NewConnectionWizardRequestCloseEvent.TYPE, (event) -> closeDialog());
    }
 
    public NewConnectionWizard(NewConnectionContext context,
@@ -76,7 +68,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
          true);
       setHelpLink(mainHelpLink_);
 
-      RStudioGinjector.INSTANCE.injectMembers(this); 
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    @Override
@@ -97,7 +89,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    @Override
    protected ArrayList<String> getWizardBodyStyles()
    {
-      ArrayList<String> classes = new ArrayList<String>();
+      ArrayList<String> classes = new ArrayList<>();
       classes.add(RES.styles().wizardBodyPanel());
       return classes;
    }
@@ -136,5 +128,5 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       RES.styles().ensureInjected();
    }
    
-   private HelpLink mainHelpLink_ = null;
+   private HelpLink mainHelpLink_;
 }

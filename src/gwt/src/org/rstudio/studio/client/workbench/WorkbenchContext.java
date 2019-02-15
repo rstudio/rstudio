@@ -1,7 +1,7 @@
 /*
  * WorkbenchContext.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ public class WorkbenchContext
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {
             currentWorkingDir_ = FileSystemItem.createDir(event.getPath());
-            defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());;
+            defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());
          }      
       }); 
       
@@ -143,7 +143,7 @@ public class WorkbenchContext
       SessionInfo sessionInfo = session_.getSessionInfo();
       if (sessionInfo != null)
       {
-         FileSystemItem rEnvDir = null;
+         FileSystemItem rEnvDir;
 
          if (getActiveProjectDir() != null)
          {
@@ -241,7 +241,12 @@ public class WorkbenchContext
       }
       return null;
    }
-   
+
+   public String getUserIdentity()
+   {
+      return session_.getSessionInfo().getUserIdentity();
+   }
+
    private boolean isServerBusy_ = false;
    private boolean isRestartInProgress_ = false;
    private boolean isBuildInProgress_ = false;

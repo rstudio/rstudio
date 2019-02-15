@@ -930,7 +930,11 @@
    }
    
    # guard against unexpected inputs
-   if (is.na(output) || !is.character(output))
+   if (length(output) == 0)
+   {
+      output <- ""
+   }
+   else if (is.na(output) || !is.character(output))
    {
       output <- "<NA>"
    }

@@ -54,6 +54,13 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                    std::map<std::string,std::string>* pFields,
                    std::string* pUserErrMsg);
 
+Error parseMultiDcfFile(const std::string& dcfFileContents,
+                        bool preserveKeyCase,
+                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry);
+
+Error parseMultiDcfFile(const FilePath& dcfFilePath,
+                        bool preserveKeyCase,
+                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry);
 
 std::string dcfMultilineAsFolded(const std::string& line);
 

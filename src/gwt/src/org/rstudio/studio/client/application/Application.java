@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -43,7 +42,6 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -61,7 +59,6 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -81,9 +78,9 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -102,6 +99,7 @@ public class Application implements ApplicationEventHandlers
                       SatelliteManager satelliteManager,
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
+                      SessionOpener sessionOpener,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -121,6 +119,7 @@ public class Application implements ApplicationEventHandlers
       satelliteManager_ = satelliteManager;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
+      sessionOpener_ = sessionOpener;
       uiPrefs_ = uiPrefs;
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
@@ -167,7 +166,8 @@ public class Application implements ApplicationEventHandlers
 
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-      
+      boolean showLongInitDialog = !ApplicationAction.isLauncherSession();
+
       final ServerRequestCallback<SessionInfo> callback = new ServerRequestCallback<SessionInfo>() {
 
          public void onResponseReceived(final SessionInfo sessionInfo)
@@ -230,7 +230,7 @@ public class Application implements ApplicationEventHandlers
       }
 
       // attempt init
-      pClientInit_.get().execute(callback);
+      pClientInit_.get().execute(showLongInitDialog, callback);
    }  
    
    @Handler
@@ -308,10 +308,9 @@ public class Application implements ApplicationEventHandlers
       form.setAction(absoluteUrl("auth-sign-out", true));
       form.getStyle().setDisplay(Display.NONE);
       
-      // read the CSRF token from the cookie and place it in the form
       InputElement csrfToken = DocumentEx.get().createHiddenInputElement();
       csrfToken.setName(CSRF_TOKEN_FIELD);
-      csrfToken.setValue(Cookies.getCookie(CSRF_TOKEN_FIELD));
+      csrfToken.setValue(ApplicationCsrfToken.getCsrfToken());
       form.appendChild(csrfToken);
       
       // append the form to the document and submit it
@@ -546,34 +545,19 @@ public class Application implements ApplicationEventHandlers
    
    public void onQuit(QuitEvent event)
    {
-      cleanupWorkbench();  
+      cleanupWorkbench();
       
       // only show the quit state in server mode (desktop mode has its
       // own handling triggered to process exit)
       if (!Desktop.isDesktop())
       {
-         // if we are switching projects then reload after a delay (to allow
-         // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
             String nextSessionUrl = event.getNextSessionUrl();
-            if (!StringUtil.isNullOrEmpty(nextSessionUrl))
-            {
-               // forward any query string parameters (e.g. the edit_published
-               // parameter might follow an action=switch_project)
-               String query = ApplicationAction.getQueryStringWithoutAction();
-               if (query.length() > 0)
-                  nextSessionUrl = nextSessionUrl + "?" + query;
-               
-               navigateWindowWithDelay(nextSessionUrl);
-            }
-            else
-            {
-               reloadWindowWithDelay(true);
-            }
+            sessionOpener_.switchSession(nextSessionUrl);
          }
          else 
-         { 
+         {
             if (session_.getSessionInfo().getMultiSession())
             {
                view_.showApplicationMultiSessionQuit();
@@ -598,14 +582,21 @@ public class Application implements ApplicationEventHandlers
             }
             else if (session_.getSessionInfo().getShowUserHomePage())
             {
-               navigateWindowWithDelay(
-                     session_.getSessionInfo().getUserHomePageUrl());
+               loadUserHomePage();
             }
          }
       }
    }
    
-   private void reloadWindowWithDelay(final boolean baseUrlOnly)
+   public void loadUserHomePage()
+   {
+      assert session_.getSessionInfo().getShowUserHomePage();
+      
+      navigateWindowWithDelay(
+            session_.getSessionInfo().getUserHomePageUrl());
+   }
+   
+   public void reloadWindowWithDelay(final boolean baseUrlOnly)
    {
       new Timer() {
          @Override
@@ -619,7 +610,7 @@ public class Application implements ApplicationEventHandlers
       }.schedule(100);
    }
    
-   private void navigateWindowWithDelay(final String url)
+   public void navigateWindowWithDelay(final String url)
    {
       new Timer() {
          @Override
@@ -1114,6 +1105,7 @@ public class Application implements ApplicationEventHandlers
    private final SatelliteManager satelliteManager_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
+   private final SessionOpener sessionOpener_;
    private final Provider<UIPrefs> uiPrefs_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;

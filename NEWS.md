@@ -83,7 +83,7 @@
 * Add option to show the R Markdown render command used when knitting (#1658)
 * Add option to show hidden files in the Files pane (#1769)
 * RStudio uses the fontconfig database to list monospace fonts when available (Linux only; #3897)
-* Upgrade embedded Pandoc to 2.5 on Windows (#1807)
+* Upgrade embedded Pandoc to 2.6 on Windows (#1807)
 * Allow renames that change only file case on Windows (#1886)
 * Remember scroll position when navigating in Help pane (#1947)
 * Show warning when attempting to edit a generated file (#2082)
@@ -157,6 +157,7 @@
 * Fix persistence of Evaluate Chunks in Directory global option (#3356)
 * Fix file.choose(new = TRUE) to properly request new file name (#3903)
 * Fix 'Copy Plot to Clipboard' functionality when IDE is zoomed (#3853)
+* Fix early evaluation of `ALTREP` objects (#4171)
 
 ### RStudio Server Pro
 

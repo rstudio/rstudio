@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1154,6 +1154,18 @@ public class DomUtils
       
       return width;
       
+   }-*/;
+   
+   /**
+    * Returns the path of a URL
+    *
+    * @param url A relative or absolute URL.
+    * @return The same URL, in absolute form.
+    */
+   public final static native String getUrlPath(String url) /*-{
+     var ele = document.createElement("a")
+     ele.href = url;
+     return ele.pathname;
    }-*/;
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

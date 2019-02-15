@@ -431,7 +431,7 @@
    return (className)
 })
 
-.rs.addFunction("describeObject", function(env, objName)
+.rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
    # objects containing null external pointers can crash when
@@ -448,8 +448,11 @@
    {
       val <- "(unknown)"
       desc <- ""
-      size <- object.size(obj)
-      len <- length(obj)
+
+      # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
+      # an attempt is made to compute their metrics exactly; avoid computing the size for these
+      size <- if (computeSize) object.size(obj) else 0
+      len <- if (computeSize) length(obj) else 0
    }
    class <- .rs.getSingleClass(obj)
    contents <- list()
@@ -647,4 +650,13 @@
    .rs.valueContents(get(objName, env));
 })
 
+.rs.addFunction("isAltrep", function(var)
+{
+   .Call("rs_isAltrep", var, PACKAGE="(embedding)")
+})
+
+.rs.addFunction("hasAltrep", function(var)
+{
+   .Call("rs_hasAltrep", var, PACKAGE="(embedding)")
+})
 

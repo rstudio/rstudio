@@ -419,6 +419,11 @@ public:
       return allowOverlay() || allowFullUI_;
    }
 
+   bool allowLauncherJobs() const
+   {
+      return allowOverlay() || allowLauncherJobs_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -553,6 +558,16 @@ public:
       return webSocketConnectTimeout_;
    }
    
+   int webSocketLogLevel() const
+   {
+      return webSocketLogLevel_;
+   }
+   
+   int webSocketHandshakeTimeoutMs() const
+   {
+      return webSocketHandshakeTimeoutMs_;
+
+   }
    bool packageOutputInPackageFolder() const
    {
       return packageOutputToPackageFolder_;   
@@ -663,6 +678,8 @@ private:
    bool verifySignatures_;
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
+   int webSocketLogLevel_;
+   int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
 
@@ -727,6 +744,7 @@ private:
    bool allowPublish_;
    bool allowPresentationCommands_;
    bool allowFullUI_;
+   bool allowLauncherJobs_;
 
    // user info
    bool showUserIdentity_;

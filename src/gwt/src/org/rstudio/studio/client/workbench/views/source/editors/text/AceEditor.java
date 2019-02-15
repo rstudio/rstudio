@@ -492,7 +492,8 @@ public class AceEditor implements DocDisplay,
       
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         Desktop.getFrame().clipboardCut();
+         Desktop.getFrame().setClipboardText(selectionValue);
+         replaceSelection("");
          clearEmacsMark();
       }
       else
@@ -576,7 +577,10 @@ public class AceEditor implements DocDisplay,
       
       if (Desktop.isDesktop() && isEmacsModeOn())
       {
-         Desktop.getFrame().clipboardPaste();
+         Desktop.getFrame().getClipboardText((String text) -> {
+            replaceSelection(text);
+            setCursorPosition(getSelectionEnd());
+         });
       }
       else
       {

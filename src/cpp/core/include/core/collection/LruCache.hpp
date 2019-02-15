@@ -40,27 +40,34 @@ public:
       {
          if (map_.count(key) > 0)
          {
-            // key already exists - we are updating the value instead of inserting it
-            // we need to remove any existing entries in the queue for that key
+            // entry for this key already exists - we are updating the value instead of inserting it
+            // we need to remove it from the chain of nodes and then reinsert it to the front
             // so that this entry's LRU "time" is effectively updated
-            removeKey(key);
+            auto pNode = map_[key];
+            pNode->value = value;
+            removeNode(pNode);
+            addNode(pNode);
          }
-         else if (map_.size() >= maxSize_)
+         else
          {
-            // the cache has reached maximum size
-            // remove the oldest key from the cache which is at the front of the deque
-            // new items are added to the back, meaning the front always contains the oldest items
-            KeyType expiredKey = keyQueue_.front();
-            keyQueue_.pop_front();
+            if (map_.size() >= maxSize_)
+            {
+               // the cache has reached maximum size
+               // remove the oldest item from the cache which is at the back of the node chain
+               auto pNode = backNode_;
+               removeNode(pNode);
 
-            map_.erase(expiredKey);
+               // erase the node from the map
+               // when this block goes out of scope, there are no more references
+               // to the expired node pointer, so it is freed
+               map_.erase(pNode->key);
+            }
+
+            // create a new node and store it
+            auto pNode = boost::shared_ptr<Node>(new Node(key, value));
+            addNode(pNode);
+            map_[key] = pNode;
          }
-
-         // add new key to the back
-         keyQueue_.push_back(key);
-
-         // store value
-         map_[key] = value;
       }
       END_LOCK_MUTEX
    }
@@ -74,12 +81,13 @@ public:
          if (iter == map_.end())
             return false;
 
-         *pValue = iter->second;
+         auto pNode = iter->second;
 
-         // remove key from queue and add new entry to update its LRU "time"
-         removeKey(key);
-         keyQueue_.push_back(key);
+         // remove and reinsert node to update its last access time
+         removeNode(pNode);
+         addNode(pNode);
 
+         *pValue = pNode->value;
          return true;
       }
       END_LOCK_MUTEX
@@ -91,7 +99,12 @@ public:
    {
       LOCK_MUTEX(mutex_)
       {
-         removeKey(key);
+         typename CollectionType::iterator iter = map_.find(key);
+         if (iter == map_.end())
+            return;
+
+         auto pNode = iter->second;
+         removeNode(pNode);
          map_.erase(key);
       }
       END_LOCK_MUTEX
@@ -109,24 +122,50 @@ public:
    }
 
 private:
-
-   void removeKey(const KeyType& key)
+   struct Node
    {
-      for (size_t i = 0; i < keyQueue_.size(); ++i)
-      {
-         if (keyQueue_.at(i) == key)
-         {
-            keyQueue_.erase(keyQueue_.begin() + i);
-            return;
-         }
-      }
+      Node(const KeyType& key, const ValueType& value) :
+         key(key), value(value) {}
+
+      boost::shared_ptr<Node> pLeft;
+      boost::shared_ptr<Node> pRight;
+      KeyType key;
+      ValueType value;
+   };
+
+   void removeNode(const boost::shared_ptr<Node>& pNode)
+   {
+      if (pNode->pLeft)
+         pNode->pLeft->pRight = pNode->pRight;
+      else
+         frontNode_ = pNode->pRight;
+
+      if (pNode->pRight)
+         pNode->pRight->pLeft = pNode->pLeft;
+      else
+         backNode_ = pNode->pLeft;
+   }
+
+   void addNode(const boost::shared_ptr<Node>& pNode)
+   {
+      pNode->pRight = frontNode_;
+      pNode->pLeft.reset();
+
+      if (frontNode_)
+         frontNode_->pLeft = pNode;
+      frontNode_ = pNode;
+
+      if (!backNode_)
+         backNode_ = frontNode_;
    }
 
    unsigned int maxSize_;
 
-   typedef std::map<KeyType, ValueType> CollectionType;
+   typedef std::map<KeyType, boost::shared_ptr<Node>> CollectionType;
    CollectionType map_;
-   std::deque<KeyType> keyQueue_;
+
+   boost::shared_ptr<Node> frontNode_;
+   boost::shared_ptr<Node> backNode_;
 
    boost::mutex mutex_;
 };

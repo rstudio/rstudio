@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -193,6 +193,9 @@ const int kNewDocumentWithCode = 174;
 const int kPlumberViewer = 175;
 const int kAvailablePackagesReady = 176;
 const int kComputeThemeColors = 177;
+const int kRequestDocumentClose = 178;
+const int kRequestDocumentCloseCompleted = 179;
+const int kExecuteAppCommand = 180;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -534,6 +537,12 @@ std::string ClientEvent::typeName() const
          return "plumber_viewer";
       case client_events::kComputeThemeColors:
          return "compute_theme_colors";
+      case client_events::kRequestDocumentClose:
+         return "request_document_close";
+      case client_events::kRequestDocumentCloseCompleted:
+         return "request_document_close_completed";
+      case client_events::kExecuteAppCommand:
+         return "execute_app_command";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

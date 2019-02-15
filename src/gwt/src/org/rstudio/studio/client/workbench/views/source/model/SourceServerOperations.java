@@ -248,6 +248,9 @@ public interface SourceServerOperations extends FilesServerOperations,
    public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
                                             ServerRequestCallback<Void> requestCallback);
    
+   public void requestDocumentCloseCompleted(boolean isSuccessfulClose, 
+                                             ServerRequestCallback<Void> requestCallback);                                    
+   
    public void adaptToLanguage(String language, ServerRequestCallback<Void> requestCallback);
 
    public void createPlumberAPI(String apiName,

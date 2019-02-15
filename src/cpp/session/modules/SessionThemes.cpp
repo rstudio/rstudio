@@ -49,6 +49,7 @@ namespace themes {
 
 namespace {
 
+bool s_deferredInitComplete = false;
 module_context::WaitForMethodFunction s_waitForThemeColors;
 
 const std::string kDefaultThemeLocation = "theme/default/";
@@ -304,6 +305,10 @@ SEXP rs_getThemeColors()
    json::JsonRpcRequest request;
    r::sexp::ListBuilder themeColors(&protect);
 
+   // Don't attempt to call the WaitForMethod unless the session has fully initialized.
+   if (!s_deferredInitComplete)
+      return R_NilValue;
+
    // Query the client for its current theme colors
    if (!s_waitForThemeColors(&request, 
             ClientEvent(client_events::kComputeThemeColors, json::Value())))
@@ -487,6 +492,11 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
+void onDeferredInit(bool newSession)
+{
+   s_deferredInitComplete = true;
+}
+
 } // anonymous namespace
 
 /**
@@ -550,6 +560,8 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_getThemes);
    RS_REGISTER_CALL_METHOD(rs_getThemeColors);
+
+   events().onDeferredInit.connect(onDeferredInit);
 
    // We need to register our URI handlers twice to cover the data viewer grid document because those
    // links have a different prefix.

@@ -639,7 +639,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 {
    os <- reticulate::import("os", convert = TRUE)
    token <- gsub("^['\"]|['\"]$", "", token)
-   expanded <- .rs.resolveAliasedPath(token)
+   expanded <- path.expand(token)
    
    # find the index of the last slash -- everything following is
    # the completion token; everything before is the directory to
@@ -1323,9 +1323,13 @@ html.heading = _heading
    if (inherits(object, "error"))
       return(error)
    
-   # extract argument names using inspect
+   # extract argument names using inspect (note that this can fail for
+   # some Python function types; e.g. builtin Python functions)
    inspect <- reticulate::import("inspect", convert = TRUE)
-   spec <- inspect$getargspec(object)
+   spec <- .rs.tryCatch(inspect$getargspec(object))
+   if (inherits(spec, "error"))
+      return(error)
+   
    args <- spec$args
    
    # attempt to scrape parameter documentation

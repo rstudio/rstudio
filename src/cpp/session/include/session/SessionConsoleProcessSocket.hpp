@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessSocket.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -123,8 +123,7 @@ private:
    void onClose(terminalServer* s, websocketpp::connection_hdl hdl);
    void onOpen(terminalServer* s, websocketpp::connection_hdl hdl);
    void onHttp(terminalServer* s, websocketpp::connection_hdl hdl);
-
-   void onServerTimeout(boost::system::error_code ec);
+   void onFail(terminalServer* s, websocketpp::connection_hdl hdl);
 
 private:
    core::thread::ThreadsafeMap<std::string, ConsoleProcessSocketConnectionDetails> connections_;
