@@ -21,8 +21,7 @@ progress("Producing '%s' build with '%s' linking", variant, link)
 owd <- getwd()
 
 # initialize log directory (for when things go wrong)
-unlink("logs", recursive = TRUE)
-dir.create("logs")
+dir.create("logs", showWarnings = FALSE)
 options(log.dir = normalizePath("logs"))
 
 # put RStudio tools on PATH
@@ -42,10 +41,10 @@ install_dir <- normalizePath(install_dir)
 
 # boost modules we need to alias
 boost_modules <- c(
-   "algorithm", "asio", "array", "bind", "chrono", "circular_buffer",
-   "context", "crc", "date_time", "filesystem", "foreach", "format",
+   "algorithm", "asio", "array", "bind", "build", "chrono", "circular_buffer",
+   "config", "context", "crc", "date_time", "filesystem", "foreach", "format",
    "function", "interprocess", "iostreams", "lambda", "lexical_cast",
-   "optional", "program_options", "property_tree", "random", "range",
+   "optional", "predef", "program_options", "property_tree", "random", "range",
    "ref", "regex", "scope_exit", "signals", "smart_ptr", "spirit",
    "string_algo", "system", "test", "thread", "tokenizer", "type_traits",
    "typeof", "unordered", "utility", "variant"
@@ -121,7 +120,6 @@ b2_build_args <- function(bitness) {
       "toolset=msvc-14.1",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
-      "--without-python",
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
       sprintf("runtime-link=shared", link),
