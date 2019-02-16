@@ -1915,7 +1915,7 @@
    # collect options of interest
    options <- options("repos", "download.file.method", "download.file.extra")
    if (identical(options[["download.file.method"]], "curl"))
-      options[["download.file.method"]] <- .rs.downloadFileExtraWithCurlArgs()
+      options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
    
    # drop NULL entries
    options <- Filter(Negate(is.null), options)
