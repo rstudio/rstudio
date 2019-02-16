@@ -10,7 +10,7 @@ mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 cmake ../cpp                                    \
     -DLIBR_HOME="${R_HOME}"                     \
-    -DCMAKE_BUILD_TYPE="RelWithDebugInfo"       \
+    -DCMAKE_BUILD_TYPE="Debug"                  \
     -DCMAKE_C_FLAGS="${ASANFLAGS} ${LDFLAGS}"   \
     -DCMAKE_CXX_FLAGS="${ASANFLAGS} ${LDFLAGS}" \
     "$@"
