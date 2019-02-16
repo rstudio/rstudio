@@ -202,7 +202,7 @@ include(RStudioCMakeUtils)
 # define custom installation macro to strip symbols from the binary
 macro(add_stripped_executable _target)
    add_executable(${_target} ${ARGN})
-   if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+   if(RSTUDIO_CRASHPAD_ENABLED AND CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
       if(UNIX AND NOT APPLE)
          add_custom_command(TARGET ${_target} POST_BUILD
                             COMMAND objcopy --only-keep-debug ${_target} ${_target}.debug

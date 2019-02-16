@@ -319,8 +319,11 @@ list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
 
 if (CRASHPAD_LIB_COUNT EQUAL 0)
    message(STATUS "No Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration disabled.")
+elseif(RSTUDIO_CRASHPAD_DISABLED)
+   message(STATUS "RSTUDIO_CRASHPAD_DISABLED was set. Crashpad integration disabled.")
 else()
    message(STATUS "Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration enabled.")
+   set(RSTUDIO_CRASHPAD_ENABLED CACHE INTERNAL "Crashpad integration enabled")
    add_definitions(-DRSTUDIO_CRASHPAD_ENABLED=1)
 
    # ensure the desired crashpad binaries are installed with the installation package
