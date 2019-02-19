@@ -261,7 +261,6 @@ public class RemoteServer implements Server
       
       // create server event listener
       serverEventListener_ = new RemoteServerEventListener(this,
-                                                           eventBus_,
                                                            externalListener);
    }
    
