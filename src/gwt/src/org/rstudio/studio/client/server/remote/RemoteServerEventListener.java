@@ -1,7 +1,7 @@
 /*
  * RemoteServerEventListener.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,6 @@ import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -33,7 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import java.util.HashMap;
 
 
-class RemoteServerEventListener implements RestartStatusEvent.Handler
+class RemoteServerEventListener 
 {
    /**
     * Stores the context needed to complete an async request.
@@ -51,7 +50,6 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
    }
 
    public RemoteServerEventListener(RemoteServer server,
-                                    EventBus eventBus,
                                     ClientEventHandler externalEventHandler)
    {
       server_ = server;
@@ -62,7 +60,6 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
       listenErrorCount_ = 0;
       isListening_ = false;
       sessionWasQuit_ = false;
-      suspendedForRestart_ = false;
       
       // we take the liberty of stopping ourselves if the window is on 
       // the verge of being closed. this allows us to prevent the scenario:
@@ -94,16 +91,10 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
             stop();
          }
       });
-   
-      eventBus.addHandler(RestartStatusEvent.TYPE, this);
    }
-   
+     
    public void start()
-   {
-      // don't make requests during suspend and restart
-      if (suspendedForRestart_)
-         return;
-      
+   {      
       // start should never be called on a running event listener!
       // (need to protect against extra requests going to the server
       // and starving the browser of its 2 connections)
@@ -136,7 +127,7 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
    }
      
    public void stop()
-   {
+   {        
       isListening_ = false;
       listenCount_ = 0;
       if (activeRequestCallback_ != null)
@@ -156,9 +147,6 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
    // after a suspension)
    public void ensureListening(final int attempts)
    {
-      if (suspendedForRestart_)
-         return;
-
       // exit if we are now listening
       if (isListening_)
          return;
@@ -302,7 +290,7 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
          
          @Override
          public void onError(ServerError error)
-         {
+         {           
             // stop listening for events
             stop();
             
@@ -465,29 +453,7 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
          callback.onResponseReceived(request, response);
       }
    }
-   
-   @Override
-   public void onRestartStatus(RestartStatusEvent event)
-   {
-      if (Desktop.isDesktop())
-         return;
-         
-      // Suspend ourself while session is being restarted
-      // in-place (i.e. without reloading the page). Otherwise
-      // we'll make a bunch of failed requests, especially
-      // if the replacement session takes a while to start
-      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
-      {
-         stop();
-         suspendedForRestart_ = true;
-      }
-      else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-      {
-         suspendedForRestart_ = false;
-         start();
-      }
-   }
- 
+
    private final RemoteServer server_;
    
    // note: kSecondListenDelayMs must be less than kWatchdogIntervalMs
@@ -501,7 +467,6 @@ class RemoteServerEventListener implements RestartStatusEvent.Handler
    private int listenCount_ ;
    private int listenErrorCount_ ;
    private boolean sessionWasQuit_ ;
-   private boolean suspendedForRestart_;
    
    private RpcRequest activeRequest_ ;
    private ServerRequestCallback<JsArray<ClientEvent>> activeRequestCallback_;
