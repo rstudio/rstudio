@@ -15,24 +15,47 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationAction;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ActiveSession;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.Server;
 
 import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import javax.inject.Inject;
 import java.util.function.Consumer;
 
+@Singleton
 public class SessionOpener
 {
+   @Inject
+   public SessionOpener(Provider<Application> pApplication,
+                        Provider<GlobalDisplay> pGlobalDisplay,
+                        Provider<ApplicationServerOperations> pServer,
+                        Provider<EventBus> pEventBus)
+   {
+      pApplication_ = pApplication;
+      pDisplay_ = pGlobalDisplay;
+      pServer_ = pServer;
+      pEventBus_ = pEventBus;
+   }
+
    /**
     * Prepare for navigation to a session
     * @param session
@@ -91,11 +114,11 @@ public class SessionOpener
          if (query.length() > 0)
             nextSessionUrl = nextSessionUrl + "?" + query;
          
-         getApplication().navigateWindowWithDelay(nextSessionUrl);
+         pApplication_.get().navigateWindowWithDelay(nextSessionUrl);
       }
       else
       {
-         getApplication().reloadWindowWithDelay(true);
+         pApplication_.get().reloadWindowWithDelay(true);
       }
    }
    
@@ -109,7 +132,7 @@ public class SessionOpener
                                     JavaScriptObject launchParams,
                                     Consumer<String> navigate)
    {
-      server().getNewSessionUrl(
+      pServer_.get().getNewSessionUrl(
                     GWT.getHostPageBaseURL(),
                     isProject,
                     directory,
@@ -127,11 +150,11 @@ public class SessionOpener
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            display().showErrorMessage(
+            pDisplay_.get().showErrorMessage(
                   "Create Session",
                   "Could not allocate a new session." +
-                  error != null && !StringUtil.isNullOrEmpty(error.getMessage()) ?
-                        "\n\n" + error.getMessage() : "");
+                        (!StringUtil.isNullOrEmpty(error.getMessage()) ?
+                        "\n\n" + error.getMessage() : ""));
          }
       });
    }
@@ -147,19 +170,116 @@ public class SessionOpener
    {
       navigateToNewSession(isProject, directory, rVersion, null, /*launchParams*/ navigate);
    }
+   
+   /**
+    * Suspend and restart current session
+    */
+   public void suspendForRestart(final String afterRestartCommand,
+                                 SuspendOptions options,
+                                 Command onCompleted,
+                                 Command onFailed)
+   {
+      pServer_.get().suspendForRestart(options,
+                                new VoidServerRequestCallback() {
+         @Override
+         protected void onSuccess()
+         {
+            waitForSessionJobExit(afterRestartCommand,
+                                  () -> waitForSessionRestart(afterRestartCommand, onCompleted),
+                                  onFailed);
+         }
+         @Override
+         protected void onFailure()
+         {
+            onFailed.execute();
+         }
+      });
+   }
+   
+   protected void waitForSessionJobExit(final String afterRestartCommand,
+                                        Command onClosed, Command onFailure)
+   {
+      // for regular sessions, no job to wait for
+      onClosed.execute();
+   }
+   
+   protected void waitForSessionRestart(final String afterRestartCommand, Command onCompleted)
+   {
+      sendPing(afterRestartCommand, 200, 25, onCompleted);
+   }
+   
+   private void sendPing(final String afterRestartCommand,
+                         int delayMs,
+                         final int maxRetries,
+                         final Command onCompleted)
+   {
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
 
-   protected Application getApplication()
-   {
-      return RStudioGinjector.INSTANCE.getApplication();
+         private int retries_ = 0;
+         private boolean pingDelivered_ = false;
+         private boolean pingInFlight_ = false;
+         
+         @Override
+         public boolean execute()
+         {
+            // if we've already delivered the ping or our retry count
+            // is exhausted then return false
+            if (pingDelivered_ || (++retries_ > maxRetries))
+               return false;
+            
+            if (!pingInFlight_)
+            {
+               pingInFlight_ = true;
+               pServer_.get().ping(new VoidServerRequestCallback() {
+                  @Override
+                  protected void onSuccess()
+                  {
+                     pingInFlight_ = false;
+                     if (!pingDelivered_)
+                     {
+                        pingDelivered_ = true;
+   
+                        // issue after restart command
+                        if (!StringUtil.isNullOrEmpty(afterRestartCommand))
+                        {
+                           pEventBus_.get().fireEvent(
+                                 new SendToConsoleEvent(afterRestartCommand,
+                                       true, true));
+                        }
+                        // otherwise make sure the console knows we
+                        // restarted (ensure prompt and set focus)
+                        else
+                        {
+                           pEventBus_.get().fireEvent(
+                                 new ConsoleRestartRCompletedEvent());
+                        }
+                     }
+                     
+                     if (onCompleted != null)
+                        onCompleted.execute();
+                  }
+                  
+                  @Override
+                  protected void onFailure()
+                  {
+                     pingInFlight_ = false;
+                     
+                     if (onCompleted != null)
+                        onCompleted.execute();
+                  }
+               });
+            }
+            
+            // keep trying until the ping is delivered
+            return true;
+         }
+         
+      }, delayMs);
    }
    
-   protected static Server server()
-   {
-      return RStudioGinjector.INSTANCE.getServer();
-   }
-   
-   protected static GlobalDisplay display()
-   {
-      return RStudioGinjector.INSTANCE.getGlobalDisplay();
-   }
+   // injected
+   protected final Provider<Application> pApplication_;
+   protected final Provider<GlobalDisplay> pDisplay_;
+   protected final Provider<ApplicationServerOperations> pServer_;
+   protected final Provider<EventBus> pEventBus_;
 }
