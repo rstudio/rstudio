@@ -260,7 +260,8 @@ public class RemoteServer implements Server
       });
       
       // create server event listener
-      serverEventListener_ = new RemoteServerEventListener(this, 
+      serverEventListener_ = new RemoteServerEventListener(this,
+                                                           eventBus_,
                                                            externalListener);
    }
    
@@ -444,7 +445,19 @@ public class RemoteServer implements Server
    
    public void ping(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, PING, requestCallback);
+      if (launchParameters_ == null)
+      {
+         sendRequest(RPC_SCOPE, PING, requestCallback);
+      }
+      else
+      {
+         // include the launch params received earlier via client_init so the ping
+         // can restart the session
+         JSONArray params = new JSONArray();
+         JSONObject kwParams = new JSONObject();
+         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
+         sendRequest(RPC_SCOPE, PING, params, kwParams, requestCallback);
+      }
    }
   
    

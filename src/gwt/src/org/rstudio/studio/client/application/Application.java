@@ -148,6 +148,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
+      events.addHandler(RestartStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -527,6 +528,20 @@ public class Application implements ApplicationEventHandlers
       {
          token.release();
       }  
+   }
+  
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // don't try to persist client state while restarting
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+      {
+         pauseClientStateUpdater();
+      }
+      else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         resumeClientStateUpdater();
+      }
    }
    
    public void onQuit(QuitEvent event)
@@ -939,7 +954,7 @@ public class Application implements ApplicationEventHandlers
             showToolbar(event.getValue());
          }
       });
-      
+   
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
       // initiate action if requested. do this after a delay 
@@ -1023,7 +1038,7 @@ public class Application implements ApplicationEventHandlers
       server_.disconnect();
       
       satelliteManager_.closeAllSatellites();
-      
+     
       if (clientStateUpdaterInstance_ != null)
       {
          clientStateUpdaterInstance_.suspend();
@@ -1083,6 +1098,18 @@ public class Application implements ApplicationEventHandlers
       commands_.runSelectionAsLauncherJob().remove();
    }
 
+   private void pauseClientStateUpdater()
+   {
+      if (clientStateUpdaterInstance_ != null)
+         clientStateUpdaterInstance_.pauseSendingUpdates();
+   }
+   
+   private void resumeClientStateUpdater()
+   {
+      if (clientStateUpdaterInstance_ != null)
+         clientStateUpdaterInstance_.resumeSendingUpdates();
+   }
+   
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;
