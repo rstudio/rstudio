@@ -68,8 +68,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -541,23 +539,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // perform the suspend and restart
       suspendingAndRestarting_ = true;
       eventBus_.fireEvent(new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
-      pSessionOpener_.get().suspendForRestart(event.getSuspendOptions(),
+      pSessionOpener_.get().suspendForRestart(
+         event.getAfterRestartCommand(),
+         event.getSuspendOptions(),
          () -> { // success
-            if (!StringUtil.isNullOrEmpty(event.getAfterRestartCommand()))
-            {
-               eventBus_.fireEvent(
-                     new SendToConsoleEvent(event.getAfterRestartCommand(),
-                                            true, true));
-            }
-            // otherwise make sure the console knows we
-            // restarted (ensure prompt and set focus)
-            else
-            {
-               eventBus_.fireEvent(new ConsoleRestartRCompletedEvent());
-            }
             onRestartComplete.execute();
-            },
-         () -> { // failure
+         }, () -> { // failure
             onRestartComplete.execute();
             setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
          });

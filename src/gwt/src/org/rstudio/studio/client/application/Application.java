@@ -1100,13 +1100,13 @@ public class Application implements ApplicationEventHandlers
 
    private void pauseClientStateUpdater()
    {
-      if (clientStateUpdaterInstance_ != null)
+      if (!Desktop.isDesktop() && clientStateUpdaterInstance_ != null)
          clientStateUpdaterInstance_.pauseSendingUpdates();
    }
    
    private void resumeClientStateUpdater()
    {
-      if (clientStateUpdaterInstance_ != null)
+      if (!Desktop.isDesktop() && clientStateUpdaterInstance_ != null)
          clientStateUpdaterInstance_.resumeSendingUpdates();
    }
    

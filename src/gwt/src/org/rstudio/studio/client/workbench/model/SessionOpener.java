@@ -24,6 +24,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationAction;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
@@ -34,6 +35,8 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import javax.inject.Inject;
 import java.util.function.Consumer;
@@ -44,11 +47,13 @@ public class SessionOpener
    @Inject
    public SessionOpener(Provider<Application> pApplication,
                         Provider<GlobalDisplay> pGlobalDisplay,
-                        Provider<ApplicationServerOperations> pServer)
+                        Provider<ApplicationServerOperations> pServer,
+                        Provider<EventBus> pEventBus)
    {
       pApplication_ = pApplication;
       pDisplay_ = pGlobalDisplay;
       pServer_ = pServer;
+      pEventBus_ = pEventBus;
    }
 
    /**
@@ -169,14 +174,19 @@ public class SessionOpener
    /**
     * Suspend and restart current session
     */
-   public void suspendForRestart(SuspendOptions options, Command onCompleted, Command onFailed)
+   public void suspendForRestart(final String afterRestartCommand,
+                                 SuspendOptions options,
+                                 Command onCompleted,
+                                 Command onFailed)
    {
       pServer_.get().suspendForRestart(options,
                                 new VoidServerRequestCallback() {
          @Override
          protected void onSuccess()
          {
-            waitForSessionJobExit(() -> waitForSessionRestart(onCompleted), onFailed);
+            waitForSessionJobExit(afterRestartCommand,
+                                  () -> waitForSessionRestart(afterRestartCommand, onCompleted),
+                                  onFailed);
          }
          @Override
          protected void onFailure()
@@ -186,18 +196,20 @@ public class SessionOpener
       });
    }
    
-   protected void waitForSessionJobExit(Command onClosed, Command onFailure)
+   protected void waitForSessionJobExit(final String afterRestartCommand,
+                                        Command onClosed, Command onFailure)
    {
       // for regular sessions, no job to wait for
       onClosed.execute();
    }
    
-   protected void waitForSessionRestart(Command onCompleted)
+   protected void waitForSessionRestart(final String afterRestartCommand, Command onCompleted)
    {
-      sendPing(200, 25, onCompleted);
+      sendPing(afterRestartCommand, 200, 25, onCompleted);
    }
    
-   private void sendPing(int delayMs,
+   private void sendPing(final String afterRestartCommand,
+                         int delayMs,
                          final int maxRetries,
                          final Command onCompleted)
    {
@@ -223,7 +235,25 @@ public class SessionOpener
                   protected void onSuccess()
                   {
                      pingInFlight_ = false;
-                     pingDelivered_ = true;
+                     if (!pingDelivered_)
+                     {
+                        pingDelivered_ = true;
+   
+                        // issue after restart command
+                        if (!StringUtil.isNullOrEmpty(afterRestartCommand))
+                        {
+                           pEventBus_.get().fireEvent(
+                                 new SendToConsoleEvent(afterRestartCommand,
+                                       true, true));
+                        }
+                        // otherwise make sure the console knows we
+                        // restarted (ensure prompt and set focus)
+                        else
+                        {
+                           pEventBus_.get().fireEvent(
+                                 new ConsoleRestartRCompletedEvent());
+                        }
+                     }
                      
                      if (onCompleted != null)
                         onCompleted.execute();
@@ -251,4 +281,5 @@ public class SessionOpener
    protected final Provider<Application> pApplication_;
    protected final Provider<GlobalDisplay> pDisplay_;
    protected final Provider<ApplicationServerOperations> pServer_;
+   protected final Provider<EventBus> pEventBus_;
 }
