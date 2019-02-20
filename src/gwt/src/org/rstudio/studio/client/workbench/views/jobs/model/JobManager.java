@@ -395,6 +395,17 @@ public class JobManager implements JobRefreshEvent.Handler,
       launcherJobManager_.controlLauncherJob(jobId, operation, callback);
    }
 
+   public long activeLauncherJobs()
+   {
+      List<Job> jobs = getJobs();
+   
+      // count of running or idle launcher jobs
+      return jobs.stream()
+            .filter(t -> t.type == JobConstants.JOB_TYPE_LAUNCHER &&
+                  (t.state == JobConstants.STATE_RUNNING ||
+                        t.state == JobConstants.STATE_IDLE)).count();
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
