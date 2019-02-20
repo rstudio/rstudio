@@ -1,7 +1,7 @@
 /*
  * ApplicationEventHandlers.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.studio.client.application.events;
+
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 
 public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   UnauthorizedHandler,
@@ -28,6 +30,7 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   ClientDisconnectedHandler,
                                                   InvalidClientVersionHandler,
                                                   ServerOfflineHandler,
-                                                  InvalidSessionEvent.Handler
+                                                  InvalidSessionEvent.Handler,
+                                                  SessionInitHandler
 {
 }

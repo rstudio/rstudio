@@ -584,6 +584,11 @@ public class SessionInfo extends JavaScriptObject
       return this.r_libs_user;
    }-*/;
    
+
+   public final native JsObject getLaunchOptions() /*-{
+      return this.launch_options;
+   }-*/;
+   
    /**
     * @return project identifier (only meaningful in RStudio Server Pro)
     */

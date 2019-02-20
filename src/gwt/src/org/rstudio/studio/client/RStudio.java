@@ -21,14 +21,9 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -36,7 +31,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -45,6 +39,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -52,18 +47,16 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
-import org.rstudio.core.client.widget.ProgressCallback;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
-import org.rstudio.core.client.widget.SimpleButton;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
+import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
@@ -290,15 +283,26 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication()
    {
-      // if we are loading the main window, add a button for bailing out and
-      // retrying in safe mode
+      // if we are loading the main window, add buttons for bailing out
       String view = Window.Location.getParameter("view");
-      if (StringUtil.isNullOrEmpty(view))
+      if (StringUtil.isNullOrEmpty(view) && !ApplicationAction.isLauncherSession())
       {
-         reloadInSafeMode_ = new SimpleButton("Reload in Safe Mode");
+         rTimeoutOptions_ = new RTimeoutOptions();
+
+         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_);
+         reloadShowHelper.hide();
+         Timer t = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               reloadShowHelper.beginShow();
+            }
+         };
+         t.schedule(1000);
       }
 
-      dismissProgressAnimation_ = showProgress(reloadInSafeMode_);
+      dismissProgressAnimation_ = showProgress(rTimeoutOptions_);
 
       final SerializedCommandQueue queue = new SerializedCommandQueue();
       
@@ -405,7 +409,7 @@ public class RStudio implements EntryPoint
       {
          RStudioGinjector.INSTANCE.getApplication().go(
                RootLayoutPanel.get(),
-               reloadInSafeMode_,
+               rTimeoutOptions_,
                dismissProgressAnimation_);
       }
    }
@@ -478,6 +482,6 @@ public class RStudio implements EntryPoint
    }
    
    private Command dismissProgressAnimation_;
-   private SimpleButton reloadInSafeMode_;
+   private RTimeoutOptions rTimeoutOptions_;
    private Timer showStatusTimer_;
 }

@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -42,6 +41,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -51,6 +51,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -59,11 +60,13 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
+import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
@@ -150,13 +153,14 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
+      events.addHandler(SessionInitEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
      
    public void go(final RootLayoutPanel rootPanel, 
-                  final HasClickHandlers safeReloadButton,
+                  final RTimeoutOptions timeoutOptions,
                   final Command dismissLoadingProgress)
    {
       rootPanel_ = rootPanel;
@@ -166,7 +170,6 @@ public class Application implements ApplicationEventHandlers
 
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-      boolean showLongInitDialog = !ApplicationAction.isLauncherSession();
 
       final ServerRequestCallback<SessionInfo> callback = new ServerRequestCallback<SessionInfo>() {
 
@@ -220,20 +223,39 @@ public class Application implements ApplicationEventHandlers
       
       final ApplicationClientInit clientInit = pClientInit_.get();
 
-      if (safeReloadButton != null)
+      if (timeoutOptions != null)
       {
-         // when the reload button is clicked, abort the pending launch
-         safeReloadButton.addClickHandler(evt -> 
+         timeoutOptions.setObserver(clientInit);
+      }
+      
+      // read options from querystring
+      SessionInitOptions options = SessionInitOptions.create(
+            SessionInitOptions.RESTORE_WORKSPACE_DEFAULT, 
+            SessionInitOptions.RUN_RPROFILE_DEFAULT);
+      try
+      {
+         String restore = Window.Location.getParameter(SessionInitOptions.RESTORE_WORKSPACE_OPTION);
+         if (!StringUtil.isNullOrEmpty(restore))
          {
-            clientInit.retry(callback, SessionInitOptions.create(
-                  SessionInitOptions.RESTORE_WORKSPACE_NO, 
-                  SessionInitOptions.RUN_RPROFILE_NO),
-                  showLongInitDialog);
-         });
+            options.setRestoreWorkspace(Integer.parseInt(restore));
+         }
+
+         String run = Window.Location.getParameter(SessionInitOptions.RUN_RPROFILE_OPTION);
+         if (!StringUtil.isNullOrEmpty(run))
+         {
+            options.setRunRprofile(Integer.parseInt(run));
+         }
+      }
+      catch(Exception e)
+      {
+         // lots of opportunities for exceptions from malformed querystrings;
+         // eat them and log them here so that we can still init the client with
+         // default options
+         Debug.logException(e);
       }
 
       // attempt init
-      clientInit.execute(callback, null, true, showLongInitDialog);
+      clientInit.execute(callback, options, true);
    }  
    
    @Handler
@@ -670,6 +692,30 @@ public class Application implements ApplicationEventHandlers
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {
       view_.showSessionAbendWarning();
+   }
+
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      if (Satellite.isCurrentWindowSatellite())
+         return;
+
+      final SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      if (info.getLaunchOptions() == null)
+         return;
+
+      String warning = "";
+      int restoreWorkspace = info.getLaunchOptions().getInteger(SessionInitOptions.RESTORE_WORKSPACE_OPTION);
+      if (restoreWorkspace == SessionInitOptions.RESTORE_WORKSPACE_NO)
+         warning += " The workspace was not restored.";
+      int runRprofile = info.getLaunchOptions().getInteger(SessionInitOptions.RUN_RPROFILE_OPTION);
+      if (runRprofile == SessionInitOptions.RUN_RPROFILE_NO)
+         warning += " Startup scripts were not executed.";
+      if (!StringUtil.isNullOrEmpty(warning))
+      {
+         globalDisplay_.showWarningBar(false, 
+               "This R session was started in safe mode. " + warning);
+      }
    }
    
    private void verifyAgreement(SessionInfo sessionInfo,

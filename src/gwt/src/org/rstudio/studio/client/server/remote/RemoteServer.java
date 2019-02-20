@@ -23,7 +23,6 @@ import java.util.Map;
 import com.google.gwt.json.client.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
