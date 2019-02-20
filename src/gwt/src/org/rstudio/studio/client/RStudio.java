@@ -141,9 +141,8 @@ public class RStudio implements EntryPoint
          str.append("width=24 height=24");
       str.append("/>");
       final SimplePanel progressPanel = new SimplePanel();
-      Element div = progressPanel.getElement();
+      final Element div = progressPanel.getElement();
       div.setInnerHTML(str.toString());
-
       div.getStyle().setProperty("textAlign", "center");
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
    
@@ -283,7 +282,8 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication()
    {
-      // if we are loading the main window, add buttons for bailing out
+      // if we are loading the main window, and we're not a launcher session, 
+      // add buttons for bailing out
       String view = Window.Location.getParameter("view");
       if (StringUtil.isNullOrEmpty(view) && !ApplicationAction.isLauncherSession())
       {
@@ -299,7 +299,7 @@ public class RStudio implements EntryPoint
                reloadShowHelper.beginShow();
             }
          };
-         t.schedule(1000);
+         t.schedule(30000);
       }
 
       dismissProgressAnimation_ = showProgress(rTimeoutOptions_);
