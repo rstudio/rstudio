@@ -289,7 +289,7 @@ public class RStudio implements EntryPoint
       {
          rTimeoutOptions_ = new RTimeoutOptions();
 
-         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_);
+         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_, 750);
          reloadShowHelper.hide();
          Timer t = new Timer()
          {

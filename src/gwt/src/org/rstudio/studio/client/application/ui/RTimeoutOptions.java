@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.studio.client.application.Desktop;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -48,11 +50,19 @@ public class RTimeoutOptions extends Composite
          observer_.onReload();
       });
 
-      safeMode_.addClickHandler((click) ->
+      if (Desktop.isDesktop())
       {
-         setStatus("Retrying in Safe Mode...");
-         observer_.onSafeMode();
-      });
+         // We don't currently have plumbing for safe mode retries in desktop mode.
+         safeMode_.setVisible(false);
+      }
+      else
+      {
+         safeMode_.addClickHandler((click) ->
+         {
+            setStatus("Retrying in Safe Mode...");
+            observer_.onSafeMode();
+         });
+      }
       
       terminate_.addClickHandler((click) ->
       {
