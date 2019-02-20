@@ -36,6 +36,8 @@ bool launcherJobsFeatureDisplayed();
 void streamLauncherOutput(const std::string& jobId,
                           bool listening);
 
+int verifyInstallation();
+
 core::Error initialize();
    
 } // namespace overlay

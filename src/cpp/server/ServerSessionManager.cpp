@@ -310,6 +310,17 @@ void SessionManager::notifySIGCHLD()
    processTracker_.notifySIGCHILD();
 }
 
+r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionContext& context,
+                                                        const core::system::Options& extraArgs)
+{
+   r_util::SessionLaunchProfile profile;
+   profile.context = context;
+   profile.executablePath = server::options().rsessionPath();
+   profile.config = sessionProcessConfig(context, extraArgs);
+
+   return profile;
+}
+
 // helper function for verify-installation
 Error launchSession(const r_util::SessionContext& context,
                     const core::system::Options& extraArgs,
@@ -329,7 +340,6 @@ Error launchSession(const r_util::SessionContext& context,
                                            core::system::ProcessConfigFilter(),
                                            pPid);
 }
-
 
 } // namespace server
 } // namespace rstudio

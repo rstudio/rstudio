@@ -90,6 +90,10 @@ bool proxyLocalhostRequest(http::Request& request,
                            boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
                            const LocalhostResponseHandler& responseHandler,
                            const http::ErrorHandler& errorHandler);
+
+Error runVerifyInstallationSession(core::system::user::User& user,
+                                   bool* pHandled);
+
 } // namespace overlay
    
 namespace {
@@ -680,18 +684,28 @@ Error runVerifyInstallationSession()
    if (error)
       return error;
 
-   // launch verify installation session
-   core::system::Options args;
-   args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
-   PidType sessionPid;
-   error = server::launchSession(r_util::SessionContext(user.username),
-                                 args,
-                                 &sessionPid);
+   bool handled = false;
+   error = overlay::runVerifyInstallationSession(user, &handled);
    if (error)
       return error;
 
-   // wait for exit
-   return core::system::waitForProcessExit(sessionPid);
+   if (!handled)
+   {
+      // launch verify installation session
+      core::system::Options args;
+      args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
+      PidType sessionPid;
+      error = server::launchSession(r_util::SessionContext(user.username),
+                                    args,
+                                    &sessionPid);
+      if (error)
+         return error;
+
+      // wait for exit
+      return core::system::waitForProcessExit(sessionPid);
+   }
+
+   return Success();
 }
 
 void proxyContentRequest(

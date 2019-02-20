@@ -50,6 +50,13 @@ bool proxyLocalhostRequest(
    return false;
 }
 
+Error runVerifyInstallationSession(core::system::user::User& user,
+                                   bool* pHandled)
+{
+   *pHandled = false;
+   return Success();
+}
+
 } // namespace overlay
 } // namespace session_proxy
 } // namespace server

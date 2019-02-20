@@ -321,7 +321,7 @@ ProgramStatus Options::read(int argc,
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook
-   addOverlayOptions(&server, &www, &rsession, &auth, &monitor);
+   addOverlayOptions(&verify, &server, &www, &rsession, &auth, &monitor);
 
    optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
