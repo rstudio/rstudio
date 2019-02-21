@@ -804,9 +804,6 @@ void startup(const std::string& firstProjectPath)
    // see if this is a project switch
    else if (!switchToProject.empty())
    {
-      // reset switch to project path so its a one shot deal
-      projSettings.setSwitchToProjectPath("");
-
       projectFilePath = resolveProjectSwitch(switchToProject);
    }
 
@@ -959,6 +956,14 @@ Error initialize()
 
    // subscribe to quit for setting last project path
    module_context::events().onQuit.connect(onQuit);
+
+   // reset switch to project path so it's a one shot deal; we only do this after successful init so
+   // that we can retry a project switch if it doesn't get off the ground the first time
+   projects::ProjectsSettings projSettings(options().userScratchPath());
+   if (!projSettings.switchToProjectPath().empty())
+   {
+      projSettings.setSwitchToProjectPath("");
+   }
 
    using boost::bind;
    using namespace module_context;

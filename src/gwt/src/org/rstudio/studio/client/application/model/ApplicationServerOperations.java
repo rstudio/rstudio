@@ -28,6 +28,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
 {   
    // establish new session for this client
    void clientInit(String baseURL, 
+           SessionInitOptions options,
            ServerRequestCallback<SessionInfo> requestCallback);
 
    // interrupt the current session

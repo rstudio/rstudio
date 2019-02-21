@@ -321,6 +321,7 @@ public class RemoteServer implements Server
    }
 
    public void clientInit(String baseURL,
+                     SessionInitOptions options,
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
       // send init request (record clientId and version contained in response)
@@ -329,7 +330,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, 
                   CLIENT_INIT, 
                   params,
-                  new ServerRequestCallback<SessionInfo>() {
+                  options == null ? null : new JSONObject(options),
+                  new ServerRequestCallback<SessionInfo>() 
+      {
+         @Override
+         public void cancel()
+         {
+            super.cancel();
+            requestCallback.cancel();
+         }
 
          public void onResponseReceived(SessionInfo sessionInfo)
          {
@@ -3152,7 +3161,7 @@ public class RemoteServer implements Server
                               final ServerRequestCallback<T> requestCallback,
                               RetryHandler retryHandler)
    { 
-      return sendRequest(
+      final RpcRequest request = sendRequest(
             null,
             scope,
             method,
@@ -3191,6 +3200,11 @@ public class RemoteServer implements Server
              },
              retryHandler);
 
+      if (requestCallback != null)
+      {
+         requestCallback.onRequestInitiated(request);
+      }
+      return request;
    }
 
    // lowest level sendRequest method -- called from the main workbench
@@ -3515,7 +3529,7 @@ public class RemoteServer implements Server
    
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
-   private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
+   private RpcRequest sendRemoteServerRequest(final JavaScriptObject sourceWindow,
                                         final String scope,
                                         final String method,
                                         final JavaScriptObject params,
@@ -3595,7 +3609,7 @@ public class RemoteServer implements Server
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(getSourceWindowName(sourceWindow),
+      return sendRequest(getSourceWindowName(sourceWindow),
                   scope, 
                   method, 
                   jsonParams,

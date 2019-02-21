@@ -240,6 +240,16 @@ public:
    {
       return std::string(rDocDirOverride_.c_str());
    }
+
+   int rRestoreWorkspace()
+   {
+      return rRestoreWorkspace_;
+   }
+
+   int rRunRprofile()
+   {
+      return rRunRprofile_;
+   }
    
    std::string defaultRVersion()
    {
@@ -690,6 +700,8 @@ private:
    std::string rDocDirOverride_;
    std::string defaultRVersion_;
    std::string defaultRVersionHome_;
+   int rRestoreWorkspace_;
+   int rRunRprofile_;
    
    // limits
    int limitFileUploadSizeMb_;

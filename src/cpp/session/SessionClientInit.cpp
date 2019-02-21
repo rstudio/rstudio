@@ -165,6 +165,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    json::Object sessionInfo ;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
+
+   // build initialization options for client
+   json::Object initOptions;
+   initOptions["restore_workspace"] = options.rRestoreWorkspace();
+   initOptions["run_rprofile"] = options.rRunRprofile();
+   sessionInfo["init_options"] = initOptions;
    
    sessionInfo["userIdentity"] = options.userIdentity();
 

@@ -86,6 +86,8 @@ bool useInternet2();
 
 bool alwaysSaveHistory();
 
+bool restoreEnvironmentOnResume();
+
 // suppress output in scope
 class SuppressOutputInScope
 {

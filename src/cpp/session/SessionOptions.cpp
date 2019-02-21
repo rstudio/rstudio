@@ -350,7 +350,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          "Override for R_HOME (used for debug configurations)")
       ("r-doc-dir-override",
          value<std::string>(&rDocDirOverride_)->default_value(""),
-         "Override for R_DOC_DIR (used for debug configurations)");
+         "Override for R_DOC_DIR (used for debug configurations)")
+      ("r-restore-workspace",
+         value<int>(&rRestoreWorkspace_)->default_value(kRestoreWorkspaceDefault),
+         "Override user/project restore workspace setting")
+      ("r-run-rprofile",
+         value<int>(&rRunRprofile_)->default_value(kRunRprofileDefault),
+         "Override user/project .Rprofile run setting");
 
    // limits options
    options_description limits("limits");

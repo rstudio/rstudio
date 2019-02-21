@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -219,6 +219,12 @@ namespace session {
 
 bool disableExecuteRprofile()
 {
+   // check for session-specific override
+   if (options().rRunRprofile() == kRunRprofileNo)
+      return true;
+   if (options().rRunRprofile() == kRunRprofileYes)
+      return false;
+
    bool disableExecuteRprofile = false;
 
    const projects::ProjectContext& projContext = projects::projectContext();
@@ -1358,6 +1364,12 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
+   // check options for session-specific override
+   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
+      return false;
+   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
+      return true;
+   
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
@@ -1963,6 +1975,14 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      if (options.rRestoreWorkspace() != kRestoreWorkspaceDefault)
+      {
+         // if workspace restore is set to a non-default option, apply it to
+         // environment restoration as well (the intent of the option is usually
+         // to recover a session with an overhelming or problematic environment)
+         rOptions.restoreEnvironmentOnResume =
+            options.rRestoreWorkspace() == kRestoreWorkspaceYes;
+      }
       rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
