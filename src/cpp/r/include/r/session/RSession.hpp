@@ -66,6 +66,7 @@ struct ROptions
          saveWorkspace(SA_SAVEASK),
          disableRProfileOnStart(false),
          rProfileOnResume(false),
+         restoreEnvironmentOnResume(true),
          packratEnabled(false)
    {
    }
@@ -92,6 +93,7 @@ struct ROptions
    SA_TYPE saveWorkspace;
    bool disableRProfileOnStart;
    bool rProfileOnResume;
+   bool restoreEnvironmentOnResume;
    core::r_util::SessionScope sessionScope;
    bool packratEnabled;
 };

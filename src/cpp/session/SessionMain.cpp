@@ -1975,6 +1975,14 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      if (options.rRestoreWorkspace() != kRestoreWorkspaceDefault)
+      {
+         // if workspace restore is set to a non-default option, apply it to
+         // environment restoration as well (the intent of the option is usually
+         // to recover a session with an overhelming or problematic environment)
+         rOptions.restoreEnvironmentOnResume =
+            options.rRestoreWorkspace() == kRestoreWorkspaceYes;
+      }
       rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();

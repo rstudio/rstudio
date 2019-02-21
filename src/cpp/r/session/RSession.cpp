@@ -577,6 +577,11 @@ bool alwaysSaveHistory()
    return s_options.alwaysSaveHistory();
 }
 
+bool restoreEnvironmentOnResume()
+{
+   return s_options.restoreEnvironmentOnResume;
+}
+
 FilePath tempFile(const std::string& prefix, const std::string& extension)
 {
    std::string filename;
