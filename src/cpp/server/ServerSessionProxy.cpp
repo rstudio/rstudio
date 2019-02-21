@@ -81,8 +81,7 @@ bool proxyRequest(int requestType,
                   const boost::shared_ptr<const http::Request>& pRequest,
                   const r_util::SessionContext &context,
                   boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-                  const http::ErrorHandler &errorHandler,
-                  const http::ConnectionRetryProfile &connectionRetryProfile);
+                  const http::ErrorHandler &errorHandler);
 
 bool proxyLocalhostRequest(http::Request& request,
                            const std::string& port,
@@ -578,8 +577,7 @@ void proxyRequest(
    invokeRequestFilter(pRequest.get());
 
    // see if the request should be handled by the overlay
-   if (overlay::proxyRequest(requestType, pRequest, context, ptrConnection,
-                             errorHandler, connectionRetryProfile))
+   if (overlay::proxyRequest(requestType, pRequest, context, ptrConnection, errorHandler))
    {
       // request handled by the overlay
       return;
@@ -729,8 +727,9 @@ void proxyRpcRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    // validate the user if this is client_init
-   if (boost::algorithm::ends_with(ptrConnection->request().uri(),
-                                   "client_init"))
+   bool isClientInit = boost::algorithm::ends_with(ptrConnection->request().uri(),
+                                                   "client_init");
+   if (isClientInit)
    {
       if (!validateUser(ptrConnection, username))
          return;
@@ -741,7 +740,7 @@ void proxyRpcRequest(
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
-   proxyRequest(RequestType::Rpc,
+   proxyRequest(isClientInit ? RequestType::ClientInit : RequestType::Rpc,
                 context,
                 ptrConnection,
                 boost::bind(handleRpcError, ptrConnection, context, _1),

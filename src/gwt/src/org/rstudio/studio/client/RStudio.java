@@ -77,6 +77,8 @@ import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
@@ -181,6 +183,15 @@ public class RStudio implements EntryPoint
          homeLabel.getElement().getStyle().setProperty("fontFamily", fontFamily);
          homeLabel.getElement().getStyle().setProperty("fontSize", fontSize);
          messagePanel.add(homeLabel);
+
+         connectionStatusLabel_ = new Label();
+         connectionStatusLabel_.getElement().getStyle().setWidth(100, Style.Unit.PCT);
+         connectionStatusLabel_.getElement().getStyle().setProperty("textAlign", "center");
+         connectionStatusLabel_.getElement().getStyle().setProperty("fontFamily", fontFamily);
+         connectionStatusLabel_.getElement().getStyle().setProperty("fontSize", "font-size: 6px;");
+         connectionStatusLabel_.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
+         connectionStatusLabel_.getElement().getStyle().setMarginBottom(8, Style.Unit.PX);
+         messagePanel.add(connectionStatusLabel_);
          
          statusPanel.add(messagePanel);
          messagePanel.setVisible(false);
@@ -377,9 +388,23 @@ public class RStudio implements EntryPoint
       }
       else
       {
+         final ServerRequestCallback<String> connectionStatusCallback =
+               new ServerRequestCallback<String>() {
+                  @Override
+                  public void onResponseReceived(String message)
+                  {
+                     connectionStatusLabel_.setText(message);
+                  }
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                  }
+               };
+
          RStudioGinjector.INSTANCE.getApplication().go(
                RootLayoutPanel.get(),
-               dismissProgressAnimation_);
+               dismissProgressAnimation_,
+               connectionStatusCallback);
       }
    }
    
@@ -452,4 +477,5 @@ public class RStudio implements EntryPoint
    
    private Command dismissProgressAnimation_;
    private Timer showStatusTimer_;
+   private Label connectionStatusLabel_;
 }

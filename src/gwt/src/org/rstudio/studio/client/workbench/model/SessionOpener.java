@@ -195,6 +195,13 @@ public class SessionOpener
          }
       });
    }
+
+   /**
+    *  Streams the session job's current connection details
+    */
+   public void getJobConnectionStatus(final ServerRequestCallback<String> connectionStatusCallback)
+   {
+   }
    
    protected void waitForSessionJobExit(final String afterRestartCommand,
                                         Command onClosed, Command onFailure)

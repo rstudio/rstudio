@@ -30,6 +30,9 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void clientInit(String baseURL, 
            ServerRequestCallback<SessionInfo> requestCallback);
 
+   // get current connection status for a session job
+   void getJobConnectionStatus(ServerRequestCallback<String> requestCallback);
+
    // interrupt the current session
    void interrupt(ServerRequestCallback<Void> requestCallback);
    

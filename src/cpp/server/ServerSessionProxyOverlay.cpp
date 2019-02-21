@@ -31,8 +31,7 @@ bool proxyRequest(
       const boost::shared_ptr<const http::Request>& pRequest,
       const r_util::SessionContext& context,
       boost::shared_ptr<http::AsyncConnection> ptrConnection,
-      const http::ErrorHandler& errorHandler,
-      const http::ConnectionRetryProfile& connectionRetryProfile)
+      const http::ErrorHandler& errorHandler)
 {
    // not proxying the request
    return false;

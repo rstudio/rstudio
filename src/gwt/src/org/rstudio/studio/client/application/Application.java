@@ -155,7 +155,8 @@ public class Application implements ApplicationEventHandlers
    }
      
    public void go(final RootLayoutPanel rootPanel, 
-                  final Command dismissLoadingProgress)
+                  final Command dismissLoadingProgress,
+                  final ServerRequestCallback<String> connectionStatusCallback)
    {
       rootPanel_ = rootPanel;
 
@@ -218,6 +219,8 @@ public class Application implements ApplicationEventHandlers
                                             error.getUserMessage());
          }
       }) ;
+
+      sessionOpener_.getJobConnectionStatus(connectionStatusCallback);
    }  
    
    @Handler
