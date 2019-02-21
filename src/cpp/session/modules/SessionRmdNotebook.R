@@ -647,11 +647,42 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     opts <- .rs.mergeLists(opts,
                            eval(substitute(knitr:::parse_params(code)),
                                 envir = .GlobalEnv))
+    
+    # convert T, F to TRUE, FALSE as appropriate
+    opts <- lapply(opts, function(opt) {
+      if (identical(opt, as.name("T")))
+        TRUE
+      else if (identical(opt, as.name("F")))
+        FALSE
+      else
+        opt
+    })
 
     # convert language name objects to plain characters (these can occur in
     # malformed expressions, and cause scalar conversion below to fail)
     names <- vapply(opts, is.name, TRUE)
     opts[names] <- as.character(opts[names])
+    
+    # ensure that fields we expect to be logical are actually logical
+    # (sanitize invalid inputs here since they can break notebook execution)
+    fields <- list(
+      warning = TRUE,
+      message = TRUE,
+      error   = FALSE
+    )
+    
+    .rs.enumerate(fields, function(key, default) {
+       
+      if (is.null(opts[[key]]))
+        next
+       
+      opts[[key]] <<- tryCatch(
+        as.logical(opts[[key]]),
+        error = function(e) default
+      )
+       
+    })
+    
   },
   error = function(e) {})
 
