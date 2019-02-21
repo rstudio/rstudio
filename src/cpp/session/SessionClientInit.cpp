@@ -166,19 +166,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
 
-   sessionInfo["launch_options"] = json::Value();
-   json::JsonRpcRequest clientInit;
-   Error error = json::parseJsonRpcRequest(ptrConnection->request().body(), &clientInit);
-   if (error)
-   {
-      // no launch options
-      sessionInfo["launch_options"] = json::Value();
-   }
-   else
-   {
-      // forward options to client
-      sessionInfo["launch_options"] = clientInit.kwparams;
-   }
+   // build initialization options for client
+   json::Object initOptions;
+   initOptions["restore_workspace"] = options.rRestoreWorkspace();
+   initOptions["run_rprofile"] = options.rRunRprofile();
+   sessionInfo["init_options"] = initOptions;
    
    sessionInfo["userIdentity"] = options.userIdentity();
 
@@ -191,7 +183,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // temp dir
    FilePath tempDir = rstudio::r::session::utils::tempDir();
-   error = tempDir.ensureDirectory();
+   Error error = tempDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
    sessionInfo["temp_dir"] = tempDir.absolutePath();

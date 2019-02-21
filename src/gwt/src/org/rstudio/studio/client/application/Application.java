@@ -701,16 +701,26 @@ public class Application implements ApplicationEventHandlers
          return;
 
       final SessionInfo info = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
-      if (info.getLaunchOptions() == null)
+      if (info.getInitOptions() == null)
          return;
 
       String warning = "";
-      int restoreWorkspace = info.getLaunchOptions().getInteger(SessionInitOptions.RESTORE_WORKSPACE_OPTION);
+      int restoreWorkspace = info.getInitOptions().restoreWorkspace();
       if (restoreWorkspace == SessionInitOptions.RESTORE_WORKSPACE_NO)
-         warning += " The workspace was not restored.";
-      int runRprofile = info.getLaunchOptions().getInteger(SessionInitOptions.RUN_RPROFILE_OPTION);
-      if (runRprofile == SessionInitOptions.RUN_RPROFILE_NO)
-         warning += " Startup scripts were not executed.";
+      {
+         warning += "The workspace was not restored";
+         if (info.getInitOptions().runRprofile() == SessionInitOptions.RUN_RPROFILE_NO)
+         {
+            warning += ", and startup scripts were not executed";
+         }
+         warning += ".";
+      }
+      else
+      {
+         int runRprofile = info.getInitOptions().runRprofile();
+         if (runRprofile == SessionInitOptions.RUN_RPROFILE_NO)
+            warning += "Startup scripts were not executed.";
+      }
       if (!StringUtil.isNullOrEmpty(warning))
       {
          globalDisplay_.showWarningBar(false, 

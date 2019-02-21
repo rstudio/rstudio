@@ -40,6 +40,14 @@ public class SessionInitOptions extends JavaScriptObject
       this.run_rprofile = value;
    }-*/;
    
+   public native final int restoreWorkspace() /*-{
+      return this.restore_workspace;
+   }-*/;
+   
+   public native final int runRprofile() /*-{
+      return this.run_rprofile;
+   }-*/;
+   
    public native static final SessionInitOptions create(
       int restoreWorkspace, int runRprofile) /*-{
       return {

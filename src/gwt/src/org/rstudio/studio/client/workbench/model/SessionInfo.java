@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
@@ -585,8 +586,8 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
    
 
-   public final native JsObject getLaunchOptions() /*-{
-      return this.launch_options;
+   public final native SessionInitOptions getInitOptions() /*-{
+      return this.init_options;
    }-*/;
    
    /**
