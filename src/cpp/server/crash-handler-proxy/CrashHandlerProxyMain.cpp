@@ -5,6 +5,7 @@
  *
  */
 
+#include <core/system/Environment.hpp>
 #include <core/system/PosixSystem.hpp>
 
 using namespace rstudio::core;
@@ -17,7 +18,13 @@ void runCrashHandler(const char* argv[])
    if (error)
       LOG_ERROR(error);
 
-   FilePath handlerPath = exePath.parent().childPath("crashpad_handler");
+   FilePath handlerPath;
+   std::string crashpadHandlerPath = rstudio::core::system::getenv("RS_CRASHPAD_HANDLER_PATH");
+   if (!crashpadHandlerPath.empty())
+      handlerPath = FilePath(crashpadHandlerPath);
+   else
+      handlerPath = exePath.parent().childPath("crashpad_handler");
+
    std::string handlerPathStr = handlerPath.absolutePath();
    const char* handlerExe = handlerPathStr.c_str();
    argv[0] = handlerExe;
