@@ -95,6 +95,12 @@ void PlotCapture::processPlots(bool ignoreEmpty)
    Error error = plotFolder_.children(&folderContents);
    if (error)
       LOG_ERROR(error);
+
+   // sort entries by filename
+   std::sort(
+            folderContents.begin(),
+            folderContents.end(),
+            std::less<FilePath>());
    
    BOOST_FOREACH(const FilePath& path, folderContents)
    {
