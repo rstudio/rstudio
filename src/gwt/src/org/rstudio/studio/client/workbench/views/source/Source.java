@@ -3045,6 +3045,13 @@ public class Source implements InsertSourceHandler,
                }
 
                @Override
+               public void onCancelled()
+               {
+                  super.onCancelled();
+                  processNextEntry.execute();
+               }
+
+               @Override
                public void onFailure(ServerError error)
                {
                   String message = error.getUserMessage();
