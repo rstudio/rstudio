@@ -251,7 +251,7 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
    pJob->type_      = static_cast<JobType>(type);
    pJob->recorded_  = static_cast<time_t>(recorded);
    pJob->started_   = static_cast<time_t>(started);
-   pJob->completed_ = static_cast<time_t>(started);
+   pJob->completed_ = static_cast<time_t>(completed);
 
    *pJobOut = pJob;
    return Success();
