@@ -75,7 +75,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       accountList_ = new RSConnectAccountList(server, globalDisplay, true, 
             true);
-      accountList_.setHeight("200px");
+      accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
       accountList_.getElement().getStyle().setMarginLeft(3, Unit.PX);
