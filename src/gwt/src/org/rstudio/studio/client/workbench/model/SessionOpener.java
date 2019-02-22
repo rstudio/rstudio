@@ -59,41 +59,21 @@ public class SessionOpener
    /**
     * Prepare for navigation to a session
     * @param session
-    * @param editExistingLauncherParams if true, shows launcher settings dialog even if we already
-    *                                   have launcher settings for this session; otherwise only
-    *                                   prompts if we don't have any launcher settings
     * @param navigate url to load
     */
    public void navigateToActiveSession(ActiveSession session,
-                                       boolean editExistingLauncherParams,
                                        Consumer<String> navigate)
    {
-        navigateToSession(
-            session.getUrl(),
-            session.getSessionId(),
-            session.getLaunchParameters(),
-            "", // verb
-            editExistingLauncherParams,
-            navigate);
+        navigateToSession(session.getUrl(), navigate);
    }
    
    /**
     * Prepare for navigation to a session
     * @param sessionUrl
-    * @param sessionId
-    * @param launchParams
-    * @param verb action shown in dialog titles
-    * @param editExistingLauncherParams if true, shows launcher settings dialog even if we already
-    *                                   have launcher settings for this session; otherwise only
-    *                                   prompts if we don't have any launcher settings
     * @param navigate url to load
     */
-   public void navigateToSession(String sessionUrl,
-                                 String sessionId,
-                                 JavaScriptObject launchParams,
-                                 String verb,
-                                 boolean editExistingLauncherParams,
-                                 Consumer<String> navigate)
+   protected void navigateToSession(String sessionUrl,
+                                    Consumer<String> navigate)
    {
       navigate.accept(sessionUrl);
    }
