@@ -133,7 +133,7 @@
    }
    
    # use context-completed tables by default
-   tables <- ctx$tables
+   tables <- as.character(ctx$tables)
    
    # attempt to derive table names from connection
    if (!is.null(conn))
