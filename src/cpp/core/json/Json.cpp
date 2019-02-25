@@ -23,20 +23,14 @@ namespace rstudio {
 namespace core {
 namespace json {
 
-Object& Value::get_obj() const
+Object Value::get_obj() const
 {
-   // note - need c-style cast here because we are unsafely upcasting
-   // this is "safe" in this context because the derived Object class
-   // does not have any additional members
-   return (Object&)(*this);
+   return Object(get_impl());
 }
 
-Array& Value::get_array() const
+Array Value::get_array() const
 {
-   // note - need c-style cast here because we are unsafely upcasting
-   // this is "safe" in this context because the derived Array class
-   // does not have any additional members
-   return (Array&)(*this);
+   return Array(get_impl());
 }
 
 rapidjson::CrtAllocator Value::s_allocator;
@@ -44,16 +38,16 @@ rapidjson::CrtAllocator Value::s_allocator;
 template <>
 Object Value::get_value<Object>() const
 {
-   Object& self = get_obj();
-   Object copy = self;
+   Object self = get_obj();
+   Object copy(self);
    return copy;
 }
 
 template <>
 Array Value::get_value<Array>() const
 {
-   Array& self = get_array();
-   Array copy = self;
+   Array self = get_array();
+   Array copy(self);
    return copy;
 }
 

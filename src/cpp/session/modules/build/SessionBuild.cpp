@@ -1954,7 +1954,7 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastOutputs, &outputsJson) &&
           json::isType<json::Array>(outputsJson))
       {
-         s_suspendBuildContext.outputs = outputsJson.get_array();
+         s_suspendBuildContext.outputs = outputsJson.get_value<json::Array>();
       }
    }
 
@@ -1966,7 +1966,7 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastErrors, &errorsJson) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendBuildContext.errors = errorsJson.get_array();
+         s_suspendBuildContext.errors = errorsJson.get_value<json::Array>();
       }
    }
 }

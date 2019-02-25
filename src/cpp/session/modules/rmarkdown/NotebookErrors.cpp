@@ -64,7 +64,7 @@ SEXP rs_recordNotebookError(SEXP errData)
       LOG_ERROR(error);
    if (jsonErr.type() != json::ObjectType)
       return R_NilValue;
-   events().onErrorOutput(jsonErr.get_obj());
+   events().onErrorOutput(jsonErr.get_value<json::Object>());
    return R_NilValue;
 }
 

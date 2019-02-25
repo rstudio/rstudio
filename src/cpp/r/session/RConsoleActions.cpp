@@ -176,9 +176,9 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
          if ( json::parse(actionsJson, &value) &&
               (value.type() == json::ObjectType) )
          {
-            json::Object& actions = value.get_obj();
+            json::Object actions = value.get_obj();
 
-            const json::Value& typeValue = actions[kActionType] ;
+            json::Value typeValue = actions[kActionType] ;
             if (typeValue.type() == json::ArrayType)
             {
                const json::Array& actionsType = typeValue.get_array();
@@ -191,7 +191,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
                LOG_WARNING_MESSAGE("unexpected json type in: " + actionsJson);
             }
 
-            const json::Value& dataValue = actions[kActionData] ;
+            json::Value dataValue = actions[kActionData] ;
             if ( dataValue.type() == json::ArrayType )
             {
                const json::Array& actionsData = dataValue.get_array();

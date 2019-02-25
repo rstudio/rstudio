@@ -77,7 +77,7 @@ json::Object returnObject()
    json::Value val;
    REQUIRE(json::parse(jsonStr, &val));
 
-   return val.get_obj();
+   return val.get_value<json::Object>();
 }
 
 json::Value createValue()
@@ -86,10 +86,73 @@ json::Value createValue()
    return obj;
 }
 
+json::Value getValue()
+{
+   std::string jsonStr = "{\"a\": 5}";
+   json::Value val;
+   REQUIRE(json::parse(jsonStr, &val));
+
+   json::Object obj = val.get_obj();
+
+   // must return a copy instead of actual reference
+   return obj["a"].clone();
+}
+
+json::Object s_object;
+
+json::Value getGlobalValue(std::string scope,
+                           std::string name)
+{
+   json::Object::iterator i = s_object.find(scope);
+   if (i == s_object.end())
+   {
+      return json::Value();
+   }
+   else
+   {
+      if (!json::isType<core::json::Object>((*i).value()))
+         return json::Value();
+      json::Object scopeObject = (*i).value().get_obj();
+      return scopeObject[name].clone();
+   }
+}
+
+void insertGlobalValue(const std::string& scope,
+                       const json::Member& entry)
+{
+   json::Object::iterator pos = s_object.find(scope);
+   if (pos == s_object.end())
+   {
+      json::Object newScopeObject;
+      s_object.insert(json::Member(scope, newScopeObject));
+   }
+
+   const json::Value& scopeValue = s_object[scope];
+   json::Object scopeObject = scopeValue.get_obj();
+
+   // insert the value into the scope
+   scopeObject.insert(entry);
+}
+
 } // anonymous namespace
 
 TEST_CASE("Json")
 {
+   SECTION("Initialize")
+   {
+      json::Object objectA;
+      objectA["1"] = 1;
+      objectA["2"] = 2;
+
+      json::Object objectC;
+      objectC["1"] = "a";
+      objectC["2"] = "b";
+
+      s_object["a"] = objectA;
+      s_object["b"] = 5;
+      s_object["c"] = objectC;
+   }
+
    SECTION("Can construct simple json object")
    {
       json::Object obj;
@@ -242,17 +305,28 @@ TEST_CASE("Json")
       json::Value value;
       REQUIRE(json::parse(json, &value));
 
-      json::Object& obj1 = value.get_obj();
-      json::Object obj2 = value.get_obj();
+      json::Object obj1 = value.get_obj();
+      json::Object obj2 = value.get_value<json::Object>();
 
       obj1["a"] = "Modified Hello";
       obj2["b"] = "modified world";
 
-      const json::Array& arr1 = value.get_obj()["d"].get_array();
-      json::Array arr2 = value.get_obj()["d"].get_array();
+      // should be a reference here
+      json::Array arr1 = value.get_obj()["d"].get_array();
+
+      // should be a copy here
+      json::Array arr2 = value.get_obj()["d"].get_value<json::Array>();
+
+      // should be a reference
+      json::Array arr3 = value.get_obj()["d"].get_array();
+
+      // another copy
+      json::Array arr4 = arr3;
 
       arr1[1] = 4;
       arr2[2] = 6;
+      arr3[2] = 5;
+      arr4[2] = 6;
 
       REQUIRE(value.get_obj()["a"].get_str() == "Modified Hello");
       REQUIRE(obj2["a"].get_str() == "Hello");
@@ -260,7 +334,7 @@ TEST_CASE("Json")
       REQUIRE(obj2["b"].get_str() == "modified world");
 
       REQUIRE(value.get_obj()["d"].get_array()[1] == 4);
-      REQUIRE(value.get_obj()["d"].get_array()[2] == 3);
+      REQUIRE(value.get_obj()["d"].get_array()[2] == 5);
       REQUIRE(arr2[1] == 2);
       REQUIRE(arr2[2] == 6);
 
@@ -530,6 +604,40 @@ TEST_CASE("Json")
       REQUIRE(innerC == 3);
    }
 
+   SECTION("Can modify object members via interator")
+   {
+      json::Object obj = createObject();
+      auto iter = obj.find("c");
+      REQUIRE((*iter).value().get_int() == 1000);
+
+      (*iter).value() = 25;
+      REQUIRE((*iter).value().get_int() == 25);
+      REQUIRE(obj["c"].get_int() == 25);
+   }
+
+   SECTION("Can add new member")
+   {
+      std::string jsonStr = "{\"a\": {}}";
+      json::Value val;
+
+      REQUIRE(json::parse(jsonStr, &val));
+      REQUIRE(val.type() == json::ObjectType);
+
+      json::Object object = val.get_obj();
+      object.insert(json::Member("a", 1));
+
+      REQUIRE(object["a"].get_int() == 1);
+   }
+
+   SECTION("Complex member fetch and set test")
+   {
+      json::Value value = getGlobalValue("a", "1");
+      REQUIRE(value.get_int() == 1);
+
+      insertGlobalValue("a", json::Member("testVal", 55));
+      REQUIRE(getGlobalValue("a", "testVal").get_int() == 55);
+   }
+
    SECTION("Can set rpc response value from complex object")
    {
       json::Object object = createObject();
@@ -625,6 +733,12 @@ TEST_CASE("Json")
       REQUIRE(json::parse(jsonStr, &val));
 
       REQUIRE(val.get_obj()["a"].get_str() == "的中文翻譯 | 英漢字典");
+   }
+
+   SECTION("Can get value from function")
+   {
+      json::Value val = getValue();
+      REQUIRE(val.get_int() == 5);
    }
 }
 

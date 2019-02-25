@@ -341,7 +341,7 @@ core::json::Object UserSettings::uiPrefs() const
    json::Value jsonValue;
    bool success = core::json::parse(value, &jsonValue);
    if (success)
-      return jsonValue.get_obj();
+      return jsonValue.get_value<json::Object>();
    else
       return json::Object();
 }

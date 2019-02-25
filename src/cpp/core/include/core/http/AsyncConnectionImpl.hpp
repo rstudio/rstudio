@@ -63,6 +63,10 @@ public:
    {
    }
 
+   virtual ~SocketOperations()
+   {
+   }
+
    virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
    {
       stream_->async_read_some(buffers, handler);

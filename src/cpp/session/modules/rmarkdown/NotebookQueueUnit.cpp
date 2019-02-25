@@ -173,7 +173,7 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    }
    else 
    {
-      *pOptions = jsonOptions.get_obj();
+      *pOptions = jsonOptions.get_value<json::Object>();
    }
 
    return Success();

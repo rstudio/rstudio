@@ -52,7 +52,9 @@ class FindInFilesState : public boost::noncopyable
 {
 public:
 
-   explicit FindInFilesState() : running_(false)
+   explicit FindInFilesState() :
+      regex_(false),
+      running_(false)
    {
    }
 
