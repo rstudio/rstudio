@@ -26,6 +26,7 @@
 		margin-top: 20px;
 		padding: 15px;
 		font-family: monospace;
+        white-space: pre-wrap;
 	}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.host}">
