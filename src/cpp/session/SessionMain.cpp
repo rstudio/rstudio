@@ -615,9 +615,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
                LOG_ERROR(error);
          }
       }
-
       rsession::options().verifyInstallationHomeDir().removeIfExists();
-      exitEarly(EXIT_SUCCESS);
+
+      int exitCode = modules::overlay::verifyInstallation();
+      exitEarly(exitCode);
    }
 
    // run unit tests

@@ -62,7 +62,11 @@ public:
 
    static bool isRootPath(const std::string& path);
 
+   // creates a randomly named file in the temp directory
    static Error tempFilePath(FilePath* pFilePath);
+
+   // creates a randomly named file in the specified directory
+   static Error uniqueFilePath(const std::string& basePath, FilePath* pFilePath);
    
 public:
    FilePath() ;

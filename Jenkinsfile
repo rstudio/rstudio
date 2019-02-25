@@ -235,10 +235,14 @@ try {
         // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
           trigger_external_build('IDE/pro-docs')
+          trigger_external_build('IDE/launcher-docs')
+          trigger_external_build('IDE/pro-desktop-docs')
           trigger_external_build('IDE/qa-autotest')
+          trigger_external_build('IDE/qa-automation')
           trigger_external_build('IDE/monitor')
           trigger_external_build('IDE/macos-pro')
           trigger_external_build('IDE/windows-pro')
+          trigger_external_build('IDE/session')
         }
         else if (env.JOB_NAME == 'IDE/pro-pipeline/v1.3') {
           trigger_external_build('IDE/macos-v1.3-pro')

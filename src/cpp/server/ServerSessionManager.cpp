@@ -13,6 +13,8 @@
  *
  */
 
+#include <core/CrashHandler.hpp>
+
 #include <server/ServerSessionManager.hpp>
 
 #include <boost/foreach.hpp>
@@ -170,6 +172,13 @@ core::system::ProcessConfig sessionProcessConfig(
    // the session should log an error if its version does not match, as that is
    // likely an unsupported configuration
    environment.push_back({kRStudioVersion, RSTUDIO_VERSION});
+
+   // forward over crash handler environment if we have it (used for development mode)
+   if (!core::system::getenv(kCrashHandlerEnvVar).empty())
+      environment.push_back({kCrashHandlerEnvVar, core::system::getenv(kCrashHandlerEnvVar)});
+
+   if (!core::system::getenv(kCrashpadHandlerEnvVar).empty())
+      environment.push_back({kCrashpadHandlerEnvVar, core::system::getenv(kCrashpadHandlerEnvVar)});
 
    // build the config object and return it
    core::system::ProcessConfig config;
@@ -340,6 +349,17 @@ void SessionManager::notifySIGCHLD()
    processTracker_.notifySIGCHILD();
 }
 
+r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionContext& context,
+                                                        const core::system::Options& extraArgs)
+{
+   r_util::SessionLaunchProfile profile;
+   profile.context = context;
+   profile.executablePath = server::options().rsessionPath();
+   profile.config = sessionProcessConfig(context, extraArgs);
+
+   return profile;
+}
+
 // helper function for verify-installation
 Error launchSession(const r_util::SessionContext& context,
                     const core::system::Options& extraArgs,
@@ -359,7 +379,6 @@ Error launchSession(const r_util::SessionContext& context,
                                            core::system::ProcessConfigFilter(),
                                            pPid);
 }
-
 
 } // namespace server
 } // namespace rstudio

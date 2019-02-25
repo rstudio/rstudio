@@ -274,7 +274,25 @@ Error FilePath::tempFilePath(FilePath* pFilePath)
    using namespace boost::filesystem;
    try
    {
-      path_t path = absolute(unique_path(), temp_directory_path());
+      path_t path = temp_directory_path();
+      return uniqueFilePath(path.string(), pFilePath);
+   }
+   catch (const filesystem_error& e)
+   {
+      return Error(e.code(), ERROR_LOCATION);
+   }
+
+   // keep compiler happy
+   return pathNotFoundError(ERROR_LOCATION);
+}
+
+Error FilePath::uniqueFilePath(const std::string& basePath,
+                               FilePath* pFilePath)
+{
+   using namespace boost::filesystem;
+   try
+   {
+      path_t path = absolute(unique_path(), fromString(basePath));
       *pFilePath = FilePath(BOOST_FS_PATH2STR(path));
       return Success();
    }

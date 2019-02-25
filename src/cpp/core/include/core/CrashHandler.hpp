@@ -16,6 +16,9 @@
 #ifndef CORE_CRASH_HANDLER_HPP
 #define CORE_CRASH_HANDLER_HPP
 
+#define kCrashHandlerEnvVar           "RS_CRASH_HANDLER_PATH"
+#define kCrashpadHandlerEnvVar        "RS_CRASHPAD_HANDLER_PATH"
+
 namespace rstudio {
 namespace core {
 

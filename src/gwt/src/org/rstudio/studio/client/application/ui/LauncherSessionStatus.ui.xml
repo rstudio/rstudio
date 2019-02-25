@@ -1,0 +1,40 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	.host
+	{
+		width: 500px;
+		text-align: center;
+		margin-left: auto;
+		margin-right: auto;
+		margin-top: 20px;
+	}
+	
+	.waiting
+	{
+		margin-bottom: 8px;
+		font-size: medium;
+	}
+	
+	.status
+	{
+		width: 100%;
+		background-color: #e5e5e5;
+		border: 1px solid #a0a0a0;
+		border-radius: 3px;
+		margin-top: 20px;
+		padding: 15px;
+		font-family: monospace;
+	}
+	</ui:style>
+	<g:HTMLPanel styleName="{style.host}">
+		<g:Label styleName="{style.waiting}" text="Waiting for session to start..."></g:Label>
+		<g:HTML>
+			You may continue waiting here or monitor from
+			<a title="Return to RStudio Server Pro Home" 
+			   href="../../home">RStudio Server Home</a>.
+		</g:HTML>
+		<g:Label styleName="{style.status}" ui:field="status_" visible="false"></g:Label>
+	</g:HTMLPanel>
+</ui:UiBinder> 

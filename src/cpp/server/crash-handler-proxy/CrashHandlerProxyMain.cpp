@@ -5,6 +5,7 @@
  *
  */
 
+#include <core/CrashHandler.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/PosixSystem.hpp>
 
@@ -19,7 +20,7 @@ void runCrashHandler(const char* argv[])
       LOG_ERROR(error);
 
    FilePath handlerPath;
-   std::string crashpadHandlerPath = rstudio::core::system::getenv("RS_CRASHPAD_HANDLER_PATH");
+   std::string crashpadHandlerPath = rstudio::core::system::getenv(kCrashpadHandlerEnvVar);
    if (!crashpadHandlerPath.empty())
       handlerPath = FilePath(crashpadHandlerPath);
    else

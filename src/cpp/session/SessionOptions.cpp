@@ -515,10 +515,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    programIdentity_ = "rsession-" + userIdentity_;
 
    // provide special home path in temp directory if we are verifying
-   if (verifyInstallation_)
+   bool isLauncherSession = getBoolOverlayOption(kLauncherSessionOption);
+   if (verifyInstallation_ && !isLauncherSession)
    {
       // we create a special home directory in server mode (since the
       // user we are running under might not have a home directory)
+      // we do not do this for launcher sessions since launcher verification
+      // must be run as a specific user with the normal home drive setup
       if (programMode_ == kSessionProgramModeServer)
       {
          verifyInstallationHomeDir_ = "/tmp/rstudio-verify-installation";

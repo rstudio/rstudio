@@ -119,6 +119,9 @@ core::Error launchSession(const core::r_util::SessionContext& context,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
 
+core::r_util::SessionLaunchProfile createSessionLaunchProfile(const core::r_util::SessionContext& context,
+                                                              const core::system::Options& extraArgs);
+
 
 } // namespace server
 } // namespace rstudio

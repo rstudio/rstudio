@@ -69,8 +69,6 @@ Error setUserHandlerEnabled(bool)
 #define kUploadProxy                  "upload-proxy"
 #define kUploadProxyDefault           ""
 
-#define kCrashHandlerEnvVar           "RS_CRASH_HANDLER_PATH"
-
 namespace rstudio {
 namespace core {
 namespace crash_handler {

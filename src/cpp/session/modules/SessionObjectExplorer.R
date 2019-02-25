@@ -124,7 +124,7 @@
    else if (is.character(object) || is.numeric(object) ||
             is.raw(object) || is.complex(object) ||
             is.list(object) || is.environment(object) ||
-            is.factor(object))
+            is.factor(object) || is.logical(object))
    {
       type <- paste(type, sprintf("[%s]", length(object)))
    }

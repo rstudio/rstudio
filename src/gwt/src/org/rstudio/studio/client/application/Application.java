@@ -161,7 +161,8 @@ public class Application implements ApplicationEventHandlers
      
    public void go(final RootLayoutPanel rootPanel, 
                   final RTimeoutOptions timeoutOptions,
-                  final Command dismissLoadingProgress)
+                  final Command dismissLoadingProgress,
+                  final ServerRequestCallback<String> connectionStatusCallback)
    {
       rootPanel_ = rootPanel;
 
@@ -256,6 +257,8 @@ public class Application implements ApplicationEventHandlers
 
       // attempt init
       clientInit.execute(callback, options, true);
+
+      sessionOpener_.getJobConnectionStatus(connectionStatusCallback);
    }  
    
    @Handler
@@ -566,6 +569,20 @@ public class Application implements ApplicationEventHandlers
       {
          token.release();
       }  
+   }
+  
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // don't try to persist client state while restarting
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+      {
+         pauseClientStateUpdater();
+      }
+      else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         resumeClientStateUpdater();
+      }
    }
    
    public void onQuit(QuitEvent event)
@@ -1012,7 +1029,7 @@ public class Application implements ApplicationEventHandlers
             showToolbar(event.getValue());
          }
       });
-      
+   
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
       // initiate action if requested. do this after a delay 
@@ -1096,7 +1113,7 @@ public class Application implements ApplicationEventHandlers
       server_.disconnect();
       
       satelliteManager_.closeAllSatellites();
-      
+     
       if (clientStateUpdaterInstance_ != null)
       {
          clientStateUpdaterInstance_.suspend();
@@ -1156,6 +1173,18 @@ public class Application implements ApplicationEventHandlers
       commands_.runSelectionAsLauncherJob().remove();
    }
 
+   private void pauseClientStateUpdater()
+   {
+      if (!Desktop.isDesktop() && clientStateUpdaterInstance_ != null)
+         clientStateUpdaterInstance_.pauseSendingUpdates();
+   }
+   
+   private void resumeClientStateUpdater()
+   {
+      if (!Desktop.isDesktop() && clientStateUpdaterInstance_ != null)
+         clientStateUpdaterInstance_.resumeSendingUpdates();
+   }
+   
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;

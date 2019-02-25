@@ -1912,50 +1912,25 @@
 
 .rs.addFunction("CRANDownloadOptionsString", function() {
    
-   # collect elements of interest
-   repos <- getOption("repos")
-   method <- getOption("download.file.method")
-   extra <- if (identical(method, "curl"))
-      .rs.downloadFileExtraWithCurlArgs()
-   else
-      getOption("download.file.extra")
+   # collect options of interest
+   options <- options("repos", "download.file.method", "download.file.extra")
+   if (identical(options[["download.file.method"]], "curl"))
+      options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
    
-   # NOTE: we need to quote arguments with single quotes below,
-   # as this command will be submitted using double quotes (and
-   # embedded quotes in the command are not properly escaped)
-   escape <- function(string)
-      sprintf("'%s'", gsub("'", "\\'", string, fixed = TRUE))
+   # drop NULL entries
+   options <- Filter(Negate(is.null), options)
    
-   data <- list()
-   if (length(repos)) {
-      data[["repos"]] <- sprintf(
-         "c(%s)",
-         paste(
-            escape(names(repos)),
-            escape(as.character(repos)),
-            sep = " = ",
-            collapse = ", "
-         )
-      )
-   }
+   # deparse to generate an R string
+   deparsed <- sub("^list", "options", .rs.deparse(options))
    
-   if (length(method) && nzchar(method))
-      data[["download.file.method"]] <- .rs.surround(method, "'")
+   # NOTE: we need to quote arguments with single quotes as the command will be
+   # submitted using double quotes, and embedded quotes in the command are not
+   # properly escaped.
+   #
+   # TODO: handle embedded quotes properly
+   deparsed <- gsub("\"", "'", deparsed, fixed = TRUE)
    
-   if (length(extra) && nzchar(extra))
-      data[["download.file.extra"]] <- .rs.surround(extra, "'")
-   
-   code <- sprintf(
-      "options(%s)",
-      paste(
-         names(data),
-         data,
-         sep = " = ",
-         collapse = ", "
-      )
-   )
-   
-   code
+   deparsed
    
 })
 

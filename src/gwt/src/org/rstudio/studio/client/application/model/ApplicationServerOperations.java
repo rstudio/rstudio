@@ -31,6 +31,9 @@ public interface ApplicationServerOperations extends PrefsServerOperations
            SessionInitOptions options,
            ServerRequestCallback<SessionInfo> requestCallback);
 
+   // get current connection status for a session job
+   void getJobConnectionStatus(ServerRequestCallback<String> requestCallback);
+
    // interrupt the current session
    void interrupt(ServerRequestCallback<Void> requestCallback);
    

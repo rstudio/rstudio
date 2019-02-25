@@ -44,6 +44,11 @@ void streamLauncherOutput(const std::string& jobId,
 {
 }
 
+int verifyInstallation()
+{
+   return EXIT_SUCCESS;
+}
+
 } // namespace overlay
 } // namespace modules
 } // namespace session

@@ -260,7 +260,7 @@ public class RemoteServer implements Server
       });
       
       // create server event listener
-      serverEventListener_ = new RemoteServerEventListener(this, 
+      serverEventListener_ = new RemoteServerEventListener(this,
                                                            externalListener);
    }
    
@@ -323,10 +323,17 @@ public class RemoteServer implements Server
    public void clientInit(String baseURL,
                      SessionInitOptions options,
                      final ServerRequestCallback<SessionInfo> requestCallback)
-   {      
+   {
+      // generate a unique id to represent this client init request
+      // this allows us to request the current status of routing for this request
+      // for launcher jobs
+      if (clientInitId_.isEmpty())
+         clientInitId_ = StringUtil.makeRandomId(32);
+
       // send init request (record clientId and version contained in response)
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(baseURL));
+      params.set(1, new JSONString(clientInitId_));
       sendRequest(RPC_SCOPE, 
                   CLIENT_INIT, 
                   params,
@@ -353,6 +360,11 @@ public class RemoteServer implements Server
             requestCallback.onError(error);
          }
       });
+   }
+
+   @Override
+   public void getJobConnectionStatus(final ServerRequestCallback<String> requestCallback)
+   {
    }
    
    private void setArrayString(JSONArray params, int index, List<String> what) {
@@ -453,7 +465,19 @@ public class RemoteServer implements Server
    
    public void ping(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, PING, requestCallback);
+      if (launchParameters_ == null)
+      {
+         sendRequest(RPC_SCOPE, PING, requestCallback);
+      }
+      else
+      {
+         // include the launch params received earlier via client_init so the ping
+         // can restart the session
+         JSONArray params = new JSONArray();
+         JSONObject kwParams = new JSONObject();
+         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
+         sendRequest(RPC_SCOPE, PING, params, kwParams, requestCallback);
+      }
    }
   
    
@@ -5877,6 +5901,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REPLACE_COMMENT_HEADER, params, callback);
    }
 
+   protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";
    private JsObject launchParameters_;
