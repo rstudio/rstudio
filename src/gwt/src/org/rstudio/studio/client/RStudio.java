@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -40,7 +39,6 @@ import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
-import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FontSizer;
@@ -54,6 +52,7 @@ import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
+import org.rstudio.studio.client.application.ui.LauncherSessionStatus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
@@ -156,45 +155,9 @@ public class RStudio implements EntryPoint
       
       if (ApplicationAction.isLauncherSession())
       {
-         VerticalPanel messagePanel = new VerticalPanel();
-         Element messageDiv = messagePanel.getElement();
-         messageDiv.getStyle().setWidth(100, Style.Unit.PCT);
-         messageDiv.getStyle().setMarginTop(12, Style.Unit.PX);
-         messageDiv.getStyle().setProperty("textAlign", "center");
-         
-         String fontFamily = ThemeFonts.getProportionalFont();
-         String fontSize = "font-size: 12px;";
-         
-         Label launcherLabel = new Label("Waiting for session to launch...");
-         launcherLabel.getElement().getStyle().setWidth(100, Style.Unit.PCT);
-         launcherLabel.getElement().getStyle().setProperty("textAlign", "center");
-         launcherLabel.getElement().getStyle().setProperty("fontFamily", fontFamily);
-         launcherLabel.getElement().getStyle().setProperty("fontSize", fontSize);
-         launcherLabel.getElement().getStyle().setMarginBottom(8, Style.Unit.PX);
-         messagePanel.add(launcherLabel);
-         
-         HTML homeLabel = new HTML(
-               "You may continue waiting here or monitor from " +
-               "<a title=\"Return to RStudio Server Home Page\" " +
-               "href=\"../../home\">RStudio Server Home</a>.");
-            
-         homeLabel.getElement().getStyle().setWidth(100, Style.Unit.PCT);
-         homeLabel.getElement().getStyle().setProperty("textAlign", "center");
-         homeLabel.getElement().getStyle().setProperty("fontFamily", fontFamily);
-         homeLabel.getElement().getStyle().setProperty("fontSize", fontSize);
-         messagePanel.add(homeLabel);
-
-         connectionStatusLabel_ = new Label();
-         connectionStatusLabel_.getElement().getStyle().setWidth(100, Style.Unit.PCT);
-         connectionStatusLabel_.getElement().getStyle().setProperty("textAlign", "center");
-         connectionStatusLabel_.getElement().getStyle().setProperty("fontFamily", fontFamily);
-         connectionStatusLabel_.getElement().getStyle().setProperty("fontSize", "font-size: 6px;");
-         connectionStatusLabel_.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
-         connectionStatusLabel_.getElement().getStyle().setMarginBottom(8, Style.Unit.PX);
-         messagePanel.add(connectionStatusLabel_);
-         
-         statusPanel.add(messagePanel);
-         messagePanel.setVisible(false);
+         sessionStatus_ = new LauncherSessionStatus();
+         sessionStatus_.setVisible(false);
+         statusPanel.add(sessionStatus_);
          
          // Wait a bit to keep things uncluttered for typical load,
          // then show message so they know things are happening, including
@@ -203,7 +166,7 @@ public class RStudio implements EntryPoint
          {
             public void run()
             {
-               messagePanel.setVisible(true);
+               sessionStatus_.setVisible(true);
             }
          };
          showStatusTimer_.schedule(3000);
@@ -393,7 +356,10 @@ public class RStudio implements EntryPoint
                   @Override
                   public void onResponseReceived(String message)
                   {
-                     connectionStatusLabel_.setText(message);
+                     if (sessionStatus_ != null)
+                     {
+                        sessionStatus_.setStatus(message);
+                     }
                   }
                   @Override
                   public void onError(ServerError error)
@@ -477,5 +443,5 @@ public class RStudio implements EntryPoint
    
    private Command dismissProgressAnimation_;
    private Timer showStatusTimer_;
-   private Label connectionStatusLabel_;
+   private LauncherSessionStatus sessionStatus_;
 }
