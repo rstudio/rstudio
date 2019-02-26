@@ -153,6 +153,26 @@ TEST_CASE("Json")
       s_object["c"] = objectC;
    }
 
+   SECTION("Null test")
+   {
+      std::string json = "{\"a\": 1, \"b\": null}";
+
+      json::Value value;
+      REQUIRE(json::parse(json, &value));
+
+      REQUIRE(value.type() == json::ObjectType);
+      json::Object obj = value.get_obj();
+
+      REQUIRE(obj["a"].type() == json::IntegerType);
+      REQUIRE(obj["b"].type() == json::NullType);
+
+      std::string bVal;
+      REQUIRE_FALSE(json::getOptionalParam(obj, "b", std::string("DEFAULT"), &bVal));
+      REQUIRE(bVal == "DEFAULT");
+
+      REQUIRE(json::typeAsString(obj["b"]) == "<null>");
+   }
+
    SECTION("Can construct simple json object")
    {
       json::Object obj;
