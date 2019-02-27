@@ -313,7 +313,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
          <cmd refid="activateJobs"/>
-         
+         <cmd refid="activateLauncherJobs"/>
+
          <separator/>
          <cmd refid="synctexSearch"/>
       </menu>
@@ -458,13 +459,16 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="closeTerminal"/>
           </menu>
          <menu label="_Jobs">
-            <cmd refid="startLauncherJob"/>
-            <separator/>
             <cmd refid="startJob"/>
             <cmd refid="clearJobs"/>
             <separator/>
-            <cmd refid="hideCompletedJobs"/>
+            <cmd refid="activateJobs"/>
           </menu>
+         <menu label="Launcher">
+            <cmd refid="startLauncherJob"/>
+            <separator/>
+            <cmd refid="activateLauncherJobs"/>
+         </menu>
          <menu label="Addins">
             <cmd refid="browseAddins"/>
          </menu>
@@ -1261,7 +1265,12 @@ well as menu structures (for main menu and popup menus).
         label="Show Jobs Pane"
         menuLabel = "Show _Jobs"
         windowMode="main"/>
-         
+
+   <cmd id="activateLauncherJobs"
+        label="Show Launcher Pane"
+        menuLabel = "Show Launcher"
+        windowMode="main"/>
+
    <cmd id="layoutZoomSource"
         checkable="true"
         label="Zoom Source"
@@ -3339,9 +3348,24 @@ well as menu structures (for main menu and popup menus).
          desc="Run the selected code as a launcher job"
          windowMode="any"/>
 
-    <cmd id="hideCompletedJobs"
+    <cmd id="sortLauncherJobsRecorded"
+         menuLabel="Sort by Submission Time"
+         desc="Sort jobs by time submitted"
+         rebindable="false"
          checkable="true"
-         menuLabel="Hide Previously Completed Jobs"
-         desc="Hide all previously completed jobs"
-         windowMode="main"/>
- </commands>
+         windowMode="any"/>
+
+    <cmd id="sortLauncherJobsState"
+         menuLabel="Sort by Job State"
+         desc="Sort jobs by current state"
+         rebindable="false"
+         checkable="true"
+         windowMode="any"/>
+
+    <cmd id="refreshLauncherJobsList"
+         menuLabel="Refresh"
+         desc="Refresh and resort launcher jobs"
+         rebindable="false"
+         windowMode="any"/>
+
+</commands>

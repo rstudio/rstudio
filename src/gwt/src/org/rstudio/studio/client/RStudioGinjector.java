@@ -110,8 +110,9 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
-import org.rstudio.studio.client.workbench.views.jobs.view.JobsList;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -275,7 +276,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SecondaryReposWidget widget);
    void injectMembers(SecondaryReposDialog widget);
    void injectMembers(CheckForUpdatesDialog dialog);
-   void injectMembers(JobsList widget);
+   void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
+   void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

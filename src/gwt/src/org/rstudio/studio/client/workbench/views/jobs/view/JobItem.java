@@ -60,9 +60,6 @@ public class JobItem extends Composite
 
       @Source("select_2x.png")
       ImageResource jobSelect();
-   
-      @Source("launcher_2x.png")
-      ImageResource launcherJobType();
    }
    
    public interface Styles extends CssResource
@@ -86,7 +83,6 @@ public class JobItem extends Composite
       String status();
       String progress();
       String failed();
-      String jobType();
    }
 
    public JobItem(final Job job)
@@ -111,11 +107,10 @@ public class JobItem extends Composite
       
       if (job.type == JobConstants.JOB_TYPE_LAUNCHER)
       {
-         jobType_.setResource(new ImageResource2x(RESOURCES.launcherJobType()));
-         jobType_.setTitle("Cluster: " + job.cluster);
+         jobDetail_.setText(job.cluster);
       }
       else
-         jobType_.setVisible(false);
+         jobDetail_.setVisible(false);
       
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
@@ -141,7 +136,7 @@ public class JobItem extends Composite
             return;
          }
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new JobSelectionEvent(job.id, true, true));
+               new JobSelectionEvent(job.id, job.type, true, true));
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
@@ -285,7 +280,7 @@ public class JobItem extends Composite
    @UiField ProgressBar progress_;
    @UiField Image select_;
    @UiField Image spinner_;
-   @UiField Image jobType_;
+   @UiField Label jobDetail_;
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
