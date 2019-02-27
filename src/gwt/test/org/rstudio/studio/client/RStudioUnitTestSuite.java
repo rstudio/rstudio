@@ -23,6 +23,7 @@ import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
@@ -48,6 +49,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(URIUtilsTests.class);
       suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(SessionScopeTests.class);
+      suite.addTestSuite(JobsListTests.class);
       return suite;
    }
 }

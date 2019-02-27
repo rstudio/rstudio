@@ -1,7 +1,7 @@
 /*
  * ConsoleTabPanel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
@@ -70,7 +71,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           ToolbarButton goToWorkingDirButton,
                           WorkbenchTab testsTab,
                           WorkbenchTab dataTab,
-                          WorkbenchTab jobsTab)
+                          WorkbenchTab jobsTab,
+                          WorkbenchTab launcherJobsTab)
    {
       super(owner, parentWindow);
       owner_ = owner;
@@ -86,6 +88,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       jobsTab_ = jobsTab;
+      launcherJobsTab_ = launcherJobsTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -321,6 +324,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
 
+      launcherJobsTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            launcherJobsTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(launcherJobsTab_);
+         }
+      });
+      launcherJobsTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            launcherJobsTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
+      
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
          @Override
@@ -341,12 +367,51 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          terminalTabVisible_ = false;
       }
       
-      // Determine initial visibility of jobs tab
-      jobsTabVisible_ = uiPrefs_.showJobsTab().getValue();
+      // Determine initial visibility of local jobs and launcher jobs tabs
+      int jobsTabVisibilitySetting = uiPrefs_.jobsTabVisibility().getValue();
+      if (session_.getSessionInfo().getLauncherJobsEnabled())
+      {
+         launcherJobsTabVisible_ = uiPrefs_.showLauncherJobsTab().getValue();
+         
+         // By default, we don't show the Jobs tab when Launcher tab is visible.
+         // However, if user has explicitly shown or hidden Jobs, we'll
+         // honor that independent of Launcher tabs visibility.
+         switch (jobsTabVisibilitySetting)
+         {
+            default:
+            case UIPrefsAccessor.JOBS_TAB_DEFAULT:
+               jobsTabVisible_ = !launcherJobsTabVisible_;
+               break;
+
+            case UIPrefsAccessor.JOBS_TAB_CLOSED:
+               jobsTabVisible_ = false;
+               break;
+
+            case UIPrefsAccessor.JOBS_TAB_SHOWN:
+               jobsTabVisible_ = true;
+               break;
+         }
+      }
+      else
+      {
+         launcherJobsTabVisible_ = false;
+         switch (jobsTabVisibilitySetting)
+         {
+            default:
+            case UIPrefsAccessor.JOBS_TAB_DEFAULT:
+            case UIPrefsAccessor.JOBS_TAB_SHOWN:
+               jobsTabVisible_ = true;
+               break;
+
+            case UIPrefsAccessor.JOBS_TAB_CLOSED:
+               jobsTabVisible_ = false;
+               break;
+         }
+      }
 
       // This ensures the logic in managePanels() works whether starting
       // up with terminal tab on by default or not.
-      consoleOnly_ = terminalTabVisible_ || jobsTabVisible_;
+      consoleOnly_ = terminalTabVisible_ || jobsTabVisible_ || launcherJobsTabVisible_;
       managePanels();
    }
 
@@ -361,7 +426,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !markersTabVisible_ &&
                             !testsTabVisible_ &&
                             !dataTabVisible_ &&
-                            !jobsTabVisible_;
+                            !jobsTabVisible_ &&
+                            !launcherJobsTabVisible_;
       
       if (consoleOnly)
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
@@ -392,6 +458,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(dataTab_);
          if (jobsTabVisible_)
             tabs.add(jobsTab_);
+         if (launcherJobsTabVisible_)
+            tabs.add(launcherJobsTab_);
 
          setTabs(tabs);
       }
@@ -494,4 +562,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean dataTabVisible_;
    private final WorkbenchTab jobsTab_;
    private boolean jobsTabVisible_;
+   private final WorkbenchTab launcherJobsTab_;
+   private boolean launcherJobsTabVisible_;
 }

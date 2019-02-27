@@ -1,5 +1,5 @@
 /*
- * LauncherJobManager.java
+ * JobsPresenterEventHandlers.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -12,22 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.jobs.events;
 
-package org.rstudio.studio.client.workbench.views.jobs.model;
-
-import org.rstudio.studio.client.server.ServerRequestCallback;
-
-public class LauncherJobManager
+public interface JobsPresenterEventHandlers extends JobUpdatedEvent.Handler,
+                                                    JobInitEvent.Handler,
+                                                    JobOutputEvent.Handler,
+                                                    JobSelectionEvent.Handler,
+                                                    JobElapsedTickEvent.Handler
 {
-   public void startTrackingAllJobStatuses()
-   {
-   }
-   
-   public void stopTrackingAllJobStatuses()
-   {
-   }
-   
-   public void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
-   {
-   }
 }

@@ -1,7 +1,7 @@
 /*
  * UIPrefsAccessor.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -684,19 +683,26 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_hidden_files", false);
    }
 
-   public PrefValue<Boolean> showJobsTab()
+   public static final int JOBS_TAB_CLOSED = 0;
+   public static final int JOBS_TAB_SHOWN = 1;
+   public static final int JOBS_TAB_DEFAULT = 2;
+   
+   public PrefValue<Integer> jobsTabVisibility()
    {
-      return bool("show_jobs_tab", true);
+      return integer("jobs_tab_visibility", JOBS_TAB_DEFAULT);
    }
    
-   public PrefValue<Boolean> hideCompletedJobs()
+   public PrefValue<Boolean> showLauncherJobsTab()
    {
-      return bool("hide_completed_jobs", false);
+      return bool("show_launcher_jobs_tab", true);
    }
    
-   public PrefValue<Integer> defaultJobsMode()
+   public static final int JOBS_SORT_RECORDED = 0;
+   public static final int JOBS_SORT_STATE = 1;
+   
+   public PrefValue<Integer> launcherJobsSort()
    {
-      return integer("default_jobs_mode", JobConstants.JOB_TYPE_UNKNOWN);
+      return integer("launcher_jobs_sort", JOBS_SORT_RECORDED);
    }
    
    public static final int BUSY_DETECT_ALWAYS = 0;

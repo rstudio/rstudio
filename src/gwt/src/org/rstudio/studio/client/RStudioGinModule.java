@@ -157,6 +157,9 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsTab;
+import org.rstudio.studio.client.workbench.views.jobs.view.LauncherJobsPane;
 import org.rstudio.studio.client.workbench.views.output.data.DataOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
@@ -352,6 +355,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
       bind(JobsPresenter.Display.class).to(JobsPane.class);
       bind(JobProgressPresenter.Display.class).to(JobProgress.class);
+      bind(LauncherJobsPresenter.Display.class).to(LauncherJobsPane.class);
       bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
@@ -374,6 +378,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Terminal", TerminalTab.class);
       bindTab("Tests", TestsOutputTab.class);
       bindTab("Jobs", JobsTab.class);
+      bindTab("Launcher", LauncherJobsTab.class);
       bindTab("Data Output", DataOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;

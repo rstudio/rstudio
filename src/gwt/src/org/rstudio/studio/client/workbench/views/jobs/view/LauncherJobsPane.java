@@ -1,5 +1,5 @@
 /*
- * JobsPane.java
+ * LauncherJobsPane.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -14,33 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
-import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
+import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 
 import java.util.List;
 
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-
-public class JobsPane extends WorkbenchPane 
-                      implements JobsPresenter.Display
+public class LauncherJobsPane extends WorkbenchPane
+                              implements LauncherJobsPresenter.Display
 {
    @Inject
-   public JobsPane(UIPrefs uiPrefs,
-                   JobsPaneWidgets widgets)
+   public LauncherJobsPane(UIPrefs uiPrefs,
+                           LauncherJobsPaneWidgets widgets)
    {
-      super("Jobs");
+      super("Launcher");
       
       uiPrefs_ = uiPrefs;
       widgets_ = widgets;
-
+      
       // create widget
       ensureWidget();
       
@@ -106,15 +103,17 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void setShowTabPref(boolean show)
    {
-      int value = show ? UIPrefsAccessor.JOBS_TAB_SHOWN : UIPrefsAccessor.JOBS_TAB_CLOSED;
-      uiPrefs_.jobsTabVisibility().setGlobalValue(value);
-      uiPrefs_.writeUIPrefs();
+      if (uiPrefs_.showLauncherJobsTab().getValue() != show)
+      {
+         uiPrefs_.showLauncherJobsTab().setGlobalValue(show);
+         uiPrefs_.writeUIPrefs();
+      }
    }
-   
+
    // internal state
    private JobsDisplayImpl baseImpl_;
-   
+
    // injected
    private final UIPrefs uiPrefs_;
-   private final JobsPaneWidgets widgets_;
+   private final LauncherJobsPaneWidgets widgets_;
 }
