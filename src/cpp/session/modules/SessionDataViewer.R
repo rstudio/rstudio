@@ -29,24 +29,25 @@
    if (is.numeric(col)) {
      # show numbers as doubles
      storage.mode(col) <- "double"
+
+     # remember which values are NA 
+     naVals <- is.na(col) 
+
+     # format all the numeric values; this drops NAs (the na.encode option only
+     # preserves NA for character cols)
+     vals <- format(col, trim = TRUE, justify = "none", ...)
+
+     # restore NA values if there were any
+     if (any(naVals)) {
+       vals[naVals] <- col[naVals]
+     } 
+
+     # return formatted values
+     vals
    } else {
      # show everything else as characters
-     col <- as.character(col)
+     as.character(col)
    }
-
-   # remember which values are NA 
-   naVals <- is.na(col) 
-
-   # format all the values; this drops NAs (the na.encode option only preserves
-   # NA for character cols)
-   vals <- format(col, trim = TRUE, justify = "none", ...)
-
-   # restore NA values if there were any
-   if (any(naVals)) {
-     vals[naVals] <- col[naVals]
-   } 
-
-   vals
 })
 
 .rs.addFunction("describeCols", function(x, maxFactors) 
