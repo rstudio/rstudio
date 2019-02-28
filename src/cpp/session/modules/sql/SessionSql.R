@@ -36,7 +36,7 @@
    # a schema. use the context keyword to figure out which
    if (grepl(".", token, fixed = TRUE))
    {
-      if (identical(ctx$contextKeyword, "from"))
+      if (.rs.sql.isTableScopedKeyword(ctx$contextKeyword))
          return(.rs.sql.getCompletionsTables(token, conn, ctx))
       else
          return(.rs.sql.getCompletionsFields(token, conn, ctx))
@@ -44,7 +44,7 @@
    
    # if we're requesting completions within 'from', we either want
    # schemas or table names
-   if (identical(ctx$contextKeyword, "from"))
+   if (.rs.sql.isTableScopedKeyword(ctx$contextKeyword))
    {
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.sql.getCompletionsTables(token, conn, ctx),
@@ -191,11 +191,13 @@
       
       fields <- setdiff(fields, token)
       
+      # NOTE: not really a function but this ensures that the source
+      # table is used in the popup displayed for the user, which is helpful
       .rs.makeCompletions(
          token = token,
          results = .rs.selectFuzzyMatches(fields, token),
          packages = table,
-         type = .rs.acCompletionTypes$UNKNOWN
+         type = .rs.acCompletionTypes$FUNCTION
       )
       
    }))
@@ -359,4 +361,8 @@
    
    objects <- DBI::dbListObjects(conn, DBI::Id(schema = schema))
    vapply(objects$table, function(object) tail(object@name, n = 1), character(1))
+})
+
+.rs.addFunction("sql.isTableScopedKeyword", function(keyword) {
+   keyword %in% c("from", "into", "join", "update", "drop")
 })
