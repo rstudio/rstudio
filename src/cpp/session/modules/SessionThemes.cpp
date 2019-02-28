@@ -1,7 +1,7 @@
 /*
  * SessionThemes.cpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -192,7 +192,7 @@ void getThemesInLocation(
 
             (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
                name,
-               urlPrefix + themeFile.filename(),
+               urlPrefix + http::util::urlEncode(themeFile.filename()),
                isDark);
          }
       }
@@ -533,7 +533,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 }
 
 /**
- * @brief Gets a custom theme that is installed for all users.
+ * @brief Gets a custom theme that is installed for this user.
  *
  * @param request       The HTTP request from the client.
  * @param pResponse     The HTTP response, which will contain the theme CSS.
