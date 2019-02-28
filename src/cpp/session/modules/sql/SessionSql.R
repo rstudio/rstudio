@@ -47,8 +47,8 @@
    if (identical(ctx$contextKeyword, "from"))
    {
       completions <- Reduce(.rs.appendCompletions, list(
-         .rs.sql.getCompletionsSchemas(token, conn, ctx),
-         .rs.sql.getCompletionsTables(token, conn, ctx)
+         .rs.sql.getCompletionsTables(token, conn, ctx),
+         .rs.sql.getCompletionsSchemas(token, conn, ctx)
       ))
       
       return(completions)
@@ -57,8 +57,8 @@
    # otherwise, gather completions from other sources
    Reduce(.rs.appendCompletions, list(
       .rs.sql.getCompletionsKeywords(token, conn, ctx),
-      .rs.sql.getCompletionsTables(token, conn, ctx),
       .rs.sql.getCompletionsFields(token, conn, ctx),
+      .rs.sql.getCompletionsTables(token, conn, ctx),
       .rs.sql.getCompletionsIdentifiers(token, conn, ctx)
    ))
 })
