@@ -191,13 +191,11 @@
       
       fields <- setdiff(fields, token)
       
-      # NOTE: not really a function but this ensures that the source
-      # table is used in the popup displayed for the user, which is helpful
       .rs.makeCompletions(
          token = token,
          results = .rs.selectFuzzyMatches(fields, token),
          packages = table,
-         type = .rs.acCompletionTypes$FUNCTION
+         type = .rs.acCompletionTypes$DATASET
       )
       
    }))
