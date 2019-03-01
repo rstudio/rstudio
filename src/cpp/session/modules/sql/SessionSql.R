@@ -347,7 +347,16 @@
    
    objects <- DBI::dbListObjects(conn)
    items <- Filter(function(x) "schema" %in% names(x@name), objects$table)
-   vapply(items, function(item) item@name[["schema"]],  character(1))
+   schemas <- vapply(items, function(item) item@name[["schema"]],  character(1))
+   
+   # for RSQLite connections, also list databases
+   if ("RSQLite" %in% loadedNamespaces() && inherits(conn, "SQLiteConnection"))
+   {
+      databases <- DBI::dbGetQuery(conn, "PRAGMA database_list;")
+      schemas <- unique(c(databases$name, schemas))
+   }
+   
+   schemas
 })
 
 .rs.addFunction("db.listTables", function(conn, schema = NULL)
