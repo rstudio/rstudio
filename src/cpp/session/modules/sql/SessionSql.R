@@ -36,7 +36,7 @@
    # a schema. use the context keyword to figure out which
    if (grepl(".", token, fixed = TRUE))
    {
-      if (identical(ctx$contextKeyword, "from"))
+      if (.rs.sql.isTableScopedKeyword(ctx$contextKeyword))
          return(.rs.sql.getCompletionsTables(token, conn, ctx))
       else
          return(.rs.sql.getCompletionsFields(token, conn, ctx))
@@ -44,11 +44,11 @@
    
    # if we're requesting completions within 'from', we either want
    # schemas or table names
-   if (identical(ctx$contextKeyword, "from"))
+   if (.rs.sql.isTableScopedKeyword(ctx$contextKeyword))
    {
       completions <- Reduce(.rs.appendCompletions, list(
-         .rs.sql.getCompletionsSchemas(token, conn, ctx),
-         .rs.sql.getCompletionsTables(token, conn, ctx)
+         .rs.sql.getCompletionsTables(token, conn, ctx),
+         .rs.sql.getCompletionsSchemas(token, conn, ctx)
       ))
       
       return(completions)
@@ -57,8 +57,8 @@
    # otherwise, gather completions from other sources
    Reduce(.rs.appendCompletions, list(
       .rs.sql.getCompletionsKeywords(token, conn, ctx),
-      .rs.sql.getCompletionsTables(token, conn, ctx),
       .rs.sql.getCompletionsFields(token, conn, ctx),
+      .rs.sql.getCompletionsTables(token, conn, ctx),
       .rs.sql.getCompletionsIdentifiers(token, conn, ctx)
    ))
 })
@@ -195,7 +195,7 @@
          token = token,
          results = .rs.selectFuzzyMatches(fields, token),
          packages = table,
-         type = .rs.acCompletionTypes$UNKNOWN
+         type = .rs.acCompletionTypes$DATASET
       )
       
    }))
@@ -347,7 +347,16 @@
    
    objects <- DBI::dbListObjects(conn)
    items <- Filter(function(x) "schema" %in% names(x@name), objects$table)
-   vapply(items, function(item) item@name[["schema"]],  character(1))
+   schemas <- vapply(items, function(item) item@name[["schema"]],  character(1))
+   
+   # for RSQLite connections, also list databases
+   if ("RSQLite" %in% loadedNamespaces() && inherits(conn, "SQLiteConnection"))
+   {
+      databases <- DBI::dbGetQuery(conn, "PRAGMA database_list;")
+      schemas <- unique(c(databases$name, schemas))
+   }
+   
+   schemas
 })
 
 .rs.addFunction("db.listTables", function(conn, schema = NULL)
@@ -359,4 +368,8 @@
    
    objects <- DBI::dbListObjects(conn, DBI::Id(schema = schema))
    vapply(objects$table, function(object) tail(object@name, n = 1), character(1))
+})
+
+.rs.addFunction("sql.isTableScopedKeyword", function(keyword) {
+   keyword %in% c("from", "into", "join", "update", "drop")
 })

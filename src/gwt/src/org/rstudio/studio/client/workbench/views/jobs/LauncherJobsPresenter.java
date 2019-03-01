@@ -1,5 +1,5 @@
 /*
- * JobsPresenter.java
+ * LauncherJobsPresenter.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -15,12 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.jobs;
 
-import java.util.List;
-
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
@@ -29,37 +27,35 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
-import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
+import org.rstudio.studio.client.workbench.views.jobs.model.LauncherJobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplay;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
-public class JobsPresenter extends BasePresenter  
-                           implements JobsPresenterEventHandlers
+public class LauncherJobsPresenter extends BasePresenter
+                                   implements JobsPresenterEventHandlers
 {
-   public interface Display extends JobsDisplay
-   {}
-   public interface Binder extends CommandBinder<Commands, JobsPresenter> {}
+   public interface Display extends JobsDisplay {}
+   
+   public interface Binder extends CommandBinder<Commands, LauncherJobsPresenter> {}
    
    @Inject
-   public JobsPresenter(Display display, 
-                        Binder binder,
-                        Commands commands,
-                        GlobalDisplay globalDisplay,
-                        Provider<JobManager> pJobManager)
+   public LauncherJobsPresenter(Display display,
+                                Binder binder,
+                                Commands commands,
+                                UIPrefs uiPrefs,
+                                LauncherJobManager launcherJobManager)
    {
       super(display);
-      
-      jobEventHandler_ = new JobsPresenterEventHandlersImpl(JobConstants.JOB_TYPE_SESSION,
-                                                            display);
+   
+      jobEventHandler_ = new JobsPresenterEventHandlersImpl(JobConstants.JOB_TYPE_LAUNCHER, display);
       
       display_ = display;
-      globalDisplay_ = globalDisplay;
-      pJobManager_ = pJobManager;
+      uiPrefs_ = uiPrefs;
+      commands_ = commands;
+      launcherJobManager_ = launcherJobManager;
       binder.bind(commands, this);
     }
 
@@ -92,49 +88,41 @@ public class JobsPresenter extends BasePresenter
    {
       jobEventHandler_.onJobElapsedTick(event);
    }
-
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      launcherJobManager_.stopTrackingAllJobStatuses();
+   }
+   
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      launcherJobManager_.startTrackingAllJobStatuses();
+   }
+   
    public void confirmClose(Command onConfirmed)
    {
-      List<Job> jobs = pJobManager_.get().getJobs();
-      
-      // if there are no jobs, go ahead and let the tab close
-      if (jobs.isEmpty())
-      {
-         display_.setShowTabPref(false);
-         onConfirmed.execute();
-      }
-
-      // count the number of running session jobs
-      long running = jobs.stream()
-            .filter(t -> t.type == JobConstants.JOB_TYPE_SESSION &&
-                         t.state == JobConstants.STATE_RUNNING).count();
-      
-      if (running > 0)
-      {
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Local Jobs Still Running", 
-               "The Jobs tab cannot be closed while there " +
-               (running > 1 ?
-                  "are unfinished local jobs" : "is an unfinished local job") + "." +
-               "\n\nWait until all local jobs have completed.");
-         return;
-      }
-      
-      // done, okay to close
+      // launcher jobs are not tied to the session so always ok to close
       display_.setShowTabPref(false);
       onConfirmed.execute();
    }
    
    @Handler
-   public void onActivateJobs()
+   public void onActivateLauncherJobs()
    {
       display_.bringToFront();
    }
+   
+   // Private methods ---------------------------------------------------------
   
    private JobsPresenterEventHandlersImpl jobEventHandler_;
    
    // injected
    private final Display display_;
-   private final GlobalDisplay globalDisplay_;
-   private final Provider<JobManager> pJobManager_;
+   private final UIPrefs uiPrefs_;
+   private final Commands commands_;
+   private final LauncherJobManager launcherJobManager_;
 }

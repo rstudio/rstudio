@@ -1,7 +1,7 @@
 /*
- * JobsTab.java
+ * LauncherJobsTab.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,27 +30,27 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 
-public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
+public class LauncherJobsTab extends DelayLoadWorkbenchTab<LauncherJobsPresenter>
 {
-   public abstract static class Shim 
-        extends DelayLoadTabShim<JobsPresenter, JobsTab>
+   public abstract static class Shim
+        extends DelayLoadTabShim<LauncherJobsPresenter, LauncherJobsTab>
         implements JobsPresenterEventHandlers
    {
       abstract void confirmClose(Command onConfirmed);
       
       @Handler
-      public abstract void onActivateJobs();
+      public abstract void onActivateLauncherJobs();
    }
    
-   public interface Binder extends CommandBinder<Commands, JobsTab.Shim> {}
+   public interface Binder extends CommandBinder<Commands, LauncherJobsTab.Shim> {}
 
    @Inject
-   public JobsTab(final Shim shim, 
-                        Binder binder,
-                        Commands commands,
-                        EventBus events)
+   public LauncherJobsTab(final Shim shim,
+                          Binder binder,
+                          Commands commands,
+                          EventBus events)
    {
-      super("Jobs", shim);
+      super("Launcher", shim);
       shim_ = shim;
       
       binder.bind(commands, shim);
