@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -339,19 +339,7 @@ Error createProjectFile(const json::JsonRpcRequest& request,
    }
 
    // Check for an existing project file in the directory
-   std::vector<FilePath> children;
-   error = projDirPath.children(&children);
-   if (error)
-      return error;
-   for (const FilePath& child: children)
-   {
-      if (child.hasExtensionLowerCase(".rproj"))
-      {
-         // Found one!
-         projFilePath = child;
-         break;
-      }
-   }
+   projFilePath = r_util::projectFromDirectory(projDirPath);
 
    if (projFilePath.empty())
    {
