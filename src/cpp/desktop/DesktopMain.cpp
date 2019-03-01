@@ -497,7 +497,7 @@ int main(int argc, char* argv[])
          if (!stdOut.empty())
          {
             // NOTE: temporarily backed out as it appears the rasterization
-            // issues do not occur anymore with Qt 5.11.1; re-enable if we
+            // issues do not occur anymore with Qt 5.12.1; re-enable if we
             // receive more reports in the wild.
             //
             // https://github.com/rstudio/rstudio/issues/2176
@@ -521,7 +521,9 @@ int main(int argc, char* argv[])
             */
             
             std::vector<std::string> gpuBlacklist = {
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
                "AMD FirePro"
+#endif
             };
             
             for (const std::string& entry : gpuBlacklist)
