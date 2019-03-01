@@ -149,7 +149,8 @@ public class SqlCompletionManager extends CompletionManagerBase
          // check for text of form 'schema.table' and move on to
          // table name in that case
          String schema = "";
-         if (clone.peekFwd().valueEquals("."))
+         Token peek = clone.peekFwd();
+         if (peek != null && peek.valueEquals("."))
          {
             schema = sqlIdentifierValue(clone);
             
