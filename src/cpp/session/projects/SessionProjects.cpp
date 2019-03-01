@@ -325,16 +325,41 @@ Error createProjectFile(const json::JsonRpcRequest& request,
 {
    using namespace projects;
    
-   std::string projFile;
-   Error error = json::readParams(request.params, &projFile);
+   std::string projDir;
+   Error error = json::readParams(request.params, &projDir);
    if (error)
       return error;
    
-   FilePath projPath = module_context::resolveAliasedPath(projFile);
-   if (!projPath.exists())
+   // Resolve the path and ensure it exists
+   FilePath projDirPath = module_context::resolveAliasedPath(projDir);
+   FilePath projFilePath;
+   if (!projDirPath.exists())
    {
-      Error error = r_util::writeProjectFile(
-               projPath,
+      return pathNotFoundError(projDir, ERROR_LOCATION);
+   }
+
+   // Check for an existing project file in the directory
+   std::vector<FilePath> children;
+   error = projDirPath.children(&children);
+   if (error)
+      return error;
+   for (const FilePath& child: children)
+   {
+      if (child.hasExtensionLowerCase(".rproj"))
+      {
+         // Found one!
+         projFilePath = child;
+         break;
+      }
+   }
+
+   if (projFilePath.empty())
+   {
+      // We didn't find a project file, so we need to make one. Use the name of the project
+      // directory as the filename.
+      projFilePath = projDirPath.complete(projDirPath.filename() + ".Rproj");
+      error = r_util::writeProjectFile(
+               projFilePath,
                ProjectContext::buildDefaults(),
                ProjectContext::defaultConfig());
       
@@ -342,7 +367,8 @@ Error createProjectFile(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
    }
    
-   pResponse->setResult(projPath.exists());
+   // Return the name of the discovered and/or created .Rproj filename
+   pResponse->setResult(module_context::createAliasedPath(projFilePath));
    return Success();
 }
 
