@@ -29,7 +29,7 @@
             classpath="${tools.dir}/compiler/compiler.jar"/>
 
    <!-- Configure path to GWT SDK -->
-   <property name="gwt.sdk" value="${lib.dir}/gwt/2.8.1"/>
+   <property name="gwt.sdk" value="${lib.dir}/gwt/2.8.2"/>
 
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
