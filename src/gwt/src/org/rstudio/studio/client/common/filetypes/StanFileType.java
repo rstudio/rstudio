@@ -19,6 +19,7 @@ import java.util.HashSet;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -37,10 +38,17 @@ public class StanFileType extends PreviewableFromRFileType
    }
    
    @Override
+   public boolean getWordWrap()
+   {
+      return RStudioGinjector.INSTANCE.getUIPrefs().softWrapRFiles().getValue();
+   }
+   
+   @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       result.add(commands.commentUncomment());
+      result.add(commands.reindent());
       return result;
    }
 }
