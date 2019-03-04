@@ -9,7 +9,7 @@ set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set GIN_FILE=gin-2.1.2.zip
-set GWT_FILE=gwt-2.8.1.zip
+set GWT_FILE=gwt-2.8.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
@@ -20,8 +20,8 @@ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.0.2p.zip
 set BOOST_FILES=boost-1.65.1-win-msvc141.zip
 
-set PANDOC_VERSION=2.5
-set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-i386
+set PANDOC_VERSION=2.6
+set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-x86_64
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
 set LIBCLANG_VERSION=5.0.2
@@ -102,12 +102,12 @@ if not exist gin\2.1.2 (
   del "%GIN_FILE%"
 )
 
-if not exist gwt\2.8.1 (
+if not exist gwt\2.8.2 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.8.1 gwt\2.8.1
+  move gwt-2.8.2 gwt\2.8.2
   del "%GWT_FILE%"
 )
 
@@ -120,7 +120,7 @@ popd
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip
 if not exist "dictionaries\en_US.dic" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-dictionaries/%CORE_DICTIONARIES%"
+  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/dictionaries/%CORE_DICTIONARIES%"
   if exist "%CORE_DICTIONARIES%" (
      mkdir dictionaries
      echo Unzipping %CORE_DICTIONARIES%
@@ -165,3 +165,4 @@ if not defined RSTUDIO_SKIP_QT (
   call install-qt-sdk-win.cmd
 )
 
+call install-crashpad.cmd

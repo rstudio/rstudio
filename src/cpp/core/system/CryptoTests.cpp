@@ -33,7 +33,7 @@ context("CryptoTests")
       std::vector<unsigned char> iv;
       Error error = core::system::crypto::random(16, &key);
       REQUIRE_FALSE(error);
-      error = core::system::crypto::random(8, &iv);
+      error = core::system::crypto::random(16, &iv);
       REQUIRE_FALSE(error);
 
       // construct the data to encrypt

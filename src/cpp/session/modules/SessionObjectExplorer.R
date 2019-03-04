@@ -124,7 +124,7 @@
    else if (is.character(object) || is.numeric(object) ||
             is.raw(object) || is.complex(object) ||
             is.list(object) || is.environment(object) ||
-            is.factor(object))
+            is.factor(object) || is.logical(object))
    {
       type <- paste(type, sprintf("[%s]", length(object)))
    }
@@ -930,7 +930,11 @@
    }
    
    # guard against unexpected inputs
-   if (is.na(output) || !is.character(output))
+   if (length(output) == 0)
+   {
+      output <- ""
+   }
+   else if (is.na(output) || !is.character(output))
    {
       output <- "<NA>"
    }

@@ -84,7 +84,31 @@
 
 .rs.addFunction("isRtoolsOnPath", function()
 {
-   return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))
+   # ensure that the Rtools utility 'bin' directory is on the PATH
+   # (this is just a heuristic but works okay in general)
+   if (!nzchar(Sys.which("ls.exe")))
+      return(FALSE)
+   
+   # for newer versions of R, ensure that BINPREF is set
+   # (since BINPREF may be going away in R 4.0.0 we don't require its
+   # existence here)
+   rv <- getRversion()
+   if (rv >= "3.3.0" && rv < "4.0.0")
+   {
+      if (is.na(Sys.getenv("BINPREF", unset = NA)))
+         return(FALSE)
+   }
+   
+   # for older versions of R (with the old toolchain) check for 'gcc.exe'
+   # on the PATH (assuming the old, multilib-variant of gcc)
+   if (rv < "3.3.0")
+   {
+      if (!nzchar(Sys.which("gcc.exe")))
+         return(FALSE)
+   }
+   
+   # survived all checks; return TRUE
+   TRUE
 })
 
 .rs.addFunction("getPackageFunction", function(name, packageName)

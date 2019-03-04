@@ -71,6 +71,62 @@ namespace session {
 
 namespace {
 
+#ifdef _WIN32
+
+// TODO: promote to StringUtils?
+std::string utf8ToConsole(const std::string& string)
+{
+   std::vector<wchar_t> wide(string.length() + 1);
+   int chars = ::MultiByteToWideChar(
+            CP_UTF8, 0,
+            string.data(), string.size(),
+            &wide[0], static_cast<int>(wide.size()));
+
+   if (chars == 0)
+   {
+      LOG_ERROR(LAST_SYSTEM_ERROR());
+      return string;
+   }
+   
+   std::ostringstream output;
+   char buffer[16];
+   
+   // force C locale (ensures that any non-ASCII characters
+   // will fail to convert and hence must be unicode escaped)
+   const char* locale = ::setlocale(LC_CTYPE, nullptr);
+   ::setlocale(LC_CTYPE, "C");
+
+   for (int i = 0; i < chars; i++)
+   {
+      int n = ::wctomb(buffer, wide[i]);
+      
+      // use Unicode escaping for characters that cannot be represented
+      // as well as for single-byte upper ASCII
+      if (n == -1 || (n == 1 && static_cast<unsigned char>(buffer[0]) > 127))
+      {
+         output << "\\u{" << std::hex << wide[i] << "}";
+      }
+      else
+      {
+         output.write(buffer, n);
+      }
+   }
+   
+   ::setlocale(LC_CTYPE, locale);
+   
+   return output.str();
+   
+}
+
+#else
+
+std::string utf8ToConsole(const std::string& string)
+{
+   return string_utils::utf8ToSystem(string);
+}
+
+#endif
+
 enum 
 {
    RExecutionReady = 0,
@@ -400,7 +456,7 @@ private:
 
       std::string extraParams;
       std::string targetFile =
-              string_utils::utf8ToSystem(targetFile_.absolutePath());
+            utf8ToConsole(targetFile_.absolutePath());
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
@@ -413,7 +469,7 @@ private:
       // include params if specified
       if (!paramsFile.empty())
       {
-         renderOptions += ", params = readRDS('" + paramsFile + "')";
+         renderOptions += ", params = readRDS('" + utf8ToConsole(paramsFile) + "')";
       }
 
       // use the stated working directory if specified and we're using the default render function
@@ -421,7 +477,7 @@ private:
       if (!workingDir.empty() && renderFunc == kStandardRenderFunc)
       {
          renderOptions += ", knit_root_dir = '" + 
-                          string_utils::utf8ToSystem(workingDir) + "'";
+                          utf8ToConsole(workingDir) + "'";
       }
 
       // output to a temporary directory if specified (no need to do this
@@ -432,7 +488,7 @@ private:
          Error error = tmpDir.ensureDirectory();
          if (!error)
          {
-            std::string dir = string_utils::utf8ToSystem(tmpDir.absolutePath());
+            std::string dir = utf8ToConsole(tmpDir.absolutePath());
             renderOptions += ", output_dir = '" + dir + "'";
          }
          else
@@ -445,8 +501,8 @@ private:
       {
          extraParams += "shiny_args = list(launch.browser = FALSE), "
                         "auto_reload = FALSE, ";
-         extraParams += "dir = '" + string_utils::utf8ToSystem(
-                     targetFile_.parent().absolutePath()) + "', ";
+         std::string parentDir = utf8ToConsole(targetFile_.parent().absolutePath());
+         extraParams += "dir = '" + parentDir + "', ";
 
          // provide render_args in render_args parameter
          renderOptions = "render_args = list(" + renderOptions + ")";
@@ -459,7 +515,12 @@ private:
                              string_utils::singleQuotedStrEscape(targetFile) %
                              extraParams %
                              renderOptions);
-
+      
+      // un-escape unicode escapes
+#ifdef _WIN32
+      cmd = boost::algorithm::replace_all_copy(cmd, "\\\\u{", "\\u{");
+#endif
+      
       // environment
       core::system::Options environment;
       std::string tempDir;

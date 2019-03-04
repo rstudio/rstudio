@@ -1,7 +1,8 @@
+
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +35,7 @@
 #define kRStudioVersion                   "RSTUDIO_VERSION"
 #define kRSessionRsaPublicKey             "RSTUDIO_SESSION_RSA_PUBLIC_KEY"
 #define kRSessionRsaPrivateKey            "RSTUDIO_SESSION_RSA_PRIVATE_KEY"
+#define kRStudioSessionUserLicenseSoftLimitReached "RSTUDIO_SESSION_USER_LICENSE_SOFT_LIMIT_REACHED"
 
 #define kRStudioDefaultRVersion           "RSTUDIO_DEFAULT_R_VERSION"
 #define kRStudioDefaultRVersionHome       "RSTUDIO_DEFAULT_R_VERSION_HOME"
@@ -41,6 +43,7 @@
 #define kRStudioUserHomePage              "RSTUDIO_USER_HOME_PAGE"
 
 #define kProgramModeSessionOption         "program-mode"
+#define kRStudioProgramMode               "RSTUDIO_PROGRAM_MODE"
 #define kSessionProgramModeDesktop        "desktop"
 #define kSessionProgramModeServer         "server"
 
@@ -73,6 +76,8 @@
 
 #define kWebSocketPingInterval            "websocket-ping-seconds"
 #define kWebSocketConnectTimeout          "websocket-connect-timeout"
+#define kWebSocketLogLevel                "websocket-log-level"
+#define kWebSocketHandshakeTimeout        "websocket-handshake-timeout"
 
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 
@@ -104,6 +109,16 @@
 #define kSessionProxyDefaultPort   "8789"
 #define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
 
+#define kSessionUserLicenseSoftLimitReached  "session-user-license-soft-limit-reached"
+
+#define kRestoreWorkspaceNo       0
+#define kRestoreWorkspaceYes      1
+#define kRestoreWorkspaceDefault  2
+
+#define kRunRprofileNo       0
+#define kRunRprofileYes      1
+#define kRunRprofileDefault  2
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";
@@ -123,6 +138,7 @@ const char * const kRStudioAPIShowDialogMethod = "rstudio_api_show_dialog";
 #define SESSION_EXIT_SCOPE_INVALID_SESSION    SESSION_EXIT_CODE_OFFSET + 1
 #define SESSION_EXIT_SCOPE_INVALID_PROJECT    SESSION_EXIT_CODE_OFFSET + 2
 #define SESSION_EXIT_SCOPE_MISSING_PROJECT    SESSION_EXIT_CODE_OFFSET + 3
+#define SESSION_EXIT_INVALID_RPC_CONFIG       SESSION_EXIT_CODE_OFFSET + 4
 
 #endif // SESSION_CONSTANTS_HPP
 

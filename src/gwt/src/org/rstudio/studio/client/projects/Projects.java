@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,6 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -79,10 +78,10 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -110,12 +109,12 @@ public class Projects implements OpenProjectFileHandler,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
                    PackratServerOperations packratServer,
-                   ApplicationServerOperations appServer,
                    GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
                    ProjectOpener opener,
+                   SessionOpener sessionOpener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<WorkbenchContext> pWorkbenchContext,
                    Provider<UIPrefs> pUIPrefs)
@@ -126,7 +125,6 @@ public class Projects implements OpenProjectFileHandler,
       applicationQuit_ = applicationQuit;
       projServer_ = projServer;
       packratServer_ = packratServer;
-      appServer_ = appServer;
       gitServer_ = gitServer;
       fsContext_ = fsContext;
       session_ = session;
@@ -134,6 +132,7 @@ public class Projects implements OpenProjectFileHandler,
       pPrefDialog_ = pPrefDialog;
       pUIPrefs_ = pUIPrefs;
       opener_ = opener;
+      sessionOpener_ = sessionOpener;
 
       binder.bind(commands, this);
        
@@ -955,9 +954,9 @@ public class Projects implements OpenProjectFileHandler,
                " owner to request access.";
       }       
       
-      ArrayList<String> buttons = new ArrayList<String>();
+      ArrayList<String> buttons = new ArrayList<>();
       buttons.add("OK");
-      ArrayList<Operation> ops = new ArrayList<Operation>();
+      ArrayList<Operation> ops = new ArrayList<>();
       ops.add(new Operation()
       {
          @Override
@@ -1063,22 +1062,16 @@ public class Projects implements OpenProjectFileHandler,
                                              RVersionSpec rVersion,
                                              final Command onSuccess)
    {
-      appServer_.getNewSessionUrl(
-                    GWT.getHostPageBaseURL(),
-                    true,
-                    project.getParentPathString(), 
-                    rVersion,
-        new SimpleRequestCallback<String>() {
+      sessionOpener_.navigateToNewSession(
+            true, /*isProject*/
+            project.getParentPathString(),
+            rVersion,
+            url -> {
+               if (onSuccess != null)
+                  onSuccess.execute();
 
-         @Override
-         public void onResponseReceived(String url)
-         {
-            if (onSuccess != null)
-               onSuccess.execute();
-            
-            globalDisplay_.openWindow(url);
-         }
-      });
+               globalDisplay_.openWindow(url);
+            });
    }
    
    private void showOpenProjectDialog(final int projectType)
@@ -1179,7 +1172,6 @@ public class Projects implements OpenProjectFileHandler,
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
    private final PackratServerOperations packratServer_;
-   private final ApplicationServerOperations appServer_;
    private final GitServerOperations gitServer_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
@@ -1189,6 +1181,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ProjectOpener opener_;
+   private final SessionOpener sessionOpener_;
    
    public static final String NONE = "none";
    public static final Pattern PACKAGE_NAME_PATTERN =

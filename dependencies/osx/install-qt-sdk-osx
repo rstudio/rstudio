@@ -18,8 +18,8 @@
 # Installs Qt via the online installer at the location in $QT_SDK_DIR.
 # If no location provided, checks against a set of common locations and installs if not found.
 
-QT_VERSION=5.11.1
-QT_SDK_BINARY_BASE=qt-unified-mac-x64-3.0.6-online
+QT_VERSION=5.12.1
+QT_SDK_BINARY_BASE=qt-unified-mac-x64-3.0.5-online
 QT_SDK_BINARY=${QT_SDK_BINARY_BASE}.tar.gz
 QT_SDK_INSTALLER=${QT_SDK_BINARY_BASE}.app
 QT_SDK_INSTALLER_BIN=${QT_SDK_INSTALLER}/Contents/MacOS/${QT_SDK_BINARY_BASE}
@@ -65,10 +65,10 @@ Controller.prototype.TargetDirectoryPageCallback = function()
 Controller.prototype.ComponentSelectionPageCallback = function() {
     var widget = gui.currentPageWidget();
      
-    widget.selectComponent("qt.qt5.5111.clang_64");
-    widget.selectComponent("qt.qt5.5111.qtwebengine");
-    widget.selectComponent("qt.qt5.5111.qtwebengine.clang_64");
-    widget.deselectComponent("qt.qt5.5111.src");
+    widget.selectComponent("qt.qt5.5121.clang_64");
+    widget.selectComponent("qt.qt5.5121.qtwebengine");
+    widget.selectComponent("qt.qt5.5121.qtwebengine.clang_64");
+    widget.deselectComponent("qt.qt5.5121.src");
     gui.clickButton(buttons.NextButton);
 }
 

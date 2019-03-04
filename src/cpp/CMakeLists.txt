@@ -72,6 +72,16 @@ if(UNIX)
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
                       -Wno-deprecated-declarations)
+
+      find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
+      find_library(COCOA_LIBRARY NAMES Cocoa)
+      find_library(SECURITY_LIBRARY NAMES Security)
+
+      # additional frameworks needed for crashpad
+      find_library(IOKIT_LIBRARY NAMES IOKit)
+      find_library(CORE_FOUNDATION_LIBRARY NAMES CoreFoundation)
+      find_library(FOUNDATION_LIBRARY NAMES Foundation)
+      find_library(BSM_LIBRARY NAMES bsm)
    endif()
 
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
@@ -79,20 +89,32 @@ if(UNIX)
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
    if(APPLE)
+
       # if present, set osx deployment target variables from environment vars
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
          set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
          message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
       endif()
+
       if(NOT $ENV{CMAKE_OSX_DEPLOYMENT_TARGET} STREQUAL "")
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
+
       # Figure out what version of Mac OS X this is. Unfortunately 
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
-      EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+      # When compiling on macOS Mojave (or greater), set a deployment target.
+      if(NOT MACOSX_VERSION VERSION_LESS 10.14 AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+         set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
+         message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+      endif()
+
+      # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+
    endif()
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)
@@ -248,6 +270,69 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION}
 
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
+# Crashpad
+if(UNIX)
+   set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/crashpad")
+   set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}")
+   set(CRASHPAD_INNER_DIR "${RSTUDIO_TOOLS_CRASHPAD}/crashpad")
+   include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
+   include_directories(SYSTEM ${CRASHPAD_INNER_DIR})
+   include_directories(SYSTEM "${CRASHPAD_INNER_DIR}/third_party/mini_chromium/mini_chromium")
+   set(CRASHPAD_OUTPUT_DIR "${CRASHPAD_INNER_DIR}/out/Default")
+   set(CRASHPAD_LIBRARY_DIR "${CRASHPAD_OUTPUT_DIR}/obj")
+else()
+   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-debug")
+   else()
+      set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-release")
+   endif()
+
+   set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}/include")
+   include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
+   include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/crashpad")
+   include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/mini_chromium")
+   set(CRASHPAD_OUTPUT_DIR "${RSTUDIO_TOOLS_CRASHPAD}/bin")
+   set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/lib_md")
+endif()
+
+# find crashpad libraries, ensuring the correct link order
+if(UNIX)
+   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*libclient.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*libutil.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*libbase.a"
+                                        "${CRASHPAD_LIBRARY_DIR}/*.a")
+
+   if(APPLE)
+      # add necessary macos frameworks so crashpad applications can link correctly
+      list(APPEND CRASHPAD_LIBRARIES ${APPLICATION_SERVICES_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${CORE_FOUNDATION_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${FOUNDATION_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${IOKIT_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${SECURITY_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
+   endif()
+else()
+   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*client.lib" "${CRASHPAD_LIBRARY_DIR}/*.lib")
+endif()
+list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
+
+if (CRASHPAD_LIB_COUNT EQUAL 0)
+   message(STATUS "No Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration disabled.")
+else()
+   message(STATUS "Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration enabled.")
+   add_definitions(-DRSTUDIO_CRASHPAD_ENABLED=1)
+
+   # ensure the desired crashpad binaries are installed with the installation package
+   if(UNIX)
+      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload" DESTINATION ${RSTUDIO_INSTALL_BIN})
+   else()
+      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.com" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
+   endif()
+endif()
 
 if(WIN32)
      # winpty - pseudoterminal support on Windows

@@ -28,7 +28,7 @@ call set PATH=%PATH:C:\Program Files\Git\bin=%
 
 REM Establish build dir
 set BUILD_DIR=build
-if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
+if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 
 REM perform build 
@@ -52,8 +52,8 @@ REM create packages
 set VSINSTALLDIR="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools"
 set VCINSTALLDIR="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC"
 cd "%BUILD_DIR%"
-if not "%1" == "quick" cpack -G NSIS
-if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
+if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
 cd ..
 
 REM reset modified environment variables (PATH)

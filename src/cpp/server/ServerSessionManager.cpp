@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 
+#include <core/CrashHandler.hpp>
+
 #include <server/ServerSessionManager.hpp>
 
 #include <boost/foreach.hpp>
@@ -21,6 +23,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <monitor/MonitorClient.hpp>
 #include <session/SessionConstants.hpp>
@@ -43,6 +46,31 @@ namespace server {
 namespace {
 
 static std::string s_launcherToken;
+
+void readRequestArgs(const core::http::Request& request, core::system::Options *pArgs)
+{
+   // we only do this when establishing new sessions via client_init
+   if (!boost::algorithm::ends_with(request.uri(), "client_init"))
+      return;
+
+   // parse the request (okay if it fails, none of the below is critical)
+   json::JsonRpcRequest clientInit;
+   Error error = json::parseJsonRpcRequest(request.body(), &clientInit);
+   if (error)
+      return;
+   
+   // read parameters from the request if present
+   int restoreWorkspace = -1;
+   json::getOptionalParam<int>(clientInit.kwparams, "restore_workspace", -1, &restoreWorkspace);
+   if (restoreWorkspace != -1)
+      pArgs->push_back(std::make_pair("--r-restore-workspace", 
+               safe_convert::numberToString(restoreWorkspace)));
+   int runRprofile = -1;
+   json::getOptionalParam<int>(clientInit.kwparams, "run_rprofile", -1, &runRprofile);
+   if (runRprofile != -1)
+      pArgs->push_back(std::make_pair("--r-run-rprofile", 
+            safe_convert::numberToString(runRprofile)));
+}
 
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
@@ -145,6 +173,13 @@ core::system::ProcessConfig sessionProcessConfig(
    // likely an unsupported configuration
    environment.push_back({kRStudioVersion, RSTUDIO_VERSION});
 
+   // forward over crash handler environment if we have it (used for development mode)
+   if (!core::system::getenv(kCrashHandlerEnvVar).empty())
+      environment.push_back({kCrashHandlerEnvVar, core::system::getenv(kCrashHandlerEnvVar)});
+
+   if (!core::system::getenv(kCrashpadHandlerEnvVar).empty())
+      environment.push_back({kCrashpadHandlerEnvVar, core::system::getenv(kCrashpadHandlerEnvVar)});
+
    // build the config object and return it
    core::system::ProcessConfig config;
    config.args = args;
@@ -208,11 +243,15 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    }
    END_LOCK_MUTEX
 
+   // translate querystring arguments into extra session args 
+   core::system::Options args;
+   readRequestArgs(request, &args);
+
    // determine launch options
    r_util::SessionLaunchProfile profile;
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(context);
+   profile.config = sessionProcessConfig(context, args);
 
    // pass the profile to any filters we have
    BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
@@ -310,6 +349,17 @@ void SessionManager::notifySIGCHLD()
    processTracker_.notifySIGCHILD();
 }
 
+r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionContext& context,
+                                                        const core::system::Options& extraArgs)
+{
+   r_util::SessionLaunchProfile profile;
+   profile.context = context;
+   profile.executablePath = server::options().rsessionPath();
+   profile.config = sessionProcessConfig(context, extraArgs);
+
+   return profile;
+}
+
 // helper function for verify-installation
 Error launchSession(const r_util::SessionContext& context,
                     const core::system::Options& extraArgs,
@@ -329,7 +379,6 @@ Error launchSession(const r_util::SessionContext& context,
                                            core::system::ProcessConfigFilter(),
                                            pPid);
 }
-
 
 } // namespace server
 } // namespace rstudio

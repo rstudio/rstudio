@@ -237,7 +237,8 @@ private:
    void resolvePath(const core::FilePath& basePath,
                     std::string* pPath) const;
 
-   void addOverlayOptions(boost::program_options::options_description* pServer,
+   void addOverlayOptions(boost::program_options::options_description* pVerify,
+                          boost::program_options::options_description* pServer,
                           boost::program_options::options_description* pWWW,
                           boost::program_options::options_description* pRSession,
                           boost::program_options::options_description* pAuth,

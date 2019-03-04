@@ -1,7 +1,7 @@
 /*
  * EnvironmentUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,14 @@
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/RSxpInfo.hpp>
+#include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#define MAX_ALTREP_LEN   65535   // maximum width/length for altrep inspection
+#define MAX_ALTREP_DEPTH 5       // maximum depth for altrep inspection
 
 using namespace rstudio::core;
 
@@ -60,6 +65,79 @@ json::Value descriptionOfVar(SEXP var)
 bool isUnevaluatedPromise (SEXP var)
 {
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
+}
+
+bool hasAltrepCapability()
+{
+   // Get the current version. If working with R < 3.5.0, then we aren't working with an ALTREP
+   // object (as they were introduced in 3.5.0)
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
+   return !(version < r_util::RVersionNumber(3, 5, 0));
+}
+
+bool isAltrepImpl(SEXP var)
+{
+   // Reject nulls
+   if (var == NULL || var == R_NilValue)
+      return false;
+
+   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
+   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(var);
+
+   // Select the bit referring to the ALTREP flag
+   return info.alt;
+}
+
+bool isAltrep(SEXP var)
+{
+   if (!hasAltrepCapability())
+      return false;
+   
+   return isAltrepImpl(var);
+}
+
+bool hasAltrepImpl(SEXP var, std::set<SEXP>& visited, unsigned maxDepth)
+{
+   // ignore if already visited
+   if (visited.find(var) != visited.end())
+      return false;
+
+   if (r::sexp::isList(var) && maxDepth > 0)
+   {
+      // recurse if this is a list and we have recursion depth remaining; don't attempt to check
+      // every element of extremely long vectors
+      int len = std::min(r::sexp::length(var), MAX_ALTREP_LEN);
+
+      // ensure we don't visit this list again
+      visited.insert(var);
+
+      for (int i = 0; i < len; i++)
+      {
+         if (hasAltrepImpl(VECTOR_ELT(var, i), visited, maxDepth - 1))
+         {
+            return true;
+         }
+      }
+   }
+   else
+   {
+      // this isn't a list, just check the object itself
+      return isAltrep(var);
+   }
+
+   // we didn't find an ALTREP
+   return false;
+}
+
+bool hasAltrep(SEXP var)
+{
+   // ensure this version of R supports ALTREP
+   if (!hasAltrepCapability())
+      return false;
+
+   // recursively scan for ALTREP objects
+   std::set<SEXP> visited;
+   return hasAltrepImpl(var, visited, MAX_ALTREP_DEPTH);
 }
 
 // convert a language variable to a value. language variables are special in
@@ -139,7 +217,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       json::Value val;
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(".rs.describeObject",
-                  env, var.first)
+                  env, var.first, !hasAltrep(varSEXP))
                   .call(&description, &protect);
       if (error)
          LOG_ERROR(error);

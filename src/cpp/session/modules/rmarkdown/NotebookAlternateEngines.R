@@ -86,7 +86,17 @@
       wrap <- getOption("reticulate.engine.wrap")
       on.exit(options(reticulate.engine.wrap = wrap), add = TRUE)
       options(reticulate.engine.wrap = function(outputs, options) {
+         
+         # take this opportunity to clear matplotlib figure if appropriate
+         sys <- reticulate::import("sys", convert = TRUE)
+         if (!is.null(sys$modules$matplotlib$pyplot)) {
+            plt <- reticulate::import("matplotlib.pyplot", convert = TRUE)
+            tryCatch(plt$clf(), error = identity)
+         }
+         
+         # return outputs
          outputs
+         
       })
       
       # use the global environment for rendering

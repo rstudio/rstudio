@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
@@ -109,8 +110,9 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
-import org.rstudio.studio.client.workbench.views.jobs.view.JobsList;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -274,8 +276,9 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SecondaryReposWidget widget);
    void injectMembers(SecondaryReposDialog widget);
    void injectMembers(CheckForUpdatesDialog dialog);
-   void injectMembers(JobsList widget);
-
+   void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
+   void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
+   
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
@@ -316,4 +319,5 @@ public interface RStudioGinjector extends Ginjector
    PlumberAPISatellite getPlumberAPISatellite();
    PlumberAPI getPlumberAPI();
    JobManager getJobManager();
+   SessionOpener getSessionOpener();
 }

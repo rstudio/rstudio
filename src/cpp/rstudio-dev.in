@@ -3,7 +3,7 @@
 #
 # rstudio-dev
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,4 +17,5 @@
 
 QT_PLUGIN_PATH="@QT_PLUGIN_PATH@" \
     LD_LIBRARY_PATH="@QT_LIBRARY_PATH@" \
+    RS_CRASH_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
     desktop/rstudio "$@"

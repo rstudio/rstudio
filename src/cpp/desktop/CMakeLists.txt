@@ -38,9 +38,9 @@ if(NOT WIN32)
       endif()
          
       if(APPLE)
-         set(QT_CANDIDATES 5.11.1)   
+         set(QT_CANDIDATES 5.12.1)   
       else()
-         set(QT_CANDIDATES 5.11.1 5.10.1)
+         set(QT_CANDIDATES 5.12.1 5.10.1)
       endif()
 
       # find the newest installed Qt version among the versions we build
@@ -73,7 +73,8 @@ if(NOT WIN32)
       endforeach()
    endif()
 else()
-   set(QT_VERSION "5.11.1")
+   # Windows
+   set(QT_VERSION "5.12.1")
    set(QT_VERSION_SUBDIR "${QT_VERSION}")   
    if(NOT QT_QMAKE_EXECUTABLE)
 
@@ -313,11 +314,6 @@ if(WIN32)
    set(
       CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
-
-elseif(APPLE)
-   find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
-   find_library(COCOA_LIBRARY NAMES Cocoa)
-   find_library(SECURITY_LIBRARY NAMES Security)
 endif(WIN32)
 
 
@@ -359,7 +355,7 @@ endif()
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
-   add_executable(rstudio
+   add_stripped_executable(rstudio
       ${DESKTOP_SOURCE_FILES}
       ${MOC_DESKTOP_SOURCE_FILES}
       ${DESKTOP_RESOURCES_SOURCES}
@@ -386,6 +382,7 @@ if(NOT APPLE)
       ${QT_LIBRARIES}
       ${Boost_LIBRARIES}
       rstudio-core
+      ${CRASHPAD_LIBRARIES}
       ${LINK_FLAGS}
    )
 
@@ -415,7 +412,7 @@ else()
    # define bundle name and executable
    set(MACOSX_BUNDLE_BUNDLE_NAME "RStudio")
 
-   add_executable(RStudio MACOSX_BUNDLE
+   add_stripped_executable(RStudio MACOSX_BUNDLE
       ${DESKTOP_SOURCE_FILES}
       ${MOC_DESKTOP_SOURCE_FILES}
       ${DESKTOP_RESOURCES_SOURCES}
@@ -429,7 +426,8 @@ else()
       rstudio-core
       ${APPLICATION_SERVICES_LIBRARY}
       ${COCOA_LIBRARY}
-      ${SECURITY_LIBRARY})
+      ${SECURITY_LIBRARY}
+      ${CRASHPAD_LIBRARIES})
 
 endif()
 
@@ -506,7 +504,7 @@ if(RSTUDIO_BUNDLE_QT)
       endif()
 
       # this copies over the frameworks and plugins
-      install(CODE "execute_process(COMMAND \"${MACDEPLOYQT_COMMAND}\" \"${APPS}\" -verbose=1 -always-overwrite)")
+      install(CODE "execute_process(COMMAND \"${MACDEPLOYQT_COMMAND}\" \"${APPS}\" -verbose=1 -always-overwrite -no-strip)")
 
       # fixups needed after running macdeployqt
       install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@executable_path/../Frameworks\" \"${RSTUDIO_APP_BIN}\")")

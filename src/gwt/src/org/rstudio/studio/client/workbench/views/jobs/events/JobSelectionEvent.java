@@ -1,7 +1,7 @@
 /*
  * JobSelectionEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,9 +24,10 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
       void onJobSelection(JobSelectionEvent event);
    }
    
-   public JobSelectionEvent(String id, boolean selected, boolean animate)
+   public JobSelectionEvent(String id, int jobType, boolean selected, boolean animate)
    {
       id_ = id;
+      jobType_ = jobType;
       selected_ = selected;
       animate_ = animate;
    }
@@ -34,6 +35,11 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
    public String id()
    {
       return id_;
+   }
+   
+   public int jobType()
+   {
+      return jobType_;
    }
    
    public boolean selected()
@@ -59,6 +65,7 @@ public class JobSelectionEvent extends GwtEvent<JobSelectionEvent.Handler>
    }
 
    private final String id_;
+   private final int jobType_;
    private final boolean selected_;
    private final boolean animate_;
 

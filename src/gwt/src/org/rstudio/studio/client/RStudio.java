@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,10 +22,13 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -35,6 +38,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -48,7 +52,10 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
+import org.rstudio.studio.client.application.ui.RTimeoutOptions;
+import org.rstudio.studio.client.application.ui.LauncherSessionStatus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
@@ -72,6 +79,8 @@ import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
@@ -104,24 +113,24 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 
 public class RStudio implements EntryPoint
-{  
-   public void onModuleLoad() 
+{
+   public void onModuleLoad()
    {
       Debug.injectDebug();
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
    }
    
-   private Command showProgress()
+   private Command showProgress(Widget progressAction)
    {
       final Label background = new Label();
       background.getElement().getStyle().setZIndex(1000);
       background.getElement().getStyle().setBackgroundColor("#e1e2e5");
       final RootLayoutPanel rootPanel = RootLayoutPanel.get();
       rootPanel.add(background);
-      rootPanel.setWidgetTopBottom(background, 0, Style.Unit.PX, 
+      rootPanel.setWidgetTopBottom(background, 0, Style.Unit.PX,
                                                0, Style.Unit.PX);
-      rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX, 
+      rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX,
                                                0, Style.Unit.PX);
       
       String progressUrl = ProgressImages.createLargeGray().getUrl();
@@ -135,20 +144,57 @@ public class RStudio implements EntryPoint
       final SimplePanel progressPanel = new SimplePanel();
       final Element div = progressPanel.getElement();
       div.setInnerHTML(str.toString());
-      div.getStyle().setWidth(100, Style.Unit.PCT);
-      div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
-      div.getStyle().setZIndex(1000);
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
-      rootPanel.add(progressPanel);
-     
+   
+      final VerticalPanel statusPanel = new VerticalPanel();
+      final Element statusDiv = statusPanel.getElement();
+      statusDiv.getStyle().setWidth(100, Style.Unit.PCT);
+      statusDiv.getStyle().setMarginTop(200, Style.Unit.PX);
+      statusDiv.getStyle().setProperty("textAlign", "center");
+      statusDiv.getStyle().setZIndex(1000);
+      
+      statusPanel.add(progressPanel);
+
+      if (progressAction != null)
+      {
+         statusPanel.add(progressAction);
+         statusPanel.setCellHorizontalAlignment(progressAction, VerticalPanel.ALIGN_CENTER);
+      }
+      
+      if (ApplicationAction.isLauncherSession())
+      {
+         sessionStatus_ = new LauncherSessionStatus();
+         sessionStatus_.setVisible(false);
+         statusPanel.add(sessionStatus_);
+         
+         // Wait a bit to keep things uncluttered for typical load,
+         // then show message so they know things are happening, including
+         // a link back to the home page
+         showStatusTimer_ = new Timer()
+         {
+            public void run()
+            {
+               sessionStatus_.setVisible(true);
+            }
+         };
+         showStatusTimer_.schedule(3000);
+      }
+
+      rootPanel.add(statusPanel);
+      
       return new Command()
       {
          public void execute()
          {
             try
             {
-               rootPanel.remove(progressPanel);
+               if (showStatusTimer_ != null)
+               {
+                  showStatusTimer_.cancel();
+                  showStatusTimer_ = null;
+               }
+               rootPanel.remove(statusPanel);
                rootPanel.remove(background);
             }
             catch (Exception e)
@@ -210,7 +256,28 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication()
    {
-      dismissProgressAnimation_ = showProgress();
+      // if we are loading the main window, and we're not a launcher session, 
+      // add buttons for bailing out
+      String view = Window.Location.getParameter("view");
+      if (StringUtil.isNullOrEmpty(view) && !ApplicationAction.isLauncherSession())
+      {
+         rTimeoutOptions_ = new RTimeoutOptions();
+
+         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_, 750);
+         reloadShowHelper.hide();
+         Timer t = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               reloadShowHelper.beginShow();
+            }
+         };
+         t.schedule(30000);
+      }
+
+      dismissProgressAnimation_ = showProgress(rTimeoutOptions_);
+
       final SerializedCommandQueue queue = new SerializedCommandQueue();
       
       // TODO (gary) This early loading of XTermWidget dependencies needs to be
@@ -314,9 +381,27 @@ public class RStudio implements EntryPoint
       }
       else
       {
+         final ServerRequestCallback<String> connectionStatusCallback =
+               new ServerRequestCallback<String>() {
+                  @Override
+                  public void onResponseReceived(String message)
+                  {
+                     if (sessionStatus_ != null)
+                     {
+                        sessionStatus_.setStatus(message);
+                     }
+                  }
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                  }
+               };
+
          RStudioGinjector.INSTANCE.getApplication().go(
                RootLayoutPanel.get(),
-               dismissProgressAnimation_);
+               rTimeoutOptions_,
+               dismissProgressAnimation_,
+               connectionStatusCallback);
       }
    }
    
@@ -388,4 +473,7 @@ public class RStudio implements EntryPoint
    }
    
    private Command dismissProgressAnimation_;
+   private RTimeoutOptions rTimeoutOptions_;
+   private Timer showStatusTimer_;
+   private LauncherSessionStatus sessionStatus_;
 }

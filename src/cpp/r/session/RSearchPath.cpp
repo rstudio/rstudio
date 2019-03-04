@@ -42,6 +42,8 @@
 #include <r/RExec.hpp>
 #include <r/RInterface.hpp>
 
+#include <r/session/RSessionUtils.hpp>
+
 using namespace rstudio::core ;
 
 namespace rstudio {
@@ -401,12 +403,15 @@ Error restoreSearchPath(const FilePath& statePath)
 
 Error restore(const FilePath& statePath, bool isCompatibleSessionState)
 {
-   // restore global environment
-   FilePath environmentFile = statePath.complete(kEnvironmentFile);
-   Error error = restoreGlobalEnvironment(environmentFile);
-   if (error)
-      return error;
-   
+   // restore global environment unless suppressed
+   if (utils::restoreEnvironmentOnResume())
+   {
+      FilePath environmentFile = statePath.complete(kEnvironmentFile);
+      Error error = restoreGlobalEnvironment(environmentFile);
+      if (error)
+         return error;
+   }
+
    // only restore the search path if we have a compatible R version
    // (guard against attempts to attach incompatible packages to this
    // R session)

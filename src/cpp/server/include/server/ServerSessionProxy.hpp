@@ -41,7 +41,8 @@ struct RequestType
    {
       Rpc,
       Content,
-      Events
+      Events,
+      ClientInit
    };
 };
 

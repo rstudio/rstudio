@@ -180,7 +180,9 @@ public class RSConnect implements SessionInitHandler,
          return false;
       
       String extension = FileSystemItem.getExtensionFromPath(filename).toLowerCase();
-      return StringUtil.equals(extension, ".html") || StringUtil.equals(extension, ".htm");
+      return StringUtil.equals(extension, ".html") || 
+             StringUtil.equals(extension, ".htm") ||
+             StringUtil.equals(extension, ".nb.html");
    }
 
    private void publishAsRPubs(RSConnectActionEvent event)
@@ -338,7 +340,8 @@ public class RSConnect implements SessionInitHandler,
             publishAsStatic(input);
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_WEBSITE)
+      else if (input.getContentType() == CONTENT_TYPE_WEBSITE ||
+               (input.getContentType() == CONTENT_TYPE_DOCUMENT && input.isWebsiteRmd()))
       {
          if (input.hasDocOutput())
          {

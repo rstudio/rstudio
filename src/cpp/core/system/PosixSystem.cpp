@@ -751,6 +751,7 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
    // the parent must give us this list because we cannot fetch it ourselves
    // in a signal-safe way, but we can read from the pipe safely
    bool error = false;
+   bool fdsRead = false;
 
    int32_t buff;
    while (true)
@@ -776,6 +777,7 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
          break; // indicates no more fds are open by the process
       }
 
+      fdsRead = true;
       uint32_t fd = static_cast<uint32_t>(buff);
 
       // close the reported fd if it is in range
@@ -784,8 +786,9 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
    }
 
    // if no descriptors could be read from the parent for whatever reason,
+   // or there was an error reading from the pipe,
    // fall back to the slow close method detailed above
-   if (error)
+   if (error || !fdsRead)
    {
       closeFileDescriptorsFromSafe(fdStart, pipeFd);
       closeFileDescriptorsFromSafe(pipeFd + 1, fdLimit);

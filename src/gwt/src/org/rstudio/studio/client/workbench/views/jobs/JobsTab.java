@@ -28,16 +28,13 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 
 public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
 {
    public abstract static class Shim 
         extends DelayLoadTabShim<JobsPresenter, JobsTab>
-        implements JobUpdatedEvent.Handler,
-                   JobOutputEvent.Handler,
-                   JobSelectionEvent.Handler,
-                   JobInitEvent.Handler,
-                   JobElapsedTickEvent.Handler
+        implements JobsPresenterEventHandlers
    {
       abstract void confirmClose(Command onConfirmed);
       

@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,21 +54,18 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -92,7 +89,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           Commands commands,
                           Binder binder,
                           TerminalHelper terminalHelper,
-                          Provider<JobManager> pJobManager)
+                          Provider<JobManager> pJobManager,
+                          Provider<SessionOpener> pSessionOpener)
    {
       // save references
       server_ = server;
@@ -103,6 +101,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       pUiPrefs_ = pUiPrefs;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
+      pSessionOpener_ = pSessionOpener;
       
       // bind to commands
       binder.bind(commands, this);
@@ -527,133 +526,33 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       final TimedProgressIndicator progress = new TimedProgressIndicator(
             globalDisplay_.getProgressIndicator("Error"));
-      progress.onTimedProgress("Restarting R", 1000);
+      progress.onTimedProgress("Restarting R...", 1000);
       
-      final Operation onRestartComplete = new Operation() {
-         @Override
-         public void execute()
-         {
-            suspendingAndRestarting_ = false;
-            progress.onCompleted();
-         }
+      final Operation onRestartComplete = () -> {
+         suspendingAndRestarting_ = false;
+         progress.onCompleted();
+         eventBus_.fireEvent(new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
       };
 
       // perform the suspend and restart
       suspendingAndRestarting_ = true;
-      eventBus_.fireEvent(
-                  new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
-      server_.suspendForRestart(event.getSuspendOptions(),
-                                new VoidServerRequestCallback() {
-         @Override 
-         protected void onSuccess()
-         { 
-            // send pings until the server restarts
-            sendPing(event.getAfterRestartCommand(), 200, 25, new Command() {
-
-               @Override
-               public void execute()
-               {
-                  onRestartComplete.execute();
-                  
-                  eventBus_.fireEvent(new RestartStatusEvent(
-                                    RestartStatusEvent.RESTART_COMPLETED));
-                  
-               }
-               
-            });
-         }
-         @Override
-         protected void onFailure()
-         {
+      eventBus_.fireEvent(new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
+      pSessionOpener_.get().suspendForRestart(
+         event.getAfterRestartCommand(),
+         event.getSuspendOptions(),
+         () -> { // success
             onRestartComplete.execute();
-            
-            eventBus_.fireEvent(
-               new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
-            
+         }, () -> { // failure
+            onRestartComplete.execute();
             setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
-         }
-      });    
-      
-   } 
+         });
+   }
    
    private void setPendinqQuit(int pendingQuit)
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
-   
-   private void sendPing(final String afterRestartCommand,
-                         int delayMs, 
-                         final int maxRetries,
-                         final Command onCompleted)
-   {  
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
-
-         private int retries_ = 0;
-         private boolean pingDelivered_ = false;
-         private boolean pingInFlight_ = false;
-         
-         @Override
-         public boolean execute()
-         {
-            // if we've already delivered the ping or our retry count
-            // is exhausted then return false
-            if (pingDelivered_ || (++retries_ > maxRetries))
-               return false;
-            
-            if (!pingInFlight_)
-            {
-               pingInFlight_ = true;
-               server_.ping(new VoidServerRequestCallback() {
-                  @Override
-                  protected void onSuccess()
-                  {
-                     pingInFlight_ = false;
-                     
-                     if (!pingDelivered_)
-                     {
-                        pingDelivered_ = true;
-                        
-                        // issue after restart command
-                        if (!StringUtil.isNullOrEmpty(afterRestartCommand))
-                        {
-                           eventBus_.fireEvent(
-                                 new SendToConsoleEvent(afterRestartCommand, 
-                                                        true, true));
-                        }
-                        // otherwise make sure the console knows we 
-                        // restarted (ensure prompt and set focus)
-                        else 
-                        {
-                           eventBus_.fireEvent(
-                                          new ConsoleRestartRCompletedEvent());
-                        }
-                     }
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-                  
-                  @Override
-                  protected void onFailure()
-                  {
-                     pingInFlight_ = false;
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-               });
-            }
-            
-            // keep trying until the ping is delivered
-            return true;
-         }
-         
-      }, delayMs);
-      
-      
-   }
-   
    
    @Handler
    public void onQuitSession()
@@ -838,7 +737,11 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       private final String progressMessage_;
       private final Command onQuitAcknowledged_;
    }
+   
+   private SaveAction saveAction_ = SaveAction.saveAsk();
+   private boolean suspendingAndRestarting_ = false;
 
+   // injected
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final Provider<UIPrefs> pUiPrefs_;
@@ -846,8 +749,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;
    private final TerminalHelper terminalHelper_;
-   private SaveAction saveAction_ = SaveAction.saveAsk();
    private final Provider<JobManager> pJobManager_;
-   
-   private boolean suspendingAndRestarting_ = false;
+   private final Provider<SessionOpener> pSessionOpener_;
 }

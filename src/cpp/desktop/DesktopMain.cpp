@@ -22,8 +22,8 @@
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Log.hpp>
-
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/SafeConvert.hpp>
@@ -283,6 +283,12 @@ QString inferDefaultRenderingEngine()
 
 QString inferDefaultRenderingEngine()
 {
+   if (::GetSystemMetrics(SM_REMOTESESSION))
+   {
+       // use software rendering over remote desktop
+       return QStringLiteral("software");
+   }
+
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
       "Intel(R) HD Graphics 520",
@@ -426,6 +432,11 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
+      // catch unhandled exceptions
+      error = core::crash_handler::initialize(core::crash_handler::ProgramMode::Desktop);
+      if (error)
+         LOG_ERROR(error);
+
       // attempt to remove stale lockfiles, as they can impede
       // application startup
       error = removeStaleOptionsLockfile();
@@ -463,14 +474,6 @@ int main(int argc, char* argv[])
          arguments.push_back(disableRendererAccessibility);
       }
 
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5,10,1))
-      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
-      // https://bugreports.qt.io/browse/QTBUG-67023
-      // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
-      arguments.push_back(noSandbox);
-#endif
-
 #ifdef Q_OS_MAC
       // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
       // be used too aggressively on Retina displays on macOS, with the side effect that the
@@ -499,7 +502,7 @@ int main(int argc, char* argv[])
          if (!stdOut.empty())
          {
             // NOTE: temporarily backed out as it appears the rasterization
-            // issues do not occur anymore with Qt 5.11.1; re-enable if we
+            // issues do not occur anymore with Qt 5.12.1; re-enable if we
             // receive more reports in the wild.
             //
             // https://github.com/rstudio/rstudio/issues/2176
@@ -523,7 +526,9 @@ int main(int argc, char* argv[])
             */
             
             std::vector<std::string> gpuBlacklist = {
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
                "AMD FirePro"
+#endif
             };
             
             for (const std::string& entry : gpuBlacklist)
@@ -537,6 +542,14 @@ int main(int argc, char* argv[])
             }
          }
       }
+#endif
+
+#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
+      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
+      // https://bugreports.qt.io/browse/QTBUG-67023
+      // https://bugreports.qt.io/browse/QTBUG-66346
+      static char noSandbox[] = "--no-sandbox";
+      arguments.push_back(noSandbox);
 #endif
       
       // allow users to supply extra command-line arguments

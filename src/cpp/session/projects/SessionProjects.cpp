@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -325,16 +325,29 @@ Error createProjectFile(const json::JsonRpcRequest& request,
 {
    using namespace projects;
    
-   std::string projFile;
-   Error error = json::readParams(request.params, &projFile);
+   std::string projDir;
+   Error error = json::readParams(request.params, &projDir);
    if (error)
       return error;
    
-   FilePath projPath = module_context::resolveAliasedPath(projFile);
-   if (!projPath.exists())
+   // Resolve the path and ensure it exists
+   FilePath projDirPath = module_context::resolveAliasedPath(projDir);
+   FilePath projFilePath;
+   if (!projDirPath.exists())
    {
-      Error error = r_util::writeProjectFile(
-               projPath,
+      return pathNotFoundError(projDir, ERROR_LOCATION);
+   }
+
+   // Check for an existing project file in the directory
+   projFilePath = r_util::projectFromDirectory(projDirPath);
+
+   if (projFilePath.empty())
+   {
+      // We didn't find a project file, so we need to make one. Use the name of the project
+      // directory as the filename.
+      projFilePath = projDirPath.complete(projDirPath.filename() + ".Rproj");
+      error = r_util::writeProjectFile(
+               projFilePath,
                ProjectContext::buildDefaults(),
                ProjectContext::defaultConfig());
       
@@ -342,7 +355,8 @@ Error createProjectFile(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
    }
    
-   pResponse->setResult(projPath.exists());
+   // Return the name of the discovered and/or created .Rproj filename
+   pResponse->setResult(module_context::createAliasedPath(projFilePath));
    return Success();
 }
 
@@ -804,9 +818,6 @@ void startup(const std::string& firstProjectPath)
    // see if this is a project switch
    else if (!switchToProject.empty())
    {
-      // reset switch to project path so its a one shot deal
-      projSettings.setSwitchToProjectPath("");
-
       projectFilePath = resolveProjectSwitch(switchToProject);
    }
 
@@ -959,6 +970,14 @@ Error initialize()
 
    // subscribe to quit for setting last project path
    module_context::events().onQuit.connect(onQuit);
+
+   // reset switch to project path so it's a one shot deal; we only do this after successful init so
+   // that we can retry a project switch if it doesn't get off the ground the first time
+   projects::ProjectsSettings projSettings(options().userScratchPath());
+   if (!projSettings.switchToProjectPath().empty())
+   {
+      projSettings.setSwitchToProjectPath("");
+   }
 
    using boost::bind;
    using namespace module_context;

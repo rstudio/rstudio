@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,6 +48,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/ROptions.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Request.hpp>
@@ -96,6 +97,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    error = json::readParams(request.params, &baseURL);
    if (error)
       return error;
+
+   // save the base URL to persistent state (for forming absolute URLs)
+   persistentState().setActiveClientUrl(baseURL);
 
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
@@ -161,6 +165,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    json::Object sessionInfo ;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
+
+   // build initialization options for client
+   json::Object initOptions;
+   initOptions["restore_workspace"] = options.rRestoreWorkspace();
+   initOptions["run_rprofile"] = options.rRunRprofile();
+   sessionInfo["init_options"] = initOptions;
    
    sessionInfo["userIdentity"] = options.userIdentity();
 
@@ -473,7 +483,22 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["job_state"] = modules::jobs::jobState();
 
-   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsEnabled();
+   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
+
+   // crash handler settings
+   bool canModifyCrashSettings =
+         options.programMode() == kSessionProgramModeDesktop &&
+         crash_handler::configSource() == crash_handler::ConfigSource::User;
+   sessionInfo["crash_handler_settings_modifiable"] = canModifyCrashSettings;
+
+   sessionInfo["project_id"] = session::options().sessionScope().project();
+
+   if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))
+   {
+      sessionInfo["license_message"] =
+            "There are more concurrent users of RStudio Server Pro than your license supports. "
+            "Please obtain an updated license to continue using the product.";
+   }
 
    module_context::events().onSessionInfo(&sessionInfo);
 

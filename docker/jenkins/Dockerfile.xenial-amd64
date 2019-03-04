@@ -19,6 +19,7 @@ RUN apt-get update && \
     apt-get install -y \
     ant \
     build-essential \
+    clang-4.0 \
     debsigs \
     dpkg-sig \
     expect \
@@ -29,6 +30,7 @@ RUN apt-get update && \
     libacl1-dev \
     libbz2-dev \
     libcap-dev \
+    libcurl4-openssl-dev \
     libfuse2 \
     libgtk-3-0 \
     libgl1-mesa-dev \
@@ -65,6 +67,17 @@ RUN cd /tmp \
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN /bin/bash /tmp/install-dependencies
+
+# add clang to system path
+ENV PATH=/usr/lib/llvm-4.0/bin:$PATH
+
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
@@ -74,14 +87,10 @@ RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
-# install cmake
-COPY package/linux/install-dependencies /tmp/
-RUN /bin/bash /tmp/install-dependencies
-
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.11.1 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 

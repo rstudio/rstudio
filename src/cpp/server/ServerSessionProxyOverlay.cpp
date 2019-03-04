@@ -31,8 +31,7 @@ bool proxyRequest(
       const boost::shared_ptr<const http::Request>& pRequest,
       const r_util::SessionContext& context,
       boost::shared_ptr<http::AsyncConnection> ptrConnection,
-      const http::ErrorHandler& errorHandler,
-      const http::ConnectionRetryProfile& connectionRetryProfile)
+      const http::ErrorHandler& errorHandler)
 {
    // not proxying the request
    return false;
@@ -48,6 +47,13 @@ bool proxyLocalhostRequest(
 {
    // not proxying the request
    return false;
+}
+
+Error runVerifyInstallationSession(core::system::user::User& user,
+                                   bool* pHandled)
+{
+   *pHandled = false;
+   return Success();
 }
 
 } // namespace overlay

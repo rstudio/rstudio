@@ -232,6 +232,23 @@ context("LruCache")
       expect_true(cache.get(5000, &val));
       expect_false(cache.get(900, &val));
    }
+
+   test_that("No values when explicitly removed")
+   {
+      LruCache<int, int> cache(100);
+
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      for (int i = 999; i >= 900; --i)
+      {
+         cache.remove(i);
+      }
+
+      expect_true(cache.size() == 0);
+   }
 }
 
 } // namespace unit_tests

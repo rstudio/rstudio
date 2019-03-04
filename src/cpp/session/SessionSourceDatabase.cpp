@@ -175,7 +175,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // return it
    if (json::isType<json::Object>(value))
-      *pProperties = value.get_obj();
+      *pProperties = value.get_value<json::Object>();
    return Success();
 }
 
@@ -492,7 +492,7 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
 
       // read safely (migration)
       json::Value properties = docJson["properties"];
-      properties_ = !properties.is_null() ? properties.get_obj() : json::Object();
+      properties_ = !properties.is_null() ? properties.get_value<json::Object>() : json::Object();
 
       json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
       lastKnownWriteTime_ = !lastKnownWriteTime.is_null()

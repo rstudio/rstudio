@@ -198,3 +198,27 @@ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
 # include utilities
 include(RStudioCMakeUtils)
+
+# define custom installation macro to strip symbols from the binary
+macro(add_stripped_executable _target)
+   add_executable(${_target} ${ARGN})
+   if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+      if(UNIX AND NOT APPLE)
+         add_custom_command(TARGET ${_target} POST_BUILD
+                            COMMAND objcopy --only-keep-debug ${_target} ${_target}.debug
+                            COMMAND objcopy --strip-debug --strip-unneeded ${_target}
+                            COMMAND objcopy --add-gnu-debuglink=${_target}.debug ${_target}
+                            COMMENT "Stripping ${_target}")
+      elseif(APPLE)
+         if(${ARGV1} STREQUAL "MACOSX_BUNDLE")
+            set(STRIP_TARGET "${_target}.app/contents/MacOS/${_target}")
+         else()
+            set(STRIP_TARGET "${_target}")
+         endif()
+         add_custom_command(TARGET ${_target} POST_BUILD
+                            COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
+                            COMMAND strip ${STRIP_TARGET}
+                            COMMENT "Stripping ${STRIP_TARGET}")
+      endif()
+   endif()
+endmacro(add_stripped_executable)

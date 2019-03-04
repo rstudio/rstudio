@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -240,6 +240,16 @@ public:
    {
       return std::string(rDocDirOverride_.c_str());
    }
+
+   int rRestoreWorkspace()
+   {
+      return rRestoreWorkspace_;
+   }
+
+   int rRunRprofile()
+   {
+      return rRunRprofile_;
+   }
    
    std::string defaultRVersion()
    {
@@ -409,6 +419,11 @@ public:
       return allowOverlay() || allowFullUI_;
    }
 
+   bool allowLauncherJobs() const
+   {
+      return allowOverlay() || allowLauncherJobs_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -543,6 +558,16 @@ public:
       return webSocketConnectTimeout_;
    }
    
+   int webSocketLogLevel() const
+   {
+      return webSocketLogLevel_;
+   }
+   
+   int webSocketHandshakeTimeoutMs() const
+   {
+      return webSocketHandshakeTimeoutMs_;
+
+   }
    bool packageOutputInPackageFolder() const
    {
       return packageOutputToPackageFolder_;   
@@ -653,6 +678,8 @@ private:
    bool verifySignatures_;
    int webSocketPingSeconds_;
    int webSocketConnectTimeout_;
+   int webSocketLogLevel_;
+   int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
 
@@ -673,6 +700,8 @@ private:
    std::string rDocDirOverride_;
    std::string defaultRVersion_;
    std::string defaultRVersionHome_;
+   int rRestoreWorkspace_;
+   int rRunRprofile_;
    
    // limits
    int limitFileUploadSizeMb_;
@@ -715,6 +744,7 @@ private:
    bool allowPublish_;
    bool allowPresentationCommands_;
    bool allowFullUI_;
+   bool allowLauncherJobs_;
 
    // user info
    bool showUserIdentity_;

@@ -63,7 +63,9 @@
 	   
 	   .outerProductInfo {
 	      text-align: center;
+	      width: 580px;
 	   }
+
 		.licenseLabel {
 			font-size: 12pt;
 			font-weight: bold;
@@ -83,7 +85,7 @@
 					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
 				</g:HTMLPanel>
 				<g:HTMLPanel styleName="{style.productVersion}">
-					<g:InlineLabel text="&copy; 2009-2018 RStudio, Inc."></g:InlineLabel>
+					<g:InlineLabel text="&copy; 2009-2019 RStudio, Inc."></g:InlineLabel>
 				</g:HTMLPanel>
 			</g:HTMLPanel>
 	   </g:HTMLPanel>

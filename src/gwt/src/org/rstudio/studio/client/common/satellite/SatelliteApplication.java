@@ -74,13 +74,6 @@ public class SatelliteApplication
       pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
       
-      // Register an event handler for themes so it will be triggered after a UIPrefsChangedEvent
-      // updates the theme.
-      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
-      uiPrefs.theme().bind(theme -> events.fireEvent(new ThemeChangedEvent()));
-      uiPrefs.getFlatTheme().bind(theme -> events.fireEvent(new ThemeChangedEvent()));
-      
       commands.showRequestLog().addHandler(new CommandHandler()
       {
          public void onCommand(AppCommand command)

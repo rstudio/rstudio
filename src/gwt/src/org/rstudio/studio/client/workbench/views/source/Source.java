@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -196,7 +197,8 @@ public class Source implements InsertSourceHandler,
                              ReplaceRangesEvent.Handler,
                              SetSelectionRangesEvent.Handler,
                              GetEditorContextEvent.Handler,
-                             RequestDocumentSaveEvent.Handler
+                             RequestDocumentSaveEvent.Handler,
+                             RequestDocumentCloseEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -598,6 +600,7 @@ public class Source implements InsertSourceHandler,
       events.addHandler(SetSelectionRangesEvent.TYPE, this);
       events.addHandler(OpenProfileEvent.TYPE, this);
       events.addHandler(RequestDocumentSaveEvent.TYPE, this);
+      events.addHandler(RequestDocumentCloseEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -3042,6 +3045,13 @@ public class Source implements InsertSourceHandler,
                }
 
                @Override
+               public void onCancelled()
+               {
+                  super.onCancelled();
+                  processNextEntry.execute();
+               }
+
+               @Override
                public void onFailure(ServerError error)
                {
                   String message = error.getUserMessage();
@@ -4577,11 +4587,8 @@ public class Source implements InsertSourceHandler,
       onShowProfiler(event);
    }
    
-   @Override
-   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   private void saveDocumentIds(JsArrayString ids, final CommandWithArg<Boolean> onSaveCompleted)
    {
-      final JsArrayString ids = event.getDocumentIds();
-      
       // we use a timer that fires the document save completed event,
       // just to ensure the server receives a response even if something
       // goes wrong during save or some client-side code throws. unfortunately
@@ -4594,12 +4601,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void run()
          {
-            if (SourceWindowManager.isMainSourceWindow())
-            {
-               server_.requestDocumentSaveCompleted(
-                     savedSuccessfully.get(),
-                     new VoidServerRequestCallback());
-            }
+            onSaveCompleted.execute(savedSuccessfully.get());
          }
       };
       completedTimer.schedule(5000);
@@ -4625,6 +4627,73 @@ public class Source implements InsertSourceHandler,
             idSet.add(id);
          
          saveUnsavedDocuments(idSet, onCompleted);
+      }
+   }
+   
+   @Override
+   public void onRequestDocumentSave(RequestDocumentSaveEvent event)
+   {
+      saveDocumentIds(event.getDocumentIds(), success -> 
+      {
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            server_.requestDocumentSaveCompleted(success,
+                  new VoidServerRequestCallback());
+         }
+      });
+   }
+   
+   @Override
+   public void onRequestDocumentClose(RequestDocumentCloseEvent event)
+   {
+      JsArrayString ids = event.getDocumentIds();
+      Command closeEditors = () ->
+      {
+         // Close each of the requested tabs
+         if (ids != null)
+         {
+            for (EditingTarget target: editors_)
+            {
+              if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
+              {
+                 view_.closeTab(target.asWidget(), false /* non interactive */);
+              }
+            }
+         }
+         
+         // Let the server know we've completed the task
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            server_.requestDocumentCloseCompleted(true,
+                  new VoidServerRequestCallback());
+         }
+      };
+
+      if (event.getSave())
+      {
+         // Saving, so save unsaved documents before closing the tab(s).
+         saveDocumentIds(ids, success ->
+         {
+            if (success)
+            {
+               // All unsaved changes saved; OK to close
+               closeEditors.execute();
+            }
+            else
+            {
+               // We didn't save (or the user cancelled), so let the server know
+               if (SourceWindowManager.isMainSourceWindow())
+               {
+                  server_.requestDocumentCloseCompleted(false,
+                        new VoidServerRequestCallback());
+               }
+            }
+         });
+      }
+      else
+      {
+         // If not saving, just close the windows immediately
+         closeEditors.execute();
       }
    }
    

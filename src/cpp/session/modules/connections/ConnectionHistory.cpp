@@ -168,7 +168,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
                             ERROR_LOCATION);
       }
 
-      *pConnections = parsedJson.get_array();
+      *pConnections = parsedJson.get_value<json::Array>();
    }
 
    return Success();

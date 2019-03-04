@@ -44,8 +44,8 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                       ProjectTemplateOptions projectTemplateOptions,
                       ServerRequestCallback<String> callback);
    
-   void createProjectFile(String projectFile,
-                          ServerRequestCallback<Boolean> callback);
+   void createProjectFile(String projectDir,
+                          ServerRequestCallback<String> callback);
    
    void packageSkeleton(String packageName,
                         String packageDirectory,

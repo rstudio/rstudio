@@ -49,7 +49,7 @@ void putState(const std::string& scope,
       pStateContainer->insert(json::Member(scope, newScopeObject));
    }
    const json::Value& scopeValue = pStateContainer->operator[](scope);
-   json::Object& scopeObject = scopeValue.get_obj();
+   json::Object scopeObject = scopeValue.get_obj();
    
    // insert the value into the scope
    scopeObject.insert(entry);
@@ -249,7 +249,7 @@ json::Value ClientState::getProjectPersistent(std::string scope,
       if (!json::isType<core::json::Object>((*i).value()))
          return json::Value();
       json::Object scopeObject = (*i).value().get_obj();
-      return json::Value(scopeObject[name]); // return a copy of the value
+      return scopeObject[name].clone();
    }
 }
 

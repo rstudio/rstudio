@@ -1,7 +1,7 @@
 /*
  * LauncherJobManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,19 @@
 
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
-import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class LauncherJobManager
 {
-   void startTrackingAllJobStatuses()
+   public void startTrackingAllJobStatuses()
    {
    }
    
-   void stopTrackingAllJobStatuses()
+   public void stopTrackingAllJobStatuses()
+   {
+   }
+   
+   public void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
    {
    }
 }

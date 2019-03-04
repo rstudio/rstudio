@@ -486,7 +486,7 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    error = r::json::jsonValueFromList(sexpDetails, &resultVal);
    if (resultVal.type() != json::ObjectType)
       return Error(json::errc::ParseError, ERROR_LOCATION);
-   json::Object result = resultVal.get_obj();
+   json::Object result = resultVal.get_value<json::Object>();
 
    // augment with website project information
    FilePath path = module_context::resolveAliasedPath(target);

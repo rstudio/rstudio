@@ -21,6 +21,7 @@ namespace rstudio {
 namespace server {
 
 void Options::addOverlayOptions(
+                       boost::program_options::options_description* pVerify,
                        boost::program_options::options_description* pServer,
                        boost::program_options::options_description* pWWW,
                        boost::program_options::options_description* pRSession,

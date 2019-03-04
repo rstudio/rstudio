@@ -1,7 +1,7 @@
 /*
  * SessionOverlay.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,10 +31,12 @@ namespace overlay {
 
 bool isSuspendable();
 
-bool launcherJobsEnabled();
+bool launcherJobsFeatureDisplayed();
 
 void streamLauncherOutput(const std::string& jobId,
                           bool listening);
+
+int verifyInstallation();
 
 core::Error initialize();
    

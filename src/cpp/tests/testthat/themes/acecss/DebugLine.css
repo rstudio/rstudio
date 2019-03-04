@@ -2,7 +2,7 @@
 
 .ace-debug-line .ace_gutter {
   background: #000000;
-  color: rgb(128,128,128);
+  color: #808080;
 }
 
 .ace-debug-line .ace_print-margin {
@@ -46,60 +46,77 @@
 }
 
 .ace-debug-line .ace_marker-layer .ace_selected-word {
-  border: 1px solid rgba(115, 89, 126, 0.88);
+  border: 1px solid rgba(115, 89, 126, 0.88)
 }
 
 .ace-debug-line .ace_fold {
-    background-color: #CC7833;
-    border-color: #FFFFFF;
+  background-color: #CC7833;
+  border-color: #FFFFFF;
 }
+
+.ace-debug-line .ace_invisible {
+  color: #404040;
+}
+
 
 .ace-debug-line .ace_keyword {
   color: #CC7833;
+
 }
 
 .ace-debug-line .ace_keyword.ace_operator {
   color: #CC7833;
+
 }
 
 .ace-debug-line .ace_constant {
   color: #3387CC;
+
 }
 
 .ace-debug-line .ace_support.ace_function {
   color: #C83730;
+
 }
 
 .ace-debug-line .ace_support.ace_type {
   color: #FFFFFF;
+
 }
 
 .ace-debug-line .ace_string {
   color: #66CC33;
+
 }
 
 .ace-debug-line .ace_string.ace_regexp {
   color: #CCCC33;
+
 }
 
 .ace-debug-line .ace_comment {
   color: #9933CC;
+
 }
 
 .ace-debug-line .ace_variable {
   color: #FFFFFF;
+
 }
 
 .ace-debug-line .ace_variable.ace_parameter {
   font-style: italic;
+
 }
 
 .ace-debug-line .ace_entity.ace_name.ace_tag {
   text-decoration: underline;
+
 }
 
 .ace-debug-line .ace_marker-layer .ace_active_debug_line {
   background-color: #ABABAB;
+
   position: absolute;
   z-index: -1;
 }

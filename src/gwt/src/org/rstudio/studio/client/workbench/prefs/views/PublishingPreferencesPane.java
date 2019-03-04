@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -74,7 +75,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       accountList_ = new RSConnectAccountList(server, globalDisplay, true, 
             true);
-      accountList_.setHeight("200px");
+      accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
       accountList_.getElement().getStyle().setMarginLeft(3, Unit.PX);
@@ -228,6 +229,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
       add(caBundlePath_);
 
+      add(spacedBefore(new HelpLink("Troubleshooting Deployments", 
+            "troubleshooting_deployments")));
+      
       server_.hasOrphanedAccounts(new ServerRequestCallback<Double>()
       {
          @Override

@@ -34,6 +34,7 @@ set (CORE_SOURCE_FILES
    BrowserUtils.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
+   CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Error.cpp
@@ -129,6 +130,7 @@ set (CORE_SOURCE_FILES
    text/DcfParser.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
+   zlib/zlib.cpp
 )
 
 # UNIX specific
@@ -335,6 +337,7 @@ target_link_libraries(
    rstudio-core
    rstudio-core-hunspell
    ${Boost_LIBRARIES}
+   ${CRASHPAD_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
 

@@ -1,12 +1,5 @@
 #!/usr/bin/env Rscript
 
-if (!require("highlight", quietly = TRUE)) {
-   install.packages("highlight")
-   if (!require("highlight")) {
-      stop("This script requires 'highlight' in order to run!")
-   }
-}
-
 if (!"tools:rstudio" %in% search())
 {
    # Needed to source the file below.
@@ -186,7 +179,7 @@ themeFiles <- list.files(
    pattern = "\\.css$"
 )
 
-## Process the theme files -- we strip out the name preceeding the theme,
+## Process the theme files -- we strip out the name preceding the theme,
 ## and then add some custom rules.
 for (themeFile in themeFiles) {
    content <- suppressWarnings(readLines(themeFile))

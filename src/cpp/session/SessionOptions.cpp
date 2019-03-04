@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -244,9 +244,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kWebSocketConnectTimeout,
        value<int>(&webSocketConnectTimeout_)->default_value(3),
        "WebSocket initial connection timeout (seconds)")
+      (kWebSocketLogLevel,
+       value<int>(&webSocketLogLevel_)->default_value(0),
+       "WebSocket log level (0=none, 1=errors, 2=activity, 3=all)")
+      (kWebSocketHandshakeTimeout,
+       value<int>(&webSocketHandshakeTimeoutMs_)->default_value(5000),
+       "WebSocket protocol handshake timeout (ms)")
       (kPackageOutputInPackageFolder,
-         value<bool>(&packageOutputToPackageFolder_)->default_value(false),
-         "devtools check and devtools build output to package project folder");
+       value<bool>(&packageOutputToPackageFolder_)->default_value(false),
+       "devtools check and devtools build output to package project folder");
 
    // allow options
    options_description allow("allow");
@@ -292,7 +298,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "allow presentation commands")
       ("allow-full-ui",
          value<bool>(&allowFullUI_)->default_value(true),
-       "allow full standalone ui mode");
+       "allow full standalone ui mode")
+      ("allow-launcher-jobs",
+         value<bool>(&allowLauncherJobs_)->default_value(true),
+         "allow running jobs via launcher");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
@@ -341,7 +350,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          "Override for R_HOME (used for debug configurations)")
       ("r-doc-dir-override",
          value<std::string>(&rDocDirOverride_)->default_value(""),
-         "Override for R_DOC_DIR (used for debug configurations)");
+         "Override for R_DOC_DIR (used for debug configurations)")
+      ("r-restore-workspace",
+         value<int>(&rRestoreWorkspace_)->default_value(kRestoreWorkspaceDefault),
+         "Override user/project restore workspace setting")
+      ("r-run-rprofile",
+         value<int>(&rRunRprofile_)->default_value(kRunRprofileDefault),
+         "Override user/project .Rprofile run setting");
 
    // limits options
    options_description limits("limits");
@@ -500,10 +515,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    programIdentity_ = "rsession-" + userIdentity_;
 
    // provide special home path in temp directory if we are verifying
-   if (verifyInstallation_)
+   bool isLauncherSession = getBoolOverlayOption(kLauncherSessionOption);
+   if (verifyInstallation_ && !isLauncherSession)
    {
       // we create a special home directory in server mode (since the
       // user we are running under might not have a home directory)
+      // we do not do this for launcher sessions since launcher verification
+      // must be run as a specific user with the normal home drive setup
       if (programMode_ == kSessionProgramModeServer)
       {
          verifyInstallationHomeDir_ = "/tmp/rstudio-verify-installation";

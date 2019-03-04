@@ -65,7 +65,7 @@ refreshenv
 # install some deps via chocolatey
 choco install -y cmake --version 3.12.1 --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8 --version 8.0.181
+choco install -y jdk8
 choco install -y ant --version 1.10.5
 choco install -y 7zip --version 18.5.0.20180730
 choco install -y git --version 2.18.0

@@ -390,8 +390,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # combine into a data.frame
    info <- .rs.rbindList(parts)
    
-   # find which packages are loaded
-   info$Loaded <- info$Package %in% loadedNamespaces()
+   # find which packages are currently attached (be careful to handle
+   # cases where package is installed into multiple libraries)
+   #
+   # we suppress warnings here as 'find.packages(.packages())' can warn
+   # if a package that is attached is no longer actually installed
+   loaded <- suppressWarnings(
+      normalizePath(file.path(info$LibPath, info$Package), winslash = "/", mustWork = FALSE) %in%
+      normalizePath(find.package(.packages(), quiet = TRUE), winslash = "/", mustWork = FALSE)
+   )
    
    # extract fields relevant to us
    packages <- data.frame(
@@ -401,7 +408,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       library_index    = match(info$LibPath, .libPaths(), nomatch = 0L),
       version          = info$Version,
       desc             = info$Title,
-      loaded           = info$Loaded,
+      loaded           = loaded,
       source           = info$Source,
       browse_url       = info$BrowseUrl,
       check.rows       = TRUE,
@@ -1422,7 +1429,25 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # is the directory old? if so, assume the prior R process launched
    # to produce available.packages crashed or similar
    info <- file.info(dir)
-   diff <- difftime(Sys.time(), info$mtime, units = "secs")
+   time <- info$mtime
+   
+   # in some cases, mtime may not be available -- in that case, fall
+   # back to the time that was serialized when the process was launched
+   #
+   # https://github.com/rstudio/rstudio/issues/4312
+   #
+   # if all-else fails, just use the current time. this effectively means
+   # that we will never mark the directory as 'stale', which means that
+   # the dependency discovery feature may not work -- but at this point
+   # there's not much else we can do
+   if (is.na(time)) {
+      time <- .rs.tryCatch(readRDS(file.path(dir, "time.rds")))
+      if (inherits(time, "error"))
+         time <- Sys.time()
+   }
+   
+   # check to see if the directory is 'stale'
+   diff <- difftime(Sys.time(), time, units = "secs")
    if (diff > 120)
       return("STALE")
    
@@ -1473,6 +1498,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    dir <- tempfile("rstudio-available-packages-")
    dir.create(dir, showWarnings = FALSE)
    .rs.availablePackagesPendingEnv[[reposString]] <- dir
+   
+   # mtime may be unreliable (or access could fail in some cases) so
+   # instead serialize the current time to a file rather than relying on OS
+   saveRDS(Sys.time(), file = file.path(dir, "time.rds"))
    
    # move there
    owd <- setwd(dir)
@@ -1528,10 +1557,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # get the directory and read packages.rds
    dir <- .rs.availablePackagesPendingEnv[[reposString]]
    rds <- file.path(dir, "packages.rds")
-   packages <- readRDS(rds)
    
-   # add it to the cache
-   .rs.availablePackagesEnv[[reposString]] <- packages
+   # attempt to read the database and add it to the cache
+   packages <- .rs.tryCatch(readRDS(rds))
+   if (!inherits(packages, "error"))
+      .rs.availablePackagesEnv[[reposString]] <- packages
    
    # remove state directory and mark as no longer pending
    unlink(dir, recursive = TRUE)

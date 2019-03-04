@@ -19,7 +19,11 @@ testConfig() {
 }
 
 verifyInstallation() {
- `${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0`
+ ${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0 $1 $2 $3 $4 $5 $6 $7 $8
+}
+
+isServerRunning() {
+ pgrep rserver &> /dev/null
 }
 
 
@@ -52,9 +56,16 @@ case "$1" in
         ;;
 
     verify-installation)
+        if isServerRunning ; then
+           echo "Server is running and must be stopped before running verify-installation"
+           exit 1
+        fi
+
+        # we call stop here even though the service should already be stopped
+        # just in case (we don't want the service running when invoking verify-installation)
         daemonCmd "stop" 2>/dev/null
-        verifyInstallation
-        daemonCmd "start"
+
+        verifyInstallation $2 $3 $4 $5 $6 $7 $8 $9
         ;;
 
     suspend-session)

@@ -48,7 +48,7 @@ if(WIN32)
 
 endif()
 
-add_executable(diagnostics
+add_stripped_executable(diagnostics
   ${DIAGNOSTICS_SOURCE_FILES}
 )
 

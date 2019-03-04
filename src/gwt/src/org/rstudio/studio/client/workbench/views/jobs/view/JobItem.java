@@ -1,7 +1,7 @@
 /*
  * JobItem.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,9 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobStopEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
@@ -60,12 +60,6 @@ public class JobItem extends Composite
 
       @Source("select_2x.png")
       ImageResource jobSelect();
-
-      @Source("info_2x.png")
-      ImageResource jobInfo();
-   
-      @Source("launcher_2x.png")
-      ImageResource launcherJobType();
    }
    
    public interface Styles extends CssResource
@@ -85,10 +79,10 @@ public class JobItem extends Composite
       String outer();
       String panel();
       String select();
+      String noSelect();
       String status();
       String progress();
       String failed();
-      String jobType();
    }
 
    public JobItem(final Job job)
@@ -103,15 +97,8 @@ public class JobItem extends Composite
       launcherStop_ = new ToolbarButton(
             RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
             {
-               // TODO: different UI that exposes both "stop" and "kill" if the job
-               // supports it. Probably a dialog with a "Force" checkbox which is
-               // always deselected by default.
-               
-               // TODO: also figure out how to incorporate "cancel", which is used
-               // to stop a job that is still being scheduled; maybe handle that
-               // entirely server-side?
-               RStudioGinjector.INSTANCE.getServer().stopLauncherJob(
-                     job.id, false /*kill*/, new VoidServerRequestCallback());
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+                     new LauncherJobStopEvent(job.id, getJob().state));
             });
       initWidget(uiBinder.createAndBindUi(this));
       
@@ -120,31 +107,36 @@ public class JobItem extends Composite
       
       if (job.type == JobConstants.JOB_TYPE_LAUNCHER)
       {
-         jobType_.setResource(new ImageResource2x(RESOURCES.launcherJobType()));
-         jobType_.setTitle("Cluster: " + job.cluster);
+         jobDetail_.setText(job.cluster);
       }
       else
-         jobType_.setVisible(false);
+         jobDetail_.setVisible(false);
       
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {
-         detailsImage = new ImageResource2x(RESOURCES.jobInfo());
+         select_.addStyleName(styles_.noSelect());
       }
       
       select_.setResource(detailsImage);
 
-      ClickHandler selectJob = evt -> 
+      ClickHandler selectJob = evt ->
       {
          if (DomUtils.isDescendant(
                Element.as(evt.getNativeEvent().getEventTarget()),
-               running_.getElement()))
+               running_.getElement()) ||
+             DomUtils.isDescendant(
+               Element.as(evt.getNativeEvent().getEventTarget()),
+                   stop_.getElement()) ||
+             DomUtils.isDescendant(
+                   Element.as(evt.getNativeEvent().getEventTarget()),
+                   launcherStop_.getElement()))
          {
-            // ignore clicks occurring inside the progress area
+            // ignore clicks occurring inside the progress area, or the stop button
             return;
          }
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new JobSelectionEvent(job.id, true, true));
+               new JobSelectionEvent(job.id, job.type, true, true));
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
@@ -288,7 +280,7 @@ public class JobItem extends Composite
    @UiField ProgressBar progress_;
    @UiField Image select_;
    @UiField Image spinner_;
-   @UiField Image jobType_;
+   @UiField Label jobDetail_;
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;

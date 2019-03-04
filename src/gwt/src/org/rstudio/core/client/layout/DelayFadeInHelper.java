@@ -1,7 +1,7 @@
 /*
  * DelayFadeInHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,13 @@ public class DelayFadeInHelper
 {
    public DelayFadeInHelper(Widget widget)
    {
+      this(widget, 250);
+   }
+
+   public DelayFadeInHelper(Widget widget, int ms)
+   {
       widget_ = widget;
+      animationMs_ = ms;
    }
 
    public void beginShow()
@@ -39,7 +45,7 @@ public class DelayFadeInHelper
             {
                animation_ = new FadeInAnimation(
                      widget_, 1, null);
-               animation_.run(250);
+               animation_.run(animationMs_);
             }
          }
       }.schedule(750);
@@ -70,4 +76,5 @@ public class DelayFadeInHelper
    private FadeInAnimation animation_;
 
    private final Widget widget_;
+   private final int animationMs_;
 }

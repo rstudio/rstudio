@@ -896,7 +896,8 @@ public class CompletionRequester
          // is a custom helpHandler provided, indicating that the "source"
          // isn't a package but rather some custom DollarNames scope)
          if ((RCompletionType.isFunctionType(type) ||
-             type == RCompletionType.SNIPPET) &&
+             type == RCompletionType.SNIPPET ||
+             type == RCompletionType.DATASET) &&
              helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(

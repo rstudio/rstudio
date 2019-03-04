@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+#include <core/CrashHandler.hpp>
 #include <core/Error.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
@@ -97,6 +98,7 @@
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/SessionClientEventService.hpp>
+#include <session/SessionUrlPorts.hpp>
 #include <session/RVersionSettings.hpp>
 
 #include "SessionAddins.hpp"
@@ -217,6 +219,12 @@ namespace session {
 
 bool disableExecuteRprofile()
 {
+   // check for session-specific override
+   if (options().rRunRprofile() == kRunRprofileNo)
+      return true;
+   if (options().rRunRprofile() == kRunRprofileYes)
+      return false;
+
    bool disableExecuteRprofile = false;
 
    const projects::ProjectContext& projContext = projects::projectContext();
@@ -485,6 +493,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // content urls
       (content_urls::initialize)
 
+      // URL port transformations
+      (url_ports::initialize)
+
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))
    
@@ -604,9 +615,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
                LOG_ERROR(error);
          }
       }
-
       rsession::options().verifyInstallationHomeDir().removeIfExists();
-      exitEarly(EXIT_SUCCESS);
+
+      int exitCode = modules::overlay::verifyInstallation();
+      exitEarly(exitCode);
    }
 
    // run unit tests
@@ -1353,6 +1365,12 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
+   // check options for session-specific override
+   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
+      return false;
+   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
+      return true;
+   
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
@@ -1641,6 +1659,22 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
+      // convenience flags for server and desktop mode
+      bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
+      bool serverMode = options.programMode() == kSessionProgramModeServer;
+
+      // catch unhandled exceptions
+      core::crash_handler::ProgramMode mode = serverMode ?
+               core::crash_handler::ProgramMode::Server :
+               core::crash_handler::ProgramMode::Desktop;
+      error = core::crash_handler::initialize(mode);
+      if (error)
+         LOG_ERROR(error);
+
+      // set program mode environment variable so any child processes
+      // (like rpostback) can determine what the program mode is
+      core::system::setenv(kRStudioProgramMode, options.programMode());
+
       // reflect stderr logging
       core::system::setLogToStderr(options.logStderr());
 
@@ -1657,10 +1691,6 @@ int main (int argc, char * const argv[])
 
       // initialize file lock config
       FileLock::initialize();
-
-      // convenience flags for server and desktop mode
-      bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
-      bool serverMode = options.programMode() == kSessionProgramModeServer;
 
       // re-initialize log for desktop mode
       if (desktopMode)
@@ -1946,6 +1976,14 @@ int main (int argc, char * const argv[])
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      if (options.rRestoreWorkspace() != kRestoreWorkspaceDefault)
+      {
+         // if workspace restore is set to a non-default option, apply it to
+         // environment restoration as well (the intent of the option is usually
+         // to recover a session with an overhelming or problematic environment)
+         rOptions.restoreEnvironmentOnResume =
+            options.rRestoreWorkspace() == kRestoreWorkspaceYes;
+      }
       rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();

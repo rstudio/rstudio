@@ -1,7 +1,7 @@
 /*
  * SessionThemes.cpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,6 +48,9 @@ namespace modules {
 namespace themes {
 
 namespace {
+
+bool s_deferredInitComplete = false;
+module_context::WaitForMethodFunction s_waitForThemeColors;
 
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
@@ -189,7 +192,7 @@ void getThemesInLocation(
 
             (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
                name,
-               urlPrefix + themeFile.filename(),
+               urlPrefix + http::util::urlEncode(themeFile.filename()),
                isDark);
          }
       }
@@ -288,6 +291,47 @@ SEXP rs_getThemes()
    }
 
    return rstudio::r::sexp::create(themeListBuilder, &protect);
+}
+
+/**
+ * @brief Returns the foreground and background color of the active theme.
+ *
+ * @return An R list with the foreground and background, or NULL if the color could not be
+ *         determined.
+ */
+SEXP rs_getThemeColors()
+{
+   r::sexp::Protect protect;
+   json::JsonRpcRequest request;
+   r::sexp::ListBuilder themeColors(&protect);
+
+   // Don't attempt to call the WaitForMethod unless the session has fully initialized.
+   if (!s_deferredInitComplete)
+      return R_NilValue;
+
+   // Query the client for its current theme colors
+   if (!s_waitForThemeColors(&request, 
+            ClientEvent(client_events::kComputeThemeColors, json::Value())))
+   {
+      // Client did not return colors
+      r::exec::warning("Active theme colors not available.");
+      return R_NilValue;
+   }
+   
+   // Parse the theme colors returned by the client
+   std::string foreground, background;
+   Error error = json::readParams(request.params, &foreground, &background);
+   if (error)
+   {
+      // Client returned something we didn't understand
+      r::exec::warning("No theme colors could be determined: " + error.summary());
+      return R_NilValue;
+   }
+
+   // Form the list and return to caller 
+   themeColors.add("foreground", foreground);
+   themeColors.add("background", background);
+   return r::sexp::create(themeColors, &protect);
 }
 
 /**
@@ -448,6 +492,11 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
+void onDeferredInit(bool newSession)
+{
+   s_deferredInitComplete = true;
+}
+
 } // anonymous namespace
 
 /**
@@ -484,7 +533,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
 }
 
 /**
- * @brief Gets a custom theme that is installed for all users.
+ * @brief Gets a custom theme that is installed for this user.
  *
  * @param request       The HTTP request from the client.
  * @param pResponse     The HTTP response, which will contain the theme CSS.
@@ -507,7 +556,12 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
+   s_waitForThemeColors = registerWaitForMethod("set_computed_theme_colors");
+
    RS_REGISTER_CALL_METHOD(rs_getThemes);
+   RS_REGISTER_CALL_METHOD(rs_getThemeColors);
+
+   events().onDeferredInit.connect(onDeferredInit);
 
    // We need to register our URI handlers twice to cover the data viewer grid document because those
    // links have a different prefix.

@@ -69,6 +69,10 @@ public:
    {
    }
 
+   virtual ~FileStreamResponse()
+   {
+   }
+
    Error initialize()
    {
       return file_.open_r(&fileStream_);
@@ -110,7 +114,6 @@ private:
    FilePath file_;
    boost::shared_ptr<std::istream> fileStream_;
    std::streamsize bufferSize_;
-   bool useGzip_;
    bool padding_;
 
    uint64_t totalRead_;
@@ -134,6 +137,10 @@ public:
       bufferSize_(bufferSize),
       compressionType_(compressionType),
       finished_(false)
+   {
+   }
+
+   virtual ~ZlibCompressionStreamResponse()
    {
    }
 
@@ -732,6 +739,17 @@ void Response::setStreamFile(const FilePath& filePath,
                              const Request& request,
                              std::streamsize buffSize)
 {
+   std::string contentType = filePath.mimeContentType("application/octet-stream");
+   setContentType(contentType);
+
+   // if content type indicates compression, do not compress it again
+   // Firefox is unable to handle this case, so we specifically guard against it
+   bool compress = (contentType != "application/x-gzip" &&
+                    contentType != "application/zip" &&
+                    contentType != "application/x-bzip" &&
+                    contentType != "application/x-bzip2" &&
+                    contentType != "application/x-tar");
+
    boost::optional<CompressionType> compressionType;
 
 #ifndef _WIN32
@@ -739,12 +757,12 @@ void Response::setStreamFile(const FilePath& filePath,
    // we prefer the inferior gzip to deflate
    // because older browsers (like IE11) claim to support
    // deflate but in actuality cannot handle it!
-   if (request.acceptsEncoding(kGzipEncoding))
+   if (request.acceptsEncoding(kGzipEncoding) && compress)
    {
       setContentEncoding(kGzipEncoding);
       compressionType = CompressionType::Gzip;
    }
-   else if (request.acceptsEncoding(kDeflateEncoding))
+   else if (request.acceptsEncoding(kDeflateEncoding) && compress)
    {
       setContentEncoding(kDeflateEncoding);
       compressionType = CompressionType::Deflate;

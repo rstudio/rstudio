@@ -236,9 +236,8 @@ public:
       return std::string(get_impl().GetString(), get_impl().GetStringLength());
    }
 
-   Object& get_obj() const;
-
-   Array& get_array() const;
+   Object get_obj() const;
+   Array get_array() const;
 
    bool get_bool() const
    {
@@ -263,6 +262,11 @@ public:
    double get_real() const
    {
       return get_impl().GetDouble();
+   }
+
+   Value clone()
+   {
+      return Value(*this);
    }
 
    template< typename T > T get_value() const;
@@ -366,16 +370,40 @@ public:
    {
    public:
       friend class Object;
-      Member(const std::string& name, Value value) :
-         name_(name), value_(value) {}
+
+      Member(const std::string& name,
+             const Value& value) :
+         name_(name),
+         pDoc_(nullptr),
+         value_(value)
+      {
+      }
 
       const std::string& name() const { return name_; }
-      Value value() const { return value_; }
+
+      Value value() const
+      {
+         if (pDoc_ != nullptr)
+            return Value(*pDoc_);
+         else
+            return value_;
+      }
 
    private:
-      Member() {}
+      Member() :
+         pDoc_(nullptr)
+      {
+      }
+
+      Member(const std::string& name,
+             DocumentType* pDoc) :
+         name_(name),
+         pDoc_(pDoc)
+      {
+      }
 
       std::string name_;
+      DocumentType* pDoc_;
       Value value_;
    };
 
@@ -450,7 +478,7 @@ public:
             return Member();
 
          auto iter = parent_->get_impl().MemberBegin() + num_;
-         return Member(iter->name.GetString(), Value(static_cast<DocumentType&>(iter->value)));
+         return Member(iter->name.GetString(), &(static_cast<DocumentType&>(iter->value)));
       }
 
    private:
@@ -498,7 +526,9 @@ public:
 
    void insert(const Member& member)
    {
-      (*this)[member.name()] = member.value();
+      // clone the member's value to ensure we don't
+      // inadvertently move a value pointer
+      (*this)[member.name()] = member.value().clone();
    }
 
    bool empty() const

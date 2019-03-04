@@ -1,7 +1,7 @@
 /*
  * ClientStateUpdater.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,6 +82,16 @@ public class ClientStateUpdater extends TimeBufferedCommand
          }
       });
    }
+   
+   public void pauseSendingUpdates()
+   {
+      pauseSendingUpdates_ = true;
+   }
+   
+   public void resumeSendingUpdates()
+   {
+      pauseSendingUpdates_ = false;
+   }
 
    @Override
    protected void performAction(final boolean shouldSchedulePassive)
@@ -105,6 +115,12 @@ public class ClientStateUpdater extends TimeBufferedCommand
 
       try
       {
+         if (pauseSendingUpdates_)
+         {
+            onComplete(shouldSchedulePassive);
+            return;
+         }
+
          server_.updateClientState(
                state.getTemporaryData(),
                state.getPersistentData(),
@@ -150,4 +166,5 @@ public class ClientStateUpdater extends TimeBufferedCommand
    private final EventBus events_;
    private final WorkbenchServerOperations server_;
    private Token barrierToken_;
+   private boolean pauseSendingUpdates_ = false;
 }

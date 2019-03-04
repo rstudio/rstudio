@@ -24,7 +24,7 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
 {
    public interface WizardNavigationPageProducer<I,T>
    {
-      public Widget createMainWidget(ArrayList<WizardPage<I,T>> pages);
+      Widget createMainWidget(ArrayList<WizardPage<I,T>> pages);
    }
    
    public WizardNavigationPage(String title,
@@ -40,16 +40,10 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
            image,
            largeImage,
            pages,
-           new WizardNavigationPageProducer<I, T>()
-           {
-              @Override
-              public Widget createMainWidget(ArrayList<WizardPage<I, T>> pages)
-              {
-                 return new WizardPageSelector<I, T>(pages);
-              }
-           });
+           WizardPageSelector::new
+      );
    }
-   
+
    public WizardNavigationPage(String title,
                                String subTitle,
                                String pageCaption,

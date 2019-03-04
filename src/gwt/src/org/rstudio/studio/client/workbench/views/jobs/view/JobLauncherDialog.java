@@ -1,7 +1,7 @@
 /*
  * JobLauncherDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,16 +24,22 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
 {
+   public enum JobSource
+   {
+      Script,
+      Selection
+   }
+
    public JobLauncherDialog(String caption,
-                            String jobName,
+                            JobSource source,
                             FileSystemItem scriptPath,
                             OperationWithInput<JobLaunchSpec> operation)
    {
-      this(caption, jobName, scriptPath, scriptPath.getParentPath(), null, operation);
+      this(caption, source, scriptPath, scriptPath.getParentPath(), null, operation);
    }
    
    public JobLauncherDialog(String caption,
-                            String jobName,
+                            JobSource source,
                             FileSystemItem scriptPath,
                             FileSystemItem workingDir,
                             String code,
@@ -53,7 +59,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
          controls_.hideScript();
       
       code_ = code;
-      jobName_ = jobName;
+      source_ = source;
 
       setOkButtonCaption("Start");
    }
@@ -61,9 +67,20 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    @Override
    protected JobLaunchSpec collectInput()
    {
+      // Compute a reasonable name for the job based on the selected script (if any)
+      String jobName;
+      if (source_ == JobSource.Selection)
+      {
+         jobName = computeSelectionJobName(controls_.scriptPath());
+      }
+      else 
+      {
+         jobName = FileSystemItem.getNameFromPath(controls_.scriptPath());
+      }
+
       if (code_ == null)
       {
-         return JobLaunchSpec.create(jobName_,
+         return JobLaunchSpec.create(jobName,
                controls_.scriptPath(), 
                "unknown", // encoding unknown (will try to look it up later)
                controls_.workingDir(),
@@ -72,7 +89,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
       }
       else
       {
-         return JobLaunchSpec.create(jobName_,
+         return JobLaunchSpec.create(jobName,
                code_, 
                controls_.workingDir(), 
                controls_.importEnv(), 
@@ -94,7 +111,19 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
       return controls_;
    }
    
+   public static String computeSelectionJobName(String path)
+   {
+      if (StringUtil.isNullOrEmpty(path))
+      {
+         return "Current selection";
+      }
+      else
+      {
+         return FileSystemItem.getNameFromPath(path) + " selection";
+      }
+   }
+   
    private final String code_;
-   private final String jobName_;
+   private final JobSource source_;
    private JobLauncherControls controls_;
 }

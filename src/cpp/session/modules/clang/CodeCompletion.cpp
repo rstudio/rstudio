@@ -560,8 +560,8 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             // if we have the same typed text then just ammend previous result
             if ((typedText == lastTypedText) && !completionsJson.empty())
             {
-               json::Object& res = completionsJson.back().get_obj();
-               json::Array& text = res["text"].get_array();
+               json::Object res = completionsJson.back().get_obj();
+               json::Array text = res["text"].get_array();
                text.push_back(friendlyCompletionText(result));
             }
             else
@@ -574,7 +574,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       }
 
       json::Object resultJson;
-      resultJson["completions"] = completionsJson;
+      resultJson["completions"] = completionsJson.clone();
       pResponse->setResult(resultJson);
    }
 

@@ -362,7 +362,7 @@ if(WIN32)
 endif()
 
 # define executable
-add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
+add_stripped_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
@@ -399,6 +399,7 @@ target_link_libraries(rsession
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
    ${LIBR_LIBRARIES}
+   ${CRASHPAD_LIBRARIES}
 )
 
 if (RSTUDIO_SERVER)
@@ -481,7 +482,7 @@ install(DIRECTORY "resources/connections"
 
 # install pandoc
 if(WIN32)
-   set(PANDOC_VERSION "2.5" CACHE INTERNAL "Pandoc version")
+   set(PANDOC_VERSION "2.6" CACHE INTERNAL "Pandoc version")
 else()
    set(PANDOC_VERSION "2.3.1" CACHE INTERNAL "Pandoc version")
 endif()

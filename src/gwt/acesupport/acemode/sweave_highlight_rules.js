@@ -60,6 +60,7 @@ var SweaveHighlightRules = function() {
     this.$rules["r-start"].unshift({
         token : "paren.keyword.operator",
         regex : "[{]",
+        merge : false,
         onMatch: function(value, state, stack, line) {
             if (stack.length)
                 stack[1] += 1;
@@ -70,6 +71,7 @@ var SweaveHighlightRules = function() {
     this.$rules["r-start"].unshift({
         token : "paren.keyword.operator",
         regex : "[}]",
+        merge : false,
         onMatch: function(value, state, stack, line) {
             this.next = "r-start";
             if (stack.length) {

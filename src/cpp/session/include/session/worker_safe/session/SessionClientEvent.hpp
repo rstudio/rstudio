@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -193,6 +193,10 @@ extern const int kDataOutputCompleted;
 extern const int kNewDocumentWithCode;
 extern const int kPlumberViewer;
 extern const int kAvailablePackagesReady;
+extern const int kComputeThemeColors;
+extern const int kRequestDocumentClose;
+extern const int kRequestDocumentCloseCompleted;
+extern const int kExecuteAppCommand;
 }
    
 class ClientEvent

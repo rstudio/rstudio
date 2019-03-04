@@ -1,7 +1,7 @@
 /*
  * JobsPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,34 +13,16 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
-import com.google.gwt.user.client.ui.Label;
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.UIPrefMenuItem;
-import org.rstudio.studio.client.common.icons.StandardIcons;
-import com.google.inject.Provider;
-import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
-import org.rstudio.studio.client.workbench.model.Session;
+
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobTypeSelectedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.List;
 
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.compile.CompileOutput;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.core.client.JsArray;
@@ -48,363 +30,91 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class JobsPane extends WorkbenchPane 
-                      implements JobsPresenter.Display,
-                                 JobTypeSelectedEvent.Handler
+                      implements JobsPresenter.Display
 {
    @Inject
-   public JobsPane(Commands commands,
-                   Provider<Session> pSession,
-                   UIPrefs uiPrefs,
-                   final EventBus events)
+   public JobsPane(UIPrefs uiPrefs,
+                   JobsPaneWidgets widgets)
    {
       super("Jobs");
-      commands_ = commands;
-      events_ = events;
+      
       uiPrefs_ = uiPrefs;
-      pSession_ = pSession;
-      
-      events.addHandler(JobTypeSelectedEvent.TYPE, this);
-
-      allJobs_ = new ToolbarButton(
-            commands.helpBack().getImageResource(), evt ->
-      {
-         // deselect current job 
-         events.fireEvent(new JobSelectionEvent(current_, false, true));
-      });
-      allJobs_.setTitle("View all jobs");
-      
-      toolbar_ = new Toolbar();
-      installMainToolbar();
+      widgets_ = widgets;
 
       // create widget
       ensureWidget();
+      
+      // defer most behavior to a shared implementation
+      baseImpl_ = new JobsDisplayImpl(this, widgets_);
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      list_ = new JobsList();
-      output_ = new JobOutputPanel();
-
-      panel_ = new SlidingLayoutPanel(list_, output_);
-      panel_.addStyleName("ace_editor_theme");
-      
-      return panel_;
+      return widgets_.createMainWidget();
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      return toolbar_;
+      return widgets_.getToolbar();
    }
 
    @Override
-   public void updateJob(int type, Job job)
+   public void updateJob(int updateType, Job job)
    {
-      switch(type)
-      {
-         case JobConstants.JOB_ADDED:
-            list_.insertJob(job);
-            
-            if (job.show)
-            {
-               // bring the pane to the front so the new job is visible
-               bringToFront();
-            
-               // select the job
-               events_.fireEvent(new JobSelectionEvent(job.id, true, false));
-            }
-            
-            break;
-
-         case JobConstants.JOB_REMOVED:
-            // if this is the job we're currently tracking, do so no longer
-            if (job.id == current_)
-            {
-               hideJobOutput(job.id, true);
-            }
-            
-            // clean up 
-            list_.removeJob(job);
-            break;
-
-         case JobConstants.JOB_UPDATED:
-            list_.updateJob(job);
-            if (job.id == current_)
-            {
-               // update progress
-               if (progress_ == null)
-               {
-                  progress_ = new JobProgress();
-                  toolbar_.addLeftWidget(progress_);
-               }
-               progress_.showJob(job);
-            }
-            break;
-            
-         default:
-            Debug.logWarning("Unrecognized job update type " + type);
-      }
+      baseImpl_.updateJob(updateType, job);
    }
    
    @Override
-   public void setInitialJobs(JsObject jobs)
+   public void setInitialJobs(List<Job> jobs)
    {
-      // clear any current state
-      list_.clear();
-      
-      if (jobs == null)
-         return;
-
-      // make an array of all the jobs on the server
-      ArrayList<Job> items = new ArrayList<>();
-      for (String id: jobs.iterableKeys())
-      {
-         items.add(jobs.getElement(id));
-      }
-      
-      // sort jobs by most recently recorded first
-      items.sort(Comparator.comparingInt(j -> j.recorded));
-      
-      // add each to the panel
-      for (Job job: items)
-      {
-         list_.addJob(job);
-      }
+      baseImpl_.setInitialJobs(jobs);
    }
 
    @Override
    public void showJobOutput(String id, JsArray<JobOutput> output, boolean animate)
    {
-      // clear any existing output in the pane
-      output_.clearOutput();
-
-      // display all the output, but don't scroll as we go
-      for (int i = 0; i < output.length(); i++)
-      {
-         output_.showOutput(CompileOutput.create(
-               output.get(i).type(), 
-               output.get(i).output()), false /* scroll */);
-      }
-      
-      // scroll to show all output so far
-      output_.scrollToBottom();
-      
-      // remove the progress for the current job if we're showing it
-      if (progress_ != null)
-      {
-         toolbar_.removeLeftWidget(progress_);
-         progress_ = null;
-      }
-
-      // save job id as current job
-      current_ = id;
-
-      // show the output pane
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideRight,
-            animate, this::installJobToolbar);
+      baseImpl_.showJobOutput(id, output, animate);
    }
 
    @Override
    public void addJobOutput(String id, int type, String output)
    {
-      // make sure this output belongs to the job currently being displayed
-      if (current_ == null || id != current_)
-      {
-         Debug.logWarning("Attempt to show output for incorrect job '" + 
-                          id + "'.");
-         return;
-      }
-      
-      // add the output
-      output_.showOutput(CompileOutput.create(type, output), true /* scroll */);
+      baseImpl_.addJobOutput(id, type, output);
    }
-   
 
    @Override
    public void hideJobOutput(String id, boolean animate)
    {
-      // make sure this output belongs to the job currently being displayed
-      if (current_ == null || id != current_)
-      {
-         Debug.logWarning("Attempt to hide output for incorrect job '" + 
-                          id + "'.");
-         return;
-      }
-      
-      panel_.slideWidgets(SlidingLayoutPanel.Direction.SlideLeft,
-            animate, this::installMainToolbar);
-      
-      current_ = null;
+      baseImpl_.hideJobOutput(id, animate);
    }
 
    @Override
    public void syncElapsedTime(int timestamp)
    {
-      // update list of running jobs
-      list_.syncElapsedTime(timestamp);
-      
-      // update progress of current job if present
-      if (progress_ != null)
-      {
-         progress_.updateElapsed(timestamp);
-      }
+      baseImpl_.syncElapsedTime(timestamp);
    }
    
    @Override
    public void bringToFront()
    {
-      setShowJobsTabPref(true);
+      setShowTabPref(true);
       super.bringToFront();
    }
    
    @Override
-   public void setShowJobsTabPref(boolean show)
+   public void setShowTabPref(boolean show)
    {
-      if (uiPrefs_.showJobsTab().getValue() != show)
-      {
-         uiPrefs_.showJobsTab().setGlobalValue(show);
-         uiPrefs_.writeUIPrefs();
-      }
-   }
-
-   @Override
-   public void onJobTypeSelected(JobTypeSelectedEvent event)
-   {
-      // Try to leave the pref at default value, which shows "job launcher" button
-      // when job-launcher is available, otherwise shows regular session jobs
-      // button. Save explicit pref value only if user has switched away from the
-      // current default.
-      int currentSetting = uiPrefs_.defaultJobsMode().getValue();
-      int currentDefault = pSession_.get().getSessionInfo().getLauncherJobsEnabled() ?
-            JobConstants.JOB_TYPE_LAUNCHER : JobConstants.JOB_TYPE_SESSION;
-      int selectedType = event.jobType();
-      
-      boolean changeSetting = false;
-      if (currentSetting == JobConstants.JOB_TYPE_UNKNOWN /* proxy for "default" */)
-      {
-         if (selectedType != currentDefault)
-         {
-            changeSetting = true;
-         }
-      }
-      else if (selectedType != currentSetting)
-      {
-         changeSetting = true;
-      }
-      
-      if (changeSetting)
-      {
-         uiPrefs_.defaultJobsMode().setGlobalValue(event.jobType());
-         uiPrefs_.writeUIPrefs();
-         
-         // update toolbar "start job" button to match their choice
-         if (current_ == null)
-            installMainToolbar();
-      }
+      int value = show ? UIPrefsAccessor.JOBS_TAB_SHOWN : UIPrefsAccessor.JOBS_TAB_CLOSED;
+      uiPrefs_.jobsTabVisibility().setGlobalValue(value);
+      uiPrefs_.writeUIPrefs();
    }
    
-   @Override
-   public void refreshPaneStatusMessage()
-   {
-      paneStatus_.setText(uiPrefs_.hideCompletedJobs().getValue() ? "(previously completed jobs hidden)" : "");
-   }
-
-   // Private methods ---------------------------------------------------------
-   
-   private void installJobToolbar()
-   {
-      toolbar_.removeAllWidgets();
-      toolbar_.addLeftWidget(allJobs_);
-
-      // if we're currently tracking a job:
-      if (current_ != null)
-      {
-         // show the progress bar if the job hasn't been completed yet
-         Job job = list_.getJob(current_);
-
-         // clear previous progress
-         if (progress_ != null)
-            toolbar_.removeLeftWidget(progress_);
-         
-         // show progress
-         progress_ = new JobProgress();
-         toolbar_.addLeftWidget(progress_);
-         progress_.showJob(job);
-      }
-   }
-   
-   private void installMainToolbar()
-   {
-      toolbar_.removeAllWidgets();
-      if (pSession_.get().getSessionInfo().getLauncherJobsEnabled())
-      {
-         // include dropdown for selection of job-type, and set "run job"
-         // button to reflect user's last choice (or the default)
-         ToolbarButton runButton;
-         switch (uiPrefs_.defaultJobsMode().getValue())
-         {
-            case JobConstants.JOB_TYPE_UNKNOWN: // represents "default" mode
-            case JobConstants.JOB_TYPE_LAUNCHER:
-               runButton = commands_.startLauncherJob().createToolbarButton();
-               break;
-               
-            case JobConstants.JOB_TYPE_SESSION:
-            default:
-               runButton = commands_.startJob().createToolbarButton();
-               break;
-         }
-         runButton.addStyleName(ThemeStyles.INSTANCE.launcherJobRunButton());
-         toolbar_.addLeftWidget(runButton);
-         
-         ToolbarPopupMenuButton runJobMenuButton = new ToolbarPopupMenuButton(false, false);
-         runJobMenuButton.addMenuItem(commands_.startLauncherJob().createMenuItem(false), "");
-         runJobMenuButton.addMenuItem(commands_.startJob().createMenuItem(false), "");
-         toolbar_.addLeftWidget(runJobMenuButton);
-      }
-      else
-      {
-         toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
-      }
-      
-      toolbar_.addLeftSeparator();
-
-      // More
-      StandardIcons icons = StandardIcons.INSTANCE;
-      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-      moreMenu.addItem(commands_.clearJobs().createMenuItem(false));
-      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
-            uiPrefs_.hideCompletedJobs(), true, "Hide Previously Completed Jobs", uiPrefs_));
-      
-      ToolbarButton moreButton = new ToolbarButton("More",
-                                                  new ImageResource2x(icons.more_actions2x()),
-                                                  moreMenu);
-
-      toolbar_.addLeftWidget(moreButton);
-      
-      toolbar_.addLeftSeparator();
-      paneStatus_ = new Label();
-      paneStatus_.setStyleName(ThemeStyles.INSTANCE.subtitle());
-      toolbar_.addLeftWidget(paneStatus_);
-      refreshPaneStatusMessage();
-      progress_ = null;
-   }
-
-   // widgets
-   private JobOutputPanel output_;
-   private JobsList list_;
-   private SlidingLayoutPanel panel_;
-   private final Toolbar toolbar_;
-   private final ToolbarButton allJobs_;
-   private Label paneStatus_;
-   private JobProgress progress_;
-
    // internal state
-   private String current_;
-
+   private JobsDisplayImpl baseImpl_;
+   
    // injected
-   private final Commands commands_;
-   private final EventBus events_;
    private final UIPrefs uiPrefs_;
-   private final Provider<Session> pSession_;
+   private final JobsPaneWidgets widgets_;
 }

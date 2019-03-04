@@ -61,14 +61,14 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
             if (fieldValue.type() != ArrayType)
                return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
-            pRequest->params = fieldValue.get_array();
+            pRequest->params = fieldValue.get_value<json::Array>();
          }
          else if ( fieldName == "kwparams" )
          {
             if (fieldValue.type() != ObjectType)
                return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
-            pRequest->kwparams = fieldValue.get_obj();
+            pRequest->kwparams = fieldValue.get_value<json::Object>();
          }
          else if (fieldName == "sourceWnd")
          {
@@ -345,7 +345,7 @@ bool JsonRpcResponse::parse(const Value& value,
    if (value.type() != ObjectType)
       return false;
 
-   pResponse->response_ = value.get_obj();
+   pResponse->response_ = value.get_value<json::Object>();
    return true;
 }
 

@@ -216,14 +216,14 @@ void formatRpcRequest(SEXP name,
    if (rpcArgs.type() == json::ObjectType)
    {
       // named pair parameters
-      pRequest->kwparams = rpcArgs.get_obj();
+      pRequest->kwparams = rpcArgs.get_value<json::Object>();
       if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
          core::json::writeFormatted(pRequest->kwparams, std::cout);
    }
    else if (rpcArgs.type() == json::ArrayType)
    {
       // array parameters
-      pRequest->params = rpcArgs.get_array();
+      pRequest->params = rpcArgs.get_value<json::Array>();
       if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
          core::json::writeFormatted(pRequest->params, std::cout);
    }
@@ -237,7 +237,7 @@ void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
    if (response.error().type() == json::ObjectType)
    {
       // formulate verbose error string
-      json::Object& err = response.error().get_obj();
+      json::Object err = response.error().get_obj();
       std::string message = err["message"].get_str();
       if (err.find("error") != err.end())
          message += ", Error " + err["error"].get_str();

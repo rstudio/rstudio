@@ -1,7 +1,7 @@
 /*
  * JobManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobTypeSelectedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobLauncherDialog;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobQuitDialog;
@@ -74,8 +73,7 @@ public class JobManager implements JobRefreshEvent.Handler,
                      JobsServerOperations server,
                      GlobalDisplay display,
                      Provider<SourceWindowManager> pSourceManager,
-                     Provider<WorkbenchContext> pWorkbench,
-                     LauncherJobManager launcherJobManager)
+                     Provider<WorkbenchContext> pWorkbench)
    {
       events_ = events;
       pSession_ = pSession;
@@ -83,7 +81,6 @@ public class JobManager implements JobRefreshEvent.Handler,
       server_ = server;
       display_ = display;
       pSourceManager_ = pSourceManager;
-      launcherJobManager_ = launcherJobManager;
       pWorkbench_ = pWorkbench;
       binder.bind(commands, this);
       events.addHandler(SessionInitEvent.TYPE, this);
@@ -379,24 +376,13 @@ public class JobManager implements JobRefreshEvent.Handler,
             () -> onConfirmed.execute(false));
       dialog.showModal();
    }
-   
-   public void startTracking()
-   {
-      launcherJobManager_.startTrackingAllJobStatuses();
-   }
-   
-   public void stopTracking()
-   {
-      launcherJobManager_.stopTrackingAllJobStatuses();
-   }
 
    // Private methods ---------------------------------------------------------
    
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
-      String name = (path == null ? "Current" : path.getName()) + " selection";
       JobLauncherDialog dialog = new JobLauncherDialog("Run Selection as Job",
-            name,
+            JobLauncherDialog.JobSource.Selection,
             path,
             workingDir,
             code,
@@ -417,7 +403,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    private void showJobLauncherDialog(FileSystemItem path)
    {
       JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
-            path.getName(),
+            JobLauncherDialog.JobSource.Script,
             path,
             spec ->
             {
@@ -428,9 +414,6 @@ public class JobManager implements JobRefreshEvent.Handler,
                {
                   spec.setEncoding(doc.getEncoding());
                }
-
-               // broadcast type of job the user chose to run
-               events_.fireEvent(new JobTypeSelectedEvent(JobConstants.JOB_TYPE_SESSION));
 
                // tell the server to start running this script
                server_.startJob(spec, new ServerRequestCallback<String>() {
@@ -491,5 +474,4 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
    private final GlobalDisplay display_;
-   private final LauncherJobManager launcherJobManager_;
 }

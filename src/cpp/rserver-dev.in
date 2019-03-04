@@ -3,7 +3,7 @@
 #
 # rserver-dev
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -33,5 +33,7 @@ cleanup()
 }
 trap cleanup SIGINT
 
-server/rserver --config-file conf/rserver-dev.conf "$@"
+RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-proxy" \
+RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
+   server/rserver --config-file conf/rserver-dev.conf "$@"
 
