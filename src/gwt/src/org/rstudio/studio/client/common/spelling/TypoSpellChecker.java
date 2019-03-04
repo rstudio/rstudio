@@ -18,7 +18,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
@@ -57,6 +56,7 @@ public class TypoSpellChecker
       uiPrefs_.realTimeSpellChecking().addValueChangeHandler(prefChangedHandler_);
       uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(prefChangedHandler_);
       uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler_);
+      uiPrefs_.spellingDictionaryLanguage().addValueChangeHandler(languageChangedHandler_);
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -81,8 +81,7 @@ public class TypoSpellChecker
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
 
-      ExternalJavaScriptLoader.Callback loadTypoCallback = () -> typoNative = new TypoNative("en_US");
-      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+      loadDictionary();
    }
 
    // Check the spelling of a single word, directly returning an
@@ -90,7 +89,7 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return typoNative.check(word);
+      return typoNative_.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
@@ -107,14 +106,13 @@ public class TypoSpellChecker
 
       for (String word : words)
       {
-         //Debug.log("Checking word: " + word);
          if (isWordIgnored(word))
          {
             spellCheckerResult.getCorrect().add(word);
          }
          else
          {
-            if (typoNative.check(word))
+            if (typoNative_.check(word))
             {
                spellCheckerResult.getCorrect().add(word);
             }
@@ -144,12 +142,12 @@ public class TypoSpellChecker
 
    public String[] suggestionList(String word)
    {
-      if (typoNative == null)
+      if (typoNative_ == null)
       {
          return new String[0];
       }
 
-      return typoNative.suggest(word);
+      return typoNative_.suggest(word);
    }
    private boolean isWordIgnored(String word)
    {
@@ -191,6 +189,15 @@ public class TypoSpellChecker
       allIgnoredWords_.addAll(contextDictionary_);
    }
 
+   private void loadDictionary()
+   {
+      ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
+         typoNative_ = new TypoNative(uiPrefs_.spellingDictionaryLanguage().getValue());
+         context_.invalidateAllWords();
+      };
+      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+   }
+
    private ValueChangeHandler<Boolean> prefChangedHandler_ = new ValueChangeHandler<Boolean>() {
       @Override
       public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -199,9 +206,17 @@ public class TypoSpellChecker
       }
    };
 
+   private ValueChangeHandler<String> languageChangedHandler_ = new ValueChangeHandler<String>() {
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event)
+      {
+         loadDictionary();
+      }
+   };
+
    private final Context context_;
 
-   private TypoNative typoNative;
+   private TypoNative typoNative_;
    private WorkbenchList userDictionary_;
    private ArrayList<String> userDictionaryWords_;
    private ArrayList<String> contextDictionary_;

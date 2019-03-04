@@ -371,7 +371,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                StringBuilder warningMsg = new StringBuilder();
                warningMsg.append("The active theme \"")
                   .append(currentTheme.getName())
-                  .append("\" could not be found. It's possible it was removed outside the context of RStudio. Switching the ")
+                  .append("\" could not be found. It's possible it was removed outside the context of RStudio. Switching to the ")
                   .append(currentTheme.isDark() ? "dark " : "light ")
                   .append("default theme: \"");
                

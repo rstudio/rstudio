@@ -19,17 +19,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.*;
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -39,20 +36,18 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.Sp
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 @SuppressWarnings("Duplicates") // TODO REMOVE THIS
 public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
    public TextEditingTargetSpelling(DocDisplay docDisplay,
-                                    DocUpdateSentinel docUpdateSentinel)
+                                    DocUpdateSentinel docUpdateSentinel,
+                                    LintManager lintManager)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;
+      lintManager_ = lintManager;
       typoSpellChecker_ = new TypoSpellChecker(this);
-
-//      docDisplay_.addKeyDownHandler(new InputKeyDownHandler());
-//      docDisplay_.addClickHandler((event) -> Debug.log("clickity: " + event.getNativeButton()));
    }
 
    public JsArray<LintItem> getLint()
@@ -129,7 +124,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public void invalidateAllWords()
    {
-      
+      lintManager_.forceRelint();
    }
 
    @Override
@@ -193,6 +188,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final LintManager lintManager_;
    private final TypoSpellChecker typoSpellChecker_;
  
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = 

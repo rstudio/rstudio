@@ -166,7 +166,12 @@ public class LintManager
          }
       });
    }
-   
+
+   public void forceRelint()
+   {
+      timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+   }
+
    @Inject
    void initialize(LintServerOperations server,
                    UIPrefs uiPrefs,
