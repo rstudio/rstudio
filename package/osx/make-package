@@ -36,7 +36,8 @@ cmake -DRSTUDIO_TARGET=Desktop \
       -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras" \
       $PKG_DIR/../..
 
-MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
+# temporarily disable until we have better build hardware
+# MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
 
 echo "Building with flags $MAKEFLAGS..."
 make $MAKEFLAGS
