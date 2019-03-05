@@ -80,6 +80,7 @@ public class SpellingCustomDictionariesWidget extends Composite
                    FileDialogs fileDialogs,
                    RemoteFileSystemContext fileSystemContext)
    {
+      spellingService_ = spellingService;
       globalDisplay_= globalDisplay;
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
@@ -120,10 +121,9 @@ public class SpellingCustomDictionariesWidget extends Composite
                   
                   progressIndicator_.onProgress("Adding dictionary...");
 
-                  // TODO: add custom dictionary
-//                  spellingService_.addCustomDictionary(
-//                                                  input.getPath(),
-//                                                  customDictRequestCallback_);
+                  spellingService_.addCustomDictionary(
+                                                  input.getPath(),
+                                                  customDictRequestCallback_);
                }
                
             }); 
@@ -151,10 +151,9 @@ public class SpellingCustomDictionariesWidget extends Composite
                      {
                         progressIndicator_.onProgress("Removing dictionary...");
 
-                        // TODO: remove custom dictionary
-                        //spellingService_.removeCustomDictionary(
-                        //                          dictionary,
-                        //                          customDictRequestCallback_);
+                        spellingService_.removeCustomDictionary(
+                                                  dictionary,
+                                                  customDictRequestCallback_);
                      }
                   },
                   false);
@@ -189,6 +188,7 @@ public class SpellingCustomDictionariesWidget extends Composite
    }
    
    private final ListBox listBox_;
+   private SpellingService spellingService_;
    private ProgressIndicator progressIndicator_;
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;

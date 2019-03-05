@@ -108,7 +108,7 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
 
    if (splat.size() != 2)
    {
-      pResponse->setStatusCode(core::http::status::BadRequest);
+      pResponse->setNotFoundError(request);
       return;
    }
 

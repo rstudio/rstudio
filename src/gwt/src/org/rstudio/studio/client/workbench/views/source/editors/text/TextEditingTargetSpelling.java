@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-@SuppressWarnings("Duplicates") // TODO REMOVE THIS
 public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
    public TextEditingTargetSpelling(DocDisplay docDisplay,
