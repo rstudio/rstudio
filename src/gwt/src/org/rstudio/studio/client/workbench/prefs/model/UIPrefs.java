@@ -473,7 +473,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
             spellingCustomDictionaries().setGlobalValue(
                      newUiPrefs.spellingCustomDictionaries().getGlobalValue());
          }
-            
+
+         // use real time spellchecking
+         realTimeSpellChecking().setGlobalValue(newUiPrefs.realTimeSpellChecking().getGlobalValue());
+
          // ignore words in uppercase
          ignoreWordsInUppercase().setGlobalValue(
                     newUiPrefs.ignoreWordsInUppercase().getGlobalValue());

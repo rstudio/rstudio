@@ -120,9 +120,9 @@ public class SpellingCustomDictionariesWidget extends Composite
                      return;
                   
                   progressIndicator_.onProgress("Adding dictionary...");
-                  
+
                   spellingService_.addCustomDictionary(
-                                                  input.getPath(), 
+                                                  input.getPath(),
                                                   customDictRequestCallback_);
                }
                
@@ -150,9 +150,9 @@ public class SpellingCustomDictionariesWidget extends Composite
                      public void execute()
                      {
                         progressIndicator_.onProgress("Removing dictionary...");
-                        
+
                         spellingService_.removeCustomDictionary(
-                                                  dictionary, 
+                                                  dictionary,
                                                   customDictRequestCallback_);
                      }
                   },
@@ -188,8 +188,8 @@ public class SpellingCustomDictionariesWidget extends Composite
    }
    
    private final ListBox listBox_;
-   private ProgressIndicator progressIndicator_;
    private SpellingService spellingService_;
+   private ProgressIndicator progressIndicator_;
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;

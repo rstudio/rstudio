@@ -20,6 +20,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/spelling/HunspellSpellingEngine.hpp>
 
 #include <r/RSexp.hpp>
@@ -95,6 +96,24 @@ FilePath allLanguagesDir()
                                           "dictionaries/languages-system");
 }
 
+
+// This responds to the request path of /dictionaries/<dict>/<dict>.dic
+// and returns the file at <userScratchDir>/dictionaries/<dict>.dic
+// Typo.js expects a hardcoded path in this form and we want to avoid forking it
+void handleDictionaryRequest(const http::Request& request, http::Response* pResponse)
+{
+   std::string prefix = "/dictionaries/";
+   std::string fileName = http::util::pathAfterPrefix(request, prefix);
+   std::vector<std::string> splat = core::algorithm::split(fileName, "/");
+
+   if (splat.size() != 2)
+   {
+      pResponse->setNotFoundError(request);
+      return;
+   }
+
+   pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+}
 
 Error checkSpelling(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
@@ -341,6 +360,7 @@ Error initialize()
       (bind(registerRpcMethod, "add_custom_dictionary", addCustomDictionary))
       (bind(registerRpcMethod, "remove_custom_dictionary", removeCustomDictionary))
       (bind(registerRpcMethod, "install_all_dictionaries", installAllDictionaries))
+      (bind(registerUriHandler, "/dictionaries", handleDictionaryRequest))
       (bind(sourceModuleRFile, "SessionSpelling.R"));
    return initBlock.execute();
 }
