@@ -158,6 +158,7 @@
 * Fix file.choose(new = TRUE) to properly request new file name (#3903)
 * Fix 'Copy Plot to Clipboard' functionality when IDE is zoomed (#3853)
 * Fix early evaluation of `ALTREP` objects (#4171)
+* Fix incorrect display of Unicode characters in the Data Viewer (#4193)
 
 ### RStudio Server Pro
 
