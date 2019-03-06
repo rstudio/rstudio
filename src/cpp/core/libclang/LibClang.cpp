@@ -67,21 +67,21 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
    // made available as part of the default toolchain instead
    if (!FilePath("/usr/include").exists())
    {
-      std::string xcodeIncludePath =
-               "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include";
-      if (FilePath(xcodeIncludePath).exists())
-      {
-         compileArgs.insert(compileArgs.begin(), xcodeIncludePath);
-         compileArgs.insert(compileArgs.begin(), "-isystem");
-      }
+      // try multiple locations for path to appropriate system headers
+      std::vector<std::string> usrIncludePaths = {
+         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+         "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+      };
 
-      std::string cltoolsIncludePath =
-            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include";
-
-      if (FilePath(cltoolsIncludePath).exists())
+      for (auto&& path : usrIncludePaths)
       {
-         compileArgs.insert(compileArgs.begin(), cltoolsIncludePath);
-         compileArgs.insert(compileArgs.begin(), "-isystem");
+         if (FilePath(path).exists())
+         {
+            compileArgs.insert(compileArgs.begin(), path);
+            compileArgs.insert(compileArgs.begin(), "-isystem");
+            break;
+         }
       }
    }
 #endif
