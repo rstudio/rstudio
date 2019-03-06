@@ -74,6 +74,15 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
          compileArgs.insert(compileArgs.begin(), xcodeIncludePath);
          compileArgs.insert(compileArgs.begin(), "-isystem");
       }
+
+      std::string cltoolsIncludePath =
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include";
+
+      if (FilePath(cltoolsIncludePath).exists())
+      {
+         compileArgs.insert(compileArgs.begin(), cltoolsIncludePath);
+         compileArgs.insert(compileArgs.begin(), "-isystem");
+      }
    }
 #endif
 
