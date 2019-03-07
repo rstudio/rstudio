@@ -1102,7 +1102,6 @@ public class Application implements ApplicationEventHandlers
       commands_.activateLauncherJobs().remove();
       commands_.sortLauncherJobsRecorded().remove();
       commands_.sortLauncherJobsState().remove();
-      commands_.refreshLauncherJobsList().remove();
    }
 
    private void pauseClientStateUpdater()
