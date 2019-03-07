@@ -96,6 +96,11 @@ FilePath allLanguagesDir()
                                           "dictionaries/languages-system");
 }
 
+FilePath customDictionariesDir()
+{
+   return module_context::userScratchPath().childPath(
+                                          "dictionaries/custom");
+}
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
 // and returns the file at <userScratchDir>/dictionaries/<dict>.dic
@@ -112,7 +117,23 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
       return;
    }
 
-   pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+   // preference order: custom -> user -> system -> pre-installed
+   if (customDictionariesDir().complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(customDictionariesDir().complete(splat[1]), request);
+   }
+   else if (allLanguagesDir().complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+   }
+   else if (options().hunspellDictionariesPath().complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(options().hunspellDictionariesPath().complete(splat[1]), request);
+   }
+   else
+   {
+      pResponse->setNotFoundError(request);
+   }
 }
 
 Error checkSpelling(const json::JsonRpcRequest& request,

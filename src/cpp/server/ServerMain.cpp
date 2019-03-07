@@ -223,6 +223,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/dictionaries", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
