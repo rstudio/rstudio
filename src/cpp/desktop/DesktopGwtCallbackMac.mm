@@ -463,29 +463,37 @@ void GwtCallback::showPptPresentation(QString qPath)
 }
 
 void GwtCallback::changeTitleBarColor(int red, int green, int blue) {
-    const int kAverageColor = pow(127.0, 2.0) * 3;
-    const int kBrightColor = pow(217.0, 2.0) * 3;
 
-    WId winId = pOwner_->asWidget()->effectiveWinId();
-    if (winId == 0) return;
-    NSView* view = (NSView*)winId;
-    NSWindow* window = [view window];
-    // we need to set `wantsLayer` to make sure the title color is set correctly
-    // https://github.com/rstudio/rstudio/pull/3365#issuecomment-415845021
-    view.wantsLayer = YES;
-    if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) < kAverageColor) {
-        window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantDark];
-    } else {
-        window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantLight];
-    }
-    if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) > kBrightColor) {
-       // do not change title bar color if the background is very light
-        window.titlebarAppearsTransparent = NO;
-        window.backgroundColor = [NSColor colorWithCalibratedWhite: 1.0 alpha: 1.];
-    } else {
-        window.titlebarAppearsTransparent = YES;
-        window.backgroundColor = [NSColor colorWithRed:red/255. green:green/255. blue:blue/255. alpha:1.];
-    }
+   // attempts to mess with the window appearance (especially with
+   // whether layer-backed views are used) cause rendering issues
+   // with older versions of macOS, so only enable this on Mojave
+   // https://github.com/rstudio/rstudio/issues/4409 
+   if (@available(macOS 10.14, *)) {
+
+      const int kAverageColor = pow(127.0, 2.0) * 3;
+      const int kBrightColor = pow(217.0, 2.0) * 3;
+
+      WId winId = pOwner_->asWidget()->effectiveWinId();
+      if (winId == 0) return;
+      NSView* view = (NSView*)winId;
+      NSWindow* window = [view window];
+      // we need to set `wantsLayer` to make sure the title color is set correctly
+      // https://github.com/rstudio/rstudio/pull/3365#issuecomment-415845021
+      view.wantsLayer = YES;
+      if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) < kAverageColor) {
+         window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantDark];
+      } else {
+         window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantLight];
+      }
+      if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) > kBrightColor) {
+         // do not change title bar color if the background is very light
+         window.titlebarAppearsTransparent = NO;
+         window.backgroundColor = [NSColor colorWithCalibratedWhite: 1.0 alpha: 1.];
+      } else {
+         window.titlebarAppearsTransparent = YES;
+         window.backgroundColor = [NSColor colorWithRed:red/255. green:green/255. blue:blue/255. alpha:1.];
+      }
+   }
 }
 
 
