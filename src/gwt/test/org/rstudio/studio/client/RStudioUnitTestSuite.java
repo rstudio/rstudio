@@ -50,6 +50,9 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(JobsListTests.class);
+      
+      // Pro-only tests
+      
       return suite;
    }
 }
