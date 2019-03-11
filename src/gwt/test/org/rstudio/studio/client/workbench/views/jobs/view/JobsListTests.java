@@ -112,7 +112,7 @@ public class JobsListTests extends GWTTestCase
       JobsList list = new JobsList();
       Job job1 = getJob1();
 
-      list.addJob(job1, null);
+      Assert.assertTrue(list.addJob(job1));
       Assert.assertEquals(list.jobCount(), 1);
    }
 
@@ -125,7 +125,7 @@ public class JobsListTests extends GWTTestCase
       Job job1 = getJob1();
       String id = job1.id;
 
-      list.addJob(job1, null);
+      Assert.assertTrue(list.addJob(job1));
       Job fetchedJob = list.getJob(id);
       Assert.assertNotNull(fetchedJob);
       Assert.assertEquals(fetchedJob.id, id);
@@ -151,13 +151,13 @@ public class JobsListTests extends GWTTestCase
       Job job1 = getJob1();
       String id = job1.id;
 
-      list.addJob(job1, null);
+      Assert.assertTrue(list.addJob(job1));
       Job fetchedJob = list.getJob(id + "foo");
       Assert.assertNull(fetchedJob);
    }
 
    /**
-    * Verify we can add a single job and get back the JobItem
+    * Verify we can add a single job and get back the Job
     */
    public void testAddOneJobWithNotify()
    {
@@ -165,10 +165,9 @@ public class JobsListTests extends GWTTestCase
       Job job1 = getJob1();
       String id = job1.id;
 
-      list.addJob(job1, (item) -> {
-         Job addedJob = item.getJob();
-         Assert.assertEquals(addedJob.id, id);
-      });
+      Assert.assertTrue(list.addJob(job1));
+      Job addedJob = list.getJob(id);
+      Assert.assertEquals(addedJob.id, id);
    }
 
     /**
@@ -184,18 +183,17 @@ public class JobsListTests extends GWTTestCase
       Job job3 = getJob3();
       String id3 = job3.id;
 
-      list.addJob(job1, (item) -> {
-         Job addedJob = item.getJob();
-         Assert.assertEquals(addedJob.id, id1);
-      });
-      list.addJob(job2, (item) -> {
-         Job addedJob = item.getJob();
-         Assert.assertEquals(addedJob.id, id2);
-      });
-      list.addJob(job3, (item) -> {
-         Job addedJob = item.getJob();
-         Assert.assertEquals(addedJob.id, id3);
-      });
+      Assert.assertTrue(list.addJob(job1));
+      Job addedJob = list.getJob(id1);
+      Assert.assertEquals(addedJob.id, id1);
+      
+      Assert.assertTrue(list.addJob(job2));
+      Job addedJob2 = list.getJob(id2);
+      Assert.assertEquals(addedJob2.id, id2);
+      
+      Assert.assertTrue(list.addJob(job3));
+      Job addedJob3 = list.getJob(id3);
+      Assert.assertEquals(addedJob3.id, id3);
    }
 
    /**
@@ -208,16 +206,13 @@ public class JobsListTests extends GWTTestCase
       Job job2 = getJob2();
       Job job3 = getJob3();
 
-      list.addJob(job1, null);
-      list.addJob(job2, null);
-      list.addJob(job3, null);
+      Assert.assertTrue(list.addJob(job1));
+      Assert.assertTrue(list.addJob(job2));
+      Assert.assertTrue(list.addJob(job3));
 
       Assert.assertEquals(3, list.jobCount());
 
-      list.addJob(job2, (item) -> {
-         Assert.assertFalse(true);
-      });
-
+      Assert.assertFalse(list.addJob(job2));
       Assert.assertEquals(3, list.jobCount());
    }
 
@@ -231,9 +226,9 @@ public class JobsListTests extends GWTTestCase
       Job job2 = getJob2();
       Job job3 = getJob3();
 
-      list.addJob(job2, null);
-      list.addJob(job3, null);
-      list.addJob(job1, null);
+      Assert.assertTrue(list.addJob(job2));
+      Assert.assertTrue(list.addJob(job3));
+      Assert.assertTrue(list.addJob(job1));
 
       List<Job> jobs = list.getJobs();
       Assert.assertEquals(3, jobs.size());
@@ -257,9 +252,9 @@ public class JobsListTests extends GWTTestCase
       // adding in a different order than their "recorded" time to validate
       // we aren't getting them back in "recorded" order but rather in the
       // order they were added (most recently added earliest in the list).
-      list.addJob(job2, null);
-      list.addJob(job3, null);
-      list.addJob(job1, null);
+      Assert.assertTrue(list.addJob(job2));
+      Assert.assertTrue(list.addJob(job3));
+      Assert.assertTrue(list.addJob(job1));
 
       List<Job> jobs = list.getJobs();
 
@@ -282,7 +277,7 @@ public class JobsListTests extends GWTTestCase
       JobsList list = new JobsList();
       Job job1 = getJob1();
 
-      list.insertJob(job1, null);
+      Assert.assertTrue(list.insertJob(job1));
       Assert.assertEquals(list.jobCount(), 1);
    }
 
@@ -295,14 +290,14 @@ public class JobsListTests extends GWTTestCase
       Job job1 = getJob1();
       String id = job1.id;
 
-      list.insertJob(job1, null);
+      Assert.assertTrue(list.insertJob(job1));
       Job fetchedJob = list.getJob(id);
       Assert.assertNotNull(fetchedJob);
       Assert.assertEquals(fetchedJob.id, id);
    }
 
    /**
-    * Verify we can insert a single job and get back the JobItem
+    * Verify we can insert a single job and get back the Job
     */
    public void testInsertOneJobWithNotify()
    {
@@ -310,10 +305,9 @@ public class JobsListTests extends GWTTestCase
       Job job1 = getJob1();
       String id = job1.id;
 
-      list.insertJob(job1, (item) -> {
-         Job insertedJob = item.getJob();
-         Assert.assertEquals(insertedJob.id, id);
-      });
+      Assert.assertTrue(list.insertJob(job1));
+      Job insertedJob = list.getJob(id);
+      Assert.assertEquals(insertedJob.id, id);
    }
 
     /**
@@ -329,18 +323,17 @@ public class JobsListTests extends GWTTestCase
       Job job3 = getJob3();
       String id3 = job3.id;
 
-      list.insertJob(job1, (item) -> {
-         Job insertedJob = item.getJob();
-         Assert.assertEquals(insertedJob.id, id1);
-      });
-      list.insertJob(job2, (item) -> {
-         Job insertedJob = item.getJob();
-         Assert.assertEquals(insertedJob.id, id2);
-      });
-      list.insertJob(job3, (item) -> {
-         Job insertedJob = item.getJob();
-         Assert.assertEquals(insertedJob.id, id3);
-      });
+      Assert.assertTrue(list.insertJob(job1));
+      Job insertedJob = list.getJob(id1);
+      Assert.assertEquals(insertedJob.id, id1);
+      
+      Assert.assertTrue(list.insertJob(job2));
+      Job insertedJob2 = list.getJob(id2);
+      Assert.assertEquals(insertedJob2.id, id2);
+      
+      Assert.assertTrue(list.insertJob(job3));
+      Job insertedJob3 = list.getJob(id3); 
+      Assert.assertEquals(insertedJob3.id, id3);
    }
 
    /**
@@ -353,16 +346,13 @@ public class JobsListTests extends GWTTestCase
       Job job2 = getJob2();
       Job job3 = getJob3();
 
-      list.insertJob(job1, null);
-      list.insertJob(job2, null);
-      list.insertJob(job3, null);
+      Assert.assertTrue(list.insertJob(job1));
+      Assert.assertTrue(list.insertJob(job2));
+      Assert.assertTrue(list.insertJob(job3));
 
       Assert.assertEquals(3, list.jobCount());
 
-      list.insertJob(job2, (item) -> {
-         Assert.assertFalse(true);
-      });
-
+      Assert.assertFalse(list.insertJob(job2));
       Assert.assertEquals(3, list.jobCount());
    }
 
@@ -376,9 +366,9 @@ public class JobsListTests extends GWTTestCase
       Job job2 = getJob2();
       Job job3 = getJob3();
 
-      list.insertJob(job2, null);
-      list.insertJob(job3, null);
-      list.insertJob(job1, null);
+      Assert.assertTrue(list.insertJob(job2));
+      Assert.assertTrue(list.insertJob(job3));
+      Assert.assertTrue(list.insertJob(job1));
 
       List<Job> jobs = list.getJobs();
       Assert.assertEquals(3, jobs.size());
@@ -400,9 +390,9 @@ public class JobsListTests extends GWTTestCase
 
       // adding in a different order than their "recorded" time to validate
       // they are being sorted when added
-      list.insertJob(job2, null); // middle-aged should come back in middle of pack
-      list.insertJob(job3, null); // newest, should be at beginning
-      list.insertJob(job1, null); // oldest, should be at end
+      list.insertJob(job2); // middle-aged should come back in middle of pack
+      list.insertJob(job3); // newest, should be at beginning
+      list.insertJob(job1); // oldest, should be at end
 
       List<Job> jobs = list.getJobs();
 
@@ -501,7 +491,7 @@ public class JobsListTests extends GWTTestCase
       Job fetchJob2 = list.getJob(id2);
       Assert.assertNotNull(fetchJob2);
 
-      list.removeJob(job2, null);
+      Assert.assertTrue(list.removeJob(job2));
       Job fetchJob2Again = list.getJob(id2);
       Assert.assertNull(fetchJob2Again);
       Assert.assertEquals(2, list.jobCount());
