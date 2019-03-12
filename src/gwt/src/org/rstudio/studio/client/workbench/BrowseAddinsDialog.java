@@ -47,6 +47,7 @@ import org.rstudio.core.client.widget.FilterWidget;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
@@ -96,7 +97,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       };
       
-      table_ = new DataGrid<RAddin>(1000, RES, keyProvider_);
+      table_ = new RStudioDataGrid<RAddin>(1000, RES, keyProvider_);
       table_.setWidth("500px");
       table_.setHeight("400px");
       

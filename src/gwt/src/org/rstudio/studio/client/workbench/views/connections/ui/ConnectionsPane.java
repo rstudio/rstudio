@@ -54,6 +54,7 @@ import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SlidingLayoutPanel;
@@ -100,7 +101,7 @@ public class ConnectionsPane extends WorkbenchPane
       };
       
       selectionModel_ = new SingleSelectionModel<Connection>();
-      connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
+      connectionsDataGrid_ = new RStudioDataGrid<Connection>(1000, RES, keyProvider_);
       connectionsDataGrid_.setSelectionModel(selectionModel_);
       selectionModel_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {

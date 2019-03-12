@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StyleUtils;
 import org.rstudio.studio.client.packrat.model.PackratConflictActions;
@@ -70,7 +71,7 @@ public class PackratResolveConflictDialog
       mainWidget_.add(label);
             
       // table
-      table_ = new DataGrid<PackratConflictActions>(conflictActions.size(),
+      table_ = new RStudioDataGrid<PackratConflictActions>(conflictActions.size(),
             (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       StyleUtils.forceMacScrollbars(table_);
       table_.addStyleName(RESOURCES.styles().conflictsTable());

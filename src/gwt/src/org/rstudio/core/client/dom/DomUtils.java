@@ -1168,6 +1168,11 @@ public class DomUtils
      return ele.pathname;
    }-*/;
    
+   public static final native NodeList<Element> querySelectorAll(Element element, String query)
+   /*-{
+      return element.querySelectorAll(query);
+   }-*/;
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
 }
