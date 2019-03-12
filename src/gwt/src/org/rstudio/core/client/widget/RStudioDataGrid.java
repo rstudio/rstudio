@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -63,7 +65,7 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       // assigned class, and have all their style attributes applied inline, so
       // instead we scan the attached DOM subtree and change the inline styles.
       Element parent = getElement().getParentElement().getParentElement();
-      NodeList<Element> children = parent.getElementsByTagName("div");
+      NodeList<Element> children = DomUtils.querySelectorAll(parent, "div[style*='z-index: -1']");
       for (int i = 0; i < children.getLength(); i++)
       {
          Element el = children.getItem(i);
