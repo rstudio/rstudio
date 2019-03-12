@@ -190,15 +190,17 @@ public class EditingPreferencesPane extends PreferencesPane
       
       editingPanel.add(panel);
       
+      HorizontalPanel marginPanel = new HorizontalPanel();
+      marginPanel.add(showMargin_ = checkboxPref("Show margin at column:", prefs.showMargin()));
+      marginPanel.add(marginCol_ = numericPref("", prefs.printMarginColumn()));
       
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
-      displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", 
-            prefs.showMargin(), false /*defaultSpace*/)));
-      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
+      displayPanel.add(marginPanel);
+      displayPanel.add(checkboxPref("Soft wrap at print margin", prefs.softWrapAtPrintMargin()));
       displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));

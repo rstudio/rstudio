@@ -315,6 +315,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
          softWrapRFiles().setGlobalValue(
                                  newUiPrefs.softWrapRFiles().getGlobalValue());
          
+         // soft wrap at print margin
+         softWrapAtPrintMargin().setGlobalValue(
+                                 newUiPrefs.softWrapAtPrintMargin().getGlobalValue());
+         
          // focus console after exec
          focusConsoleAfterExec().setGlobalValue(
                          newUiPrefs.focusConsoleAfterExec().getGlobalValue());

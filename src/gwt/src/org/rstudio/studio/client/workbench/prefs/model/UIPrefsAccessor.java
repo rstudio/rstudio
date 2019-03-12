@@ -302,6 +302,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("soft_wrap_r_files", false);
    }
    
+   public PrefValue<Boolean> softWrapAtPrintMargin()
+   {
+      return bool("soft_wrap_at_print_margin", false);
+   }
+   
    public PrefValue<Boolean> focusConsoleAfterExec()
    {
       return bool("focus_console_after_exec", false);

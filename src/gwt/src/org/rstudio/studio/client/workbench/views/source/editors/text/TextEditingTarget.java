@@ -6719,6 +6719,14 @@ public class TextEditingTarget implements
                public void execute(Integer arg) {
                   docDisplay.setPrintMarginColumn(arg);
                }}));
+      releaseOnDismiss.add(prefs.softWrapAtPrintMargin().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  if (arg)
+                     docDisplay.setWrapLimitRange(-1, -1);
+                  else
+                     docDisplay.setWrapLimitRange(0, 0);
+               }}));
       releaseOnDismiss.add(prefs.showInvisibles().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {

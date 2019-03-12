@@ -2105,6 +2105,11 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setUseWrapMode(useWrapMode);
    }
+   
+   public void setWrapLimitRange(int min, int max)
+   {
+      getSession().setWrapLimitRange(min, max);
+   }
 
    public void setTabSize(int tabSize)
    {
