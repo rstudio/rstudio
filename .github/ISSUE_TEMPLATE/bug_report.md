@@ -1,3 +1,8 @@
+---
+name  : Bug report
+about : Report a bug in RStudio.
+---
+
 <!--
 
 RStudio v1.2 is currently available as a preview release, from https://www.rstudio.com/products/rstudio/download/preview/. If you are reporting a bug with RStudio v1.1, it would be greatly appreciated if you could check if the issue also reproduces in the preview release before reporting an issue.
