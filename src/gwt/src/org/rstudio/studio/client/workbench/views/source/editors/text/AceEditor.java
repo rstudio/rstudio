@@ -2122,7 +2122,10 @@ public class AceEditor implements DocDisplay,
 
       int indentSize = StringUtil.detectIndent(lines);
       if (indentSize > 0)
+      {
          setTabSize(indentSize);
+         setUseSoftTabs(true);
+      }
    }
 
    public void setShowInvisibles(boolean show)
