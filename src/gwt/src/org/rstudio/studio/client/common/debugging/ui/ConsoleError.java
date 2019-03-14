@@ -1,7 +1,7 @@
 /*
  * ConsoleError.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
@@ -56,7 +57,8 @@ public class ConsoleError extends Composite
       
       initWidget(uiBinder.createAndBindUi(this));
       
-      VirtualConsole vc = new VirtualConsole(errorMessage.getElement());
+      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
+            errorMessage.getElement());
       vc.submit(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
       

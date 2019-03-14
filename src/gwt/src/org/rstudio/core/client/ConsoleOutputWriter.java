@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriter.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
+import org.rstudio.studio.client.RStudioGinjector;
 
 /**
  * Displays R Console output to user, with special behaviors for regular output
@@ -86,7 +87,7 @@ public class ConsoleOutputWriter
       {
          SpanElement trailing = Document.get().createSpanElement();
          outEl.appendChild(trailing);
-         virtualConsole_ = new VirtualConsole(trailing);
+         virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(trailing);
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);

@@ -1,7 +1,7 @@
 /*
  * ChunkOutputStream.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -651,7 +651,7 @@ public class ChunkOutputStream extends FlowPanel
          console_.getElement().setInnerHTML("");
       }
       if (vconsole_ == null)
-         vconsole_ = new VirtualConsole(console_.getElement());
+         vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(console_.getElement());
       else
          vconsole_.clear();
 

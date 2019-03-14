@@ -355,10 +355,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearErrors_ = true;
    }
 
+   public static String consolify(String text)
+   {
+      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(null);
+      console.submit(text);
+      return console.toString();
+   }
+
    public void consolePrompt(String prompt, boolean showInput)
    {
       if (prompt != null)
-         prompt = VirtualConsole.consolify(prompt);
+         prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
       //input_.clear() ;

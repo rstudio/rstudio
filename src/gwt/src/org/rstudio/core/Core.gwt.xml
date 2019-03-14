@@ -5,6 +5,8 @@
    <inherits name='com.google.gwt.json.JSON' />
    <inherits name='com.google.gwt.http.HTTP' />
 
+   <inherits name='org.rstudio.studio.RStudio' />
+    
    <generate-with class="org.rstudio.core.rebind.command.CommandBundleGenerator" >
       <when-type-assignable
             class="org.rstudio.core.client.command.CommandBundle"/>
