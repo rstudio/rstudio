@@ -83,6 +83,8 @@ fi
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
     echo Running 'rsession' tests...
 
+    RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy" \
+           RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
     $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
        --run-tests \
        --config-file="$SESSION_CONF_FILE"
@@ -96,6 +98,8 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
         TESTTHAT_FILTER=", filter = '$TEST_FILTER'"
     fi
 
+    RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy" \
+       RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
     "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
         --run-script "testthat::test_dir('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat'$TESTTHAT_FILTER)" \
         --config-file="$SESSION_CONF_FILE"
