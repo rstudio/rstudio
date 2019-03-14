@@ -3,7 +3,7 @@
 #
 # build.xml
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -190,22 +190,6 @@
          <arg value="-generateJsInteropExports"/>
          <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
-      </java>
-   </target>
-
-   <target name="superdevmode" description="Run super dev mode">
-   	<antcall target="gwtc">
-          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
-   	</antcall>
-      <java failonerror="true" fork="true" classname="com.google.gwt.dev.codeserver.CodeServer">
-         <classpath>
-            <pathelement location="src"/>
-            <path refid="project.class.path"/>
-         </classpath>
-         <jvmarg value="-Xmx2048M"/>
-      	<arg value="-src"/>
-      	<arg value = "src"/>
-        <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
 
