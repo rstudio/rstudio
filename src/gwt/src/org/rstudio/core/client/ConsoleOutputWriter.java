@@ -148,7 +148,5 @@ public class ConsoleOutputWriter
    private int lines_ = 0;
    private final PreWidget output_;
    private VirtualConsole virtualConsole_;
-   
-   // injected
    private VirtualConsoleFactory vcFactory_;
 }
