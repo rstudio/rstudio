@@ -33,7 +33,7 @@ public class StringUtilTests extends GWTTestCase
    {
       String orig = null;
       int minWidth = 5;
-      try 
+      try
       {
          StringUtil.padRight(orig, minWidth);
          fail("Expected exception to be thrown");
@@ -276,5 +276,20 @@ public class StringUtilTests extends GWTTestCase
       String expected = "\\~/Something\\ Special\\ Here\\!\\ 129,\\ ._\\ +@%/-\\>";
       String result = StringUtil.escapeBashPath(input, true);
       assertTrue(StringUtil.equals(result, expected));
+   }
+   
+   public void testIsCharAt()
+   {
+      assertTrue(StringUtil.isCharAt("abcd", 'a', 0));
+      assertTrue(StringUtil.isCharAt("abcd", 'b', 1));
+      assertTrue(StringUtil.isCharAt("abcd", 'c', 2));
+      assertTrue(StringUtil.isCharAt("abcd", 'd', 3));
+   }
+   
+   public void testIsCharAtOOB()
+   {
+      assertFalse(StringUtil.isCharAt("abcd", 'a', -1));
+      assertFalse(StringUtil.isCharAt(null, 'a', 0));
+      assertFalse(StringUtil.isCharAt("012345", '6', 6));
    }
 }
