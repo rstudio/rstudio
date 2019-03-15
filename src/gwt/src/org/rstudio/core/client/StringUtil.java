@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1373,6 +1373,25 @@ public class StringUtil
             return "\\" + m.getValue();
          }
       });
+   }
+   
+   /**
+    * Checks if a character is at a given position in a string. Will not throw an exception
+    * if attempting to look at an invalid index, or if the input string is null.
+    * @param str String to examine
+    * @param ch Character to find at given position
+    * @param pos Position to check
+    * @return true if ch is found at pos in str
+    */
+   public static boolean isCharAt(String str, char ch, int pos)
+   {
+      if (isNullOrEmpty(str))
+         return false;
+      
+      if (pos < 0 || pos >= str.length())
+         return false;
+      
+      return str.charAt(pos) == ch;
    }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
