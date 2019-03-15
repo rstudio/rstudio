@@ -22,6 +22,7 @@ import com.google.inject.name.Names;
 
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.VirtualConsoleFactory;
+import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.studio.client.common.console.VirtualConsolePreferences;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -163,6 +164,7 @@ import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsTab;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
 import org.rstudio.studio.client.workbench.views.jobs.view.LauncherJobsPane;
 import org.rstudio.studio.client.workbench.views.output.data.DataOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
@@ -478,6 +480,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AskSecretManager.class).in(Singleton.class);
       bind(VirtualConsole.Preferences.class).to(VirtualConsolePreferences.class);
       install(new GinFactoryModuleBuilder().build(VirtualConsoleFactory.class));
+      install(new GinFactoryModuleBuilder().build(JobItemFactory.class));
+      bind(FireEvents.class).to(EventBus.class);
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)

@@ -113,6 +113,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
@@ -322,4 +323,5 @@ public interface RStudioGinjector extends Ginjector
    JobManager getJobManager();
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
+   JobItemFactory getJobItemFactory();
 }
