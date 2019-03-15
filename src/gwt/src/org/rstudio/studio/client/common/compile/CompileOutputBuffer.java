@@ -31,8 +31,7 @@ public class CompileOutputBuffer extends Composite
    public CompileOutputBuffer()
    {
       output_ = new PreWidget();
-      virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
-            output_.getElement());
+      virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(output_.getElement());
       output_.setStylePrimaryName(
                         ConsoleResources.INSTANCE.consoleStyles().output());
       FontSizer.applyNormalFontSize(output_);
@@ -80,8 +79,7 @@ public class CompileOutputBuffer extends Composite
    public void clear()
    {
       output_.setText("");
-      virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
-            output_.getElement());
+      virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(output_.getElement());
    }
  
    private PreWidget output_;

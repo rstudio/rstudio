@@ -49,8 +49,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
       super(true, false, true);
       
       console_ = new PreWidget();
-      vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
-            console_.getElement());
+      vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
       chunkId_ = chunkId;
       selection_ = selection;
       state_ = State.Queued;

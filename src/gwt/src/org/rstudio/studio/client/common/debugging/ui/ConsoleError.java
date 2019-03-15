@@ -57,8 +57,7 @@ public class ConsoleError extends Composite
       
       initWidget(uiBinder.createAndBindUi(this));
       
-      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
-            errorMessage.getElement());
+      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
       vc.submit(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
       

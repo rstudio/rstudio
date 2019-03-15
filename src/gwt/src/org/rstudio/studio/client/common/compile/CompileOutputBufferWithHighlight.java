@@ -36,8 +36,7 @@ public class CompileOutputBufferWithHighlight extends Composite
       output_.setStylePrimaryName(styles_.output());
       output_.addStyleName(styles_.paddedOutput());
       FontSizer.applyNormalFontSize(output_);
-      console_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(
-            output_.getElement());
+      console_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(output_.getElement());
     
       scrollPanel_ = new BottomScrollPanel();
       scrollPanel_.setSize("100%", "100%");

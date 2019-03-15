@@ -357,7 +357,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public static String consolify(String text)
    {
-      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(null);
+      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(null);
       console.submit(text);
       return console.toString();
    }

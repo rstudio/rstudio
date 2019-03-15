@@ -87,7 +87,7 @@ public class ConsoleOutputWriter
       {
          SpanElement trailing = Document.get().createSpanElement();
          outEl.appendChild(trailing);
-         virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(trailing);
+         virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(trailing);
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);

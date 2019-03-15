@@ -651,7 +651,7 @@ public class ChunkOutputStream extends FlowPanel
          console_.getElement().setInnerHTML("");
       }
       if (vconsole_ == null)
-         vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().createVirtualConsole(console_.getElement());
+         vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
       else
          vconsole_.clear();
 
