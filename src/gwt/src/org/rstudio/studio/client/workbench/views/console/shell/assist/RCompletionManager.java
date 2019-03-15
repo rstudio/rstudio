@@ -1,7 +1,7 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -805,30 +805,33 @@ public class RCompletionManager implements CompletionManager
             return false;
          
          // Immediately display completions after '$', '::', etc.
-         char prevChar = docDisplay_.getCurrentLine().charAt(
-               input_.getCursorPosition().getColumn() - 1);
-         if (
-               (c == ':' && prevChar == ':') ||
-               (c == '$') ||
-               (c == '@')
-               )
+         if (input_.getCursorPosition().getColumn() > 0)
          {
-            // Bail if we're in Vim but not in insert mode
-            if (docDisplay_.isVimModeOn() &&
-                !docDisplay_.isVimInInsertMode())
+            char prevChar = docDisplay_.getCurrentLine().charAt(
+                  input_.getCursorPosition().getColumn() - 1);
+            if (
+                  (c == ':' && prevChar == ':') ||
+                        (c == '$') ||
+                        (c == '@')
+            )
             {
+               // Bail if we're in Vim but not in insert mode
+               if (docDisplay_.isVimModeOn() &&
+                     !docDisplay_.isVimInInsertMode())
+               {
+                  return false;
+               }
+      
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     beginSuggest(true, true, false);
+                  }
+               });
                return false;
             }
-            
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(true, true, false);
-               }
-            });
-            return false;
          }
          
          // Check for a valid number of R identifier characters for autopopup

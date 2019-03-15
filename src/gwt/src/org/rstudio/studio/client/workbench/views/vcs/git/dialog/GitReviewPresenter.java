@@ -1,7 +1,7 @@
 /*
  * GitReviewPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -576,7 +576,7 @@ public class GitReviewPresenter implements ReviewPresenter
                         continue;
                      
                      String status = info.getStatus();
-                     if (status.charAt(0) != 'A')
+                     if (!StringUtil.isCharAt(status, 'A', 0))
                         continue;
                      
                      // warn if we're trying to commit a file >10MB in size
@@ -749,8 +749,8 @@ public class GitReviewPresenter implements ReviewPresenter
       {
          if (!softModeSwitch_)
          {
-            boolean staged = item.getStatus().charAt(0) != ' ' &&
-                             item.getStatus().charAt(1) == ' ';
+            boolean staged = !StringUtil.isCharAt(item.getStatus(), ' ', 0) &&
+                              StringUtil.isCharAt(item.getStatus(), ' ', 1);
             HasValue<Boolean> checkbox = staged ?
                                          view_.getStagedCheckBox() :
                                          view_.getUnstagedCheckBox();
@@ -763,13 +763,14 @@ public class GitReviewPresenter implements ReviewPresenter
          else
          {
             if (view_.getStagedCheckBox().getValue()
-                && (item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?'))
+                && (StringUtil.isCharAt(item.getStatus(), ' ', 0) || 
+                    StringUtil.isCharAt(item.getStatus(), '?', 0)))
             {
                clearDiff();
                view_.getUnstagedCheckBox().setValue(true, true);
             }
             else if (view_.getUnstagedCheckBox().getValue()
-                     && item.getStatus().charAt(1) == ' ')
+                     && StringUtil.isCharAt(item.getStatus(), ' ', 1))
             {
                clearDiff();
                view_.getStagedCheckBox().setValue(true, true);
