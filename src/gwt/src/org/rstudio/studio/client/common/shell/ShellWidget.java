@@ -81,7 +81,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new ConsoleOutputWriter();
+      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), 

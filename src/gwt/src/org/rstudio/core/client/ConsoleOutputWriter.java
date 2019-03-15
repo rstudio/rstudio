@@ -23,7 +23,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
-import org.rstudio.studio.client.RStudioGinjector;
 
 /**
  * Displays R Console output to user, with special behaviors for regular output
@@ -31,8 +30,9 @@ import org.rstudio.studio.client.RStudioGinjector;
  */
 public class ConsoleOutputWriter
 {
-   public ConsoleOutputWriter()
+   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory)
    {
+      vcFactory_ = vcFactory;
       output_ = new PreWidget();
    }
    
@@ -87,7 +87,7 @@ public class ConsoleOutputWriter
       {
          SpanElement trailing = Document.get().createSpanElement();
          outEl.appendChild(trailing);
-         virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(trailing);
+         virtualConsole_ = vcFactory_.create(trailing);
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
@@ -148,4 +148,7 @@ public class ConsoleOutputWriter
    private int lines_ = 0;
    private final PreWidget output_;
    private VirtualConsole virtualConsole_;
+   
+   // injected
+   private VirtualConsoleFactory vcFactory_;
 }
