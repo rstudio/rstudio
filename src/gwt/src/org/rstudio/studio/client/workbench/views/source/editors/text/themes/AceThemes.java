@@ -71,7 +71,11 @@ public class AceThemes
       if (!currentUrl.equals(baseUrl) &&
          currentUrl.indexOf(baseUrl) == 0)
       {
-         pathUpCount = currentUrl.substring(baseUrl.length()).split("/").length;
+         String[] urlElements = currentUrl.substring(baseUrl.length()).split("/");
+         if (urlElements[urlElements.length - 1].contains("."))
+            pathUpCount = urlElements.length - 1;
+         else
+            pathUpCount = urlElements.length;
       }
       
       // Build the URL.
