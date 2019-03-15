@@ -37,21 +37,21 @@ public class RStudioUnitTestSuite extends GWTTestSuite
    public static Test suite()
    {
       GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
-      suite.addTestSuite(RTokenizerTests.class);
+//      suite.addTestSuite(RTokenizerTests.class);
       suite.addTestSuite(VirtualConsoleTests.class);
-      suite.addTestSuite(ConsoleOutputWriterTests.class);
+//      suite.addTestSuite(ConsoleOutputWriterTests.class);
       suite.addTestSuite(StringUtilTests.class);
-      suite.addTestSuite(DomUtilsTests.class);
-      suite.addTestSuite(AnsiCodeTests.class);
-      suite.addTestSuite(TerminalLocalEchoTests.class);
-      suite.addTestSuite(TerminalSessionSocketTests.class);
-      suite.addTestSuite(JobManagerTests.class);
-      suite.addTestSuite(URIUtilsTests.class);
-      // Disabled in v1.3 due to failures. See #4249.
-      // suite.addTestSuite(RChunkHeaderParserTests.class);
-      suite.addTestSuite(SessionScopeTests.class);
-      suite.addTestSuite(JobsListTests.class);
-      
+//      suite.addTestSuite(DomUtilsTests.class);
+//      suite.addTestSuite(AnsiCodeTests.class);
+//      suite.addTestSuite(TerminalLocalEchoTests.class);
+//      suite.addTestSuite(TerminalSessionSocketTests.class);
+//      suite.addTestSuite(JobManagerTests.class);
+//      suite.addTestSuite(URIUtilsTests.class);
+//      // Disabled in v1.3 due to failures. See #4249.
+//      // suite.addTestSuite(RChunkHeaderParserTests.class);
+//      suite.addTestSuite(SessionScopeTests.class);
+//      suite.addTestSuite(JobsListTests.class);
+//      
       // Pro-only tests
       
       return suite;

@@ -12,9 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.studio.client.common.console;
 
 import com.google.gwt.dom.client.Element;
+import org.rstudio.core.client.VirtualConsole;
 
 public interface VirtualConsoleFactory
 {

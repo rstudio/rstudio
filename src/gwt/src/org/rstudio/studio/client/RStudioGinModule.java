@@ -21,8 +21,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.VirtualConsoleFactory;
-import org.rstudio.core.client.VirtualConsolePreferences;
+import org.rstudio.studio.client.common.console.VirtualConsoleFactory;
+import org.rstudio.studio.client.common.console.VirtualConsolePreferences;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;

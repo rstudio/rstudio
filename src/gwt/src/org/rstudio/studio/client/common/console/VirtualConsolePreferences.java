@@ -12,13 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.studio.client.common.console;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.VirtualConsole.Preferences;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-public class VirtualConsolePreferences implements VirtualConsole.Preferences
+public class VirtualConsolePreferences implements Preferences
 {
    @Inject
    public VirtualConsolePreferences(Provider<UIPrefs> pUIPrefs)

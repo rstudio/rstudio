@@ -20,7 +20,7 @@ import com.google.gwt.inject.client.Ginjector;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.VirtualConsoleFactory;
+import org.rstudio.studio.client.common.console.VirtualConsoleFactory;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
