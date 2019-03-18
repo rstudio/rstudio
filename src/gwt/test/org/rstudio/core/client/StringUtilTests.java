@@ -19,7 +19,6 @@ import java.util.Date;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
-
 public class StringUtilTests extends GWTTestCase
 {
    @Override
@@ -128,11 +127,11 @@ public class StringUtilTests extends GWTTestCase
       String result = StringUtil.formatDate(input);
       assertEquals(expected, result);
    }
-   
+
    public void testFormatDate()
    {
       String result = StringUtil.formatDate(new Date());
-      
+   
       // just check that it's got minimum valid length; don't want to 
       // mess with timezone awareness to do exact check
       // MMM d, yyyy, h:mm AM

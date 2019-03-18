@@ -15,9 +15,13 @@
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
@@ -86,7 +90,39 @@ public class JobsListTests extends GWTTestCase
          actions = emptyJsArrayString();
       }};
    }
+   
+   private static class FakeEventBus implements FireEvents
+   {
+      @Override
+      public void fireEvent(GwtEvent<?> event)
+      {
+      }
 
+      @Override
+      public void fireEventToAllSatellites(CrossWindowEvent<?> event)
+      {
+      }
+
+      @Override
+      public void fireEventToSatellite(CrossWindowEvent<?> event, WindowEx satelliteWindow)
+      {
+      }
+
+      @Override
+      public void fireEventToMainWindow(CrossWindowEvent<?> event)
+      {
+      }
+   }
+   
+   private static class Factory implements JobItemFactory
+   {
+      @Override
+      public JobItem create(Job job)
+      {
+         return new JobItem(job, new FakeEventBus());
+      }
+   }
+   
    @Override
    public String getModuleName()
    {
@@ -98,7 +134,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAllocate()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Assert.assertTrue(true);
    }
 
@@ -109,7 +145,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddOneJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
 
       Assert.assertTrue(list.addJob(job1));
@@ -121,7 +157,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddFetchJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id = job1.id;
 
@@ -136,7 +172,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testFetchBogusJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job fetchedJob = list.getJob("foo");
       Assert.assertNull(fetchedJob);
    }
@@ -147,7 +183,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddFetchBogusJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id = job1.id;
 
@@ -161,7 +197,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddOneJobWithNotify()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id = job1.id;
 
@@ -175,7 +211,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddThreeJobs()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id1 = job1.id;
       Job job2 = getJob2();
@@ -186,11 +222,11 @@ public class JobsListTests extends GWTTestCase
       Assert.assertTrue(list.addJob(job1));
       Job addedJob = list.getJob(id1);
       Assert.assertEquals(addedJob.id, id1);
-      
+
       Assert.assertTrue(list.addJob(job2));
       Job addedJob2 = list.getJob(id2);
       Assert.assertEquals(addedJob2.id, id2);
-      
+
       Assert.assertTrue(list.addJob(job3));
       Job addedJob3 = list.getJob(id3);
       Assert.assertEquals(addedJob3.id, id3);
@@ -201,7 +237,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddThreeJobsWithDups()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       Job job2 = getJob2();
       Job job3 = getJob3();
@@ -221,7 +257,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testGettingList()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       Job job2 = getJob2();
       Job job3 = getJob3();
@@ -241,7 +277,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAddSortOrder()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id1 = job1.id;
       Job job2 = getJob2();
@@ -274,7 +310,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertOneJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
 
       Assert.assertTrue(list.insertJob(job1));
@@ -286,7 +322,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertFetchJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id = job1.id;
 
@@ -301,7 +337,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertOneJobWithNotify()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id = job1.id;
 
@@ -315,7 +351,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertThreeJobs()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id1 = job1.id;
       Job job2 = getJob2();
@@ -326,11 +362,11 @@ public class JobsListTests extends GWTTestCase
       Assert.assertTrue(list.insertJob(job1));
       Job insertedJob = list.getJob(id1);
       Assert.assertEquals(insertedJob.id, id1);
-      
+
       Assert.assertTrue(list.insertJob(job2));
       Job insertedJob2 = list.getJob(id2);
       Assert.assertEquals(insertedJob2.id, id2);
-      
+
       Assert.assertTrue(list.insertJob(job3));
       Job insertedJob3 = list.getJob(id3); 
       Assert.assertEquals(insertedJob3.id, id3);
@@ -341,7 +377,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertThreeJobsWithDups()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       Job job2 = getJob2();
       Job job3 = getJob3();
@@ -361,7 +397,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertedGettingList()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       Job job2 = getJob2();
       Job job3 = getJob3();
@@ -380,7 +416,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testInsertSortOrder()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
       Job job1 = getJob1();
       String id1 = job1.id;
       Job job2 = getJob2();
@@ -414,7 +450,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testSetInitialJobs()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
 
       ArrayList<Job> jobs = new ArrayList<>();
 
@@ -448,7 +484,7 @@ public class JobsListTests extends GWTTestCase
 
    public void testClearJobs()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
 
       ArrayList<Job> jobs = new ArrayList<>();
 
@@ -471,7 +507,7 @@ public class JobsListTests extends GWTTestCase
 
    public void testRemoveJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
 
       ArrayList<Job> jobs = new ArrayList<>();
 
@@ -501,7 +537,7 @@ public class JobsListTests extends GWTTestCase
 
    public void testUpdateJob()
    {
-      JobsList list = new JobsList();
+      JobsList list = new JobsList(new Factory());
 
       ArrayList<Job> jobs = new ArrayList<>();
 

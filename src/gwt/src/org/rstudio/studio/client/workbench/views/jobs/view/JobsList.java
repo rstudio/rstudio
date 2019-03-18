@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -37,8 +38,10 @@ public class JobsList extends Composite
    {
    }
 
-   public JobsList()
+   @Inject
+   public JobsList(JobItemFactory jobItemFactory)
    {
+      jobItemFactory_ = jobItemFactory;
       initWidget(uiBinder.createAndBindUi(this));
    
       listImpl_ = new JobsListViewImpl(list_);
@@ -52,7 +55,7 @@ public class JobsList extends Composite
       if (listImpl_.hasJob(job.id))
          return false;
    
-      listImpl_.addJob(new JobItem(job)); 
+      listImpl_.addJob(jobItemFactory_.create(job)); 
       updateVisibility();
       return true;
    }
@@ -63,7 +66,7 @@ public class JobsList extends Composite
       if (listImpl_.hasJob(job.id))
          return false;
       
-      listImpl_.insertJob(new JobItem(job));
+      listImpl_.insertJob(jobItemFactory_.create(job));
       updateVisibility();
       return true;
    }
@@ -143,4 +146,7 @@ public class JobsList extends Composite
    @UiField ScrollPanel scroll_;
 
    private final JobsListViewImpl listImpl_;
+   
+   // injected
+   private final JobItemFactory jobItemFactory_;
 }

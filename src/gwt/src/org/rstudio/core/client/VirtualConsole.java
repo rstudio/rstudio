@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,10 +23,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
@@ -40,9 +39,6 @@ import com.google.inject.Inject;
  */
 public class VirtualConsole
 {
-   // use preference to determine ANSI color behavior
-   private final static int ANSI_COLOR_USE_PREF = -1;
-
    // don't do any processing of ANSI escape codes
    public final static int ANSI_COLOR_OFF = 0;
    
@@ -51,38 +47,20 @@ public class VirtualConsole
    
    // strip out ANSI escape sequences but don't apply styles
    public final static int ANSI_COLOR_STRIP = 2;
+   
+   public interface Preferences
+   {
+      int truncateLongLinesInConsoleHistory();
+      int consoleAnsiMode();
+   }
   
-   public VirtualConsole()
-   {
-      this(null);
-   }
-
-   public VirtualConsole(Element parent)
-   {
-      this(parent, ANSI_COLOR_USE_PREF);
-   }   
-
-   /**
-    * VirtualConsole constructor
-    * @param parent parent element
-    * @param ansiColorMode ANSI_COLOR_OFF: don't process ANSI escapes,
-    * ANSI_COLOR_ON: translate ANSI escapes into css styles,
-    * ANSI_COLOR_STRIP: strip out ANSI escape sequences but don't apply styles, 
-    * ANSI_COLOR_USE_PREF: determine behavior from preference
-    */
-   public VirtualConsole(Element parent, int ansiColorMode)
-   {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      parent_ = parent;
-      ansiColorMode_ = ansiColorMode;
-   }
-    
    @Inject
-   private void initialize(UIPrefs prefs)
+   public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
       prefs_ = prefs;
+      parent_ = parent;
    }
-
+    
    public void clear()
    {
       formfeed();
@@ -164,7 +142,7 @@ public class VirtualConsole
    {
       String output = output_.toString();
       
-      int maxLength = prefs_.truncateLongLinesInConsoleHistory().getGlobalValue();
+      int maxLength = prefs_.truncateLongLinesInConsoleHistory();
       if (maxLength == 0)
          return output;
       
@@ -186,13 +164,6 @@ public class VirtualConsole
    public int getLength()
    {
       return output_.length();
-   }
-   
-   public static String consolify(String text)
-   {
-      VirtualConsole console = new VirtualConsole();
-      console.submit(text);
-      return console.toString();
    }
    
    public Element getParent()
@@ -452,8 +423,7 @@ public class VirtualConsole
      
       String currentClazz = clazz;
 
-      int ansiColorMode = (ansiColorMode_ == ANSI_COLOR_USE_PREF) ? 
-            prefs_.consoleAnsiMode().getValue() : ansiColorMode_;
+      int ansiColorMode = prefs_.consoleAnsiMode();
 
       // If previously determined classes from ANSI codes are available,
       // combine them with input class so they are ready to use if
@@ -692,12 +662,11 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   private int ansiColorMode_;
    
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
    private List<Element> newElements_ = new ArrayList<Element>();
    
    // Injected ----
-   private UIPrefs prefs_;
+   private Preferences prefs_;
 }

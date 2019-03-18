@@ -16,13 +16,15 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -59,6 +61,9 @@ public class JobItem extends Composite implements JobItemView
 
       @Source("select_2x.png")
       ImageResource jobSelect();
+      
+      @Source("cancel_2x.png")
+      ImageResource jobCancel();
    }
    
    public interface Styles extends CssResource
@@ -84,14 +89,14 @@ public class JobItem extends Composite implements JobItemView
       String failed();
    }
 
-   public JobItem(final Job job)
+   @Inject
+   public JobItem(@Assisted Job job, FireEvents eventBus)
    {
-      stop_ = new ToolbarButton(
-            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
-            {
-               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
-            });
+      eventBus_ = eventBus;
+      stop_ = new ToolbarButton(new ImageResource2x(RESOURCES.jobCancel()), evt ->
+      {
+         eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+      });
       
       initWidget(uiBinder.createAndBindUi(this));
       
@@ -118,8 +123,7 @@ public class JobItem extends Composite implements JobItemView
             // ignore clicks occurring inside the progress area, or the stop button
             return;
          }
-         RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new JobSelectionEvent(job.id, job.type, true, true));
+         eventBus_.fireEvent(new JobSelectionEvent(job.id, job.type, true, true));
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
@@ -265,4 +269,7 @@ public class JobItem extends Composite implements JobItemView
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
    @UiField Styles styles_;
+   
+   // injected
+   private final FireEvents eventBus_;
 }
