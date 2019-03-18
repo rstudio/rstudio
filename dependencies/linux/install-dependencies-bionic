@@ -36,14 +36,12 @@ sudo apt-get -y install \
   libclang-6.0-dev \
   libclang-dev \
   libcurl4-openssl-dev \
-  libdbi1 \
   libegl1-mesa \
   libfuse2 \
   libgl1-mesa-dev \
   libgtk-3-0 \
   libpam-dev \
   libpango1.0-dev \
-  librrd8 \
   libssl-dev \
   libuser1-dev \
   libxslt1-dev \
