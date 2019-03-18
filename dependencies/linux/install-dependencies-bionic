@@ -19,38 +19,43 @@ set -e
 
 sudo apt-get update
 
-sudo apt-get -y install ant
-sudo apt-get -y install build-essential
-sudo apt-get -y install clang
-sudo apt-get -y install cmake
-sudo apt-get -y install debsigs
-sudo apt-get -y install dpkg-sig
-sudo apt-get -y install expect
-sudo apt-get -y install fakeroot
-sudo apt-get -y install gnupg1
-sudo apt-get -y install libacl1-dev
-sudo apt-get -y install libattr1-dev
-sudo apt-get -y install libbz2-dev
-sudo apt-get -y install libcap-dev
-sudo apt-get -y install libcurl4-openssl-dev
-sudo apt-get -y install libegl1-mesa
-sudo apt-get -y install libfuse2
-sudo apt-get -y install libgl1-mesa-dev
-sudo apt-get -y install libgl1-mesa-dev
-sudo apt-get -y install libgtk-3-0
-sudo apt-get -y install libpam-dev
-sudo apt-get -y install libpango1.0-dev
-sudo apt-get -y install libssl-dev
-sudo apt-get -y install libuser1-dev
-sudo apt-get -y install libxslt1-dev
-sudo apt-get -y install lsof
-sudo apt-get -y install pkg-config
-sudo apt-get -y install python
-sudo apt-get -y install software-properties-common
-sudo apt-get -y install unzip
-sudo apt-get -y install uuid-dev
-sudo apt-get -y install wget
-sudo apt-get -y install zlib1g-dev
+sudo apt-get -y install \
+  ant \
+  build-essential \
+  clang \
+  cmake \
+  debsigs \
+  dpkg-sig \
+  expect \
+  fakeroot \
+  gnupg1 \
+  libacl1-dev \
+  libattr1-dev \
+  libbz2-dev \
+  libcap-dev \
+  libclang-6.0-dev \
+  libclang-dev \
+  libcurl4-openssl-dev \
+  libdbi1 \
+  libegl1-mesa \
+  libfuse2 \
+  libgl1-mesa-dev \
+  libgtk-3-0 \
+  libpam-dev \
+  libpango1.0-dev \
+  librrd8 \
+  libssl-dev \
+  libuser1-dev \
+  libxslt1-dev \
+  lsof \
+  pkg-config \
+  python \
+  rrdtool \
+  software-properties-common \
+  unzip \
+  uuid-dev \
+  wget \
+  zlib1g-dev
 
 # Java 8 (not in official repo for bionic)
 sudo add-apt-repository -y ppa:openjdk-r/ppa
