@@ -1385,13 +1385,21 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("availablePackages", function()
 {
+   # short-circuit for empty repositories case
+   repos <- getOption("repos")
+   if (length(repos) == 0) {
+      value <- available.packages()
+      attr(value, "time") <- Sys.time()
+      return(list(state = "CACHED", value = value))
+   }
+   
    # figure out the current state. possibilities:
    #
    # - STALE:    we need to request available packages
    # - PENDING:  another process is requesting packages
    # - CACHED:   available packages ready in cache
    #
-   reposString <- paste(deparse(getOption("repos")), collapse = " ")
+   reposString <- paste(deparse(repos), collapse = " ")
    state <- .rs.availablePackagesState(reposString)
    value <- switch(
       state,
