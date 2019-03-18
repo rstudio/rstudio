@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+#
+# install-dependencies-bionic
+#
+# Copyright (C) 2009-19 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+sudo apt-get update
+
+sudo apt-get -y install ant
+sudo apt-get -y install build-essential
+sudo apt-get -y install clang
+sudo apt-get -y install cmake
+sudo apt-get -y install debsigs
+sudo apt-get -y install dpkg-sig
+sudo apt-get -y install expect
+sudo apt-get -y install fakeroot
+sudo apt-get -y install gnupg1
+sudo apt-get -y install libacl1-dev
+sudo apt-get -y install libattr1-dev
+sudo apt-get -y install libbz2-dev
+sudo apt-get -y install libcap-dev
+sudo apt-get -y install libcurl4-openssl-dev
+sudo apt-get -y install libegl1-mesa
+sudo apt-get -y install libfuse2
+sudo apt-get -y install libgl1-mesa-dev
+sudo apt-get -y install libgl1-mesa-dev
+sudo apt-get -y install libgtk-3-0
+sudo apt-get -y install libpam-dev
+sudo apt-get -y install libpango1.0-dev
+sudo apt-get -y install libssl-dev
+sudo apt-get -y install libuser1-dev
+sudo apt-get -y install libxslt1-dev
+sudo apt-get -y install lsof
+sudo apt-get -y install pkg-config
+sudo apt-get -y install python
+sudo apt-get -y install software-properties-common
+sudo apt-get -y install unzip
+sudo apt-get -y install uuid-dev
+sudo apt-get -y install wget
+sudo apt-get -y install zlib1g-dev
+
+# Java 8 (not in official repo for bionic)
+sudo add-apt-repository -y ppa:openjdk-r/ppa
+sudo apt-get update
+sudo apt-get -y install openjdk-8-jdk
+sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+
+# R
+if ! [ -x "$(command -v R)" ]; then
+  sudo apt-get -y  install apt-transport-https software-properties-common
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+  sudo add-apt-repository -y 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+  sudo apt update
+  sudo apt-get -y install r-base
+fi
+
+# overlay
+if [ -e install-overlay-common ]
+then
+  ./install-overlay-common
+fi
+
+# common
+cd ../common
+./install-common
+cd ../linux
+
+# Qt for desktop
+if [ "$1" != "--exclude-qt-sdk" ]
+then
+   ./install-qt-sdk
+fi
+
