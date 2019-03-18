@@ -467,8 +467,9 @@ void GwtCallback::changeTitleBarColor(int red, int green, int blue) {
    // attempts to mess with the window appearance (especially with
    // whether layer-backed views are used) cause rendering issues
    // with older versions of macOS, so only enable this on Mojave
-   // https://github.com/rstudio/rstudio/issues/4409 
-   if (@available(macOS 10.14, *)) {
+   // https://github.com/rstudio/rstudio/issues/4409
+   static bool s_isMojave = macosVersion() >= Version(10, 14, 0);
+   if (s_isMojave) {
 
       const int kAverageColor = pow(127.0, 2.0) * 3;
       const int kBrightColor = pow(217.0, 2.0) * 3;

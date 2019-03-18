@@ -119,6 +119,40 @@ bool isGnomeDesktop()
    return false;
 }
 
+core::Version macosVersionImpl()
+{
+#ifdef Q_OS_MAC
+
+   system::ProcessOptions options;
+   system::ProcessResult result;
+   Error error = system::runCommand(
+            "/usr/bin/sw_vers -productVersion",
+            options,
+            &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return Version(10, 12, 6);
+   }
+
+   std::string output = result.stdOut;
+   return core::Version(output);
+
+#else
+
+   // dummy / unused version
+   return core::Version(10, 12, 6);
+
+#endif
+}
+
+core::Version macosVersion()
+{
+   static Version s_macosVersion = macosVersionImpl();
+   return s_macosVersion;
+}
+
 #ifndef Q_OS_MAC
 
 QString getFixedWidthFontList()

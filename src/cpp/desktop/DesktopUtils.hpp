@@ -22,6 +22,7 @@
 #include <QUrl>
 #include <QWebEnginePage>
 
+#include <core/Version.hpp>
 #include <core/system/Process.hpp>
 
 namespace rstudio {
@@ -45,6 +46,8 @@ bool isWindows();
 bool isOSXMavericks();
 bool isCentOS();
 bool isGnomeDesktop();
+
+core::Version macosVersion();
 
 QString getFixedWidthFontList();
 
