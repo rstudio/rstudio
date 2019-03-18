@@ -17,6 +17,14 @@
 
 set -e
 
+platform_codename=$(lsb_release -sc)
+if [ $platform_codename != "bionic" ] ; then
+    echo Error: This script is only for use on Ubuntu Bionic
+    exit 1
+fi
+
+echo Installing RStudio dependencies for Ubuntu Bionic
+
 sudo apt-get update
 
 sudo apt-get -y install \
