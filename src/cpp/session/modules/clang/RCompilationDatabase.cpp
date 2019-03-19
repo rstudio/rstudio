@@ -624,13 +624,17 @@ bool RCompilationDatabase::isProjectTranslationUnit(
                                           const std::string& filename) const
 {
    using namespace projects;
+
+   if (projectContext().config().buildType != r_util::kBuildTypePackage)
+      return false;
+
    FilePath filePath(filename);
    FilePath pkgPath = projectContext().buildTargetPath();
    FilePath srcDirPath = pkgPath.childPath("src");
    FilePath includePath = pkgPath.childPath("inst/include");
-   return ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-          (!filePath.relativePath(srcDirPath).empty() ||
-           !filePath.relativePath(includePath).empty()));
+   return
+         filePath.isWithin(srcDirPath) ||
+         filePath.isWithin(includePath);
 }
 
 namespace {
