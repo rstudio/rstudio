@@ -298,10 +298,10 @@ endif()
 
 # find crashpad libraries, ensuring the correct link order
 if(UNIX)
-   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*libclient.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*libutil.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*libbase.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*.a")
+   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*libclient.a")
+   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*libutil.a")
+   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*libbase.a")
+   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
 
    if(APPLE)
       # add necessary macos frameworks so crashpad applications can link correctly
@@ -313,7 +313,10 @@ if(UNIX)
       list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
    endif()
 else()
-   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*client.lib" "${CRASHPAD_LIBRARY_DIR}/*.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*client.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*util.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*base.lib")
+   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
 endif()
 list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
 
