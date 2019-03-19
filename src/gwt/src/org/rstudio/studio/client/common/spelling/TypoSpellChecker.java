@@ -191,9 +191,27 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
+//      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+//      TypoNativeSettings settings = TypoNativeSettings.create(true, (t) -> {
+//         typoNative_ = t;
+//         context_.invalidateAllWords();
+//      });
+//
+//      new TypoNative(
+//         uiPrefs_.spellingDictionaryLanguage().getValue(),
+//         null,
+//         null,
+//         settings
+//      );
+//   };
+
       ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
-         typoNative_ = new TypoNative(uiPrefs_.spellingDictionaryLanguage().getValue());
-         context_.invalidateAllWords();
+         typoNative_ = new TypoNative(
+            uiPrefs_.spellingDictionaryLanguage().getValue(),
+            null,
+            null,
+            null
+         );
       };
       new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
    }

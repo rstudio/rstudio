@@ -15,13 +15,14 @@
 
 package org.rstudio.studio.client.common.spelling;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Typo")
 public class TypoNative
 {
-   TypoNative(String dictionary) {}
+   TypoNative(String dictionary, JavaScriptObject affData, JavaScriptObject wordsData, JavaScriptObject settings) {}
 
    public native boolean check(String word);
    public native String[] suggest(String word);

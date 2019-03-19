@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,18 +40,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.AceSupport;
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
-import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -59,8 +55,10 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -96,6 +94,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -183,7 +182,7 @@ public class AceEditor implements DocDisplay,
       public void apply()
       {
          getSession().getSelection().setSelectionRange(
-               getRange());
+            getRange());
       }
 
       public Range getRange()
@@ -214,7 +213,8 @@ public class AceEditor implements DocDisplay,
                changed_ = true;
             }
          });
-         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler() {
+         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler()
+         {
             @Override
             public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
             {
@@ -260,7 +260,7 @@ public class AceEditor implements DocDisplay,
                                  public void onLoaded()
                                  {
                                     AceSupport.initialize();
-                                    
+
                                     if (command != null)
                                        command.execute();
                                  }
@@ -274,10 +274,10 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-   
+
    public static final native AceEditor getEditor(Element el)
-   /*-{
-      for (; el != null; el = el.parentElement)
+      /*-{
+          for (; el != null; el = el.parentElement)
          if (el.$RStudioAceEditor != null)
             return el.$RStudioAceEditor;
    }-*/;
@@ -341,7 +341,7 @@ public class AceEditor implements DocDisplay,
                completionManager_.onPaste(event);
 
             final Position start = getSelectionStart();
-            
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -2283,7 +2283,12 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addFocusHandler(handler);
    }
-   
+
+   public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
+   {
+      return widget_.addContextMenuHandler(handler);
+   }
+
    public Scope getScopeAtPosition(Position position)
    {
       if (hasCodeModelScopeTree())
@@ -2915,7 +2920,7 @@ public class AceEditor implements DocDisplay,
       
       return false;
    }
-   
+
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
    {
       return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
