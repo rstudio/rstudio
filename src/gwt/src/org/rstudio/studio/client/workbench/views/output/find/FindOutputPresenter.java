@@ -1,7 +1,7 @@
 /*
  * FindOutputPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,6 +185,9 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          protected JsObject getValue()
          {
+            if (dialogState_ == null)
+               return dialogState_.cast();
+            
             JsObject object = dialogState_.<JsObject>cast().clone();
             
             // convert path to relative if path is project-relative
