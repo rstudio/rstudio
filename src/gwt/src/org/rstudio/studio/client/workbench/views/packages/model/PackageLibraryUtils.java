@@ -62,7 +62,7 @@ public class PackageLibraryUtils
    public static String nameOfLibraryType(PackageLibraryType type)
    {
       if (type == PackageLibraryType.Project)
-         return "Packrat Library";
+         return "Project Library";
       else if (type == PackageLibraryType.User)
          return "User Library";
       else if (type == PackageLibraryType.System)
