@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
@@ -35,14 +35,13 @@ import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalE
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-public class TerminalTabPresenter extends BusyPresenter
+public class TerminalTabPresenter extends BasePresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
                                              CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
                                              RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
-
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 

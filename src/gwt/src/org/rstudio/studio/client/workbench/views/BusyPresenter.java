@@ -1,7 +1,7 @@
 /*
  * BusyPresenter.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ public abstract class BusyPresenter extends BasePresenter
    @Override
    public void addBusyHandler(BusyHandler handler)
    {
-      // if a handler is added while when we're already busy, invoke the
+      // if a handler is added when we're already busy, invoke the
       // handler immediately
       if (isBusy())
          handler.onBusy(new BusyEvent(true));
