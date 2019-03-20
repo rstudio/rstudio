@@ -1393,6 +1393,27 @@ public class StringUtil
       
       return str.charAt(pos) == ch;
    }
+
+   /**
+    * Prior to GWT 2.8.2, the String.charAt method was not range-checked and would not
+    * throw exceptions when invoked with an out-of-range position. We have code that assumes
+    * this old behavior.
+    * 
+    * Starting with 2.8.2 it will throw StringIndexOutOfBoundsException per Java standard.
+    * In cases where it's not obvious how to safely switch to the new behavior, this method
+    * can be substituted.
+    */
+   public static char charAt(String str, int pos)
+   {
+      try
+      {
+         return str.charAt(pos);         
+      }
+      catch (StringIndexOutOfBoundsException ex)
+      {
+         return '\0';         
+      }
+   }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

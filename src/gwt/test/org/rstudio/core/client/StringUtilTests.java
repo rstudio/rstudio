@@ -292,4 +292,20 @@ public class StringUtilTests extends GWTTestCase
       assertFalse(StringUtil.isCharAt(null, 'a', 0));
       assertFalse(StringUtil.isCharAt("012345", '6', 6));
    }
+   
+   public void testSafeCharAt()
+   {
+      String str = "";
+      
+      assertEquals(StringUtil.charAt(str, 0), '\0');
+      assertEquals(StringUtil.charAt(str, -1), '\0');
+      assertEquals(StringUtil.charAt(str, 100), '\0');
+      
+      str = "abcd";
+
+      assertEquals(StringUtil.charAt(str, 0), 'a');
+      assertEquals(StringUtil.charAt(str, 1), 'b');
+      assertEquals(StringUtil.charAt(str, 2), 'c');
+      assertEquals(StringUtil.charAt(str, 3), 'd');
+   }
 }
