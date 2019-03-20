@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,8 +128,6 @@ import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
-import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
-import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
@@ -309,11 +307,6 @@ public class ClientEventDispatcher
          {
             PlotsState plotsState = event.getData();
             eventBus_.dispatchEvent(new PlotsChangedEvent(plotsState));
-         }
-         else if (type == ClientEvent.ViewData)
-         {
-            DataView dataView = event.getData();
-            eventBus_.dispatchEvent(new ViewDataEvent(dataView));
          }
          else if (type == ClientEvent.PackageStateChanged)
          {

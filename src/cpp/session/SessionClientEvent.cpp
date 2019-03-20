@@ -46,7 +46,6 @@ const int kSuicide = 16;
 const int kFileChanged = 17;
 const int kWorkingDirChanged = 18;
 const int kPlotsStateChanged = 19;
-const int kViewData = 20;
 const int kPackageStatusChanged = 21;
 const int kPackageStateChanged = 22;
 const int kLocator = 23;
@@ -247,8 +246,6 @@ std::string ClientEvent::typeName() const
          return "working_dir_changed";
       case client_events::kPlotsStateChanged: 
          return "plots_state_changed";
-      case client_events::kViewData: 
-         return "view_data";
       case client_events::kPackageStatusChanged: 
          return "package_status_changed";
       case client_events::kPackageStateChanged: 

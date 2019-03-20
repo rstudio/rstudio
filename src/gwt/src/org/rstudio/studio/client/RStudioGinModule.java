@@ -146,10 +146,6 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
-import org.rstudio.studio.client.workbench.views.data.Data;
-import org.rstudio.studio.client.workbench.views.data.DataPane;
-import org.rstudio.studio.client.workbench.views.data.DataTab;
-import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditView;
@@ -343,7 +339,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Source.Display.class).to(SourcePane.class);
       bind(TerminalTabPresenter.Display.class).to(TerminalPane.class);
       bind(History.Display.class).to(HistoryPane.class);
-      bind(Data.Display.class).to(DataPane.class);
       bind(Files.Display.class).to(FilesPane.class);
       bind(Plots.Display.class).to(PlotsPane.class);
       bind(Packages.Display.class).to(PackagesPane.class);
@@ -365,7 +360,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(LauncherJobsPresenter.Display.class).to(LauncherJobsPane.class);
       bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
       bindTab("History", HistoryTab.class);
-      bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
       bindTab("Plots", PlotsTab.class);
       bindTab("Packages", PackagesTab.class);
@@ -413,7 +407,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CodeToolsServerOperations.class).to(RemoteServer.class) ;
       bind(ConsoleServerOperations.class).to(RemoteServer.class) ;
       bind(SourceServerOperations.class).to(RemoteServer.class) ;
-      bind(DataServerOperations.class).to(RemoteServer.class);
       bind(FilesServerOperations.class).to(RemoteServer.class) ;
       bind(HistoryServerOperations.class).to(RemoteServer.class) ;
       bind(PlotsServerOperations.class).to(RemoteServer.class) ;
