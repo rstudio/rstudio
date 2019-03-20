@@ -20,9 +20,11 @@ import java.util.Iterator;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
@@ -47,7 +49,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
    interface Resources extends ClientBundle
    {
-      @Source("../../../../commands/goToWorkingDir.png")
+      @Source("./goToWorkingDir.png")
       ImageResource addToDictIcon();
    }
 
@@ -192,7 +194,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
-         Position endOfLine = Position.create(docDisplay_.getLine(pos.getRow()).length(), pos.getColumn());
+         Position endOfLine = Position.create(pos.getRow()+1, 0);
          Iterable<Range> wordSource = docDisplay_.getWords(
             docDisplay_.getFileType().getTokenPredicate(),
             docDisplay_.getFileType().getCharPredicate(),
@@ -218,8 +220,13 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          event.preventDefault();
          event.stopPropagation();
 
+         int i = 0;
          for (String suggestion : suggestions)
          {
+            // Only show a limited number of suggestions
+            if (i >= MAX_SUGGESTIONS)
+               break;
+
             MenuItem suggestionItem = new MenuItem(
                AppCommand.formatMenuLabel(null, suggestion, ""),
                true,
@@ -229,6 +236,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                });
 
             menu.addItem(suggestionItem);
+            i++;
          }
 
          // Only add a separator if we have suggestions to separate from
@@ -245,9 +253,12 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
          menu.addItem(addToDictionaryItem);
 
-
          menu.setPopupPositionAndShow((offWidth, offHeight) -> {
-            menu.setPopupPosition(event.getNativeEvent().getClientX(), event.getNativeEvent().getClientY());
+            int clientX = event.getNativeEvent().getClientX();
+            int clientY = event.getNativeEvent().getClientY();
+            int menuX = Math.min(clientX, Window.getClientWidth() - offWidth);
+            int menuY = Math.min(clientY, Window.getClientHeight() - offHeight);
+            menu.setPopupPosition(menuX, menuY);
          });
       });
    }
@@ -269,7 +280,8 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    private boolean isSpellChecking_;
 
-   private final static String IGNORED_WORDS = "ignored_words"; 
+   private final static String IGNORED_WORDS = "ignored_words";
+   private final static int MAX_SUGGESTIONS = 5;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
