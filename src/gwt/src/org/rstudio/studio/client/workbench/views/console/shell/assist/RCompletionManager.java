@@ -605,8 +605,8 @@ public class RCompletionManager implements CompletionManager
             // also halt suggestions if we're about to remove the only character on the line
             if (cursorColumn > 0)
             {
-               char ch = currentLine.charAt(cursorColumn - 2);
-               char prevCh = currentLine.charAt(cursorColumn - 3);
+               char ch = StringUtil.charAt(currentLine, cursorColumn - 2);
+               char prevCh = StringUtil.charAt(currentLine, cursorColumn - 3);
                
                boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
                      (ch == ':' && prevCh == ':') ||
@@ -623,7 +623,7 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition start = selection.getStart().movePosition(-1, true);
                   InputEditorPosition end = selection.getStart();
 
-                  if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
+                  if (StringUtil.charAt(currentLine, cursorColumn) == ')' && StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
                      requester_.flushCache();
@@ -688,7 +688,7 @@ public class RCompletionManager implements CompletionManager
       {
          for (int i = 0; i < lookbackLimit; i++)
          {
-            if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
+            if (!isValidForRIdentifier(StringUtil.charAt(currentLine, cursorColumn - i - 1)))
             {
                canAutoPopup = false;
                break;
