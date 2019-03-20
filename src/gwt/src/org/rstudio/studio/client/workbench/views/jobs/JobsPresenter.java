@@ -24,7 +24,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
@@ -32,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventH
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplay;
 
 import com.google.gwt.user.client.Command;
@@ -70,9 +70,9 @@ public class JobsPresenter extends BasePresenter
    }
 
    @Override
-   public void onJobInit(JobInitEvent event)
+   public void setInitialJobs(JobState state)
    {
-      jobEventHandler_.onJobInit(event);
+      jobEventHandler_.setInitialJobs(state);
    }
    
    @Override
