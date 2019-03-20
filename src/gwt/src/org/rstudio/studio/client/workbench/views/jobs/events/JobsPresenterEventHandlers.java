@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
+
 public interface JobsPresenterEventHandlers extends JobUpdatedEvent.Handler,
-                                                    JobInitEvent.Handler,
                                                     JobOutputEvent.Handler,
                                                     JobSelectionEvent.Handler,
                                                     JobElapsedTickEvent.Handler
 {
+   void setInitialJobs(JobState state);
 }

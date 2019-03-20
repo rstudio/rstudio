@@ -65,5 +65,13 @@ public class JobState extends JsObject
    {
       return (JobState)JsObject.createJsObject();
    }
-   
+
+   public final boolean hasJobs()
+   {
+      for (String id : iterableKeys())
+      {
+         return true;
+      }
+      return false;
+   }
 }

@@ -1,7 +1,7 @@
 /*
  * TerminalTab.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,12 +20,10 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -43,14 +41,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
-                         implements ProvidesBusy
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
 
    public abstract static class Shim 
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
-      implements ProvidesBusy,
-                 CreateTerminalEvent.Handler,
+      implements CreateTerminalEvent.Handler,
                  SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
                  AddTerminalEvent.Handler,
@@ -141,12 +137,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
-   }
-
-   @Override
-   public void addBusyHandler(BusyHandler handler)
-   {
-      shim_.addBusyHandler(handler);
    }
 
    /**

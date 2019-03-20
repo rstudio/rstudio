@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplay;
 
@@ -67,19 +68,19 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    }
    
    @Override
-   public void onJobInit(JobInitEvent event)
+   public void setInitialJobs(JobState state)
    {
       // make an array of all the jobs on the server
       ArrayList<Job> jobs = new ArrayList<>();
-      if (event.state() != null)
+      if (state != null)
       {
-         for (String id : event.state().iterableKeys())
+         for (String id : state.iterableKeys())
          {
-            Job job = event.state().getElement(id);
+            Job job = state.getElement(id);
             if (!isSupportedJobType(job.type))
                continue;
       
-            jobs.add(event.state().getElement(id));
+            jobs.add(state.getElement(id));
          }
       }
       setJobState(jobs);
