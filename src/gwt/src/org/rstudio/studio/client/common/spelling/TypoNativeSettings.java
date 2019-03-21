@@ -1,5 +1,5 @@
 /*
- * TypoNative.java
+ * TypoNativeSettings.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -12,18 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.common.spelling;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Typo")
-public class TypoNative
+import java.util.function.Consumer;
+
+class TypoNativeSettings extends JavaScriptObject
 {
-   TypoNative(String dictionary, JavaScriptObject affData, JavaScriptObject wordsData, JavaScriptObject settings) {}
+   protected TypoNativeSettings() {}
 
-   public native boolean check(String word);
-   public native String[] suggest(String word);
+   /*
+      Since we only care about Async and Async loader for now that's all we're taking.
+      The Typo.js interface is a little opaque using JSNI so we are just using a
+      Minimum Viable Interface at the moment.
+    */
+   public static native TypoNativeSettings create(Boolean isAsync, Consumer<TypoNative> asyncCallback)  /*-{
+      return {asyncLoad: async, loadedCallback: asyncCallback};
+   }-*/;
 }

@@ -19,11 +19,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.NullProgressIndicator;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
@@ -39,6 +47,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 {
+   interface Resources extends ClientBundle
+   {
+      @Source("./goToWorkingDir.png")
+      ImageResource addToDictIcon();
+   }
+
    public TextEditingTargetSpelling(DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     LintManager lintManager)
@@ -47,6 +61,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       docUpdateSentinel_ = docUpdateSentinel;
       lintManager_ = lintManager;
       typoSpellChecker_ = new TypoSpellChecker(this);
+      injectContextMenuHandler();
    }
 
    public JsArray<LintItem> getLint()
@@ -90,6 +105,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       return lint;
    }
 
+   // Legacy checkSpelling function for popup dialog
    public void checkSpelling()
    {
       if (isSpellChecking_)
@@ -168,6 +184,87 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          releaseOnDismiss_.remove(0).removeHandler();
    }
 
+   private void injectContextMenuHandler()
+   {
+      docDisplay_.addContextMenuHandler((event) ->
+      {
+         // If we have a selection, just return as the user likely wants to cut/copy/paste
+         if (docDisplay_.hasSelection())
+            return;
+
+         // Get the word under the cursor
+         Position pos = docDisplay_.getCursorPosition();
+         Position endOfLine = Position.create(pos.getRow()+1, 0);
+         Iterable<Range> wordSource = docDisplay_.getWords(
+            docDisplay_.getFileType().getTokenPredicate(),
+            docDisplay_.getFileType().getCharPredicate(),
+            pos,
+            endOfLine);
+
+         Iterator<Range> wordsIterator = wordSource.iterator();
+
+         // If there's no word, just return
+         if (!wordsIterator.hasNext())
+            return;
+
+         Range wordRange = wordsIterator.next();
+         String word = docDisplay_.getTextForRange(wordRange);
+
+         if (word.length() < 2 || typoSpellChecker_.checkSpelling(word))
+            return;
+
+         final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+         String[] suggestions = typoSpellChecker_.suggestionList(word);
+
+         // We now know we're going to show our menu, stop default context menu
+         event.preventDefault();
+         event.stopPropagation();
+
+         int i = 0;
+         for (String suggestion : suggestions)
+         {
+            // Only show a limited number of suggestions
+            if (i >= MAX_SUGGESTIONS)
+               break;
+
+            MenuItem suggestionItem = new MenuItem(
+               AppCommand.formatMenuLabel(null, suggestion, ""),
+               true,
+               () -> {
+                  docDisplay_.replaceRange(wordRange, suggestion);
+                  docDisplay_.removeMarkersAtCursorPosition();
+               });
+
+            menu.addItem(suggestionItem);
+            i++;
+         }
+
+         // Only add a separator if we have suggestions to separate from
+         if (suggestions.length > 0)
+            menu.addSeparator();
+
+         MenuItem addToDictionaryItem = new MenuItem(
+            AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""),
+            true,
+            () -> {
+               typoSpellChecker_.addToUserDictionary(word);
+               docDisplay_.removeMarkersAtCursorPosition();
+            });
+
+         menu.addItem(addToDictionaryItem);
+
+         menu.setPopupPositionAndShow((offWidth, offHeight) -> {
+            int clientX = event.getNativeEvent().getClientX();
+            int clientY = event.getNativeEvent().getClientY();
+            int menuX = Math.min(clientX, Window.getClientWidth() - offWidth);
+            int menuY = Math.min(clientY, Window.getClientHeight() - offHeight);
+            menu.setPopupPosition(menuX, menuY);
+         });
+      });
+   }
+
+   private static final Resources RES = GWT.create(Resources.class);
+
    private final class InputKeyDownHandler implements KeyDownHandler
    {
       public void onKeyDown(KeyDownEvent event)
@@ -183,7 +280,8 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    private boolean isSpellChecking_;
 
-   private final static String IGNORED_WORDS = "ignored_words"; 
+   private final static String IGNORED_WORDS = "ignored_words";
+   private final static int MAX_SUGGESTIONS = 5;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;

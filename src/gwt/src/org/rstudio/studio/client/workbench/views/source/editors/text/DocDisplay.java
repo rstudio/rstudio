@@ -19,6 +19,7 @@ import org.rstudio.core.client.Rectangle;
 import java.util.List;
 
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -82,6 +83,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
                                     HasLineWidgetsChangedHandlers,
                                     IsWidget,
+                                    HasContextMenuHandlers,
                                     HasFocusHandlers,
                                     HasKeyDownHandlers,
                                     HasRenderFinishedHandlers,

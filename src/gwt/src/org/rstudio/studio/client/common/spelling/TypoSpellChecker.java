@@ -192,8 +192,12 @@ public class TypoSpellChecker
    private void loadDictionary()
    {
       ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
-         typoNative_ = new TypoNative(uiPrefs_.spellingDictionaryLanguage().getValue());
-         context_.invalidateAllWords();
+         typoNative_ = new TypoNative(
+            uiPrefs_.spellingDictionaryLanguage().getValue(),
+            null,
+            null,
+            null
+         );
       };
       new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
    }
