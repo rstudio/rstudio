@@ -1,7 +1,7 @@
 /*
  * TerminalLocalEcho.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,19 +15,18 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.AnsiCode;
-import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
 public class TerminalLocalEcho
 {
-   public TerminalLocalEcho(StringSink writer)
+   public TerminalLocalEcho(Consumer<String> writer)
    {
       writer_ = writer;
-      
    }
    
    public void echo(String input)
@@ -43,7 +42,7 @@ public class TerminalLocalEcho
          if (ch >= 32 /*space*/ && ch <= 126 /*tilde*/ || ch == 8 /*backspace*/)
          {
             localEcho_.add(input);
-            writer_.write(input);
+            writer_.accept(input);
          }
       }
    }
@@ -82,7 +81,7 @@ public class TerminalLocalEcho
             {
                // didn't match previously echoed text at all; write 
                // everything after that chunk
-               writer_.write(output.substring(chunkEnd));
+               writer_.accept(output.substring(chunkEnd));
                return;
             }
             // Otherwise completely or partially matched; at this point
@@ -106,11 +105,11 @@ public class TerminalLocalEcho
                // the local screen that the server doesn't know was written, so a
                // backspace needs to delete starting at the point the server
                // thinks is on the screen
-               writer_.write(matchedValue);
+               writer_.accept(matchedValue);
             }
          }
 
-         writer_.write(matchedValue); // write special sequence
+         writer_.accept(matchedValue); // write special sequence
 
          chunkStart = chunkEnd + matchedValue.length();
 
@@ -145,7 +144,7 @@ public class TerminalLocalEcho
       {
          // output is superset of what was local-echoed; write out the
          // unmatched part
-         writer_.write(outputToMatch.substring(lastOutput.length()));
+         writer_.accept(outputToMatch.substring(lastOutput.length()));
          return lastOutput.length();
       }
       else
@@ -159,7 +158,7 @@ public class TerminalLocalEcho
                "' Had: '" + AnsiCode.prettyPrint(lastOutput.toString()) + "'");
          
          localEcho_.clear();
-         writer_.write(outputToMatch);
+         writer_.accept(outputToMatch);
          return 0;
       }
    }
@@ -233,6 +232,6 @@ public class TerminalLocalEcho
    private long stopEchoPause_;
    private StringBuilder diagnostic_;
    
-   private final StringSink writer_;
+   private final Consumer<String> writer_;
    private LinkedList<String> localEcho_ = new LinkedList<>();
 }

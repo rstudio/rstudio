@@ -1,7 +1,7 @@
 /*
  * TerminalSession.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -730,7 +730,7 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onResponseReceived(final ProcessBufferChunk chunk)
                {
-                  write(chunk.getChunk());
+                  accept(chunk.getChunk());
                   if (chunk.getMoreAvailable())
                   {
                      fetchNextChunk(chunk.getChunkNumber() + 1);
@@ -765,11 +765,11 @@ public class TerminalSession extends XTermWidget
    public void showZombieMessage()
    {
       writeln("[Process completed]");
-      write("[Exit code: ");
+      accept("[Exit code: ");
       if (procInfo_.getExitCode() != null)
-         write(Integer.toString(procInfo_.getExitCode()));
+         accept(Integer.toString(procInfo_.getExitCode()));
       else
-         write("Unknown");
+         accept("Unknown");
       writeln("]");
    }
 
@@ -790,7 +790,7 @@ public class TerminalSession extends XTermWidget
          final String sequence = AnsiCode.CSI + AnsiCode.CHA + AnsiCode.CSI + AnsiCode.EL;
 
          // immediately clear line locally
-         write(sequence);
+         accept(sequence);
          
          // ask server to delete last line of saved buffer to prevent
          // accumulation of prompts

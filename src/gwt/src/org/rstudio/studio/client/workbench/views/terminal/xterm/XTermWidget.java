@@ -1,7 +1,7 @@
 /*
  * XTermWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
@@ -29,10 +28,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResources;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
@@ -46,6 +41,8 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /**
  * Xterm-compatible terminal emulator widget. This widget does no network
@@ -62,11 +59,12 @@ import com.google.gwt.user.client.ui.Widget;
  * For title changes (via escape sequences sent to terminal), subscribe to
  * XTermTitleEvent.
  */
-public class XTermWidget extends Widget implements RequiresResize,
-                                                   ResizeTerminalEvent.HasHandlers,
-                                                   TerminalDataInputEvent.HasHandlers,
-                                                   XTermTitleEvent.HasHandlers,
-                                                   StringSink
+public class XTermWidget extends Widget 
+                         implements RequiresResize,
+                                    ResizeTerminalEvent.HasHandlers,
+                                    TerminalDataInputEvent.HasHandlers,
+                                    XTermTitleEvent.HasHandlers,
+                                    Consumer<String> 
 {
   /**
     *  Creates an XTermWidget.
@@ -119,7 +117,7 @@ public class XTermWidget extends Widget implements RequiresResize,
     * @param str Text to write
     */
    @Override
-   public void write(String str)
+   public void accept(String str)
    {
       terminal_.scrollToBottom();
       terminal_.write(str);

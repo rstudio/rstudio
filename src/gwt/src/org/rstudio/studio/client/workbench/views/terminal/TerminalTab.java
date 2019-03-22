@@ -84,7 +84,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server
        */
-      public abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
+      abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       abstract void confirmClose(Command onConfirmed);
    }
