@@ -654,11 +654,9 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
-      switch(event.getAction().getType())
+      if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
       {
-      case SessionSerializationAction.SUSPEND_SESSION:
          disconnect(false);
-         break;
       }
    }
 
@@ -847,8 +845,8 @@ public class TerminalSession extends XTermWidget
       return socket_;
    }
 
-   private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private TerminalSessionSocket socket_;
+   private final HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private final TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
    private ConsoleProcessInfo procInfo_;
    private String title_;
@@ -857,13 +855,13 @@ public class TerminalSession extends XTermWidget
    private boolean connecting_;
    private boolean terminating_;
    private boolean reloading_;
-   private ArrayList<String> deferredOutput_ = new ArrayList<>();
+   private final ArrayList<String> deferredOutput_ = new ArrayList<>();
    private boolean restartSequenceWritten_;
-   private StringBuilder inputQueue_ = new StringBuilder();
+   private final StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
-   private boolean createdByApi_;
+   private final boolean createdByApi_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

@@ -154,7 +154,7 @@ public class TerminalLocalEcho
          
          // diagnostics to help isolate cases where local-echo is 
          // not matching as expected 
-         diagnostic("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
+         diagnostic_.log("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
                "' Had: '" + AnsiCode.prettyPrint(lastOutput.toString()) + "'");
          
          localEcho_.clear();
@@ -189,49 +189,25 @@ public class TerminalLocalEcho
          return false;
       }
    }
-   
-   private void diagnostic(String msg)
-   {
-      if (diagnostic_ == null)
-         diagnostic_ = new StringBuilder();
-     
-      diagnostic_.append(StringUtil.getTimestamp());
-      diagnostic_.append(": ");
-      diagnostic_.append(msg);
-      diagnostic_.append("\n");
-   }
 
    public String getDiagnostics()
    {
-      if (diagnostic_ == null || diagnostic_.length() == 0)
-         return("<none>\n");
-      else
-         return diagnostic_.toString();
+      return diagnostic_.getLog();
    }
 
    public void resetDiagnostics()
    {
-      diagnostic_ = null;
+      diagnostic_.resetLog();
    }
 
-   public String getEchoBuffer()
-   {
-      StringBuilder b = new StringBuilder();
-      for (String s : localEcho_)
-      {
-         b.append(s);
-      }
-      return b.toString();
-   }
-
-  // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
+   // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
    private static final Pattern ANSI_CTRL_PATTERN =
          Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\n\r\177\7]" + ")");
 
    // Pause local-echo until this time
    private long stopEchoPause_;
-   private StringBuilder diagnostic_;
+   private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
    
    private final Consumer<String> writer_;
-   private LinkedList<String> localEcho_ = new LinkedList<>();
+   private final LinkedList<String> localEcho_ = new LinkedList<>();
 }

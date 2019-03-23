@@ -21,7 +21,6 @@ import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Stopwatch;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -84,7 +83,7 @@ public class TerminalSessionSocket
    }
    
    // Monitor and report input/display lag to console
-   class InputEchoTimeMonitor
+   private class InputEchoTimeMonitor
    {
       class InputDatapoint
       {
@@ -111,22 +110,22 @@ public class TerminalSessionSocket
             return duration_;
          }
          
-         private String input_;
-         private Stopwatch stopWatch_ = new Stopwatch(false);
+         private final String input_;
+         private final Stopwatch stopWatch_ = new Stopwatch(false);
          private long duration_;
       }
       
-      public InputEchoTimeMonitor()
+      InputEchoTimeMonitor()
       {
          pending_ = new LinkedList<>();
       }
       
-      public void inputReceived(String input)
+      void inputReceived(String input)
       {
          pending_.add(new InputDatapoint(input));
       }
       
-      public void outputReceived(String output)
+      void outputReceived(String output)
       {
          InputDatapoint item = pending_.poll();
          if (item == null)
@@ -144,7 +143,7 @@ public class TerminalSessionSocket
          }
       }
       
-      private long average()
+      long average()
       {
          if (accumulatedPoints_ > 0)
          {
@@ -153,12 +152,12 @@ public class TerminalSessionSocket
          return 0;
       }
 
-      public String averageTimeMsg()
+      String averageTimeMsg()
       {
-         return Long.toString(average()) + "ms";
+         return average() + "ms";
       }
       
-      private LinkedList<InputDatapoint> pending_;
+      private final LinkedList<InputDatapoint> pending_;
       private long accumulatedPoints_;
       private long accumulatedTime_;
    }
@@ -232,7 +231,7 @@ public class TerminalSessionSocket
       
       if (consoleProcess.getProcessInfo().getZombie())
       {
-         diagnostic("Zombie, not reconnecting");
+         diagnostic_.log("Zombie, not reconnecting");
          callback.onConnected();
          return;
       }
@@ -247,7 +246,7 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         diagnostic("Connected with RPC");
+         diagnostic_.log("Connected with RPC");
          callback.onConnected();
          break;
          
@@ -280,14 +279,14 @@ public class TerminalSessionSocket
             }
          }
 
-         diagnostic("Connect WebSocket: '" + url + "'");
+         diagnostic_.log("Connect WebSocket: '" + url + "'");
          socket_ = new Websocket(url);
          socket_.addListener(new WebsocketListenerExt() 
          {
             @Override
             public void onClose(CloseEvent event)
             {
-               diagnostic("WebSocket closed");
+               diagnostic_.log("WebSocket closed");
                if (socket_ != null)
                {
                   // if socket is already null then we're probably in the middle of switching to RPC
@@ -316,7 +315,7 @@ public class TerminalSessionSocket
             public void onOpen()
             {
                connectWebSocketTimer_.cancel();
-               diagnostic("WebSocket connected");
+               diagnostic_.log("WebSocket connected");
                callback.onConnected();
                if (webSocketPingInterval_ > 0)
                {
@@ -360,14 +359,14 @@ public class TerminalSessionSocket
          @Override
          public void onResponseReceived(Void response)
          {
-            diagnostic("Switched to RPC");
+            diagnostic_.log("Switched to RPC");
             connectCallback_.onConnected();
          }
       
          @Override
          public void onError(ServerError error)
          {
-            diagnostic("Failed to switch to RPC: " + error.getMessage());
+            diagnostic_.log("Failed to switch to RPC: " + error.getMessage());
             connectCallback_.onError("Terminal failed to connect. Please try again.");
          }
       });
@@ -472,7 +471,7 @@ public class TerminalSessionSocket
 
    public void disconnect(boolean permanent)
    {
-      diagnostic(permanent ? "Permanently Disconnected" : "Disconnected");
+      diagnostic_.log(permanent ? "Permanently Disconnected" : "Disconnected");
       if (socket_ != null)
          socket_.close();
       socket_ = null;
@@ -485,16 +484,13 @@ public class TerminalSessionSocket
    
    public void resetDiagnostics()
    {
-      diagnostic_ = null;
+      diagnostic_.resetLog();
       localEcho_.resetDiagnostics();
    }
    
    public String getConnectionDiagnostics()
    {
-      if (diagnostic_ == null || diagnostic_.length() == 0)
-         return("<none>\n");
-      else
-         return diagnostic_.toString();
+      return diagnostic_.getLog();
    }
    
    public String getLocalEchoDiagnostics()
@@ -505,18 +501,7 @@ public class TerminalSessionSocket
    private void diagnosticError(String msg)
    {
       Debug.log(msg);
-      diagnostic(msg);
-   }
-   
-   private void diagnostic(String msg)
-   {
-      if (diagnostic_ == null)
-         diagnostic_ = new StringBuilder();
-     
-      diagnostic_.append(StringUtil.getTimestamp());
-      diagnostic_.append(": ");
-      diagnostic_.append(msg);
-      diagnostic_.append("\n");
+      diagnostic_.log(msg);
    }
    
    public String getTypingLagMsg()
@@ -524,20 +509,20 @@ public class TerminalSessionSocket
       return inputEchoTiming_.averageTimeMsg();
    }
    
-   public void receivedKeepAlive()
+   private void receivedKeepAlive()
    {
    }
  
-   private HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final Session session_;
    private final XTermWidget xterm_;
    private ConsoleProcess consoleProcess_;
    private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
-   private InputEchoTimeMonitor inputEchoTiming_;
+   private final InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
-   private TerminalLocalEcho localEcho_;
-   private StringBuilder diagnostic_;
+   private final TerminalLocalEcho localEcho_;
+   private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
    
    // RegEx to match common password prompts
    private static final String PASSWORD_REGEX = 
