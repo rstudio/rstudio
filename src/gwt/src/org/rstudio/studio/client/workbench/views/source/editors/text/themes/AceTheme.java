@@ -59,7 +59,10 @@ public class AceTheme extends JavaScriptObject
    
    public native final String getUrl()
    /*-{
-      return this.url;
+      if (this.url.startsWith("/"))
+         return this.url.substr(1);
+      else
+         return this.url;
    }-*/;
    
    public native final Boolean isDark()
