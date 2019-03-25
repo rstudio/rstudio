@@ -207,7 +207,7 @@ public class TerminalTabPresenter extends BasePresenter
    public void onCreateTerminal(final CreateTerminalEvent event)
    {
       // New Terminal command, always creates a new terminal
-      view_.activateTerminal(() -> view_.createTerminal(event.getPostCreateText()));
+      view_.activateTerminal(() -> view_.createTerminal(null));
    }
 
    @Override
