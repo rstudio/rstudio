@@ -46,17 +46,10 @@ public class TerminalTabPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       /**
-       * Callback when Display is selected
-       */
-      interface DisplaySelectedCallback {
-         void displaySelected();
-      }
-
-      /**
        * Ensure terminal pane is visible. Callback to perform actions after pane has
        * been made visible and received onSelected.
        */
-      void activateTerminal(DisplaySelectedCallback callback);
+      void activateTerminal(Command displaySelected);
 
       /**
        * Create a new terminal session
