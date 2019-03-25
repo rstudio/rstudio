@@ -218,9 +218,9 @@ try {
             }
         }
         // trigger desktop builds if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
-          trigger_external_build('IDE/macos')
-          trigger_external_build('IDE/windows')
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2') {
+          trigger_external_build('IDE/macos-v1.2')
+          trigger_external_build('IDE/windows-v1.2')
         }
         parallel parallel_containers
 
@@ -234,8 +234,8 @@ try {
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/qa-automation')
           trigger_external_build('IDE/monitor')
-          trigger_external_build('IDE/macos-pro')
-          trigger_external_build('IDE/windows-pro')
+          trigger_external_build('IDE/macos-v1.2-pro')
+          trigger_external_build('IDE/windows-v1.2-pro')
           trigger_external_build('IDE/session')
         }
 

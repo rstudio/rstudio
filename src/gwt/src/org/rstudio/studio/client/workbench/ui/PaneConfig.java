@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,8 +79,7 @@ public class PaneConfig extends JavaScriptObject
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Presentation",
-                           "Viewer"};
+                           "Packages", "Help", "Build", "VCS", "Viewer", "Presentation"};
    }
 
    public static String[] getAlwaysVisibleTabs()
