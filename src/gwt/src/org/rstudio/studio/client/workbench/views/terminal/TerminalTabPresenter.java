@@ -28,7 +28,6 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -38,7 +37,6 @@ import com.google.inject.Inject;
 public class TerminalTabPresenter extends BasePresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
-                                             CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
                                              RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
@@ -148,6 +146,12 @@ public class TerminalTabPresenter extends BasePresenter
    }
 
    @Handler
+   public void onNewTerminal()
+   {
+      view_.activateTerminal(() -> view_.createTerminal(null));
+   }
+
+   @Handler
    public void onActivateTerminal()
    {
       // "Move focus to terminal" command; does same thing as clicking the 
@@ -201,13 +205,6 @@ public class TerminalTabPresenter extends BasePresenter
    public void onSendTerminalToEditor()
    {
       view_.sendTerminalToEditor();
-   }
-
-   @Override
-   public void onCreateTerminal(final CreateTerminalEvent event)
-   {
-      // New Terminal command, always creates a new terminal
-      view_.activateTerminal(() -> view_.createTerminal(null));
    }
 
    @Override
