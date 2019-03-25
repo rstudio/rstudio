@@ -59,7 +59,7 @@ public class AceTheme extends JavaScriptObject
    
    public native final String getUrl()
    /*-{
-      if (this.url.startsWith("/"))
+      if (this.url.charAt(0) == '/')
          return this.url.substr(1);
       else
          return this.url;
