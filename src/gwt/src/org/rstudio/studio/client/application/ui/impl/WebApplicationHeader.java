@@ -131,19 +131,6 @@ public class WebApplicationHeader extends Composite
       if (BrowseCap.INSTANCE.suppressBrowserForwardBack())
          suppressBrowserForwardBack();
 
-      // override Cmd+W keybaord shortcut for Chrome
-      if (BrowseCap.isChrome())
-      {
-         int modifiers = (BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
-                                                   KeyboardShortcut.CTRL) |
-                         KeyboardShortcut.ALT;
-             
-         AppCommand closeSourceDoc = commands.closeSourceDoc();
-         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'W'));
-         ShortcutManager.INSTANCE.register(
-               modifiers, 'W', closeSourceDoc, "", "", "");
-      }
-      
       // main menu
       advertiseEditingShortcuts(globalDisplay, commands);
       WebMenuCallback menuCallback = new WebMenuCallback();
@@ -311,18 +298,27 @@ public class WebApplicationHeader extends Composite
       } catch(err) {}
    }-*/;
 
+   private static final void setCommandShortcut(AppCommand command,
+                                                String key,
+                                                int keyCode,
+                                                int modifiers)
+   {
+      KeySequence sequence = new KeySequence();
+      sequence.add(new KeyCombination(key, keyCode, modifiers));
+      command.setShortcut(new KeyboardShortcut(sequence));
+   }
    private void advertiseEditingShortcuts(final GlobalDisplay display,
                                           final Commands commands)
    {
-      int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : KeyboardShortcut.CTRL;
+      int modifiers = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : KeyboardShortcut.CTRL;
 
-      commands.undoDummy().setShortcut(new KeyboardShortcut(mod, 'Z'));
-      commands.redoDummy().setShortcut(new KeyboardShortcut(mod| KeyboardShortcut.SHIFT, 'Z'));
+      setCommandShortcut(commands.undoDummy(),  "z", 'Z', modifiers);
+      setCommandShortcut(commands.redoDummy(),  "Z", 'Z', modifiers | KeyboardShortcut.SHIFT);
 
-      commands.cutDummy().setShortcut(new KeyboardShortcut(mod, 'X'));
-      commands.copyDummy().setShortcut(new KeyboardShortcut(mod, 'C'));
-      commands.pasteDummy().setShortcut(new KeyboardShortcut(mod, 'V'));
-
+      setCommandShortcut(commands.cutDummy(),   "x", 'X', modifiers);
+      setCommandShortcut(commands.copyDummy(),  "c", 'C', modifiers);
+      setCommandShortcut(commands.pasteDummy(), "v", 'V', modifiers);
+      
       CommandHandler useKeyboardNotification = new CommandHandler()
       {
          public void onCommand(AppCommand command)

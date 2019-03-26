@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
@@ -59,7 +60,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;
-      String cmdText = new KeyboardShortcut(mod, 'C').toString(true);
+      String cmdText = new KeyCombination("c", 'C', mod).toString(true);
       HTML label = new HTML("Press " + cmdText + 
                             " to copy the key to the clipboard");
       label.addStyleName(RES.styles().viewPublicKeyLabel());

@@ -40,6 +40,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -320,7 +321,7 @@ public class TextEditingTargetWidget
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
          KeyboardShortcut.CTRL;
       String cmdText = 
-        new KeyboardShortcut(mod + KeyboardShortcut.SHIFT, 'K').toString(true);
+        new KeyCombination("K", 'K', mod + KeyboardShortcut.SHIFT).toString(true);
       cmdText = DomUtils.htmlToText(cmdText);
       notebookToolbarButton_.setTitle("Compile Report (" + cmdText + ")");
       

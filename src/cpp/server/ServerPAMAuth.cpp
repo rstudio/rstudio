@@ -1,8 +1,7 @@
 /*
  * ServerPAMAuth.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,13 +27,13 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <server_core/http/SecureCookie.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
-#include <server/auth/ServerCSRFToken.hpp>
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
@@ -307,7 +306,7 @@ void setSignInCookies(const core::http::Request& request,
                                   options().getOverlayOption("ssl-enabled") == "1");
 
    // add cross site request forgery detection cookie
-   auth::csrf::setCSRFTokenCookie(request, expiry, "", pResponse);
+   core::http::setCSRFTokenCookie(request, expiry, "", pResponse);
 }
 
 void doSignIn(const http::Request& request,
@@ -405,7 +404,7 @@ void signOut(const http::Request& request,
              http::Response* pResponse)
 {
    // validate sign-out request
-   if (!auth::csrf::validateCSRFForm(request, pResponse))
+   if (!core::http::validateCSRFForm(request, pResponse))
       return;
 
    // register logout with monitor if we have the username

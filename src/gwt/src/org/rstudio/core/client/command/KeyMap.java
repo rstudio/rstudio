@@ -25,8 +25,6 @@ import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
 import org.rstudio.core.client.DirectedGraph.ForEachNodeCommand;
-import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.container.SafeMap;
 
 public class KeyMap
