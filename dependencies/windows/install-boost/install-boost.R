@@ -45,7 +45,7 @@ boost_modules <- c(
    "config", "context", "crc", "date_time", "filesystem", "foreach", "format",
    "function", "interprocess", "iostreams", "lambda", "lexical_cast",
    "optional", "predef", "program_options", "property_tree", "random", "range",
-   "ref", "regex", "scope_exit", "signals", "smart_ptr", "spirit",
+   "ref", "regex", "scope_exit", "signals2", "smart_ptr", "spirit",
    "string_algo", "system", "test", "thread", "tokenizer", "type_traits",
    "typeof", "unordered", "utility", "variant"
 )
@@ -132,25 +132,6 @@ b2_build_args <- function(bitness) {
 # build 64bit Boost
 section("Building Boost 64bit...")
 exec("b2", b2_build_args("64"))
-
-# enter the build directory
-enter(install_dir)
-
-# zip it all up
-section("Creating archive '%s'...", output_name)
-if (file.exists(output_name))
-   unlink(output_name)
-
-zip(output_name, files = c("boost64"), extras = "-q")
-if (!file.exists(output_name))
-   fatal("Failed to create archive '%s'.", output_name)
-progress("Created archive '%s'.", output_name)
-
-# copy the generated file to the boost
-file.rename(output_name, output_file)
-if (!file.exists(output_file))
-   fatal("Failed to move archive to path '%s'.", output_file)
-progress("Moved archive to path '%s'.", output_file)
 
 # rejoice
 progress("Boost built successfully!")
