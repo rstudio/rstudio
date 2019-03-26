@@ -1,7 +1,7 @@
 /*
- * ServerCSRFToken.hpp
+ * CSRFToken.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SERVER_CSRF_TOKEN_HPP
-#define SERVER_CSRF_TOKEN_HPP
+#ifndef CORE_HTTP_CSRF_TOKEN_HPP
+#define CORE_HTTP_CSRF_TOKEN_HPP
 
 #include <string>
 #include <boost/optional.hpp>
@@ -22,33 +22,22 @@
 
 namespace rstudio {
 namespace core {
-   namespace http {
-      class Request;
-      class Response;
-   }
-}
-}
-
-namespace rstudio {
-namespace server {
-namespace auth {
-namespace csrf {
+namespace http {
 
 // Adds a CSRF (cross site request forgery) cookie. This is simply a cookie with
 // a random value (token).
-void setCSRFTokenCookie(const core::http::Request& request, 
+void setCSRFTokenCookie(const Request& request, 
       boost::optional<boost::gregorian::days> expiry,
       const std::string& token,
       core::http::Response* pResponse);
 
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.
-bool validateCSRFForm(const core::http::Request&, core::http::Response*);
+bool validateCSRFForm(const Request&, Response*);
 
-} // namespace csrf
-} // namespace auth
-} // namespace server
+} // namespace http
+} // namespace core
 } // namespace rstudio
 
-#endif // SERVER_CSRF_TOKEN_HPP
+#endif // CORE_HTTP_CSRF_TOKEN_HPP
 

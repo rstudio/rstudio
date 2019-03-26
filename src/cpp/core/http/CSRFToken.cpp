@@ -1,7 +1,7 @@
 /*
- * ServerCSRFToken.cpp
+ * CSRFToken.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,10 +13,10 @@
  *
  */
 
-#include <server/auth/ServerCSRFToken.hpp>
-#include <server/ServerOptions.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/http/Cookie.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
@@ -27,9 +27,8 @@
 using namespace rstudio::core;
 
 namespace rstudio {
-namespace server {
-namespace auth {
-namespace csrf {
+namespace core {
+namespace http {
 
 void setCSRFTokenCookie(const http::Request& request, 
                         boost::optional<boost::gregorian::days> expiry,
@@ -49,7 +48,7 @@ void setCSRFTokenCookie(const http::Request& request,
             "/",  // cookie for root path
             true, // HTTP only
             // secure if delivered via SSL
-            options().getOverlayOption("ssl-enabled") == "1");
+            boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    // set expiration for cookie
    if (expiry.is_initialized())
@@ -82,7 +81,6 @@ bool validateCSRFForm(const http::Request& request,
    return true;
 }
 
-} // namespace csrf
-} // namespace auth
-} // namespace server
+} // namespace http
+} // namespace core
 } // namespace rstudio
