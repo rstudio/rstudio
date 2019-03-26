@@ -195,7 +195,6 @@ list(APPEND BOOST_LIBS
    program_options
    random
    regex
-   signals
    system
    thread
 )
@@ -236,10 +235,10 @@ else()
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
    set(BOOST_ARCH "64")
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc141-mt-1_69_0.lib")
+      set(BOOST_SUFFIX "vc141-mt-x64-1_69.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc141-mt-gd-1_69_0.lib")
+      set(BOOST_SUFFIX "vc141-mt-gd-x64-1_69.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_69_0")
