@@ -19,7 +19,6 @@ import org.rstudio.core.client.command.KeySequence;
 
 import java.util.List;
 
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;

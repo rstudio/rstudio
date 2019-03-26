@@ -67,7 +67,7 @@ public class KeySequence
          else
          {
             String[] keySplit = sc.split("[-+]");
-            String key = keySplit[keySplit.length - 1];
+            String key = StringUtil.capitalize(keySplit[keySplit.length - 1]);
             int keyCode = KeyboardHelper.keyCodeFromKeyName(key);
             keyCombination = new KeyCombination(key, keyCode, modifiers);
          }
