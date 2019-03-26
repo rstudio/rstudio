@@ -84,4 +84,10 @@ else
   $PKG_DIR/fix-debian-permissions `ls *.deb`
 fi
 
+# strip off cmake build type from file name
+PACKAGE=$(ls *.deb)
+PACKAGE_TYPE=$(echo $CMAKE_BUILD_TYPE | tr '[:upper:]' '[:lower:]')
+MODIFIED_PACKAGE=$(echo $PACKAGE | sed "s/-${PACKAGE_TYPE}//")
+mv $PACKAGE $MODIFIED_PACKAGE
+
 cd $PREV_WD
