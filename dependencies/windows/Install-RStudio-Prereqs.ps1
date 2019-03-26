@@ -73,22 +73,7 @@ choco install -y ninja --version 1.7.2
 choco install -y windows-sdk-10.1 --version 10.1.17134.12
 choco install -y visualstudio2017buildtools --version 15.8.2.0
 choco install -y visualstudio2017-workload-vctools --version 1.3.0
-
-# install nsis (version on chocolatey is too new)
-if (-Not (Test-Path -Path "C:\Program Files (x86)\NSIS")) {
-    $NSISSetup = 'C:\nsis-2.50-setup.exe'
-    Write-Host "Downloading NSIS..."
-    if (-Not (Test-Path $NSISSetup)) {
-        Download-File https://s3.amazonaws.com/rstudio-buildtools/test-qt-windows/nsis-2.50-setup.exe $NSISSetup
-    } else {
-        Write-Host "Using previously downloaded NSIS installer"
-    }
-    Write-Host "Installing NSIS..."
-    Start-Process $NSISSetup -Wait -ArgumentList '/S'
-    if ($DeleteDownloads) { Remove-Item $NSISSetup -Force }
-} else {
-    Write-Host "NSIS already found, skipping"
-}
+choco install -y nsis
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
