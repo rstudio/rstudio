@@ -27,9 +27,7 @@ RUN choco install -y visualstudio2017buildtools --version 15.8.2.0; `
   choco install -y visualstudio2017-workload-vctools --version 1.3.0
   
 # install aws cli
-# awscli bug where cp65001 is not understood by internal python.
-RUN choco install -y awscli ;`
-  cp 'C:\Program Files\Amazon\AWSCLI\encodings\utf_8.pyc' 'C:\Program Files\Amazon\AWSCLI\encodings\cp65001.pyc'
+RUN choco install -y awscli
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
