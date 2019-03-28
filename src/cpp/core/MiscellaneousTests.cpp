@@ -24,6 +24,9 @@
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 #include <core/http/Request.hpp>
+#include <core/json/Json.hpp>
+
+#include <core/system/Types.hpp>
 
 namespace rstudio {
 namespace unit_tests {
@@ -248,6 +251,28 @@ context("LruCache")
       }
 
       expect_true(cache.size() == 0);
+   }
+}
+
+context("Options")
+{
+   test_that("Options are properly serialized/deserialized")
+   {
+      core::system::Options options;
+      options.push_back({"abc", "123"});
+      options.push_back({"abc=123", "456"});
+      options.push_back({"abc=", "=123"});
+      options.push_back({"abc", std::string()});
+      options.push_back({"abc=", std::string()});
+
+      core::json::Array optionsArray = core::json::toJsonArray(options);
+      core::system::Options options2 = core::json::optionsFromJson(optionsArray);
+
+      for (size_t i = 0; i < options.size(); ++i)
+      {
+         expect_true(options[i].first == options2[i].first);
+         expect_true(options[i].second == options2[i].second);
+      }
    }
 }
 

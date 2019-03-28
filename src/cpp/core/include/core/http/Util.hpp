@@ -180,6 +180,9 @@ bool isWSUpgradeRequest(const Request& request);
 // does the given error represent SSL truncation/shutdown?
 bool isSslShutdownError(const boost::system::error_code& code);
 
+std::string addQueryParam(const std::string& uri,
+                          const std::string& queryParam);
+
 } // namespace util
 
 } // namespace http

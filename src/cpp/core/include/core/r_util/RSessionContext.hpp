@@ -24,11 +24,17 @@
 
 #include <boost/function.hpp>
 
-#define kProjectNone   "none"
-#define kUserIdLen      5
-#define kProjectIdLen   8
-#define kProjectNoneId "cfc78a31"
-#define kWorkspacesId  "3c286bd3"
+#define kProjectNone               "none"
+#define kUserIdLen                 5
+#define kProjectIdLen              8
+#define kProjectNoneId             "cfc78a31"
+#define kJupyterLabId              "21f2ed72"
+#define kJupyterNotebookId         "2cb256d2"
+#define kWorkspacesId              "3c286bd3"
+
+#define kWorkbenchRStudio          "RStudio"
+#define kWorkbenchJupyterLab       "JupyterLab"
+#define kWorkbenchJupyterNotebook  "Jupyter Notebook"
 
 #ifdef _WIN32
 typedef unsigned int uid_t;
@@ -144,6 +150,9 @@ public:
 
    static SessionScope projectNone(const std::string& id);
 
+   static SessionScope jupyterLabSession(const std::string& id);
+   static SessionScope jupyterNotebookSession(const std::string& id);
+
    SessionScope()
    {
    }
@@ -151,6 +160,10 @@ public:
    bool isProjectNone() const;
 
    bool isWorkspaces() const;
+
+   bool isJupyter() const;
+   bool isJupyterLab() const;
+   bool isJupyterNotebook() const;
 
    const std::string project() const { return project_.asString(); }
 
@@ -196,7 +209,8 @@ std::string createSessionUrl(const std::string& hostPageUrl,
 void parseSessionUrl(const std::string& url,
                      SessionScope* pScope,
                      std::string* pUrlPrefix,
-                     std::string* pUrlWithoutPrefix);
+                     std::string* pUrlWithoutPrefix,
+                     std::string* pBaseUrl = nullptr);
 
 
 struct SessionContext
