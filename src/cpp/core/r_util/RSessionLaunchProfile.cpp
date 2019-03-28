@@ -92,7 +92,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    profileJson["password"] = profile.password;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
-   configJson["args"] = json::toJsonObject(profile.config.args);
+   configJson["args"] = json::toJsonArray(profile.config.args);
    configJson["environment"] = json::toJsonObject(profile.config.environment);
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
@@ -130,7 +130,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
       LOG_ERROR(error);
 
    // read config object
-   json::Object argsJson, envJson;
+   json::Object envJson;
+   json::Array argsJson;
    std::string stdInput;
    int stdStreamBehavior = 0;
    int priority = 0;

@@ -42,7 +42,8 @@ struct RequestType
       Rpc,
       Content,
       Events,
-      ClientInit
+      ClientInit,
+      Jupyter
    };
 };
 
@@ -68,6 +69,10 @@ void proxyEventsRequest(
 
 void proxyLocalhostRequest(
       bool ipv6,
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+
+void proxyJupyterRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    

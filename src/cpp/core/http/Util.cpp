@@ -552,6 +552,19 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 }
 #endif
 
+std::string addQueryParam(const std::string& uri,
+                          const std::string& queryParam)
+{
+   if (uri.find('?') == std::string::npos)
+   {
+      return uri + "?" + queryParam;
+   }
+   else
+   {
+      return uri + "&" + queryParam;
+   }
+}
+
 } // namespace util
 
 } // namespace http
