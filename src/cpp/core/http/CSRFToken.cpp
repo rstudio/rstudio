@@ -20,7 +20,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
-#include <core/system/PosixSystem.hpp>
+#include <core/system/System.hpp>
 
 #define kCSRFTokenName "csrf-token"
 
