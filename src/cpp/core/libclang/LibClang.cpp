@@ -1,7 +1,7 @@
 /*
  * LibClang.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -553,7 +553,7 @@ Error LibClang::tryLoad(const std::string& libraryPath,
 
 Error LibClang::unload()
 {
-   if (pLib_ != NULL)
+   if (pLib_ != nullptr)
    {
       Error error = core::system::closeLibrary(pLib_);
       if (error)
@@ -562,7 +562,7 @@ Error LibClang::unload()
       }
       else
       {
-         pLib_ = NULL;
+         pLib_ = nullptr;
          return Success();
       }
    }

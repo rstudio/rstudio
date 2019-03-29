@@ -1,7 +1,7 @@
 /*
  * PosixOutputCapture.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,7 +74,7 @@ void standardStreamCaptureThread(
 
          // wait
          int highFd = std::max(stdoutFd, stderrFd);
-         int result = ::select(highFd+1, &fds, NULL, NULL, NULL);
+         int result = ::select(highFd+1, &fds, nullptr, nullptr, nullptr);
          if (result != -1)
          {
             if (FD_ISSET(stdoutFd, &fds))
@@ -134,7 +134,7 @@ Error captureStandardStreams(
       return error;
 
    // set stdout to use unbuffered io
-   ::setvbuf(stdout, NULL, _IONBF, 0);
+   ::setvbuf(stdout, nullptr, _IONBF, 0);
 
    // optionally oredirect stderror if handler was provided
    int stderrReadPipe = -1;
@@ -145,7 +145,7 @@ Error captureStandardStreams(
          return error;
 
       // set stderr to use unbuffered io
-      ::setvbuf(stderr, NULL, _IONBF, 0);
+      ::setvbuf(stderr, nullptr, _IONBF, 0);
    }
 
    // sync c++ iostreams

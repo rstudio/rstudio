@@ -1,7 +1,7 @@
 /*
  * TexLogParser.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -142,7 +142,7 @@ FilePath resolveFilename(const FilePath& rootDir,
 // TeX wraps lines hard at 79 characters. We use heuristics as described in
 // Sublime Text's TeX plugin to determine where these breaks are.
 void unwrapLines(std::vector<std::string>* pLines,
-                 std::vector<size_t>* pLinesUnwrapped=NULL)
+                 std::vector<size_t>* pLinesUnwrapped=nullptr)
 {
    static boost::regex regexLine("^l\\.(\\d+)\\s");
    static boost::regex regexAssignment("^\\\\.*?=");

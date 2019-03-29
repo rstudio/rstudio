@@ -1,7 +1,7 @@
 /*
  * PosixSystemTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,7 +47,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -60,7 +60,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -83,7 +83,7 @@ test_context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -106,7 +106,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -128,7 +128,7 @@ test_context("PosixSystemTests")
          expect_true(children.at(0).pid == pid);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -140,7 +140,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -154,7 +154,7 @@ test_context("PosixSystemTests")
             expect_true(children[0].exe.compare(exe) == 0);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -179,7 +179,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -191,7 +191,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "10000", NULL);
+         execlp(exe.c_str(), exe.c_str(), "10000", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -215,7 +215,7 @@ test_context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__
@@ -237,7 +237,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -262,7 +262,7 @@ test_context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -287,7 +287,7 @@ test_context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -313,7 +313,7 @@ test_context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__

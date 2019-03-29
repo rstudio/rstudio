@@ -1,7 +1,7 @@
 /*
  * MiscellaneousTests.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,8 +38,8 @@ class SuppressOutputScope
 public:
    SuppressOutputScope()
    {
-      pCoutBuf_ = std::cout.rdbuf(NULL);
-      pCerrBuf_ = std::cerr.rdbuf(NULL);
+      pCoutBuf_ = std::cout.rdbuf(nullptr);
+      pCerrBuf_ = std::cerr.rdbuf(nullptr);
    }
    
    ~SuppressOutputScope()

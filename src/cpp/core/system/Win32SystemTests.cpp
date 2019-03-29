@@ -1,7 +1,7 @@
 /*
  * Win32SystemTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -101,14 +101,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -137,14 +137,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -192,14 +192,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -232,14 +232,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 

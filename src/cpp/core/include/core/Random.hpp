@@ -1,7 +1,7 @@
 /*
  * Random.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ T uniformRandomInteger()
   // setup generator and distribution
   typedef boost::mt19937 GeneratorType;
   typedef boost::uniform_int<T> DistributionType;
-  GeneratorType generator(std::time(NULL));
+  GeneratorType generator(std::time(nullptr));
   DistributionType distribution(std::numeric_limits<T>::min(),
                                 std::numeric_limits<T>::max());
 
