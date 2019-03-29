@@ -230,7 +230,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
             return val;
       }
    }
-   return varJson;
+   return std::move(varJson);
 }
 
 bool functionDiffersFromSource(
