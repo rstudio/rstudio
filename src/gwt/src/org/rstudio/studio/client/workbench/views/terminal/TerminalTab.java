@@ -31,7 +31,6 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -46,13 +45,15 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
    public abstract static class Shim 
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
-      implements CreateTerminalEvent.Handler,
-                 SendToTerminalEvent.Handler,
+      implements SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
                  AddTerminalEvent.Handler,
                  RemoveTerminalEvent.Handler,
                  ActivateNamedTerminalEvent.Handler
    {
+      @Handler
+      public abstract void onNewTerminal();
+
       @Handler
       public abstract void onActivateTerminal();
 
@@ -102,7 +103,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       pConsoleProcessFactory_ = pConsoleProcessFactory;
 
       binder.bind(commands, shim_);
-      events.addHandler(CreateTerminalEvent.TYPE, shim_);
       events.addHandler(SendToTerminalEvent.TYPE, shim_);
       events.addHandler(ClearTerminalEvent.TYPE, shim_);
       events.addHandler(AddTerminalEvent.TYPE, shim_);

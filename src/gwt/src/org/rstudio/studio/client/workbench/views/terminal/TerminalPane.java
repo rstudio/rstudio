@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -206,7 +207,7 @@ public class TerminalPane extends WorkbenchPane
       if (selectedCallback_ != null)
       {
          // terminal tab was shown programmatically
-         selectedCallback_.displaySelected();
+         selectedCallback_.execute();
          selectedCallback_ = null;
       }
       else
@@ -251,9 +252,9 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void activateTerminal(DisplaySelectedCallback callback)
+   public void activateTerminal(Command displaySelected)
    {
-      selectedCallback_ = callback;
+      selectedCallback_ = displaySelected;
       setShowTerminalPref(true);
       closingAll_ = false;
       bringToFront();
@@ -1085,7 +1086,7 @@ public class TerminalPane extends WorkbenchPane
    private boolean isRestartInProgress_;
    private boolean closingAll_;
    private boolean suppressAutoFocus_;
-   private DisplaySelectedCallback selectedCallback_;
+   private Command selectedCallback_;
    
    // Injected ----  
    private GlobalDisplay globalDisplay_;
