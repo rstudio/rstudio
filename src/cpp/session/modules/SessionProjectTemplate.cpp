@@ -1,7 +1,7 @@
 /*
  * SessionProjectTemplate.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,7 +185,7 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    object["position"]  = position;
    object["fields"]    = core::json::toJsonArray(fields);
 
-   return object;
+   return std::move(object);
 }
 
 Error fromJson(
@@ -252,7 +252,7 @@ json::Value ProjectTemplateDescription::toJson() const
    }
    object["widgets"] = widgetsJson;
 
-   return object;
+   return std::move(object);
 }
 
 namespace {
@@ -462,7 +462,7 @@ public:
          object[pkgName] = array;
       }
       
-      return object;
+      return std::move(object);
    }
 
    std::map<

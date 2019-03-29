@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2375,7 +2375,7 @@ json::Value sourceMarkerJson(const SourceMarker& sourceMarker)
    obj["log_path"] = "";
    obj["log_line"] = -1;
    obj["show_error_list"] = sourceMarker.showErrorList;
-   return obj;
+   return std::move(obj);
 }
 
 } // anonymous namespace

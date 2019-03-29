@@ -1,7 +1,7 @@
 /*
  * PresentationState.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -216,7 +216,7 @@ json::Value asJson()
    stateJson["file_path"] = module_context::createAliasedPath(
                                                 s_presentationState.filePath);
    stateJson["slide_index"] = s_presentationState.slideIndex;
-   return stateJson;
+   return std::move(stateJson);
 }
 
 Error initialize()
