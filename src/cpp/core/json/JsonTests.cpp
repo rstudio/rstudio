@@ -1,7 +1,7 @@
 /*
  * JsonTests.cpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,7 +83,7 @@ json::Object returnObject()
 json::Value createValue()
 {
    json::Object obj = createObject();
-   return obj;
+   return std::move(obj);
 }
 
 json::Value getValue()

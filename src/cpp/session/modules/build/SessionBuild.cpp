@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2094,7 +2094,7 @@ json::Value buildStateAsJson()
       stateJson["errors_base_dir"] = s_pBuild->errorsBaseDir();
       stateJson["type"] = s_pBuild->type();
       stateJson["errors"] = s_pBuild->errorsAsJson();
-      return stateJson;
+      return std::move(stateJson);
    }
    else if (!s_suspendBuildContext.empty())
    {
@@ -2104,7 +2104,7 @@ json::Value buildStateAsJson()
       stateJson["errors_base_dir"] = s_suspendBuildContext.errorsBaseDir;
       stateJson["type"] = s_suspendBuildContext.type;
       stateJson["errors"] = s_suspendBuildContext.errors;
-      return stateJson;
+      return std::move(stateJson);
    }
    else
    {

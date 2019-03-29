@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -356,7 +356,7 @@ json::Value makeDataItem(SEXP dataSEXP,
       http::util::urlEncode(cacheKey, true);
    dataItem["preview"] = preview;
 
-   return dataItem;
+   return std::move(dataItem);
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP, 
@@ -695,7 +695,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
-   return result;
+   return std::move(result);
 }
 
 Error getGridData(const http::Request& request,
