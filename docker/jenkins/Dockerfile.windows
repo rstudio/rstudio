@@ -63,7 +63,7 @@ RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 ##### the items below this are dependencies relevant to jenkins-swarm. #####
 ##### follow https://issues.jenkins-ci.org/browse/JENKINS-36776 to track docker windows support on jenkins #####
 
-RUN choco install -y git cygwin
+RUN choco install -y git
 ENV JENKINS_SWARM_VERSION 3.15
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
   Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;
