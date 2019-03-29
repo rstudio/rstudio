@@ -130,7 +130,7 @@ public:
 
 } // anonymous namespace
 
-context("ChildProcess polling support class")
+test_context("ChildProcess polling support class")
 {
    test_that("initial state without subproc polling matches expectation")
    {

@@ -339,7 +339,7 @@ private:
 
 } // anonymous namespace
 
-context("websocket for interactive terminals")
+test_context("websocket for interactive terminals")
 {
    const std::string handle1 = "abcd";
    const std::string handle2 = "defg";

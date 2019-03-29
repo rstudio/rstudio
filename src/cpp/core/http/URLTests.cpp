@@ -23,7 +23,7 @@ namespace core {
 namespace http {
 namespace util {
 
-context("HttpUtil Tests")
+test_context("HttpUtil Tests")
 {
    test_that("Can parse simple url")
    {

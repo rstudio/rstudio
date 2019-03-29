@@ -23,7 +23,7 @@ namespace rstudio {
 namespace core {
 namespace base64 {
 
-context("Base64 Encoding")
+test_context("Base64 Encoding")
 {
    std::string encoded;
    test_that("Various small strings encode correctly")

@@ -28,7 +28,7 @@ namespace tests {
 
 const std::string chunkEnd = "0\r\n\r\n";
 
-context("ChunkParserTests")
+test_context("ChunkParserTests")
 {
    test_that("Can parse one simple chunk with no chunk end")
    {

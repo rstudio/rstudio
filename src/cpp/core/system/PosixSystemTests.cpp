@@ -28,7 +28,7 @@ namespace core {
 namespace system {
 namespace tests {
 
-context("PosixSystemTests")
+test_context("PosixSystemTests")
 {
    test_that("Empty subprocess list returned correctly with pgrep method")
    {

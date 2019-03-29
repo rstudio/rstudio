@@ -28,7 +28,7 @@ bool isPipeOperator(const std::wstring& string)
    return regex_utils::match(string.begin(), string.end(), rePipe);
 }
 
-context("RTokenCursor")
+test_context("RTokenCursor")
 {
    test_that("Token cursors properly detect end of statements")
    {

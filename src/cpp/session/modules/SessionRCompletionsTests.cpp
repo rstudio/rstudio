@@ -22,7 +22,7 @@ namespace session {
 namespace modules {
 namespace r_packages {
 
-context("r_completions")
+test_context("r_completions")
 {
    test_that("finishExpression works")
    {

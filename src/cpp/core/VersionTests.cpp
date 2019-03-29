@@ -38,7 +38,7 @@ void compareVersionEqual(const std::string& lhs, const std::string& rhs)
    expect_true(Version(lhs) == Version(rhs));
 }
 
-context("Version")
+test_context("Version")
 {
    test_that("Various versions are compared correctly")
    {

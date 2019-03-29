@@ -120,7 +120,7 @@ void lintRStudioRFiles()
    lintRFilesInSubdirectory(options().modulesRSourcePath());
 }
 
-context("Diagnostics")
+test_context("Diagnostics")
 {
    test_that("valid expressions generate no lint")
    {

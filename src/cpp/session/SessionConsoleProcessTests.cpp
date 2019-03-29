@@ -25,7 +25,7 @@ namespace tests {
 
 using namespace console_process;
 
-context("queue and fetch input")
+test_context("queue and fetch input")
 {
    core::system::ProcessOptions procOptions;
    core::FilePath cwd("/usr/local");

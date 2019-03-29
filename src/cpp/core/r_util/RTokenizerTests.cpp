@@ -234,7 +234,7 @@ void testWhitespace()
 } // anonymous namespace
 
 
-context("RTokenizer")
+test_context("RTokenizer")
 {
    test_that("We tokenize various strings correctly")
    {
