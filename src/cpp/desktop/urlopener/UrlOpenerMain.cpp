@@ -1,7 +1,7 @@
 /*
  * UrlOpenerMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,11 +38,11 @@ int main(int argc, char** argv)
       }
 
       // shell execute
-      DWORD ret = (DWORD) ::ShellExecute(NULL,
+      DWORD ret = (DWORD) ::ShellExecute(nullptr,
                                          "open",
                                          argv[1],
-                                         NULL,
-                                         NULL,
+                                         nullptr,
+                                         nullptr,
                                          SW_SHOW);
 
       // check for error
