@@ -59,7 +59,13 @@ public class AceTheme extends JavaScriptObject
    
    public native final String getUrl()
    /*-{
-      return this.url;
+      if ((this.url !== null) &&
+          (this.url !== undefined) &&
+          (this.url !== "") &&
+          (this.url.charAt(0) === '/'))
+         return this.url.substr(1);
+      else
+         return this.url;
    }-*/;
    
    public native final Boolean isDark()

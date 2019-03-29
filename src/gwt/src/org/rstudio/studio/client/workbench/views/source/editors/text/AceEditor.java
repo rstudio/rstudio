@@ -3584,6 +3584,15 @@ public class AceEditor implements DocDisplay,
       
       while (endRow <= endRowLimit)
       {
+         // continue search if we're in a multi-line string
+         // (forego updating our bracket counts)
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring")
+         {
+            endRow++;
+            continue;
+         }
+         
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -3609,14 +3618,6 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
-         {
-            endRow++;
-            continue;
-         }
-         
-         // continue search if we're in a multi-line string
-         String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring")
          {
             endRow++;
             continue;

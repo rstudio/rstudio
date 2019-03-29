@@ -19,6 +19,9 @@
 #include <core/json/rapidjson/prettywriter.h>
 #include <core/json/rapidjson/writer.h>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
+
 namespace rstudio {
 namespace core {
 namespace json {
@@ -110,13 +113,71 @@ Object toJsonObject(const std::vector<std::pair<std::string,std::string> >& opti
    return optionsJson;
 }
 
-std::vector<std::pair<std::string,std::string> > optionsFromJson(const Object& optionsJson)
+json::Array toJsonArray(const std::vector<std::pair<std::string,std::string> >& options)
+{
+   json::Array optionsArray;
+   typedef std::pair<std::string,std::string> Pair;
+
+   for (const Pair& option : options)
+   {
+      // escape the equals in the keys and values
+      // this is necessary because we will jam the key value pairs together
+      // into an array to ensure that options stay ordered, and we want to make sure
+      // to properly deliniate between the real equals delimiter and an equals value
+      // in the key value pairs
+      std::string escapedKey = boost::replace_all_copy(option.first, "=", "\\=");
+      std::string escapedValue = boost::replace_all_copy(option.second, "=", "\\=");
+
+      std::string argVal = escapedKey;
+      if (!escapedValue.empty())
+         argVal += "=" + escapedValue;
+
+      optionsArray.push_back(argVal);
+   }
+
+   return optionsArray;
+}
+
+std::vector<std::pair<std::string,std::string> > optionsFromJson(const json::Object& optionsJson)
 {
    std::vector<std::pair<std::string,std::string> > options;
    for (const Member& member : optionsJson)
    {
       if (member.value().type() == StringType)
          options.push_back(std::make_pair(member.name(), member.value().get_str()));
+   }
+   return options;
+}
+
+std::vector<std::pair<std::string,std::string> > optionsFromJson(const json::Array& optionsJson)
+{
+   std::vector<std::pair<std::string,std::string> > options;
+   for (const json::Value& value : optionsJson)
+   {
+      if (value.type() != json::StringType)
+         continue;
+
+      const std::string& optionStr = value.get_str();
+
+      // find the first equals that is not preceded by an escape character
+      // this is the actual position in the string we will split on to get
+      // the key and value separated
+      boost::smatch results;
+      boost::regex rx("[^\\\\]=");
+      if (boost::regex_search(optionStr, results, rx))
+      {
+         std::string key = optionStr.substr(0, results.position() + 1);
+         std::string value = optionStr.substr(results.position() + 2);
+         boost::replace_all(key, "\\=", "=");
+         boost::replace_all(value, "\\=", "=");
+         options.push_back(std::make_pair(key, value));
+      }
+      else
+      {
+         // no value, just a key
+         std::string unescapedKey = boost::replace_all_copy(optionStr, "\\=", "=");
+         options.push_back(std::make_pair(unescapedKey, std::string()));
+      }
    }
    return options;
 }

@@ -78,10 +78,14 @@ namespace session_proxy {
 namespace overlay {
 
 bool proxyRequest(int requestType,
-                  const boost::shared_ptr<const http::Request>& pRequest,
-                  const r_util::SessionContext &context,
+                  const boost::shared_ptr<http::Request>& pRequest,
+                  const r_util::SessionContext& context,
                   boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-                  const http::ErrorHandler &errorHandler);
+                  const http::ErrorHandler& errorHandler);
+
+void proxyJupyterRequest(const r_util::SessionContext& context,
+                         boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                         const http::ErrorHandler& errorHandler);
 
 bool proxyLocalhostRequest(http::Request& request,
                            const std::string& port,
@@ -765,6 +769,20 @@ void proxyEventsRequest(
                 ptrConnection,
                 boost::bind(handleEventsError, ptrConnection, context, _1),
                 http::ConnectionRetryProfile());
+}
+
+void proxyJupyterRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   // get session context
+   r_util::SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
+
+   overlay::proxyJupyterRequest(context,
+                                ptrConnection,
+                                boost::bind(handleContentError, ptrConnection, context, _1));
 }
 
 void proxyLocalhostRequest(

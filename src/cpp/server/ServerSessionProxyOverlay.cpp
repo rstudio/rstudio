@@ -28,7 +28,7 @@ namespace overlay {
 
 bool proxyRequest(
       int requestType,
-      const boost::shared_ptr<const http::Request>& pRequest,
+      const boost::shared_ptr<http::Request>& pRequest,
       const r_util::SessionContext& context,
       boost::shared_ptr<http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler)
@@ -47,6 +47,12 @@ bool proxyLocalhostRequest(
 {
    // not proxying the request
    return false;
+}
+
+void proxyJupyterRequest(const r_util::SessionContext& context,
+                         boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                         const http::ErrorHandler& errorHandler)
+{
 }
 
 Error runVerifyInstallationSession(core::system::user::User& user,

@@ -891,8 +891,13 @@ Array toJsonArray(const std::set<T>& set)
 
 Object toJsonObject(const std::vector<std::pair<std::string,std::string> >& options);
 
-std::vector<std::pair<std::string,std::string> > optionsFromJson(const Object& optionsJson);
+json::Array toJsonArray(
+      const std::vector<std::pair<std::string,std::string> >& options);
 
+std::vector<std::pair<std::string,std::string> > optionsFromJson(
+                                      const json::Object& optionsJson);
+std::vector<std::pair<std::string,std::string> > optionsFromJson(
+                                      const json::Array& optionsJson);
 
 bool fillSetString(const Array& array, std::set<std::string>* pSet);
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
