@@ -53,7 +53,7 @@ private:
    std::streambuf* pCerrBuf_;
 };
 
-context("Position")
+test_context("Position")
 {
    test_that("Positions are compared correctly")
    {
@@ -65,7 +65,7 @@ context("Position")
    
 }
 
-context("Splitting")
+test_context("Splitting")
 {
    test_that("core::algorithm::split handles multi-character delimiters")
    {
@@ -81,7 +81,7 @@ context("Splitting")
    }
 }
 
-context("Regular Expressions")
+test_context("Regular Expressions")
 {
    test_that("Exceptions caused by regular expression complexity are caught")
    {
@@ -136,7 +136,7 @@ context("Regular Expressions")
    }
 }
 
-context("HttpRequest")
+test_context("HttpRequest")
 {
    test_that("Accept encoding works properly")
    {
@@ -159,7 +159,7 @@ context("HttpRequest")
    }
 }
 
-context("LruCache")
+test_context("LruCache")
 {
    test_that("Can update the same value multiple times")
    {
@@ -254,7 +254,7 @@ context("LruCache")
    }
 }
 
-context("Options")
+test_context("Options")
 {
    test_that("Options are properly serialized/deserialized")
    {

@@ -24,7 +24,7 @@ namespace core {
 namespace system {
 namespace tests {
 
-context("CryptoTests")
+test_context("CryptoTests")
 {
    test_that("Can AES encrypt/decrypt")
    {

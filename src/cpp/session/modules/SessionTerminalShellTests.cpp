@@ -26,7 +26,7 @@ namespace tests {
 
 using namespace console_process;
 
-context("session terminal shell tests")
+test_context("session terminal shell tests")
 {
 #ifdef _WIN32
 

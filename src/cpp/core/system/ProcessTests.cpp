@@ -85,7 +85,7 @@ struct IoServiceFixture
    }
 };
 
-context("ProcessTests")
+test_context("ProcessTests")
 {
    test_that("AsioProcessSupervisor can run program")
    {

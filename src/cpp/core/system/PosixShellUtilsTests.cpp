@@ -28,7 +28,7 @@ namespace core {
 namespace shell_utils {
 namespace tests {
 
-context("Shell Escaping")
+test_context("Shell Escaping")
 {
    test_that("Commands with special characters are escaped")
    {

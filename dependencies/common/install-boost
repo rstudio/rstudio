@@ -118,6 +118,10 @@ then
       sudo mv "$src" "$tgt"
    done
 
+   for file in libboost*.so; do
+      sudo ln -f -s $file.$BOOST_VERSION_NUMBER $file
+   done
+
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
    sudo rm -rf $BOOST_BUILD_DIR
