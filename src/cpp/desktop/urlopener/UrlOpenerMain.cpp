@@ -38,12 +38,13 @@ int main(int argc, char** argv)
       }
 
       // shell execute
-      DWORD ret = (DWORD) ::ShellExecute(nullptr,
-                                         "open",
-                                         argv[1],
-                                         nullptr,
-                                         nullptr,
-                                         SW_SHOW);
+      int ret = static_cast<int>(reinterpret_cast<uintptr_t>(
+            ::ShellExecute(nullptr,
+                           "open",
+                           argv[1],
+                           nullptr,
+                           nullptr,
+                           SW_SHOW)));
 
       // check for error
       if(ret <= 32)
