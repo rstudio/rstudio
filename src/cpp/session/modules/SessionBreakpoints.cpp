@@ -1,7 +1,7 @@
 /*
  * SessionBreakpoints.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@ public:
       // compute the first and last lines of the function in the original
       // source file.
       SEXP srcref = r::sexp::getAttrib(expr, "srcref");
-      if (srcref != NULL && TYPEOF(srcref) != NILSXP)
+      if (srcref != nullptr && TYPEOF(srcref) != NILSXP)
       {
          SEXP firstRef = VECTOR_ELT(srcref, 0);
          firstLine_ = INTEGER(firstRef)[0];
@@ -78,7 +78,7 @@ public:
       }
       // If the srcfile attribute is present, extract it
       SEXP srcfile = r::sexp::getAttrib(expr, "srcfile");
-      if (srcfile != NULL && TYPEOF(srcfile) != NILSXP)
+      if (srcfile != nullptr && TYPEOF(srcfile) != NILSXP)
       {
          SEXP file = r::sexp::findVar("filename", srcfile);
          r::sexp::extract(file, &srcfilename_);
@@ -225,7 +225,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
                     module_context::resolveAliasedPath(fileName));
 
    // get the source refs and code for the function
-   SEXP srcRefs = NULL;
+   SEXP srcRefs = nullptr;
    Protect protect;
    std::string functionCode;
    error = r::exec::RFunction(".rs.getFunctionSourceRefs",
@@ -262,7 +262,7 @@ bool setBreakpoint(const std::string& functionName,
                    const std::string& packageName,
                    const json::Array& steps)
 {
-   SEXP env = NULL;
+   SEXP env = nullptr;
    Protect protect;
    Error error = r::exec::RFunction(".rs.getEnvironmentOfFunction",
                                     functionName,
@@ -371,7 +371,7 @@ void unregisterShinyFunction(SEXP ptr)
    // Extract the cached pointer
    ShinyFunction* psf = static_cast<ShinyFunction*>
          (r::sexp::getExternalPtrAddr(ptr));
-   if (psf == NULL)
+   if (psf == nullptr)
       return;
 
    // Look over each Shiny function we know about; if this was a function
@@ -423,7 +423,7 @@ void rs_registerShinyFunction(SEXP params)
    // a Shiny session starts. If we had other functions "running", they
    // likely simply haven't been GC'ed yet--forcefully clean them up.
    SEXP isShinyServer = r::sexp::getAttrib(fun, "shinyServerFunction");
-   if (isShinyServer != NULL &&
+   if (isShinyServer != nullptr &&
        TYPEOF(isShinyServer) != NILSXP)
    {
       s_shinyFunctions.clear();

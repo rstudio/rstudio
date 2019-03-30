@@ -1,7 +1,7 @@
 /*
  * URL.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -178,7 +178,7 @@ void splitParts(const std::string pathInfo, std::string* path, std::string* extr
 // then returns the path unchanged.
 std::string getDir(std::string fileOrDirPath)
 {
-   splitParts(fileOrDirPath, &fileOrDirPath, NULL);
+   splitParts(fileOrDirPath, &fileOrDirPath, nullptr);
    size_t lastSlash = fileOrDirPath.find_last_of('/');
    if (lastSlash != std::string::npos)
       fileOrDirPath = fileOrDirPath.substr(0, lastSlash + 1);
@@ -229,7 +229,7 @@ std::string URL::complete(std::string absoluteUri, std::string targetUri)
 
 std::string URL::uncomplete(std::string baseUri, std::string targetUri)
 {
-   splitParts(baseUri, &baseUri, NULL);
+   splitParts(baseUri, &baseUri, nullptr);
    std::string targetPath, targetExtra;
    splitParts(targetUri, &targetPath, &targetExtra);
 

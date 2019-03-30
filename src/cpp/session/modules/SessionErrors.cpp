@@ -130,7 +130,7 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler,
          // by the handler and compare to the user preference.
          SEXP fun = CAR(currentHandler);
          SEXP typeSEXP = r::sexp::getAttrib(fun, "errorHandlerType");
-         if (typeSEXP != NULL && !r::sexp::isNull(typeSEXP))
+         if (typeSEXP != nullptr && !r::sexp::isNull(typeSEXP))
          {
             Error error = r::sexp::extract(typeSEXP, &handlerType);
             if (!error && handlerType == userSettings().errorHandlerType())

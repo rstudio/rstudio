@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,7 +80,7 @@ Error initJobObject(bool* detachFromJob)
    // executable with CREATE_BREAKAWAY_FROM_JOB
    *detachFromJob = false;
 
-   HANDLE hJob = ::CreateJobObject(NULL, NULL);
+   HANDLE hJob = ::CreateJobObject(nullptr, nullptr);
    if (!hJob)
    {
       return LAST_SYSTEM_ERROR();
@@ -140,7 +140,7 @@ void initHook()
       return;
 
    TCHAR path[MAX_PATH];
-   if (!::GetModuleFileName(NULL, path, MAX_PATH))
+   if (!::GetModuleFileName(nullptr, path, MAX_PATH))
       return;  // Couldn't get the path of the current .exe
 
    STARTUPINFO startupInfo;
@@ -149,14 +149,14 @@ void initHook()
    PROCESS_INFORMATION procInfo;
    memset(&procInfo, 0, sizeof(procInfo));
 
-   if (!::CreateProcess(NULL,
+   if (!::CreateProcess(nullptr,
                         ::GetCommandLine(),
-                        NULL,
-                        NULL,
+                        nullptr,
+                        nullptr,
                         TRUE,
                         CREATE_BREAKAWAY_FROM_JOB | ::GetPriorityClass(::GetCurrentProcess()),
-                        NULL,
-                        NULL,
+                        nullptr,
+                        nullptr,
                         &startupInfo,
                         &procInfo))
    {
@@ -218,7 +218,7 @@ bool effectiveUserIsRoot()
    // on Windows, treat built-in administrator account, or elevation to it, to be the
    // equivalent of Posix "root"
 
-   HANDLE hProcessToken = NULL;
+   HANDLE hProcessToken = nullptr;
    if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hProcessToken))
    {
       auto lastErr = ::GetLastError();
@@ -310,9 +310,9 @@ FilePath currentCSIDLPersonalHomePath()
    // query for My Documents directory
    const DWORD SHGFP_TYPE_CURRENT = 0;
    wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(NULL,
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
                                    CSIDL_PERSONAL,
-                                   NULL,
+                                   nullptr,
                                    SHGFP_TYPE_CURRENT,
                                    homePath);
    if (SUCCEEDED(hr))
@@ -333,9 +333,9 @@ FilePath defaultCSIDLPersonalHomePath()
    // where redirected path is not available)
    const DWORD SHGFP_TYPE_DEFAULT = 1;
    wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(NULL,
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
                                    CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
-                                   NULL,
+                                   nullptr,
                                    SHGFP_TYPE_DEFAULT,
                                    homePath);
    if (SUCCEEDED(hr))
@@ -431,9 +431,9 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    if (ensureDirectory)
       csidl |= CSIDL_FLAG_CREATE;
    HRESULT hr = ::SHGetFolderPathAndSubDirW(
-         NULL,
+         nullptr,
          csidl,
-         NULL,
+         nullptr,
          SHGFP_TYPE_CURRENT,
          appNameWide.c_str(),
          path);
@@ -455,7 +455,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
       nFolder |= CSIDL_FLAG_CREATE;
 
    wchar_t path[MAX_PATH + 1];
-   HRESULT hr = ::SHGetFolderPathW(NULL, nFolder, NULL, SHGFP_TYPE_CURRENT, path);
+   HRESULT hr = ::SHGetFolderPathW(nullptr, nFolder, nullptr, SHGFP_TYPE_CURRENT, path);
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retrieve per machine configuration path. HRESULT:  " +
@@ -469,7 +469,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
    if (create)
    {
       std::wstring appNameWide = core::string_utils::utf8ToWide(appName);
-      hr = ::SHGetFolderPathAndSubDirW(NULL, CSIDL_COMMON_APPDATA|CSIDL_FLAG_CREATE, NULL,
+      hr = ::SHGetFolderPathAndSubDirW(nullptr, CSIDL_COMMON_APPDATA|CSIDL_FLAG_CREATE, nullptr,
                                        SHGFP_TYPE_CURRENT, appNameWide.c_str(), path);
       if (hr != S_OK)
       {
@@ -495,13 +495,13 @@ Error captureCommand(const std::string& command, std::string* pOutput)
 
    // start process
    FILE* fp = ::_popen(command.c_str(), "r");
-   if (fp == NULL)
+   if (fp == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
    // collect output
    const int kBuffSize = 1024;
    char buffer[kBuffSize];
-   while (::fgets(buffer, kBuffSize, fp) != NULL)
+   while (::fgets(buffer, kBuffSize, fp) != nullptr)
       *pOutput += buffer;
 
    // check if an error terminated our output
@@ -530,7 +530,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    DWORD res = ::GetFullPathNameW(wPath.c_str(),
                                   static_cast<DWORD>(buffer.size()),
                                   &(buffer[0]),
-                                  NULL);
+                                  nullptr);
    if (res == 0)
    {
       Error error = LAST_SYSTEM_ERROR();
@@ -543,7 +543,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
       res = ::GetFullPathNameW(wPath.c_str(),
                                static_cast<DWORD>(buffer.size()),
                                &(buffer[0]),
-                               NULL);
+                               nullptr);
       if (res == 0)
       {
          return LAST_SYSTEM_ERROR();
@@ -617,7 +617,7 @@ std::string generateUuid(bool includeDashes)
    // create the uuid
    UUID uuid = {0};
    ::UuidCreate(&uuid);
-   PUCHAR pChar = NULL;
+   PUCHAR pChar = nullptr;
    ::UuidToStringA(&uuid, &pChar);
    std::string uuidStr((char*)pChar);
    ::RpcStringFreeA(&pChar);
@@ -774,7 +774,7 @@ public:
 
    Error open()
    {
-      if (!::OpenClipboard(NULL))
+      if (!::OpenClipboard(nullptr))
       {
          return LAST_SYSTEM_ERROR();
       }
@@ -809,12 +809,12 @@ private:
 class EnhMetaFile : boost::noncopyable
 {
 public:
-   EnhMetaFile() : hMF_(NULL) {}
+   EnhMetaFile() : hMF_(nullptr) {}
 
    Error open(const FilePath& path)
    {
       hMF_ = ::GetEnhMetaFileW(path.absolutePathW().c_str());
-      if (hMF_ == NULL)
+      if (hMF_ == nullptr)
       {
          return LAST_SYSTEM_ERROR();
       }
@@ -826,7 +826,7 @@ public:
    {
       try
       {
-         if (hMF_ != NULL)
+         if (hMF_ != nullptr)
          {
             if (!::DeleteEnhMetaFile(hMF_))
             {
@@ -843,7 +843,7 @@ public:
 
    void release()
    {
-      hMF_ = NULL;
+      hMF_ = nullptr;
    }
 
 private:
@@ -904,7 +904,7 @@ Error expandEnvironmentVariables(std::string value, std::string* pResult)
       return Success();
    }
 
-   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), NULL, 0);
+   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), nullptr, 0);
    if (!sizeRequired)
    {
       return LAST_SYSTEM_ERROR();
@@ -1000,10 +1000,10 @@ FilePath currentWorkingDir(PidType pid)
 
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {
-   if (*pHandle != NULL)
+   if (*pHandle != nullptr)
    {
       BOOL result = ::CloseHandle(*pHandle);
-      *pHandle = NULL;
+      *pHandle = nullptr;
 
       if (!result)
       {
@@ -1025,7 +1025,7 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
       // A "null" handle can contain INVALID_HANDLE or NULL, depending
       // on the context. This is a painful inconsistency in Windows, see:
       // https://blogs.msdn.microsoft.com/oldnewthing/20040302-00/?p=40443
-      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE || *pHandle_ == NULL)
+      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE || *pHandle_ == nullptr)
          return;
 
       Error error = closeHandle(pHandle_, location_);

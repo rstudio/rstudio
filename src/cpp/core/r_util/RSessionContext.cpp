@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -323,7 +323,7 @@ std::string createSessionUrl(const std::string& hostPageUrl,
 
    // determine the host scope path
    std::string hostScopePath;
-   parseSessionUrl(hostPageUrl, NULL, &hostScopePath, NULL);
+   parseSessionUrl(hostPageUrl, nullptr, &hostScopePath, nullptr);
 
    // if we got a scope path then take everything before
    // it and append our target scope path

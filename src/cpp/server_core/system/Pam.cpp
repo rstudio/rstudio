@@ -1,7 +1,7 @@
 /*
  * Pam.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -141,7 +141,7 @@ int conv(int num_msg,
 PAM::PAM(const std::string& service, bool silent, bool closeOnDestroy) :
       service_(service),
       defaultFlags_(silent ? PAM_SILENT : 0),
-      pamh_(NULL),
+      pamh_(nullptr),
       status_(PAM_SUCCESS),
       closeOnDestroy_(closeOnDestroy)
 {
@@ -205,7 +205,7 @@ void PAM::close()
    if (pamh_)
    {
       ::pam_end(pamh_, status_);
-      pamh_ = NULL;
+      pamh_ = nullptr;
    }
 }
 

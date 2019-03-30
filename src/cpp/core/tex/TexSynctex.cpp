@@ -1,7 +1,7 @@
 /*
  * TexSynctex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@ std::ostream& operator << (std::ostream& stream, const PdfLocation& loc)
 
 struct Synctex::Impl
 {
-   Impl() : scanner(NULL) {}
+   Impl() : scanner(nullptr) {}
 
    FilePath pdfPath;
    synctex_scanner_t scanner;
@@ -85,10 +85,10 @@ Synctex::~Synctex()
 {
    try
    {
-      if (pImpl_->scanner != NULL)
+      if (pImpl_->scanner != nullptr)
       {
          ::synctex_scanner_free(pImpl_->scanner);
-         pImpl_->scanner = NULL;
+         pImpl_->scanner = nullptr;
       }
    }
    catch(...)
@@ -108,7 +108,7 @@ bool Synctex::parse(const FilePath& pdfPath)
    pImpl_->scanner = ::synctex_scanner_new_with_output_file(path.c_str(),
                                                             buildDir.c_str(),
                                                             1);
-   return pImpl_->scanner != NULL;
+   return pImpl_->scanner != nullptr;
 }
 
 PdfLocation Synctex::forwardSearch(const SourceLocation& location)
@@ -128,7 +128,7 @@ PdfLocation Synctex::forwardSearch(const SourceLocation& location)
    if (result > 0)
    {
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
-      if (node != NULL)
+      if (node != nullptr)
          pdfLocation = pdfLocationFromNode(node);
    }
 
@@ -146,7 +146,7 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
    if (result > 0)
    {
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
-      if (node != NULL)
+      if (node != nullptr)
       {
          // get the filename then normalize it
          std::string name = ::synctex_scanner_get_name(
@@ -178,7 +178,7 @@ PdfLocation Synctex::topOfPageContent(int page)
 {
    // get the sheet contents
    synctex_node_t sheetNode = ::synctex_sheet_content(pImpl_->scanner, page);
-   if (sheetNode == NULL)
+   if (sheetNode == nullptr)
       return PdfLocation();
 
    // iterate through the nodes looking for a box
@@ -202,7 +202,7 @@ std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
 
    // iterate through the known input files looking for a match
    synctex_node_t node = ::synctex_scanner_input(pImpl_->scanner);
-   while (node != NULL)
+   while (node != nullptr)
    {
       // get tex name then normalize it for comparisons
       std::string name = ::synctex_scanner_get_name(pImpl_->scanner,

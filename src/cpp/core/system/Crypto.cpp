@@ -1,7 +1,7 @@
 /*
  * Crypto.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -151,7 +151,7 @@ Error HMAC_SHA2(const std::string& data,
                                    dataVector.size(),
                                    &(pHMAC->operator[](0)),
                                    &md_len);
-   if (pResult != NULL)
+   if (pResult != nullptr)
    {
       pHMAC->resize(md_len);
       return Success();
@@ -195,7 +195,7 @@ Error base64Encode(const unsigned char* pData,
 {
    // allocate BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
-   if (pB64 == NULL)
+   if (pB64 == nullptr)
       return lastCryptoError(ERROR_LOCATION);
       
    // no newlines
@@ -206,7 +206,7 @@ Error base64Encode(const unsigned char* pData,
    
    // allocate memory stream 
    BIO* pMem = ::BIO_new(BIO_s_mem());
-   if (pMem == NULL)
+   if (pMem == nullptr)
       return lastCryptoError(ERROR_LOCATION);
    
    // tie the stream to the b64 stream
@@ -247,7 +247,7 @@ Error base64Decode(const std::string& data,
 {
    // allocate b64 BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
-   if (pB64 == NULL)
+   if (pB64 == nullptr)
       return lastCryptoError(ERROR_LOCATION);
    
    // no newlines
@@ -258,7 +258,7 @@ Error base64Decode(const std::string& data,
    
    // allocate buffer 
    BIO* pMem = BIO_new_mem_buf((void*)data.data(), static_cast<int>(data.length()));
-   if (pMem == NULL)
+   if (pMem == nullptr)
       return lastCryptoError(ERROR_LOCATION);
    
    // tie the stream to the b64 stream
@@ -293,7 +293,7 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kEncrypt);
+   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], kEncrypt);
 
    // perform the encryption
    if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
@@ -330,7 +330,7 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, &key[0], &iv[0], kDecrypt);
+   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], kDecrypt);
 
    // perform the decryption
    if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
@@ -388,7 +388,7 @@ Error rsaSign(const std::string& message,
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
 
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSAPrivateKey(pKeyBuff.get(), NULL, NULL, NULL),
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSAPrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
                                                   RSA_free);
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -431,7 +431,7 @@ Error rsaVerify(const std::string& message,
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSA_PUBKEY(pKeyBuff.get(), NULL, NULL, NULL),
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSA_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
                                                   RSA_free);
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -462,7 +462,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
 
-   ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), NULL);
+   ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), nullptr);
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -481,7 +481,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
       return lastCryptoError(ERROR_LOCATION);
 
    // Write private key in PEM format
-   ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), NULL, NULL, 0, NULL, NULL);
+   ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
    if (ret != 1)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -566,7 +566,7 @@ core::Error rsaInit()
    RAND_seed(entropy, ENTROPY_BYTES);
 
    #if OPENSSL_VERSION_NUMBER < 0x10100000L
-      s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, NULL, NULL);
+      s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, nullptr, nullptr);
       if (!s_pRSA)
          return lastCryptoError(ERROR_LOCATION);
 
@@ -577,14 +577,14 @@ core::Error rsaInit()
       BN_set_word(bn, RSA_F4);
  
       s_pRSA = RSA_new();
-      int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, NULL);
+      int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, nullptr);
       BN_clear_free(bn);
       if (rc != 1) {
         RSA_free(s_pRSA);
         return lastCryptoError(ERROR_LOCATION);
       }
    
-      RSA_get0_key(s_pRSA, &bn_n, &bn_e, NULL);
+      RSA_get0_key(s_pRSA, &bn_n, &bn_e, nullptr);
    #endif
 
    char* n = BN_bn2hex(bn_n);

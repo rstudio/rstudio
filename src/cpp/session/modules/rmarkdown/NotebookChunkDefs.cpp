@@ -1,7 +1,7 @@
 /*
  * NotebookChunkDefs.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -196,7 +196,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
 
    // update the contents of the file with the new chunk definitions and 
    // write time
-   time_t docTime = pDoc->dirty() ? std::time(NULL) : 
+   time_t docTime = pDoc->dirty() ? std::time(nullptr) : 
                                     pDoc->lastKnownWriteTime();
    defContents[kChunkDefs] = newDefs;
    defContents[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);

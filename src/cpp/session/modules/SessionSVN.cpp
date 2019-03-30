@@ -1,7 +1,7 @@
 /*
  * SessionSVN.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,9 +213,9 @@ Error runSvn(const ShellArgs& args,
 }
 
 Error runSvn(const ShellArgs& args,
-             std::string* pStdOut=NULL,
-             std::string* pStdErr=NULL,
-             int* pExitCode=NULL)
+             std::string* pStdOut=nullptr,
+             std::string* pStdErr=nullptr,
+             int* pExitCode=nullptr)
 {
    core::system::ProcessResult result;
    Error error = runSvn(args, false, &result);
@@ -371,7 +371,7 @@ bool detectSvnExeOnPath(FilePath* pPath)
 {
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"svn.exe");
-   if (::PathFindOnPathW(&(path[0]), NULL))
+   if (::PathFindOnPathW(&(path[0]), nullptr))
    {
       *pPath = FilePath(&(path[0]));
       return true;
@@ -437,7 +437,7 @@ bool isSvnInstalled()
    }
 
    int exitCode;
-   Error error = runSvn(ShellArgs() << "help", NULL, NULL, &exitCode);
+   Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
    if (error)
    {
@@ -1501,7 +1501,7 @@ void svnHistory(const json::JsonRpcRequest& request,
                                   &searchText);
    if (error)
    {
-      cont(error, NULL);
+      cont(error, nullptr);
       return;
    }
 

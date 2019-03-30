@@ -1,7 +1,7 @@
 /*
  * Win32FileMonitor.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,9 +46,9 @@ class FileEventContext : boost::noncopyable
 public:
    FileEventContext()
       : recursive(false),
-        hDirectory(NULL),
+        hDirectory(nullptr),
         readDirChangesPending(false),
-        hRestartTimer(NULL),
+        hRestartTimer(nullptr),
         restartCount(0)
    {
       receiveBuffer.resize(kBuffSize);
@@ -87,7 +87,7 @@ public:
 
 void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
 {
-   if (hObject != NULL)
+   if (hObject != nullptr)
    {
       if (!::CloseHandle(hObject))
       {
@@ -98,7 +98,7 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
 
 void cleanupContext(FileEventContext* pContext)
 {
-   if (pContext->hDirectory != NULL)
+   if (pContext->hDirectory != nullptr)
    {
       if (!::CancelIo(pContext->hDirectory))
       {
@@ -107,10 +107,10 @@ void cleanupContext(FileEventContext* pContext)
 
       safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
 
-      pContext->hDirectory = NULL;
+      pContext->hDirectory = nullptr;
    }
 
-   if (pContext->hRestartTimer != NULL)
+   if (pContext->hRestartTimer != nullptr)
    {
       // make sure timer APC is never called after a cleanupContext
       if (!::CancelWaitableTimer(pContext->hRestartTimer))
@@ -120,7 +120,7 @@ void cleanupContext(FileEventContext* pContext)
 
       safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
 
-      pContext->hRestartTimer = NULL;
+      pContext->hRestartTimer = nullptr;
    }
 
    // delete pContext only if there are no read dir changes operations
@@ -353,7 +353,7 @@ VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
 
    // close the timer handle
    safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
-   pContext->hRestartTimer = NULL;
+   pContext->hRestartTimer = nullptr;
 
    // attempt the restart
    restartMonitoring(pContext);
@@ -363,8 +363,8 @@ VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
 void enqueRestartMonitoring(FileEventContext* pContext)
 {
    // create the restart timer (1 second from now)
-   pContext->hRestartTimer = ::CreateWaitableTimer(NULL, true, NULL);
-   if (pContext->hRestartTimer == NULL)
+   pContext->hRestartTimer = ::CreateWaitableTimer(nullptr, true, nullptr);
+   if (pContext->hRestartTimer == nullptr)
    {
       Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
@@ -544,10 +544,10 @@ Handle registerMonitor(const core::FilePath& filePath,
                      filePath.absolutePathW().c_str(),
                      FILE_LIST_DIRECTORY,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                     NULL,
+                     nullptr,
                      OPEN_EXISTING,
                      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-                     NULL);
+                     nullptr);
    if (pContext->hDirectory == INVALID_HANDLE_VALUE)
    {
       callbacks.onRegistrationError(LAST_SYSTEM_ERROR());

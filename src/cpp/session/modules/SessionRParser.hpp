@@ -1,7 +1,7 @@
 /*
  * RParser.hpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -342,7 +342,7 @@ public:
       ParseItem item(
                cursor.contentAsUtf8(),
                cursor.currentPosition(),
-               NULL);
+               nullptr);
       noSymbolNamed(item, candidate);
    }
    
@@ -570,19 +570,19 @@ public:
    static boost::shared_ptr<ParseNode> createRootNode()
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(NULL, "<root>", Position(0, 0)));
+               new ParseNode(nullptr, "<root>", Position(0, 0)));
    }
    
    static boost::shared_ptr<ParseNode> createNode(
          const std::string& name)
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(NULL, name, Position(0, 0)));
+               new ParseNode(nullptr, name, Position(0, 0)));
    }
    
    bool isRootNode() const
    {
-      return pParent_ == NULL;
+      return pParent_ == nullptr;
    }
    
    const SymbolPositions& getDefinedSymbols() const
@@ -662,7 +662,7 @@ public:
    ParseNode* const getRoot() const
    {
       ParseNode* pNode = const_cast<ParseNode*>(this);
-      while (pNode->pParent_ != NULL)
+      while (pNode->pParent_ != nullptr)
          pNode = pNode->pParent_;
       
       return pNode;
@@ -745,7 +745,7 @@ public:
    
    bool findFunction(const std::string& name,
                      const Position& position,
-                     const ParseNode** ppFoundNode = NULL) const
+                     const ParseNode** ppFoundNode = nullptr) const
    {
       return findFunctionImpl(
                this,
@@ -765,7 +765,7 @@ private:
       if (!pNode) return false;
       
       // First, perform a position-wide search in the current node.
-      Positions* pPositions = NULL;
+      Positions* pPositions = nullptr;
       core::algorithm::get(pNode->getDefinedSymbols(), name, &pPositions);
       
       if (!pPositions)
@@ -806,7 +806,7 @@ public:
    
    bool findVariable(const std::string& name,
                      const Position& position,
-                     Position* pFoundPosition = NULL) const
+                     Position* pFoundPosition = nullptr) const
    {
       return findVariableImpl(this,
                               name,

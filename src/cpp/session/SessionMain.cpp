@@ -373,7 +373,7 @@ Error registerSignalHandlers()
 
 #ifdef _WIN32
    // accept Ctrl + C interrupts
-   ::SetConsoleCtrlHandler(NULL, FALSE);
+   ::SetConsoleCtrlHandler(nullptr, FALSE);
 
    // register console control handler
    ::SetConsoleCtrlHandler(handleConsoleCtrl, TRUE);

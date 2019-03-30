@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,7 +61,7 @@ MainWindow::MainWindow(QUrl url) :
    pToolbar_->setVisible(false);
 
 #ifdef _WIN32
-   eventHook_ = NULL;
+   eventHook_ = nullptr;
 #endif
 
    // bind GWT callbacks
@@ -367,7 +367,7 @@ void MainWindow::setSessionProcess(QProcess* pSessionProcess)
    {
       eventHook_ = ::SetWinEventHook(
                EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
-               NULL,
+               nullptr,
                onDialogStart,
                pSessionProcess->processId(),
                0,

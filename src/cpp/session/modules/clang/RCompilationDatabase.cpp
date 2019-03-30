@@ -1,7 +1,7 @@
 /*
  * RCompilationDatabase.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1065,7 +1065,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                             0,
                             0,
                             CXTranslationUnit_ForSerialization);
-      if (tu == NULL)
+      if (tu == nullptr)
       {
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
                            cppPath.absolutePath());

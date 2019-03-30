@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ Error removeStaleOptionsLockfile()
    if (!lockFilePath.exists())
       return Success();
 
-   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.lastWriteTime());
    if (diff < 10)
       return Success();
 
@@ -301,7 +301,7 @@ QString inferDefaultRenderingEngine()
    device.cb = sizeof(DISPLAY_DEVICE);
 
    DWORD i = 0;
-   while (::EnumDisplayDevices(NULL, i++, &device, 0))
+   while (::EnumDisplayDevices(nullptr, i++, &device, 0))
    {
       // skip non-primary device
       if ((device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) == 0)

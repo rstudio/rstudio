@@ -305,7 +305,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_user_data_directory"] = json::Value();
    }
 
-   sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
+   sessionInfo["system_encoding"] = std::string(::locale2charset(nullptr));
 
    std::vector<std::string> vcsAvailable;
    if (modules::source_control::isGitInstalled())

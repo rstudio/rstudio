@@ -1,7 +1,7 @@
 /*
  * NotebookCache.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -135,7 +135,7 @@ void cleanUnusedCaches()
          FilePath chunkDefs = context.complete(kNotebookChunkDefFilename);
          if (!chunkDefs.exists())
             continue;
-         if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+         if ((std::time(nullptr) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
          {
             // the cache is old and the document hasn't been opened in a while --
             // remove it.
@@ -367,7 +367,7 @@ void onDocAdded(const std::string& id)
       // if we got this far, it means that the notebook cache looks newer than
       // our cache -- test to see whether it's compatible
       bool matches = false;
-      error = notebookContentMatches(notebookPath, docPath, &matches, NULL);
+      error = notebookContentMatches(notebookPath, docPath, &matches, nullptr);
       if (error)
       {
          LOG_ERROR(error);

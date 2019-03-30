@@ -1,7 +1,7 @@
 /*
  * SessionHelp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,7 +100,7 @@ std::string replaceRPort(const std::string& url, const std::string& rPort)
 
 bool isLocalURL(const std::string& url,
                 const std::string& scope,
-                std::string* pLocalURLPath = NULL)
+                std::string* pLocalURLPath = nullptr)
 {
    // first look for local ip prefix
    std::string rPort = module_context::rLocalHelpPort();
@@ -841,7 +841,7 @@ void handleHttpdRequest(const std::string& location,
 
 // this mirrors handler_for_path in Rhttpd.c. They cache the custom handlers
 // env (not sure why). do the same for consistency
-SEXP s_customHandlersEnv = NULL;
+SEXP s_customHandlersEnv = nullptr;
 SEXP lookupCustomHandler(const std::string& uri)
 {
    // pick name of handler out of uri

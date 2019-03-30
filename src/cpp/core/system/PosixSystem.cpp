@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,7 +98,7 @@ Error ignoreSig(int signal)
    struct sigaction sa;
    ::memset(&sa, 0, sizeof sa);
    sa.sa_handler = SIG_IGN;
-   int result = ::sigaction(signal, &sa, NULL);
+   int result = ::sigaction(signal, &sa, nullptr);
    if (result != 0)
    {
       Error error = systemError(result, ERROR_LOCATION);
@@ -158,7 +158,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
 
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
-   if (realPath == NULL)
+   if (realPath == nullptr)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", filePath);
@@ -173,7 +173,7 @@ Error realPath(const std::string& path, FilePath* pRealPath)
 {
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
-   if (realPath == NULL)
+   if (realPath == nullptr)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", path);
@@ -254,7 +254,7 @@ void initializeLogConfigReload()
    sigemptyset(&waitMask);
    sigaddset(&waitMask, SIGHUP);
 
-   int result = ::pthread_sigmask(SIG_BLOCK, &waitMask, NULL);
+   int result = ::pthread_sigmask(SIG_BLOCK, &waitMask, nullptr);
    if (result != 0)
       return;
 
@@ -312,7 +312,7 @@ Error reapChildren()
    sa.sa_flags = SA_RESTART;
    
    // install it
-   int result = ::sigaction(SIGCHLD, &sa, NULL);
+   int result = ::sigaction(SIGCHLD, &sa, nullptr);
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
    else
@@ -390,7 +390,7 @@ SignalBlocker::~SignalBlocker()
       if (pImpl_->blocked)
       {
          // restore old mask
-         int result = ::pthread_sigmask(SIG_SETMASK, &(pImpl_->oldMask), NULL);
+         int result = ::pthread_sigmask(SIG_SETMASK, &(pImpl_->oldMask), nullptr);
          if (result != 0)
             LOG_ERROR(systemError(result, ERROR_LOCATION));
       }
@@ -438,7 +438,7 @@ Error useDefaultSignalHandler(SignalType signal)
    struct sigaction sa;
    ::memset(&sa, 0, sizeof sa);
    sa.sa_handler = SIG_DFL;
-   int result = ::sigaction(sig, &sa, NULL);
+   int result = ::sigaction(sig, &sa, nullptr);
    if (result != 0)
    {
       Error error = systemError(result, ERROR_LOCATION);
@@ -809,7 +809,7 @@ int clearSignalMask()
 {
    sigset_t blockNoneMask;
    sigemptyset(&blockNoneMask);
-   return ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, NULL);
+   return ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, nullptr);
 }
 
 } // namespace signal_safe
@@ -1060,7 +1060,7 @@ std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
 {
    std::vector<SubprocInfo> subprocs;
 
-   int result = proc_listchildpids(pid, NULL, 0);
+   int result = proc_listchildpids(pid, nullptr, 0);
    if (result > 0)
    {
       std::vector<PidType> buffer(result, 0);
@@ -1548,13 +1548,13 @@ Error processInfo(const std::string& process,
    pInfo->clear();
 
    // declear directory iterator
-   DIR *pDir = NULL;
+   DIR *pDir = nullptr;
 
    try
    {
       // open the /proc directory
       pDir = ::opendir("/proc");
-      if (pDir == NULL)
+      if (pDir == nullptr)
          return systemError(errno, ERROR_LOCATION);
 
       struct dirent *pDirent;
@@ -1592,7 +1592,7 @@ Error processInfo(const std::string& process,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   if (pDir != NULL)
+   if (pDir != nullptr)
       ::closedir(pDir);
 
    return Success();
@@ -1882,9 +1882,9 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses,
       return systemError(errno, ERROR_LOCATION);
 
    // iterate through the linked list
-   for (struct ifaddrs* pAddr = pAddrs; pAddr != NULL; pAddr = pAddr->ifa_next)
+   for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
    {
-      if (pAddr->ifa_addr == NULL)
+      if (pAddr->ifa_addr == nullptr)
          continue;
 
       // filter out non-ip addresses
@@ -1898,7 +1898,7 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses,
                         (family == AF_INET) ? sizeof(struct sockaddr_in) :
                                               sizeof(struct sockaddr_in6),
                         host, NI_MAXHOST,
-                        NULL, 0, NI_NUMERICHOST) != 0)
+                        nullptr, 0, NI_NUMERICHOST) != 0)
       {
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
          continue;
@@ -1962,7 +1962,7 @@ void printCoreDumpable(const std::string& context)
 
    // ptrace
 #ifndef __APPLE__
-   int dumpable = ::prctl(PR_GET_DUMPABLE, NULL, NULL, NULL, NULL);
+   int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
    ostr << "  pr_get_dumpable: " << dumpable << std::endl;
@@ -2467,7 +2467,7 @@ Error restorePrivImpl(uid_t uid)
 
    // get user info to use in group calls
    struct passwd* pPrivPasswd = ::getpwuid(uid);
-   if (pPrivPasswd == NULL)
+   if (pPrivPasswd == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
    // supplemental groups
@@ -2579,7 +2579,7 @@ Error restorePriv()
 
    // get saved user info to use in group calls
    struct passwd* pPrivPasswd = ::getpwuid(suid);
-   if (pPrivPasswd == NULL)
+   if (pPrivPasswd == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
    // supplemental groups

@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessTable.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,7 +88,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
 
 bool isKnownProcHandle(const std::string& handle)
 {
-   return findProcByHandle(handle) != NULL;
+   return findProcByHandle(handle) != nullptr;
 }
 
 void onSuspend(core::Settings* /*pSettings*/)

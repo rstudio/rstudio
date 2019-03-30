@@ -1,7 +1,7 @@
 /*
  * PosixChildProcess.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,7 +98,7 @@ void closePipe(int* pipeDescriptors, const ErrorLocation& location)
    closePipe(pipeDescriptors[WRITE], location);
 }
 
-Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
+Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
 {
    // default to not eof
    if (pEOF)
@@ -447,7 +447,7 @@ Error ChildProcess::run()
    args.insert(args.end(), args_.begin(), args_.end());
    using core::system::ProcessArgs;
    ProcessArgs* pProcessArgs = new ProcessArgs(args);
-   ProcessArgs* pEnvironment = NULL;
+   ProcessArgs* pEnvironment = nullptr;
 
    // get rlimit for max files
    // in the thread-safe fork approach, this needs to be provided
@@ -493,8 +493,8 @@ Error ChildProcess::run()
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
-      char* nullName = NULL;
-      struct termios* nullTermp = NULL;
+      char* nullName = nullptr;
+      struct termios* nullTermp = nullptr;
       struct winsize winSize;
       winSize.ws_col = options_.pseudoterminal.get().cols;
       winSize.ws_row = options_.pseudoterminal.get().rows;
@@ -1013,9 +1013,9 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-         options().reportHasSubprocs ? core::system::getSubprocesses : NULL,
+         options().reportHasSubprocs ? core::system::getSubprocesses : nullptr,
          options().subprocWhitelist,
-         options().trackCwd ? core::system::currentWorkingDir : NULL));
+         options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);

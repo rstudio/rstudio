@@ -1,7 +1,7 @@
 /*
  * PosixGroup.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ Error groupFrom(const boost::function<int(
 
    } while (result == ERANGE);
 
-   if (temp == NULL)
+   if (temp == nullptr)
    {
       if (result == 0) // will happen if group is not found
          result = kNotFoundError;
