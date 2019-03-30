@@ -22,8 +22,6 @@
 
 #include <core/system/System.hpp>
 
-#define kCSRFTokenName "csrf-token"
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -43,7 +41,7 @@ void setCSRFTokenCookie(const http::Request& request,
    // generate CSRF token cookie
    http::Cookie cookie(
             request, 
-            kCSRFTokenName, 
+            kCSRFTokenCookie, 
             csrfToken, 
             "/",  // cookie for root path
             true, // HTTP only
@@ -61,13 +59,13 @@ bool validateCSRFForm(const http::Request& request,
                       http::Response* pResponse)
 {
    // extract token from HTTP cookie (set above)
-   std::string headerToken = request.cookieValue(kCSRFTokenName);
+   std::string headerToken = request.cookieValue(kCSRFTokenCookie);
    http::Fields fields;
 
    // parse the form and check for a matching token
    http::util::parseForm(request.body(), &fields);
    std::string bodyToken = http::util::fieldValue<std::string>(fields,
-         kCSRFTokenName, "");
+         kCSRFTokenCookie, "");
 
    // report an error if they don't match
    if (headerToken.empty() || bodyToken != headerToken) 

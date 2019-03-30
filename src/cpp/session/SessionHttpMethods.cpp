@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,8 @@
 #include <core/system/Crypto.hpp>
 
 #include <core/text/TemplateFilter.hpp>
+
+#include <core/http/CSRFToken.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -109,6 +111,19 @@ bool parseAndValidateJsonRpcConnection(
    {
       ptrConnection->sendJsonRpcError(error);
       return false;
+   }
+
+   // in server mode, ensure valid CSRF token is present
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      const core::http::Request& req = ptrConnection->request();
+      std::string headerToken = req.headerValue(kCSRFTokenHeader);
+      std::string cookieToken = req.cookieValue(kCSRFTokenCookie);
+      if (headerToken.empty() || headerToken != cookieToken)
+      {
+         ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+         return false;
+      }
    }
 
    // check for invalid client id

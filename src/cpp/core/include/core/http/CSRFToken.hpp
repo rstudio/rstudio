@@ -20,6 +20,9 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#define kCSRFTokenHeader "X-CSRF-Token"
+#define kCSRFTokenCookie "csrf-token"
+
 namespace rstudio {
 namespace core {
 namespace http {
