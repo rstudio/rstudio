@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -315,8 +315,8 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
       return error;
    
    // ensure that we actually succeeded in producing a primitive environment
-   if (pTargetSEXP == NULL  ||
-       *pTargetSEXP == NULL ||
+   if (pTargetSEXP == nullptr  ||
+       *pTargetSEXP == nullptr ||
        !isPrimitiveEnvironment(*pTargetSEXP))
    {
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -733,7 +733,7 @@ bool isNullExternalPointer(SEXP object)
 {
    return
          isExternalPointer(object) &&
-         R_ExternalPtrAddr(object) == NULL;
+         R_ExternalPtrAddr(object) == nullptr;
 }
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)

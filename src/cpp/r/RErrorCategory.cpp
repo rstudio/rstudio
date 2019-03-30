@@ -1,7 +1,7 @@
 /*
  * RErrorCategory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,7 +94,7 @@ bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
 {
    if (error.code() == r::errc::CodeExecutionError)
    {
-      if (pErrMsg != NULL)
+      if (pErrMsg != nullptr)
          *pErrMsg = error.getProperty("errormsg");
       return true;
    }
