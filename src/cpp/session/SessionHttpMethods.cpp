@@ -113,17 +113,12 @@ bool parseAndValidateJsonRpcConnection(
       return false;
    }
 
-   // in server mode, ensure valid CSRF token is present
-   if (options().programMode() == kSessionProgramModeServer)
+   // check for valid CSRF headers in server mode 
+   if (options().programMode() == kSessionProgramModeServer && 
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
-      const core::http::Request& req = ptrConnection->request();
-      std::string headerToken = req.headerValue(kCSRFTokenHeader);
-      std::string cookieToken = req.cookieValue(kCSRFTokenCookie);
-      if (headerToken.empty() || headerToken != cookieToken)
-      {
-         ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
-         return false;
-      }
+      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+      return false;
    }
 
    // check for invalid client id
@@ -340,7 +335,7 @@ bool registeredWaitForMethod(const std::string& method,
 bool verifyRequestSignature(const core::http::Request& request)
 {
 #ifndef RSTUDIO_SERVER
-   // signatures only supported in server mode - requiresd a dependency
+   // signatures only supported in server mode - requires a dependency
    // on server_core, which is only available to server platforms
    return true;
 #else

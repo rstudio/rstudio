@@ -79,6 +79,17 @@ bool validateCSRFForm(const http::Request& request,
    return true;
 }
 
+bool validateCSRFHeaders(const http::Request& request)
+{
+   std::string headerToken = request.headerValue(kCSRFTokenHeader);
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+   if (headerToken.empty() || headerToken != cookieToken)
+   {
+      return false;
+   }
+   return true;
+}
+
 } // namespace http
 } // namespace core
 } // namespace rstudio

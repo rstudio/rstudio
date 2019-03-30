@@ -38,6 +38,10 @@ void setCSRFTokenCookie(const Request& request,
 // a valid CSRF token.
 bool validateCSRFForm(const Request&, Response*);
 
+// Validates any other HTTP request by ensuring that the CSRF HTTP header matches the accompanying
+// token cookie.
+bool validateCSRFHeaders(const Request& request);
+
 } // namespace http
 } // namespace core
 } // namespace rstudio
