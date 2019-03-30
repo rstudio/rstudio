@@ -1,7 +1,7 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -176,7 +176,7 @@ struct Entry
    FileInfo fileInfo;
    boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
    
-   bool hasIndex() const { return pIndex.get() != NULL; }
+   bool hasIndex() const { return pIndex.get() != nullptr; }
    
    bool operator < (const Entry& other) const
    {

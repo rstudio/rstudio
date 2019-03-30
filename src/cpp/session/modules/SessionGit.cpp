@@ -281,7 +281,7 @@ bool waitForIndexLock(const FilePath& workingDir)
       // escape early
       else
       {
-         double diff = ::difftime(::time(NULL), lockPath.lastWriteTime());
+         double diff = ::difftime(::time(nullptr), lockPath.lastWriteTime());
          if (diff > 600)
          {
             Error error = lockPath.remove();
@@ -380,9 +380,9 @@ private:
 
 protected:
    core::Error runGit(const ShellArgs& args,
-                      std::string* pStdOut=NULL,
-                      std::string* pStdErr=NULL,
-                      int* pExitCode=NULL)
+                      std::string* pStdOut=nullptr,
+                      std::string* pStdErr=nullptr,
+                      int* pExitCode=nullptr)
    {
       using namespace rstudio::core::system;
 
@@ -645,7 +645,7 @@ public:
 
       // Detect if HEAD does not exist (i.e. no commits in repo yet)
       int exitCode;
-      error = runGit(gitArgs() << "rev-parse" << "HEAD", NULL, NULL,
+      error = runGit(gitArgs() << "rev-parse" << "HEAD", nullptr, nullptr,
                      &exitCode);
       if (error)
          return error;
@@ -852,7 +852,7 @@ public:
       int exitCode;
       Error error = runGit(gitArgs() << "config" << "i18n.commitencoding",
                            &encoding,
-                           NULL,
+                           nullptr,
                            &exitCode);
       
       // normalize output (no config specified implies UTF-8 default)
@@ -965,7 +965,7 @@ public:
       int exitStatus;
       Error error = runGit(gitArgs() << "config" << "--get" << "branch." + branch + ".remote",
                            pRemote,
-                           NULL,
+                           nullptr,
                            &exitStatus);
       if (error)
       {
@@ -978,7 +978,7 @@ public:
 
       error = runGit(gitArgs() << "config" << "--get" << "branch." + branch + ".merge",
                      pMerge,
-                     NULL,
+                     nullptr,
                      &exitStatus);
       if (error)
       {
@@ -1053,7 +1053,7 @@ public:
          args << *pCompareTo;
       args << filePath;
 
-      return runGit(args, pOutput, NULL, NULL);
+      return runGit(args, pOutput, nullptr, nullptr);
    }
 
    core::Error diffFile(const FilePath& filePath,
@@ -1062,7 +1062,7 @@ public:
                         bool ignoreWhitespace,
                         std::string* pOutput)
    {
-      Error error = doDiffFile(filePath, NULL, mode, contextLines, ignoreWhitespace, pOutput);
+      Error error = doDiffFile(filePath, nullptr, mode, contextLines, ignoreWhitespace, pOutput);
       if (error)
          return error;
 
@@ -1944,7 +1944,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (contextLines < 0)
       contextLines = 999999999;
 
-   splitRename(path, NULL, &path);
+   splitRename(path, nullptr, &path);
 
    std::string output;
    error = s_git_.diffFile(
@@ -2687,7 +2687,7 @@ bool detectGitExeDirOnPath(FilePath* pPath)
 {
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"git.exe");
-   if (::PathFindOnPathW(&(path[0]), NULL))
+   if (::PathFindOnPathW(&(path[0]), nullptr))
    {
       // As of version 20120710 of msysgit, the cmd directory contains a
       // git.exe wrapper that, if used by us, causes console windows to
@@ -2717,7 +2717,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"git.cmd");
 
-   if (::PathFindOnPathW(&(path[0]), NULL))
+   if (::PathFindOnPathW(&(path[0]), nullptr))
    {
       *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
       return true;
@@ -2726,7 +2726,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
    // Look for cmd/git.exe and redirect to bin/
    wcscpy(&(path[0]), L"git.exe");
 
-   if (::PathFindOnPathW(&(path[0]), NULL))
+   if (::PathFindOnPathW(&(path[0]), nullptr))
    {
       *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
       return true;
@@ -2739,13 +2739,13 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
 {
    using namespace boost;
 
-   CoInitialize(NULL);
+   CoInitialize(nullptr);
 
    // Step 1. Find the Git Bash shortcut on the Start menu
    std::vector<wchar_t> data(MAX_PATH+2);
-   HRESULT hr = ::SHGetFolderPathW(NULL,
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
                                    CSIDL_COMMON_PROGRAMS,
-                                   NULL,
+                                   nullptr,
                                    SHGFP_TYPE_CURRENT,
                                    &(data[0]));
    if (FAILED(hr))
@@ -2766,7 +2766,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
    // Step 2. read the shortcut
    IShellLinkW* pShellLink;
    hr = CoCreateInstance(CLSID_ShellLink,
-                         NULL,
+                         nullptr,
                          CLSCTX_INPROC_SERVER,
                          IID_IShellLinkW,
                          (void**)&pShellLink);
@@ -2784,7 +2784,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
    if (FAILED(hr))
       return hr;
 
-   hr = pShellLink->Resolve(NULL, SLR_NO_UI | 0x10000);
+   hr = pShellLink->Resolve(nullptr, SLR_NO_UI | 0x10000);
    if (FAILED(hr))
       return hr;
 
@@ -2793,7 +2793,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
 
    // check the path of the shortcut
    std::vector<wchar_t> pathbuff(1024);
-   hr = pShellLink->GetPath(&(pathbuff[0]), pathbuff.capacity() - 1, NULL, 0L);
+   hr = pShellLink->GetPath(&(pathbuff[0]), pathbuff.capacity() - 1, nullptr, 0L);
    if (FAILED(hr))
       return hr;
 

@@ -1,7 +1,7 @@
 /*
  * FindReferences.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -250,9 +250,9 @@ private:
          for (unsigned i = 0; i<numFiles; ++i)
          {
             CXUnsavedFile unsavedFile = unsavedFiles.unsavedFilesArray()[i];
-            if (unsavedFile.Filename != NULL &&
+            if (unsavedFile.Filename != nullptr &&
                 std::string(unsavedFile.Filename) == filename &&
-                unsavedFile.Contents != NULL)
+                unsavedFile.Contents != nullptr)
             {
                std::string contents(unsavedFile.Contents, unsavedFile.Length);
                std::vector<std::string> lines;
@@ -378,7 +378,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                                   filename.c_str(),
                                   argsArray.args(),
                                   argsArray.argCount(),
-                                  NULL, 0, // no unsaved files
+                                  nullptr, 0, // no unsaved files
                                   CXTranslationUnit_None |
                                   CXTranslationUnit_Incomplete);
 

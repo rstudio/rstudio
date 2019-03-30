@@ -1,7 +1,7 @@
 /*
  * NotebookPaths.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,7 +114,7 @@ void cleanNotebookPathMap()
    error = writeStringMapToFile(cache, s_idCache);
    if (error)
       LOG_ERROR(error);
-   s_cacheWriteTime = std::time(NULL);
+   s_cacheWriteTime = std::time(nullptr);
 }
 
 Error synchronizeCache()
@@ -144,7 +144,7 @@ Error synchronizeCache()
          error = core::readStringMapFromFile(cache, &s_idCache);
          if (error)
             return error;
-         s_cacheWriteTime = std::time(NULL);
+         s_cacheWriteTime = std::time(nullptr);
 
          // schedule a path map cleanup (no urgency)
          module_context::scheduleDelayedWork(boost::posix_time::seconds(10),
@@ -200,7 +200,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
    error = writeStringMapToFile(cachePath(), s_idCache);
    if (error)
       return error;
-   s_cacheWriteTime = std::time(NULL);
+   s_cacheWriteTime = std::time(nullptr);
    *pId = id;
 
    return Success();

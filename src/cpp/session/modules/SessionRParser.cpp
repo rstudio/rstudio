@@ -1,7 +1,7 @@
 /*
  * RParser.hpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -196,7 +196,7 @@ NSEDatabase& nseDatabase()
 SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
                                      r::sexp::Protect* pProtect,
                                      bool functionsOnly = false,
-                                     bool* pCacheable = NULL)
+                                     bool* pCacheable = nullptr)
 {
    DEBUG("--- Resolve function call: " << cursor);
    
@@ -276,7 +276,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
 
 SEXP resolveFunctionAssociatedWithCall(RTokenCursor cursor,
                                        r::sexp::Protect* pProtect,
-                                       bool* pCacheable = NULL)
+                                       bool* pCacheable = nullptr)
 {
    return resolveObjectAssociatedWithCall(cursor, pProtect, true, pCacheable);
 }
@@ -1430,7 +1430,7 @@ ParseResults parse(const FilePath& filePath,
    
    doParse(cursor, status);
    
-   if (status.node()->getParent() != NULL)
+   if (status.node()->getParent() != nullptr)
    {
       DEBUG("** Parent is not null (not at top level): failed to close all scopes?");
       status.lint().unexpectedEndOfDocument(cursor.currentToken());

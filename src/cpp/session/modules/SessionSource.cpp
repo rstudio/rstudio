@@ -227,7 +227,7 @@ Error openDocument(const json::JsonRpcRequest& request,
       if (type == "r_markdown" && encoding == "")
          encoding = "UTF-8";
       else
-         encoding = ::locale2charset(NULL);
+         encoding = ::locale2charset(nullptr);
    }
    
    // ensure the file exists

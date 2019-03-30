@@ -1,7 +1,7 @@
 /*
  * SessionContentUrls.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -216,7 +216,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // reset content-type with charset
    pResponse->setContentType(contentFilePath.mimeContentType() +
                              std::string("; charset=") +
-                             (isUtf8 ? "UTF-8" : ::locale2charset(NULL)));
+                             (isUtf8 ? "UTF-8" : ::locale2charset(nullptr)));
 
    // set title header
    pResponse->setHeader("Title", title);

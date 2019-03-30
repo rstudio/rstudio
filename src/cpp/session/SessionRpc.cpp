@@ -1,7 +1,7 @@
 /*
  * SessionRpc.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,7 @@ namespace session {
 namespace {
 
 // json rpc methods
-core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = NULL;
+core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
    
 void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
@@ -303,7 +303,7 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       // application states
       LOG_ERROR(executeError);
 
-      endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, NULL);
+      endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
    }
 }
 

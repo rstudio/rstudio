@@ -1,7 +1,7 @@
 /*
  * SessionDiagnostics.cpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -113,7 +113,7 @@ void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
       
       if (pNode->isSymbolDefinedButNotUsed(symbolName, true, true))
       {
-         ParseNode::Positions* symbolPos = NULL;
+         ParseNode::Positions* symbolPos = nullptr;
          if (get(definitions, symbolName, &symbolPos))
          {
             results.lint().symbolDefinedButNotUsed(

@@ -2,7 +2,7 @@
  *
  * SessionSourceDatabaseSupervisor.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -336,7 +336,7 @@ bool reclaimOrphanedSession()
       FilePath restartFile = sessionRestartFilePath(sessionDir);
       if (restartFile.exists())
       {
-         if (std::time(NULL) - restartFile.lastWriteTime() > 
+         if (std::time(nullptr) - restartFile.lastWriteTime() > 
               (1000 * 60 * 5))
          {
             // the file exists, but it's more than five minutes old, so 

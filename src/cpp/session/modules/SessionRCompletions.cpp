@@ -1,7 +1,7 @@
 /*
  * SessionRCompletions.cpp
  *
- * Copyright (C) 2009-2018 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -429,7 +429,7 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
          code_search::rSourceIndex().get(documentId);
 
    // NOTE: can occur when user edits file not in source index
-   if (index == NULL)
+   if (index == nullptr)
       return R_NilValue;
    
    std::vector<std::string> pkgs = index->getInferredPackages();

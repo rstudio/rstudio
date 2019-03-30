@@ -67,7 +67,7 @@ Error ConsoleProcessSocket::ensureServerRunning()
    // initialize seed for random port selection
    if (!s_didSeedRand)
    {
-      srand(static_cast<unsigned int>(time(NULL)));
+      srand(static_cast<unsigned int>(time(nullptr)));
       s_didSeedRand = true;
    }
 
