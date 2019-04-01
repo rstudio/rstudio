@@ -219,7 +219,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("RCurl", "1.95"));
       deps.add(Dependency.cranPackage("jsonlite", "1.5"));
       deps.add(Dependency.cranPackage("openssl", "1.0.2"));
-      deps.add(Dependency.cranPackage("rstudioapi", "0.5"));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.10"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
@@ -365,7 +365,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // define dependencies
       ArrayList<Dependency> deps = shinyDependencies(); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
-      deps.add(Dependency.cranPackage("rstudioapi", "0.5", true));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.10", true));
       
       withDependencies(   
         "Checking installed packages",
@@ -803,7 +803,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         "Using " + name, 
         new Dependency[] {
            Dependency.cranPackage("odbc", "1.1.6"),
-           Dependency.cranPackage("rstudioapi", "0.5")
+           Dependency.cranPackage("rstudioapi", "0.10")
         }, 
         true, // update odbc if needed
         new CommandWithArg<Boolean>()
