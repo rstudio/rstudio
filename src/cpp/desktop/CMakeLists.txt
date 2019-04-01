@@ -388,7 +388,7 @@ if(NOT APPLE)
 
    # extra dependencies for Windows
    if(WIN32)
-      target_link_libraries(rstudio Version)
+      target_link_libraries(rstudio Version Crypt32)
    endif()
 
 # for OSX we create a bundle
