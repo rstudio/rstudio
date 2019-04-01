@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,8 @@
 #include <core/system/Crypto.hpp>
 
 #include <core/text/TemplateFilter.hpp>
+
+#include <core/http/CSRFToken.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -108,6 +110,14 @@ bool parseAndValidateJsonRpcConnection(
    if (error)
    {
       ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // check for valid CSRF headers in server mode 
+   if (options().programMode() == kSessionProgramModeServer && 
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
+   {
+      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
    }
 
@@ -325,7 +335,7 @@ bool registeredWaitForMethod(const std::string& method,
 bool verifyRequestSignature(const core::http::Request& request)
 {
 #ifndef RSTUDIO_SERVER
-   // signatures only supported in server mode - requiresd a dependency
+   // signatures only supported in server mode - requires a dependency
    // on server_core, which is only available to server platforms
    return true;
 #else

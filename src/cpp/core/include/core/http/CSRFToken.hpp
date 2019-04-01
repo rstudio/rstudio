@@ -20,6 +20,9 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#define kCSRFTokenHeader "X-CSRF-Token"
+#define kCSRFTokenCookie "csrf-token"
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -34,6 +37,10 @@ void setCSRFTokenCookie(const Request& request,
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.
 bool validateCSRFForm(const Request&, Response*);
+
+// Validates any other HTTP request by ensuring that the CSRF HTTP header matches the accompanying
+// token cookie.
+bool validateCSRFHeaders(const Request& request);
 
 } // namespace http
 } // namespace core

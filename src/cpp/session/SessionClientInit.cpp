@@ -54,6 +54,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -136,6 +137,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // alias options
    Options& options = session::options();
    
+   // check for valid CSRF headers in server mode 
+   if (options.programMode() == kSessionProgramModeServer && 
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
+   {
+      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+      return;
+   }
+
    // calculate initialization parameters
    std::string clientId = persistentState().newActiveClientId();
    bool resumed = suspend::sessionResumed() || init::isSessionInitialized();
