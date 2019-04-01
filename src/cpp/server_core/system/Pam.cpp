@@ -205,6 +205,9 @@ void PAM::close()
    if (pamh_)
    {
       ::pam_end(pamh_, status_);
+      
+      // TODO (gary) conflicting versions; determine if we should have the former, or this:
+      // ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
       pamh_ = nullptr;
    }
 }
