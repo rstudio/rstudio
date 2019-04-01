@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -56,5 +56,11 @@ add_executable(urlopener
 target_link_libraries(urlopener
    rstudio-core
 )
+
+if(WIN32)
+   target_link_libraries(urlopener
+      Crypt32
+   )
+endif()
 
 install(TARGETS urlopener DESTINATION ${RSTUDIO_INSTALL_BIN})

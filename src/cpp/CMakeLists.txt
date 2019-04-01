@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -350,12 +350,12 @@ if(WIN32)
      endif()
 
      set(OPENSSL_BITNESS "64")
-     set(OPENSSL_NAME "openssl-1.0.2p")
+     set(OPENSSL_NAME "openssl-1.1.1b")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")
-     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libeay32.lib")
-     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/ssleay32.lib")
+     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libcrypto.lib")
+     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/libssl.lib")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_SSL_LIBRARY}")
 

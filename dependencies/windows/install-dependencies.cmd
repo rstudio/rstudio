@@ -17,7 +17,7 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
-set OPENSSL_FILES=openssl-1.0.2p.zip
+set OPENSSL_FILES=openssl-1.1.1b.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 
 set PANDOC_VERSION=2.6
