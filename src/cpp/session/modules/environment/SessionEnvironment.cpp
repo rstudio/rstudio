@@ -396,12 +396,11 @@ json::Array environmentListAsJson()
     if (s_pEnvironmentMonitor->hasEnvironment())
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-       if (env != NULL)
-          listEnvironment(env,
-                          false,
-                          userSettings().showLastDotValue(),
-                          &rProtect,
-                          &vars);
+       listEnvironment(env,
+                       false,
+                       userSettings().showLastDotValue(),
+                       &rProtect,
+                       &vars);
 
        // get object details and transform to json
        std::transform(vars.begin(),
