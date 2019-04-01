@@ -1,7 +1,7 @@
 /*
  * ShinyDisconnectNotifier.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+
 public class ShinyDisconnectNotifier
 {
    public interface ShinyDisconnectSource
@@ -25,7 +28,31 @@ public class ShinyDisconnectNotifier
    public ShinyDisconnectNotifier(ShinyDisconnectSource source)
    {
       source_ = source;
+      suppressUrl_ = null;
       initializeEvents();
+   }
+   
+   /**
+    * Begins suppressing disconnect notifications from the current URL.
+    */
+   public void suppress()
+   {
+      if (!StringUtil.isNullOrEmpty(suppressUrl_))
+      {
+         // should never happen in practice; if it does the safest behavior is
+         // to respect the new suppress URL and discard the old one. warn that
+         // we're doing this.
+         Debug.logWarning("Replacing old Shiny disconnect suppress URL: " + suppressUrl_);
+      }
+      suppressUrl_ = source_.getShinyUrl();
+   }
+   
+   /**
+    * Ends suppression of disconnect notifications.
+    */
+   public void unsuppress()
+   {
+      suppressUrl_ = null;
    }
 
    private native void initializeEvents() /*-{  
@@ -46,10 +73,18 @@ public class ShinyDisconnectNotifier
       {
          if (source_.getShinyUrl().startsWith(origin)) 
          {
+            if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
+            {
+               // we were suppressing disconnect notifications from this URL;
+               // consume this disconnection and resume
+               unsuppress();
+               return;
+            }
             source_.onShinyDisconnect();
          }
       }
    }
 
-   private ShinyDisconnectSource source_;
+   private final ShinyDisconnectSource source_;
+   private String suppressUrl_;
 }
