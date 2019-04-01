@@ -49,6 +49,11 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    
    protected void showUrl(String url, boolean removeToolbar)
    {
+      showUrl(url, false, null);
+   }
+
+   protected void showUrl(String url, boolean removeToolbar, LoadHandler onLoad)
+   {
       if (appFrame_ != null)
       {
          // first set the frame to about:blank so that the 
@@ -72,6 +77,12 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       rootPanel_.add(glassPanel_);
       rootPanel_.setWidgetLeftRight(glassPanel_,  0, Unit.PX, 0, Unit.PX);
       rootPanel_.setWidgetTopBottom(glassPanel_, widgetTop, Unit.PX, 0, Unit.PX);
+
+      if (onLoad != null)
+      {
+         // run supplied load handler if present
+         appFrame_.addLoadHandler(onLoad);
+      }
    }
    
    protected T getFrame()

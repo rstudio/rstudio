@@ -1,7 +1,7 @@
 /*
  * ViewerPresenter.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -12,10 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.Size;
@@ -45,6 +48,8 @@ import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -72,7 +77,8 @@ public class ViewerPresenter extends BasePresenter
                                         ViewerClearedEvent.Handler,
                                         ShinyApplicationStatusEvent.Handler,
                                         PlumberAPIStatusEvent.Handler,
-                                        InterruptStatusEvent.Handler
+                                        InterruptStatusEvent.Handler,
+                                        ShinyDisconnectSource
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
@@ -83,6 +89,7 @@ public class ViewerPresenter extends BasePresenter
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
       void previewPlumber(PlumberAPIParams params);
+      HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
       void popout();
@@ -141,7 +148,19 @@ public class ViewerPresenter extends BasePresenter
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus.addHandler(PlumberAPIStatusEvent.TYPE, this);
       eventBus.addHandler(InterruptStatusEvent.TYPE, this);
-      initializeEvents();
+
+      // listen for Shiny disconnection events
+      shinyNotifier_ = new ShinyDisconnectNotifier(this);
+      
+      if (BrowseCap.isFirefox())
+      {
+         display_.addLoadHandler((evt) ->
+         {
+            // for Firefox, we need to suppress disconnection events during a
+            // reload; this load signals that the reload is complete
+            shinyNotifier_.unsuppress();
+         });
+      }
    }
    
 
@@ -245,10 +264,38 @@ public class ViewerPresenter extends BasePresenter
       }
    }
  
+   @Override
+   public String getShinyUrl()
+   {
+      return display_.getUrl();
+   }
+
+   @Override
+   public void onShinyDisconnect()
+   {
+      // when Shiny applications disconnect themselves, clear them out of the the Viewer
+      onViewerClear();
+   }
+
    @Handler
-   public void onViewerPopout() { display_.popout(); }
+   public void onViewerPopout()
+   {
+      display_.popout();
+   }
+
    @Handler
-   public void onViewerRefresh() { display_.refresh(); }
+   public void onViewerRefresh()
+   { 
+      if (BrowseCap.isFirefox() && !StringUtil.isNullOrEmpty(getShinyUrl()))
+      {
+         // Firefox allows Shiny's disconnection notification (a "disconnected"
+         // postmessage) through during the unload that occurs during refresh.
+         // To keep this transient disconnection from being treated as an app
+         // stop, we temporarily suppress it here.
+         shinyNotifier_.suppress();
+      }
+      display_.refresh();
+   }
    
    @Handler
    public void onViewerBack()
@@ -407,7 +454,6 @@ public class ViewerPresenter extends BasePresenter
             }
          });
    }
-   
    
    @Handler 
    public void onViewerClear()
@@ -568,37 +614,6 @@ public class ViewerPresenter extends BasePresenter
             }
          };
    
-   
-   private native void initializeEvents() /*-{  
-      var thiz = this;   
-      $wnd.addEventListener(
-            "message",
-            $entry(function(e) {
-               if (typeof e.data != 'string')
-                  return;
-               thiz.@org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-            }),
-            true);
-   }-*/;
-   
-   private void onMessage(String data, String origin)
-   {  
-      if ("disconnected".equals(data))
-      {
-         // ensure the frame url starts with the specified origin
-         if (display_.getUrl().startsWith(origin))
-            onViewerClear();
-      }
-   }
-   
-   private String normalizeUrl(String url)
-   {
-      if (url.endsWith("/"))
-         return url.substring(0, url.length()-1);
-      else
-         return url;
-   }
-   
    private final Display display_ ;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
@@ -610,6 +625,7 @@ public class ViewerPresenter extends BasePresenter
    private final RemoteFileSystemContext fileSystemContext_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final SourceShim sourceShim_; 
+   private final ShinyDisconnectNotifier shinyNotifier_;
    
    private FileSystemItem saveAsWebPageDefaultPath_ = null;
    
@@ -621,4 +637,5 @@ public class ViewerPresenter extends BasePresenter
    private Size zoomWindowDefaultSize_ = null;
    
    private HtmlMessageListener htmlMessageListener_;
+
 }
