@@ -68,11 +68,9 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
          return error;
 
       // change mode it so it is only readable and writeable by this user
-      if (changeFileMode(secureKeyPath,
-                         core::system::UserReadWriteMode) < 0)
-      {
-         return systemError(errno, ERROR_LOCATION);
-      }
+      error = changeFileMode(secureKeyPath, core::system::UserReadWriteMode);
+      if (error)
+         return error;
 
       // successfully generated the cookie key, set it
       *pContents = secureKey;
