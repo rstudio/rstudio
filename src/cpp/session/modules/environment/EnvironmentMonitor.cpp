@@ -114,11 +114,15 @@ SEXP EnvironmentMonitor::getMonitoredEnvironment()
 
 bool EnvironmentMonitor::hasEnvironment()
 {
-   return getMonitoredEnvironment() != nullptr;
+   SEXP envir = getMonitoredEnvironment();
+   return envir != nullptr && r::sexp::isPrimitiveEnvironment(envir);
 }
 
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
+   if (!hasEnvironment())
+      return;
+
    r::sexp::Protect rProtect;
    r::sexp::listEnvironment(getMonitoredEnvironment(),
                             false,

@@ -43,6 +43,7 @@
 #include "DesktopActivationOverlay.hpp"
 
 #ifdef _WIN32
+#include <core/system/RegistryKey.hpp>
 #include <Windows.h>
 #endif
 
@@ -281,13 +282,51 @@ QString inferDefaultRenderingEngine()
 
 #ifdef Q_OS_WIN
 
-QString inferDefaultRenderingEngine()
+namespace {
+
+bool isRemoteSession()
 {
    if (::GetSystemMetrics(SM_REMOTESESSION))
-   {
-       // use software rendering over remote desktop
-       return QStringLiteral("software");
-   }
+      return true;
+   
+   core::system::RegistryKey key;
+   Error error = key.open(
+            HKEY_LOCAL_MACHINE,
+            "SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\",
+            KEY_READ);
+   
+   if (error)
+      return false;
+   
+   DWORD dwGlassSessionId;
+   DWORD cbGlassSessionId = sizeof(dwGlassSessionId);
+   DWORD dwType;
+
+   LONG lResult = RegQueryValueEx(
+            key.handle(),
+            "GlassSessionId",
+            NULL, // lpReserved
+            &dwType,
+            (BYTE*) &dwGlassSessionId,
+            &cbGlassSessionId);
+
+   if (lResult != ERROR_SUCCESS)
+      return false;
+   
+   DWORD dwCurrentSessionId;
+   if (ProcessIdToSessionId(GetCurrentProcessId(), &dwCurrentSessionId))
+      return dwCurrentSessionId != dwGlassSessionId;
+   
+   return false;
+   
+}
+
+} // end anonymous namespace
+
+QString inferDefaultRenderingEngine()
+{
+   if (isRemoteSession())
+      return QStringLiteral("software");
 
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
