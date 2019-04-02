@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.spelling;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.Request;
@@ -200,7 +201,7 @@ public class TypoSpellChecker
    private void loadDictionary()
    {
       String dictLanguage = uiPrefs_.spellingDictionaryLanguage().getValue();
-      String path = "/dictionaries/" + dictLanguage + "/" + dictLanguage;
+      String path = GWT.getHostPageBaseURL() + "dictionaries/" + dictLanguage + "/" + dictLanguage;
 
       RequestLogEntry affLogEntry = RequestLog.log(dictLanguage + "_aff_request", "");
       RequestLogEntry dicLogEntry = RequestLog.log(dictLanguage + "_dic_request", "");
