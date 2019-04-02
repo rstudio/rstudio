@@ -157,7 +157,7 @@ void getThemesInLocation(
 
             // If there's no name specified,use the name of the file
             std::string name;
-            if (matches.size() < 2)
+            if ((matches.size() < 2) || (!matches[0].matched) || (matches[1] == ""))
             {
                name = themeFile.stem();
             }
