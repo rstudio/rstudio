@@ -46,7 +46,9 @@ RUN apt-get update && \
     unzip \
     uuid-dev \
     wget \
-    zlib1g-dev
+    zlib1g-dev \
+    libuser1-dev \
+    libglib2.0-dev
 
 # ensure we use the java 8 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java

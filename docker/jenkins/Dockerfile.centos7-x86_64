@@ -18,6 +18,8 @@ RUN yum install -y \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     libcurl-devel \
+    libacl-devel \
+    libcap-devel \ 
     libffi \
     libuuid-devel \
     libXcursor-devel \
@@ -37,7 +39,8 @@ RUN yum install -y \
     sudo \
     wget \
     xml-commons-apis \
-    zlib-devel
+    zlib-devel \
+    libuser-devel
 
 # add scl repo and install additional dependencies
 RUN yum install -y \

@@ -31,7 +31,8 @@ RUN yum install -y \
     sudo \
     wget \
     xml-commons-apis \
-    zlib-devel
+    zlib-devel \
+    libuser-devel
 
 # update gcc for C++11 support
 RUN wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo

@@ -43,7 +43,9 @@ RUN apt-get update -y && apt-get install -y \
     libcap-dev \
     libacl1-dev \
     lsof \
-    python
+    python \
+    libuser1-dev \
+    libglib2.0-dev
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
