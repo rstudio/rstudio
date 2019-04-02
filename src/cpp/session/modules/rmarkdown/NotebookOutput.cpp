@@ -18,7 +18,6 @@
 #include "NotebookOutput.hpp"
 #include "NotebookPlots.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -366,7 +365,7 @@ OutputPair lastChunkOutput(const std::string& docId,
    }
 
    OutputPair last;
-   BOOST_FOREACH(const FilePath& path, outputPaths)
+   for (const FilePath& path : outputPaths)
    {
       // extract ordinal and update if it's the most recent we've seen so far
       unsigned ordinal = static_cast<unsigned>(
@@ -496,7 +495,7 @@ Error enqueueChunkOutput(
       std::sort(outputPaths.begin(), outputPaths.end());
 
       // loop through each and build an array of the outputs
-      BOOST_FOREACH(const FilePath& outputPath, outputPaths)
+      for (const FilePath& outputPath : outputPaths)
       {
          json::Object output;
 

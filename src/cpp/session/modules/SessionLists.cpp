@@ -1,7 +1,7 @@
 /*
  * SessionLists.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <map>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
 
@@ -111,7 +110,7 @@ Error writeList(const std::string& name, const T& list)
 json::Array listToJson(const std::list<std::string>& list)
 {
    json::Array jsonArray;
-   BOOST_FOREACH(const std::string& val, list)
+   for (const std::string& val : list)
    {
       jsonArray.push_back(val);
    }
@@ -203,7 +202,7 @@ Error listSetContents(const json::JsonRpcRequest& request,
       return error;
 
    std::list<std::string> list;
-   BOOST_FOREACH(const json::Value& val, jsonList)
+   for (const json::Value& val : jsonList)
    {
       if (!json::isType<std::string>(val))
       {

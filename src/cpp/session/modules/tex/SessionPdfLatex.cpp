@@ -1,7 +1,7 @@
 /*
  * SessionPdfLatex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,7 @@ public:
 
    bool isValidTypeName(const std::string& name) const
    {
-      BOOST_FOREACH(const std::string& type, types_)
+      for (const std::string& type : types_)
       {
          if (boost::algorithm::iequals(name, type))
             return true;
@@ -107,7 +107,7 @@ const LatexProgramTypes& programTypes()
 std::string latexProgramMagicComment(
                      const core::tex::TexMagicComments& magicComments)
 {
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   for (const core::tex::TexMagicComment& mc : magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "tex") &&
           (boost::algorithm::iequals(mc.variable(), "program") ||

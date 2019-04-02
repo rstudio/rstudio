@@ -15,8 +15,6 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
-#include <boost/foreach.hpp>
-
 #include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
 
@@ -141,7 +139,7 @@ std::map<std::string,TranslationUnit>
                            SourceIndex::getIndexedTranslationUnits()
 {
    std::map<std::string,TranslationUnit> units;
-   BOOST_FOREACH(TranslationUnits::value_type& t, translationUnits_)
+   for (TranslationUnits::value_type& t : translationUnits_)
    {
       TranslationUnit unit(t.first, t.second.tu, &unsavedFiles_);
       units.insert(std::make_pair(t.first, unit));

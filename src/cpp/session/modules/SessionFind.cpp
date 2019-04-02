@@ -511,7 +511,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (!asRegex)
       cmd << "-F";
 
-   BOOST_FOREACH(json::Value filePattern, filePatterns)
+   for (json::Value filePattern : filePatterns)
    {
       cmd << "--include=" + filePattern.get_str();
    }

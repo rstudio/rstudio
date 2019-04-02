@@ -1,7 +1,7 @@
 /*
  * MathJax.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/RegexUtils.hpp>
@@ -57,7 +56,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
    {
       // try all of the exclude patterns
       std::vector<TextRange> matchedRanges;
-      BOOST_FOREACH(const html_utils::ExcludePattern& pattern, excludePatterns)
+      for (const html_utils::ExcludePattern& pattern : excludePatterns)
       {
          boost::smatch m;
          if (regex_utils::search(pos, inputEnd, m, pattern.begin))
@@ -115,7 +114,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
 
    // now iterate through the ranges and substitute a guid for math blocks
    std::string filteredInput;
-   BOOST_FOREACH(const TextRange& range, ranges)
+   for (const TextRange& range : ranges)
    {
       std::string rangeText(range.begin, range.end);
 

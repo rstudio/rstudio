@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,6 @@
 #ifdef _WIN32
 #include <shlobj.h>
 #endif
-
-#include <boost/foreach.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -1285,7 +1283,7 @@ void GwtCallback::setFixedWidthFont(QString font)
 QString GwtCallback::getZoomLevels()
 {
    QStringList zoomLevels;
-   BOOST_FOREACH(double zoomLevel, pMainWindow_->zoomLevels())
+   for (double zoomLevel : pMainWindow_->zoomLevels())
    {
       zoomLevels.append(QString::fromStdString(
                            safe_convert::numberToString(zoomLevel)));

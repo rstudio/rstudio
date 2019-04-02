@@ -1,7 +1,7 @@
 /*
  * Win32FileScanner.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include <core/system/FileScanner.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/system/windows_error.hpp>
 
 #include <core/Error.hpp>
@@ -112,7 +111,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
              fileInfoPathLessThan);
 
    // iterate over entries
-   BOOST_FOREACH(const FileInfo& childFileInfo, childrenFileInfo)
+   for (const FileInfo& childFileInfo : childrenFileInfo)
    {
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))

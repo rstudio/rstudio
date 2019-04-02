@@ -1,7 +1,7 @@
 /*
  * NotebookQueueUnit.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -68,7 +67,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 
 void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
-   BOOST_FOREACH(const ExecRange range, in)
+   for (const ExecRange range : in)
    {
       pOut->push_back(range.toJson());
    }

@@ -16,7 +16,6 @@
 #include <core/gwt/GwtLogHandler.hpp>
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -57,7 +56,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
    if (error)
        return error;
 
-   BOOST_FOREACH(const json::Value& elementJson, stackJson)
+   for (const json::Value& elementJson : stackJson)
    {
       if (!json::isType<json::Object>(elementJson))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
@@ -142,7 +141,7 @@ void handleLogExceptionRequest(const std::string& username,
    // build the log message
    bool printFrame = false;
    std::ostringstream ostr;
-   BOOST_FOREACH(const StackElement& element, stack)
+   for (const StackElement& element : stack)
    {
       // skip past java/lang/Exception entries
       if (!printFrame)

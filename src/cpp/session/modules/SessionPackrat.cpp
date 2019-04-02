@@ -601,7 +601,7 @@ void onFileChanged(FilePath sourceFilePath)
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   for (const core::system::FileChangeEvent& fileChange : changes)
    {
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       onFileChanged(changedFilePath);

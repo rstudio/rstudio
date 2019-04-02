@@ -1,7 +1,7 @@
 /*
  * NotebookData.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <r/RExec.hpp>

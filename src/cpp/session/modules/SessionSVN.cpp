@@ -743,14 +743,14 @@ Error svnRevert(const json::JsonRpcRequest& request,
    
    // build map (indexed on file path) for easy lookup
    std::map<std::string, source_control::FileWithStatus> fileStatusMap;
-   BOOST_FOREACH(const source_control::FileWithStatus& file, fileStatusVector)
+   for (const source_control::FileWithStatus& file : fileStatusVector)
    {
       fileStatusMap[file.path.absolutePath()] = file;
    }
    
    std::vector<FilePath> recursiveReverts;
    std::vector<FilePath> nonRecursiveReverts;
-   BOOST_FOREACH(const FilePath& filePath, paths)
+   for (const FilePath& filePath : paths)
    {
       if (!filePath.isDirectory())
       {
@@ -956,7 +956,7 @@ Error status(const FilePath& filePath,
    if (error)
       return error;
 
-   BOOST_FOREACH(source_control::FileWithStatus file, files)
+   for (source_control::FileWithStatus file : files)
    {
       json::Object fileObj;
       error = statusToJson(file.path, file.status, &fileObj);
@@ -1196,7 +1196,7 @@ struct CommitInfo
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
 {
-   BOOST_FOREACH(std::string pattern, patterns)
+   for (std::string pattern : patterns)
    {
       if (!boost::algorithm::ifind_first(commit.author, pattern)
           && !boost::algorithm::ifind_first(commit.description, pattern)

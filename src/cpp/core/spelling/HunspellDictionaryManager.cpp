@@ -16,7 +16,6 @@
 #include <core/spelling/HunspellDictionaryManager.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 

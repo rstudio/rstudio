@@ -1,7 +1,7 @@
 /*
  * SessionSnippets.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 #include <core/json/Json.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -67,7 +66,7 @@ Error saveSnippets(const json::JsonRpcRequest& request,
       return error;
 
    FilePath snippetsDir = getSnippetsDir(true);
-   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
+   for (const json::Value& valueJson : snippetsJson)
    {
       if (json::isType<json::Object>(valueJson))
       {
@@ -119,7 +118,7 @@ Error getSnippetsAsJson(json::Array* pJsonData)
    if (error)
       return error;
    
-   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
+   for (const FilePath& filePath : snippetPaths)
    {
       // bail if this doesn't appear to be a snippets file
       std::string mode;

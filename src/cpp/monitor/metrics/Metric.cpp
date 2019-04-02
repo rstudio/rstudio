@@ -17,8 +17,6 @@
 
 #include <ostream>
 
-#include <boost/foreach.hpp>
-
 #include <core/Error.hpp>
 #include <core/DateTime.hpp>
 
@@ -146,7 +144,7 @@ Error metricFromJson(const json::Object& multiMetricJson,
 
    // create vector of metric data
    std::vector<MetricData> data;
-   BOOST_FOREACH(const json::Value& value, dataJson)
+   for (const json::Value& value : dataJson)
    {
       if (!json::isType<json::Object>(value))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);

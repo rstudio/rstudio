@@ -1,7 +1,7 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include <algorithm>
 
 #include <boost/function.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -139,7 +138,7 @@ Error saveEnvironmentVars(const FilePath& envFile)
    core::system::Options env;
    core::system::environment(&env);
    envSettings.beginUpdate();
-   BOOST_FOREACH(const core::system::Option& var, env)
+   for (const core::system::Option& var : env)
    {
       envSettings.set(var.first, var.second);
    }

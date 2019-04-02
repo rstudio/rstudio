@@ -439,7 +439,7 @@ json::Object projectVcsContextJson()
    json::Object contextJson;
    contextJson["detected_vcs"] = vcsContext.detectedVcs;
    json::Array applicableJson;
-   BOOST_FOREACH(const std::string& vcs, vcsContext.applicableVcs)
+   for (const std::string& vcs : vcsContext.applicableVcs)
    {
       applicableJson.push_back(vcs);
    }
@@ -707,7 +707,7 @@ void onQuit()
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       // if the project file changed then sync its changes
       if (event.fileInfo().absolutePath() ==
@@ -880,7 +880,7 @@ void startup(const std::string& firstProjectPath)
       std::vector<std::string> docs;
       boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
 
-      BOOST_FOREACH(std::string& doc, docs)
+      for (std::string& doc : docs)
       {
          boost::algorithm::trim(doc);
 
@@ -919,7 +919,7 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
    if (!success)
       return R_NilValue;
    
-   BOOST_FOREACH(const std::string& path, docRelativePaths)
+   for (const std::string& path : docRelativePaths)
    {
       addFirstRunDoc(projectFilePath, path);
    }

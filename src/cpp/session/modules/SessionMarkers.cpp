@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionMarkers.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
@@ -125,7 +124,7 @@ public:
 
       MarkerSets markerSets;
 
-      BOOST_FOREACH(const json::Value& setJson, setsJson)
+      for (const json::Value& setJson : setsJson)
       {
          if (json::isType<json::Object>(setJson))
          {
@@ -141,7 +140,7 @@ public:
                continue;
             }
             std::vector<module_context::SourceMarker> markers;
-            BOOST_FOREACH(json::Value markerJson, markersJson)
+            for (json::Value markerJson : markersJson)
             {
                if (json::isType<json::Object>(markerJson))
                {
@@ -217,7 +216,7 @@ public:
       {
          // names
          json::Array namesJson;
-         BOOST_FOREACH(const module_context::SourceMarkerSet& set, markerSets_)
+         for (const module_context::SourceMarkerSet& set : markerSets_)
          {
             namesJson.push_back(set.name);
          }

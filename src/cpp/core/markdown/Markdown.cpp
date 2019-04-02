@@ -17,7 +17,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -218,7 +217,7 @@ void stripMetadata(std::string* pInput)
 
    // check the first non-empy line for metadata
    bool hasFrontMatter = false, hasPandocTitleBlock = false;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (boost::algorithm::trim_copy(line).empty())
       {

@@ -15,7 +15,6 @@
 
 #include "SessionConsoleProcessTable.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
 #include <core/SafeConvert.hpp>
@@ -123,7 +122,7 @@ ConsoleProcessPtr findProcByHandle(const std::string& handle)
 
 ConsoleProcessPtr findProcByCaption(const std::string& caption)
 {
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       if (proc->getCaption() == caption)
          return proc;
@@ -160,7 +159,7 @@ std::vector<std::string> getAllHandles()
 std::pair<int, std::string> nextTerminalName()
 {
    int maxNum = kNoTerminal;
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       maxNum = std::max(maxNum, proc->getTerminalSequence());
    }

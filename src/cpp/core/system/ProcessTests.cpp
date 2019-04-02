@@ -1,7 +1,7 @@
 /*
  * ProcessTests.cpp
  *
- * Copyright (C) 2017-18 by RStudio, Inc.
+ * Copyright (C) 2017-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include <atomic>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 
 #include <core/SafeConvert.hpp>

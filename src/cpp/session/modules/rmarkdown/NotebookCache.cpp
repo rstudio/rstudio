@@ -21,7 +21,6 @@
 #include "NotebookHtmlWidgets.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -75,7 +74,7 @@ void cleanUnusedCaches()
    }
 
    std::string nbCtxId = notebookCtxId();
-   BOOST_FOREACH(const FilePath cache, caches)
+   for (const FilePath cache : caches)
    {
       // make sure this looks like a notebook cache
       if (!cache.isDirectory())
@@ -123,7 +122,7 @@ void cleanUnusedCaches()
          continue;
       }
 
-      BOOST_FOREACH(const FilePath context, contexts)
+      for (const FilePath context : contexts)
       {
          // skip if not our context or the saved context
          if (context.filename() != kSavedCtx &&
@@ -433,7 +432,7 @@ void onDocSaved(FilePath path)
       LOG_ERROR(error);
       return;
    }
-   BOOST_FOREACH(const FilePath source, children)
+   for (const FilePath source : children)
    {
       // compute the target path 
       FilePath target = saved.complete(source.filename());

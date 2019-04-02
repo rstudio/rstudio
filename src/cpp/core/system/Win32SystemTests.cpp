@@ -18,7 +18,6 @@
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -156,7 +155,7 @@ TEST_CASE("Win32SystemTests")
       if (children.size() >= 1)
       {
          bool found = false;
-         BOOST_FOREACH(SubprocInfo info, children)
+         for (SubprocInfo info : children)
          {
             if (info.exe.compare(exe) == 0)
             {

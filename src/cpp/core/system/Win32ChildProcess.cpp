@@ -21,7 +21,6 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/system/ChildProcess.hpp>
@@ -461,7 +460,7 @@ Error ChildProcess::run()
    if (exeQuot)
       cmdLine.push_back(L'"');
 
-   BOOST_FOREACH(std::string& arg, args_)
+   for (std::string& arg : args_)
    {
       cmdLine.push_back(L' ');
 
@@ -487,7 +486,7 @@ Error ChildProcess::run()
    if (options_.environment)
    {
       const Options& env = options_.environment.get();
-      BOOST_FOREACH(const Option& envVar, env)
+      for (const Option& envVar : env)
       {
          std::wstring key = string_utils::utf8ToWide(envVar.first);
          std::wstring value = string_utils::utf8ToWide(envVar.second);

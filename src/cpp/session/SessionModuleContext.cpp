@@ -517,7 +517,7 @@ bool monitoredScratchFilter(const FileInfo& fileInfo)
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   for (const core::system::FileChangeEvent& fileChange : changes)
    {
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       for (MonitoredScratchPaths::const_iterator
@@ -1225,7 +1225,7 @@ std::vector<FilePath> getLibPaths()
       LOG_ERROR(error);
 
    std::vector<FilePath> libPaths;
-   BOOST_FOREACH(const std::string& path, libPathsString)
+   for (const std::string& path : libPathsString)
    {
       libPaths.push_back(module_context::resolveAliasedPath(path));
    }
@@ -1866,7 +1866,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
 
    // try to find the common parent of the events
    FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).parent();
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       // if not within the common parent then revert to the vcs status root
       if (!FilePath(event.fileInfo().absolutePath()).isWithin(commonParentPath))
@@ -1881,7 +1881,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                                   fileDecorationContext(commonParentPath);
 
    // fire client events as necessary
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       enqueFileChangedEvent(event, pCtx);
    }

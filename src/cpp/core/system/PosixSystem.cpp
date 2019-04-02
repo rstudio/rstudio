@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/range/as_array.hpp>
 
 #include <signal.h>
@@ -1024,7 +1023,7 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
    {
       boost::regex re("^(\\d+)\\s+(.+)");
       std::vector<std::string> lines = algorithm::split(result.stdOut, "\n");
-      BOOST_FOREACH(const std::string& line, lines)
+      for (const std::string& line : lines)
       {
          if (boost::algorithm::trim_copy(line).empty())
          {
@@ -1126,7 +1125,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
       return subprocs;
    }
 
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       // only interested in the numeric directories (pid)
       std::string filename = child.filename();
@@ -1507,7 +1506,7 @@ namespace  {
 
 void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
 {
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       PidType pid = safe_convert::stringTo<PidType>(line, -1);
       if (pid != -1)
@@ -1744,7 +1743,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    Error error = core::readStringVectorFromFile(FilePath("/proc/stat"), &lines);
    if (error)
       return error;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (boost::algorithm::starts_with(line, "btime"))
       {
@@ -1829,7 +1828,7 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
                            result.stdOut,
                            boost::algorithm::is_any_of("\n"));
 
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (line.empty()) continue;
        
@@ -2292,7 +2291,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
                        ProcessTreeT *pOutTree)
 {
    // first pass, create the nodes in the tree
-   BOOST_FOREACH(const ProcessInfo& process, processes)
+   for (const ProcessInfo& process : processes)
    {
       ProcessTreeT::iterator iter = pOutTree->find(process.pid);
       if (iter == pOutTree->end())
@@ -2308,7 +2307,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
    }
 
    // second pass, link the nodes together
-   BOOST_FOREACH(ProcessTreeT::value_type& element, *pOutTree)
+   for (ProcessTreeT::value_type& element : *pOutTree)
    {
       pid_t parent = element.second->data->ppid;
       ProcessTreeT::iterator iter = pOutTree->find(parent);
@@ -2325,7 +2324,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
 void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
                  std::vector<ProcessInfo> *pOutChildren)
 {
-   BOOST_FOREACH(const boost::shared_ptr<ProcessTreeNode>& child, node->children)
+   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
    {
       pOutChildren->push_back(*child->data.get());
       getChildren(child, pOutChildren);
@@ -2382,7 +2381,7 @@ Error terminateChildProcesses(pid_t pid,
    if (error)
       return error;
 
-   BOOST_FOREACH(const ProcessInfo& process, childProcesses)
+   for (const ProcessInfo& process : childProcesses)
    {
       if (::kill(process.pid, signal) != 0)
       {

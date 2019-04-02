@@ -1,7 +1,7 @@
 /*
  * SessionRSConnect.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "SessionRSConnect.hpp"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -252,7 +251,7 @@ private:
       boost::algorithm::split(lines, output,
                               boost::algorithm::is_any_of("\n\r"));
       int ncharMarker = sizeof(kFinishedMarker) - 1;
-      BOOST_FOREACH(std::string& line, lines)
+      for (std::string& line : lines)
       {
          if (line.substr(0, ncharMarker) == kFinishedMarker)
             deployedUrl_ = line.substr(ncharMarker, line.size() - ncharMarker);
@@ -434,7 +433,7 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
       shinyPaths.push_back(appPath.childPath("ui.R"));
       shinyPaths.push_back(appPath.childPath("server.R"));
       shinyPaths.push_back(appPath.childPath("www/index.html"));
-      BOOST_FOREACH(const FilePath& filePath, shinyPaths)
+      for (const FilePath& filePath : shinyPaths)
       {
          if (filePath.exists())
             docPaths.push_back(filePath);

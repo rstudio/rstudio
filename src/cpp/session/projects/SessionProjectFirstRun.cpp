@@ -15,8 +15,6 @@
 
 #include "SessionProjectFirstRun.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 

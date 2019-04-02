@@ -23,7 +23,6 @@
 
 #include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -157,7 +156,7 @@ Error removeSessionDir(const FilePath& sessionDir)
    Error error = sessionDir.children(&children);
    if (error)
       LOG_ERROR(error);
-   BOOST_FOREACH(const FilePath& filePath, children)
+   for (const FilePath& filePath : children)
    {
       error = filePath.remove();
       if (error)
@@ -202,7 +201,7 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       LOG_ERROR(error);
 
    // move the files
-   BOOST_FOREACH(const FilePath& filePath, children)
+   for (const FilePath& filePath : children)
    {
       // skip directories (directories can exist because multi-session
       // mode writes top level directories into the /sdb/t and /sdb/u
@@ -327,7 +326,7 @@ bool reclaimOrphanedSession()
       return false;
    }
 
-   BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
+   for (const FilePath& sessionDir : sessionDirs)
    {
       // if the suspend file exists, this session is only sleeping, not dead
       if (sessionSuspendFilePath(sessionDir).exists())
@@ -494,7 +493,7 @@ Error saveMostRecentDocuments()
          return error;
 
       // write the docs into the mru directories
-      BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+      for (boost::shared_ptr<SourceDocument> pDoc : sourceDocs)
       {
          FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
                                                    mostRecentDir;
@@ -534,7 +533,7 @@ Error detachFromSourceDatabase()
       return error;
 
    // now write the source database entries to the appropriate places
-   BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+   for (boost::shared_ptr<SourceDocument> pDoc : sourceDocs)
    {
       if (pDoc->isUntitled())
       {

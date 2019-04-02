@@ -1,7 +1,7 @@
 /*
  * SessionConnections.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionConnections.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -78,7 +77,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    {
       std::vector<std::string> actionNames;
       r::sexp::getNames(actionList, &actionNames);
-      BOOST_FOREACH(const std::string& actionName, actionNames)
+      for (const std::string& actionName : actionNames)
       {
          std::string icon;
          SEXP action;
@@ -210,7 +209,7 @@ SEXP rs_availableRemoteServers()
    // get list of previous connections and extract unique remote servers
    std::vector<std::string> remoteServers;
    json::Array connectionsJson = connectionHistory().connectionsAsJson();
-   BOOST_FOREACH(const json::Value connectionJson, connectionsJson)
+   for (const json::Value connectionJson : connectionsJson)
    {
       // don't inspect if not an object -- this should never happen
       // but we screen it anyway to prevent a crash on corrupt data

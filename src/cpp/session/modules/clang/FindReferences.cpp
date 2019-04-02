@@ -15,8 +15,6 @@
 
 #include "FindReferences.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -123,7 +121,7 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
          }
 
          // cycle through the tokens
-         BOOST_FOREACH(unsigned i, indexes)
+         for (unsigned i : indexes)
          {
             Token token = tokens.getToken(i);
             if (token.kind() == CXToken_Identifier &&
@@ -169,7 +167,7 @@ public:
       using namespace module_context;
       std::vector<SourceMarker> markers;
 
-      BOOST_FOREACH(const libclang::FileRange& loc, locations)
+      for (const libclang::FileRange& loc : locations)
       {
          FileLocation startLoc = loc.start;
 
@@ -340,7 +338,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
       std::map<std::string,TranslationUnit> indexedUnits =
                            rSourceIndex().getIndexedTranslationUnits();
 
-      BOOST_FOREACH(const std::string& filename, files)
+      for (const std::string& filename : files)
       {
          // first look in already indexed translation units
          // (this will pickup unsaved files)

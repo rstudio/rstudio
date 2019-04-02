@@ -17,9 +17,6 @@
 
 #include "modules/SessionConsole.hpp"
 
-#include <boost/foreach.hpp>
-
-
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 #include <core/json/Json.hpp>

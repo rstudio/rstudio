@@ -17,8 +17,6 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
@@ -91,7 +89,7 @@ void cleanChunks(const FilePath& cacheDir,
                        std::back_inserter(staleIds));
 
    // remove each stale folder from the system
-   BOOST_FOREACH(const std::string& staleId, staleIds)
+   for (const std::string& staleId : staleIds)
    {
       error = cacheDir.complete(staleId).removeIfExists();
    }

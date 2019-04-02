@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,8 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-#include <boost/foreach.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -153,7 +151,7 @@ void AsyncRProcess::start(const char* rCommand,
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
    }
    // forward passed environment variables
-   BOOST_FOREACH(const core::system::Option& var, environment)
+   for (const core::system::Option& var : environment)
    {
       core::system::setenv(&childEnv, var.first, var.second);
    }

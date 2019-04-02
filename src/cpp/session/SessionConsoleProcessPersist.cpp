@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessPersist.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 
 #include <session/SessionConsoleProcessPersist.hpp>
-
-#include <boost/foreach.hpp>
 
 #include <core/FileSerializer.hpp>
 
@@ -289,7 +287,7 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
       LOG_ERROR(error);
       return;
    }
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       // Don't erase the INDEXnnn or any subfolders
       if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
@@ -358,7 +356,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
    }
 
    core::system::Options loadedEnvironment = json::optionsFromJson(envJson.get_obj());
-   BOOST_FOREACH(const core::system::Option& var, loadedEnvironment)
+   for (const core::system::Option& var : loadedEnvironment)
    {
       core::system::setenv(pEnv, var.first, var.second);
    }

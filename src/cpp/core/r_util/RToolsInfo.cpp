@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include <core/Version.hpp>
 #include <core/r_util/RToolsInfo.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -195,7 +194,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
       boost::format fmt("getRversion() >= \"%1%\" && getRversion() <= \"%2%\"");
       versionPredicate_ = boost::str(fmt % versionMin % versionMax);
 
-      BOOST_FOREACH(const std::string& relativePath, relativePathEntries)
+      for (const std::string& relativePath : relativePathEntries)
       {
          pathEntries_.push_back(installPath_.childPath(relativePath));
       }
@@ -218,11 +217,11 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 {
    os << "Rtools " << info.name() << std::endl;
    os << info.versionPredicate() << std::endl;
-   BOOST_FOREACH(const FilePath& pathEntry, info.pathEntries())
+   for (const FilePath& pathEntry : info.pathEntries())
    {
      os << pathEntry << std::endl;
    }
-   BOOST_FOREACH(const core::system::Option& var, info.environmentVars())
+   for (const core::system::Option& var : info.environmentVars())
    {
       os << var.first << "=" << var.second << std::endl;
    }

@@ -31,7 +31,6 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
@@ -342,7 +341,7 @@ Error gitExec(const ShellArgs& args,
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
 {
-   BOOST_FOREACH(std::string pattern, patterns)
+   for (std::string pattern : patterns)
    {
       if (!boost::algorithm::ifind_first(commit.author, pattern)
           && !boost::algorithm::ifind_first(commit.description, pattern)
@@ -458,7 +457,7 @@ protected:
       // we could, so below we use git root relative paths whenever we can
       // on OSX, but on other platforms continue to use full absolute paths
 #ifdef __APPLE__
-      BOOST_FOREACH(const FilePath& filePath, filePaths)
+      for (const FilePath& filePath : filePaths)
       {
          if (filePath.isWithin(root_))
             *pArgs << filePath.relativePath(root_);
@@ -592,7 +591,7 @@ public:
       std::vector<FilePath> filesToAdd;
       std::vector<FilePath> filesToRm;
 
-      BOOST_FOREACH(const FilePath& path, filePaths)
+      for (const FilePath& path : filePaths)
       {
          std::string status = statusResult.getStatus(path).status();
          if (status.size() < 2)
@@ -749,7 +748,7 @@ public:
       // split and parse remotes output
       boost::regex reSpaces("\\s+");
       std::vector<std::string> splat = split(trimmed);
-      BOOST_FOREACH(const std::string& line, splat)
+      for (const std::string& line : splat)
       {
          boost::smatch match;
          if (!regex_utils::search(line, match, reSpaces))
@@ -1136,7 +1135,7 @@ public:
             boost::algorithm::split(refs,
                                     static_cast<const std::string>(smatch[3]),
                                     boost::algorithm::is_any_of(","));
-            BOOST_FOREACH(std::string ref, refs)
+            for (std::string ref : refs)
             {
                boost::algorithm::trim(ref);
                if (boost::algorithm::starts_with(ref, "tag: "))
@@ -2957,7 +2956,7 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
       if (addExtraNewline)
          *ptrOs << kNewline;
 
-      BOOST_FOREACH(const std::string& line, filesToIgnore)
+      for (const std::string& line : filesToIgnore)
       {
          *ptrOs << line << kNewline;
       }

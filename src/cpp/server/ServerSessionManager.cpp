@@ -17,7 +17,6 @@
 
 #include <server/ServerSessionManager.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <core/SafeConvert.hpp>
@@ -254,7 +253,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    profile.config = sessionProcessConfig(context, args);
 
    // pass the profile to any filters we have
-   BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
+   for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)
    {
       f(&profile);
    }
