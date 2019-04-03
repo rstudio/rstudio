@@ -45,7 +45,7 @@ sudo apt-get -y install \
   libcap-dev \
   libcurl4-openssl-dev \
   libffi-dev \
-  libglib2.0-dev
+  libglib2.0-dev \
   libpam0g-dev \
   libpango-1.0-0 \
   libssl1.0-dev \
@@ -60,7 +60,7 @@ sudo apt-get -y install \
   rrdtool \
   uuid-dev \
   wget \
-  zlib1g \
+  zlib1g
 
 # overlay
 if [ -e install-overlay-common ]
