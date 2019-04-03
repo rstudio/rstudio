@@ -22,7 +22,7 @@ namespace core {
 namespace text {
 namespace tests {
 
-context("Ansi Code Parsing")
+test_context("Ansi Code Parsing")
 {
    test_that("Ansi stripping doesn't modify plain text")
    {

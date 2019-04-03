@@ -1,7 +1,7 @@
 /*
  * Win32ChildProcess.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/system/ChildProcess.hpp>
@@ -66,7 +65,7 @@ std::string findOnPath(const std::string& exe,
    std::vector<TCHAR> exeBuffer(MAX_PATH*4);
    exeBuffer.insert(exeBuffer.begin(), resolvedExe.begin(), resolvedExe.end());
    exeBuffer.push_back('\0');
-   if (::PathFindOnPath(&(exeBuffer[0]), NULL))
+   if (::PathFindOnPath(&(exeBuffer[0]), nullptr))
    {
       return std::string(&(exeBuffer[0]));
    }
@@ -121,7 +120,7 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
    while(TRUE)
    {
       // read from pipe
-      BOOL result = ::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, NULL);
+      BOOL result = ::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, nullptr);
       auto lastErr = ::GetLastError();
 
       // end of file
@@ -149,10 +148,10 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 struct ChildProcess::Impl
 {
    Impl()
-      : hStdInWrite(NULL),
-        hStdOutRead(NULL),
-        hStdErrRead(NULL),
-        hProcess(NULL),
+      : hStdInWrite(nullptr),
+        hStdOutRead(nullptr),
+        hStdErrRead(nullptr),
+        hProcess(nullptr),
         closeStdIn_(&hStdInWrite, ERROR_LOCATION),
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
@@ -242,7 +241,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
                                      input.data(),
                                      static_cast<DWORD>(input.length()),
                                      &dwWritten,
-                                     NULL);
+                                     nullptr);
          if (!bSuccess)
          {
             return LAST_SYSTEM_ERROR();
@@ -322,10 +321,10 @@ Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
    HANDLE hFile = ::CreateFileW(file.absolutePathW().c_str(),
                                 GENERIC_WRITE,
                                 0,
-                                NULL,
+                                nullptr,
                                 CREATE_ALWAYS,
                                 FILE_ATTRIBUTE_NORMAL,
-                                NULL);
+                                nullptr);
    if (hFile == INVALID_HANDLE_VALUE)
    {
       return LAST_SYSTEM_ERROR();
@@ -379,7 +378,7 @@ Error ChildProcess::run()
 
    // Standard input pipe
    HANDLE hStdInRead;
-   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, NULL, 0))
+   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, nullptr, 0))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -393,7 +392,7 @@ Error ChildProcess::run()
 
    // Standard output pipe
    HANDLE hStdOutWrite;
-   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, NULL, 0))
+   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, nullptr, 0))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -407,7 +406,7 @@ Error ChildProcess::run()
 
    // Standard error pipe
    HANDLE hStdErrWrite;
-   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, NULL, 0))
+   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, nullptr, 0))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -461,7 +460,7 @@ Error ChildProcess::run()
    if (exeQuot)
       cmdLine.push_back(L'"');
 
-   BOOST_FOREACH(std::string& arg, args_)
+   for (std::string& arg : args_)
    {
       cmdLine.push_back(L' ');
 
@@ -482,12 +481,12 @@ Error ChildProcess::run()
 
    // specify custom environment if requested
    DWORD dwFlags = 0;
-   LPVOID lpEnv = NULL;
+   LPVOID lpEnv = nullptr;
    std::vector<wchar_t> envBlock;
    if (options_.environment)
    {
       const Options& env = options_.environment.get();
-      BOOST_FOREACH(const Option& envVar, env)
+      for (const Option& envVar : env)
       {
          std::wstring key = string_utils::utf8ToWide(envVar.first);
          std::wstring value = string_utils::utf8ToWide(envVar.second);
@@ -531,13 +530,13 @@ Error ChildProcess::run()
    BOOL success = ::CreateProcessW(
      exeWide.c_str(), // Process
      &(cmdLine[0]),   // Command line
-     NULL,            // Process handle not inheritable
-     NULL,            // Thread handle not inheritable
+     nullptr,            // Process handle not inheritable
+     nullptr,            // Thread handle not inheritable
      TRUE,            // Set handle inheritance to TRUE
      dwFlags,         // Creation flags
      lpEnv,           // Environment block
                       // Use parent's starting directory
-     workingDir.empty() ? NULL : workingDir.c_str(),
+     workingDir.empty() ? nullptr : workingDir.c_str(),
      &si,             // Pointer to STARTUPINFO structure
      &pi);            // Pointer to PROCESS_INFORMATION structure
 
@@ -687,9 +686,9 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-         options().reportHasSubprocs ? core::system::getSubprocesses : NULL,
+         options().reportHasSubprocs ? core::system::getSubprocesses : nullptr,
          options().subprocWhitelist,
-         options().trackCwd ? core::system::currentWorkingDir : NULL));
+         options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
@@ -804,7 +803,7 @@ void AsyncChildProcess::poll()
 
 bool AsyncChildProcess::exited()
 {
-   return pImpl_->hProcess == NULL;
+   return pImpl_->hProcess == nullptr;
 }
 
 } // namespace system

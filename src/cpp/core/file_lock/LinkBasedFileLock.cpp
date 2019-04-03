@@ -1,7 +1,7 @@
 /*
  * LinkBasedFileLock.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,6 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/system/error_code.hpp>
 
 #define LOG(__X__)                                                             \
@@ -164,7 +163,7 @@ bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
    }
    
    double seconds = static_cast<double>(s_timeoutInterval.total_seconds());
-   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.lastWriteTime());
    return diff >= seconds;
 }
 
@@ -176,8 +175,8 @@ void cleanStaleLockfiles(const FilePath& dir)
    Error error = dir.children(&children);
    if (error)
       LOG_ERROR(error);
-   
-   BOOST_FOREACH(const FilePath& filePath, children)
+
+   for (const FilePath& filePath : children )
    {
       if (boost::algorithm::starts_with(filePath.filename(), kFileLockPrefix) &&
           isLockFileStale(filePath))
@@ -215,7 +214,7 @@ public:
    {
       LOCK_MUTEX(mutex_)
       {
-         BOOST_FOREACH(const FilePath& lockFilePath, registration_)
+         for (const FilePath& lockFilePath : registration_)
          {
             LOG("Bumping write time: " << lockFilePath.absolutePath());
             lockFilePath.setLastWriteTime();
@@ -228,7 +227,7 @@ public:
    {
       LOCK_MUTEX(mutex_)
       {
-         BOOST_FOREACH(const FilePath& lockFilePath, registration_)
+         for (const FilePath& lockFilePath : registration_)
          {
             Error error = lockFilePath.removeIfExists();
             if (error)

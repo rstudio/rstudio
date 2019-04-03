@@ -1,7 +1,7 @@
 /*
  * EventBus.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class EventBus extends HandlerManager
+public class EventBus extends HandlerManager implements FireEvents
 {
    @Inject
    public EventBus(Provider<Satellite> pSatellite,
@@ -94,18 +94,21 @@ public class EventBus extends HandlerManager
       
    }
    
+   @Override
    public void fireEventToAllSatellites(CrossWindowEvent<?> event)
    {
       pManager_.get().dispatchCrossWindowEvent(event);
    }
    
-   public void fireEventToSatellite(CrossWindowEvent<?> event, 
-         WindowEx satelliteWindow)
+   @Override
+   public void fireEventToSatellite(CrossWindowEvent<?> event,
+                                    WindowEx satelliteWindow)
    {
       fireEventToSatellite(serializer_.serialize(event), 
             satelliteWindow);
    }
    
+   @Override
    public void fireEventToMainWindow(CrossWindowEvent<?> event)
    {
       if (Satellite.isCurrentWindowSatellite())

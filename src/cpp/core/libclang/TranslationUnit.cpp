@@ -1,7 +1,7 @@
 /*
  * TranslationUnit.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,7 +57,7 @@ std::string TranslationUnit::getSpelling() const
 
 bool TranslationUnit::includesFile(const std::string& filename) const
 {
-   return clang().getFile(tu_, filename.c_str()) != NULL;
+   return clang().getFile(tu_, filename.c_str()) != nullptr;
 }
 
 CXFile TranslationUnit::getFile(const std::string& filename) const
@@ -75,7 +75,7 @@ CXResult TranslationUnit::findReferencesInFile(
                               const std::string& filename) const
 {
    CXFile file = getFile(filename);
-   if (file == NULL)
+   if (file == nullptr)
       return CXResult_Invalid;
 
    return clang().findReferencesInFile(cursor.getCXCursor(), file, visitor);
@@ -104,7 +104,7 @@ Cursor TranslationUnit::getCursor(const std::string& filename,
 {
    // get the file
    CXFile file = clang().getFile(tu_, filename.c_str());
-   if (file == NULL)
+   if (file == nullptr)
       return Cursor();
 
    // get the source location
@@ -133,7 +133,7 @@ boost::shared_ptr<CodeCompleteResults> TranslationUnit::codeCompleteAt(
                                  pUnsavedFiles_->numUnsavedFiles(),
                                  clang().defaultCodeCompleteOptions());
 
-   if (pResults != NULL)
+   if (pResults != nullptr)
    {
       clang().sortCodeCompletionResults(pResults->Results,
                                         pResults->NumResults);

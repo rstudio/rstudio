@@ -77,6 +77,7 @@ public class ProjectUserChangedEvent
    public static final String JOINED   = "joined";
    public static final String LEFT     = "left";
    public static final String REPLACED = "replaced";
+   public static final String CHANGED  = "changed";
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -1,7 +1,7 @@
 /*
  * Markdown.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -46,7 +45,7 @@ class SundownBuffer : boost::noncopyable
 {
 public:
    explicit SundownBuffer(std::size_t unit = 128)
-      : pBuff_(NULL)
+      : pBuff_(nullptr)
    {
       pBuff_ = ::bufnew(unit);
    }
@@ -54,7 +53,7 @@ public:
    explicit SundownBuffer(const std::string& str)
    {
       pBuff_ = ::bufnew(str.length());
-      if (pBuff_ != NULL)
+      if (pBuff_ != nullptr)
       {
          if (grow(str.length()) == BUF_OK)
          {
@@ -63,7 +62,7 @@ public:
          else
          {
             ::bufrelease(pBuff_);
-            pBuff_ = NULL;
+            pBuff_ = nullptr;
          }
       }
    }
@@ -76,7 +75,7 @@ public:
 
    // COPYING: prohibited (boost::noncopyable)
 
-   bool allocated() const { return pBuff_ != NULL; }
+   bool allocated() const { return pBuff_ != nullptr; }
 
    int grow(std::size_t size)
    {
@@ -120,7 +119,7 @@ public:
                    size_t maxNesting,
                    const struct sd_callbacks* pCallbacks,
                    void *pOpaque)
-      : pMD_(NULL)
+      : pMD_(nullptr)
    {
       pMD_ = ::sd_markdown_new(extensions, maxNesting,  pCallbacks, pOpaque);
    }
@@ -133,7 +132,7 @@ public:
 
    // COPYING: prohibited (boost::noncopyable)
 
-   bool allocated() const { return pMD_ != NULL; }
+   bool allocated() const { return pMD_ != nullptr; }
 
    void render(const SundownBuffer& input, SundownBuffer* pOutput)
    {
@@ -218,7 +217,7 @@ void stripMetadata(std::string* pInput)
 
    // check the first non-empy line for metadata
    bool hasFrontMatter = false, hasPandocTitleBlock = false;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (boost::algorithm::trim_copy(line).empty())
       {

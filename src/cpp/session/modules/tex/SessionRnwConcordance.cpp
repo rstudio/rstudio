@@ -1,7 +1,7 @@
 /*
  * SessionRnwConcordance.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -97,7 +96,7 @@ Error Concordance::parse(const FilePath& sourceFile,
    // paste them back together (removing trailing %)
    using namespace boost::algorithm;
    std::string concordance;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       concordance.append(trim_right_copy_if(line, is_any_of("%")));
    }
@@ -388,7 +387,7 @@ Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
    boost::regex re("\\" + std::string(kConcordance));
    std::vector<std::string> concordances;
    boost::algorithm::split_regex(concordances, contents, re);
-   BOOST_FOREACH(const std::string& concordance, concordances)
+   for (const std::string& concordance : concordances)
    {
       std::string entry = boost::algorithm::trim_copy(concordance);
       if (!entry.empty())

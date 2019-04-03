@@ -28,6 +28,7 @@ rm -f CMakeCache.txt
 rm -rf build/_CPack_Packages
 
 cmake -DRSTUDIO_TARGET=Desktop \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12" \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
@@ -35,7 +36,8 @@ cmake -DRSTUDIO_TARGET=Desktop \
       -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras" \
       $PKG_DIR/../..
 
-MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
+# temporarily disable until we have better build hardware
+# MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
 
 echo "Building with flags $MAKEFLAGS..."
 make $MAKEFLAGS

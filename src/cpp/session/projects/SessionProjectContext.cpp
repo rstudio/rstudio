@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -668,7 +668,7 @@ json::Array ProjectContext::openDocs() const
 {
    json::Array openDocsJson;
    std::vector<std::string> docs = projects::collectFirstRunDocs(file());
-   BOOST_FOREACH(const std::string& doc, docs)
+   for (const std::string& doc : docs)
    {
       FilePath docPath = directory().childPath(doc);
       openDocsJson.push_back(module_context::createAliasedPath(docPath));

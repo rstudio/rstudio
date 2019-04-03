@@ -16,16 +16,17 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.LauncherJobStopEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 
@@ -45,7 +46,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class JobItem extends Composite
+public class JobItem extends Composite implements JobItemView
 {
    private static JobItemUiBinder uiBinder = GWT.create(JobItemUiBinder.class);
 
@@ -60,9 +61,9 @@ public class JobItem extends Composite
 
       @Source("select_2x.png")
       ImageResource jobSelect();
-   
-      @Source("launcher_2x.png")
-      ImageResource launcherJobType();
+      
+      @Source("cancel_2x.png")
+      ImageResource jobCancel();
    }
    
    public interface Styles extends CssResource
@@ -86,36 +87,21 @@ public class JobItem extends Composite
       String status();
       String progress();
       String failed();
-      String jobType();
    }
 
-   public JobItem(final Job job)
+   @Inject
+   public JobItem(@Assisted Job job, FireEvents eventBus)
    {
-      stop_ = new ToolbarButton(
-            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
-            {
-               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-                     new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
-            });
+      eventBus_ = eventBus;
+      stop_ = new ToolbarButton(new ImageResource2x(RESOURCES.jobCancel()), evt ->
+      {
+         eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+      });
       
-      launcherStop_ = new ToolbarButton(
-            RStudioGinjector.INSTANCE.getCommands().interruptR().getImageResource(), evt ->
-            {
-               RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-                     new LauncherJobStopEvent(job.id, getJob().state));
-            });
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
       spinner_.setResource(new ImageResource2x(RESOURCES.jobSpinner()));
-      
-      if (job.type == JobConstants.JOB_TYPE_LAUNCHER)
-      {
-         jobType_.setResource(new ImageResource2x(RESOURCES.launcherJobType()));
-         jobType_.setTitle("Cluster: " + job.cluster);
-      }
-      else
-         jobType_.setVisible(false);
       
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
@@ -132,16 +118,12 @@ public class JobItem extends Composite
                running_.getElement()) ||
              DomUtils.isDescendant(
                Element.as(evt.getNativeEvent().getEventTarget()),
-                   stop_.getElement()) ||
-             DomUtils.isDescendant(
-                   Element.as(evt.getNativeEvent().getEventTarget()),
-                   launcherStop_.getElement()))
+                   stop_.getElement()))
          {
             // ignore clicks occurring inside the progress area, or the stop button
             return;
          }
-         RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new JobSelectionEvent(job.id, true, true));
+         eventBus_.fireEvent(new JobSelectionEvent(job.id, job.type, true, true));
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);
@@ -151,6 +133,7 @@ public class JobItem extends Composite
       update(job);
    }
    
+   @Override
    public void update(Job job)
    {
       // cache reference to job
@@ -222,23 +205,13 @@ public class JobItem extends Composite
       // show stop button if job has a "stop" action, and is not completed
       if (job_.completed == 0)
       {
-         if (job_.type == JobConstants.JOB_TYPE_LAUNCHER)
-         {
-            stop_.setVisible(false);
-            launcherStop_.setVisible(true);
-         }
-         else
-         {
-            stop_.setVisible(
-                  JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
-                  job_.completed == 0);
-            launcherStop_.setVisible(false);
-         }
+         stop_.setVisible(
+               JsArrayUtil.jsArrayStringContains(job_.actions, JobConstants.ACTION_STOP) &&
+               job_.completed == 0);
       }
       else
       {
          stop_.setVisible(false);
-         launcherStop_.setVisible(false);
       }
       
       // update progress bar if it's showing
@@ -255,11 +228,13 @@ public class JobItem extends Composite
       syncTime((int)((new Date()).getTime() * 0.001));
    }
    
+   @Override
    public Job getJob()
    {
       return job_;
    }
    
+   @Override
    public void syncTime(int timestamp)
    {
       // if job is not running, we have nothing to do
@@ -285,7 +260,6 @@ public class JobItem extends Composite
    @UiField ProgressBar progress_;
    @UiField Image select_;
    @UiField Image spinner_;
-   @UiField Image jobType_;
    @UiField Label elapsed_;
    @UiField Label name_;
    @UiField Label status_;
@@ -294,6 +268,8 @@ public class JobItem extends Composite
    @UiField HorizontalPanel outer_;
    @UiField FocusPanel panel_;
    @UiField(provided=true) ToolbarButton stop_;
-   @UiField(provided=true) ToolbarButton launcherStop_;
    @UiField Styles styles_;
+   
+   // injected
+   private final FireEvents eventBus_;
 }

@@ -2,15 +2,17 @@
 
 setlocal EnableDelayedExpansion
 
-set QT_VERSION=5.12.0
-set QT_SDK_BINARY=qt-unified-windows-x86-3.0.5-online.exe
+@rem When updating to a new Qt version, be sure to also update the 
+@rem component versions in qt-noninteractive-install-win.qs
+set QT_VERSION=5.12.1
+set QT_SDK_BINARY=qt-unified-windows-x86-3.0.6-online.exe
 set QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/%QT_SDK_BINARY%
 set QT_SCRIPT=qt-noninteractive-install-win.qs
 
 call :DetectQt foundQt
 if "!foundQt!" == "false" (
   wget -c --no-check-certificate %QT_SDK_URL%
-  echo "Installing Qt, this will take a while."
+  echo "Installing Qt %QT_VERSION%, this will take a while."
   echo "Ignore warnings about QtAccount credentials."
   echo "Do not click on the setup interface, it is controlled by a script."
   %QT_SDK_BINARY% --script %QT_SCRIPT%

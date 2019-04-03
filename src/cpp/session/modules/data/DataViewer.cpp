@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@
 #include <sstream>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -236,14 +235,14 @@ struct CachedFrame
       objName(obj),
       observedSEXP(sexp)
    {
-      if (sexp == NULL)
+      if (sexp == nullptr)
          return;
 
       // cache list of column names
       r::sexp::Protect protect;
       SEXP namesSEXP;
       r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
-      if (namesSEXP != NULL && TYPEOF(namesSEXP) != NILSXP 
+      if (namesSEXP != nullptr && TYPEOF(namesSEXP) != NILSXP 
           && !Rf_isNull(namesSEXP))
       {
          r::sexp::extract(namesSEXP, &colNames);
@@ -306,12 +305,12 @@ std::string viewerCacheDir()
 
 SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
 {
-   SEXP env = NULL;
+   SEXP env = nullptr;
    r::sexp::Protect protect;
 
    // shortcut for unbound environment
    if (envir == kNoBoundEnv)
-      return NULL;
+      return nullptr;
 
    // use the global environment or resolve environment name
    if (envir.empty() || envir == "R_GlobalEnv")
@@ -320,12 +319,12 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
       r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
 
    // if we failed to find an environment by name, return a null SEXP
-   if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
-      return NULL;
+   if (env == nullptr || TYPEOF(env) == NILSXP || Rf_isNull(env))
+      return nullptr;
 
    // find the SEXP directly in the environment; return null if unbound
    SEXP obj = r::sexp::findVar(name, env); 
-   return obj == R_UnboundValue ? NULL : obj;
+   return obj == R_UnboundValue ? nullptr : obj;
 }
 
 // data items are used both as the payload for the client event that opens an
@@ -356,7 +355,7 @@ json::Value makeDataItem(SEXP dataSEXP,
       http::util::urlEncode(cacheKey, true);
    dataItem["preview"] = preview;
 
-   return dataItem;
+   return std::move(dataItem);
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP, 
@@ -398,7 +397,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP,
          // caught below
          throw r::exec::RErrorException(error.summary());
       }
-      if (dataFrameSEXP != NULL && dataFrameSEXP != R_NilValue)
+      if (dataFrameSEXP != nullptr && dataFrameSEXP != R_NilValue)
       {
          dataSEXP = dataFrameSEXP;
       }
@@ -529,10 +528,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       if (cachedFrame != s_cachedFrames.end())
       {
          // do we have a previously ordered/filtered view?
-         SEXP workingDataSEXP = NULL;
+         SEXP workingDataSEXP = nullptr;
          r::exec::RFunction(".rs.findWorkingData", cacheKey)
             .call(&workingDataSEXP, &protect);
-         if (workingDataSEXP != NULL && TYPEOF(workingDataSEXP) != NILSXP &&
+         if (workingDataSEXP != nullptr && TYPEOF(workingDataSEXP) != NILSXP &&
              !Rf_isNull(workingDataSEXP))
          {
             if (cachedFrame->second.workingSearch == search &&
@@ -573,7 +572,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
       // check to see if we've accidentally transformed ourselves into nothing
       // (this shouldn't generally happen without a specific error)
-      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || 
+      if (dataSEXP == nullptr || TYPEOF(dataSEXP) == NILSXP || 
           Rf_isNull(dataSEXP)) 
       {
          throw r::exec::RErrorException("Failure to sort or filter data");
@@ -611,7 +610,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
    {
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP ||
+      if (columnSEXP == nullptr || TYPEOF(columnSEXP) == NILSXP ||
           Rf_isNull(columnSEXP))
       {
          throw r::exec::RErrorException("No data in column " +
@@ -638,12 +637,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (int row = 0; row < length; row++)
    {
       json::Array rowData;
-      if (rownamesSEXP != NULL &&
+      if (rownamesSEXP != nullptr &&
           TYPEOF(rownamesSEXP) != NILSXP &&
           !Rf_isNull(rownamesSEXP) )
       {
          SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
-         if (nameSEXP != NULL &&
+         if (nameSEXP != nullptr &&
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
@@ -662,12 +661,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-         if (columnSEXP != NULL &&
+         if (columnSEXP != nullptr &&
              TYPEOF(columnSEXP) != NILSXP &&
              !Rf_isNull(columnSEXP))
          {
             SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-            if (stringSEXP != NULL &&
+            if (stringSEXP != nullptr &&
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
@@ -695,7 +694,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
-   return result;
+   return std::move(result);
 }
 
 Error getGridData(const http::Request& request,
@@ -745,7 +744,7 @@ Error getGridData(const http::Request& request,
       }
 
       // couldn't find the original object
-      if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
+      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
       {
          json::Object err;
@@ -881,7 +880,7 @@ void onDetectChanges(module_context::ChangeSource source)
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
 
          // replace cached copy (if we have something to replace it with)
-         if (sexp != NULL)
+         if (sexp != nullptr)
             r::exec::RFunction(".rs.assignCachedData", 
                   i->first, sexp, i->second.objName).call();
 
@@ -960,7 +959,7 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> sourceKeys;
-   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> pDoc, docs)
+   for (boost::shared_ptr<source_database::SourceDocument> pDoc : docs)
    {
       std::string key = pDoc->getProperty("cacheKey");
       if (!key.empty())
@@ -981,7 +980,7 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> cacheKeys;
-   BOOST_FOREACH(const FilePath& cacheFile, cacheFiles)
+   for (const FilePath& cacheFile : cacheFiles)
    {
       cacheKeys.push_back(cacheFile.stem());
    }
@@ -996,7 +995,7 @@ void onDeferredInit(bool newSession)
                        std::back_inserter(orphanKeys));
 
    // remove each key no longer bound to a source file
-   BOOST_FOREACH(const std::string& orphanKey, orphanKeys)
+   for (const std::string& orphanKey : orphanKeys)
    {
       error = cache.complete(orphanKey + ".Rdata").removeIfExists();
       if (error)

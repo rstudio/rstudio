@@ -1,7 +1,7 @@
 /*
  * ViewerHistory.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "ViewerHistory.hpp"
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
@@ -172,7 +171,7 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
 
    // copy the files
    FilePath tempDir = module_context::tempDir();
-   BOOST_FOREACH(const ViewerHistoryEntry& entry, entries_)
+   for (const ViewerHistoryEntry& entry : entries_)
    {
       Error error = entry.copy(tempDir, serializationPath);
       if (error)
@@ -223,7 +222,7 @@ void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
 
    // copy the files to the session temp dir
    FilePath tempDir = module_context::tempDir();
-   BOOST_FOREACH(const ViewerHistoryEntry& entry, entries_)
+   for (const ViewerHistoryEntry& entry : entries_)
    {
       Error error = entry.copy(serializationPath, tempDir);
       if (error)

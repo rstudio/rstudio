@@ -1,7 +1,7 @@
 /*
  * SessionRCompletions.cpp
  *
- * Copyright (C) 2009-2018 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -188,7 +188,7 @@ SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
                                       &moreAvailable);
 
    SourceIndexCompletions srcCompletions;
-   BOOST_FOREACH(const core::r_util::RSourceItem& item, items)
+   for (const core::r_util::RSourceItem& item : items)
    {
       if (item.braceLevel() == 0)
       {
@@ -329,12 +329,12 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
    using namespace core::r_util;
    std::vector<std::string> pkgs;
    
-   BOOST_FOREACH(const std::string& pkg, RSourceIndex::getImportedPackages())
+   for (const std::string& pkg : RSourceIndex::getImportedPackages())
    {
       pkgs.push_back(pkg);
    }
    
-   BOOST_FOREACH(const std::string& pkg,
+   for (const std::string& pkg :
                  RSourceIndex::getImportFromDirectives() | boost::adaptors::map_keys)
    {
       pkgs.push_back(pkg);
@@ -344,7 +344,7 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
    Protect protect;
    r::sexp::ListBuilder builder(&protect);
    
-   BOOST_FOREACH(const std::string& pkg, pkgs)
+   for (const std::string& pkg : pkgs)
    {
       const PackageInformation& completions = RSourceIndex::getPackageInformation(pkg);
       r::sexp::ListBuilder child(&protect);
@@ -361,7 +361,7 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
          std::set<std::string>& directives =
                RSourceIndex::getImportFromDirectives()[pkg];
          
-         BOOST_FOREACH(const std::string& item, directives)
+         for (const std::string& item : directives)
          {
             std::vector<std::string>::const_iterator it =
                   std::find(completions.exports.begin(),
@@ -429,7 +429,7 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
          code_search::rSourceIndex().get(documentId);
 
    // NOTE: can occur when user edits file not in source index
-   if (index == NULL)
+   if (index == nullptr)
       return R_NilValue;
    
    std::vector<std::string> pkgs = index->getInferredPackages();
@@ -486,7 +486,7 @@ SEXP rs_listIndexedPackages()
    
    const std::vector<FilePath>& pkgPaths = libpaths::getInstalledPackages();
    pkgNames.reserve(pkgPaths.size());
-   BOOST_FOREACH(const FilePath& pkgPath, pkgPaths)
+   for (const FilePath& pkgPath : pkgPaths)
    {
       pkgNames.push_back(pkgPath.absolutePath());
    }

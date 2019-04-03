@@ -1,7 +1,7 @@
 /*
  * TerminalSession.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -654,11 +654,9 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
-      switch(event.getAction().getType())
+      if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
       {
-      case SessionSerializationAction.SUSPEND_SESSION:
          disconnect(false);
-         break;
       }
    }
 
@@ -730,7 +728,7 @@ public class TerminalSession extends XTermWidget
                @Override
                public void onResponseReceived(final ProcessBufferChunk chunk)
                {
-                  write(chunk.getChunk());
+                  accept(chunk.getChunk());
                   if (chunk.getMoreAvailable())
                   {
                      fetchNextChunk(chunk.getChunkNumber() + 1);
@@ -765,11 +763,11 @@ public class TerminalSession extends XTermWidget
    public void showZombieMessage()
    {
       writeln("[Process completed]");
-      write("[Exit code: ");
+      accept("[Exit code: ");
       if (procInfo_.getExitCode() != null)
-         write(Integer.toString(procInfo_.getExitCode()));
+         accept(Integer.toString(procInfo_.getExitCode()));
       else
-         write("Unknown");
+         accept("Unknown");
       writeln("]");
    }
 
@@ -790,7 +788,7 @@ public class TerminalSession extends XTermWidget
          final String sequence = AnsiCode.CSI + AnsiCode.CHA + AnsiCode.CSI + AnsiCode.EL;
 
          // immediately clear line locally
-         write(sequence);
+         accept(sequence);
          
          // ask server to delete last line of saved buffer to prevent
          // accumulation of prompts
@@ -847,8 +845,8 @@ public class TerminalSession extends XTermWidget
       return socket_;
    }
 
-   private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private TerminalSessionSocket socket_;
+   private final HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private final TerminalSessionSocket socket_;
    private ConsoleProcess consoleProcess_;
    private ConsoleProcessInfo procInfo_;
    private String title_;
@@ -857,13 +855,13 @@ public class TerminalSession extends XTermWidget
    private boolean connecting_;
    private boolean terminating_;
    private boolean reloading_;
-   private ArrayList<String> deferredOutput_ = new ArrayList<>();
+   private final ArrayList<String> deferredOutput_ = new ArrayList<>();
    private boolean restartSequenceWritten_;
-   private StringBuilder inputQueue_ = new StringBuilder();
+   private final StringBuilder inputQueue_ = new StringBuilder();
    private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private boolean newTerminal_ = true;
    private boolean showAltAfterReload_;
-   private boolean createdByApi_;
+   private final boolean createdByApi_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

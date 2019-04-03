@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationPanel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.shiny.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -74,7 +75,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    }
    
    @Override
-   public void showApp(ShinyApplicationParams params)
+   public void showApp(ShinyApplicationParams params, LoadHandler handler)
    {
       appParams_ = params;
       publishButton_.setShinyPreview(params);
@@ -88,7 +89,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
 
       boolean removeTolbar = (appParams_.getViewerOptions() & ShinyViewerOptions.SHINY_VIEWER_OPTIONS_NOTOOLS) > 0;
 
-      showUrl(url, removeTolbar);
+      showUrl(url, removeTolbar, handler);
    }
    
    @Override

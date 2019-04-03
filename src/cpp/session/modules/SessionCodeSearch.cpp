@@ -1,7 +1,7 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -176,7 +176,7 @@ struct Entry
    FileInfo fileInfo;
    boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
    
-   bool hasIndex() const { return pIndex.get() != NULL; }
+   bool hasIndex() const { return pIndex.get() != nullptr; }
    
    bool operator < (const Entry& other) const
    {
@@ -524,7 +524,7 @@ public:
                            r_util::RSourceItem* pFunctionItem)
    {
       std::vector<r_util::RSourceItem> sourceItems;
-      BOOST_FOREACH(const Entry& entry, *pEntries_)
+      for (const Entry& entry : *pEntries_)
       {
          // bail if there is no index
          if (!entry.hasIndex())
@@ -561,7 +561,7 @@ public:
                      const std::set<std::string>& excludeContexts,
                      std::vector<r_util::RSourceItem>* pItems)
    {
-      BOOST_FOREACH(const Entry& entry, *pEntries_)
+      for (const Entry& entry : *pEntries_)
       {
          // skip if it has no index
          if (!entry.hasIndex())
@@ -998,7 +998,7 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
    std::set<std::string> implicitlyAvailable =
          r_utils::implicitlyAvailablePackages(filePath, pDoc->contents());
    
-   BOOST_FOREACH(const std::string& package, implicitlyAvailable)
+   for (const std::string& package : implicitlyAvailable)
    {
       pIndex->addInferredPackage(package);
    }
@@ -1063,7 +1063,7 @@ bool findGlobalFunctionInSourceDatabase(
                                                    rSourceIndex().indexes();
 
    std::vector<r_util::RSourceItem> sourceItems;
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
+   for (boost::shared_ptr<r_util::RSourceIndex>& pIndex : indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -1100,7 +1100,7 @@ void searchSourceDatabase(const std::string& term,
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes
                                                 = rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
+   for (boost::shared_ptr<r_util::RSourceIndex>& pIndex : indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -1168,7 +1168,7 @@ void searchSource(const std::string& term,
                                &projItems);
 
    // add project items to the list
-   BOOST_FOREACH(const r_util::RSourceItem& sourceItem, projItems)
+   for (const r_util::RSourceItem& sourceItem : projItems)
    {
       // add the item
       pItems->push_back(sourceItem);
@@ -1202,7 +1202,7 @@ void searchSourceDatabaseFiles(const std::string& term,
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
                                                    rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
+   for (boost::shared_ptr<r_util::RSourceIndex>& pIndex : indexes)
    {
       // bail if there is no path
       std::string context = pIndex->context();
@@ -1600,7 +1600,7 @@ Error searchCode(const json::JsonRpcRequest& request,
                   std::back_inserter(srcItems),
                   fromCppDefinition);
 
-   // typedef necessary for BOOST_FOREACH to work with pairs
+   // typedef necessary for range-based-for to work with pairs
    typedef std::pair<int, int> PairIntInt;
 
    // score matches -- returned as a pair, mapping index to score
@@ -1642,14 +1642,14 @@ Error searchCode(const json::JsonRpcRequest& request,
    // get filtered results
    std::vector<std::string> namesFiltered;
    std::vector<std::string> pathsFiltered;
-   BOOST_FOREACH(PairIntInt const& pair, fileScores)
+   for (PairIntInt const& pair : fileScores)
    {
       namesFiltered.push_back(names[pair.first]);
       pathsFiltered.push_back(paths[pair.first]);
    }
 
    std::vector<SourceItem> srcItemsFiltered;
-   BOOST_FOREACH(PairIntInt const& pair, srcItemScores)
+   for (PairIntInt const& pair : srcItemScores)
    {
       srcItemsFiltered.push_back(srcItems[pair.first]);
    }
@@ -1920,7 +1920,7 @@ json::Object createFunctionDefinition(const std::string& name,
    {
       // append the lines to the code and set it
       std::string code;
-      BOOST_FOREACH(const std::string& line, lines)
+      for (const std::string& line : lines)
       {
          code.append(line);
          code.append("\n");
@@ -2039,7 +2039,7 @@ json::Value createS3MethodDefinition(const std::string& name)
    std::string packagePrefix = "package:";
    std::string namespacePrefix = "namespace:";
    std::string namespaceName;
-   BOOST_FOREACH(const std::string& where, whereList)
+   for (const std::string& where : whereList)
    {
       if (boost::algorithm::starts_with(where, packagePrefix))
       {
@@ -2518,7 +2518,7 @@ void addAllProjectSymbols(const Entry& entry,
       return;
    
    const std::vector<r_util::RSourceItem>& items = entry.pIndex->items();
-   BOOST_FOREACH(const r_util::RSourceItem& item, items)
+   for (const r_util::RSourceItem& item : items)
    {
       pSymbols->insert(string_utils::strippedOfQuotes(item.name()));
    } 

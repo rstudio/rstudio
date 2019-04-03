@@ -20,6 +20,7 @@ import com.google.gwt.inject.client.Ginjector;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.VirtualConsoleFactory;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -59,7 +60,7 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.spelling.SpellChecker;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
@@ -110,8 +111,10 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
-import org.rstudio.studio.client.workbench.views.jobs.view.JobsList;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -183,7 +186,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
-   void injectMembers(SpellChecker spellChecker);
+   void injectMembers(TypoSpellChecker typoSpellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);
    void injectMembers(RPubsUploadDialog uploadDialog);
@@ -275,7 +278,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SecondaryReposWidget widget);
    void injectMembers(SecondaryReposDialog widget);
    void injectMembers(CheckForUpdatesDialog dialog);
-   void injectMembers(JobsList widget);
+   void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
+   void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -318,4 +322,8 @@ public interface RStudioGinjector extends Ginjector
    PlumberAPI getPlumberAPI();
    JobManager getJobManager();
    SessionOpener getSessionOpener();
+   VirtualConsoleFactory getVirtualConsoleFactory();
+   JobItemFactory getJobItemFactory();
+
+   // Pro-only below here
 }

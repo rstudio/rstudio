@@ -1,7 +1,7 @@
 /*
  * RCntxt.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,7 @@ RCntxt::RCntxt()
 // we set up the appropriate interface pointer based on the R version
 RCntxt::RCntxt(void *rawCntxt)
 {
-   if (rawCntxt == NULL)
+   if (rawCntxt == nullptr)
       return;
    else if (contextVersion() == RVersion34)
       pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34> >(
@@ -87,7 +87,7 @@ std::string RCntxt::shinyFunctionLabel() const
 {
    std::string label;
    SEXP s = r::sexp::getAttrib(originalFunctionCall() , "_rs_shinyDebugLabel");
-   if (s != NULL && TYPEOF(s) != NILSXP)
+   if (s != nullptr && TYPEOF(s) != NILSXP)
    {
       r::sexp::extract(s, &label);
    }
@@ -182,7 +182,7 @@ RCntxt::iterator RCntxt::end()
 
 bool RCntxt::isNull() const
 {
-   return pCntxt_ == NULL;
+   return pCntxt_ == nullptr;
 }
 
 SEXP RCntxt::callfun() const
@@ -212,7 +212,7 @@ SEXP RCntxt::cloenv() const
 
 RCntxt RCntxt::nextcontext() const
 {
-   return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(NULL);
+   return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(nullptr);
 }
 
 } // namespace context

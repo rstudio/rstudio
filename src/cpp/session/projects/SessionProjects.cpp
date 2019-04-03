@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -325,16 +325,29 @@ Error createProjectFile(const json::JsonRpcRequest& request,
 {
    using namespace projects;
    
-   std::string projFile;
-   Error error = json::readParams(request.params, &projFile);
+   std::string projDir;
+   Error error = json::readParams(request.params, &projDir);
    if (error)
       return error;
    
-   FilePath projPath = module_context::resolveAliasedPath(projFile);
-   if (!projPath.exists())
+   // Resolve the path and ensure it exists
+   FilePath projDirPath = module_context::resolveAliasedPath(projDir);
+   FilePath projFilePath;
+   if (!projDirPath.exists())
    {
-      Error error = r_util::writeProjectFile(
-               projPath,
+      return pathNotFoundError(projDir, ERROR_LOCATION);
+   }
+
+   // Check for an existing project file in the directory
+   projFilePath = r_util::projectFromDirectory(projDirPath);
+
+   if (projFilePath.empty())
+   {
+      // We didn't find a project file, so we need to make one. Use the name of the project
+      // directory as the filename.
+      projFilePath = projDirPath.complete(projDirPath.filename() + ".Rproj");
+      error = r_util::writeProjectFile(
+               projFilePath,
                ProjectContext::buildDefaults(),
                ProjectContext::defaultConfig());
       
@@ -342,7 +355,8 @@ Error createProjectFile(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
    }
    
-   pResponse->setResult(projPath.exists());
+   // Return the name of the discovered and/or created .Rproj filename
+   pResponse->setResult(module_context::createAliasedPath(projFilePath));
    return Success();
 }
 
@@ -425,7 +439,7 @@ json::Object projectVcsContextJson()
    json::Object contextJson;
    contextJson["detected_vcs"] = vcsContext.detectedVcs;
    json::Array applicableJson;
-   BOOST_FOREACH(const std::string& vcs, vcsContext.applicableVcs)
+   for (const std::string& vcs : vcsContext.applicableVcs)
    {
       applicableJson.push_back(vcs);
    }
@@ -693,7 +707,7 @@ void onQuit()
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       // if the project file changed then sync its changes
       if (event.fileInfo().absolutePath() ==
@@ -866,7 +880,7 @@ void startup(const std::string& firstProjectPath)
       std::vector<std::string> docs;
       boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
 
-      BOOST_FOREACH(std::string& doc, docs)
+      for (std::string& doc : docs)
       {
          boost::algorithm::trim(doc);
 
@@ -905,7 +919,7 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
    if (!success)
       return R_NilValue;
    
-   BOOST_FOREACH(const std::string& path, docRelativePaths)
+   for (const std::string& path : docRelativePaths)
    {
       addFirstRunDoc(projectFilePath, path);
    }

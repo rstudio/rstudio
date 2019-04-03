@@ -1,7 +1,7 @@
 /*
  * RGraphicsUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ namespace session {
 namespace graphics {
 
 void setCompatibleEngineVersion(int version);
-bool validateRequirements(std::string* pMessage = NULL);
+bool validateRequirements(std::string* pMessage = nullptr);
 
 class RestorePreviousGraphicsDeviceScope
 {

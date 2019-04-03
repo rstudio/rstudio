@@ -1,7 +1,7 @@
 /*
  * SessionFilesListingMonitor.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include <algorithm>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -202,7 +201,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
    std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
 
    // produce json listing
-   BOOST_FOREACH( core::FilePath& filePath, *pFiles)
+   for (core::FilePath& filePath : *pFiles)
    {
       // files which may have been deleted after the listing or which
       // are not end-user visible

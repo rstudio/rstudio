@@ -1,7 +1,7 @@
 /*
  * ConsoleIOMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -229,7 +229,7 @@ BOOL write_to_handle(const std::string& output, HANDLE hOutput)
                        pData,
                        bytesToWrite,
                        &bytesWritten,
-                       NULL))
+                       nullptr))
       {
          return false;
       }
@@ -290,7 +290,7 @@ void transferStdInToConsole(HANDLE hConIn)
 
    while (true)
    {
-      if (!::ReadFile(hStdIn, &(buf[0]), buf.size(), &bytesRead, NULL))
+      if (!::ReadFile(hStdIn, &(buf[0]), buf.size(), &bytesRead, nullptr))
          break;
 
       send_console_input(hConIn, buf.begin(), buf.begin() + bytesRead);
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
                                 &sa,
                                 OPEN_EXISTING,
                                 0,
-                                NULL);
+                                nullptr);
    if (hConIn == INVALID_HANDLE_VALUE)
    {
       print_error("CreateFile");
@@ -372,7 +372,7 @@ int main(int argc, char** argv)
                                  &sa,
                                  OPEN_EXISTING,
                                  0,
-                                 NULL);
+                                 nullptr);
    if (hConOut == INVALID_HANDLE_VALUE)
    {
       print_error("CreateFile");
@@ -410,14 +410,14 @@ int main(int argc, char** argv)
 
    PROCESS_INFORMATION pi = {0};
 
-   if (!::CreateProcess(NULL,
+   if (!::CreateProcess(nullptr,
                         &(cmdBuf[0]),
-                        NULL,
-                        NULL,
+                        nullptr,
+                        nullptr,
                         TRUE,
                         0,
-                        NULL,
-                        NULL,
+                        nullptr,
+                        nullptr,
                         &si,
                         &pi))
    {
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
       return 1;
    }
 
-   hReadyForExitEvent = ::CreateEvent(NULL, true, true, NULL);
+   hReadyForExitEvent = ::CreateEvent(nullptr, true, true, nullptr);
    if (hReadyForExitEvent == INVALID_HANDLE_VALUE)
    {
       print_error("CreateEvent");

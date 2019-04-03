@@ -1,7 +1,7 @@
 /*
  * SessionClientEventQueue.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,6 @@
 
 #include "modules/SessionConsole.hpp"
 
-#include <boost/foreach.hpp>
-
-
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 #include <core/json/Json.hpp>
@@ -33,12 +30,12 @@ namespace rstudio {
 namespace session {
  
 namespace {
-ClientEventQueue* s_pClientEventQueue = NULL;
+ClientEventQueue* s_pClientEventQueue = nullptr;
 }
 
 void initializeClientEventQueue()
 {
-   BOOST_ASSERT(s_pClientEventQueue == NULL);
+   BOOST_ASSERT(s_pClientEventQueue == nullptr);
    s_pClientEventQueue = new ClientEventQueue();
 }
 

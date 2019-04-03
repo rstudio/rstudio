@@ -1,7 +1,7 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -560,10 +560,10 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
 
 DisableDebugScope::DisableDebugScope(SEXP env): 
    rdebug_(0), 
-   env_(NULL)
+   env_(nullptr)
 {
    // nothing to do if no environment 
-   if (env == NULL) {
+   if (env == nullptr) {
       return;
    }
 
@@ -582,7 +582,7 @@ DisableDebugScope::~DisableDebugScope()
 {
    // if we disabled debugging and debugging didn't end during the command 
    // evaluation, restore debugging
-   if (env_ != NULL && !atTopLevelContext()) 
+   if (env_ != nullptr && !atTopLevelContext()) 
    {
       SET_RDEBUG(env_, rdebug_);
    }

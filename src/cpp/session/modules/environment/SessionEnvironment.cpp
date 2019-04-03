@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,8 +35,6 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include <boost/foreach.hpp>
-
 #include "EnvironmentUtils.hpp"
 
 using namespace rstudio::core;
@@ -49,7 +47,7 @@ namespace environment {
 // allocate on the heap so we control timing of destruction (if we leave it
 // to the destructor we might release the underlying environment SEXP after
 // R has already shut down)
-EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
+EnvironmentMonitor* s_pEnvironmentMonitor = nullptr;
 
 // is the browser currently active? we store this state
 // so that we can query this from R, without 'hiding' the
@@ -236,7 +234,7 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
    if (lineContext)
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
-   else if (pLineDebugState != NULL)
+   else if (pLineDebugState != nullptr)
    {
       SEXP lastDebugSEXP = r::sexp::create(
                pLineDebugState->lastDebugText, &protect);
@@ -329,7 +327,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             // construct it by deparsing calls in the context stack.
             SEXP simulatedSrcref;
             if (contextDepth == 1 &&
-                pLineDebugState != NULL &&
+                pLineDebugState != nullptr &&
                 pLineDebugState->lastDebugText.length() > 0)
                simulatedSrcref =
                      simulatedSourceRefsOfContext(*context, 
@@ -337,12 +335,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             else
                simulatedSrcref =
                      simulatedSourceRefsOfContext(*context, prevContext,
-                                                  NULL);
+                                                  nullptr);
 
             // store the line stepped over in the top frame, so we can infer
             // that the next line stepped over will be near this one
             if (contextDepth == 1 &&
-                pLineDebugState != NULL &&
+                pLineDebugState != nullptr &&
                 isValidSrcref(simulatedSrcref))
             {
                int stepLine = INTEGER(simulatedSrcref)[0];
@@ -396,12 +394,11 @@ json::Array environmentListAsJson()
     if (s_pEnvironmentMonitor->hasEnvironment())
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-       if (env != NULL)
-          listEnvironment(env,
-                          false,
-                          userSettings().showLastDotValue(),
-                          &rProtect,
-                          &vars);
+       listEnvironment(env,
+                       false,
+                       userSettings().showLastDotValue(),
+                       &rProtect,
+                       &vars);
 
        // get object details and transform to json
        std::transform(vars.begin(),
@@ -711,8 +708,8 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
 
    // set state for the new depth
    *pContextDepth = requestedDepth;
-   SEXP env = NULL;
-   r::context::getFunctionContext(requestedDepth, NULL, &env);
+   SEXP env = nullptr;
+   r::context::getFunctionContext(requestedDepth, nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -753,7 +750,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    DROP_RECURSIVE_CALLS;
 
    int depth = 0;
-   SEXP environmentTop = NULL;
+   SEXP environmentTop = nullptr;
    r::context::RCntxt context;
 
    // End debug output capture every time a console prompt occurs
@@ -1041,7 +1038,7 @@ json::Value environmentStateAsJson()
       contextDepth = 0;
    return commonEnvironmentStateData(contextDepth, 
          s_monitoring, // include contents if actively monitoring
-         NULL);
+         nullptr);
 }
 
 SEXP rs_isBrowserActive()

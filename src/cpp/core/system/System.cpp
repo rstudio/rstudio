@@ -1,7 +1,7 @@
 /*
  * System.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -111,7 +111,7 @@ boost::recursive_mutex s_loggingMutex;
 namespace {
 
 // main log writer for the binary
-LogWriter* s_pLogWriter = NULL;
+LogWriter* s_pLogWriter = nullptr;
 
 // lazy initalized named loggers
 // these are secondary loggers to the main binary logger

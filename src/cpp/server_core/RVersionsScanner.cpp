@@ -1,7 +1,7 @@
 /*
  * RVersionsScanner.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include <server_core/RVersionsScanner.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -225,7 +224,7 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
       bool skipEntry = true;
       std::vector<std::string> rEntryLines;
       boost::algorithm::split(rEntryLines, rEntry, boost::is_any_of("\n"));
-      BOOST_FOREACH(const std::string& line, rEntryLines)
+      for (const std::string& line : rEntryLines)
       {
          std::string trimmedLine = string_utils::trimWhitespace(line);
 
@@ -249,7 +248,7 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
          else
          {
             // dcf parse failed, so treat each line as a regular file path (legacy mode)
-            BOOST_FOREACH(const std::string& line, rEntryLines)
+            for (const std::string& line : rEntryLines)
             {
                if (boost::algorithm::starts_with(line, "#"))
                   continue;

@@ -1,7 +1,7 @@
 /*
  * MarkersOutputPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
@@ -61,7 +60,6 @@ public class MarkersOutputPresenter extends BasePresenter
    @Inject
    public MarkersOutputPresenter(Display view,
                                  MarkersServerOperations server,
-                                 EventBus events,
                                  FileTypeRegistry fileTypeRegistry)
    {
       super(view);
@@ -108,13 +106,10 @@ public class MarkersOutputPresenter extends BasePresenter
       });
    }
 
-   public void initialize(MarkersState state)
+   public void showInitialMarkers(MarkersState state)
    {
-      if (state.hasMarkers())
-      {
-         view_.ensureVisible(false);
-         view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
-      }
+      view_.ensureVisible(false);
+      view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
    }
    
    public void onMarkersChanged(MarkersChangedEvent event)

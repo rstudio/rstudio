@@ -1,7 +1,7 @@
 /*
  * StringUtilTests.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import java.util.Date;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
-
 public class StringUtilTests extends GWTTestCase
 {
    @Override
@@ -34,10 +33,10 @@ public class StringUtilTests extends GWTTestCase
    {
       String orig = null;
       int minWidth = 5;
-      try 
+      try
       {
-    	  StringUtil.padRight(orig, minWidth);
-    	  fail("Expected exception to be thrown");
+         StringUtil.padRight(orig, minWidth);
+         fail("Expected exception to be thrown");
       } 
       catch (NullPointerException ex) { }
       catch (JavaScriptException ex) { }
@@ -76,10 +75,10 @@ public class StringUtilTests extends GWTTestCase
 
    public void testParseIntNullInput()
    {
-	   String input = null;
-	   int def = 999;
-	   int result = StringUtil.parseInt(input, def);
-	   assertEquals(def, result);
+      String input = null;
+      int def = 999;
+      int result = StringUtil.parseInt(input, def);
+      assertEquals(def, result);
    }
 
    public void testParseIntNonNumericInput()
@@ -123,20 +122,20 @@ public class StringUtilTests extends GWTTestCase
 
    public void testFormatDateNullInput()
    {
-	  Date input = null;
-	  String expected = "";
-	  String result = StringUtil.formatDate(input);
-	  assertEquals(expected, result);
+      Date input = null;
+      String expected = "";
+      String result = StringUtil.formatDate(input);
+      assertEquals(expected, result);
    }
 
    public void testFormatDate()
    {
-	   String result = StringUtil.formatDate(new Date());
-	   
-	   // just check that it's got minimum valid length; don't want to 
-	   // mess with timezone awareness to do exact check
-	   // MMM d, yyyy, h:mm AM
-	   assertTrue(result.length() >= 20);
+      String result = StringUtil.formatDate(new Date());
+   
+      // just check that it's got minimum valid length; don't want to 
+      // mess with timezone awareness to do exact check
+      // MMM d, yyyy, h:mm AM
+      assertTrue(result.length() >= 20);
    }
    
    public void testNewlineCount()
@@ -277,5 +276,36 @@ public class StringUtilTests extends GWTTestCase
       String expected = "\\~/Something\\ Special\\ Here\\!\\ 129,\\ ._\\ +@%/-\\>";
       String result = StringUtil.escapeBashPath(input, true);
       assertTrue(StringUtil.equals(result, expected));
+   }
+   
+   public void testIsCharAt()
+   {
+      assertTrue(StringUtil.isCharAt("abcd", 'a', 0));
+      assertTrue(StringUtil.isCharAt("abcd", 'b', 1));
+      assertTrue(StringUtil.isCharAt("abcd", 'c', 2));
+      assertTrue(StringUtil.isCharAt("abcd", 'd', 3));
+   }
+   
+   public void testIsCharAtOOB()
+   {
+      assertFalse(StringUtil.isCharAt("abcd", 'a', -1));
+      assertFalse(StringUtil.isCharAt(null, 'a', 0));
+      assertFalse(StringUtil.isCharAt("012345", '6', 6));
+   }
+   
+   public void testSafeCharAt()
+   {
+      String str = "";
+      
+      assertEquals(StringUtil.charAt(str, 0), '\0');
+      assertEquals(StringUtil.charAt(str, -1), '\0');
+      assertEquals(StringUtil.charAt(str, 100), '\0');
+      
+      str = "abcd";
+
+      assertEquals(StringUtil.charAt(str, 0), 'a');
+      assertEquals(StringUtil.charAt(str, 1), 'b');
+      assertEquals(StringUtil.charAt(str, 2), 'c');
+      assertEquals(StringUtil.charAt(str, 3), 'd');
    }
 }

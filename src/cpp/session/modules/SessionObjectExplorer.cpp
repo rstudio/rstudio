@@ -1,7 +1,7 @@
 /*
  * SessionObjectExplorer.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include "SessionObjectExplorer.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Error.hpp>
@@ -74,7 +73,7 @@ void removeOrphanedCacheItems()
    typedef boost::shared_ptr<SourceDocument> Document;
    
    std::vector<Document> documents;
-   BOOST_FOREACH(const FilePath& docPath, docPaths)
+   for (const FilePath& docPath : docPaths)
    {
       Document pDoc(new SourceDocument());
       Error error = source_database::get(docPath.filename(), false, pDoc);
@@ -97,12 +96,12 @@ void removeOrphanedCacheItems()
    
    // remove any objects for which we don't have an associated
    // source document available
-   BOOST_FOREACH(const FilePath& cacheFile, cachedFiles)
+   for (const FilePath& cacheFile : cachedFiles)
    {
       std::string id = cacheFile.filename();
       
       bool foundId = false;
-      BOOST_FOREACH(Document pDoc, documents)
+      for (Document pDoc : documents)
       {
          if (id == pDoc->getProperty("id"))
          {

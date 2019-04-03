@@ -1,7 +1,7 @@
 /*
  * SessionBuildErrors.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -75,7 +74,7 @@ FilePath scanForRSourceFile(const FilePath& basePath,
       return FilePath();
    }
 
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       if (isRSourceFile(child))
       {

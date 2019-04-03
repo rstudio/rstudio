@@ -25,6 +25,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -311,7 +312,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       try
       {
          packagesTableContainer_.clear();
-         packagesTable_ = new DataGrid<PackageInfo>(
+         packagesTable_ = new RStudioDataGrid<PackageInfo>(
             packagesDataProvider_.getList().size(), dataGridRes_);
       }
       catch (Exception e)

@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -30,7 +26,19 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -43,7 +51,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-
 import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
@@ -51,7 +58,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -68,8 +75,8 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -94,16 +101,57 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.FoldingRules;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.KeyboardHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
@@ -114,6 +162,10 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class AceEditor implements DocDisplay,
                                   InputEditorDisplay,
@@ -183,7 +235,7 @@ public class AceEditor implements DocDisplay,
       public void apply()
       {
          getSession().getSelection().setSelectionRange(
-               getRange());
+            getRange());
       }
 
       public Range getRange()
@@ -214,7 +266,8 @@ public class AceEditor implements DocDisplay,
                changed_ = true;
             }
          });
-         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler() {
+         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler()
+         {
             @Override
             public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
             {
@@ -260,7 +313,7 @@ public class AceEditor implements DocDisplay,
                                  public void onLoaded()
                                  {
                                     AceSupport.initialize();
-                                    
+
                                     if (command != null)
                                        command.execute();
                                  }
@@ -274,7 +327,7 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-   
+
    public static final native AceEditor getEditor(Element el)
    /*-{
       for (; el != null; el = el.parentElement)
@@ -341,7 +394,7 @@ public class AceEditor implements DocDisplay,
                completionManager_.onPaste(event);
 
             final Position start = getSelectionStart();
-            
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -2122,7 +2175,10 @@ public class AceEditor implements DocDisplay,
 
       int indentSize = StringUtil.detectIndent(lines);
       if (indentSize > 0)
+      {
          setTabSize(indentSize);
+         setUseSoftTabs(true);
+      }
    }
 
    public void setShowInvisibles(boolean show)
@@ -2283,7 +2339,12 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addFocusHandler(handler);
    }
-   
+
+   public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
+   {
+      return widget_.addContextMenuHandler(handler);
+   }
+
    public Scope getScopeAtPosition(Position position)
    {
       if (hasCodeModelScopeTree())
@@ -2915,7 +2976,7 @@ public class AceEditor implements DocDisplay,
       
       return false;
    }
-   
+
    public HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler)
    {
       return handlers_.addHandler(ScopeTreeReadyEvent.TYPE, handler);
@@ -3523,6 +3584,15 @@ public class AceEditor implements DocDisplay,
       
       while (endRow <= endRowLimit)
       {
+         // continue search if we're in a multi-line string
+         // (forego updating our bracket counts)
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring")
+         {
+            endRow++;
+            continue;
+         }
+         
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -3548,14 +3618,6 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
-         {
-            endRow++;
-            continue;
-         }
-         
-         // continue search if we're in a multi-line string
-         String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring")
          {
             endRow++;
             continue;

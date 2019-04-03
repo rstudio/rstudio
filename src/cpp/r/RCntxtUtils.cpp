@@ -1,7 +1,7 @@
 /*
  * RCntxtUtils.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ RCntxt globalContext()
 RCntxt firstFunctionContext()
 {
    RCntxt::iterator firstFunContext = RCntxt::begin();
-   while ((firstFunContext->callfun() == NULL ||
+   while ((firstFunContext->callfun() == nullptr ||
            firstFunContext->callfun() == R_NilValue) &&
           firstFunContext->callflag())
       firstFunContext++;

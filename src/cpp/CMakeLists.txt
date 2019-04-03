@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -71,7 +71,7 @@ if(UNIX)
 
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
-                      -Wno-deprecated-declarations)
+                      -Wno-deprecated-declarations -fvisibility=hidden)
 
       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
       find_library(COCOA_LIBRARY NAMES Cocoa)
@@ -180,11 +180,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   if (WIN32)
-      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.65.1)
-   else()
-      set(RSTUDIO_BOOST_REQUESTED_VERSION 1.63.0)
-   endif()
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.69.0)
 endif()
 
 # disable Boost Signals deprecation warning
@@ -199,7 +195,6 @@ list(APPEND BOOST_LIBS
    program_options
    random
    regex
-   signals
    system
    thread
 )
@@ -207,7 +202,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_63_0)
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_69_0)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -240,13 +235,13 @@ else()
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
    set(BOOST_ARCH "64")
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc141-mt-1_65_1.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-release-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc141-mt-x64-1_69.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc141-mt-gd-1_65_1.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-debug-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc141-mt-gd-x64-1_69.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_65_1")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_69_0")
    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
@@ -298,10 +293,10 @@ endif()
 
 # find crashpad libraries, ensuring the correct link order
 if(UNIX)
-   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*libclient.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*libutil.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*libbase.a"
-                                        "${CRASHPAD_LIBRARY_DIR}/*.a")
+   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*libclient.a")
+   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*libutil.a")
+   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*libbase.a")
+   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
 
    if(APPLE)
       # add necessary macos frameworks so crashpad applications can link correctly
@@ -313,7 +308,10 @@ if(UNIX)
       list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
    endif()
 else()
-   file(GLOB_RECURSE CRASHPAD_LIBRARIES "${CRASHPAD_LIBRARY_DIR}/*client.lib" "${CRASHPAD_LIBRARY_DIR}/*.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*client.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*util.lib")
+   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*base.lib")
+   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
 endif()
 list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
 
@@ -352,12 +350,12 @@ if(WIN32)
      endif()
 
      set(OPENSSL_BITNESS "64")
-     set(OPENSSL_NAME "openssl-1.0.2p")
+     set(OPENSSL_NAME "openssl-1.1.1b")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")
-     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libeay32.lib")
-     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/ssleay32.lib")
+     set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIBRARY_DIR}/libcrypto.lib")
+     set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIBRARY_DIR}/libssl.lib")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}")
      list(APPEND OPENSSL_LIBRARIES "${OPENSSL_SSL_LIBRARY}")
 

@@ -33,7 +33,7 @@ namespace {
 
 } // anonymous namespace
 
-context("Private Terminal Command Tests")
+test_context("Private Terminal Command Tests")
 {
    // ProcessOptions impl that tracks calls
    class OpsHarness : public system::ProcessOperations

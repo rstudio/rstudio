@@ -1,7 +1,7 @@
 /*
  * Win32StringUtils.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,7 +57,7 @@ std::wstring utf8ToWide(const std::string& value,
    const char * cstr = value.c_str();
    int chars = ::MultiByteToWideChar(CP_UTF8, 0,
                                      cstr, -1,
-                                     NULL, 0);
+                                     nullptr, 0);
    if (chars == 0)
    {
       Error error = LAST_SYSTEM_ERROR();

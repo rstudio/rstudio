@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -59,12 +60,14 @@ public class NewConnectionShinyHost extends Composite
    private void initialize(EventBus events,
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
-                           ShinyServerOperations shinyServer)
+                           ShinyServerOperations shinyServer,
+                           DependencyManager dependencyManager)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       shinyServer_ = shinyServer;
+      dependencyManager_ = dependencyManager;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -114,24 +117,31 @@ public class NewConnectionShinyHost extends Composite
    
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
-      // initialize miniUI
-      server_.launchEmbeddedShinyConnectionUI(info.getPackage(), info.getName(), new ServerRequestCallback<RResult<Void>>()
+      dependencyManager_.withShiny("Connecting to " + info.getName(), new Command()
       {
          @Override
-         public void onResponseReceived(RResult<Void> response)
+         public void execute()
          {
-            if (response.failed()) {
-               showError(response.errorMessage());
-            }
-            else {
-               operation.execute();
-            }
-         }
+            // initialize miniUI
+            server_.launchEmbeddedShinyConnectionUI(info.getPackage(), info.getName(), new ServerRequestCallback<RResult<Void>>()
+            {
+               @Override
+               public void onResponseReceived(RResult<Void> response)
+               {
+                  if (response.failed()) {
+                     showError(response.errorMessage());
+                  }
+                  else {
+                     operation.execute();
+                  }
+               }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
          }
       });
    }
@@ -264,4 +274,5 @@ public class NewConnectionShinyHost extends Composite
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
    private ShinyServerOperations shinyServer_;
+   private DependencyManager dependencyManager_;
 }

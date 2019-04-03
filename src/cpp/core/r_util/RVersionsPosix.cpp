@@ -1,7 +1,7 @@
 /*
  * RVersionsPosix.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <algorithm>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
@@ -43,7 +42,7 @@ namespace {
 std::vector<FilePath> realPaths(const std::vector<FilePath>& paths)
 {
    std::vector<FilePath> realPaths;
-   BOOST_FOREACH(const FilePath& path, paths)
+   for (const FilePath& path : paths)
    {
       FilePath realPath;
       Error error = core::system::realPath(path.absolutePath(), &realPath);
@@ -58,7 +57,7 @@ std::vector<FilePath> realPaths(const std::vector<FilePath>& paths)
 std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
 {
    std::vector<FilePath> filteredPaths;
-   BOOST_FOREACH(const FilePath& path, paths)
+   for (const FilePath& path : paths)
    {
       if (path.exists())
          filteredPaths.push_back(path);
@@ -75,7 +74,7 @@ void scanForRHomePaths(const core::FilePath& rootDir,
       Error error = rootDir.children(&rDirs);
       if (error)
          LOG_ERROR(error);
-      BOOST_FOREACH(const FilePath& rDir, rDirs)
+      for (const FilePath& rDir : rDirs)
       {
          if (rDir.childPath("bin/R").exists())
             pHomePaths->push_back(rDir);
@@ -95,7 +94,7 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
 
    os << std::endl;
    os << version.homeDir() << std::endl;
-   BOOST_FOREACH(const core::system::Option& option, version.environment())
+   for (const core::system::Option& option : version.environment())
    {
       os << option.first << "=" << option.second << std::endl;
    }
@@ -139,7 +138,7 @@ std::vector<RVersion> enumerateRVersions(
    // resolve user defined r entries first
    // when duplicates are removed, the default paths
    // that are equivalent to the user defined entries (but which contain less metadata) will be removed
-   BOOST_FOREACH(r_util::RVersion& rEntry, rEntries)
+   for (r_util::RVersion& rEntry : rEntries)
    {
       // compute R script path
       FilePath rScriptPath = rEntry.homeDir().childPath("bin/R");
@@ -172,13 +171,13 @@ std::vector<RVersion> enumerateRVersions(
          core::system::Options mergedEnv;
 
          // set automatically found variables first
-         BOOST_FOREACH(const core::system::Option& option, env)
+         for (const core::system::Option& option : env)
          {
             core::system::setenv(&mergedEnv, option.first, option.second);
          }
 
          // override them with whatever was explicitly set by the user
-         BOOST_FOREACH(const core::system::Option& option, userEnv)
+         for (const core::system::Option& option : userEnv)
          {
             // do not override R_HOME as it was corrected while detecting the environment
             // this is necessary because the user-specified path might be just the root directory
@@ -203,7 +202,7 @@ std::vector<RVersion> enumerateRVersions(
    }
 
    // probe versions
-   BOOST_FOREACH(const FilePath& rHomePath, rHomePaths)
+   for (const FilePath& rHomePath : rHomePaths)
    {
       // compute R script path
       FilePath rScriptPath = rHomePath.childPath("bin/R");
@@ -238,7 +237,7 @@ std::vector<RVersion> enumerateRVersions(
    Error error = rFrameworkVersions.children(&versionPaths);
    if (error)
       LOG_ERROR(error);
-   BOOST_FOREACH(const FilePath& versionPath, versionPaths)
+   for (const FilePath& versionPath : versionPaths)
    {
       if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
       {
@@ -502,7 +501,7 @@ Error validatedReadRVersionsFromFile(const FilePath& filePath,
       return error;
 
    // ensure the home path exists before returning
-   BOOST_FOREACH(const r_util::RVersion& version, versions)
+   for (const r_util::RVersion& version : versions)
    {
       if (version.homeDir().exists())
       {

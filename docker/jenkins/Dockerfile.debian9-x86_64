@@ -43,7 +43,9 @@ RUN apt-get update -y && apt-get install -y \
     libcap-dev \
     libacl1-dev \
     lsof \
-    python
+    python \
+    libuser1-dev \
+    libglib2.0-dev
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
@@ -73,7 +75,7 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.11.1 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 

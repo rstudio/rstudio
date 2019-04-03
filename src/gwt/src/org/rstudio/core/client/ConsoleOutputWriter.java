@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriter.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,8 +30,9 @@ import com.google.gwt.dom.client.SpanElement;
  */
 public class ConsoleOutputWriter
 {
-   public ConsoleOutputWriter()
+   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory)
    {
+      vcFactory_ = vcFactory;
       output_ = new PreWidget();
    }
    
@@ -86,7 +87,7 @@ public class ConsoleOutputWriter
       {
          SpanElement trailing = Document.get().createSpanElement();
          outEl.appendChild(trailing);
-         virtualConsole_ = new VirtualConsole(trailing);
+         virtualConsole_ = vcFactory_.create(trailing);
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
@@ -147,4 +148,5 @@ public class ConsoleOutputWriter
    private int lines_ = 0;
    private final PreWidget output_;
    private VirtualConsole virtualConsole_;
+   private VirtualConsoleFactory vcFactory_;
 }

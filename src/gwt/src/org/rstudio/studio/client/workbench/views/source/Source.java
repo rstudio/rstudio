@@ -120,8 +120,6 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
-import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -394,44 +392,14 @@ public class Source implements InsertSourceHandler,
       }
 
       // fake shortcuts for commands which we handle at a lower level
-      commands.goToHelp().setShortcut(new KeyboardShortcut(112));
-      commands.goToDefinition().setShortcut(new KeyboardShortcut(113));
-      commands.codeCompletion().setShortcut(
-                                    new KeyboardShortcut(KeyCodes.KEY_TAB));
+      commands.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
+      commands.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
+      commands.codeCompletion().setShortcut(new KeyboardShortcut("Tab", KeyCodes.KEY_TAB, KeyboardShortcut.NONE));
       
-      // See bug 3673 and https://bugs.webkit.org/show_bug.cgi?id=41016
-      if (BrowseCap.isMacintosh())
-      {
-         ShortcutManager.INSTANCE.register(
-               KeyboardShortcut.META | KeyboardShortcut.ALT,
-               192,
-               commands.executeNextChunk(), 
-               "Execute",
-               commands.executeNextChunk().getMenuLabel(false), 
-               "");
-      }
-
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
       events.addHandler(OpenObjectExplorerEvent.TYPE, this);
 
-      events.addHandler(ViewDataEvent.TYPE, new ViewDataHandler()
-      {
-         public void onViewData(ViewDataEvent event)
-         {
-            server_.newDocument(
-                  FileTypeRegistry.DATAFRAME.getTypeId(),
-                  null,
-                  JsObject.createJsObject(),
-                  new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
-                     public void onResponseReceived(SourceDocument response)
-                     {
-                        addTab(response, OPEN_INTERACTIVE);
-                     }
-                  });
-         }
-      });
-      
       events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
       
       events.addHandler(CodeBrowserFinishedEvent.TYPE, this);

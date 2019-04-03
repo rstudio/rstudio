@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessTable.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionConsoleProcessTable.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
 #include <core/SafeConvert.hpp>
@@ -88,7 +87,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
 
 bool isKnownProcHandle(const std::string& handle)
 {
-   return findProcByHandle(handle) != NULL;
+   return findProcByHandle(handle) != nullptr;
 }
 
 void onSuspend(core::Settings* /*pSettings*/)
@@ -123,7 +122,7 @@ ConsoleProcessPtr findProcByHandle(const std::string& handle)
 
 ConsoleProcessPtr findProcByCaption(const std::string& caption)
 {
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       if (proc->getCaption() == caption)
          return proc;
@@ -160,7 +159,7 @@ std::vector<std::string> getAllHandles()
 std::pair<int, std::string> nextTerminalName()
 {
    int maxNum = kNoTerminal;
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       maxNum = std::max(maxNum, proc->getTerminalSequence());
    }

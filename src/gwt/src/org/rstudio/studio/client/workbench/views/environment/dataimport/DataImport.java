@@ -137,7 +137,9 @@ public class DataImport extends Composite
          }
       });
       
-      assembleDataImport(null);
+      if (path.isEmpty()) {
+         assembleDataImport(null);
+      }
       
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {

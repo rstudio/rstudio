@@ -1,7 +1,7 @@
 /*
  * Win32Environment.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,14 +42,14 @@ void environment(Options* pEnvironment)
 {
    // get all environment strings (as unicode)
    LPWSTR lpEnv = ::GetEnvironmentStringsW();
-   if (lpEnv == NULL)
+   if (lpEnv == nullptr)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return;
    }
 
    // iterate over them
-   LPWSTR lpszEnvVar = NULL;
+   LPWSTR lpszEnvVar = nullptr;
    for (lpszEnvVar = lpEnv; *lpszEnvVar; lpszEnvVar++)
    {
       // get the variable
@@ -109,7 +109,7 @@ void setenv(const std::string& name, const std::string& value)
 
 void unsetenv(const std::string& name)
 {
-   ::SetEnvironmentVariable(name.c_str(), NULL);
+   ::SetEnvironmentVariable(name.c_str(), nullptr);
 }
 
 

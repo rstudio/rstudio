@@ -44,7 +44,7 @@ public:
                        const boost::posix_time::time_duration& connectionTimeout =
                           boost::posix_time::time_duration(boost::posix_time::pos_infin))
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
-       sslContext_(ioService, boost::asio::ssl::context::sslv23_client),
+       sslContext_(boost::asio::ssl::context::sslv23_client),
        address_(address),
        port_(port),
        verify_(verify),

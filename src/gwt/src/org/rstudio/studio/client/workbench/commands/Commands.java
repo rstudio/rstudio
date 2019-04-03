@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -570,12 +570,14 @@ public abstract class
    public abstract AppCommand clearJobs();
    public abstract AppCommand activateJobs();
    public abstract AppCommand runSelectionAsJob();
-   public abstract AppCommand hideCompletedJobs();
 
    // Launcher Jobs
    public abstract AppCommand startLauncherJob();
    public abstract AppCommand sourceAsLauncherJob();
    public abstract AppCommand runSelectionAsLauncherJob();
+   public abstract AppCommand activateLauncherJobs();
+   public abstract AppCommand sortLauncherJobsRecorded();
+   public abstract AppCommand sortLauncherJobsState();
 
    // Other
    public abstract AppCommand checkSpelling();

@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,7 @@
 #include "DesktopActivationOverlay.hpp"
 
 #ifdef _WIN32
+#include <core/system/RegistryKey.hpp>
 #include <Windows.h>
 #endif
 
@@ -93,7 +94,7 @@ Error removeStaleOptionsLockfile()
    if (!lockFilePath.exists())
       return Success();
 
-   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.lastWriteTime());
    if (diff < 10)
       return Success();
 
@@ -281,13 +282,51 @@ QString inferDefaultRenderingEngine()
 
 #ifdef Q_OS_WIN
 
-QString inferDefaultRenderingEngine()
+namespace {
+
+bool isRemoteSession()
 {
    if (::GetSystemMetrics(SM_REMOTESESSION))
-   {
-       // use software rendering over remote desktop
-       return QStringLiteral("software");
-   }
+      return true;
+   
+   core::system::RegistryKey key;
+   Error error = key.open(
+            HKEY_LOCAL_MACHINE,
+            "SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\",
+            KEY_READ);
+   
+   if (error)
+      return false;
+   
+   DWORD dwGlassSessionId;
+   DWORD cbGlassSessionId = sizeof(dwGlassSessionId);
+   DWORD dwType;
+
+   LONG lResult = RegQueryValueEx(
+            key.handle(),
+            "GlassSessionId",
+            NULL, // lpReserved
+            &dwType,
+            (BYTE*) &dwGlassSessionId,
+            &cbGlassSessionId);
+
+   if (lResult != ERROR_SUCCESS)
+      return false;
+   
+   DWORD dwCurrentSessionId;
+   if (ProcessIdToSessionId(GetCurrentProcessId(), &dwCurrentSessionId))
+      return dwCurrentSessionId != dwGlassSessionId;
+   
+   return false;
+   
+}
+
+} // end anonymous namespace
+
+QString inferDefaultRenderingEngine()
+{
+   if (isRemoteSession())
+      return QStringLiteral("software");
 
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
@@ -301,7 +340,7 @@ QString inferDefaultRenderingEngine()
    device.cb = sizeof(DISPLAY_DEVICE);
 
    DWORD i = 0;
-   while (::EnumDisplayDevices(NULL, i++, &device, 0))
+   while (::EnumDisplayDevices(nullptr, i++, &device, 0))
    {
       // skip non-primary device
       if ((device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) == 0)
@@ -502,7 +541,7 @@ int main(int argc, char* argv[])
          if (!stdOut.empty())
          {
             // NOTE: temporarily backed out as it appears the rasterization
-            // issues do not occur anymore with Qt 5.11.1; re-enable if we
+            // issues do not occur anymore with Qt 5.12.1; re-enable if we
             // receive more reports in the wild.
             //
             // https://github.com/rstudio/rstudio/issues/2176
@@ -526,7 +565,9 @@ int main(int argc, char* argv[])
             */
             
             std::vector<std::string> gpuBlacklist = {
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
                "AMD FirePro"
+#endif
             };
             
             for (const std::string& entry : gpuBlacklist)

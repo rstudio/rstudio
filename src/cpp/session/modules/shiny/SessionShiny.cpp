@@ -1,7 +1,7 @@
 /*
  * SessionShiny.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "SessionShiny.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Error.hpp>
@@ -312,7 +311,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    
    // if any files already exist, report that as an error
    std::vector<std::string> existingFiles;
-   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   for (const std::string& fileName : templateFiles)
    {
       FilePath filePath = shinyDir.complete(fileName);
       std::string aliasedPath = module_context::createAliasedPath(shinyDir.complete(fileName));
@@ -345,7 +344,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    }
    
    // copy the files (updates success in 'result')
-   BOOST_FOREACH(const std::string& fileName, templateFiles)
+   for (const std::string& fileName : templateFiles)
    {
       FilePath target = shinyDir.complete(fileName);
       Error error = copyTemplateFile(fileName, target);

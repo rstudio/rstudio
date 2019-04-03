@@ -1,7 +1,7 @@
 /*
  * SessionSVN.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,9 +213,9 @@ Error runSvn(const ShellArgs& args,
 }
 
 Error runSvn(const ShellArgs& args,
-             std::string* pStdOut=NULL,
-             std::string* pStdErr=NULL,
-             int* pExitCode=NULL)
+             std::string* pStdOut=nullptr,
+             std::string* pStdErr=nullptr,
+             int* pExitCode=nullptr)
 {
    core::system::ProcessResult result;
    Error error = runSvn(args, false, &result);
@@ -371,7 +371,7 @@ bool detectSvnExeOnPath(FilePath* pPath)
 {
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"svn.exe");
-   if (::PathFindOnPathW(&(path[0]), NULL))
+   if (::PathFindOnPathW(&(path[0]), nullptr))
    {
       *pPath = FilePath(&(path[0]));
       return true;
@@ -437,7 +437,7 @@ bool isSvnInstalled()
    }
 
    int exitCode;
-   Error error = runSvn(ShellArgs() << "help", NULL, NULL, &exitCode);
+   Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
    if (error)
    {
@@ -743,14 +743,14 @@ Error svnRevert(const json::JsonRpcRequest& request,
    
    // build map (indexed on file path) for easy lookup
    std::map<std::string, source_control::FileWithStatus> fileStatusMap;
-   BOOST_FOREACH(const source_control::FileWithStatus& file, fileStatusVector)
+   for (const source_control::FileWithStatus& file : fileStatusVector)
    {
       fileStatusMap[file.path.absolutePath()] = file;
    }
    
    std::vector<FilePath> recursiveReverts;
    std::vector<FilePath> nonRecursiveReverts;
-   BOOST_FOREACH(const FilePath& filePath, paths)
+   for (const FilePath& filePath : paths)
    {
       if (!filePath.isDirectory())
       {
@@ -956,7 +956,7 @@ Error status(const FilePath& filePath,
    if (error)
       return error;
 
-   BOOST_FOREACH(source_control::FileWithStatus file, files)
+   for (source_control::FileWithStatus file : files)
    {
       json::Object fileObj;
       error = statusToJson(file.path, file.status, &fileObj);
@@ -1196,7 +1196,7 @@ struct CommitInfo
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
 {
-   BOOST_FOREACH(std::string pattern, patterns)
+   for (std::string pattern : patterns)
    {
       if (!boost::algorithm::ifind_first(commit.author, pattern)
           && !boost::algorithm::ifind_first(commit.description, pattern)
@@ -1501,7 +1501,7 @@ void svnHistory(const json::JsonRpcRequest& request,
                                   &searchText);
    if (error)
    {
-      cont(error, NULL);
+      cont(error, nullptr);
       return;
    }
 

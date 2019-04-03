@@ -1,7 +1,7 @@
 /*
  * CodeCompletion.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -178,7 +178,7 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
          rCompilationDatabase().compileArgsForTranslationUnit(
             filePath.absolutePathNative(), false);
    
-   BOOST_FOREACH(const std::string& arg, args)
+   for (const std::string& arg : args)
    {
       if (boost::algorithm::starts_with(arg, "-I"))
       {
@@ -410,7 +410,7 @@ Error getHeaderCompletionsImpl(const std::string& token,
    std::set<std::string> discoveredEntries;
    json::Array completionsJson;
    
-   BOOST_FOREACH(const std::string& path, includePaths)
+   for (const std::string& path : includePaths)
    {
       FilePath includePath(path);
       if (!includePath.exists())
@@ -425,7 +425,7 @@ Error getHeaderCompletionsImpl(const std::string& token,
       if (error)
          LOG_ERROR(error);
       
-      BOOST_FOREACH(const FilePath& childPath, children)
+      for (const FilePath& childPath : children)
       {
          std::string name = childPath.filename();
          if (discoveredEntries.count(name))

@@ -1,7 +1,7 @@
 /*
  * Win32OutputCapture.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ void standardStreamCaptureThread(
          const int kBufferSize = 512;
          char buffer[kBufferSize];
          DWORD bytesRead = 0;
-         if (::ReadFile(hReadPipe, &buffer, kBufferSize, &bytesRead, NULL))
+         if (::ReadFile(hReadPipe, &buffer, kBufferSize, &bytesRead, nullptr))
          {
             if (bytesRead > 0)
                outputHandler(std::string(buffer, bytesRead));
@@ -84,7 +84,7 @@ Error redirectToPipe(DWORD stdHandle,
 {
    // create pipe
    HANDLE hWritePipe;
-   if (!::CreatePipe(phReadPipe, &hWritePipe, NULL, 0))
+   if (!::CreatePipe(phReadPipe, &hWritePipe, nullptr, 0))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -110,7 +110,7 @@ Error redirectToPipe(DWORD stdHandle,
       // this situation, we allocate a new stream for the descriptor so
       // stdout/stderr will go somewhere.
       FILE* newStdHandle = ::_fdopen(stdFd, "w");
-      if (newStdHandle == NULL)
+      if (newStdHandle == nullptr)
          return systemError(errno, ERROR_LOCATION);
       *fpStdFile = *newStdHandle;
       stdDupFd = stdFd;
@@ -120,7 +120,7 @@ Error redirectToPipe(DWORD stdHandle,
       return systemError(errno, ERROR_LOCATION);
 
    // turn off buffering
-   if (::setvbuf(fpStdFile, NULL, _IONBF, 0) != 0)
+   if (::setvbuf(fpStdFile, nullptr, _IONBF, 0) != 0)
       return ioError("setvbuf", ERROR_LOCATION);
 
    // sync c++ std streams
@@ -139,7 +139,7 @@ Error captureStandardStreams(
    try
    {
       // redirect stdout
-      HANDLE hReadStdoutPipe = NULL;
+      HANDLE hReadStdoutPipe = nullptr;
       Error error = redirectToPipe(STD_OUTPUT_HANDLE, STDOUT_FILENO, stdout,
                                    &hReadStdoutPipe);
       if (error)
@@ -151,7 +151,7 @@ Error captureStandardStreams(
                                              stdoutHandler));
 
       // optionally redirect stderror if handler was provided
-      HANDLE hReadStderrPipe = NULL;
+      HANDLE hReadStderrPipe = nullptr;
       if (stderrHandler)
       {
          // redirect stderr

@@ -1,7 +1,7 @@
 /*
  * MacFileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
@@ -42,7 +41,7 @@ class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext()
-      : streamRef(NULL), recursive(false)
+      : streamRef(nullptr), recursive(false)
    {
       handle = Handle((void*)this);
    }
@@ -173,7 +172,7 @@ Handle registerMonitor(const FilePath& filePath,
                                        kCFAllocatorDefault,
                                        filePath.absolutePath().c_str(),
                                        kCFStringEncodingUTF8);
-   if (filePathRef == NULL)
+   if (filePathRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
@@ -186,8 +185,8 @@ Handle registerMonitor(const FilePath& filePath,
    CFArrayRef pathsArrayRef = ::CFArrayCreate(kCFAllocatorDefault,
                                               (const void **)&filePathRef,
                                               1,
-                                              NULL);
-   if (pathsArrayRef == NULL)
+                                              nullptr);
+   if (pathsArrayRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
@@ -207,9 +206,9 @@ Handle registerMonitor(const FilePath& filePath,
    FSEventStreamContext context;
    context.version = 0;
    context.info = (void*) pContext;
-   context.retain = NULL;
-   context.release = NULL;
-   context.copyDescription = NULL;
+   context.retain = nullptr;
+   context.release = nullptr;
+   context.copyDescription = nullptr;
 
    // create the stream and save a reference to it
    pContext->streamRef = ::FSEventStreamCreate(
@@ -221,7 +220,7 @@ Handle registerMonitor(const FilePath& filePath,
                   1,
                   kFSEventStreamCreateFlagNoDefer |
                   kFSEventStreamCreateFlagWatchRoot);
-   if (pContext->streamRef == NULL)
+   if (pContext->streamRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,

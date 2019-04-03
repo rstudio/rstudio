@@ -1,7 +1,7 @@
 /*
  * JobsList.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Comparator;
+import java.util.List;
 
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -29,9 +28,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 public class JobsList extends Composite
+                      implements JobsListView
 {
    private static JobsListUiBinder uiBinder = GWT.create(JobsListUiBinder.class);
 
@@ -39,135 +38,115 @@ public class JobsList extends Composite
    {
    }
 
-   public JobsList()
-   {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      jobs_ = new HashMap<String, JobItem>();
-
-      initWidget(uiBinder.createAndBindUi(this));
-      
-      // register handler for hide completed jobs pref
-      uiPrefs_.hideCompletedJobs().addValueChangeHandler(hide ->
-      {
-         if (list_ == null)
-            return;
-
-         for (Widget widget : list_)
-         {
-            if (widget instanceof JobItem)
-            {
-               JobItem item = (JobItem) widget;
-               if (item.getJob().completed != 0)
-               {
-                  item.setVisible(!hide.getValue());
-               }
-            }
-         }
-      });
- 
-      updateVisibility();
-   }
-   
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   public JobsList(JobItemFactory jobItemFactory)
    {
-      uiPrefs_ = uiPrefs;
+      jobItemFactory_ = jobItemFactory;
+      initWidget(uiBinder.createAndBindUi(this));
+   
+      listImpl_ = new JobsListViewImpl(list_);
+      
+      updateVisibility();
    }
    
    @Override
-   protected void onUnload()
+   public boolean addJob(Job job)
    {
-      RStudioGinjector.INSTANCE.getJobManager().stopTracking();
-      super.onUnload();
-   }
+      if (listImpl_.hasJob(job.id))
+         return false;
    
-   public void addJob(Job job)
-   {
-      if (jobs_.containsKey(job.id))
-         return;
-      JobItem item = new JobItem(job);
-      jobs_.put(job.id, item);
-      list_.insert(item, 0);
-      
-      if (job.completed != 0 && uiPrefs_.hideCompletedJobs().getValue())
-         item.setVisible(false);
-
+      listImpl_.addJob(jobItemFactory_.create(job)); 
       updateVisibility();
+      return true;
    }
    
-   public void insertJob(Job job)
+   @Override
+   public boolean insertJob(Job job)
    {
-      if (jobs_.containsKey(job.id))
-         return;
-      JobItem item = new JobItem(job);
-      jobs_.put(job.id, item);
+      if (listImpl_.hasJob(job.id))
+         return false;
       
-      // keep list sorted with most recently recorded jobs first
-      int i;
-      for (i = 0; i < list_.getWidgetCount(); i++)
-      {
-         if (((JobItem)list_.getWidget(i)).getJob().recorded <= job.recorded)
-            break;
-      }
-      list_.insert(item, i);
-      
-      if (job.completed != 0 && uiPrefs_.hideCompletedJobs().getValue())
-         item.setVisible(false);
+      listImpl_.insertJob(jobItemFactory_.create(job));
+      updateVisibility();
+      return true;
+   }
+   
+   @Override
+   public boolean removeJob(Job job)
+   {
+      if (!listImpl_.removeJob(job))
+         return false;
       
       updateVisibility();
+      return true;         
    }
    
-   public void removeJob(Job job)
-   {
-      if (!jobs_.containsKey(job.id))
-         return;
-      list_.remove(jobs_.get(job.id));
-      jobs_.remove(job.id);
-      updateVisibility();
-   }
-   
+   @Override
    public void updateJob(Job job)
    {
-      if (!jobs_.containsKey(job.id))
-         return;
-      jobs_.get(job.id).update(job);
+      listImpl_.updateJob(job);
    }
    
+   @Override
    public void clear()
    {
-      list_.clear();
-      jobs_.clear();
+      listImpl_.clear();
       updateVisibility();
    }
    
+   @Override
    public void syncElapsedTime(int timestamp)
    {
-      for (JobItem item: jobs_.values())
-      {
-         item.syncTime(timestamp);
-      }
+      listImpl_.syncElapsedTime(timestamp);
    }
    
+   @Override
    public Job getJob(String id)
    {
-      if (jobs_.containsKey(id))
-         return jobs_.get(id).getJob();
-      return null;
+      return listImpl_.getJob(id);
+   }
+   
+   @Override
+   public int jobCount()
+   {
+      return listImpl_.jobCount();
+   }
+   
+   @Override
+   public List<Job> getJobs()
+   {
+      return listImpl_.getJobs();
+   }
+   
+   @Override
+   public void setInitialJobs(List<Job> jobs)
+   {
+       // clear any current state
+      clear();
+     
+      // sort jobs by most recently recorded first
+      List<Job> sortedJobs = jobs;
+      sortedJobs.sort(Comparator.comparingInt(j -> j.recorded));
+      
+      // add each to the panel
+      for (Job job: sortedJobs)
+      {
+         addJob(job);
+      }
    }
    
    private void updateVisibility()
    {
-      scroll_.setVisible(jobs_.size() > 0);
-      empty_.setVisible(jobs_.size() == 0);
+      scroll_.setVisible(jobCount() > 0);
+      empty_.setVisible(jobCount() == 0);
    }
-
+  
    @UiField VerticalPanel list_;
    @UiField Label empty_;
    @UiField ScrollPanel scroll_;
 
-   private final Map<String, JobItem> jobs_;
+   private final JobsListViewImpl listImpl_;
    
-   // Injected ----
-   UIPrefs uiPrefs_;
+   // injected
+   private final JobItemFactory jobItemFactory_;
 }

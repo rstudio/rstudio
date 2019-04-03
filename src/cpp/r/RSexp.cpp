@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
@@ -315,8 +314,8 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
       return error;
    
    // ensure that we actually succeeded in producing a primitive environment
-   if (pTargetSEXP == NULL  ||
-       *pTargetSEXP == NULL ||
+   if (pTargetSEXP == nullptr  ||
+       *pTargetSEXP == nullptr ||
        !isPrimitiveEnvironment(*pTargetSEXP))
    {
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -358,7 +357,7 @@ void listEnvironment(SEXP env,
    }
 
    // populate pVariables
-   BOOST_FOREACH(const std::string& var, vars)
+   for (const std::string& var : vars)
    {
       SEXP varSEXP = R_NilValue;
       // Merely calling Rf_findVar on an active binding will fire the binding.
@@ -733,7 +732,7 @@ bool isNullExternalPointer(SEXP object)
 {
    return
          isExternalPointer(object) &&
-         R_ExternalPtrAddr(object) == NULL;
+         R_ExternalPtrAddr(object) == nullptr;
 }
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
@@ -1596,7 +1595,7 @@ void examineSymbolUsage(
    }
    
    // fill output
-   BOOST_FOREACH(FormalInformation& info, pInfo->formals())
+   for (FormalInformation& info : pInfo->formals())
    {
       const std::string& name = info.name();
       info.setIsUsed(usage.symbolsUsed.contains(name.c_str()));

@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -223,6 +223,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/dictionaries", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())
@@ -316,7 +317,7 @@ Error waitForSignals()
    sa.sa_handler = handleSIGCHLD;
    sigemptyset(&sa.sa_mask);
    sa.sa_flags = SA_NOCLDSTOP;
-   int result = ::sigaction(SIGCHLD, &sa, NULL);
+   int result = ::sigaction(SIGCHLD, &sa, nullptr);
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
 
@@ -329,7 +330,7 @@ Error waitForSignals()
    sigaddset(&wait_mask, SIGTERM);
    sigaddset(&wait_mask, SIGHUP);
 
-   result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
+   result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, nullptr);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
 
@@ -368,7 +369,7 @@ Error waitForSignals()
          struct sigaction sa;
          ::memset(&sa, 0, sizeof sa);
          sa.sa_handler = SIG_DFL;
-         int result = ::sigaction(sig, &sa, NULL);
+         int result = ::sigaction(sig, &sa, nullptr);
          if (result != 0)
             LOG_ERROR(systemError(result, ERROR_LOCATION));
 

@@ -15,7 +15,6 @@
 
 #include <session/SessionOptions.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <boost/property_tree/ptree.hpp>

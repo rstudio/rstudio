@@ -90,13 +90,6 @@
         border: 0px;
         animation: spinner 2s linear infinite;
     }
-    
-    .jobType
-    {
-        width: 20px;
-        height: 18px;
-        border: 0px;
-    }
 
     .outer
     {
@@ -170,17 +163,11 @@
                                 </g:VerticalPanel>
                             </g:VerticalPanel>
                         </g:cell>
-                        <g:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE" width="20px">
-                            <g:Image styleName="{styles_.jobType}" ui:field="jobType_"></g:Image>
-                        </g:cell>
                         <g:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE" width="80px">
                             <g:Label styleName="{styles_.elapsed}" ui:field="elapsed_"></g:Label>
                         </g:cell>
                         <g:cell width="20px" horizontalAlignment="ALIGN_CENTER" verticalAlignment="ALIGN_MIDDLE">
-                            <g:HorizontalPanel height="100%">
-                                <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
-                                <rw:ToolbarButton ui:field="launcherStop_"></rw:ToolbarButton>
-                            </g:HorizontalPanel>
+                            <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
                         </g:cell>
                     </g:HorizontalPanel>
                 </g:VerticalPanel>

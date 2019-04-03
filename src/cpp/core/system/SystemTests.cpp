@@ -24,7 +24,7 @@ namespace core {
 namespace system {
 namespace tests {
 
-context("SystemTests")
+test_context("SystemTests")
 {
 }
 

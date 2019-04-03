@@ -24,7 +24,7 @@ import java.util.LinkedList;
 
 public class ExternalJavaScriptLoader
 {
-   public static interface Callback
+   public interface Callback
    {
       void onLoaded();
    }

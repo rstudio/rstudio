@@ -81,7 +81,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new ConsoleOutputWriter();
+      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), 
@@ -355,10 +355,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearErrors_ = true;
    }
 
+   public static String consolify(String text)
+   {
+      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(null);
+      console.submit(text);
+      return console.toString();
+   }
+
    public void consolePrompt(String prompt, boolean showInput)
    {
       if (prompt != null)
-         prompt = VirtualConsole.consolify(prompt);
+         prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
       //input_.clear() ;

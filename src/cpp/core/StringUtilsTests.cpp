@@ -26,7 +26,7 @@ namespace string_utils {
 
 using namespace algorithm;
 
-context("String splitting")
+test_context("String splitting")
 {
    test_that("Strings can be split on NUL bytes")
    {
@@ -50,7 +50,7 @@ context("String splitting")
    }
 }
 
-context("isSubsequence")
+test_context("isSubsequence")
 {
    test_that("isSubsequence works")
    {
@@ -104,7 +104,7 @@ context("isSubsequence")
    }
 }
 
-context("Comment extraction")
+test_context("Comment extraction")
 {
    test_that("Comment headers can be extracted")
    {

@@ -1,7 +1,7 @@
 /*
  * SlideMediaRenderer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -82,7 +81,7 @@ std::vector<MediaSource> discoverMediaSources(
    {
       // get the filename without extension
       std::string stem = mediaFile.stem();
-      BOOST_FOREACH(std::string fmt, formats)
+      for (std::string fmt : formats)
       {
          FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
          if (targetPath.exists())
@@ -107,7 +106,7 @@ std::vector<MediaSource> discoverMediaSources(
 std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
 {
    json::Array cmdsArray;
-   BOOST_FOREACH(const AtCommand atCmd, atCommands)
+   for (const AtCommand atCmd : atCommands)
    {
       cmdsArray.push_back(atCmd.asJson());
    }
@@ -137,7 +136,7 @@ void renderMedia(const std::string& type,
                                                                 baseDir,
                                                                 fileName);
    std::string sources;
-   BOOST_FOREACH(const MediaSource& source, mediaSources)
+   for (const MediaSource& source : mediaSources)
    {
       sources += (source.asTag() + "\n");
    }

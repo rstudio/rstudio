@@ -87,22 +87,30 @@ public class ProjectOpener
                   
                   if (input.isDirectory())
                   {
-                     final String rprojPath = input.completePath(input.getName() + ".Rproj");
-                     final FileSystemItem rprojFile = FileSystemItem.createFile(rprojPath);
+                     // Locate or create the .Rproj associated with this directory
                      server_.createProjectFile(
-                           rprojFile.getPath(),
-                           new ServerRequestCallback<Boolean>()
+                           input.getPath(),
+                           new ServerRequestCallback<String>()
                            {
                               @Override
-                              public void onResponseReceived(Boolean success)
+                              public void onResponseReceived(String rproj)
                               {
-                                 onProjectFileReady.execute(rprojFile);
+                                 // Found the .Rproj; open it.
+                                 onProjectFileReady.execute(FileSystemItem.createFile(rproj));
                               }
 
                               @Override
                               public void onError(ServerError error)
                               {
                                  Debug.logError(error);
+
+                                 // There's a chance that there's an Rproj even
+                                 // if we couldn't find or create it; make a best-effort
+                                 // attempt to open it.
+                                 String rprojPath = 
+                                       input.completePath(input.getName() + ".Rproj");
+                                 FileSystemItem rprojFile = 
+                                       FileSystemItem.createFile(rprojPath);
                                  onProjectFileReady.execute(rprojFile);
                               }
                            });

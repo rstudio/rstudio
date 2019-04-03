@@ -1,7 +1,7 @@
 /*
  * PosixSystemTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,6 @@
 
 #ifndef _WIN32
 
-#include <boost/foreach.hpp>
-
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
 #include <sys/wait.h>
@@ -28,7 +26,7 @@ namespace core {
 namespace system {
 namespace tests {
 
-context("PosixSystemTests")
+test_context("PosixSystemTests")
 {
    test_that("Empty subprocess list returned correctly with pgrep method")
    {
@@ -47,7 +45,7 @@ context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -60,7 +58,7 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -71,7 +69,7 @@ context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {
@@ -83,7 +81,7 @@ context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -106,7 +104,7 @@ context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -128,7 +126,7 @@ context("PosixSystemTests")
          expect_true(children.at(0).pid == pid);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -140,7 +138,7 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -154,7 +152,7 @@ context("PosixSystemTests")
             expect_true(children[0].exe.compare(exe) == 0);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -179,7 +177,7 @@ context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -191,7 +189,7 @@ context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "10000", NULL);
+         execlp(exe.c_str(), exe.c_str(), "10000", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -203,7 +201,7 @@ context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {
@@ -215,7 +213,7 @@ context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__
@@ -237,7 +235,7 @@ context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -262,7 +260,7 @@ context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -287,7 +285,7 @@ context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -313,7 +311,7 @@ context("PosixSystemTests")
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__

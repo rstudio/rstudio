@@ -1,7 +1,7 @@
 /*
  * GitChangelistTable.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.Column;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
@@ -34,7 +35,7 @@ public class GitChangelistTable extends ChangelistTable
       ArrayList<StatusAndPath> items = getSelectedItems();
       if (items.size() > 0)
       {
-         boolean unstage = items.get(0).getStatus().charAt(1) == ' ';
+         boolean unstage = StringUtil.isCharAt(items.get(0).getStatus(), ' ', 1);
          fireEvent(new StageUnstageEvent(unstage, items));
 
          if (moveSelection)
@@ -60,8 +61,8 @@ public class GitChangelistTable extends ChangelistTable
          public Boolean getValue(StatusAndPath object)
          {
             return "??".equals(object.getStatus()) ? Boolean.FALSE :
-                   object.getStatus().charAt(1) == ' ' ? Boolean.TRUE :
-                   object.getStatus().charAt(0) == ' ' ? Boolean.FALSE :
+                   StringUtil.isCharAt(object.getStatus(), ' ', 1) ? Boolean.TRUE :
+                   StringUtil.isCharAt(object.getStatus(), ' ', 0) ? Boolean.FALSE :
                    null;
          }
       };

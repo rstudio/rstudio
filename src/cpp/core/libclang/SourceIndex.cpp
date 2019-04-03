@@ -1,7 +1,7 @@
 /*
  * SourceIndex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 
 #include <core/libclang/SourceIndex.hpp>
-
-#include <boost/foreach.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
@@ -77,7 +75,7 @@ SourceIndex::~SourceIndex()
       removeAllTranslationUnits();
 
       // dispose the index
-      if (index_ != NULL)
+      if (index_ != nullptr)
          clang().disposeIndex(index_);
    }
    catch(...)
@@ -141,7 +139,7 @@ std::map<std::string,TranslationUnit>
                            SourceIndex::getIndexedTranslationUnits()
 {
    std::map<std::string,TranslationUnit> units;
-   BOOST_FOREACH(TranslationUnits::value_type& t, translationUnits_)
+   for (TranslationUnits::value_type& t : translationUnits_)
    {
       TranslationUnit unit(t.first, t.second.tu, &unsavedFiles_);
       units.insert(std::make_pair(t.first, unit));
@@ -254,7 +252,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 
 
    // save and return it if we succeeded
-   if (tu != NULL)
+   if (tu != nullptr)
    {
       translationUnits_[filename] = StoredTranslationUnit(args,
                                                           lastWriteTime,

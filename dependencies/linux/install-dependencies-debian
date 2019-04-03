@@ -3,7 +3,7 @@
 #
 # install-dependencies-debian
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,16 @@
 #
 
 set -e
+
+# delegate to specific platform scripts if available
+if command -v lsb_release &> /dev/null; then
+  platform_codename=$(lsb_release -sc)
+  platform_script="install-dependencies-$platform_codename"
+  if [ -e $platform_script ] ; then
+    ./$platform_script
+    exit 
+  fi
+fi
 
 # build/development tools
 sudo apt-get -y install build-essential

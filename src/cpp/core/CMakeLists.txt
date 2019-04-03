@@ -88,6 +88,7 @@ set (CORE_SOURCE_FILES
    http/MultipartRelated.cpp
    http/ChunkParser.cpp
    http/ChunkProxy.cpp
+   http/CSRFToken.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
@@ -279,6 +280,7 @@ else()
       RpcRT4
       ShLwApi
       AdvAPI32
+      Crypt32
       ${OPENSSL_LIBRARIES}
    )
 

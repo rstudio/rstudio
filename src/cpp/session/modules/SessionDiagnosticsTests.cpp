@@ -1,7 +1,7 @@
 /*
  * SessionDiagnosticsTests.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <session/SessionOptions.hpp>
 #include "SessionRParser.hpp"
@@ -120,7 +119,7 @@ void lintRStudioRFiles()
    lintRFilesInSubdirectory(options().modulesRSourcePath());
 }
 
-context("Diagnostics")
+test_context("Diagnostics")
 {
    test_that("valid expressions generate no lint")
    {

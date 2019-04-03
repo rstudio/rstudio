@@ -70,11 +70,11 @@ public class ActiveSession extends JavaScriptObject
    public native final String getRVersionHome() /*-{
       return this.r_version_home;
    }-*/;
-   
+
    public native final String getLabel() /*-{
       return this.label;
    }-*/;
-   
+
    public native final int getSuspendedSize() /*-{
       return this.suspend_size || 0;
    }-*/;

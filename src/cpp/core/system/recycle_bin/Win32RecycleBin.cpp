@@ -1,7 +1,7 @@
 /*
  * Win32RecycleBin.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@ Error sendTo(const FilePath& filePath)
    buffPath.push_back(L'\0');
 
    SHFILEOPSTRUCTW fileOp;
-   fileOp.hwnd = NULL;
+   fileOp.hwnd = nullptr;
    fileOp.wFunc = FO_DELETE;
    fileOp.pFrom = &(buffPath[0]);
    fileOp.pTo = L"";
@@ -43,7 +43,7 @@ Error sendTo(const FilePath& filePath)
                    FOF_NOERRORUI |
                    FOF_SILENT;
    fileOp.fAnyOperationsAborted = FALSE;
-   fileOp.hNameMappings = NULL;
+   fileOp.hNameMappings = nullptr;
    fileOp.lpszProgressTitle = L"";
 
    int result = ::SHFileOperationW(&fileOp);

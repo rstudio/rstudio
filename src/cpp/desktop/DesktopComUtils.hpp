@@ -16,6 +16,8 @@
 #ifndef DESKTOP_COMUTILS_HPP
 #define DESKTOP_COMUTILS_HPP
 
+#include <string>
+
 // Convenience to convert an HRSULT to our own error type and bail out on
 // failure.
 #define VERIFY_HRESULT(x) hr = (x); \

@@ -1,7 +1,7 @@
 /*
  * RCompilationDatabase.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,7 +140,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
 
 std::string extractStdArg(const std::vector<std::string>& args)
 {
-   BOOST_FOREACH(const std::string& arg, args)
+   for (const std::string& arg : args)
    {
       if (boost::algorithm::starts_with(arg, "-std="))
          return arg;
@@ -190,7 +190,7 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
 
    // find the line with the compilation and add it's args
    boost::regex re("-c [^\\.]+\\.c\\w* -o");
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (regex_utils::search(line, re))
       {
@@ -233,7 +233,7 @@ bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
          return false;
       }
 
-      BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
+      for (const FilePath& srcFile : allSrcFiles)
       {
          std::string ext = srcFile.extensionLowerCase();
          if (ext == ".cpp" || ext == ".cc")
@@ -334,7 +334,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (!compileArgs.empty())
    {
       // do path substitutions
-      BOOST_FOREACH(std::string arg, compileArgs)
+      for (std::string arg : compileArgs)
       {
          // do path substitutions
          boost::algorithm::replace_first(
@@ -477,7 +477,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 
    packageCompilationConfig_.args.clear();
-   BOOST_FOREACH(const json::Value& argJson, argsJson)
+   for (const json::Value& argJson : argsJson)
    {
       if (json::isType<std::string>(argJson))
          packageCompilationConfig_.args.push_back(argJson.get_str());
@@ -624,13 +624,17 @@ bool RCompilationDatabase::isProjectTranslationUnit(
                                           const std::string& filename) const
 {
    using namespace projects;
+
+   if (projectContext().config().buildType != r_util::kBuildTypePackage)
+      return false;
+
    FilePath filePath(filename);
    FilePath pkgPath = projectContext().buildTargetPath();
    FilePath srcDirPath = pkgPath.childPath("src");
    FilePath includePath = pkgPath.childPath("inst/include");
-   return ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-          (!filePath.relativePath(srcDirPath).empty() ||
-           !filePath.relativePath(includePath).empty()));
+   return
+         filePath.isWithin(srcDirPath) ||
+         filePath.isWithin(includePath);
 }
 
 namespace {
@@ -703,7 +707,7 @@ bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 
    // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
-   BOOST_FOREACH(const std::string& arg, config.args)
+   for (const std::string& arg : config.args)
    {
       if (boost::algorithm::contains(arg, "RcppNT2"))
          return false;
@@ -1061,7 +1065,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                             0,
                             0,
                             CXTranslationUnit_ForSerialization);
-      if (tu == NULL)
+      if (tu == nullptr)
       {
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
                            cppPath.absolutePath());

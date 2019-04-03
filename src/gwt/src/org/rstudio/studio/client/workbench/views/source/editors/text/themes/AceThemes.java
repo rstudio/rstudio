@@ -62,25 +62,10 @@ public class AceThemes
    
    private void applyTheme(Document document, final AceTheme theme)
    {
-      // Build a relative path to avoid having to register 80000 theme URI handlers on the server.
-      int pathUpCount = 0;
-      String baseUrl = GWT.getHostPageBaseURL();
-      
-      // Strip any query out of the current URL since it isn't relevant to the path.
-      String currentUrl = document.getURL().split("\\?")[0];
-      if (!currentUrl.equals(baseUrl) &&
-         currentUrl.indexOf(baseUrl) == 0)
-      {
-         pathUpCount = currentUrl.substring(baseUrl.length()).split("/").length;
-      }
-      
       // Build the URL.
-      StringBuilder urlBuilder = new StringBuilder();
-      for (int i = 0; i < pathUpCount; ++i)
-      {
-         urlBuilder.append("../");
-      }
-      urlBuilder.append(theme.getUrl())
+      StringBuilder themeUrl = new StringBuilder();
+      themeUrl.append(GWT.getHostPageBaseURL())
+         .append(theme.getUrl())
          .append("?dark=")
          .append(theme.isDark() ? "1" : "0");
       
@@ -88,7 +73,7 @@ public class AceThemes
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
-      currentStyleEl.setHref(urlBuilder.toString());
+      currentStyleEl.setHref(themeUrl.toString());
    
       Element oldStyleEl = document.getElementById(linkId_);
       if (null != oldStyleEl)

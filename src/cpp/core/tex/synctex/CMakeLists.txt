@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,19 @@ project (SYNCTEX)
 
 # include files
 file(GLOB_RECURSE SYNCTEX_HEADER_FILES "*.h*")
+
+if(MSVC)
+  # disable noisy warnings; third-party code we try to avoid changing
+
+  # C4267: assigning size_t to int
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4267")
+
+  # C4244: possible loss of data such as assigning double to float
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244")
+
+  # C4018: comparing signed and unsigned integers
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4018")
+endif()
 
 # source files
 set(SYNCTEX_SOURCE_FILES

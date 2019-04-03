@@ -1,7 +1,7 @@
 /*
  * GwtLogHandler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include <core/gwt/GwtLogHandler.hpp>
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -37,7 +36,7 @@ namespace gwt {
 namespace {
 
 // symbol maps
-SymbolMaps* s_pSymbolMaps = NULL;
+SymbolMaps* s_pSymbolMaps = nullptr;
 
 // client exception
 struct ClientException
@@ -57,7 +56,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
    if (error)
        return error;
 
-   BOOST_FOREACH(const json::Value& elementJson, stackJson)
+   for (const json::Value& elementJson : stackJson)
    {
       if (!json::isType<json::Object>(elementJson))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
@@ -142,7 +141,7 @@ void handleLogExceptionRequest(const std::string& username,
    // build the log message
    bool printFrame = false;
    std::ostringstream ostr;
-   BOOST_FOREACH(const StackElement& element, stack)
+   for (const StackElement& element : stack)
    {
       // skip past java/lang/Exception entries
       if (!printFrame)

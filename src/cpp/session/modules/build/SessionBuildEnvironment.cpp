@@ -1,7 +1,7 @@
 /*
  * SessionBuildEnvironment.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -215,7 +214,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
                                     &environmentVars,
                                     pWarningMessage))
    {
-      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      for (const core::system::Option& var : environmentVars)
       {
          core::system::setenv(var.first, var.second);
       }
@@ -235,7 +234,7 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
                                     &environmentVars,
                                     pWarningMessage))
    {
-      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      for (const core::system::Option& var : environmentVars)
       {
          core::system::setenv(pEnvironment, var.first, var.second);
       }

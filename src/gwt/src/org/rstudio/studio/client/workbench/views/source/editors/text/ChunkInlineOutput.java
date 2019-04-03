@@ -2,7 +2,7 @@
 /*
  * ChunkInlineOutput.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
@@ -48,7 +49,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
       super(true, false, true);
       
       console_ = new PreWidget();
-      vconsole_ = new VirtualConsole(console_.getElement());
+      vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
       chunkId_ = chunkId;
       selection_ = selection;
       state_ = State.Queued;

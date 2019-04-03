@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include <core/r_util/RActiveSessions.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/StringUtils.hpp>
@@ -150,7 +149,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
       return sessions;
    }
    std::string prefix = kSessionDirPrefix;
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       if (boost::algorithm::starts_with(child.filename(), prefix))
       {
@@ -225,7 +224,7 @@ GlobalActiveSessions::list() const
       return sessions;
    }
 
-   BOOST_FOREACH(const FilePath& sessionFile, sessionFiles)
+   for (const FilePath& sessionFile : sessionFiles)
    {
       sessions.push_back(boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile)));
    }

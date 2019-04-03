@@ -14,14 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
-import java.util.List;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -37,15 +34,20 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       super(max, res);
    }
    
+   public RStudioDataGrid(int max, ProvidesKey<T> keyProvider)
+   {
+      super(max, keyProvider);
+   }
+   
    public RStudioDataGrid(int max, DataGrid.Resources res, ProvidesKey<T> keyProvider)
    {
       super(max, res, keyProvider);
    }
    
    @Override
-   public void onAttach()
+   protected void onLoad()
    {
-      super.onAttach();
+      super.onLoad();
       
       // None of the below is necessary unless on MacOS since that's the only
       // platform that uses overlay scrollbars.
@@ -63,28 +65,21 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       // assigned class, and have all their style attributes applied inline, so
       // instead we scan the attached DOM subtree and change the inline styles.
       Element parent = getElement().getParentElement().getParentElement();
-      List<Node> matches = DomUtils.findNodes(parent, 
-            10,     // Max results 
-            3,      // Recurse depth 
-            false,  // Check siblings
-            node -> 
+      NodeList<Element> children = DomUtils.querySelectorAll(parent, "div[style*='z-index: -1']");
+      for (int i = 0; i < children.getLength(); i++)
       {
-         // Ignore text nodes, etc.
-         if (node.getNodeType() != Node.ELEMENT_NODE)
-            return false;
-
-         com.google.gwt.dom.client.Style style = Element.as(node).getStyle();
+         Element el = children.getItem(i);
+         com.google.gwt.dom.client.Style style = el.getStyle();
          
-         // The scroll helpers are hidden, and set to appear behind the grid.
-         return style.getZIndex() == "-1" && 
-                style.getOverflow() == "scroll" &&
-                style.getVisibility() == "hidden";
-      });
-      
-      for (Node match: matches)
-      {
-         // Don't show scrollbars on these elements
-         Element.as(match).getStyle().setOverflow(Overflow.HIDDEN);
+         boolean doesNotSparkJoy =
+               style.getZIndex() == "-1" &&
+               style.getOverflow() == "scroll" &&
+               style.getVisibility() == "hidden";
+         
+         if (doesNotSparkJoy)
+            style.setOverflow(com.google.gwt.dom.client.Style.Overflow.HIDDEN);
+         
       }
+      
    }
 }

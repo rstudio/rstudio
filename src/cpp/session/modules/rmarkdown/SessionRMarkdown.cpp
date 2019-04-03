@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/scope_exit.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -185,7 +184,7 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
    std::stringstream outputStream(output);
    while (std::getline(outputStream, renderLine))
    {
-      BOOST_FOREACH(const std::string& marker, completeMarkers)
+      for (const std::string& marker : completeMarkers)
       {
          if (boost::algorithm::starts_with(renderLine, marker))
          {
@@ -597,7 +596,7 @@ private:
       std::vector<std::string> outputLines;
       boost::algorithm::split(outputLines, output,
                               boost::algorithm::is_any_of("\n\r"));
-      BOOST_FOREACH(std::string& outputLine, outputLines)
+      for (std::string& outputLine : outputLines)
       {
          // if this is a Shiny render, check to see if Shiny started listening
          if (isShiny_)

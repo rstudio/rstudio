@@ -1944,11 +1944,11 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void createProjectFile(String projectFile,
-                                 ServerRequestCallback<Boolean> requestCallback)
+   public void createProjectFile(String projectDir,
+                                 ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.notNull(projectFile)));
+      params.set(0, new JSONString(StringUtil.notNull(projectDir)));
       sendRequest(RPC_SCOPE, CREATE_PROJECT_FILE, params, requestCallback);
    }
    

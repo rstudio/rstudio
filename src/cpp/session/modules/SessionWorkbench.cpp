@@ -1,7 +1,7 @@
 /*
  * SessionWorkbench.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -242,7 +242,7 @@ FilePath detectedTerminalPath()
       terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
       terminalPaths.push_back(FilePath("/usr/bin/xterm"));
 
-      BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
+      for (const FilePath& terminalPath : terminalPaths)
       {
          if (terminalPath.exists())
             return terminalPath;

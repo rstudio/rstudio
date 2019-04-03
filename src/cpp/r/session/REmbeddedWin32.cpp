@@ -1,7 +1,7 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,10 +57,10 @@ namespace session {
 
 namespace {
 
-void (*s_polledEventHandler)(void) = NULL;
+void (*s_polledEventHandler)(void) = nullptr;
 void rPolledEventCallback()
 {
-   if (s_polledEventHandler != NULL)
+   if (s_polledEventHandler != nullptr)
       s_polledEventHandler();
 }
 
@@ -170,7 +170,7 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // hooks
    pRP->ReadConsole = callbacks.readConsole;
-   pRP->WriteConsole = NULL;
+   pRP->WriteConsole = nullptr;
    pRP->WriteConsoleEx = callbacks.writeConsoleEx;
    pRP->CallBack = rPolledEventCallback;
    pRP->ShowMessage = showMessage;
@@ -257,13 +257,13 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
 
 void permanentlyDisablePolledEventHandler()
 {
-   s_polledEventHandler = NULL;
+   s_polledEventHandler = nullptr;
 }
 
 
 bool polledEventHandlerInitialized()
 {
-   return s_polledEventHandler != NULL;
+   return s_polledEventHandler != nullptr;
 }
 
 void processEvents()

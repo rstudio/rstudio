@@ -41,6 +41,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -71,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Fold
 public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
+                 HasContextMenuHandlers,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
                  EditEvent.Handler
@@ -502,7 +504,12 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, BlurEvent.getType());
    }
-   
+
+   public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
+   {
+      return addDomHandler(handler, ContextMenuEvent.getType());
+   }
+
    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
    {
       return addDomHandler(handler, MouseDownEvent.getType());
@@ -592,7 +599,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, AceSelectionChangedEvent.TYPE);
    }
-   
+
    public void forceResize()
    {
       editor_.getRenderer().onResize(true);

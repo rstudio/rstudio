@@ -467,7 +467,7 @@ public class TextEditingTarget implements
                                          docDisplay_, 
                                          events_, 
                                          this);
-      
+
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -1532,14 +1532,12 @@ public class TextEditingTarget implements
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
 
-      final String rTypeId = FileTypeRegistry.R.getTypeId();
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
                public void onValueChange(ValueChangeEvent<Boolean> evt)
                {
-                  if (fileType_.getTypeId().equals(rTypeId))
-                     view_.adaptToFileType(fileType_);
+                  view_.adaptToFileType(fileType_);
                }
             }
       ));
@@ -1571,9 +1569,8 @@ public class TextEditingTarget implements
          }
       }));
       
-      spelling_ = new TextEditingTargetSpelling(docDisplay_, 
-                                                docUpdateSentinel_);
-      
+      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_);
+
 
       // show/hide the debug toolbar when the dirty state changes. (note:
       // this doesn't yet handle the case where the user saves the document,
@@ -7285,7 +7282,9 @@ public class TextEditingTarget implements
          }
       });
    }
-   
+
+   public TextEditingTargetSpelling getSpellingTarget() { return this.spelling_; }
+
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
