@@ -13,3 +13,5 @@
 - Fix issue where text in prompts would fail to display on macOS Mojave (#4497)
 - Fix "Reload App" button for Shiny applications in Firefox on RStudio Server (#4552)
 - Fix issue where themes without names would not use the file name as a name instead (#4553)
+- Fix NULL in code preview on first attempt to import data (#4563)
+
