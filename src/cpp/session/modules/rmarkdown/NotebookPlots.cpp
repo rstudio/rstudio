@@ -1,7 +1,7 @@
 /*
  * NotebookPlots.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include "../SessionPlots.hpp"
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/Exec.hpp>
@@ -58,7 +57,7 @@ SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
    std::vector<std::string> plotFiles;
    if (r::sexp::fillVectorString(plotFilesSEXP, &plotFiles))
    {
-      BOOST_FOREACH(const std::string& plotFile, plotFiles)
+      for (const std::string& plotFile : plotFiles)
       {
          if (plotFile.empty())
             continue;
@@ -102,7 +101,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
             folderContents.end(),
             std::less<FilePath>());
    
-   BOOST_FOREACH(const FilePath& path, folderContents)
+   for (const FilePath& path : folderContents)
    {
       if (isPlotPath(path))
       {
@@ -295,7 +294,7 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    if (error)
       return error;
 
-   BOOST_FOREACH(const core::FilePath& file, folderContents)
+   for (const core::FilePath& file : folderContents)
    {
       // remove if it looks like a plot 
       if (isPlotPath(file)) 

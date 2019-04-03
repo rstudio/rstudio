@@ -27,7 +27,6 @@
 #include "session-config.h"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
@@ -230,7 +229,7 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 
 bool isWaitForMethodUri(const std::string& uri)
 {
-   BOOST_FOREACH(const std::string& methodName, s_waitForMethodNames)
+   for (const std::string& methodName : s_waitForMethodNames)
    {
       if (isMethod(uri, methodName))
          return true;

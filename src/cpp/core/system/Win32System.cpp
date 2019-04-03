@@ -29,7 +29,6 @@
 #include <tlhelp32.h>
 #include <VersionHelpers.h>
 
-#include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/system/windows_error.hpp>
 #include <boost/lexical_cast.hpp>
@@ -390,7 +389,7 @@ FilePath userHomePath(std::string envOverride)
    sources.push_back(std::make_pair("HOMEDRIVE",
                                     homedriveHomePath));
 
-   BOOST_FOREACH(const HomePathSource& source, sources)
+   for (const HomePathSource& source : sources)
    {
       FilePath homePath = source.second();
       if (!homePath.empty())
@@ -1058,7 +1057,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
                        ProcessTreeT *pOutTree)
 {
    // first pass, create the nodes in the tree
-   BOOST_FOREACH(const ProcessInfo& process, processes)
+   for (const ProcessInfo& process : processes)
    {
       ProcessTreeT::iterator iter = pOutTree->find(process.processId);
       if (iter == pOutTree->end())
@@ -1074,7 +1073,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
    }
 
    // second pass, link the nodes together
-   BOOST_FOREACH(ProcessTreeT::value_type& element, *pOutTree)
+   for (ProcessTreeT::value_type& element : *pOutTree)
    {
       DWORD parent = element.second->data->parentProcessId;
       ProcessTreeT::iterator iter = pOutTree->find(parent);
@@ -1091,7 +1090,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
 void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
                  std::vector<ProcessInfo> *pOutChildren)
 {
-   BOOST_FOREACH(const boost::shared_ptr<ProcessTreeNode>& child, node->children)
+   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
    {
       pOutChildren->push_back(*child->data.get());
       getChildren(child, pOutChildren);
@@ -1160,7 +1159,7 @@ Error terminateChildProcesses()
    if (error)
       return error;
 
-   BOOST_FOREACH(const ProcessInfo& process, childProcesses)
+   for (const ProcessInfo& process : childProcesses)
    {
       HANDLE hChildProc = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, process.processId);
       if (hChildProc)

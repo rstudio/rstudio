@@ -1,7 +1,7 @@
 /*
  * SessionRnwWeave.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "SessionRnwWeave.hpp"
 
 #include <boost/utility.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <boost/algorithm/string/split.hpp>
@@ -393,7 +392,7 @@ public:
    boost::shared_ptr<RnwWeave> findTypeIgnoreCase(const std::string& name)
                                                                         const
    {
-      BOOST_FOREACH(boost::shared_ptr<RnwWeave> weaveType, weaveTypes_)
+      for (boost::shared_ptr<RnwWeave> weaveType : weaveTypes_)
       {
          if (boost::algorithm::iequals(weaveType->name(), name))
             return weaveType;
@@ -416,7 +415,7 @@ const RnwWeaveRegistry& weaveRegistry()
 std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 {
    // first see if the file contains an rnw weave magic comment
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   for (const core::tex::TexMagicComment& mc : magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "rnw") &&
           boost::algorithm::iequals(mc.variable(), "weave"))
@@ -434,7 +433,7 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
 
 std::string driverForFile(const core::tex::TexMagicComments& magicComments)
 {
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   for (const core::tex::TexMagicComment& mc : magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "rnw") &&
           boost::algorithm::iequals(mc.variable(), "driver"))
@@ -585,8 +584,7 @@ core::json::Array supportedTypes()
 {
    // query for list of supported types
    json::Array array;
-   BOOST_FOREACH(boost::shared_ptr<RnwWeave> pRnwWeave,
-                 weaveRegistry().weaveTypes())
+   for (boost::shared_ptr<RnwWeave> pRnwWeave : weaveRegistry().weaveTypes())
    {
       json::Object object;
       object["name"] = pRnwWeave->name();
@@ -602,8 +600,7 @@ core::json::Array supportedTypes()
 void getTypesInstalledStatus(json::Object* pObj)
 {
    // query for status of all rnw weave types
-   BOOST_FOREACH(boost::shared_ptr<RnwWeave> pRnwWeave,
-                 weaveRegistry().weaveTypes())
+   for (boost::shared_ptr<RnwWeave> pRnwWeave : weaveRegistry().weaveTypes())
    {
       std::string n = string_utils::toLower(pRnwWeave->name() + "_installed");
       (*pObj)[n] = pRnwWeave->isInstalled();

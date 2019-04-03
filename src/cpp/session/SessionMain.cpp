@@ -633,7 +633,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error ;
-   BOOST_FOREACH(const json::JsonRpcMethod& method, rMethods)
+   for (const json::JsonRpcMethod& method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
    }

@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@
 #include <algorithm>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -797,7 +796,7 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
    if (error)
       return error ;
    
-   BOOST_FOREACH( FilePath& filePath, files )
+   for (FilePath& filePath : files)
    {
       if (isSourceDocument(filePath))
       {
@@ -867,7 +866,7 @@ Error removeAll()
    if (error)
       return error ;
    
-   BOOST_FOREACH( FilePath& filePath, files )
+   for (FilePath& filePath : files)
    {
       Error error = filePath.remove();
       if (error)

@@ -1,7 +1,7 @@
 /*
  * NotebookPlotReplay.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/StringUtils.hpp>
 #include <core/Exec.hpp>
@@ -61,7 +60,7 @@ public:
       // create the text to send to the process (it'll be read on stdin
       // inside R)
       std::string input;
-      BOOST_FOREACH(const FilePath snapshot, snapshotFiles)
+      for (const FilePath snapshot : snapshotFiles)
       {
          input.append(string_utils::utf8ToSystem(snapshot.absolutePath()));
          input.append("\n");
@@ -117,7 +116,7 @@ private:
       std::vector<std::string> paths;
       boost::algorithm::split(paths, output,
                               boost::algorithm::is_any_of("\n\r"));
-      BOOST_FOREACH(std::string& path, paths)
+      for (std::string& path : paths)
       {
          // ensure path exists
          FilePath png(string_utils::trimWhitespace(path));
@@ -225,7 +224,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 
    // look for snapshot files
    std::vector<FilePath> snapshotFiles;
-   BOOST_FOREACH(const std::string chunkId, chunkIds)
+   for (const std::string chunkId : chunkIds)
    {
       // find the storage location for this chunk output
       FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
@@ -241,7 +240,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
          continue;
       }
-      BOOST_FOREACH(const FilePath content, contents)
+      for (const FilePath content : contents)
       {
          if (content.hasExtensionLowerCase(kDisplayListExt))
             snapshotFiles.push_back(content);
@@ -303,7 +302,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   BOOST_FOREACH(const FilePath content, contents)
+   for (const FilePath content : contents)
    {
       if (content.hasExtensionLowerCase(kDisplayListExt))
          snapshotFiles.push_back(content);

@@ -20,7 +20,6 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/utility.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -160,7 +159,7 @@ boost::shared_ptr<ShinyFunction> findShinyFunction(std::string filename,
 {
    boost::shared_ptr<ShinyFunction> bestPsf;
    int bestSize = INT_MAX;
-   BOOST_FOREACH(boost::shared_ptr<ShinyFunction> psf, s_shinyFunctions)
+   for (boost::shared_ptr<ShinyFunction> psf : s_shinyFunctions)
    {
       if (psf->contains(filename, line) &&
           psf->getSize() < bestSize)
@@ -194,7 +193,7 @@ boost::shared_ptr<Breakpoint> breakpointFromJson(const json::Object& obj)
 std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)
 {
    std::vector<int> lines;
-   BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
+   for (boost::shared_ptr<Breakpoint> pbp : s_breakpoints)
    {
       if (sf.contains(pbp->path, pbp->lineNumber) &&
           pbp->type == TYPE_TOPLEVEL)
@@ -468,7 +467,7 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
 
    // Find all the lines in the file that have breakpoints
    std::vector<int> lines;
-   BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
+   for (boost::shared_ptr<Breakpoint> pbp : s_breakpoints)
    {
       if (module_context::resolveAliasedPath(pbp->path) == filePath)
       {
@@ -541,7 +540,7 @@ Error initBreakpoints()
       {
          json::Array breakpointArray = jsonBreakpointArray.get_array();
          s_breakpoints.clear();
-         BOOST_FOREACH(json::Value bp, breakpointArray)
+         for (json::Value bp : breakpointArray)
          {
             if (json::isType<core::json::Object>(bp))
             {
@@ -563,7 +562,7 @@ Error updateBreakpoints(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   BOOST_FOREACH(json::Value bp, breakpointArr)
+   for (json::Value bp : breakpointArr)
    {
       boost::shared_ptr<Breakpoint> breakpoint
             (breakpointFromJson(bp.get_obj()));

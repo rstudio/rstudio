@@ -1,7 +1,7 @@
 /*
  * SessionCompilePdf.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include <set>
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/FilePath.hpp>
@@ -273,7 +272,7 @@ void showLogEntries(const core::tex::LogEntries& logEntries,
                                              rnw_concordance::Concordances())
 {
    json::Array logEntriesJson;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   for (const core::tex::LogEntry& logEntry : logEntries)
    {
       using namespace tex::rnw_concordance;
       core::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
@@ -289,7 +288,7 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
       return;
 
    std::string output = "\n";
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   for (const core::tex::LogEntry& logEntry : logEntries)
    {
       switch(logEntry.type())
       {
@@ -399,7 +398,7 @@ std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
 
    // count error types
    int errors = 0, warnings = 0, badBoxes = 0;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   for (const core::tex::LogEntry& logEntry : logEntries)
    {
       if (logEntry.type() == core::tex::LogEntry::Error)
          errors++;
@@ -475,7 +474,7 @@ public:
    void preserveLogReferencedFiles(
                const core::tex::LogEntries& logEntries)
    {
-      BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+      for (const core::tex::LogEntry& logEntry : logEntries)
       {
          logRefFiles_.insert(logEntry.filePath());
       }

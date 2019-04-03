@@ -1,7 +1,7 @@
 /*
  * HunspellSpellingEngine.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include <core/spelling/HunspellSpellingEngine.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Error.hpp>
@@ -243,7 +242,7 @@ private:
       // parse lines for words
       bool added;
       std::string word, affix, example;
-      BOOST_FOREACH(const std::string& line, lines)
+      for (const std::string& line : lines)
       {
          if (parseDicDeltaLine(line, &word, &affix))
          {
@@ -290,7 +289,7 @@ public:
       int ns = pHunspell_->suggest(&wlst,encoded.c_str());
       copyAndFreeHunspellVector(pSug,wlst,ns);
 
-      BOOST_FOREACH(std::string& sug, *pSug)
+      for (std::string& sug : *pSug)
       {
          error = iconvstrFunc_(sug, encoding_, "UTF-8", true, &sug);
          if (error)
@@ -417,7 +416,7 @@ private:
          {
             currentLangId_ = langId;
             currentCustomDicts_ = dictManager_.custom().dictionaries();
-            BOOST_FOREACH(const std::string& dict, currentCustomDicts_)
+            for (const std::string& dict : currentCustomDicts_)
             {
                bool added;
                FilePath dicPath = dictManager_.custom().dictionaryPath(dict);

@@ -24,7 +24,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
@@ -358,7 +357,7 @@ void listEnvironment(SEXP env,
    }
 
    // populate pVariables
-   BOOST_FOREACH(const std::string& var, vars)
+   for (const std::string& var : vars)
    {
       SEXP varSEXP = R_NilValue;
       // Merely calling Rf_findVar on an active binding will fire the binding.
@@ -1596,7 +1595,7 @@ void examineSymbolUsage(
    }
    
    // fill output
-   BOOST_FOREACH(FormalInformation& info, pInfo->formals())
+   for (FormalInformation& info : pInfo->formals())
    {
       const std::string& name = info.name();
       info.setIsUsed(usage.symbolsUsed.contains(name.c_str()));

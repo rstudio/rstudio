@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
@@ -560,7 +559,7 @@ std::vector<std::string> UserSettings::spellingCustomDictionaries() const
 {
    json::Array dictsJson = readUiPref<json::Array>(pSpellingCustomDicts_);
    std::vector<std::string> dicts;
-   BOOST_FOREACH(const json::Value& dictJson, dictsJson)
+   for (const json::Value& dictJson : dictsJson)
    {
       if (json::isType<std::string>(dictJson))
          dicts.push_back(dictJson.get_str());
@@ -751,7 +750,7 @@ std::vector<std::string> UserSettings::terminalBusyWhitelist() const
 {
    json::Array whitelistJson = readUiPref<json::Array>(pTerminalBusyWhitelist_);
    std::vector<std::string> whitelist;
-   BOOST_FOREACH(const json::Value& exeJson, whitelistJson)
+   for (const json::Value& exeJson : whitelistJson)
    {
       if (json::isType<std::string>(exeJson))
          whitelist.push_back(exeJson.get_str());

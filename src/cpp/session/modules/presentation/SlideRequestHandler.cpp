@@ -1,7 +1,7 @@
 /*
  * SlideRequestHandler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <iostream>
 
 #include <boost/utility.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -663,7 +662,7 @@ void fontVars(const SlideDeck& slideDeck,
       std::vector<std::string> fontImports =
             slideDeck.slides().at(0).fieldValues("font-import");
 
-      BOOST_FOREACH(const std::string& fontImport, fontImports)
+      for (const std::string& fontImport : fontImports)
       {
          ostr << "@import url('" << fontImport << "');" << std::endl;
       }
@@ -803,7 +802,7 @@ void loadSlideDeckDependencies(const SlideDeck& slideDeck)
                            boost::algorithm::is_any_of(","));
 
    // load any dependencies
-   BOOST_FOREACH(std::string pkg, depends)
+   for (std::string pkg : depends)
    {
       boost::algorithm::trim(pkg);
 

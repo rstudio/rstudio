@@ -20,7 +20,6 @@
 #include <sstream>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -960,7 +959,7 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> sourceKeys;
-   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> pDoc, docs)
+   for (boost::shared_ptr<source_database::SourceDocument> pDoc : docs)
    {
       std::string key = pDoc->getProperty("cacheKey");
       if (!key.empty())
@@ -981,7 +980,7 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> cacheKeys;
-   BOOST_FOREACH(const FilePath& cacheFile, cacheFiles)
+   for (const FilePath& cacheFile : cacheFiles)
    {
       cacheKeys.push_back(cacheFile.stem());
    }
@@ -996,7 +995,7 @@ void onDeferredInit(bool newSession)
                        std::back_inserter(orphanKeys));
 
    // remove each key no longer bound to a source file
-   BOOST_FOREACH(const std::string& orphanKey, orphanKeys)
+   for (const std::string& orphanKey : orphanKeys)
    {
       error = cache.complete(orphanKey + ".Rdata").removeIfExists();
       if (error)

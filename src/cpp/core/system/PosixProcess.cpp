@@ -1,7 +1,7 @@
 /*
  * PosixProcess.cpp
  *
- * Copyright (C) 2017-18 by RStudio, Inc.
+ * Copyright (C) 2017-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
@@ -91,7 +90,7 @@ struct AsioProcessSupervisor::Impl
       END_LOCK_MUTEX
 
       // call terminate on all of our children
-      BOOST_FOREACH(const boost::shared_ptr<AsioAsyncChildProcess>& pChild, childCopies)
+      for (const boost::shared_ptr<AsioAsyncChildProcess>& pChild : childCopies)
       {
          if (killChildProcs)
          {

@@ -1,7 +1,7 @@
 /*
  * PresentationLog.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 #include "PresentationLog.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -96,13 +95,13 @@ void Log::onSlideDeckChanged(const SlideDeck& slideDeck)
       slideTypes_.push_back(slides[i].type());
 
       const std::vector<Command>& commands = slides[i].commands();
-      BOOST_FOREACH(const Command& command, commands)
+      for (const Command& command : commands)
       {
          recordCommand(i, command);
       }
 
       const std::vector<AtCommand>& atCommands = slides[i].atCommands();
-      BOOST_FOREACH(const AtCommand& atCommand, atCommands)
+      for (const AtCommand& atCommand : atCommands)
       {
          recordCommand(i, atCommand.command());
       }

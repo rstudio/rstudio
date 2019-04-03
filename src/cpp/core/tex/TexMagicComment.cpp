@@ -1,7 +1,7 @@
 /*
  * TexMagicComment.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/regex.hpp>
@@ -38,7 +37,7 @@ Error parseMagicComments(const FilePath& texFile,
       return error;
 
    boost::regex mcRegex("%{1,2}\\s*!(\\w+)\\s+(\\w+)\\s*=\\s*(.*)$");
-   BOOST_FOREACH(std::string line, lines)
+   for (std::string line : lines)
    {
       boost::algorithm::trim(line);
       if (line.empty())

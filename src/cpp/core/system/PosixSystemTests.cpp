@@ -15,8 +15,6 @@
 
 #ifndef _WIN32
 
-#include <boost/foreach.hpp>
-
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
 #include <sys/wait.h>
@@ -71,7 +69,7 @@ test_context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {
@@ -203,7 +201,7 @@ test_context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {

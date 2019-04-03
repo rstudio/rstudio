@@ -1,7 +1,7 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "SessionDependencies.hpp"
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
@@ -76,7 +75,7 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    re.assign(name + "_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
    */
 
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       boost::smatch match;
       std::string filename = child.filename();
@@ -164,7 +163,7 @@ std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
 json::Array dependenciesToJson(const std::vector<Dependency>& deps)
 {
    json::Array depsJson;
-   BOOST_FOREACH(const Dependency& dep, deps)
+   for (const Dependency& dep : deps)
    {
       json::Object depJson;
       depJson["type"] = dep.type;
@@ -220,7 +219,7 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
    // build the list of unsatisifed dependencies
    using namespace module_context;
    std::vector<Dependency> unsatisfiedDeps;
-   BOOST_FOREACH(Dependency& dep, deps)
+   for (Dependency& dep : deps)
    {
       switch(dep.type)
       {
@@ -325,7 +324,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    std::vector<std::string> cranPackages;
    std::vector<std::string> cranSourcePackages;
    std::vector<std::string> embeddedPackages;
-   BOOST_FOREACH(const Dependency& dep, deps)
+   for (const Dependency& dep : deps)
    {
       switch(dep.type)
       {
@@ -360,7 +359,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
              "repos = '"+ module_context::CRANReposURL() + "', ";
       cmd += "type = 'source');";
    }
-   BOOST_FOREACH(const std::string& pkg, embeddedPackages)
+   for (const std::string& pkg : embeddedPackages)
    {
       cmd += "utils::install.packages('" + pkg + "', "
                                       "repos = NULL, type = 'source');";

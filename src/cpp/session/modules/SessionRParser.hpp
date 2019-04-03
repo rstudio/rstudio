@@ -42,7 +42,6 @@
 #include <boost/bind.hpp>
 #include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Macros.hpp>
@@ -864,7 +863,7 @@ public:
            ++it)
       {
          const std::string& symbol = it->first;
-         BOOST_FOREACH(const Position& position, it->second)
+         for (const Position& position : it->second)
          {
             DEBUG("-- Checking for symbol '" << symbol << "' " << position.toString());
             if (!symbolHasDefinitionInTree(symbol, position) &&
@@ -886,7 +885,7 @@ public:
    
    bool isSymbolUsedInChildNode(const std::string& symbolName)
    {
-      BOOST_FOREACH(const boost::shared_ptr<ParseNode>& pChild, children_)
+      for (const boost::shared_ptr<ParseNode>& pChild : children_)
       {
          if (pChild->getReferencedSymbols().count(symbolName))
             return true;
@@ -947,7 +946,7 @@ public:
          DEBUG("-- '" << it->first << "'");
          if (nameLower == boost::algorithm::to_lower_copy(it->first))
          {
-            BOOST_FOREACH(const Position& position, it->second)
+            for (const Position& position : it->second)
             {
                if (position < item.position)
                {

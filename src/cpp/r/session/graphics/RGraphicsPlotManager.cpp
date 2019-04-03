@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManager.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -688,7 +687,7 @@ Error copyDirectory(const FilePath& srcDir, const FilePath& targetDir)
    error = srcDir.children(&srcFiles);
    if (error)
       return error;
-   BOOST_FOREACH(const FilePath& srcFile, srcFiles)
+   for (const FilePath& srcFile : srcFiles)
    {
       FilePath targetFile = targetDir.complete(srcFile.filename());
       Error error = srcFile.copy(targetFile);

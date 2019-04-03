@@ -1,7 +1,7 @@
 /*
  * Connection.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 
 #include "Connection.hpp"
-
-#include <boost/foreach.hpp>
 
 #include <core/Base64.hpp>
 #include <core/StringUtils.hpp>
@@ -117,14 +115,14 @@ json::Object connectionJson(const Connection& connection)
 {
    // form the action array
    json::Array actions;
-   BOOST_FOREACH(const ConnectionAction& action, connection.actions)
+   for (const ConnectionAction& action : connection.actions)
    {
       actions.push_back(connectionActionJson(action));
    }
 
    // form the object type array
    json::Array objectTypes;
-   BOOST_FOREACH(const ConnectionObjectType& type, connection.objectTypes)
+   for (const ConnectionObjectType& type : connection.objectTypes)
    {
       objectTypes.push_back(connectionObjectTypeJson(type));
    }
@@ -191,7 +189,7 @@ Error connectionFromJson(const json::Object& connectionJson,
             "last_used", &(pConnection->lastUsed));
 
    // read each action
-   BOOST_FOREACH(const json::Value& action, actions) 
+   for (const json::Value& action : actions)
    {
       if (action.type() != json::ObjectType)
          continue;
@@ -208,7 +206,7 @@ Error connectionFromJson(const json::Object& connectionJson,
    }
 
    // read each object type
-   BOOST_FOREACH(const json::Value& objectType, objectTypes) 
+   for (const json::Value& objectType : objectTypes)
    {
       if (objectType.type() != json::ObjectType)
          continue;

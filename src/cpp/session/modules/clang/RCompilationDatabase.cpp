@@ -140,7 +140,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
 
 std::string extractStdArg(const std::vector<std::string>& args)
 {
-   BOOST_FOREACH(const std::string& arg, args)
+   for (const std::string& arg : args)
    {
       if (boost::algorithm::starts_with(arg, "-std="))
          return arg;
@@ -190,7 +190,7 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
 
    // find the line with the compilation and add it's args
    boost::regex re("-c [^\\.]+\\.c\\w* -o");
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (regex_utils::search(line, re))
       {
@@ -233,7 +233,7 @@ bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
          return false;
       }
 
-      BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
+      for (const FilePath& srcFile : allSrcFiles)
       {
          std::string ext = srcFile.extensionLowerCase();
          if (ext == ".cpp" || ext == ".cc")
@@ -334,7 +334,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (!compileArgs.empty())
    {
       // do path substitutions
-      BOOST_FOREACH(std::string arg, compileArgs)
+      for (std::string arg : compileArgs)
       {
          // do path substitutions
          boost::algorithm::replace_first(
@@ -477,7 +477,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 
    packageCompilationConfig_.args.clear();
-   BOOST_FOREACH(const json::Value& argJson, argsJson)
+   for (const json::Value& argJson : argsJson)
    {
       if (json::isType<std::string>(argJson))
          packageCompilationConfig_.args.push_back(argJson.get_str());
@@ -707,7 +707,7 @@ bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 
    // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
-   BOOST_FOREACH(const std::string& arg, config.args)
+   for (const std::string& arg : config.args)
    {
       if (boost::algorithm::contains(arg, "RcppNT2"))
          return false;

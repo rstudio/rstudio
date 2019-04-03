@@ -19,7 +19,6 @@
 #include <vector>
 
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -165,7 +164,7 @@ bool LibClang::load(EmbeddedLibrary embedded,
    std::vector<std::string> sysVersions = systemClangVersions();
    versions.insert(versions.end(), sysVersions.begin(), sysVersions.end());
 
-   BOOST_FOREACH(const std::string& version, versions)
+   for (const std::string& version : versions)
    {
       FilePath versionPath(version);
       ostr << versionPath << std::endl;
@@ -584,7 +583,7 @@ LibraryVersion LibClang::version() const
    std::vector<boost::regex> patterns;
    patterns.push_back(boost::regex("LLVM " + verRegex));
    patterns.push_back(boost::regex(verRegex));
-   BOOST_FOREACH(boost::regex re, patterns)
+   for (boost::regex re : patterns)
    {
       boost::smatch match;
       if (regex_utils::search(versionString, match, re))

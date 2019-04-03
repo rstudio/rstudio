@@ -1,7 +1,7 @@
 /*
  * RProjectFile.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include <iomanip>
 #include <ostream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
@@ -337,7 +336,7 @@ Error findProjectFile(FilePath filePath,
    for (; filePath.exists(); filePath = filePath.parent())
    {
       // bail if we've hit our anchor
-      BOOST_FOREACH(const FilePath& anchorPath, anchorPaths)
+      for (const FilePath& anchorPath : anchorPaths)
       {
          if (filePath == anchorPath)
             return fileNotFoundError(ERROR_LOCATION);

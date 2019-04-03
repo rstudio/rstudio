@@ -35,8 +35,6 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include <boost/foreach.hpp>
-
 #include "EnvironmentUtils.hpp"
 
 using namespace rstudio::core;

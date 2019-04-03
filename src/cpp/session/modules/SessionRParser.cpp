@@ -141,7 +141,7 @@ public:
    NSEDatabase()
    {
       // Add in a set of 'known' NSE-performing functinos.
-      BOOST_FOREACH(const std::string& name, r::sexp::nsePrimitives())
+      for (const std::string& name : r::sexp::nsePrimitives())
       {
          addNseFunction(name, "base");
       }
@@ -286,7 +286,7 @@ std::set<std::wstring> makeWideNsePrimitives()
    std::set<std::wstring> wide;
    const std::set<std::string>& nsePrimitives = r::sexp::nsePrimitives();
    
-   BOOST_FOREACH(const std::string& primitive, nsePrimitives)
+   for (const std::string& primitive : nsePrimitives)
    {
       wide.insert(string_utils::utf8ToWide(primitive));
    }
@@ -1184,9 +1184,9 @@ public:
        * 1. Identify perfect matches in the set of formals to search.
        */
       std::vector<std::size_t> matchedIndices;
-      BOOST_FOREACH(const std::string& argName, userSuppliedArgNames)
+      for (const std::string& argName : userSuppliedArgNames)
       {
-         BOOST_FOREACH(std::size_t index, formalIndices)
+         for (std::size_t index : formalIndices)
          {
             const std::string& formalName = formalNames[index];
             if (argName == formalName)
@@ -1211,9 +1211,9 @@ public:
        * 2. Identify prefix matches in the set of remaining formals.
        */
       std::vector<std::pair<std::string, std::string> > prefixMatchedPairs;
-      BOOST_FOREACH(const std::string& userSuppliedArgName, userSuppliedArgNames)
+      for (const std::string& userSuppliedArgName : userSuppliedArgNames)
       {
-         BOOST_FOREACH(std::size_t index, formalIndices)
+         for (std::size_t index : formalIndices)
          {
             const std::string& formalName = formalNames[index];
             if (boost::algorithm::starts_with(formalName, userSuppliedArgName))
@@ -1239,7 +1239,7 @@ public:
        * 3. Match other formals positionally.
        */
       std::size_t index = 0;
-      BOOST_FOREACH(const std::string& argument, unnamedArguments)
+      for (const std::string& argument : unnamedArguments)
       {
          if (index == formalIndices.size())
             break;
@@ -1324,7 +1324,7 @@ public:
       if (cursor.contentEquals(L"trace"))
       {
          std::vector<FormalInformation>& formals = pCall->functionInfo().formals();
-         BOOST_FOREACH(FormalInformation& formal, formals)
+         for (FormalInformation& formal : formals)
          {
             formal.setMissingnessHandled(true);
          }

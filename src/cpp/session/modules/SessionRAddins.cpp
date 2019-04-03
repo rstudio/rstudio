@@ -1,7 +1,7 @@
 /*
  * SessionRAddins.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@
 #include <core/text/DcfParser.hpp>
 
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/system/error_code.hpp>
@@ -253,7 +252,7 @@ public:
    {
       json::Object object;
       
-      BOOST_FOREACH(const std::string& key, addins_ | boost::adaptors::map_keys)
+      for (const std::string& key : addins_ | boost::adaptors::map_keys)
       {
          object[key] = addins_.at(key).toJson();
       }
@@ -359,7 +358,7 @@ class AddinWorker : public ppe::Worker
 
       // handle pending continuations
       json::Object registryJson = addinRegistry().toJson();
-      BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
+      for (json::JsonRpcFunctionContinuation continuation : continuations_)
       {
          json::JsonRpcResponse response;
          response.setResult(registryJson);

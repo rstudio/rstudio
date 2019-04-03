@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -468,7 +468,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    do
    {
       status.update(cursor);
-      BOOST_FOREACH(const Indexer& indexer, indexers)
+      for (const Indexer& indexer : indexers)
       {
          indexer(cursor, status, this);
       }

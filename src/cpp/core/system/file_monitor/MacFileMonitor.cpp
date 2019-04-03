@@ -17,7 +17,6 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
