@@ -1226,6 +1226,31 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 #endif
 }
 
+#ifdef __APPLE__
+
+FilePath currentWorkingDirMac(PidType pid)
+{
+   struct proc_vnodepathinfo info;
+
+   int status = ::proc_pidinfo(
+            pid, PROC_PIDVNODEPATHINFO, 0,
+            &info, PROC_PIDVNODEPATHINFO_SIZE);
+
+   if (status <= 0) {
+
+      Error error;
+      error.addProperty("reason", "failed to read current working directory");
+      error.addProperty("pid", pid);
+      LOG_ERROR(error);
+
+      return FilePath();
+   }
+
+   return FilePath(info.pvi_cdir.vip_path);
+}
+
+#endif // __APPLE__
+
 FilePath currentWorkingDirViaLsof(PidType pid)
 {
    // lsof -a -p PID -d cwd -Fn
@@ -1296,7 +1321,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 FilePath currentWorkingDir(PidType pid)
 {
 #ifdef __APPLE__
-   return currentWorkingDirViaLsof(pid);
+   return currentWorkingDirMac(pid);
 #else
    return currentWorkingDirViaProcFs(pid);
 #endif
