@@ -29,6 +29,7 @@ sudo apt-get update
 sudo apt-get -y install \
   ant \
   bzip2 \
+  clang \
   clang-4.0 \
   cmake \
   debsigs \
@@ -62,8 +63,14 @@ sudo apt-get -y install \
   wget \
   zlib1g
 
-sudo update-alternatives --set clang /usr/lib/llvm-4.0/bin/clang
-sudo update-alternatives --set clang++ /usr/lib/llvm-4.0/bin/clang++
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-4.0 100
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-4.0 100
+sudo update-alternatives --install /usr/bin/clang-apply-replacements clang-apply-replacements /usr/bin/clang-apply-replacements-4.0 100
+sudo update-alternatives --install /usr/bin/clang-check clang-check /usr/bin/clang-check-4.0 100
+sudo update-alternatives --install /usr/bin/clang-query clang-query /usr/bin/clang-query-4.0 100
+sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-4.0 100
+sudo update-alternatives --install /usr/bin/scan-build scan-build /usr/bin/scan-build-4.0 100
+sudo update-alternatives --install /usr/bin/scan-view scan-view /usr/bin/scan-view-4.0 100
 
 # overlay
 if [ -e install-overlay-common ]
