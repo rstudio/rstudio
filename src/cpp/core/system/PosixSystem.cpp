@@ -1235,6 +1235,10 @@ FilePath currentWorkingDirMac(PidType pid)
 
 #endif // __APPLE__
 
+
+#ifndef __APPLE__
+
+// NOTE: disabled on macOS; prefer using 'currentWorkingDirMac()'
 FilePath currentWorkingDirViaLsof(PidType pid)
 {
    // lsof -a -p PID -d cwd -Fn
@@ -1280,7 +1284,6 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
-#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid)
 {
    core::FilePath procFsPath("/proc");

@@ -273,13 +273,19 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid);
 std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid);
 #endif // !__APPLE__
 
+#ifdef __APPLE__
+// Detect current working directory via Mac-only APIs.
+// Note that this will only work reliably for child processes.
+FilePath currentWorkingDirMac(PidType pid);
+#endif
+
+#ifndef __APPLE__
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
 FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
 // empty FilePath if unable to determine.
-#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid);
 #endif // !__APPLE__
 
