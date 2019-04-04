@@ -156,7 +156,31 @@ test_context("PosixSystemTests")
       }
    }
 
+   test_that("Current working directory determined correctly with Mac method")
+   {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+      pid_t pid = fork();
+      expect_false(pid == -1);
 
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDirMac(pid);
+         expect_false(cwd.empty());
+         expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, nullptr, 0);
+      }
+
+   }
 
 #else
 
@@ -264,6 +288,8 @@ test_context("PosixSystemTests")
       }
    }
 
+#ifndef __APPLE__
+
    test_that("Current working directory determined correctly with lsof method")
    {
       FilePath emptyPath;
@@ -289,7 +315,6 @@ test_context("PosixSystemTests")
       }
    }
 
-#ifndef __APPLE__
    test_that("Current working directory determined correctly with procfs method")
    {
       FilePath emptyPath;
