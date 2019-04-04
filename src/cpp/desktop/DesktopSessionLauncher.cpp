@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -387,7 +387,11 @@ void SessionLauncher::onLaunchError(QString message)
       errorMsg.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
       errorMsg.exec();
    }
-  qApp->exit(EXIT_FAILURE);
+
+   if (pMainWindow_)
+      pMainWindow_->quit();
+   else
+      qApp->exit(EXIT_FAILURE);
 }
 
 QString SessionLauncher::collectAbendLogMessage() const
