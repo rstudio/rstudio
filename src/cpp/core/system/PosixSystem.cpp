@@ -1225,6 +1225,41 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 #endif
 }
 
+#ifdef __APPLE__
+
+FilePath currentWorkingDirMac(PidType pid)
+{
+   struct proc_vnodepathinfo info;
+
+   int size = ::proc_pidinfo(
+            pid, PROC_PIDVNODEPATHINFO, 0,
+            &info, PROC_PIDVNODEPATHINFO_SIZE);
+
+   // check for explicit failure
+   if (size == -1)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      return FilePath();
+   }
+
+   // check for failure to write all required bytes
+   if (size != PROC_PIDVNODEPATHINFO_SIZE)
+   {
+      using namespace boost::system::errc;
+      LOG_ERROR(systemError(not_enough_memory, ERROR_LOCATION));
+      return FilePath();
+   }
+
+   // ok, we can return the path
+   return FilePath(info.pvi_cdir.vip_path);
+}
+
+#endif // __APPLE__
+
+
+#ifndef __APPLE__
+
+// NOTE: disabled on macOS; prefer using 'currentWorkingDirMac()'
 FilePath currentWorkingDirViaLsof(PidType pid)
 {
    // lsof -a -p PID -d cwd -Fn
@@ -1270,7 +1305,6 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
-#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid)
 {
    core::FilePath procFsPath("/proc");
@@ -1295,7 +1329,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 FilePath currentWorkingDir(PidType pid)
 {
 #ifdef __APPLE__
-   return currentWorkingDirViaLsof(pid);
+   return currentWorkingDirMac(pid);
 #else
    return currentWorkingDirViaProcFs(pid);
 #endif
