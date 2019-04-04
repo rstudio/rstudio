@@ -10,6 +10,7 @@ systems. Specific version requirements for various components include:
 - CMake 3.4.3 or newer
 - Boost 1.69
 - Qt 5.12.1 [Required only for Desktop]
+- patchelf 0.9 [Required only for Desktop]
 - some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
   build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.12.1
 
