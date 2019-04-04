@@ -1216,20 +1216,26 @@ FilePath currentWorkingDirMac(PidType pid)
 {
    struct proc_vnodepathinfo info;
 
-   int status = ::proc_pidinfo(
+   int size = ::proc_pidinfo(
             pid, PROC_PIDVNODEPATHINFO, 0,
             &info, PROC_PIDVNODEPATHINFO_SIZE);
 
-   if (status <= 0) {
-
-      Error error;
-      error.addProperty("reason", "failed to read current working directory");
-      error.addProperty("pid", pid);
-      LOG_ERROR(error);
-
+   // check for explicit failure
+   if (size == -1)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
       return FilePath();
    }
 
+   // check for failure to write all required bytes
+   if (size != PROC_PIDVNODEPATHINFO_SIZE)
+   {
+      using namespace boost::system::errc;
+      LOG_ERROR(systemError(not_enough_memory, ERROR_LOCATION));
+      return FilePath();
+   }
+
+   // ok, we can return the path
    return FilePath(info.pvi_cdir.vip_path);
 }
 
