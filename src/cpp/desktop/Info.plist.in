@@ -255,5 +255,25 @@
   <true/>
   <key>OSAScriptingDefinition</key>
   <string>RStudio.sdef</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>R wants to run AppleScript.</string>
+  <key>NSBluetoothPeripheralUsageDescription</key>
+  <string>R wants to access bluetooth.</string>
+  <key>NSCalendarsUsageDescription</key>
+  <string>R wants to access calendars.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>R wants to access the camera.</string>
+  <key>NSContactsUsageDescription</key>
+  <string>R wants to access contacts.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>R wants to access location information.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>R wants to access the microphone.</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>R wants write access to the photo library.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>R wants to access the photo library.</string>
+  <key>NSRemindersUsageDescription</key>
+  <string>R wants to access the reminders.</string>
 </dict>
 </plist>
