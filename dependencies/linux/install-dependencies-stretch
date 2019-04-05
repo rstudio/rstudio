@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 #
-# install-dependencies-bionic
+# install-dependencies-stretch
 #
 # Copyright (C) 2009-19 by RStudio, Inc.
 #
@@ -18,66 +17,55 @@
 set -e
 
 platform_codename=$(lsb_release -sc)
-if [ $platform_codename != "bionic" ] ; then
-    echo Error: This script is only for use on Ubuntu Bionic
+if [ $platform_codename != "stretch" ] ; then
+    echo Error: This script is only for use on Debian Stretch
     exit 1
 fi
 
-echo Installing RStudio dependencies for Ubuntu Bionic
+echo Installing RStudio dependencies for Debian Stretch
 
 sudo apt-get update
 
 sudo apt-get -y install \
   ant \
-  build-essential \
+  bzip2 \
   clang \
+  clang-4.0 \
   cmake \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
+  gcc \
   gnupg1 \
   libacl1-dev \
+  libacl1-dev \
   libattr1-dev \
-  libbz2-dev \
+  libboost-all-dev \
   libcap-dev \
-  libclang-6.0-dev \
-  libclang-dev \
+  libcap-dev \
   libcurl4-openssl-dev \
-  libegl1-mesa \
-  libfuse2 \
-  libgl1-mesa-dev \
-  libgtk-3-0 \
-  libpam-dev \
-  libpango1.0-dev \
-  libssl-dev \
+  libffi-dev \
+  libglib2.0-dev \
+  libpam0g-dev \
+  libpango-1.0-0 \
+  libssl1.0-dev \
   libuser1-dev \
-  libxslt1-dev \
+  libxml-commons-external-java \
   lsof \
+  make \
+  mesa-common-dev \
+  openjdk-8-jdk  \
   patchelf \
-  pkg-config \
   python \
+  r-base \
   rrdtool \
-  software-properties-common \
-  unzip \
   uuid-dev \
   wget \
-  zlib1g-dev
+  zlib1g
 
-# Java 8 (not in official repo for bionic)
-sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo apt-get update
-sudo apt-get -y install openjdk-8-jdk
-sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-
-# R
-if ! [ -x "$(command -v R)" ]; then
-  sudo apt-get -y  install apt-transport-https software-properties-common
-  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-  sudo add-apt-repository -y 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
-  sudo apt update
-  sudo apt-get -y install r-base
-fi
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-4.0 100
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-4.0 100
 
 # overlay
 if [ -e install-overlay-common ]

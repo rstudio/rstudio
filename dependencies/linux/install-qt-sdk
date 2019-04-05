@@ -3,7 +3,7 @@
 #
 # install-qt-sdk
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,7 @@ then
          echo "Installing Qt, this will take a while."
          echo " - Ignore warnings about QtAccount credentials and/or XDG_RUNTIME_DIR."
          echo " - Do not click on any Qt setup dialogs, it is controlled by a script."
-         /tmp/$QT_SDK_BINARY --script $QT_SCRIPT
+         /tmp/$QT_SDK_BINARY --script $QT_SCRIPT || true
          ((retryCounter++))
       done
       rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
