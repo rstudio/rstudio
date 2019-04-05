@@ -1,7 +1,7 @@
 /*
  * Json.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/type_traits/TypeTraits.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
@@ -34,6 +35,17 @@
 
 #include <core/json/rapidjson/document.h>
 #include <core/json/rapidjson/rapidjson.h>
+
+namespace RSTUDIO_BOOST_NAMESPACE {
+   namespace system {
+      template <>
+      struct is_error_code_enum<rapidjson::ParseErrorCode>
+      {
+         static const bool value = true;
+      };
+
+   } // namespace system
+} // namespace boost
 
 namespace rstudio {
 namespace core {
@@ -280,6 +292,8 @@ public:
    {
       return !get_impl().Parse(input.c_str()).HasParseError();
    }
+
+   Error parse(const std::string& input, const ErrorLocation& location);
 
    DocumentType& get_impl() const { return *pValue_; }
 
@@ -905,6 +919,9 @@ bool fillVectorInt(const Array& array, std::vector<int>* pVector);
 bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
 
 bool parse(const std::string& input, Value* pValue);
+Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
+Error parseAndValidate(const std::string& input, const std::string& schema, 
+      const ErrorLocation& location, Value* pValue);
 
 void write(const Value& value, std::ostream& os);
 void writeFormatted(const Value& value, std::ostream& os);
@@ -912,9 +929,21 @@ void writeFormatted(const Value& value, std::ostream& os);
 std::string write(const Value& value);
 std::string writeFormatted(const Value& value);
 
+const boost::system::error_category& jsonParseCategory();
+
 } // namespace json
 } // namespace core
 } // namespace rstudio
+
+namespace rapidjson {
+   inline boost::system::error_code make_error_code(ParseErrorCode e) {
+      return boost::system::error_code(e, rstudio::core::json::jsonParseCategory());
+   }
+
+   inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
+      return boost::system::error_condition(e, rstudio::core::json::jsonParseCategory());
+   }
+}
 
 #endif // CORE_JSON_HPP
 

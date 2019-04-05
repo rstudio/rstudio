@@ -1,7 +1,7 @@
 /*
  * Json.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,8 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
+#include <core/json/rapidjson/error/en.h>
+#include <core/json/rapidjson/schema.h>
 
 namespace rstudio {
 namespace core {
@@ -100,6 +102,18 @@ template <>
 std::string Value::get_value<std::string>() const
 {
    return std::string(get_impl().GetString(), get_impl().GetStringLength());
+}
+
+Error Value::parse(const std::string& input, const ErrorLocation& location)
+{
+   rapidjson::ParseResult result = get_impl().Parse(input.c_str());
+   if (result.IsError())
+   {
+      Error error(result.Code(), location);
+      error.addProperty("offset", result.Offset());
+      return error;
+   }
+   return Success();
 }
 
 Object toJsonObject(const std::vector<std::pair<std::string,std::string> >& options)
@@ -245,6 +259,49 @@ bool parse(const std::string& input, Value* pValue)
    return pValue->parse(input);
 }
 
+Error parse(const std::string& input, const ErrorLocation& location, Value* pValue)
+{
+   return pValue->parse(input, location);
+}
+
+Error parseAndValidate(const std::string& input, const std::string& schema, 
+      const ErrorLocation& location, Value* pValue)
+{
+   Error error;
+
+   // parse the schema first
+   rapidjson::Document sd;
+   rapidjson::ParseResult result = sd.Parse(schema);
+   if (result.IsError())
+   {
+      error = Error(result.Code(), location);
+      error.addProperty("offset", result.Offset());
+      error.addProperty("source", "schema");
+      return error;
+   }
+
+   // next, parse the input
+   error = pValue->parse(input, location);
+   if (error)
+      return error;
+
+   // validate the input according to the schema
+   rapidjson::SchemaDocument schemaDoc(sd) ;
+   rapidjson::SchemaValidator validator(schemaDoc);
+   if (!pValue->get_impl().Accept(validator))
+   {
+      rapidjson::StringBuffer sb;
+      error = Error(rapidjson::kParseErrorUnspecificSyntaxError, location);
+      validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
+      error.addProperty("schema", sb.GetString());
+      error.addProperty("keyword", validator.GetInvalidSchemaKeyword());
+      validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+      error.addProperty("document", sb.GetString());
+      return error;
+   }
+   return Success();
+}
+
 void write(const Value& value, std::ostream& os)
 {
    os << write(value);
@@ -271,6 +328,29 @@ std::string writeFormatted(const Value& value)
 
    value.get_impl().Accept(writer);
    return std::string(buffer.GetString(), buffer.GetLength());
+}
+
+class JsonParseErrorCategory : public boost::system::error_category
+{
+public:
+   virtual const char * name() const BOOST_NOEXCEPT;
+   virtual std::string message(int ev) const;
+};
+
+const boost::system::error_category& jsonParseCategory()
+{
+   static JsonParseErrorCategory jsonParseErrorCategoryConst;
+   return jsonParseErrorCategoryConst;
+}
+
+const char * JsonParseErrorCategory::name() const BOOST_NOEXCEPT
+{
+   return "json-parse";
+}
+
+std::string JsonParseErrorCategory::message(int ev) const
+{
+   return rapidjson::GetParseError_En(static_cast<rapidjson::ParseErrorCode>(ev));
 }
 
 } // namespace json

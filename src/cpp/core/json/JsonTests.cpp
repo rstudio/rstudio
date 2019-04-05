@@ -320,7 +320,7 @@ TEST_CASE("Json")
 
    SECTION("Ref/copy semantics")
    {
-      std::string json = "{\"a\":\"Hello\",\"b\":\"world\",\"c\":25,\"c2\":25.5,\"d\":[1,2,3],\"e\":{\"a\":\"Inner hello\"}}";
+      std::string json = R"({"a":"Hello","b":"world","c":25,"c2":25.5,"d":[1,2,3],"e":{"a":"Inner hello"}})";
 
       json::Value value;
       REQUIRE(json::parse(json, &value));
@@ -759,6 +759,57 @@ TEST_CASE("Json")
    {
       json::Value val = getValue();
       REQUIRE(val.get_int() == 5);
+   }
+
+   SECTION("Parse errors")
+   {
+      std::string invalid = R"({ key: value )";
+      json::Value val;
+      Error err = json::parse(invalid, ERROR_LOCATION, &val);
+      REQUIRE(err != Success());
+   }
+
+   SECTION("Schema validation")
+   {
+      std::string schema = R"(
+      {
+         "$id": "https://rstudio.com/rstudio.preferences.json",
+         "$schema": "http://json-schema.org/draft-07/schema#",
+         "title": "Unit Test Example Schema",
+         "type": "object",
+         "properties": {
+             "first": {
+                 "type": "boolean",
+                 "default": false,
+                 "description": "The first example property"
+             },
+             "second": {
+                 "type": "string",
+                 "enum": ["a", "b", "c"],
+                 "default": "b",
+                 "description": "The second example property"
+             }
+           }
+        })";
+         
+      // do valid documents parse correctly?
+      std::string valid = R"(
+         { "first": true, "second": "a" }
+      )";
+
+      json::Value val;
+      Error err = json::parseAndValidate(valid, schema, ERROR_LOCATION, &val);
+      INFO(err.summary());
+      REQUIRE(err == Success());
+      REQUIRE(val.get_obj()["first"].get_bool());
+
+      // do invalid documents fail?
+      std::string invalid = R"(
+         { "first": 1, "second": "d" }
+      )";
+      err = json::parseAndValidate(valid, schema, ERROR_LOCATION, &val);
+      INFO(err.summary());
+      REQUIRE(json::parseAndValidate(invalid, schema, ERROR_LOCATION, &val) != Success());
    }
 }
 
