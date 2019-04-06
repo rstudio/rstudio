@@ -32,12 +32,14 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
@@ -66,8 +68,10 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    public JsArray<LintItem> getLint()
    {
+      TextFileType fileType = docDisplay_.getFileType();
+      TokenPredicate tokenPredicate = fileType.isR() ? fileType.getCommentsTokenPredicate() : fileType.getTokenPredicate();
       Iterable<Range> wordSource = docDisplay_.getWords(
-         docDisplay_.getFileType().getTokenPredicate(),
+         tokenPredicate,
          docDisplay_.getFileType().getCharPredicate(),
          Position.create(0, 0),
          null);
@@ -194,9 +198,11 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
+         TextFileType fileType = docDisplay_.getFileType();
+         TokenPredicate tokenPredicate = fileType.isR() ? fileType.getCommentsTokenPredicate() : fileType.getTokenPredicate();
          Position endOfLine = Position.create(pos.getRow()+1, 0);
          Iterable<Range> wordSource = docDisplay_.getWords(
-            docDisplay_.getFileType().getTokenPredicate(),
+            tokenPredicate,
             docDisplay_.getFileType().getCharPredicate(),
             pos,
             endOfLine);
@@ -242,6 +248,17 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          // Only add a separator if we have suggestions to separate from
          if (suggestions.length > 0)
             menu.addSeparator();
+
+         MenuItem ignoreItem = new MenuItem(
+            AppCommand.formatMenuLabel(null, "Ignore word", ""),
+            true,
+            () -> {
+               typoSpellChecker_.addIgnoredWord(word);
+               docDisplay_.removeMarkersAtCursorPosition();
+            });
+
+         menu.addItem(ignoreItem);
+         menu.addSeparator();
 
          MenuItem addToDictionaryItem = new MenuItem(
             AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""),
