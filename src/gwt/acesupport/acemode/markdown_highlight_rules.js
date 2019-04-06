@@ -125,13 +125,14 @@ var MarkdownHighlightRules = function() {
     };
 
     var linkByUrl = {
-        token : ["text", "keyword", "text", "markup.href", "string", "text"],
+        token : ["text", "keyword", "text", "markup.href", "string", "text", "paren.keyword.operator", "nospell", "paren.keyword.operator"],
         regex : "(\\s*\\[)(" +                            // [
             escaped("]") +                                // link text
             ")(\\]\\()" +                                 // ](
             '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +    // href
             '(\\s*"' +  escaped('"') + '"\\s*)?' +        // "title"
-            "(\\))"                                       // )
+            "(\\))" +                                     // )
+            "(?:(\\s*{)((?:[^\\}]+))(\\s*}))?"            // { block text }
     };
 
     var urlLink = {
