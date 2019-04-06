@@ -21,6 +21,8 @@
 #include <boost/date_time.hpp>
 #include <boost/function.hpp>
 
+#include <core/Thread.hpp>
+
 namespace rstudio {
 namespace core {
 
@@ -31,13 +33,13 @@ class ExponentialBackoff : public boost::enable_shared_from_this<ExponentialBack
 {
 public:
    ExponentialBackoff(boost::asio::io_service& ioService,
-                      const boost::posix_time::milliseconds& initialWait,
-                      const boost::posix_time::milliseconds& maxWait,
+                      const boost::posix_time::time_duration& initialWait,
+                      const boost::posix_time::time_duration& maxWait,
                       const boost::function<void(ExponentialBackoffPtr)>& action);
 
    ExponentialBackoff(boost::asio::io_service& ioService,
-                      const boost::posix_time::milliseconds& initialWait,
-                      const boost::posix_time::milliseconds& maxWait,
+                      const boost::posix_time::time_duration& initialWait,
+                      const boost::posix_time::time_duration& maxWait,
                       unsigned int maxNumRetries,
                       const boost::function<void(ExponentialBackoffPtr)>& action);
 
@@ -52,11 +54,14 @@ public:
 
 private:
    boost::asio::io_service& ioService_;
-   boost::posix_time::milliseconds initialWait_;
-   boost::posix_time::milliseconds maxWait_;
+   boost::posix_time::time_duration initialWait_;
+   boost::posix_time::time_duration maxWait_;
    unsigned int maxNumRetries_;
    unsigned int totalNumTries_;
    boost::function<void(ExponentialBackoffPtr)> action_;
+
+   boost::posix_time::time_duration lastWait_;
+   boost::mutex mutex_;
 };
 
 } // namespace core 

@@ -20,6 +20,7 @@ import com.google.gwt.inject.client.Ginjector;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.VirtualConsoleFactory;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -112,6 +113,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
+import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
@@ -320,4 +322,8 @@ public interface RStudioGinjector extends Ginjector
    PlumberAPI getPlumberAPI();
    JobManager getJobManager();
    SessionOpener getSessionOpener();
+   VirtualConsoleFactory getVirtualConsoleFactory();
+   JobItemFactory getJobItemFactory();
+
+   // Pro-only below here
 }

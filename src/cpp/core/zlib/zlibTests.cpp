@@ -21,7 +21,7 @@ namespace rstudio {
 namespace core {
 namespace zlib {
 
-context("zlib")
+test_context("zlib")
 {
    test_that("can compress & decompress difficult strings")
    {

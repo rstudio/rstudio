@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 
 public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
+                     implements JobInitEvent.Handler
 {
    public abstract static class Shim 
         extends DelayLoadTabShim<JobsPresenter, JobsTab>
@@ -57,8 +58,20 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       events.addHandler(JobUpdatedEvent.TYPE, shim);
       events.addHandler(JobOutputEvent.TYPE, shim);
       events.addHandler(JobSelectionEvent.TYPE, shim);
-      events.addHandler(JobInitEvent.TYPE, shim);
       events.addHandler(JobElapsedTickEvent.TYPE, shim);
+      
+      events.addHandler(JobInitEvent.TYPE, this);
+   }
+
+   @Override
+   public void onJobInit(JobInitEvent event)
+   {
+      if (event.state() != null && event.state().hasJobs())
+      {
+         // don't message the shim unless there are jobs, otherwise will trigger
+         // unnecessary loading of the deferred tab code
+         shim_.setInitialJobs(event.state());
+      }
    }
 
    @Override

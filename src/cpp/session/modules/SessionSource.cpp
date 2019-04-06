@@ -20,7 +20,6 @@
 #include <map>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/utility.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
@@ -227,7 +226,7 @@ Error openDocument(const json::JsonRpcRequest& request,
       if (type == "r_markdown" && encoding == "")
          encoding = "UTF-8";
       else
-         encoding = ::locale2charset(NULL);
+         encoding = ::locale2charset(nullptr);
    }
    
    // ensure the file exists
@@ -1042,7 +1041,7 @@ Error setDocOrder(const json::JsonRpcRequest& request,
       return error;
    source_database::list(&docs);
 
-   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
+   for (boost::shared_ptr<SourceDocument>& pDoc : docs)
    {
       for (unsigned i = 0; i < ids.size(); i++) 
       {
@@ -1304,7 +1303,7 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
 
    // populate the array
    pJsonDocs->clear();
-   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
+   for (boost::shared_ptr<SourceDocument>& pDoc : docs)
    {
       // Force dirty state to be checked.
       // Client and server dirty state can get out of sync because

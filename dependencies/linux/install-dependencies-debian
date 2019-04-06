@@ -3,7 +3,7 @@
 #
 # install-dependencies-debian
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,72 +17,16 @@
 
 set -e
 
-# build/development tools
-sudo apt-get -y install build-essential
-sudo apt-get -y install pkg-config
-sudo apt-get -y install fakeroot
-sudo apt-get -y install cmake
-
-# core system libraries
-sudo apt-get -y install uuid-dev
-
-# for libssl, we want to make sure we get 1.0.2
-# version 1.1.0+ is not compatible with our source code
-if which apt-cache > /dev/null ; then
-  if apt-cache show libssl1.0-dev > /dev/null ; then
-    sudo apt-get -y install libssl1.0-dev
-  else
-    sudo apt-get -y install libssl-dev
+# delegate to specific debian release scripts
+if command -v lsb_release &> /dev/null; then
+  platform_codename=$(lsb_release -sc)
+  platform_script="install-dependencies-$platform_codename"
+  if [ -e $platform_script ] ; then
+    ./$platform_script
+    exit 
   fi
-else
-   sudo apt-get -y install libssl-dev
 fi
 
-sudo apt-get -y install libbz2-dev
-sudo apt-get -y install zlib1g-dev
-sudo apt-get -y install libpam-dev
-
-# needed for QtWebKit >= 5
-sudo apt-get -y install libxslt1-dev
-
-# boost
-## This version of libboost-all-dev is now 1.55.0.2 in the current stable version of debian (jessie) [2015-12-04].
-## This is further along than the version installed by the install-boost script also run by install-dependencies-debian.
-## So comment this out to ensure only one version of boost is installed here and it is supported by rstudio.
-#sudo apt-get -y install libboost-all-dev
-
-# pango cairo
-sudo apt-get -y install libpango1.0-dev
-
-# gwt prereqs
-## openjdk-6-jdk is no longer available in the current stable version of debian [2015-12-04]
-## Also, ant no longer depends on openjdk-6-jdk
-# sudo apt-get -y install openjdk-6-jdk 
-sudo apt-get -y install ant
-
-# overlay
-if [ -e install-overlay-debian ]
-then
-  ./install-overlay-debian
-fi
-
-# common
-sudo apt-get -y install unzip
-cd ../common
-./install-common
-cd ../linux
-
-# desktop dependencies (qt)
-if [ "$1" != "--exclude-qt-sdk" ]
-then
-   # Need the OpenGL development libraries to build QtGui
-   sudo apt-get -y install libgl1-mesa-dev
-
-   ./install-qt-sdk
-fi
-
-
-
-
-
+echo Error: Unsupported Debian release
+exit 1
 

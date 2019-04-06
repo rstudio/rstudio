@@ -1,7 +1,7 @@
 /*
  * DefinitionIndex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -220,7 +220,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                file.c_str(),
                                argsArray.args(),
                                argsArray.argCount(),
-                               NULL, 0, // no unsaved files
+                               nullptr, 0, // no unsaved files
                                CXTranslationUnit_None |
                                CXTranslationUnit_Incomplete);
 
@@ -338,7 +338,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    {
       // first inspect translation units we have an in-memory index for
       TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
-      BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+      for (const TranslationUnits::value_type& unit : units)
       {
          // search for the definition
          CppDefinition def;
@@ -358,10 +358,9 @@ FileLocation findDefinitionLocation(const FileLocation& location)
 
       // if we didn't find it there then look for it in our index
       // of all saved files
-      BOOST_FOREACH(const DefinitionsByFile::value_type& defs,
-                    s_definitionsByFile)
+      for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
       {
-         BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
+         for (const CppDefinition& def : defs.second.definitions)
          {
             if (def.USR == USR)
                return def.location;
@@ -511,7 +510,7 @@ void loadDefinitionIndex()
       if (!FilePath::exists(definitions.file))
          continue;
 
-      BOOST_FOREACH(const json::Value& defJson, defsArrayJson)
+      for (const json::Value& defJson : defsArrayJson)
       {
          if (!json::isType<json::Object>(defJson))
          {
@@ -534,7 +533,7 @@ void saveDefinitionIndex()
    using namespace safe_convert;
 
    json::Array indexJson;
-   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
    {
       const CppDefinitions& definitions = defs.second;
       json::Object definitionsJson;
@@ -580,7 +579,7 @@ void searchDefinitions(const std::string& term,
    // first search translation units we have an in-memory index for
    // (this will reflect unsaved changes in editor buffers)
    TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
-   BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+   for (const TranslationUnits::value_type& unit : units)
    {
       // search for matching definitions
       DefinitionVisitor visitor =
@@ -598,13 +597,13 @@ void searchDefinitions(const std::string& term,
    // for within the in-memory index)
    // if we didn't find it there then look for it in our index
    // of all saved files
-   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
    {
       // skip files we've already searched
       if (units.find(defs.first) != units.end())
          continue;
 
-      BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
+      for (const CppDefinition& def : defs.second.definitions)
       {
          if (matches(term, pattern, def))
             pDefinitions->push_back(def);

@@ -1,7 +1,7 @@
 /*
  * PosixLibraryLoader.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@ namespace {
 void addLastDLErrorMessage(Error* pError)
 {
    const char* msg = ::dlerror();
-   if (msg != NULL)
+   if (msg != nullptr)
       pError->addProperty("dlerror", std::string(msg));
 }
 
@@ -36,9 +36,9 @@ void addLastDLErrorMessage(Error* pError)
 
 Error loadLibrary(const std::string& libPath, void** ppLib)
 {
-   *ppLib = NULL;
+   *ppLib = nullptr;
    *ppLib = ::dlopen(libPath.c_str(), RTLD_NOW);
-   if (*ppLib == NULL)
+   if (*ppLib == nullptr)
    {
       Error error = systemError(
                            boost::system::errc::no_such_file_or_directory,
@@ -55,9 +55,9 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
 
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
 {
-   *ppSymbol = NULL;
+   *ppSymbol = nullptr;
    *ppSymbol = ::dlsym(pLib, name.c_str());
-   if (*ppSymbol == NULL)
+   if (*ppSymbol == nullptr)
    {
       Error error = systemError(boost::system::errc::not_supported,
                                 ERROR_LOCATION);

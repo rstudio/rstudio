@@ -4,7 +4,7 @@
 
 # for most language files, use Unix line endings, 3-space tabs, and wrap at 80
 # characters
-[*.{cpp,hpp,js,R,mm}]
+[*.{cpp,hpp,js,ts,tsx,R,mm}]
 indent_style = space
 indent_size = 3
 end_of_line = lf

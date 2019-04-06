@@ -1,7 +1,7 @@
 /*
  * PosixProcess.hpp
  *
- * Copyright (C) 2017-18 by RStudio, Inc.
+ * Copyright (C) 2017-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,12 +39,12 @@ public:
                           const std::vector<std::string>& args,
                           const ProcessOptions& options,
                           const ProcessCallbacks& callbacks,
-                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = NULL);
+                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = nullptr);
 
    core::Error runCommand(const std::string& command,
                           const ProcessOptions& options,
                           const ProcessCallbacks& callbacks,
-                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = NULL);
+                          boost::shared_ptr<AsioAsyncChildProcess>* pOutChild = nullptr);
 
    // Check whether any children are currently running
    bool hasRunningChildren();

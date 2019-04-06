@@ -1,7 +1,7 @@
 /*
  * RSessionLaunchProfile.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
-
-#include <boost/foreach.hpp>
 
 #include <core/SafeConvert.hpp>
 
@@ -92,7 +90,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    profileJson["password"] = profile.password;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
-   configJson["args"] = json::toJsonObject(profile.config.args);
+   configJson["args"] = json::toJsonArray(profile.config.args);
    configJson["environment"] = json::toJsonObject(profile.config.environment);
    configJson["stdInput"] = profile.config.stdInput;
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
@@ -130,7 +128,8 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
       LOG_ERROR(error);
 
    // read config object
-   json::Object argsJson, envJson;
+   json::Object envJson;
+   json::Array argsJson;
    std::string stdInput;
    int stdStreamBehavior = 0;
    int priority = 0;

@@ -19,7 +19,7 @@
 namespace rstudio {
 namespace server_core {
 
-context("URL Port Transformation")
+test_context("URL Port Transformation")
 {
    test_that("ports are transformed")
    {

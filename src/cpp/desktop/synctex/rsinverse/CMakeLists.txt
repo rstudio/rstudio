@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -55,5 +55,11 @@ add_executable(rsinverse
 target_link_libraries(rsinverse
    rstudio-core
 )
+
+if(WIN32)
+   target_link_libraries(rsinverse
+      Crypt32
+   )
+endif()
 
 install(TARGETS rsinverse DESTINATION ${RSTUDIO_INSTALL_BIN})

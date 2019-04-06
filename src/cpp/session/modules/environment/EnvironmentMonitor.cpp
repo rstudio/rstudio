@@ -1,7 +1,7 @@
 /*
  * EnvironmentMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,11 +114,15 @@ SEXP EnvironmentMonitor::getMonitoredEnvironment()
 
 bool EnvironmentMonitor::hasEnvironment()
 {
-   return getMonitoredEnvironment() != NULL;
+   SEXP envir = getMonitoredEnvironment();
+   return envir != nullptr && r::sexp::isPrimitiveEnvironment(envir);
 }
 
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
+   if (!hasEnvironment())
+      return;
+
    r::sexp::Protect rProtect;
    r::sexp::listEnvironment(getMonitoredEnvironment(),
                             false,

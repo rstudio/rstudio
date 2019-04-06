@@ -166,19 +166,19 @@ public class JobsPaneWidgets implements JobsPaneOperations
    @Override
    public void addJob(Job job)
    {
-      list_.addJob(job, null);
+      list_.addJob(job);
    }
 
    @Override
    public void insertJob(Job job)
    {
-      list_.insertJob(job, null);
+      list_.insertJob(job);
    }
    
    @Override
    public void removeJob(Job job)
    {
-      list_.removeJob(job, null);
+      list_.removeJob(job);
    }
    
    @Override

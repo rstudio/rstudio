@@ -1,7 +1,7 @@
 /*
  * SessionRmdNotebook.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <r/RJson.hpp>
@@ -73,7 +72,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    if (singleChunkId.empty())
    {
       // find all the chunks and play them back to the client
-      BOOST_FOREACH(const std::string& chunkId, chunkIds)
+      for (const std::string& chunkId : chunkIds)
       {
          enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
       }

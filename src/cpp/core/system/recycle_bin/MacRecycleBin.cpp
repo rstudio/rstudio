@@ -1,7 +1,7 @@
 /*
  * MacRecycleBin.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,12 +55,12 @@ Error sendTo(const FilePath& filePath)
                                         (const UInt8*)sysPath.c_str(),
                                         kFSPathMakeRefDoNotFollowLeafSymlink,
                                         &ref,
-                                        NULL);
+                                        nullptr);
    if (status != 0)
       return errorForStatus(status, filePath, ERROR_LOCATION);
 
    status = ::FSMoveObjectToTrashSync(&ref,
-                                      NULL,
+                                      nullptr,
                                       kFSFileOperationDefaultOptions);
    if (status != 0)
       return errorForStatus(status, filePath, ERROR_LOCATION);

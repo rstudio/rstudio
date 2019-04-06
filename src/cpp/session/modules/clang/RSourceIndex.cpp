@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,13 +49,13 @@ public:
 // store as a pointer so that it's never destructrued during shutdown
 // (we observed at least one instance of libclang crashing when calling
 // clang_disposeTranslationUnit during shutdown)
-RSourceIndex* s_pRSourceIndex = NULL;
+RSourceIndex* s_pRSourceIndex = nullptr;
 
 } // anonymous namespace
 
 SourceIndex& rSourceIndex()
 {
-   if (s_pRSourceIndex == NULL)
+   if (s_pRSourceIndex == nullptr)
       s_pRSourceIndex = new RSourceIndex();
    return *s_pRSourceIndex;
 }

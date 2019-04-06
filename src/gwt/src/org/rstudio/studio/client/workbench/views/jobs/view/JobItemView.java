@@ -1,7 +1,7 @@
 /*
- * DataServerOperations.java
+ * JobItemView.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,9 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.data.model;
+package org.rstudio.studio.client.workbench.views.jobs.view;
 
-public interface DataServerOperations
+import com.google.gwt.user.client.ui.IsWidget;
+import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+
+public interface JobItemView extends IsWidget
 {
-
+   void update(Job job);
+   Job getJob();
+   void syncTime(int timestamp);
 }

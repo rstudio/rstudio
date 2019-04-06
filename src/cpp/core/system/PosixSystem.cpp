@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/range/as_array.hpp>
 
 #include <signal.h>
@@ -98,7 +97,7 @@ Error ignoreSig(int signal)
    struct sigaction sa;
    ::memset(&sa, 0, sizeof sa);
    sa.sa_handler = SIG_IGN;
-   int result = ::sigaction(signal, &sa, NULL);
+   int result = ::sigaction(signal, &sa, nullptr);
    if (result != 0)
    {
       Error error = systemError(result, ERROR_LOCATION);
@@ -158,7 +157,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
 
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
-   if (realPath == NULL)
+   if (realPath == nullptr)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", filePath);
@@ -173,7 +172,7 @@ Error realPath(const std::string& path, FilePath* pRealPath)
 {
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
-   if (realPath == NULL)
+   if (realPath == nullptr)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", path);
@@ -254,7 +253,7 @@ void initializeLogConfigReload()
    sigemptyset(&waitMask);
    sigaddset(&waitMask, SIGHUP);
 
-   int result = ::pthread_sigmask(SIG_BLOCK, &waitMask, NULL);
+   int result = ::pthread_sigmask(SIG_BLOCK, &waitMask, nullptr);
    if (result != 0)
       return;
 
@@ -312,7 +311,7 @@ Error reapChildren()
    sa.sa_flags = SA_RESTART;
    
    // install it
-   int result = ::sigaction(SIGCHLD, &sa, NULL);
+   int result = ::sigaction(SIGCHLD, &sa, nullptr);
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
    else
@@ -390,7 +389,7 @@ SignalBlocker::~SignalBlocker()
       if (pImpl_->blocked)
       {
          // restore old mask
-         int result = ::pthread_sigmask(SIG_SETMASK, &(pImpl_->oldMask), NULL);
+         int result = ::pthread_sigmask(SIG_SETMASK, &(pImpl_->oldMask), nullptr);
          if (result != 0)
             LOG_ERROR(systemError(result, ERROR_LOCATION));
       }
@@ -438,7 +437,7 @@ Error useDefaultSignalHandler(SignalType signal)
    struct sigaction sa;
    ::memset(&sa, 0, sizeof sa);
    sa.sa_handler = SIG_DFL;
-   int result = ::sigaction(sig, &sa, NULL);
+   int result = ::sigaction(sig, &sa, nullptr);
    if (result != 0)
    {
       Error error = systemError(result, ERROR_LOCATION);
@@ -809,7 +808,7 @@ int clearSignalMask()
 {
    sigset_t blockNoneMask;
    sigemptyset(&blockNoneMask);
-   return ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, NULL);
+   return ::pthread_sigmask(SIG_SETMASK, &blockNoneMask, nullptr);
 }
 
 } // namespace signal_safe
@@ -1024,7 +1023,7 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid)
    {
       boost::regex re("^(\\d+)\\s+(.+)");
       std::vector<std::string> lines = algorithm::split(result.stdOut, "\n");
-      BOOST_FOREACH(const std::string& line, lines)
+      for (const std::string& line : lines)
       {
          if (boost::algorithm::trim_copy(line).empty())
          {
@@ -1060,7 +1059,7 @@ std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
 {
    std::vector<SubprocInfo> subprocs;
 
-   int result = proc_listchildpids(pid, NULL, 0);
+   int result = proc_listchildpids(pid, nullptr, 0);
    if (result > 0)
    {
       std::vector<PidType> buffer(result, 0);
@@ -1126,7 +1125,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
       return subprocs;
    }
 
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       // only interested in the numeric directories (pid)
       std::string filename = child.filename();
@@ -1226,6 +1225,41 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 #endif
 }
 
+#ifdef __APPLE__
+
+FilePath currentWorkingDirMac(PidType pid)
+{
+   struct proc_vnodepathinfo info;
+
+   int size = ::proc_pidinfo(
+            pid, PROC_PIDVNODEPATHINFO, 0,
+            &info, PROC_PIDVNODEPATHINFO_SIZE);
+
+   // check for explicit failure
+   if (size == -1)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      return FilePath();
+   }
+
+   // check for failure to write all required bytes
+   if (size != PROC_PIDVNODEPATHINFO_SIZE)
+   {
+      using namespace boost::system::errc;
+      LOG_ERROR(systemError(not_enough_memory, ERROR_LOCATION));
+      return FilePath();
+   }
+
+   // ok, we can return the path
+   return FilePath(info.pvi_cdir.vip_path);
+}
+
+#endif // __APPLE__
+
+
+#ifndef __APPLE__
+
+// NOTE: disabled on macOS; prefer using 'currentWorkingDirMac()'
 FilePath currentWorkingDirViaLsof(PidType pid)
 {
    // lsof -a -p PID -d cwd -Fn
@@ -1271,7 +1305,6 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    return FilePath();
 }
 
-#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid)
 {
    core::FilePath procFsPath("/proc");
@@ -1296,7 +1329,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 FilePath currentWorkingDir(PidType pid)
 {
 #ifdef __APPLE__
-   return currentWorkingDirViaLsof(pid);
+   return currentWorkingDirMac(pid);
 #else
    return currentWorkingDirViaProcFs(pid);
 #endif
@@ -1507,7 +1540,7 @@ namespace  {
 
 void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
 {
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       PidType pid = safe_convert::stringTo<PidType>(line, -1);
       if (pid != -1)
@@ -1548,13 +1581,13 @@ Error processInfo(const std::string& process,
    pInfo->clear();
 
    // declear directory iterator
-   DIR *pDir = NULL;
+   DIR *pDir = nullptr;
 
    try
    {
       // open the /proc directory
       pDir = ::opendir("/proc");
-      if (pDir == NULL)
+      if (pDir == nullptr)
          return systemError(errno, ERROR_LOCATION);
 
       struct dirent *pDirent;
@@ -1592,7 +1625,7 @@ Error processInfo(const std::string& process,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   if (pDir != NULL)
+   if (pDir != nullptr)
       ::closedir(pDir);
 
    return Success();
@@ -1744,7 +1777,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    Error error = core::readStringVectorFromFile(FilePath("/proc/stat"), &lines);
    if (error)
       return error;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (boost::algorithm::starts_with(line, "btime"))
       {
@@ -1829,7 +1862,7 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
                            result.stdOut,
                            boost::algorithm::is_any_of("\n"));
 
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       if (line.empty()) continue;
        
@@ -1882,9 +1915,9 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses,
       return systemError(errno, ERROR_LOCATION);
 
    // iterate through the linked list
-   for (struct ifaddrs* pAddr = pAddrs; pAddr != NULL; pAddr = pAddr->ifa_next)
+   for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
    {
-      if (pAddr->ifa_addr == NULL)
+      if (pAddr->ifa_addr == nullptr)
          continue;
 
       // filter out non-ip addresses
@@ -1898,7 +1931,7 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses,
                         (family == AF_INET) ? sizeof(struct sockaddr_in) :
                                               sizeof(struct sockaddr_in6),
                         host, NI_MAXHOST,
-                        NULL, 0, NI_NUMERICHOST) != 0)
+                        nullptr, 0, NI_NUMERICHOST) != 0)
       {
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
          continue;
@@ -1962,7 +1995,7 @@ void printCoreDumpable(const std::string& context)
 
    // ptrace
 #ifndef __APPLE__
-   int dumpable = ::prctl(PR_GET_DUMPABLE, NULL, NULL, NULL, NULL);
+   int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
    ostr << "  pr_get_dumpable: " << dumpable << std::endl;
@@ -2292,7 +2325,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
                        ProcessTreeT *pOutTree)
 {
    // first pass, create the nodes in the tree
-   BOOST_FOREACH(const ProcessInfo& process, processes)
+   for (const ProcessInfo& process : processes)
    {
       ProcessTreeT::iterator iter = pOutTree->find(process.pid);
       if (iter == pOutTree->end())
@@ -2308,7 +2341,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
    }
 
    // second pass, link the nodes together
-   BOOST_FOREACH(ProcessTreeT::value_type& element, *pOutTree)
+   for (ProcessTreeT::value_type& element : *pOutTree)
    {
       pid_t parent = element.second->data->ppid;
       ProcessTreeT::iterator iter = pOutTree->find(parent);
@@ -2325,7 +2358,7 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
 void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
                  std::vector<ProcessInfo> *pOutChildren)
 {
-   BOOST_FOREACH(const boost::shared_ptr<ProcessTreeNode>& child, node->children)
+   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
    {
       pOutChildren->push_back(*child->data.get());
       getChildren(child, pOutChildren);
@@ -2382,7 +2415,7 @@ Error terminateChildProcesses(pid_t pid,
    if (error)
       return error;
 
-   BOOST_FOREACH(const ProcessInfo& process, childProcesses)
+   for (const ProcessInfo& process : childProcesses)
    {
       if (::kill(process.pid, signal) != 0)
       {
@@ -2467,7 +2500,7 @@ Error restorePrivImpl(uid_t uid)
 
    // get user info to use in group calls
    struct passwd* pPrivPasswd = ::getpwuid(uid);
-   if (pPrivPasswd == NULL)
+   if (pPrivPasswd == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
    // supplemental groups
@@ -2579,7 +2612,7 @@ Error restorePriv()
 
    // get saved user info to use in group calls
    struct passwd* pPrivPasswd = ::getpwuid(suid);
-   if (pPrivPasswd == NULL)
+   if (pPrivPasswd == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
    // supplemental groups

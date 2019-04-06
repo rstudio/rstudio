@@ -1,7 +1,7 @@
 /*
  * MonitorClient.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,7 @@ private:
 
 // single global instance of the monitor client (allocate it on the heap
 // and never free it so that there are no order of destruction surprises)
-Client* s_pClient = NULL;
+Client* s_pClient = nullptr;
 
 } // anonymous namespace
 
@@ -65,7 +65,7 @@ boost::shared_ptr<core::LogWriter> Client::createLogWriter(
 void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& sharedSecret)
 {
-   BOOST_ASSERT(s_pClient == NULL);
+   BOOST_ASSERT(s_pClient == nullptr);
    s_pClient = new SyncClient(metricsSocket, sharedSecret);
 }
 
@@ -73,13 +73,13 @@ void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& sharedSecret,
                              boost::asio::io_service& ioService)
 {
-   BOOST_ASSERT(s_pClient == NULL);
+   BOOST_ASSERT(s_pClient == nullptr);
    s_pClient = new AsyncClient(metricsSocket, sharedSecret, ioService);
 }
 
 Client& client()
 {
-   BOOST_ASSERT(s_pClient != NULL);
+   BOOST_ASSERT(s_pClient != nullptr);
    return *s_pClient;
 }
 

@@ -1,7 +1,7 @@
 /*
  * NotebookExec.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,8 +23,6 @@
 #include "NotebookErrors.hpp"
 #include "NotebookWorkingDir.hpp"
 #include "NotebookConditions.hpp"
-
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/text/CsvParser.hpp>
@@ -282,7 +280,7 @@ bool ChunkExecContext::onCondition(Condition condition,
    }
 
    // give each capturing module a chance to handle the condition
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       if (pCapture->onCondition(condition, message))
          return true;
@@ -441,7 +439,7 @@ void ChunkExecContext::disconnect()
    Error error;
 
    // clean up capturing modules (includes plots, errors, and HTML widgets)
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       pCapture->disconnect();
    }
@@ -466,7 +464,7 @@ void ChunkExecContext::disconnect()
    }
 
    // unhook all our event handlers
-   BOOST_FOREACH(const RSTUDIO_BOOST_CONNECTION& connection, connections_)
+   for (const RSTUDIO_BOOST_CONNECTION& connection : connections_)
    {
       connection.disconnect();
    }
@@ -524,7 +522,7 @@ ExecScope ChunkExecContext::execScope()
 void ChunkExecContext::onExprComplete()
 {
    // notify capturing submodules
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       pCapture->onExprComplete();
    }

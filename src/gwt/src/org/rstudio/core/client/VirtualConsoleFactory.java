@@ -1,7 +1,7 @@
 /*
- * DataTab.java
+ * VirtualConsoleFactory.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,19 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.data;
+package org.rstudio.core.client;
 
-import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
-import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import com.google.gwt.dom.client.Element;
 
-public class DataTab extends DelayLoadWorkbenchTab<Data>
+public interface VirtualConsoleFactory
 {
-   public abstract static class Shim extends DelayLoadTabShim<Data, DataTab> {}
-
-   @Inject
-   public DataTab(Shim shim)
-   {
-      super("Data", shim);
-   }
+   // for assisted injection
+   VirtualConsole create(Element elem); 
 }

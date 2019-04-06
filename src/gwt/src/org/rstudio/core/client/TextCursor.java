@@ -56,11 +56,16 @@ public class TextCursor
    
    public boolean contentEquals(char ch)
    {
+      if (index_ == n_)
+         return false;
       return data_.charAt(index_) == ch;
    }
    
    public boolean fwdToMatchingCharacter()
    {
+      if (index_ == n_)
+         return false;
+      
       char lhs = data_.charAt(index_);
       char rhs = complement(lhs);
       
@@ -99,6 +104,9 @@ public class TextCursor
    
    public boolean bwdToMatchingCharacter()
    {
+      if (index_ == n_)
+         return false;
+      
       char lhs = data_.charAt(index_);
       char rhs = complement(lhs);
       
@@ -178,6 +186,9 @@ public class TextCursor
    
    public boolean consume(char expected)
    {
+      if (index_ == n_)
+         return false;
+      
       boolean matches = data_.charAt(index_) == expected;
       index_ += matches ? 1 : 0;
       return matches;
@@ -226,23 +237,31 @@ public class TextCursor
    
    public boolean isLeftBracket()
    {
+      if (index_ == n_)
+         return false;
       char ch = data_.charAt(index_);
       return ch == '{' || ch == '[' || ch == '(';
    }
    
    public boolean isRightBracket()
    {
+      if (index_ == n_)
+         return false;
       char ch = data_.charAt(index_);
       return ch == '}' || ch == ']' || ch == ')';
    }
    
    public boolean isSingleQuote()
    {
+      if (index_ == n_)
+         return false;
       return data_.charAt(index_) == '\'';
    }
    
    public boolean isDoubleQuote()
    {
+      if (index_ == n_)
+         return false;
       return data_.charAt(index_) == '"';
    }
    

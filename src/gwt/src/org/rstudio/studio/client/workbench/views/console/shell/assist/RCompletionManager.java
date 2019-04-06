@@ -1,7 +1,7 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -605,8 +605,8 @@ public class RCompletionManager implements CompletionManager
             // also halt suggestions if we're about to remove the only character on the line
             if (cursorColumn > 0)
             {
-               char ch = currentLine.charAt(cursorColumn - 2);
-               char prevCh = currentLine.charAt(cursorColumn - 3);
+               char ch = StringUtil.charAt(currentLine, cursorColumn - 2);
+               char prevCh = StringUtil.charAt(currentLine, cursorColumn - 3);
                
                boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
                      (ch == ':' && prevCh == ':') ||
@@ -623,7 +623,7 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition start = selection.getStart().movePosition(-1, true);
                   InputEditorPosition end = selection.getStart();
 
-                  if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
+                  if (StringUtil.charAt(currentLine, cursorColumn) == ')' && StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
                      requester_.flushCache();
@@ -688,7 +688,7 @@ public class RCompletionManager implements CompletionManager
       {
          for (int i = 0; i < lookbackLimit; i++)
          {
-            if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
+            if (!isValidForRIdentifier(StringUtil.charAt(currentLine, cursorColumn - i - 1)))
             {
                canAutoPopup = false;
                break;
@@ -805,30 +805,33 @@ public class RCompletionManager implements CompletionManager
             return false;
          
          // Immediately display completions after '$', '::', etc.
-         char prevChar = docDisplay_.getCurrentLine().charAt(
-               input_.getCursorPosition().getColumn() - 1);
-         if (
-               (c == ':' && prevChar == ':') ||
-               (c == '$') ||
-               (c == '@')
-               )
+         if (input_.getCursorPosition().getColumn() > 0)
          {
-            // Bail if we're in Vim but not in insert mode
-            if (docDisplay_.isVimModeOn() &&
-                !docDisplay_.isVimInInsertMode())
+            char prevChar = docDisplay_.getCurrentLine().charAt(
+                  input_.getCursorPosition().getColumn() - 1);
+            if (
+                  (c == ':' && prevChar == ':') ||
+                        (c == '$') ||
+                        (c == '@')
+            )
             {
+               // Bail if we're in Vim but not in insert mode
+               if (docDisplay_.isVimModeOn() &&
+                     !docDisplay_.isVimInInsertMode())
+               {
+                  return false;
+               }
+      
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     beginSuggest(true, true, false);
+                  }
+               });
                return false;
             }
-            
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(true, true, false);
-               }
-            });
-            return false;
          }
          
          // Check for a valid number of R identifier characters for autopopup

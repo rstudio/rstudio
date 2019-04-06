@@ -1,7 +1,7 @@
 /*
  * SessionPackrat.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -601,7 +601,7 @@ void onFileChanged(FilePath sourceFilePath)
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   for (const core::system::FileChangeEvent& fileChange : changes)
    {
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       onFileChanged(changedFilePath);
@@ -722,14 +722,14 @@ bool resolveStateAfterAction(PackratActionType action,
    // mark the library resolved if there are no pending snapshot actions
    bool hasPendingSnapshotActions = 
       getPendingActions(PACKRAT_ACTION_SNAPSHOT, true, newLibraryHash,
-                        newLockfileHash, NULL);
+                        newLockfileHash, nullptr);
    if (!hasPendingSnapshotActions)
       updateHash(HASH_TYPE_LIBRARY, HASH_STATE_RESOLVED, newLibraryHash);
 
    // mark the lockfile resolved if there are no pending restore actions   
    bool hasPendingRestoreActions = 
       getPendingActions(PACKRAT_ACTION_RESTORE, true, newLibraryHash,
-                        newLockfileHash, NULL);
+                        newLockfileHash, nullptr);
    if (hasPendingRestoreActions)
    {
       // if we just finished a snapshot and there are pending restore actions,

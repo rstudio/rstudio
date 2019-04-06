@@ -1,7 +1,7 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,6 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookChunkOptions.hpp"
-
-#include <boost/foreach.hpp>
 
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
@@ -87,7 +85,7 @@ public:
       pInput_->enque(kThreadQuitCommand);
 
       // unregister handlers
-      BOOST_FOREACH(RSTUDIO_BOOST_CONNECTION& connection, handlers_)
+      for (RSTUDIO_BOOST_CONNECTION& connection : handlers_)
       {
          connection.disconnect();
       }
@@ -183,7 +181,7 @@ public:
       const std::string& before)
    {
       // find the document queue corresponding to this unit
-      BOOST_FOREACH(const boost::shared_ptr<NotebookDocQueue> queue, queue_)
+      for (const boost::shared_ptr<NotebookDocQueue> queue : queue_)
       {
          if (queue->docId() == pUnit->docId())
          {
@@ -214,7 +212,7 @@ public:
 
    json::Value getDocQueue(const std::string& docId)
    {
-      BOOST_FOREACH(boost::shared_ptr<NotebookDocQueue> pQueue, queue_)
+      for (boost::shared_ptr<NotebookDocQueue> pQueue : queue_)
       {
          if (pQueue->docId() == docId)
             return pQueue->toJson();

@@ -1,7 +1,7 @@
 /*
  * RCntxtUtils.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,8 +45,8 @@ bool inDebugHiddenContext();
 RCntxt firstFunctionContext();
 
 RCntxt getFunctionContext(const int depth, 
-                          int* pFoundDepth = NULL,
-                          SEXP* pEnvironment = NULL);
+                          int* pFoundDepth = nullptr,
+                          SEXP* pEnvironment = nullptr);
 
 bool isByteCodeContext(const RCntxt& cntxt);
 bool isByteCodeSrcRef(SEXP srcref);

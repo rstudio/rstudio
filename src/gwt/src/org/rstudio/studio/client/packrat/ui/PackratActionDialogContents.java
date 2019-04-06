@@ -17,6 +17,7 @@ package org.rstudio.studio.client.packrat.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
 
@@ -45,7 +46,7 @@ public class PackratActionDialogContents extends Composite {
       prRestoreActionsList_ = new ArrayList<PackratPackageAction>();
       JsArrayUtil.fillList(prRestoreActionsArray, prRestoreActionsList_);
       
-      table_ = new DataGrid<PackratPackageAction>(prRestoreActionsList_.size(),
+      table_ = new RStudioDataGrid<PackratPackageAction>(prRestoreActionsList_.size(),
             (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       table_.setRowData(prRestoreActionsList_);
       

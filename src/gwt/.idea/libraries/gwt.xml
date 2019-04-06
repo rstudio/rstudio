@@ -1,17 +1,15 @@
 <component name="libraryTable">
   <library name="gwt">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/junit-4.9b3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/gwt-api-checker.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/gwt-dev.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/gwt-user.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/validation-api-1.0.0.GA.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2/doc/javadoc" />
+    </JAVADOC>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/gwt-dev.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/gwt-user.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/gwt/2.8.1/validation-api-1.0.0.GA-sources.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2" />
     </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/2.8.2" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/2.8.2" recursive="false" type="SOURCES" />
   </library>
 </component>

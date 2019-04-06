@@ -14,34 +14,32 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
-import com.google.gwt.user.client.Command;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public interface JobsListView
 {
    /**
     * Add a job to the beginning of the list, independent of sort order
     * @param job job to add
-    * @param onAddedItem callback with added JobItem, not invoked if job already in list
+    * @return true if job was added, false if job was not added (i.e. already in list)
     */
-   void addJob(Job job, Consumer<JobItem> onAddedItem);
+   boolean addJob(Job job);
 
    /**
     * Insert a job in the list based on current sort order
     * @param job job to insert
-    * @param onInsertedItem callback with added JobItem, not invoked if job already in list
+    * @return true if job was inserted, false if job was not inserted (i.e. already in list)
     */
-   void insertJob(Job job, Consumer<JobItem> onInsertedItem);
+   boolean insertJob(Job job);
 
    /**
     * Remove job from list
     * @param job job to remove
-    * @param onRemoved callback if job was removed, not invoked if job wasn't in list
+    * @return true if job was removed, false if job was not found and thus not removed
     */
-   void removeJob(Job job, Command onRemoved);
+   boolean removeJob(Job job);
 
    /**
     * Process updates to an existing Job

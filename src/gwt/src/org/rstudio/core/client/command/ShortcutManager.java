@@ -30,8 +30,6 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
@@ -182,8 +180,9 @@ public class ShortcutManager implements NativePreviewHandler,
       };
    }
    
-   public void register(int modifiers, 
-                        int keyCode, 
+   public void register(String key,
+                        int keyCode,
+                        int modifiers, 
                         AppCommand command, 
                         String groupName, 
                         String title,
@@ -192,26 +191,27 @@ public class ShortcutManager implements NativePreviewHandler,
       if (!BrowseCap.hasMetaKey() && (modifiers & KeyboardShortcut.META) != 0)
          return;
       
+      KeySequence keySequence = new KeySequence();
+      keySequence.add(new KeyCombination(key, keyCode, modifiers));
+      
       register(
-            new KeySequence(keyCode, modifiers),
+            keySequence,
             command,
             groupName,
             title,
             disableModes);
    }
    
-   public void register(int m1,
-                        int k1,
-                        int m2,
-                        int k2,
+   public void register(String k1, int c1, int m1,
+                        String k2, int c2, int m2,
                         AppCommand command,
                         String groupName,
                         String title,
                         String disableModes)
    {
       KeySequence sequence = new KeySequence();
-      sequence.add(k1, m1);
-      sequence.add(k2, m2);
+      sequence.add(new KeyCombination(k1, c1, m1));
+      sequence.add(new KeyCombination(k2, c2, m2));
       register(sequence, command, groupName, title, disableModes);
    }
    
@@ -430,16 +430,7 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       }
       
-      int keyCode = event.getKeyCode();
-      int modifier = KeyboardShortcut.getModifierValue(event);
-      
-      // Convert Firefox hyphen key code and NumPad hyphen key code
-      // to 'normal' hyphen keycode since we have code wired to that
-      // expectation
-      if (keyCode == 109 || keyCode == 173)
-         keyCode = 189;
-      
-      KeyCombination keyCombination = new KeyCombination(keyCode, modifier);
+      KeyCombination keyCombination = new KeyCombination(event);
       
       // Disable 'Ctrl+F' keybinding when Ace editor in Vim mode
       // is focused.

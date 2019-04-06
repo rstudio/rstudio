@@ -1,7 +1,7 @@
 /*
  * ServerValidateUser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include <server/auth/ServerValidateUser.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
 
@@ -81,7 +80,7 @@ bool validateUser(const std::string& username,
       using namespace boost ;
       char_separator<char> comma(",");
       tokenizer<char_separator<char> > groups(requiredGroup, comma);
-      BOOST_FOREACH(const std::string& group, groups)
+      for (const std::string& group : groups)
       {
          // check group membership
          Error error = core::system::userBelongsToGroup(user,

@@ -1,7 +1,7 @@
 /*
  * RGraphicsDevice.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ namespace {
 const char * const kRStudioDevice = "RStudioGD";
 
 // GE device description
-pGEDevDesc s_pGEDevDesc = NULL;   
+pGEDevDesc s_pGEDevDesc = nullptr;   
 
 // externally provided locator function
 boost::function<bool(double*,double*)> s_locatorFunction;
@@ -317,7 +317,7 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
          // if our graphics device went away while we were waiting 
          // for locator input then we need to return false
          
-         if (s_pGEDevDesc != NULL)
+         if (s_pGEDevDesc != nullptr)
             return TRUE;
          else
             return FALSE;
@@ -348,7 +348,7 @@ void GD_Close(pDevDesc dev)
 {
    TRACE_GD_CALL
 
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       // destroy device specific struct
       DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
@@ -359,10 +359,10 @@ void GD_Close(pDevDesc dev)
       // and the heap R is compiled with (we observed this to a problem with
       // 64-bit R)
       std::free(s_pGEDevDesc->dev);
-      s_pGEDevDesc->dev = NULL;
+      s_pGEDevDesc->dev = nullptr;
       
       // set GDDevDesc to NULL so we don't reference it again
-      s_pGEDevDesc = NULL;
+      s_pGEDevDesc = nullptr;
    }
 
    s_graphicsDeviceEvents.onClosed();
@@ -448,7 +448,7 @@ void resizeGraphicsDevice()
 SEXP createGD()
 {   
    // error if there is already an RStudio device
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       if (!r::session::utils::isServerMode())
       {
@@ -503,7 +503,7 @@ SEXP createGD()
       devDesc.newFrameConfirm = GD_NewFrameConfirm;
       devDesc.onExit = GD_OnExit;
       devDesc.eventEnv = R_NilValue;
-      devDesc.eventHelper = NULL;
+      devDesc.eventHelper = nullptr;
       devDesc.holdflush = GD_HoldFlush;
 
       // capabilities flags
@@ -564,7 +564,7 @@ Error makeActive()
       return Error(graphics::errc::IncompatibleGraphicsEngine, ERROR_LOCATION);
 
    // make sure we have been created
-   if (s_pGEDevDesc == NULL)
+   if (s_pGEDevDesc == nullptr)
    {
       SEXP ignoredSEXP;
       Error error = r::exec::executeSafely<SEXP>(boost::bind(createGD), 
@@ -581,7 +581,7 @@ Error makeActive()
 
 bool isActive()
 {
-   return s_pGEDevDesc != NULL &&
+   return s_pGEDevDesc != nullptr &&
           Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
 }
 
@@ -678,10 +678,10 @@ std::string imageFileExtension()
 
 void onBeforeExecute()
 {
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
    {
       DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
-      if (pDC != NULL)
+      if (pDC != nullptr)
          handler::onBeforeExecute(pDC);
    }
 }
@@ -777,7 +777,7 @@ void setSize(int width, int height, double devicePixelRatio)
       s_devicePixelRatio = devicePixelRatio;
       
       // if there is a device active sync its size
-      if (s_pGEDevDesc != NULL)
+      if (s_pGEDevDesc != nullptr)
          resizeGraphicsDevice();
    }
 }
@@ -799,7 +799,7 @@ double devicePixelRatio()
    
 void close()
 {     
-   if (s_pGEDevDesc != NULL)
+   if (s_pGEDevDesc != nullptr)
       Rf_killDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
 }
    

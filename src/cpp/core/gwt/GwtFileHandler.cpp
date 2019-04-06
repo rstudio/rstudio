@@ -1,7 +1,7 @@
 /*
  * GwtFileHandler.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/System.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
@@ -131,10 +132,16 @@ void handleFileRequest(const std::string& wwwLocalPath,
       // gwt prefix
       vars["gwt_prefix"] = gwtPrefix;
 
-      // CSRF token
-      vars["csrf_token"] = string_utils::htmlEscape(
-            request.cookieValue("csrf-token"), 
-            true /* isAttribute */);
+      // read existing CSRF token 
+      std::string csrfToken = request.cookieValue("csrf-token");
+      if (csrfToken.empty())
+      {
+         // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
+         // set when using proxied authentication. generate and apply a new token.
+         csrfToken = core::system::generateUuid();
+         core::http::setCSRFTokenCookie(request, boost::none, csrfToken, pResponse);
+      }
+      vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
       // don't allow main page to be framed by other domains (clickjacking
       // defense)

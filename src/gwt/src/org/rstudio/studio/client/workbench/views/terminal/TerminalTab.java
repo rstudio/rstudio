@@ -1,7 +1,7 @@
 /*
  * TerminalTab.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,12 +20,10 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -33,7 +31,6 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -43,20 +40,20 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
-                         implements ProvidesBusy
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
 
    public abstract static class Shim 
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
-      implements ProvidesBusy,
-                 CreateTerminalEvent.Handler,
-                 SendToTerminalEvent.Handler,
+      implements SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
                  AddTerminalEvent.Handler,
                  RemoveTerminalEvent.Handler,
                  ActivateNamedTerminalEvent.Handler
    {
+      @Handler
+      public abstract void onNewTerminal();
+
       @Handler
       public abstract void onActivateTerminal();
 
@@ -88,7 +85,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server
        */
-      public abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
+      abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       abstract void confirmClose(Command onConfirmed);
    }
@@ -106,7 +103,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       pConsoleProcessFactory_ = pConsoleProcessFactory;
 
       binder.bind(commands, shim_);
-      events.addHandler(CreateTerminalEvent.TYPE, shim_);
       events.addHandler(SendToTerminalEvent.TYPE, shim_);
       events.addHandler(ClearTerminalEvent.TYPE, shim_);
       events.addHandler(AddTerminalEvent.TYPE, shim_);
@@ -141,12 +137,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
-   }
-
-   @Override
-   public void addBusyHandler(BusyHandler handler)
-   {
-      shim_.addBusyHandler(handler);
    }
 
    /**

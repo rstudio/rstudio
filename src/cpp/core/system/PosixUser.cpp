@@ -1,7 +1,7 @@
 /*
  * PosixUser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,7 +100,7 @@ Error userFrom(const boost::function<int(
       buffSize = 4096; // some systems return -1, be conservative!
    std::vector<char> buffer(buffSize);
    int result = getPasswd(value, ptrPwd, &(buffer[0]), buffSize, &tempPtrPwd) ;
-   if (tempPtrPwd == NULL)
+   if (tempPtrPwd == nullptr)
    {
       if (result == 0) // will happen if user is simply not found
          result = kNotFoundError;

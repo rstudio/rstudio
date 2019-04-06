@@ -88,7 +88,7 @@ private:
    {
       // get peer identity
       core::system::user::UserIdentity peerIdentity;
-      Error error = core::system::user::socketPeerIdentity(pSocket->native(), 
+      Error error = core::system::user::socketPeerIdentity(pSocket->native_handle(),
                                                            &peerIdentity);
       if (error)
       {

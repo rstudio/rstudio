@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.SlidingLayoutPanel;
@@ -32,7 +33,7 @@ public class LauncherJobsPaneWidgets implements JobsPaneOperations
    @Override
    public Widget createMainWidget()
    {
-      return null;
+      return new Label();
    }
    
    @Override

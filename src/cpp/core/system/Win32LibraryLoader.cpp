@@ -1,7 +1,7 @@
 /*
  * Win32LibraryLoader.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,11 +34,11 @@ std::string getLastErrorMessage()
        FORMAT_MESSAGE_ALLOCATE_BUFFER |
        FORMAT_MESSAGE_FROM_SYSTEM |
        FORMAT_MESSAGE_IGNORE_INSERTS,
-       NULL,
+       nullptr,
        lastErr,
        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
        (LPTSTR) &lpMsgBuf,
-       0, NULL );
+       0, nullptr );
 
    if (length != 0)
    {
@@ -57,9 +57,9 @@ std::string getLastErrorMessage()
 Error loadLibrary(const std::string& libPath, void** ppLib)
 {
    // use
-   *ppLib = NULL;
-   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, 0);
-   if (*ppLib == NULL)
+   *ppLib = nullptr;
+   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), nullptr, 0);
+   if (*ppLib == nullptr)
    {
       Error error = LAST_SYSTEM_ERROR();
       error.addProperty("dlerror", libPath + " - " + getLastErrorMessage());
@@ -73,9 +73,9 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
 
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
 {
-   *ppSymbol = NULL;
+   *ppSymbol = nullptr;
    *ppSymbol = (void*)::GetProcAddress((HINSTANCE)pLib, name.c_str());
-   if (*ppSymbol == NULL)
+   if (*ppSymbol == nullptr)
    {
       Error error = LAST_SYSTEM_ERROR();
       error.addProperty("dlerror", name + " - " + getLastErrorMessage());

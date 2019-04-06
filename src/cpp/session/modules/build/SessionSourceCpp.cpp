@@ -1,7 +1,7 @@
 /*
  * SessionSourceCpp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,7 @@ struct SourceCppState
       stateJson["target_file"] = targetFile;
       stateJson["outputs"] = outputs;
       stateJson["errors"] = errors;
-      return stateJson;
+      return std::move(stateJson);
    }
 
    std::string targetFile;

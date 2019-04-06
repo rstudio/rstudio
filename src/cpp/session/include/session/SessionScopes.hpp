@@ -1,7 +1,7 @@
 /*
  * SessionScopes.hpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@
 #define SESSION_SCOPES_HPP
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/range/adaptor/map.hpp>
 
@@ -261,7 +260,7 @@ inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
       return "";
    }
 
-   BOOST_FOREACH(const core::FilePath& projectEntry, projectEntries)
+   for (const core::FilePath& projectEntry : projectEntries)
    {
       // skip files that don't look like project entries
       if (projectEntry.extensionLowerCase() != kProjectEntryExt)

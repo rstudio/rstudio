@@ -1,7 +1,7 @@
 /*
  * LinuxFileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@
 #include <set>
 
 #include <boost/utility.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/multi_index_container.hpp>
@@ -359,7 +358,7 @@ Error processEvent(FileEventContext* pContext,
                                      &removeEvents);
 
             // for each directory remove event remove any watches we have for it
-            BOOST_FOREACH(const FileChangeEvent& event, removeEvents)
+            for (const FileChangeEvent& event : removeEvents)
             {
                if (event.fileInfo().isDirectory())
                {
@@ -536,7 +535,7 @@ void run(const boost::function<void()>& checkForInput)
    while(true)
    {
       std::list<void*> contexts = impl::activeEventContexts();
-      BOOST_FOREACH(void* ctx, contexts)
+      for (void* ctx : contexts)
       {
          // cast to context
          FileEventContext* pContext = (FileEventContext*)ctx;

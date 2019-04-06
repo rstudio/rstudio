@@ -373,7 +373,7 @@ Error registerSignalHandlers()
 
 #ifdef _WIN32
    // accept Ctrl + C interrupts
-   ::SetConsoleCtrlHandler(NULL, FALSE);
+   ::SetConsoleCtrlHandler(nullptr, FALSE);
 
    // register console control handler
    ::SetConsoleCtrlHandler(handleConsoleCtrl, TRUE);
@@ -633,7 +633,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error ;
-   BOOST_FOREACH(const json::JsonRpcMethod& method, rMethods)
+   for (const json::JsonRpcMethod& method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
    }

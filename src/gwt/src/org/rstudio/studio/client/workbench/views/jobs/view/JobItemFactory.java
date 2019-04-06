@@ -1,7 +1,7 @@
 /*
- * StringSink.java
+ * JobItemFactory.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,9 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.studio.client.workbench.views.jobs.view;
 
-public interface StringSink
+import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+
+public interface JobItemFactory
 {
-   void write(String str);
+   // for assisted injection
+   JobItem create(Job job);
 }

@@ -1,7 +1,7 @@
 /*
  * System.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -123,7 +123,7 @@ T posixCall(const boost::function<T()>& func)
 template <typename T>
 Error posixCall(const boost::function<T()>& func,
                        const ErrorLocation& location,
-                       T *pResult = NULL)
+                       T *pResult = nullptr)
 {
    const T ERR = -1;
 
@@ -147,7 +147,7 @@ template <typename T>
 void safePosixCall(const boost::function<T()>& func,
                           const ErrorLocation& location)
 {
-   Error error = posixCall<T>(func, location, NULL);
+   Error error = posixCall<T>(func, location, nullptr);
    if (error)
       LOG_ERROR(error);
 }
@@ -182,7 +182,7 @@ public:
    }
 
    virtual ~CloseHandleOnExitScope();
-   void detach() { pHandle_ = NULL; }
+   void detach() { pHandle_ = nullptr; }
 private:
    HANDLE* pHandle_;
    ErrorLocation location_;

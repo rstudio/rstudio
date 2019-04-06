@@ -68,7 +68,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;

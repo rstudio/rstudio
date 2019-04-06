@@ -1,7 +1,7 @@
 /*
  * NotebookOutput.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 #include "NotebookOutput.hpp"
 #include "NotebookPlots.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -366,11 +365,11 @@ OutputPair lastChunkOutput(const std::string& docId,
    }
 
    OutputPair last;
-   BOOST_FOREACH(const FilePath& path, outputPaths)
+   for (const FilePath& path : outputPaths)
    {
       // extract ordinal and update if it's the most recent we've seen so far
       unsigned ordinal = static_cast<unsigned>(
-            ::strtoul(path.stem().c_str(), NULL, 16));
+            ::strtoul(path.stem().c_str(), nullptr, 16));
       if (ordinal > last.ordinal)
       {
          last.ordinal = ordinal;
@@ -496,7 +495,7 @@ Error enqueueChunkOutput(
       std::sort(outputPaths.begin(), outputPaths.end());
 
       // loop through each and build an array of the outputs
-      BOOST_FOREACH(const FilePath& outputPath, outputPaths)
+      for (const FilePath& outputPath : outputPaths)
       {
          json::Object output;
 
@@ -507,7 +506,7 @@ Error enqueueChunkOutput(
             continue;
 
          // extract ordinal from filename
-         unsigned ordinal = ::strtol(outputPath.stem().c_str(), NULL, 16);
+         unsigned ordinal = ::strtol(outputPath.stem().c_str(), nullptr, 16);
 
          // extract metadata if present
          json::Value meta;

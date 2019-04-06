@@ -78,7 +78,7 @@ bool hasAltrepCapability()
 bool isAltrepImpl(SEXP var)
 {
    // Reject nulls
-   if (var == NULL || var == R_NilValue)
+   if (var == nullptr || var == R_NilValue)
       return false;
 
    // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
@@ -230,7 +230,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
             return val;
       }
    }
-   return varJson;
+   return std::move(varJson);
 }
 
 bool functionDiffersFromSource(
@@ -307,7 +307,7 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (srcref == NULL ||
+   if (srcref == nullptr ||
        r::sexp::isNull(srcref) ||
        r::context::isByteCodeSrcRef(srcref))
    {

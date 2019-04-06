@@ -1532,14 +1532,12 @@ public class TextEditingTarget implements
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
      
 
-      final String rTypeId = FileTypeRegistry.R.getTypeId();
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
                public void onValueChange(ValueChangeEvent<Boolean> evt)
                {
-                  if (fileType_.getTypeId().equals(rTypeId))
-                     view_.adaptToFileType(fileType_);
+                  view_.adaptToFileType(fileType_);
                }
             }
       ));

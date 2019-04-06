@@ -7,7 +7,6 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;

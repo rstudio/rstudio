@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,7 +148,7 @@ struct FilePath::Impl
    Impl()
    {
    }
-   Impl(path_t path)
+   explicit Impl(path_t path)
       : path(path)
    {
    }
@@ -218,7 +218,7 @@ FilePath FilePath::resolveAliasedPath(const std::string& aliasedPath,
                             const FilePath& userHomePath)
 {
    // Special case for empty string or "~"
-   if (aliasedPath.empty() || (aliasedPath.compare(kHomePathLeafAlias) == 0))
+   if (aliasedPath.empty() || (aliasedPath == kHomePathLeafAlias))
       return userHomePath;
 
    // if the path starts with the home alias then substitute the home path
@@ -557,7 +557,7 @@ MimeType s_mimeTypes[] =
    { "oga",   "audio/ogg" },
    { "ogg",   "audio/ogg" },
 
-   { NULL, NULL }
+   { nullptr, nullptr }
 };
 
 }
@@ -1077,16 +1077,16 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
 {
    try
    {
-      std::istream* pResult = NULL;
+      std::istream* pResult = nullptr;
    #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
                                    GENERIC_READ,
                                    FILE_SHARE_READ,
-                                   NULL,
+                                   nullptr,
                                    OPEN_EXISTING,
                                    0,
-                                   NULL);
+                                   nullptr);
       if (hFile == INVALID_HANDLE_VALUE)
       {
          Error error = LAST_SYSTEM_ERROR();
@@ -1129,16 +1129,16 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
 {
    try
    {
-      std::ostream* pResult = NULL;
+      std::ostream* pResult = nullptr;
    #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
                                    truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
                                    0, // exclusive access
-                                   NULL,
+                                   nullptr,
                                    truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
                                    0,
-                                   NULL);
+                                   nullptr);
       if (hFile == INVALID_HANDLE_VALUE)
       {
          Error error = LAST_SYSTEM_ERROR();
@@ -1196,11 +1196,8 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
       Error error(e.code(), ERROR_LOCATION) ;
       addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("equivilant-to", filePath);
-      return error ;
+      return false;
    }
-
-   // keep compiler happy
-   return false;
 }
 
 bool FilePath::operator== (const FilePath& filePath) const

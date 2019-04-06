@@ -1,7 +1,7 @@
 /*
  * SessionInstallRtools.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include "SessionInstallRtools.hpp"
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/StringUtils.hpp>
@@ -76,7 +75,7 @@ Error installRtools()
    availableRtools.push_back(r_util::RToolsInfo("2.13", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("2.12", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("2.11", installPath, gcc49));
-   BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
+   for (const r_util::RToolsInfo& rTools : availableRtools)
    {
       if (module_context::isRtoolsCompatible(rTools))
       {

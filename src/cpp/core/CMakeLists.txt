@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -88,6 +88,7 @@ set (CORE_SOURCE_FILES
    http/MultipartRelated.cpp
    http/ChunkParser.cpp
    http/ChunkProxy.cpp
+   http/CSRFToken.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
@@ -278,6 +279,7 @@ else()
       RpcRT4
       ShLwApi
       AdvAPI32
+      Crypt32
       ${OPENSSL_LIBRARIES}
    )
 

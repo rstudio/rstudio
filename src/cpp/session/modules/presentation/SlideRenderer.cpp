@@ -1,7 +1,7 @@
 /*
  * SlideRenderer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 
 #include "SlideRenderer.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
@@ -49,7 +48,7 @@ std::string commandsAsJsonArray(const Slide& slide)
    json::Array commandsJsonArray;
 
    std::vector<Command> commands = slide.commands();
-   BOOST_FOREACH(const Command& command, commands)
+   for (const Command& command : commands)
    {
       commandsJsonArray.push_back(command.asJson());
    }
@@ -239,7 +238,7 @@ Error slideToHtml(const Slide& slide,
    {
       std::ostringstream ostr;
       ostr << "<div class=\"fieldError\">";
-      BOOST_FOREACH(const std::string& field, slide.invalidFields())
+      for (const std::string& field : slide.invalidFields())
       {
          ostr << "<span>Unrecognized slide field:</span> "
               << "<code>" << field << "</code><br/>";
@@ -517,20 +516,20 @@ Error renderSlides(const SlideDeck& slideDeck,
       ostr << "</section>" << "\n";
 
       // reveal config actions
-      BOOST_FOREACH(const std::string& config, revealConfig)
+      for (const std::string& config : revealConfig)
       {
          ostrRevealConfig << config << "," << "\n";
       }
 
       // javascript actions to take on slide deck init
-      BOOST_FOREACH(const std::string& jsAction, initActions)
+      for (const std::string& jsAction : initActions)
       {
          ostrInitActions <<  jsAction << ";" << "\n";
       }
 
       // javascript actions to take on slide load
       ostrSlideActions << cmdPad << "case " << slideNumber << ":" << "\n";
-      BOOST_FOREACH(const std::string& jsAction, slideActions)
+      for (const std::string& jsAction : slideActions)
       {
          ostrSlideActions << cmdPad << "  " << jsAction << ";" << "\n";
       }

@@ -1,7 +1,7 @@
 /*
  * RRoutines.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,19 +45,19 @@ void registerCallMethod(const char* name,
 void registerAll()
 {
    // call methods
-   R_CallMethodDef* pCallMethods = NULL;
+   R_CallMethodDef* pCallMethods = nullptr;
    if (s_callMethods.size() > 0)
    {
       R_CallMethodDef nullMethodDef ;
-      nullMethodDef.name = NULL ;
-      nullMethodDef.fun = NULL ;
+      nullMethodDef.name = nullptr ;
+      nullMethodDef.fun = nullptr ;
       nullMethodDef.numArgs = 0 ;
       s_callMethods.push_back(nullMethodDef);
       pCallMethods = &s_callMethods[0];
    }
    
    DllInfo *info = R_getEmbeddingDllInfo() ;
-   R_registerRoutines(info, NULL, pCallMethods, NULL, NULL);
+   R_registerRoutines(info, nullptr, pCallMethods, nullptr, nullptr);
 }
    
    

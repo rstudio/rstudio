@@ -1,7 +1,7 @@
 /*
  * MiscellaneousTests.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,9 @@
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 #include <core/http/Request.hpp>
+#include <core/json/Json.hpp>
+
+#include <core/system/Types.hpp>
 
 namespace rstudio {
 namespace unit_tests {
@@ -35,8 +38,8 @@ class SuppressOutputScope
 public:
    SuppressOutputScope()
    {
-      pCoutBuf_ = std::cout.rdbuf(NULL);
-      pCerrBuf_ = std::cerr.rdbuf(NULL);
+      pCoutBuf_ = std::cout.rdbuf(nullptr);
+      pCerrBuf_ = std::cerr.rdbuf(nullptr);
    }
    
    ~SuppressOutputScope()
@@ -50,7 +53,7 @@ private:
    std::streambuf* pCerrBuf_;
 };
 
-context("Position")
+test_context("Position")
 {
    test_that("Positions are compared correctly")
    {
@@ -62,7 +65,7 @@ context("Position")
    
 }
 
-context("Splitting")
+test_context("Splitting")
 {
    test_that("core::algorithm::split handles multi-character delimiters")
    {
@@ -78,7 +81,7 @@ context("Splitting")
    }
 }
 
-context("Regular Expressions")
+test_context("Regular Expressions")
 {
    test_that("Exceptions caused by regular expression complexity are caught")
    {
@@ -133,7 +136,7 @@ context("Regular Expressions")
    }
 }
 
-context("HttpRequest")
+test_context("HttpRequest")
 {
    test_that("Accept encoding works properly")
    {
@@ -156,7 +159,7 @@ context("HttpRequest")
    }
 }
 
-context("LruCache")
+test_context("LruCache")
 {
    test_that("Can update the same value multiple times")
    {
@@ -248,6 +251,28 @@ context("LruCache")
       }
 
       expect_true(cache.size() == 0);
+   }
+}
+
+test_context("Options")
+{
+   test_that("Options are properly serialized/deserialized")
+   {
+      core::system::Options options;
+      options.push_back({"abc", "123"});
+      options.push_back({"abc=123", "456"});
+      options.push_back({"abc=", "=123"});
+      options.push_back({"abc", std::string()});
+      options.push_back({"abc=", std::string()});
+
+      core::json::Array optionsArray = core::json::toJsonArray(options);
+      core::system::Options options2 = core::json::optionsFromJson(optionsArray);
+
+      for (size_t i = 0; i < options.size(); ++i)
+      {
+         expect_true(options[i].first == options2[i].first);
+         expect_true(options[i].second == options2[i].second);
+      }
    }
 }
 

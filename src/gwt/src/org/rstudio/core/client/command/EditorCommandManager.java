@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;

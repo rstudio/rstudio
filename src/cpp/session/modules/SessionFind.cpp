@@ -1,7 +1,7 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -189,8 +189,8 @@ private:
 
 FindInFilesState& findResults()
 {
-   static FindInFilesState* s_pFindResults = NULL;
-   if (s_pFindResults == NULL)
+   static FindInFilesState* s_pFindResults = nullptr;
+   if (s_pFindResults == nullptr)
       s_pFindResults = new FindInFilesState();
    return *s_pFindResults;
 }
@@ -511,7 +511,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (!asRegex)
       cmd << "-F";
 
-   BOOST_FOREACH(json::Value filePattern, filePatterns)
+   for (json::Value filePattern : filePatterns)
    {
       cmd << "--include=" + filePattern.get_str();
    }

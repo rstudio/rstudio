@@ -11,7 +11,7 @@ import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.files.FileBacked;
 import org.rstudio.studio.client.application.events.EventBus;

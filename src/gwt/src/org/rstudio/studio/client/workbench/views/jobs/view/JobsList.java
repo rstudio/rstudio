@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
-import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -38,89 +38,101 @@ public class JobsList extends Composite
    {
    }
 
-   public JobsList()
+   @Inject
+   public JobsList(JobItemFactory jobItemFactory)
    {
+      jobItemFactory_ = jobItemFactory;
       initWidget(uiBinder.createAndBindUi(this));
    
-      baseImpl_ = new JobsListViewImpl(list_);
+      listImpl_ = new JobsListViewImpl(list_);
       
       updateVisibility();
    }
    
    @Override
-   public void addJob(Job job, Consumer<JobItem> onAddedItem)
+   public boolean addJob(Job job)
    {
-      baseImpl_.addJob(job, (item) -> {
-         updateVisibility();
-         
-         if (onAddedItem != null)
-            onAddedItem.accept(item);
-      });
+      if (listImpl_.hasJob(job.id))
+         return false;
+   
+      listImpl_.addJob(jobItemFactory_.create(job)); 
+      updateVisibility();
+      return true;
    }
    
    @Override
-   public void insertJob(Job job, Consumer<JobItem> onInsertedItem)
+   public boolean insertJob(Job job)
    {
-      baseImpl_.insertJob(job, (item) -> {
-         updateVisibility();
-         
-         if (onInsertedItem != null)
-            onInsertedItem.accept(item);
-      });
+      if (listImpl_.hasJob(job.id))
+         return false;
+      
+      listImpl_.insertJob(jobItemFactory_.create(job));
+      updateVisibility();
+      return true;
    }
    
    @Override
-   public void removeJob(Job job, Command onRemoved)
+   public boolean removeJob(Job job)
    {
-      baseImpl_.removeJob(job, () -> {
-         updateVisibility();
-         
-         if (onRemoved != null)
-            onRemoved.execute();
-      });
+      if (!listImpl_.removeJob(job))
+         return false;
+      
+      updateVisibility();
+      return true;         
    }
    
    @Override
    public void updateJob(Job job)
    {
-      baseImpl_.updateJob(job);
+      listImpl_.updateJob(job);
    }
    
    @Override
    public void clear()
    {
-      baseImpl_.clear();
+      listImpl_.clear();
       updateVisibility();
    }
    
    @Override
    public void syncElapsedTime(int timestamp)
    {
-      baseImpl_.syncElapsedTime(timestamp);
+      listImpl_.syncElapsedTime(timestamp);
    }
    
    @Override
    public Job getJob(String id)
    {
-      return baseImpl_.getJob(id);
+      return listImpl_.getJob(id);
    }
    
    @Override
    public int jobCount()
    {
-      return baseImpl_.jobCount();
+      return listImpl_.jobCount();
    }
    
    @Override
    public List<Job> getJobs()
    {
-      return baseImpl_.getJobs();
+      return listImpl_.getJobs();
    }
    
    @Override
    public void setInitialJobs(List<Job> jobs)
    {
-      baseImpl_.setInitialJobs(jobs);
+       // clear any current state
+      clear();
+     
+      // sort jobs by most recently recorded first
+      List<Job> sortedJobs = jobs;
+      sortedJobs.sort(Comparator.comparingInt(j -> j.recorded));
+      
+      // add each to the panel
+      for (Job job: sortedJobs)
+      {
+         addJob(job);
+      }
    }
    
    private void updateVisibility()
@@ -133,5 +145,8 @@ public class JobsList extends Composite
    @UiField Label empty_;
    @UiField ScrollPanel scroll_;
 
-   private final JobsListViewImpl baseImpl_;
+   private final JobsListViewImpl listImpl_;
+   
+   // injected
+   private final JobItemFactory jobItemFactory_;
 }

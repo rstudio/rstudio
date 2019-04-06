@@ -244,7 +244,7 @@ Error initialize(ProgramMode programMode)
             handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler").absolutePath());
          #endif
       #else
-         handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler.com").absolutePath());
+         handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler.exe").absolutePath());
 #endif
    }
 

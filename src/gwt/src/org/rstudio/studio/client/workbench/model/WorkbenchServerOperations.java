@@ -1,7 +1,7 @@
 /*
  * WorkbenchServerOperations.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOpe
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
-import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
@@ -72,7 +71,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    PlotsServerOperations,
                                                    EditServerOperations,
                                                    SourceServerOperations,
-                                                   DataServerOperations,
                                                    ChooseFileServerOperations,
                                                    HistoryServerOperations,
                                                    MirrorsServerOperations,

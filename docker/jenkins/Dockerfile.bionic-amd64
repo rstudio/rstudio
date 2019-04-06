@@ -39,6 +39,7 @@ RUN apt-get update && \
     libegl1-mesa \
     libpam-dev \
     libpango1.0-dev \
+    libuser1-dev \
     libssl-dev \
     libxslt1-dev \
     lsof \

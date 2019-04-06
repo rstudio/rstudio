@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,42 +24,32 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-public class TerminalTabPresenter extends BusyPresenter
+public class TerminalTabPresenter extends BasePresenter
                                   implements SendToTerminalEvent.Handler,
                                              ClearTerminalEvent.Handler,
-                                             CreateTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
                                              RemoveTerminalEvent.Handler,
                                              ActivateNamedTerminalEvent.Handler
-
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
    public interface Display extends WorkbenchView
    {
       /**
-       * Callback when Display is selected
-       */
-      interface DisplaySelectedCallback {
-         void displaySelected();
-      }
-
-      /**
        * Ensure terminal pane is visible. Callback to perform actions after pane has
        * been made visible and received onSelected.
        */
-      void activateTerminal(DisplaySelectedCallback callback);
+      void activateTerminal(Command displaySelected);
 
       /**
        * Create a new terminal session
@@ -149,6 +139,12 @@ public class TerminalTabPresenter extends BusyPresenter
    }
 
    @Handler
+   public void onNewTerminal()
+   {
+      view_.activateTerminal(() -> view_.createTerminal(null));
+   }
+
+   @Handler
    public void onActivateTerminal()
    {
       // "Move focus to terminal" command; does same thing as clicking the 
@@ -202,13 +198,6 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onSendTerminalToEditor()
    {
       view_.sendTerminalToEditor();
-   }
-
-   @Override
-   public void onCreateTerminal(final CreateTerminalEvent event)
-   {
-      // New Terminal command, always creates a new terminal
-      view_.activateTerminal(() -> view_.createTerminal(event.getPostCreateText()));
    }
 
    @Override

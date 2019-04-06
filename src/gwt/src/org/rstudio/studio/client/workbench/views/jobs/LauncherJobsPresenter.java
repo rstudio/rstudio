@@ -18,16 +18,15 @@ package org.rstudio.studio.client.workbench.views.jobs;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
-import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.LauncherJobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplay;
 
@@ -45,7 +44,6 @@ public class LauncherJobsPresenter extends BasePresenter
    public LauncherJobsPresenter(Display display,
                                 Binder binder,
                                 Commands commands,
-                                UIPrefs uiPrefs,
                                 LauncherJobManager launcherJobManager)
    {
       super(display);
@@ -53,8 +51,6 @@ public class LauncherJobsPresenter extends BasePresenter
       jobEventHandler_ = new JobsPresenterEventHandlersImpl(JobConstants.JOB_TYPE_LAUNCHER, display);
       
       display_ = display;
-      uiPrefs_ = uiPrefs;
-      commands_ = commands;
       launcherJobManager_ = launcherJobManager;
       binder.bind(commands, this);
     }
@@ -66,9 +62,9 @@ public class LauncherJobsPresenter extends BasePresenter
    }
 
    @Override
-   public void onJobInit(JobInitEvent event)
+   public void setInitialJobs(JobState state)
    {
-      jobEventHandler_.onJobInit(event);
+      jobEventHandler_.setInitialJobs(state);
    }
    
    @Override
@@ -122,7 +118,5 @@ public class LauncherJobsPresenter extends BasePresenter
    
    // injected
    private final Display display_;
-   private final UIPrefs uiPrefs_;
-   private final Commands commands_;
    private final LauncherJobManager launcherJobManager_;
 }

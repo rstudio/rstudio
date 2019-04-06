@@ -1,7 +1,7 @@
 /*
  * SessionProjectTemplate.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 #include <session/SessionProjectTemplate.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/function.hpp>
 #include <boost/range/adaptors.hpp>
 
@@ -62,7 +61,7 @@ void reportErrorsToConsole(const std::vector<Error>& errors,
    
    std::string pkgName = projectContext().packageInfo().name();
    std::vector<Error> localErrors;
-   BOOST_FOREACH(const Error& error, errors)
+   for (const Error& error : errors)
    {
       std::string resourcePath = error.getProperty("resource");
       if (resourcePath.find("/" + pkgName + "/"))
@@ -76,7 +75,7 @@ void reportErrorsToConsole(const std::vector<Error>& errors,
          << "Error(s) found while parsing '" + resourcePath.filename() + "':"
          << std::endl;
    
-   BOOST_FOREACH(const Error& error, localErrors)
+   for (const Error& error : localErrors)
    {
       std::string description = error.getProperty("description");
       std::cout << description << std::endl;
@@ -185,7 +184,7 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    object["position"]  = position;
    object["fields"]    = core::json::toJsonArray(fields);
 
-   return object;
+   return std::move(object);
 }
 
 Error fromJson(
@@ -213,7 +212,7 @@ Error fromJson(
    if (error)
       return error;
    
-   BOOST_FOREACH(const json::Value& value, array)
+   for (const json::Value& value : array)
    {
       if (!json::isType<json::Object>(value))
          return json::errors::typeMismatch(
@@ -246,13 +245,13 @@ json::Value ProjectTemplateDescription::toJson() const
    object["open_files"] = json::toJsonArray(openFiles);
 
    core::json::Array widgetsJson;
-   BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
+   for (const ProjectTemplateWidgetDescription& widgetDescription : widgets)
    {
       widgetsJson.push_back(widgetDescription.toJson());
    }
    object["widgets"] = widgetsJson;
 
-   return object;
+   return std::move(object);
 }
 
 namespace {
@@ -415,7 +414,7 @@ std::vector<Error> validate(const ProjectTemplateDescription& description,
    if (description.title.empty())
       result.push_back(errors::missingField("Title", resourcePath, location));
    
-   BOOST_FOREACH(const ProjectTemplateWidgetDescription widget, description.widgets)
+   for (const ProjectTemplateWidgetDescription widget : description.widgets)
    {
       std::vector<Error> widgetErrors =
             validateWidget(widget, resourcePath, location);
@@ -452,17 +451,17 @@ public:
    {
       json::Object object;
       
-      BOOST_FOREACH(const std::string& pkgName, registry_ | boost::adaptors::map_keys)
+      for (const std::string& pkgName : registry_ | boost::adaptors::map_keys)
       {
          json::Array array;
-         BOOST_FOREACH(const ProjectTemplateDescription& description, registry_[pkgName])
+         for (const ProjectTemplateDescription& description : registry_[pkgName])
          {
             array.push_back(description.toJson());
          }
          object[pkgName] = array;
       }
       
-      return object;
+      return std::move(object);
    }
 
    std::map<
@@ -529,7 +528,7 @@ private:
       if (error)
          LOG_ERROR(error);
       
-      BOOST_FOREACH(const FilePath& childPath, children)
+      for (const FilePath& childPath : children)
       {
          // skip files that don't have a dcf extension
          if (childPath.extension() != ".dcf")

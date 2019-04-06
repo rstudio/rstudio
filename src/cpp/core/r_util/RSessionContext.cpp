@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,6 +94,20 @@ SessionScope SessionScope::projectNone(const std::string& id)
    return SessionScope(ProjectId(kProjectNoneId), id);
 }
 
+SessionScope SessionScope::jupyterLabSession(const std::string& id)
+{
+   // note: project ID is currently unused as it is meaningless
+   // in the context of Jupyter sessions
+   return SessionScope(ProjectId(kJupyterLabId), id);
+}
+
+SessionScope SessionScope::jupyterNotebookSession(const std::string& id)
+{
+   // note: project ID is currently unused as it is meaningless
+   // in the context of Jupyter sessions
+   return SessionScope(ProjectId(kJupyterNotebookId), id);
+}
+
 bool SessionScope::isProjectNone() const
 {
    return project_.id() == kProjectNoneId;
@@ -102,6 +116,21 @@ bool SessionScope::isProjectNone() const
 bool SessionScope::isWorkspaces() const
 {
    return project_.id() == kWorkspacesId;
+}
+
+bool SessionScope::isJupyter() const
+{
+   return isJupyterLab() || isJupyterNotebook();
+}
+
+bool SessionScope::isJupyterLab() const
+{
+   return project_.id() == kJupyterLabId;
+}
+
+bool SessionScope::isJupyterNotebook() const
+{
+   return project_.id() == kJupyterNotebookId;
 }
 
 // This function is intended to tell us whether a given path corresponds to an
@@ -242,7 +271,8 @@ std::string urlPathForSessionScope(const SessionScope& scope)
 void parseSessionUrl(const std::string& url,
                      SessionScope* pScope,
                      std::string* pUrlPrefix,
-                     std::string* pUrlWithoutPrefix)
+                     std::string* pUrlWithoutPrefix,
+                     std::string* pBaseUrl)
 {
    static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)");
 
@@ -266,6 +296,11 @@ void parseSessionUrl(const std::string& url,
          *pUrlWithoutPrefix = boost::algorithm::replace_first_copy(
                                    url, std::string(match[0]), "/");
       }
+      if (pBaseUrl)
+      {
+         http::URL urlObj(url.substr(0, url.find(match[0])));
+         *pBaseUrl = urlObj.path();
+      }
    }
    else
    {
@@ -275,9 +310,10 @@ void parseSessionUrl(const std::string& url,
          *pUrlPrefix = std::string();
       if (pUrlWithoutPrefix)
          *pUrlWithoutPrefix = url;
+      if (pBaseUrl)
+         *pBaseUrl = std::string();
    }
 }
-
 
 std::string createSessionUrl(const std::string& hostPageUrl,
                              const SessionScope& scope)
@@ -287,7 +323,7 @@ std::string createSessionUrl(const std::string& hostPageUrl,
 
    // determine the host scope path
    std::string hostScopePath;
-   parseSessionUrl(hostPageUrl, NULL, &hostScopePath, NULL);
+   parseSessionUrl(hostPageUrl, nullptr, &hostScopePath, nullptr);
 
    // if we got a scope path then take everything before
    // it and append our target scope path
@@ -378,10 +414,10 @@ std::string generateScopeId()
    // reserved ids we are using now
    reserved.push_back(kProjectNoneId);
    reserved.push_back(kWorkspacesId);
+   reserved.push_back(kJupyterLabId);
+   reserved.push_back(kJupyterNotebookId);
 
    // a few more for future expansion
-   reserved.push_back("21f2ed72");
-   reserved.push_back("2cb256d2");
    reserved.push_back("3c9ab5a7");
    reserved.push_back("f468a750");
    reserved.push_back("6ae9dc1b");

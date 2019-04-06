@@ -1,7 +1,7 @@
 /*
  * SessionSynctex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ json::Value toJson(const FilePath& pdfFile,
       pdfJson["width"] = pdfLoc.width();
       pdfJson["height"] = pdfLoc.height();
       pdfJson["from_click"] = fromClick;
-      return pdfJson;
+      return std::move(pdfJson);
    }
    else
    {
@@ -68,7 +68,7 @@ json::Value toJson(const core::tex::SourceLocation& srcLoc)
       srcJson["file"] = module_context::createAliasedPath(srcLoc.file());
       srcJson["line"] = srcLoc.line();
       srcJson["column"] = srcLoc.column();
-      return srcJson;
+      return std::move(srcJson);
    }
    else
    {

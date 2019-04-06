@@ -58,7 +58,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -2175,7 +2175,10 @@ public class AceEditor implements DocDisplay,
 
       int indentSize = StringUtil.detectIndent(lines);
       if (indentSize > 0)
+      {
          setTabSize(indentSize);
+         setUseSoftTabs(true);
+      }
    }
 
    public void setShowInvisibles(boolean show)
@@ -3581,6 +3584,15 @@ public class AceEditor implements DocDisplay,
       
       while (endRow <= endRowLimit)
       {
+         // continue search if we're in a multi-line string
+         // (forego updating our bracket counts)
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring")
+         {
+            endRow++;
+            continue;
+         }
+         
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -3606,14 +3618,6 @@ public class AceEditor implements DocDisplay,
          
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
-         {
-            endRow++;
-            continue;
-         }
-         
-         // continue search if we're in a multi-line string
-         String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring")
          {
             endRow++;
             continue;

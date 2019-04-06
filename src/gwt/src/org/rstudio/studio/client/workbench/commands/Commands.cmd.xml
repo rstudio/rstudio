@@ -3362,10 +3362,4 @@ well as menu structures (for main menu and popup menus).
          checkable="true"
          windowMode="any"/>
 
-    <cmd id="refreshLauncherJobsList"
-         menuLabel="Refresh"
-         desc="Refresh and resort launcher jobs"
-         rebindable="false"
-         windowMode="any"/>
-
 </commands>

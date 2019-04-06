@@ -1,7 +1,7 @@
 /*
  * SessionDiagnostics.cpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
 #include <r/RSexp.hpp>
@@ -88,7 +87,7 @@ void addUnreferencedSymbol(const ParseItem& item,
    if (symbols.count(item.symbol))
    {
       ParseNode::Positions positions = symbols[item.symbol];
-      BOOST_FOREACH(const Position& position, positions)
+      for (const Position& position : positions)
       {
          lint.symbolDefinedAfterUsage(item, position);
       }
@@ -113,7 +112,7 @@ void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
       
       if (pNode->isSymbolDefinedButNotUsed(symbolName, true, true))
       {
-         ParseNode::Positions* symbolPos = NULL;
+         ParseNode::Positions* symbolPos = nullptr;
          if (get(definitions, symbolName, &symbolPos))
          {
             results.lint().symbolDefinedButNotUsed(
@@ -127,7 +126,7 @@ void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
 void checkDefinedButNotUsed(ParseResults& results)
 {
    ParseNode::Children children = results.parseTree()->getChildren();
-   BOOST_FOREACH(const boost::shared_ptr<ParseNode>& child, children)
+   for (const boost::shared_ptr<ParseNode>& child : children)
    {
       doCheckDefinedButNotUsed(child.get(), results);
    }
@@ -152,7 +151,7 @@ void addInferredSymbols(const FilePath& filePath,
    
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.
-   BOOST_FOREACH(const std::string& package, pIndex->getInferredPackages())
+   for (const std::string& package : pIndex->getInferredPackages())
    {
       const PackageInformation& completions =
             pIndex->getPackageInformation(package);
@@ -184,7 +183,7 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
 {
    // Add symbols specifically mentioned as 'importFrom'
    // directives in the NAMESPACE.
-   BOOST_FOREACH(const std::set<std::string>& symbolNames,
+   for (const std::set<std::string>& symbolNames :
                  RSourceIndex::getImportFromDirectives() | boost::adaptors::map_values)
    {
       pSymbols->insert(symbolNames.begin(), symbolNames.end());
@@ -192,8 +191,7 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    
    // Make all (exported) symbols published by packages
    // that are 'import'ed in the NAMESPACE.
-   BOOST_FOREACH(const std::string& package,
-                 RSourceIndex::getImportedPackages())
+   for (const std::string& package : RSourceIndex::getImportedPackages())
    {
       DEBUG("- Adding imports for package '" << package << "'");
       const PackageInformation& pkgInfo =
@@ -487,7 +485,7 @@ void checkNoDefinitionInScope(const FilePath& origin,
    
    // For each unresolved symbol, add it to the lint if it's not on the search
    // path.
-   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
+   for (const ParseItem& item : unresolvedItems)
    {
       if (!r::util::isRKeyword(item.symbol) &&
           !r::util::isWindowsOnlyFunction(item.symbol) &&
@@ -534,7 +532,7 @@ void parseLintOptionGlobals(const std::string& text, FileLocalLintOptions* pOpti
    std::string::const_iterator end = text.end();
    
    ParsedCSVLine parsed = parseCsvLine(begin + 1, end, true);
-   BOOST_FOREACH(const std::string element, parsed.first)
+   for (const std::string element : parsed.first)
    {
       pOptions->globals.insert(string_utils::trimWhitespace(element));
    }
@@ -550,7 +548,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
    
    ParsedCSVLine line = parseCsvLine(text.begin(), text.end(), true);
    
-   BOOST_FOREACH(const std::string& entry, line.first)
+   for (const std::string& entry : line.first)
    {
       std::string::const_iterator it = 
             std::find(entry.begin(), entry.end(), '=');
@@ -566,7 +564,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
 FileLocalLintOptions parseLintOptions(const std::vector<std::string>& lintText)
 {
    FileLocalLintOptions options;
-   BOOST_FOREACH(const std::string text, lintText)
+   for (const std::string text : lintText)
    {
       parseLintOption(text, &options);
    }
@@ -581,7 +579,7 @@ void applyOptions(const FileLocalLintOptions& fileOptions,
                                  fileOptions.globals.end());
    
    typedef std::pair<std::string, std::string> PairStringString;
-   BOOST_FOREACH(const PairStringString& option, fileOptions.options)
+   for (const PairStringString& option : fileOptions.options)
    {
       if (option.first == "style")
          pOptions->setRecordStyleLint(lintOptionValueAsBool(option.second));
@@ -706,7 +704,7 @@ json::Array lintAsJson(const LintItems& items)
 {
    json::Array jsonArray;
    
-   BOOST_FOREACH(const LintItem& item, items)
+   for (const LintItem& item : items)
    {
       json::Object jsonObject;
       
@@ -730,7 +728,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
    using namespace module_context;
    std::vector<SourceMarker> markers;
    markers.reserve(items.size());
-   BOOST_FOREACH(const LintItem& item, items)
+   for (const LintItem& item : items)
    {
       markers.push_back(SourceMarker(
                            sourceMarkerTypeFromString(lintTypeToString(item.type)),
@@ -754,7 +752,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(
    {
       const FilePath& path = it->first;
       const LintItems& lintItems = it->second;
-      BOOST_FOREACH(const LintItem& item, lintItems)
+      for (const LintItem& item : lintItems)
       {
          markers.push_back(SourceMarker(
                               sourceMarkerTypeFromString(lintTypeToString(item.type)),
@@ -948,7 +946,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    std::string namespacePath =
          projects::projectContext().directory().complete("NAMESPACE").absolutePath();
    
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)

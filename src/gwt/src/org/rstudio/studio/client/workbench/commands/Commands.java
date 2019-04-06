@@ -578,7 +578,6 @@ public abstract class
    public abstract AppCommand activateLauncherJobs();
    public abstract AppCommand sortLauncherJobsRecorded();
    public abstract AppCommand sortLauncherJobsState();
-   public abstract AppCommand refreshLauncherJobsList();
 
    // Other
    public abstract AppCommand checkSpelling();

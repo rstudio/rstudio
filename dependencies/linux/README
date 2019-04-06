@@ -7,9 +7,10 @@ therefore likely to only correctly configure and build on more recent Linux
 systems. Specific version requirements for various components include:
 
 - R 3.0.1
-- CMake 2.8 (3.1.0 for Desktop)
-- Boost 1.63
+- CMake 3.4.3 or newer
+- Boost 1.69
 - Qt 5.12.1 [Required only for Desktop]
+- patchelf 0.9 [Required only for Desktop]
 - some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
   build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.12.1
 
@@ -17,10 +18,17 @@ Installation of Qt SDK 5.12.1
 =============================================================================
 
 RStudio Desktop requires Qt 5.12.1. The install-dependencies scripts 
-referenced below install a version of the Qt 5.12.1 SDK into 
-/opt/RStudio-QtSDK (the special RStudio prefix on the directory is included 
-so this installation doesn't conflict with any other versions of Qt installed 
-on the system).
+referenced below install a version of the Qt 5.12.1 SDK into the home
+directory where it will be found by the RStudio build.
+
+Alternatively, the location may changed to /opt/RStudio-QtSDK (the special 
+RStudio prefix on the directory is included so this installation doesn't 
+conflict with any other versions of Qt installed on the system). This
+location is checked first by the RStudio build scripts. To install here,
+define QT_SDK_DIR=/opt/RStudio-QtSDK when invoking the install-dependencies
+script. For example:
+
+QT_SDK_DIR=/opt/RStudio-QtSDK ./install-dependencies-debian
 
 If you are either building RStudio Server or running a Linux distribution 
 that already includes Qt 5.12.1 you may wish to prevent installation of the
@@ -82,9 +90,8 @@ Desktop version and don't have Qt 5.12.1 installed on the system:
       linux
          install-qt-sdk
 
-4) If your system doesn't meet the minimum version requirements for CMake (2.8
-for Server, 3.1.0 for Desktop) you can download a Linux binary of the latest 
-version of CMake here:
+4) If your system doesn't meet the minimum version requirements for CMake 
+(3.4.3)you can download a Linux binary of the latest version of CMake here:
 
   - https://cmake.org/download/
 

@@ -1,7 +1,7 @@
 /*
  * TerminalLocalEcho.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,19 +15,18 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.LinkedList;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.AnsiCode;
-import org.rstudio.core.client.StringSink;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
 public class TerminalLocalEcho
 {
-   public TerminalLocalEcho(StringSink writer)
+   public TerminalLocalEcho(Consumer<String> writer)
    {
       writer_ = writer;
-      
    }
    
    public void echo(String input)
@@ -43,7 +42,7 @@ public class TerminalLocalEcho
          if (ch >= 32 /*space*/ && ch <= 126 /*tilde*/ || ch == 8 /*backspace*/)
          {
             localEcho_.add(input);
-            writer_.write(input);
+            writer_.accept(input);
          }
       }
    }
@@ -82,7 +81,7 @@ public class TerminalLocalEcho
             {
                // didn't match previously echoed text at all; write 
                // everything after that chunk
-               writer_.write(output.substring(chunkEnd));
+               writer_.accept(output.substring(chunkEnd));
                return;
             }
             // Otherwise completely or partially matched; at this point
@@ -106,11 +105,11 @@ public class TerminalLocalEcho
                // the local screen that the server doesn't know was written, so a
                // backspace needs to delete starting at the point the server
                // thinks is on the screen
-               writer_.write(matchedValue);
+               writer_.accept(matchedValue);
             }
          }
 
-         writer_.write(matchedValue); // write special sequence
+         writer_.accept(matchedValue); // write special sequence
 
          chunkStart = chunkEnd + matchedValue.length();
 
@@ -145,7 +144,7 @@ public class TerminalLocalEcho
       {
          // output is superset of what was local-echoed; write out the
          // unmatched part
-         writer_.write(outputToMatch.substring(lastOutput.length()));
+         writer_.accept(outputToMatch.substring(lastOutput.length()));
          return lastOutput.length();
       }
       else
@@ -155,11 +154,11 @@ public class TerminalLocalEcho
          
          // diagnostics to help isolate cases where local-echo is 
          // not matching as expected 
-         diagnostic("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
+         diagnostic_.log("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
                "' Had: '" + AnsiCode.prettyPrint(lastOutput.toString()) + "'");
          
          localEcho_.clear();
-         writer_.write(outputToMatch);
+         writer_.accept(outputToMatch);
          return 0;
       }
    }
@@ -190,49 +189,25 @@ public class TerminalLocalEcho
          return false;
       }
    }
-   
-   private void diagnostic(String msg)
-   {
-      if (diagnostic_ == null)
-         diagnostic_ = new StringBuilder();
-     
-      diagnostic_.append(StringUtil.getTimestamp());
-      diagnostic_.append(": ");
-      diagnostic_.append(msg);
-      diagnostic_.append("\n");
-   }
 
    public String getDiagnostics()
    {
-      if (diagnostic_ == null || diagnostic_.length() == 0)
-         return("<none>\n");
-      else
-         return diagnostic_.toString();
+      return diagnostic_.getLog();
    }
 
    public void resetDiagnostics()
    {
-      diagnostic_ = null;
+      diagnostic_.resetLog();
    }
 
-   public String getEchoBuffer()
-   {
-      StringBuilder b = new StringBuilder();
-      for (String s : localEcho_)
-      {
-         b.append(s);
-      }
-      return b.toString();
-   }
-
-  // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
+   // Matches ANSI control sequences or BS, CR, LF, DEL, BEL
    private static final Pattern ANSI_CTRL_PATTERN =
          Pattern.create("(?:" + AnsiCode.ANSI_REGEX + ")|(?:" + "[\b\n\r\177\7]" + ")");
 
    // Pause local-echo until this time
    private long stopEchoPause_;
-   private StringBuilder diagnostic_;
+   private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
    
-   private final StringSink writer_;
-   private LinkedList<String> localEcho_ = new LinkedList<>();
+   private final Consumer<String> writer_;
+   private final LinkedList<String> localEcho_ = new LinkedList<>();
 }

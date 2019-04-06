@@ -269,6 +269,16 @@ public class WidgetListBox<T extends Widget>
       updateEmptyText();
    }
    
+   public void removeItem(int idx)
+   {
+      panel_.remove(idx);
+      options_.remove(idx);
+      items_.remove(idx);
+      if (selectedIdx_ == idx)
+         selectedIdx_ = 0;
+      updateEmptyText();
+   }
+   
    public void setEmptyText(String text)
    {
       emptyTextLabel_.setText(text);

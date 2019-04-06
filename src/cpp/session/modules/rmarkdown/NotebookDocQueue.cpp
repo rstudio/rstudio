@@ -1,7 +1,7 @@
 /*
  * NotebookDocQueue.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,6 @@
 
 #include "NotebookDocQueue.hpp"
 #include "NotebookChunkDefs.hpp"
-
-#include <boost/foreach.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -92,7 +90,7 @@ json::Object NotebookDocQueue::toJson() const
 {
    // serialize all the queue units 
    json::Array units;
-   BOOST_FOREACH(const boost::shared_ptr<NotebookQueueUnit> unit, queue_) 
+   for (const boost::shared_ptr<NotebookQueueUnit> unit : queue_)
    {
       units.push_back(unit->toJson());
    }
@@ -136,7 +134,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
          maxUnits);
 
    // populate the queue units
-   BOOST_FOREACH(const json::Value val, units)
+   for (const json::Value val : units)
    {
       // ignore non-objects
       if (val.type() != json::ObjectType)

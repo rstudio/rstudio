@@ -1,7 +1,7 @@
 /*
- * ServerCSRFToken.cpp
+ * CSRFToken.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,23 +13,20 @@
  *
  */
 
-#include <server/auth/ServerCSRFToken.hpp>
-#include <server/ServerOptions.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/http/Cookie.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
-#include <core/system/PosixSystem.hpp>
-
-#define kCSRFTokenName "csrf-token"
+#include <core/system/System.hpp>
 
 using namespace rstudio::core;
 
 namespace rstudio {
-namespace server {
-namespace auth {
-namespace csrf {
+namespace core {
+namespace http {
 
 void setCSRFTokenCookie(const http::Request& request, 
                         boost::optional<boost::gregorian::days> expiry,
@@ -44,12 +41,12 @@ void setCSRFTokenCookie(const http::Request& request,
    // generate CSRF token cookie
    http::Cookie cookie(
             request, 
-            kCSRFTokenName, 
+            kCSRFTokenCookie, 
             csrfToken, 
             "/",  // cookie for root path
             true, // HTTP only
             // secure if delivered via SSL
-            options().getOverlayOption("ssl-enabled") == "1");
+            boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    // set expiration for cookie
    if (expiry.is_initialized())
@@ -62,13 +59,13 @@ bool validateCSRFForm(const http::Request& request,
                       http::Response* pResponse)
 {
    // extract token from HTTP cookie (set above)
-   std::string headerToken = request.cookieValue(kCSRFTokenName);
+   std::string headerToken = request.cookieValue(kCSRFTokenCookie);
    http::Fields fields;
 
    // parse the form and check for a matching token
    http::util::parseForm(request.body(), &fields);
    std::string bodyToken = http::util::fieldValue<std::string>(fields,
-         kCSRFTokenName, "");
+         kCSRFTokenCookie, "");
 
    // report an error if they don't match
    if (headerToken.empty() || bodyToken != headerToken) 
@@ -82,7 +79,17 @@ bool validateCSRFForm(const http::Request& request,
    return true;
 }
 
-} // namespace csrf
-} // namespace auth
-} // namespace server
+bool validateCSRFHeaders(const http::Request& request)
+{
+   std::string headerToken = request.headerValue(kCSRFTokenHeader);
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+   if (headerToken.empty() || headerToken != cookieToken)
+   {
+      return false;
+   }
+   return true;
+}
+
+} // namespace http
+} // namespace core
 } // namespace rstudio

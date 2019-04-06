@@ -1,7 +1,7 @@
 /*
  * SlideParser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -133,7 +132,7 @@ bool Slide::showTitle() const
 std::vector<Command> Slide::commands() const
 {
    std::vector<Command> commands;
-   BOOST_FOREACH(const Slide::Field& field, fields_)
+   for (const Slide::Field& field : fields_)
    {
       if (isCommandField(field.first))
          commands.push_back(Command(field.first, field.second));
@@ -148,7 +147,7 @@ std::vector<AtCommand> Slide::atCommands() const
 
 
    std::vector<std::string> atFields = fieldValues("at");
-   BOOST_FOREACH(const std::string& atField, atFields)
+   for (const std::string& atField : atFields)
    {
       boost::smatch match;
       if (regex_utils::match(atField, match, re))
@@ -182,7 +181,7 @@ std::vector<AtCommand> Slide::atCommands() const
 std::vector<std::string> Slide::fields() const
 {
    std::vector<std::string> fields;
-   BOOST_FOREACH(const Field& field, fields_)
+   for (const Field& field : fields_)
    {
       fields.push_back(field.first);
    }
@@ -204,7 +203,7 @@ std::string Slide::fieldValue(const std::string& name,
 std::vector<std::string> Slide::fieldValues(const std::string& name) const
 {
    std::vector<std::string> values;
-   BOOST_FOREACH(const Field& field, fields_)
+   for (const Field& field : fields_)
    {
       if (boost::iequals(name, field.first))
          values.push_back(normalizeFieldValue(field.second));
@@ -476,7 +475,7 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
 
       // validate all of the fields
       std::vector<std::string> invalidFields;
-      BOOST_FOREACH(const Slide::Field& field, slideFields)
+      for (const Slide::Field& field : slideFields)
       {
          if (!isValidField(field.first))
             invalidFields.push_back(field.first);

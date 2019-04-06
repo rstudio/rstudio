@@ -1,5 +1,5 @@
 /*
- * AdaptObject.java
+ * EventProperty.java
  *
  * Copyright (C) 2009-18 by RStudio, Inc.
  *
@@ -12,20 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.jsonrpc;
+package org.rstudio.core.client.dom;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.NativeEvent;
 
-/**
- * Creates a JavaScriptObject from a jsinterop-based (@JsType isNative) object.
- */
-public class AdaptObject extends JavaScriptObject
+public class EventProperty
 {
-   protected AdaptObject()
-   {
-   }
-
-   public final static native AdaptObject fromJsInterop(Object obj) /*-{
-      return obj;
-   }-*/;
+   public static final native String key(NativeEvent event) /*-{ return event.key; }-*/;
 }
+

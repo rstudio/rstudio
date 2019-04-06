@@ -1,7 +1,7 @@
 /*
  * Error.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,7 +68,7 @@ Error::~Error()
 
 void Error::copyOnWrite()
 {
-   if ( (pImpl_.get() != NULL) && !pImpl_.unique())
+   if ( (pImpl_.get() != nullptr) && !pImpl_.unique())
    {
       Impl* pOldImpl = pImpl_.get() ;
       pImpl_ = boost::shared_ptr<Impl>(new Impl(*pOldImpl)) ;
@@ -119,12 +119,11 @@ void Error::addOrUpdateProperty(const std::string& name, const std::string& valu
 {
    copyOnWrite() ;
 
-   for (ErrorProperties::iterator it = impl().properties.begin();
-        it != impl().properties.end(); ++it)
+   for (auto & property : impl().properties)
    {
-      if (it->first == name)
+      if (property.first == name)
       {
-         it->second = value;
+         property.second = value;
          return;
       }
    }
@@ -164,11 +163,10 @@ const std::vector<std::pair<std::string,std::string> >&
    
 std::string Error::getProperty(const std::string& name) const
 {
-   for (ErrorProperties::const_iterator it = properties().begin();
-        it != properties().end(); ++it)
+   for (const auto & it : properties())
    {
-      if (it->first == name)
-         return it->second;
+      if (it.first == name)
+         return it.second;
    }
    
    return std::string();
@@ -176,7 +174,7 @@ std::string Error::getProperty(const std::string& name) const
 
 bool Error::isError() const 
 {
-   if ( pImpl_.get() != NULL )
+   if ( pImpl_.get() != nullptr )
       return pImpl_->ec.value() != 0 ;
    else
       return false ;
@@ -184,7 +182,7 @@ bool Error::isError() const
 
 Error::Impl& Error::impl() const
 {
-   if (pImpl_.get() == NULL)
+   if (pImpl_.get() == nullptr)
       pImpl_.reset(new Impl()) ;
    return *pImpl_ ;
 }

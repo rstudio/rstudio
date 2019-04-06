@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -275,7 +274,7 @@ private:
    const RSourceItem& get(const std::string& name,
                           const RSourceItem::Type type = RSourceItem::Function)
    {
-      BOOST_FOREACH(const RSourceItem& item, items_)
+      for (const RSourceItem& item : items_)
       {
          if (item.name() == name && item.type() == type)
             return item;
@@ -395,7 +394,7 @@ public:
    static void setImportFromDirectives(const ImportFromMap& map)
    {
       s_importFromDirectives_ = map;
-      BOOST_FOREACH(const std::string& pkg, map | boost::adaptors::map_keys)
+      for (const std::string& pkg : map | boost::adaptors::map_keys)
       {
          s_allInferredPkgNames_.insert(pkg);
       }

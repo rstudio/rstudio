@@ -1,7 +1,7 @@
 /*
  * SessionTexUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionTexUtils.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/system/Process.hpp>
@@ -142,7 +141,7 @@ Error runTexCompile(const FilePath& texProgramPath,
    // copy extra environment variables
    core::system::Options env;
    core::system::environment(&env);
-   BOOST_FOREACH(const core::system::Option& var, envVars)
+   for (const core::system::Option& var : envVars)
    {
       core::system::setenv(&env, var.first, var.second);
    }

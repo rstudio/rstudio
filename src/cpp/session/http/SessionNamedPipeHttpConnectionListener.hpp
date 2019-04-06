@@ -1,7 +1,7 @@
 /*
  * SessionNamedPipeHttpConnectionListener.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,7 +86,7 @@ public:
       while(TRUE)
       {
          // read from pipe
-         BOOL result = ::ReadFile(hPipe_, buff, kReadBufferSize, &bytesRead, NULL);
+         BOOL result = ::ReadFile(hPipe_, buff, kReadBufferSize, &bytesRead, nullptr);
 
          // check for error
          if (!result)
@@ -169,7 +169,7 @@ public:
                   boost::asio::buffer_cast<const unsigned char*>(buffers[i]),
                   bytesToWrite,
                   &bytesWritten,
-                  NULL);
+                  nullptr);
 
          if (!success || (bytesWritten != bytesToWrite))
          {
@@ -270,11 +270,11 @@ private:
          while (true)
          {
             // create security attributes
-            PSECURITY_ATTRIBUTES pSA = NULL;
+            PSECURITY_ATTRIBUTES pSA = nullptr;
             SECURITY_ATTRIBUTES sa;
             ZeroMemory(&sa, sizeof(sa));
             sa.nLength = sizeof(sa);
-            sa.lpSecurityDescriptor = NULL;
+            sa.lpSecurityDescriptor = nullptr;
             sa.bInheritHandle = FALSE;
 
             // get login session only descriptor -- proceed without one
@@ -311,7 +311,7 @@ private:
             }
 
             // attempt to connect
-            BOOL connected = ::ConnectNamedPipe(hPipe, NULL);
+            BOOL connected = ::ConnectNamedPipe(hPipe, nullptr);
             lastError = ::GetLastError();
             if (!connected)
             {
@@ -404,7 +404,7 @@ private:
       if (error)
       {
          LOG_ERROR(error);
-         return NULL;
+         return nullptr;
       }
 
       ULONG sdSize;
@@ -420,14 +420,14 @@ private:
       else
       {
          LOG_ERROR(LAST_SYSTEM_ERROR());
-         return NULL;
+         return nullptr;
       }
    }
 
    static core::Error logonSessionOnlyDescriptor(std::string* pDescriptor)
    {
       // token for current process
-      HANDLE hToken = NULL;
+      HANDLE hToken = nullptr;
       if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
       {
          return LAST_SYSTEM_ERROR();
@@ -437,7 +437,7 @@ private:
       // size of token groups structure (note that we expect the error
       // since we pass NULL for the token information buffer)
       DWORD tgSize = 0;
-      BOOL res = ::GetTokenInformation(hToken, TokenGroups, NULL, 0, &tgSize);
+      BOOL res = ::GetTokenInformation(hToken, TokenGroups, nullptr, 0, &tgSize);
       if (res != FALSE)
       {
          auto lastErr = ::GetLastError();
@@ -456,7 +456,7 @@ private:
       }
 
       // find login sid
-      SID* pSid = NULL;
+      SID* pSid = nullptr;
       for (DWORD i = 0; i < pTG->GroupCount ; ++i)
       {
          if ((pTG->Groups[i].Attributes & SE_GROUP_LOGON_ID)
@@ -468,7 +468,7 @@ private:
       }
 
       // ensure we found it
-      if (pSid == NULL)
+      if (pSid == nullptr)
       {
          return systemError(boost::system::windows_error::file_not_found,
                             "Failed to find SE_GROUP_LOGON_ID",
@@ -476,7 +476,7 @@ private:
       }
 
       // convert to a string
-      char* pSidString = NULL;
+      char* pSidString = nullptr;
       if (!::ConvertSidToStringSid(pSid, &pSidString))
       {
          return LAST_SYSTEM_ERROR();
