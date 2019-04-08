@@ -209,15 +209,27 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
          Iterator<Range> wordsIterator = wordSource.iterator();
 
-         // If there's no word, just return
          if (!wordsIterator.hasNext())
             return;
 
+         String word;
          Range wordRange = wordsIterator.next();
-         String word = docDisplay_.getTextForRange(wordRange);
 
-         if (word.length() < 2 || typoSpellChecker_.checkSpelling(word))
+         while (!wordRange.contains(pos))
+         {
+            if (wordsIterator.hasNext())
+               wordRange = wordsIterator.next();
+            else
+               break;
+         }
+         word = docDisplay_.getTextForRange(wordRange);
+
+         if (word == null || word.length() < 2 || typoSpellChecker_.checkSpelling(word))
             return;
+
+         // final variables for lambdas
+         final String replaceWord = word;
+         final Range replaceRange = wordRange;
 
          final ToolbarPopupMenu menu = new ToolbarPopupMenu();
          String[] suggestions = typoSpellChecker_.suggestionList(word);
@@ -237,7 +249,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                AppCommand.formatMenuLabel(null, suggestion, ""),
                true,
                () -> {
-                  docDisplay_.replaceRange(wordRange, suggestion);
+                  docDisplay_.replaceRange(replaceRange, suggestion);
                   docDisplay_.removeMarkersAtCursorPosition();
                });
 
@@ -253,7 +265,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
             AppCommand.formatMenuLabel(null, "Ignore word", ""),
             true,
             () -> {
-               typoSpellChecker_.addIgnoredWord(word);
+               typoSpellChecker_.addIgnoredWord(replaceWord);
                docDisplay_.removeMarkersAtCursorPosition();
             });
 
@@ -264,7 +276,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
             AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""),
             true,
             () -> {
-               typoSpellChecker_.addToUserDictionary(word);
+               typoSpellChecker_.addToUserDictionary(replaceWord);
                docDisplay_.removeMarkersAtCursorPosition();
             });
 
