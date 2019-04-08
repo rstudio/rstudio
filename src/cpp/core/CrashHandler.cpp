@@ -22,6 +22,10 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #include "config.h"
 
 #ifndef RSTUDIO_CRASHPAD_ENABLED
@@ -194,7 +198,20 @@ Error initialize(ProgramMode programMode)
          Error error = FilePath::tempFilePath(&tmpPath);
          if (error)
             return error;
-         databasePathStr = tmpPath.parent().childPath("crashpad_database").absolutePath();
+
+         FilePath databasePath = tmpPath.parent().childPath("crashpad_database");
+
+         // ensure that the database path exists
+         error = databasePath.ensureDirectory();
+         if (error)
+            return error;
+
+         // ensure that it is writeable by all users
+         error = core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
+         if (error)
+            return error;
+
+         databasePathStr = databasePath.absolutePath();
       }
       else
       {
