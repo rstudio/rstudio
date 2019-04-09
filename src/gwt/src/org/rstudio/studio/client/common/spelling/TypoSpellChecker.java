@@ -98,7 +98,7 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return typoNative_.check(word);
+      return allIgnoredWords_.contains(word) || typoNative_.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
