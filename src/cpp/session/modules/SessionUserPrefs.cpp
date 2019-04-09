@@ -96,6 +96,7 @@ Error initialize()
 
    // Iterate over every known preference value (which are exhaustively enumerated in the schema
    // document) and read the value from the user prefs file if present
+   /*
    for (auto & it: sd["properties"].GetObject())
    {
       // Read the name of the preference
@@ -120,6 +121,7 @@ Error initialize()
       }
       s_pUserPrefs[prefName] = val;
    }
+   */
 
    return Success();
 }
