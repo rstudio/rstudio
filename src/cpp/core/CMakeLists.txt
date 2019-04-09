@@ -32,6 +32,7 @@ set (CORE_SOURCE_FILES
    Base64.cpp
    BoostErrors.cpp
    BrowserUtils.cpp
+   collection/MruList.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
