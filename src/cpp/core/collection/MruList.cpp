@@ -34,7 +34,7 @@ MruList::MruList(const FilePath& file, size_t maxSize) :
 
 void MruList::flush()
 {
-   Error error = writeCollectionToFile(file_, contents_, stringifyString);
+   Error error = writeCollectionToFile<std::list<std::string>>(file_, contents_, stringifyString);
    if (error)
       LOG_ERROR(error);
 }
