@@ -14,7 +14,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.4.3)
 
 project (RSTUDIO_CPP)
 
@@ -68,6 +68,12 @@ if(UNIX)
 
    # compiler flags
    add_definitions(-Wall -pthread)
+
+   if(RSTUDIO_ASAN)
+      message(STATUS "Compiling with Address Sanitizer (ASAN) support")
+      add_definitions(-fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls -O1)
+      set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+   endif()
 
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
