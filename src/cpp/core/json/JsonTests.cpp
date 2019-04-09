@@ -799,7 +799,6 @@ TEST_CASE("Json")
 
       json::Value val;
       Error err = json::parseAndValidate(valid, schema, ERROR_LOCATION, &val);
-      INFO(err.summary());
       REQUIRE(err == Success());
       REQUIRE(val.get_obj()["first"].get_bool());
 
@@ -807,9 +806,16 @@ TEST_CASE("Json")
       std::string invalid = R"(
          { "first": 1, "second": "d" }
       )";
-      err = json::parseAndValidate(valid, schema, ERROR_LOCATION, &val);
-      INFO(err.summary());
-      REQUIRE(json::parseAndValidate(invalid, schema, ERROR_LOCATION, &val) != Success());
+      err = json::parseAndValidate(invalid, schema, ERROR_LOCATION, &val);
+      REQUIRE(err != Success());
+
+      // are defaults maintained?
+      std::string incomplete = R"(
+         { "first": true }
+      )";
+      err = json::parseAndValidate(incomplete, schema, ERROR_LOCATION, &val);
+      REQUIRE(err == Success());
+      REQUIRE(val.get_obj()["second"].get_str() == "b");
    }
 }
 

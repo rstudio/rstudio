@@ -276,7 +276,6 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
    {
       error = Error(result.Code(), location);
       error.addProperty("offset", result.Offset());
-      error.addProperty("source", "schema");
       return error;
    }
 
@@ -299,6 +298,8 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
       error.addProperty("document", sb.GetString());
       return error;
    }
+
+   // fill in any default values from the schema that aren't present in the input document
    return Success();
 }
 

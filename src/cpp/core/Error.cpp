@@ -89,6 +89,25 @@ std::string Error::summary() const
    return ostr.str();
 }
 
+std::string Error::description() const
+{
+   std::ostringstream ostr;
+   ostr << summary();
+   auto& props = properties();
+   if (!props.empty())
+   {
+      ostr << " (";
+      for (size_t i = 0; i < props.size(); i++)
+      {
+         ostr << props[i].first << ": " << props[i].second;
+         if (i < props.size() - 1)
+            ostr << ", ";
+      }
+      ostr << ")";
+   }
+   return ostr.str();
+}
+
 const Error& Error::cause() const
 {
    return impl().cause ;
