@@ -13,7 +13,7 @@
  *
  */
 
-#include <unistd.h>
+#include <cstddef>
 
 #include <list>
 #include <string>
