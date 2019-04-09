@@ -194,7 +194,7 @@ Error listSetContents(const json::JsonRpcRequest& request,
       list.push_back(val.get_str());
    }
 
-   return writeCollectionToFile(listPath(name), list, stringifyString);
+   return writeCollectionToFile<std::list<std::string>>(listPath(name), list, stringifyString);
 }
 
 Error listInsertItem(bool prepend,
