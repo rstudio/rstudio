@@ -1059,7 +1059,12 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
       R_VERSION = rVersion
    ))
    
-   writeLines(rendered, con = stdout())
+   if (requireNamespace("clipr", quietly = TRUE)) {
+      clipr::write_clip(rendered)
+      writeLines("* The bug report template has been written to the clipboard.")
+   } else {
+      writeLines(rendered, con = stdout())
+   }
    
    url <- "https://github.com/rstudio/rstudio/issues/new?template=bug_report.md"
    utils::browseURL(url)
