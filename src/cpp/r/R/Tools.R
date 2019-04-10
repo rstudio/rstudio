@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1026,3 +1026,44 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 {
   .Call("rs_completeUrl", url, path)
 })
+
+.rs.addFunction("renderTemplate", function(template, data)
+{
+   rendered <- template
+   .rs.enumerate(data, function(key, val) {
+      fkey <- sprintf("${%s}", key)
+      rendered <<- gsub(fkey, val, rendered, fixed = TRUE)
+   })
+   rendered
+})
+
+.rs.addFunction("bugReport", function()
+{
+   resources <- .Call("rs_rResourcesPath", PACKAGE = "(embedding)")
+   path <- file.path(resources, "bug_report.md")
+   template <- readLines(path, warn = FALSE)
+   
+   info <- utils::sessionInfo()
+   spec <- RStudio.Version()
+   rstudioEdition <- if (spec$mode == "desktop") "Desktop" else "Server"
+   rstudioVersion <- format(spec$version)
+   osVersion <- info$running
+   
+   rVersion <- info$R.version$version.string
+   rVersion <- sub("^R version", "", rVersion, fixed = TRUE)
+   
+   rendered <- .rs.renderTemplate(template, list(
+      RSTUDIO_VERSION = rstudioVersion,
+      RSTUDIO_EDITION = rstudioEdition,
+      OS_VERSION = osVersion,
+      R_VERSION = rVersion
+   ))
+   
+   writeLines(rendered, con = stdout())
+   
+   url <- "https://github.com/rstudio/rstudio/issues/new?template=bug_report.md"
+   utils::browseURL(url)
+})
+
+
+
