@@ -3,11 +3,11 @@ bibentry("Manual",
          author = person("RStudio Team"),
          organization = "RStudio, Inc.",
          address      = "Boston, MA",
-         year         = "2018",
+         year         = "${CPACK_COPYRIGHT_YEAR}",
          url          = "http://www.rstudio.com/",
          
          textVersion = 
-         paste("RStudio Team (2018). ", 
+         paste("RStudio Team (${CPACK_COPYRIGHT_YEAR}). ", 
                "RStudio: Integrated Development for R. ",
                "RStudio, Inc., Boston, MA ",
                "URL http://www.rstudio.com/.",
@@ -15,5 +15,5 @@ bibentry("Manual",
          
          mheader = "To cite RStudio in publications use:",
 	 
-	      mfooter = ""
+	     mfooter = ""
 	)
