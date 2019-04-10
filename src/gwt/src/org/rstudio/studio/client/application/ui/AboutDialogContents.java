@@ -56,9 +56,11 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "Build " + info.build + " (" + info.commit.substring(0, 8) + ")");
+           "Build " + info.build + " (" + info.commit.substring(0, 8) + ", " +
+           info.date + ")");
       noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
+      copyrightYearLabel.setText("2009-" + info.copyright_year);
       
       if (editionInfo.proLicense())
       {
@@ -92,6 +94,7 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
+   @UiField InlineLabel copyrightYearLabel;
    @UiField TextArea noticeBox;
    @UiField HTMLPanel gplNotice;
    @UiField Label licenseLabel;
