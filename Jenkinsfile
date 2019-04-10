@@ -218,7 +218,7 @@ try {
             }
         }
         // trigger desktop builds if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2') {
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2-patch') {
           trigger_external_build('IDE/macos-v1.2')
           trigger_external_build('IDE/windows-v1.2')
         }
