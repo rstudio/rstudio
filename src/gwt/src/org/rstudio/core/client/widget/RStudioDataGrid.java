@@ -15,10 +15,12 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -54,31 +56,26 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       if (!BrowseCap.isMacintosh())
          return;
       
-      // GWT's DataGrid implementation adds a handful of nodes with aggressive
-      // inline styles in the header and footer of the grid. They're designed to
-      // help with scrolling, but in newer versions of Chromium, they cause
-      // horizontal overlay scrollbars to appear when the grid is created and
-      // whenever it's resized. The below tweaks these elements so that they
-      // don't have a scrollbar.
-      //
-      // Typically we'd use CSS here but these elements are buried, have no
-      // assigned class, and have all their style attributes applied inline, so
-      // instead we scan the attached DOM subtree and change the inline styles.
       Element parent = getElement().getParentElement().getParentElement();
-      NodeList<Element> children = DomUtils.querySelectorAll(parent, "div[style*='z-index: -1']");
+      
+      // GWT's DataGrid also occasionally displays unwanted horizontal
+      // scroll bars. Since we don't ever require horizontal scrolling
+      // in the DataGrid objects we show, we just suppress horizontal
+      // overflow in any div element that does something with overflow.
+      //
+      // Again, this is something we'd normally do with CSS but because
+      // we need to perform surgery on arbitrary sub-divs which otherwise
+      // have no class we must resort to JavaScript + inline styles.
+      //
+      // https://github.com/rstudio/rstudio/issues/4529
+      NodeList<Element> children = DomUtils.querySelectorAll(parent, "div[style*='overflow:']");
       for (int i = 0; i < children.getLength(); i++)
       {
          Element el = children.getItem(i);
          com.google.gwt.dom.client.Style style = el.getStyle();
-         
-         boolean doesNotSparkJoy =
-               style.getZIndex() == "-1" &&
-               style.getOverflow() == "scroll" &&
-               style.getVisibility() == "hidden";
-         
-         if (doesNotSparkJoy)
-            style.setOverflow(com.google.gwt.dom.client.Style.Overflow.HIDDEN);
-         
+         String overflow = style.getOverflow();
+         if (!StringUtil.isNullOrEmpty(overflow))
+            style.setOverflowX(Overflow.HIDDEN);
       }
       
    }
