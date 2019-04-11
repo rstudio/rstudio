@@ -13,10 +13,8 @@ endif()
 if (RSTUDIO_PACKAGE_BUILD)
    INSTALL(CODE "
      # don't follow symlinks in GLOB_RECURSE
-     if(CMAKE_VERSION VERSION_GREATER \"3.0.0\")
-        cmake_policy(SET CMP0009 NEW)
-        cmake_policy(SET CMP0011 NEW)
-     endif()
+     cmake_policy(SET CMP0009 NEW)
+     cmake_policy(SET CMP0011 NEW)
 
      list (APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
 
