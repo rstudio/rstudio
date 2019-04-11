@@ -102,7 +102,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                   range.getEnd().getRow(),
                   range.getEnd().getColumn(),
                   "Spellcheck warning",
-                  "warning"));
+                  "spelling"));
             }
          }
       }
