@@ -117,7 +117,7 @@ if hash nproc 2>/dev/null; then
     ENV="$ENV MAKEFLAGS=-j$(nproc --all)"
 elif hash sysctl 2>/dev/null; then
     # macos
-    ENV="$ENV MAKEFLAKGS=-j$(sysctl -n hw.ncpu)"
+    ENV="$ENV MAKEFLAGS=-j$(sysctl -n hw.ncpu)"
 fi
 
 # forward build type if set

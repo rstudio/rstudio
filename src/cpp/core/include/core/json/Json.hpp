@@ -246,7 +246,14 @@ public:
 
    int get_int() const
    {
-      return get_impl().GetInt();
+      if (get_impl().IsInt())
+         return get_impl().GetInt();
+      else if (get_impl().IsInt64())
+         return static_cast<int>(get_impl().GetInt64());
+      else if (get_impl().IsUint64())
+         return static_cast<int>(get_impl().GetUint64());
+      else
+         return static_cast<int>(get_impl().GetUint());
    }
 
    int64_t get_int64() const
