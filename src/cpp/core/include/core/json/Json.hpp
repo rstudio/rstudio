@@ -1,7 +1,7 @@
 /*
  * Json.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/type_traits/TypeTraits.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
@@ -34,6 +35,17 @@
 
 #include <core/json/rapidjson/document.h>
 #include <core/json/rapidjson/rapidjson.h>
+
+namespace RSTUDIO_BOOST_NAMESPACE {
+   namespace system {
+      template <>
+      struct is_error_code_enum<rapidjson::ParseErrorCode>
+      {
+         static const bool value = true;
+      };
+
+   } // namespace system
+} // namespace boost
 
 namespace rstudio {
 namespace core {
@@ -288,6 +300,8 @@ public:
       return !get_impl().Parse(input.c_str()).HasParseError();
    }
 
+   Error parse(const std::string& input, const ErrorLocation& location);
+
    DocumentType& get_impl() const { return *pValue_; }
 
 protected:
@@ -304,7 +318,8 @@ private:
    {
       // rapidjson copy is a move operation
       // only move the underlying value (and none of the document members)
-      // because we do not want to move the allocators (as they are the same and rapidjson cannot handle this)
+      // because we do not want to move the allocators (as they are the same and rapidjson cannot
+      // handle this)
       static_cast<ValueType&>(get_impl()) = static_cast<ValueType&>(other.get_impl());
    }
 
@@ -911,7 +926,25 @@ bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
 bool fillVectorInt(const Array& array, std::vector<int>* pVector);
 bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
 
+// Parses, returning true (parsed successfully) or false (did not parse successfully).
 bool parse(const std::string& input, Value* pValue);
+
+// Parses, returning the parse error that occurred.
+Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
+
+// Parse input according to the given JSON schema document. Returns an error if either the input or
+// schema does not parse, or if the input is not valid according to the schema. Does not apply
+// default values from the schema.
+Error parseAndValidate(const std::string& input, const std::string& schema, 
+      const ErrorLocation& location, Value* pValue);
+
+// Given a JSON schema document, return an object representing the default values named in the
+// schema.
+Error getSchemaDefaults(const std::string& schema, Value* pValue);
+
+// Given two JSON objects, return their union, with properties in "overlay" preferred when both
+// objects contain a property of the same name. Merges sub-objects.
+Object merge(const Object& base, const Object& overlay);
 
 void write(const Value& value, std::ostream& os);
 void writeFormatted(const Value& value, std::ostream& os);
@@ -919,9 +952,21 @@ void writeFormatted(const Value& value, std::ostream& os);
 std::string write(const Value& value);
 std::string writeFormatted(const Value& value);
 
+const boost::system::error_category& jsonParseCategory();
+
 } // namespace json
 } // namespace core
 } // namespace rstudio
+
+namespace rapidjson {
+   inline boost::system::error_code make_error_code(ParseErrorCode e) {
+      return boost::system::error_code(e, rstudio::core::json::jsonParseCategory());
+   }
+
+   inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
+      return boost::system::error_condition(e, rstudio::core::json::jsonParseCategory());
+   }
+}
 
 #endif // CORE_JSON_HPP
 
