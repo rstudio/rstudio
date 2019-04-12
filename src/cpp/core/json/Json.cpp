@@ -264,7 +264,75 @@ Error parse(const std::string& input, const ErrorLocation& location, Value* pVal
    return pValue->parse(input, location);
 }
 
-Error parseAndValidate(const std::string& input, const std::string& schema, 
+json::Object getSchemaDefaults(const Object& schema)
+{
+   json::Object result;
+   Object::iterator objType = schema.find("type");
+   if (objType == schema.end() ||
+       (*objType).value().type() != json::StringType ||
+       (*objType).value().get_str() != "object")
+   {
+      // Nothing to do for non-object types
+      return result;
+   }
+
+   Object::iterator objProperties = schema.find("properties");
+   if (objProperties == schema.end() ||
+       (*objProperties).value().type() != json::ObjectType)
+   {
+      // Nothing to do for types with no properties
+      return result;
+   }
+
+   // Iterate over all the properties specified in the schema
+   const json::Object& properties = (*objProperties).value().get_obj();
+   for (auto prop: properties)
+   {
+      // JSON schema specifies that properties are defined with objects
+      if (prop.value().type() != json::ObjectType)
+         continue;
+
+      json::Object& definition = prop.value().get_obj();
+      Object::iterator def = definition.find("default");
+      if (def == definition.end())
+      {
+         // We didn't find a default value for this property, so recurse and see if it is an
+         // object with its own defaults.
+         json::Object child = getSchemaDefaults(definition);
+         if (!child.empty())
+         {
+            // We found defaults inside the object; use them
+            result[prop.name()] = child;
+         }
+      }
+      else
+      {
+         // Use the default
+         result[prop.name()] = (*def).value();
+      }
+   }
+   return result;
+}
+
+Error getSchemaDefaults(const std::string& schema, Value* pValue)
+{
+   json::Value value;
+   Error error = parse(schema, ERROR_LOCATION, &value);
+   if (error)
+   {
+      return error;
+   }
+
+   if (value.type() != json::ObjectType)
+   {
+      return Error(rapidjson::kParseErrorValueInvalid, ERROR_LOCATION);
+   }
+
+   *pValue = getSchemaDefaults(value.get_obj());
+   return Success();
+}
+
+Error parseAndValidate(const std::string& input, const std::string& schema,
       const ErrorLocation& location, Value* pValue)
 {
    Error error;

@@ -922,6 +922,7 @@ bool parse(const std::string& input, Value* pValue);
 Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
 Error parseAndValidate(const std::string& input, const std::string& schema, 
       const ErrorLocation& location, Value* pValue);
+Error getSchemaDefaults(const std::string& schema, Value* pValue);
 
 void write(const Value& value, std::ostream& os);
 void writeFormatted(const Value& value, std::ostream& os);

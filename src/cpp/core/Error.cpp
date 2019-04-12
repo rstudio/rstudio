@@ -103,7 +103,7 @@ std::string Error::description() const
          if (i < props.size() - 1)
             ostr << ", ";
       }
-      ostr << ")";
+      ostr << ") at " << location().asString();
    }
    return ostr.str();
 }

@@ -808,14 +808,34 @@ TEST_CASE("Json")
       )";
       err = json::parseAndValidate(invalid, schema, ERROR_LOCATION, &val);
       REQUIRE(err != Success());
+   }
 
-      // are defaults maintained?
-      std::string incomplete = R"(
-         { "first": true }
-      )";
-      err = json::parseAndValidate(incomplete, schema, ERROR_LOCATION, &val);
-      REQUIRE(err == Success());
-      REQUIRE(val.get_obj()["second"].get_str() == "b");
+   SECTION("Schema defaults") {
+      std::string schema = R"(
+      {
+         "$id": "https://rstudio.com/rstudio.preferences.json",
+         "$schema": "http://json-schema.org/draft-07/schema#",
+         "title": "Unit Test Example Schema",
+         "type": "object",
+         "properties": {
+             "first": {
+                 "type": "boolean",
+                 "default": false,
+                 "description": "The first example property"
+             },
+             "second": {
+                 "type": "string",
+                 "enum": ["a", "b", "c"],
+                 "default": "b",
+                 "description": "The second example property"
+             }
+           }
+        })";
+
+      std::string def = R"(
+      {
+         "first": false, "second": "b"
+      })";
    }
 }
 
