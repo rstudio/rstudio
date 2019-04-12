@@ -314,6 +314,51 @@ json::Object getSchemaDefaults(const Object& schema)
    return result;
 }
 
+Object merge(const Object& base, const Object& overlay)
+{
+   Object merged;
+
+   // Begin by enumerating all the properties in the base object and replacing them with any
+   // properties also present in the overlay object.
+   for (auto prop: base)
+   {
+      auto it = overlay.find(prop.name());
+      if (it == overlay.end())
+      {
+         // The property does not exist in the overlay object, so use the base copy.
+         merged[prop.name()] = prop.value();
+      }
+      else
+      {
+         // The property exists in the overlay object.
+         if (prop.value().type() == json::ObjectType &&
+             (*it).value().type() == json::ObjectType)
+         {
+            // If the properties exist in both objects and both are object types, then we
+            // recursively merge the objects (instead of just taking the overlay).
+            merged[prop.name()] = merge(prop.value().get_obj(), (*it).value().get_obj());
+         }
+         else
+         {
+            // Not objects, so just take the overlay value
+            merged[prop.name()] = (*it).value();
+         }
+      }
+   }
+
+   // Next, we need to fill in any properties in the overlay object that are not present in the
+   // base.
+   for (auto prop: overlay)
+   {
+      auto it = base.find(prop.name());
+      if (it == base.end())
+      {
+         merged[prop.name()] = prop.value();
+      }
+   }
+   return merged; 
+}
+
 Error getSchemaDefaults(const std::string& schema, Value* pValue)
 {
    json::Value value;

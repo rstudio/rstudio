@@ -925,6 +925,8 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
       const ErrorLocation& location, Value* pValue);
 Error getSchemaDefaults(const std::string& schema, Value* pValue);
 
+Object merge(const Object& base, const Object& overlay);
+
 void write(const Value& value, std::ostream& os);
 void writeFormatted(const Value& value, std::ostream& os);
 
