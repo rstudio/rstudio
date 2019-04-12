@@ -382,7 +382,7 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
 {
    Error error;
 
-   // parse the schema first
+   // Parse the schema first.
    rapidjson::Document sd;
    rapidjson::ParseResult result = sd.Parse(schema);
    if (result.IsError())
@@ -392,12 +392,12 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
       return error;
    }
 
-   // next, parse the input
+   // Next, parse the input.
    error = pValue->parse(input, location);
    if (error)
       return error;
 
-   // validate the input according to the schema
+   // Validate the input according to the schema.
    rapidjson::SchemaDocument schemaDoc(sd) ;
    rapidjson::SchemaValidator validator(schemaDoc);
    if (!pValue->get_impl().Accept(validator))
@@ -412,7 +412,6 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
       return error;
    }
 
-   // fill in any default values from the schema that aren't present in the input document
    return Success();
 }
 

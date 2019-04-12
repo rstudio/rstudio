@@ -919,12 +919,24 @@ bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
 bool fillVectorInt(const Array& array, std::vector<int>* pVector);
 bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
 
+// Parses, returning true (parsed successfully) or false (did not parse successfully).
 bool parse(const std::string& input, Value* pValue);
+
+// Parses, returning the parse error that occurred.
 Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
+
+// Parse input according to the given JSON schema document. Returns an error if either the input or
+// schema does not parse, or if the input is not valid according to the schema. Does not apply
+// default values from the schema.
 Error parseAndValidate(const std::string& input, const std::string& schema, 
       const ErrorLocation& location, Value* pValue);
+
+// Given a JSON schema document, return an object representing the default values named in the
+// schema.
 Error getSchemaDefaults(const std::string& schema, Value* pValue);
 
+// Given two JSON objects, return their union, with properties in "overlay" preferred when both
+// objects contain a property of the same name. Merges sub-objects.
 Object merge(const Object& base, const Object& overlay);
 
 void write(const Value& value, std::ostream& os);
