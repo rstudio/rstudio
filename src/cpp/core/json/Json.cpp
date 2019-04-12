@@ -292,7 +292,7 @@ json::Object getSchemaDefaults(const Object& schema)
       if (prop.value().type() != json::ObjectType)
          continue;
 
-      json::Object& definition = prop.value().get_obj();
+      const json::Object& definition = prop.value().get_obj();
       Object::iterator def = definition.find("default");
       if (def == definition.end())
       {

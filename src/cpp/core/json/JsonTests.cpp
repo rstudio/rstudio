@@ -792,7 +792,7 @@ TEST_CASE("Json")
            }
         })";
          
-      // do valid documents parse correctly?
+      // do valid documents pass validation?
       std::string valid = R"(
          { "first": true, "second": "a" }
       )";
@@ -815,27 +815,36 @@ TEST_CASE("Json")
       {
          "$id": "https://rstudio.com/rstudio.preferences.json",
          "$schema": "http://json-schema.org/draft-07/schema#",
-         "title": "Unit Test Example Schema",
+         "title": "Defaults Test Example Schema",
          "type": "object",
          "properties": {
              "first": {
-                 "type": "boolean",
-                 "default": false,
-                 "description": "The first example property"
+                 "type": "int",
+                 "default": 5,
+                 "description": "A number. How about 5?"
              },
              "second": {
-                 "type": "string",
-                 "enum": ["a", "b", "c"],
-                 "default": "b",
-                 "description": "The second example property"
+                 "type": "object",
+                 "description": "An object which contains defaults.",
+                 "properties": {
+                     "foo": {
+                        "type": "int",
+                        "default": 10,
+                        "description": "Another number. How about 10?"
+                     }
+                 }
              }
            }
         })";
 
-      std::string def = R"(
-      {
-         "first": false, "second": "b"
-      })";
+      json::Object defaults;
+      Error err = json::getSchemaDefaults(schema, &defaults);
+      INFO(err.description());
+      REQUIRE(err == Success());
+      
+      REQUIRE(defaults["first"] == 5);
+      json::Object second = defaults["second"].get_obj();
+      REQUIRE(second["foo"] == 10);
    }
 }
 

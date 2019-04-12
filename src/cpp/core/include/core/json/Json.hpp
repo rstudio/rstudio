@@ -311,7 +311,8 @@ private:
    {
       // rapidjson copy is a move operation
       // only move the underlying value (and none of the document members)
-      // because we do not want to move the allocators (as they are the same and rapidjson cannot handle this)
+      // because we do not want to move the allocators (as they are the same and rapidjson cannot
+      // handle this)
       static_cast<ValueType&>(get_impl()) = static_cast<ValueType&>(other.get_impl());
    }
 
