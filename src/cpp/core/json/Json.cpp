@@ -359,7 +359,7 @@ Object merge(const Object& base, const Object& overlay)
    return merged; 
 }
 
-Error getSchemaDefaults(const std::string& schema, Value* pValue)
+Error getSchemaDefaults(const std::string& schema, Object* pValue)
 {
    json::Value value;
    Error error = parse(schema, ERROR_LOCATION, &value);

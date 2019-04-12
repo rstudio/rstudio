@@ -1,5 +1,5 @@
 /*
- * SessionUserPrefs.hpp
+ * SessionUserPrefs.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -50,78 +50,72 @@ Error initialize()
    Error error = readStringFromFile(schemaFile, &schemaContents);
    if (error)
       return error;
-   rapidjson::Document sd;
-   if (sd.Parse(schemaContents).HasParseError())
+
+   // Extract default values from schema
+   json::Object defaults;
+   error = json::getSchemaDefaults(schemaContents, &defaults);
+   if (error)
+      return error;
+
+   // If there's a system-wide configuration file, load that first.
+   FilePath globalPrefsFile = core::system::xdg::systemConfigDir().complete(kUserPrefsFile);
+   if (globalPrefsFile.exists())
    {
-      return Error(json::errc::ParseError, ERROR_LOCATION);
+      std::string globalPrefsContents;
+      error = readStringFromFile(globalPrefsFile, &globalPrefsContents);
+      if (error)
+      {
+         // Non-fatal; we will proceed with defaults and/or user prefs.
+         LOG_ERROR(error);
+      }
+      else
+      {
+         // We have a global preferences file; ensure it's valid.
+         json::Value globalPrefs;
+         error = json::parseAndValidate(globalPrefsContents, schemaContents, ERROR_LOCATION, 
+               &globalPrefs);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (globalPrefs.type() == json::ObjectType)
+         {
+            // Overlay the globally specified values over the defaults.
+            defaults = json::merge(defaults.get_obj(), globalPrefs.get_obj());
+         }
+      }
    }
 
-   // TODO: check for version-specific file first
+   // Use the defaults unless there's a valid user prefs file.
+   s_pUserPrefs = boost::make_shared<json::Object>(defaults);
+
    FilePath prefsFile = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
    if (!prefsFile.exists())
+   {
+      // No user prefs file, just use whatever defaults we've accumulated.
       return Success();
+   }
 
-   // TODO: validate version stored in file
    std::string prefsContents;
    error = readStringFromFile(prefsFile, &prefsContents);
    if (error)
    {
-      // don't fail here since it will cause startup to fail, we'll just live with no prefs
+      // Don't fail here since it will cause startup to fail, we'll just live with no prefs.
       LOG_ERROR(error);
       return Success();
    }
 
-   // Parse the user preferences
-   rapidjson::Document pd;
-   if (pd.Parse(prefsContents).HasParseError())
+   json::Value prefs;
+   error = json::parseAndValidate(prefsContents, schemaContents, ERROR_LOCATION, &prefs);
+   if (error)
    {
-      return Error(json::errc::ParseError, ERROR_LOCATION);
+      // Invalid or non-conforming user prefs; use defaults.
+      LOG_ERROR(error);
+      return Success();
    }
 
-   // Validate the user prefs according to the schema
-   rapidjson::SchemaDocument schema(sd);
-   rapidjson::SchemaValidator validator(schema);
-   if (!pd.Accept(validator))
-   {
-      rapidjson::StringBuffer sb;
-      validator.GetInvalidSchemaPointer().StringifyUriFragment(sb);
-
-      error = Error(json::errc::ParseError, ERROR_LOCATION);
-      error.addProperty("schema", sb.GetString());
-      error.addProperty("keyword", validator.GetInvalidSchemaKeyword());
-      return error;
-   }
-
-   s_pUserPrefs = boost::make_shared<json::Object>();
-
-   // Iterate over every known preference value (which are exhaustively enumerated in the schema
-   // document) and read the value from the user prefs file if present
-   /*
-   for (auto & it: sd["properties"].GetObject())
-   {
-      // Read the name of the preference
-      std::string prefName(it.name.GetString());
-
-      // See if the preference has a user-defined value
-      auto userPref = pd.FindMember(prefName);
-      rapidjson::Value val;
-      if (pd != pd.MemberEnd())
-      {
-         // It has a user-defined value; use it
-         val = userPref->value;
-      }
-      else
-      {
-         // No user defined value; use the default from the schema if we can find it.
-         auto pref = it.value;
-         if (pref.HasMember("default"))
-         {
-            val = pref["default"];
-         }
-      }
-      s_pUserPrefs[prefName] = val;
-   }
-   */
+   // Overlay user prefs over global prefs and defaults
+   *s_pUserPrefs = json::merge(defaults, prefs.get_obj());
 
    return Success();
 }
