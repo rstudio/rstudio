@@ -86,6 +86,8 @@ public:
    const boost::system::error_code& code() const;
 
    std::string summary() const;
+
+   std::string description() const;
    
    const Error& cause() const ;
 
