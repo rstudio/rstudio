@@ -308,7 +308,7 @@ json::Object getSchemaDefaults(const Object& schema)
       else
       {
          // Use the default
-         result[prop.name()] = (*def).value();
+         result[prop.name()] = (*def).value().clone();
       }
    }
    return result;
@@ -326,7 +326,7 @@ Object merge(const Object& base, const Object& overlay)
       if (it == overlay.end())
       {
          // The property does not exist in the overlay object, so use the base copy.
-         merged[prop.name()] = prop.value();
+         merged[prop.name()] = prop.value().clone();
       }
       else
       {
@@ -341,7 +341,7 @@ Object merge(const Object& base, const Object& overlay)
          else
          {
             // Not objects, so just take the overlay value
-            merged[prop.name()] = (*it).value();
+            merged[prop.name()] = (*it).value().clone();
          }
       }
    }
@@ -353,7 +353,7 @@ Object merge(const Object& base, const Object& overlay)
       auto it = base.find(prop.name());
       if (it == base.end())
       {
-         merged[prop.name()] = prop.value();
+         merged[prop.name()] = prop.value().clone();
       }
    }
    return merged; 
