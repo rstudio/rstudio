@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 #include <session/SessionConsoleProcess.hpp>
+
+#include <gsl/gsl>
 
 #include <boost/lexical_cast.hpp>
 #include <tests/TestThat.hpp>
@@ -91,7 +93,7 @@ test_context("queue and fetch input")
       {
          std::string oneChar;
          oneChar.push_back(orig[i]);
-         pCP->enqueInput(ConsoleProcess::Input(i, oneChar));
+         pCP->enqueInput(ConsoleProcess::Input(gsl::narrow_cast<int>(i), oneChar));
       }
 
       std::string result;
@@ -155,8 +157,8 @@ test_context("queue and fetch input")
       {
          std::string item = boost::lexical_cast<std::string>(i);
          expected += item;
-         input.push_back(ConsoleProcess::Input(i, item));
-         lastAdded = i;
+         input.push_back(ConsoleProcess::Input(gsl::narrow_cast<int>(i), item));
+         lastAdded = gsl::narrow_cast<int>(i);
       }
 
       for (size_t i = 0; i < input.size(); i++)

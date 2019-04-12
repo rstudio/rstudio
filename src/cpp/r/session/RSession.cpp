@@ -1,7 +1,7 @@
 /*
  * RSession.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,6 +64,8 @@
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
+
+#include <gsl/gsl>
 
 #define CTXT_BROWSER 16
 
@@ -452,7 +454,7 @@ void setClientMetrics(const RClientMetrics& metrics)
 void reportAndLogWarning(const std::string& warning)
 {
    std::string msg = "WARNING: " + warning + "\n";
-   RWriteConsoleEx(msg.c_str(), msg.length(), 1);
+   RWriteConsoleEx(msg.c_str(), gsl::narrow_cast<int>(msg.length()), 1);
    LOG_WARNING_MESSAGE("(Reported to User) " + warning);
 }
 

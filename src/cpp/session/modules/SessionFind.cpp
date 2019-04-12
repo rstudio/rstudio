@@ -16,6 +16,7 @@
 #include "SessionFind.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
@@ -65,7 +66,7 @@ public:
 
    int resultCount() const
    {
-      return files_.size();
+      return gsl::narrow_cast<int>(files_.size());
    }
 
    bool isRunning() const
@@ -295,9 +296,9 @@ private:
 
          // update the match state
          if (match[1] == "01")
-            pMatchOn->push_back(static_cast<int>(nUtf8CharactersProcessed));
+            pMatchOn->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
          else
-            pMatchOff->push_back(static_cast<int>(nUtf8CharactersProcessed));
+            pMatchOff->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
       }
       
       if (inputPos != end)

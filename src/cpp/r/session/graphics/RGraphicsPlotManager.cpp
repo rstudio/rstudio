@@ -16,6 +16,7 @@
 #include "RGraphicsPlotManager.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -117,7 +118,7 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
 
 int PlotManager::plotCount() const
 {
-   return plots_.size();
+   return gsl::narrow_cast<int>(plots_.size());
 }
    
 Error PlotManager::plotImageFilename(int index, 
@@ -307,9 +308,9 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    int res = 96;
 
    // adjust for device pixel ratio
-   width = static_cast<int>(width * pixelRatio);
-   height = static_cast<int>(height * pixelRatio);
-   res = static_cast<int>(res * pixelRatio);
+   width = gsl::narrow_cast<int>(width * pixelRatio);
+   height = gsl::narrow_cast<int>(height * pixelRatio);
+   res = gsl::narrow_cast<int>(res * pixelRatio);
 
    // optional format specific extra params
    std::string extraParams;
@@ -659,9 +660,9 @@ Error PlotManager::restorePlotsState()
    // of the circular buffer (would happen when migrating from a
    // suspended session that allowed more plots)
    if ((activePlot_ == -1) ||
-       (activePlot_ > (static_cast<int>(plots_.size()) - 1)))
+       (activePlot_ > (gsl::narrow_cast<int>(plots_.size()) - 1)))
    {
-      activePlot_ = plots_.size() - 1;
+      activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
    }
    
    // restore snapshot for the active plot
@@ -781,7 +782,7 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
 
       // add the plot
       plots_.push_back(ptrPlot);
-      activePlot_ = plots_.size() - 1  ;
+      activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
    }
 
    // once we render the new plot we always reset pending manipulator state

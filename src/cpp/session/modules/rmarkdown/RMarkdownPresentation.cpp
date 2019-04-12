@@ -15,6 +15,8 @@
 
 #include "RMarkdownPresentation.hpp"
 
+#include <gsl/gsl>
+
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -179,7 +181,7 @@ void ammendResults(const std::string& formatName,
    {
       // determine which slide the cursor is on
       int previewSlide = 1;
-      for (int i = (slideNavigationItems.size()-1); i>=0; i--)
+      for (int i = gsl::narrow_cast<int>(slideNavigationItems.size()) - 1; i >= 0; i--)
       {
          const SlideNavigationItem& item = slideNavigationItems.at(i);
          if (sourceLine >= item.line)

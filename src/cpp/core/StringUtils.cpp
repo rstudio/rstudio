@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <ostream>
+#include <gsl/gsl>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -137,7 +138,7 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
       if (index == std::string::npos)
          continue;
       
-      result.push_back(static_cast<int>(index));
+      result.push_back(gsl::narrow_cast<int>(index));
       prevMatchIndex = index;
    }
    
@@ -151,12 +152,12 @@ bool subsequenceIndices(std::string const& sequence,
    pIndices->clear();
    pIndices->reserve(query.length());
    
-   int query_n = static_cast<int>(query.length());
+   int query_n = gsl::narrow_cast<int>(query.length());
    int prevMatchIndex = -1;
    
    for (int i = 0; i < query_n; i++)
    {
-      int index = static_cast<int>(sequence.find(query[i], prevMatchIndex + 1));
+      int index = gsl::narrow_cast<int>(sequence.find(query[i], prevMatchIndex + 1));
       if (index == -1)
          return false;
       
@@ -267,7 +268,7 @@ std::string utf8ToSystem(const std::string& str,
    int chars = ::MultiByteToWideChar(
             CP_UTF8, 0,
             str.c_str(), -1,
-            &wide[0], static_cast<int>(wide.size()));
+            &wide[0], gsl::narrow_cast<int>(wide.size()));
 
    if (chars < 0)
    {
@@ -309,8 +310,12 @@ std::string systemToUtf8(const std::string& str, int codepage)
 
 #ifdef _WIN32
    std::vector<wchar_t> wide(str.length() + 1);
-   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), static_cast<int>(str.length()),
-                                     &wide[0], static_cast<int>(wide.size()));
+   int chars = ::MultiByteToWideChar(codepage,
+                                     0,
+                                     str.c_str(),
+                                     gsl::narrow_cast<int>(str.length()),
+                                     &wide[0],
+                                     gsl::narrow_cast<int>(wide.size()));
    if (chars < 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());

@@ -15,6 +15,8 @@
 
 #include "ViewerHistory.hpp"
 
+#include <gsl/gsl>
+
 #include <boost/format.hpp>
 
 #include <core/SafeConvert.hpp>
@@ -44,7 +46,7 @@ ViewerHistory::ViewerHistory()
 void ViewerHistory::add(const module_context::ViewerHistoryEntry& entry)
 {
    entries_.push_back(entry);
-   currentIndex_ = static_cast<int>(entries_.size() - 1);
+   currentIndex_ = gsl::narrow_cast<int>(entries_.size() - 1);
 }
 
 void ViewerHistory::clear()

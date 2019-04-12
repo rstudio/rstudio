@@ -1,7 +1,7 @@
 /*
  * SessionHistory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/utility.hpp>
 #include <boost/bind.hpp>
@@ -82,7 +83,7 @@ Error setJsonResultFromHistory(int startIndex,
    const std::vector<HistoryEntry>& allEntries = historyArchive().entries();
 
    // validate indexes
-   int historySize = allEntries.size();
+   int historySize = gsl::narrow_cast<int>(allEntries.size());
    if ( (startIndex < 0)               ||
         (startIndex > historySize)     ||
         (endIndex < 0)                 ||
@@ -247,7 +248,7 @@ Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
       return error;
    
    // truncate indexes if necessary
-   int historySize = historyArchive().entries().size();
+   int historySize = gsl::narrow_cast<int>(historyArchive().entries().size());
    startIndex = std::min(startIndex, historySize);
    endIndex = std::min(endIndex, historySize);
    

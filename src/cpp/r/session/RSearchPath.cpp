@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -371,7 +372,7 @@ Error restoreSearchPath(const FilePath& statePath)
    // this excludes the first and last entries in the list (.GlobalEnv and
    // package:base respectively)
    FilePath environmentDataPath = searchPathDir.complete(kEnvDataDir);
-   for (int i = (savedSearchPathList.size() - 2); i > 0; i--)
+   for (int i = (gsl::narrow_cast<int>(savedSearchPathList.size()) - 2); i > 0; i--)
    {
       // get the path element
       std::string pathElement = savedSearchPathList[i];
