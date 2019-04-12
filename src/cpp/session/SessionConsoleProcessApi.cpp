@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessApi.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 #include "SessionConsoleProcessApi.hpp"
+
+#include <gsl/gsl>
 
 #include <boost/algorithm/string/replace.hpp>
 
@@ -264,7 +266,7 @@ SEXP rs_terminalContext(SEXP terminalSEXP)
    builder.add("lines", proc->getBufferLineCount());
    builder.add("cols", proc->getCols());
    builder.add("rows", proc->getRows());
-   builder.add("pid", static_cast<int>(proc->getPid()));
+   builder.add("pid", gsl::narrow_cast<int>(proc->getPid()));
    builder.add("full_screen", proc->getAltBufferActive());
    builder.add("restarted", proc->getWasRestarted());
 

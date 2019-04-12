@@ -1,7 +1,7 @@
 /*
  * Response.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #include <core/http/Response.hpp>
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
@@ -493,7 +494,7 @@ void Response::setBodyUnencoded(const std::string& body)
 {
    removeHeader("Content-Encoding");
    body_ = body;
-   setContentLength(static_cast<int>(body_.length()));
+   setContentLength(gsl::narrow_cast<int>(body_.length()));
 }
    
    

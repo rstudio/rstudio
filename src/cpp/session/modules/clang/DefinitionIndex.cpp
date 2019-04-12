@@ -16,6 +16,7 @@
 #include "DefinitionIndex.hpp"
 
 #include <deque>
+#include <gsl/gsl>
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -219,7 +220,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                index,
                                file.c_str(),
                                argsArray.args(),
-                               argsArray.argCount(),
+                               gsl::narrow_cast<int>(argsArray.argCount()),
                                nullptr, 0, // no unsaved files
                                CXTranslationUnit_None |
                                CXTranslationUnit_Incomplete);

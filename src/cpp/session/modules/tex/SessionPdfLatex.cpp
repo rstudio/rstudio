@@ -15,6 +15,8 @@
 
 #include "SessionPdfLatex.hpp"
 
+#include <gsl/gsl>
+
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -226,9 +228,9 @@ int countCitationMisses(const FilePath& logFilePath)
 
    // look for misses
    boost::regex missRegex("Warning:.*Citation.*undefined");
-   int misses = std::count_if(lines.begin(),
-                              lines.end(),
-                              boost::bind(lineIncludes, _1, missRegex));
+   int misses = gsl::narrow_cast<int>(std::count_if(lines.begin(),
+                                      lines.end(),
+                                      boost::bind(lineIncludes, _1, missRegex)));
    return misses;
 }
 

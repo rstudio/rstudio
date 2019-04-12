@@ -16,6 +16,7 @@
 #include "SessionRnwConcordance.hpp"
 
 #include <iostream>
+#include <gsl/gsl>
 
 #include <boost/regex.hpp>
 
@@ -260,7 +261,7 @@ FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
    for (std::vector<Concordance>::const_reverse_iterator it =
       texFileConcords.rbegin(); it != texFileConcords.rend(); ++it)
    {
-      if (texLine.line() > static_cast<int>(it->offset()))
+      if (texLine.line() > gsl::narrow_cast<int>(it->offset()))
       {
           return FileAndLine(it->inputFile(),
                              it->rnwLine(texLine.line()));
@@ -306,7 +307,7 @@ std::string fixup_formatter(const Concordances& concordances,
 {
    std::string result = what[0];
 
-   for (unsigned int i = what.size()-1; i > 0; i--)
+   for (int i = gsl::narrow_cast<int>(what.size()) - 1; i > 0; i--)
    {
       if (what[i].matched)
       {

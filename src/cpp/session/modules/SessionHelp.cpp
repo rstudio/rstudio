@@ -16,6 +16,7 @@
 #include "SessionHelp.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
@@ -549,7 +550,7 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
    else
    {
       // body bytes
-      int contentLength = request.body().length();
+      int contentLength = gsl::narrow_cast<int>(request.body().length());
       SEXP bodySEXP;
       pProtect->add(bodySEXP = Rf_allocVector(RAWSXP, contentLength));
       if (contentLength > 0)

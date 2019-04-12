@@ -16,6 +16,8 @@
 
 #include <core/system/Crypto.hpp>
 
+#include <gsl/gsl>
+
 #ifdef _MSC_VER
 # include <io.h>
 #endif
@@ -146,7 +148,7 @@ Error HMAC_SHA2(const std::string& data,
    pHMAC->resize(EVP_MAX_MD_SIZE);
    unsigned char* pResult = ::HMAC(EVP_sha256(),
                                    &(key[0]),
-                                   static_cast<int>(key.size()),
+                                   gsl::narrow_cast<int>(key.size()),
                                    &(dataVector[0]),
                                    dataVector.size(),
                                    &(pHMAC->operator[](0)),
@@ -186,7 +188,7 @@ Error sha256(const std::string& message,
 Error base64Encode(const std::vector<unsigned char>& data, 
                    std::string* pEncoded)
 {
-   return base64Encode(&(data[0]), static_cast<int>(data.size()), pEncoded);
+   return base64Encode(&(data[0]), gsl::narrow_cast<int>(data.size()), pEncoded);
 }
    
 Error base64Encode(const unsigned char* pData, 
@@ -229,7 +231,7 @@ Error base64Encode(const unsigned char* pData,
 
    // read the memory stream
    std::vector<char> buffer(len *2); // plenty more than len * 1.37 + padding
-   int bytesRead = ::BIO_read(pMem, &(buffer[0]), static_cast<int>(buffer.capacity()));
+   int bytesRead = ::BIO_read(pMem, &(buffer[0]), gsl::narrow_cast<int>(buffer.capacity()));
    if (bytesRead < 0 && ::ERR_get_error() != 0)
       return lastCryptoError(ERROR_LOCATION);
 
@@ -257,7 +259,7 @@ Error base64Decode(const std::string& data,
    BIOFreeAllScope freeB64Scope(pB64);
    
    // allocate buffer 
-   BIO* pMem = BIO_new_mem_buf((void*)data.data(), static_cast<int>(data.length()));
+   BIO* pMem = BIO_new_mem_buf((void*)data.data(), gsl::narrow_cast<int>(data.length()));
    if (pMem == nullptr)
       return lastCryptoError(ERROR_LOCATION);
    
@@ -269,7 +271,7 @@ Error base64Decode(const std::string& data,
    pDecoded->resize(data.length());
    int bytesRead = ::BIO_read(pB64, 
                               &(pDecoded->operator[](0)), 
-                              static_cast<int>(pDecoded->size()));
+                              gsl::narrow_cast<int>(pDecoded->size()));
    if (bytesRead < 0)
       return lastCryptoError(ERROR_LOCATION);
    
@@ -296,7 +298,7 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], kEncrypt);
 
    // perform the encryption
-   if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
+   if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
@@ -333,7 +335,7 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], kDecrypt);
 
    // perform the decryption
-   if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], static_cast<int>(data.size())))
+   if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
       return lastCryptoError(ERROR_LOCATION);
@@ -382,7 +384,7 @@ Error rsaSign(const std::string& message,
 
    // convert the key into an RSA structure
    std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(BIO_new_mem_buf(const_cast<char*>(pemPrivateKey.c_str()),
-                                                      static_cast<int>(pemPrivateKey.size())),
+                                                      gsl::narrow_cast<int>(pemPrivateKey.size())),
                                                       BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -426,7 +428,7 @@ Error rsaVerify(const std::string& message,
    // convert the key into an RSA structure
    std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(
             BIO_new_mem_buf(const_cast<char*>(pemPublicKey.c_str()),
-            static_cast<int>(pemPublicKey.size())),
+            gsl::narrow_cast<int>(pemPublicKey.size())),
             BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
@@ -612,7 +614,7 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
 
    int size = RSA_size(s_pRSA);
    std::vector<unsigned char> plainTextBytes(size);
-   int bytesRead = RSA_private_decrypt(static_cast<int>(cipherTextBytes.size()),
+   int bytesRead = RSA_private_decrypt(gsl::narrow_cast<int>(cipherTextBytes.size()),
                                        &cipherTextBytes[0],
                                        &plainTextBytes[0],
                                        s_pRSA,

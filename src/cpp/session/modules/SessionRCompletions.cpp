@@ -15,6 +15,8 @@
 
 #include "SessionRCompletions.hpp"
 
+#include <gsl/gsl>
+
 #include <core/Exec.hpp>
 
 #include <boost/range/adaptors.hpp>
@@ -92,7 +94,7 @@ std::string finishExpression(const std::string& expression)
 
    // If the last character of the expression is a binary op, then we
    // place a '.' after it
-   int n = expression.length();
+   int n = gsl::narrow_cast<int>(expression.length());
    if (n > 0 && isBinaryOp(expression[n - 1]))
       result.append(".");
 
@@ -278,7 +280,7 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    options.filter = boost::bind(subsequenceFilter,
                                 _1,
                                 pattern,
-                                path.length(),
+                                gsl::narrow_cast<int>(path.length()),
                                 maxCount,
                                 &paths,
                                 &count,

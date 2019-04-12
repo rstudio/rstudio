@@ -15,6 +15,8 @@
 
 #include "FindReferences.hpp"
 
+#include <gsl/gsl>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -375,7 +377,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                                   index,
                                   filename.c_str(),
                                   argsArray.args(),
-                                  argsArray.argCount(),
+                                  gsl::narrow_cast<int>(argsArray.argCount()),
                                   nullptr, 0, // no unsaved files
                                   CXTranslationUnit_None |
                                   CXTranslationUnit_Incomplete);

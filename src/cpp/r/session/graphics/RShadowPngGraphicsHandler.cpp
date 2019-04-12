@@ -14,6 +14,7 @@
  */
 
 #include <iostream>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -109,9 +110,9 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // determine width, height, and res
-      int width = static_cast<int>(pDC->width * pDC->devicePixelRatio);
-      int height = static_cast<int>(pDC->height * pDC->devicePixelRatio);
-      int res = static_cast<int>(96.0 * pDC->devicePixelRatio);
+      int width = gsl::narrow_cast<int>(pDC->width * pDC->devicePixelRatio);
+      int height = gsl::narrow_cast<int>(pDC->height * pDC->devicePixelRatio);
+      int res = gsl::narrow_cast<int>(96.0 * pDC->devicePixelRatio);
 
       // create PNG device (completely bail on error)
       boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
@@ -460,7 +461,7 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
-      return ::strlen(str);
+      return gsl::narrow_cast<double>(::strlen(str));
    
    return dev_desc::strWidth(str, gc, pngDevDesc);
 }

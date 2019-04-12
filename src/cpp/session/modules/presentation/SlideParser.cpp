@@ -421,7 +421,8 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
       std::string title = lineIndex > 0 ? lines[lineIndex-1] : "";
 
       // line of code the slide is on
-      int line = !title.empty() ? lineIndex - 1 : lineIndex;
+      int line = !title.empty() ? gsl::narrow_cast<int>(lineIndex - 1) :
+                                  gsl::narrow_cast<int>(lineIndex);
 
       // find the begin index (line after)
       std::size_t beginIndex = lineIndex + 1;

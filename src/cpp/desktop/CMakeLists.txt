@@ -278,6 +278,7 @@ include_directories(
   ${CORE_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${EXT_SOURCE_DIR}
   ${TESTS_INCLUDE_DIR}
 )
 

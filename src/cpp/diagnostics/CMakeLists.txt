@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ file(GLOB_RECURSE DIAGNOSTICS_HEADER_FILES "*.h*")
 include_directories(
    ${CORE_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${EXT_SOURCE_DIR}
 )
 
 set(DIAGNOSTICS_SOURCE_FILES

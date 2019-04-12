@@ -15,6 +15,8 @@
 
 #include <core/libclang/TranslationUnit.hpp>
 
+#include <gsl/gsl>
+
 #include <core/FilePath.hpp>
 
 #include <core/libclang/Utils.hpp>
@@ -29,7 +31,7 @@ namespace  {
 
 std::string formatBytes(double value)
 {
-   int mb = static_cast<int>(value / 1024 / 1024);
+   int mb = gsl::narrow_cast<int>(value / 1024 / 1024);
    if (mb > 1024)
    {
       double gb = (double)mb / 1024.0;
@@ -44,7 +46,7 @@ std::string formatBytes(double value)
    else
    {
       boost::format fmt("%1% kb");
-      return boost::str(fmt % static_cast<int>(value / 1024));
+      return boost::str(fmt % gsl::narrow_cast<int>(value / 1024));
    }
 }
 

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -619,8 +620,8 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       SEXP formattedColumnSEXP;
       r::exec::RFunction formatFx(".rs.formatDataColumn");
       formatFx.addParam(columnSEXP);
-      formatFx.addParam(static_cast<int>(start));
-      formatFx.addParam(static_cast<int>(length));
+      formatFx.addParam(gsl::narrow_cast<int>(start));
+      formatFx.addParam(gsl::narrow_cast<int>(length));
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.summary());
