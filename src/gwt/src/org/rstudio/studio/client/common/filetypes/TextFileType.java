@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
@@ -446,19 +445,31 @@ public class TextFileType extends EditableFileType
 
    public TokenPredicate getTokenPredicate()
    {
-      return new TokenPredicate()
+      return (token, row, column) ->
       {
-         @Override
-         public boolean test(Token token, int row, int column)
-         {
-            if (reNospellType_.match(token.getType(), 0) != null) {
-               return false;
-            }
-
-            return reTextType_.match(token.getType(), 0) != null ||
-               reStringType_.match(token.getType(), 0) != null ||
-               reHeaderType_.match(token.getType(), 0) != null;
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
          }
+
+         return reTextType_.match(token.getType(), 0) != null ||
+            reStringType_.match(token.getType(), 0) != null ||
+            reHeaderType_.match(token.getType(), 0) != null;
+      };
+   }
+
+   // special token predicate for only getting commented words
+   public TokenPredicate getCommentsTokenPredicate()
+   {
+      return (token, row, column) ->
+      {
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
+         }
+
+         return reTextType_.match(token.getType(), 0) != null ||
+            reStringType_.match(token.getType(), 0) != null ||
+            reHeaderType_.match(token.getType(), 0) != null ||
+            reCommentType_.match(token.getType(), 0) != null;
       };
    }
 
@@ -513,4 +524,5 @@ public class TextFileType extends EditableFileType
    private static Pattern reStringType_ = Pattern.create("\\bstring\\b");
    private static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
    private static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
+   private static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
 }

@@ -26,13 +26,13 @@
 
 namespace rstudio {
 namespace core {
-   
+
 class Error;
 class ErrorLocation;
 class ProgramStatus;
 
 namespace program_options {
-      
+
 struct OptionsDescription
 {
    OptionsDescription(const std::string& programName,
@@ -53,7 +53,7 @@ struct OptionsDescription
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
-                   char * const argv[],
+                   const char * const argv[],
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
                    bool allowUnregisteredConfigOptions = false,
@@ -61,18 +61,18 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
-                          char * const argv[],
+                          const char * const argv[],
                           bool* pHelp,
                           bool allowUnregisteredConfigOptions = false,
                           bool configFileHasPrecedence = false)
 {
-   return read(optionsDescription, argc, argv, nullptr, pHelp,
+   return read(optionsDescription, argc, argv, NULL, pHelp,
                allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
-                          char * const argv[],
+                          const char * const argv[],
                           std::vector<std::string>* pUnrecognized,
                           bool allowUnregisteredConfigOptions = false,
                           bool configFileHasPrecedence = false)
@@ -84,7 +84,7 @@ inline ProgramStatus read(const OptionsDescription& optionsDescription,
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
-                          char * const argv[],
+                          const char * const argv[],
                           bool allowUnregisteredConfigOptions = false,
                           bool configFileHasPrecedence = false)
 {
@@ -98,9 +98,9 @@ void reportError(const std::string& errorMessage,
 
 void reportWarnings(const std::string& warningMessages,
                     const ErrorLocation& location);
-   
+
 } // namespace program_options
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 #endif // CORE_PROGRAM_OPTIONS_HPP

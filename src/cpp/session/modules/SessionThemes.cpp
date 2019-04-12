@@ -150,14 +150,14 @@ void getThemesInLocation(
             themeIFStream.close();
 
             boost::smatch matches;
-            boost::regex_search(
+            bool found = boost::regex_search(
                themeContents,
                matches,
                boost::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
             // If there's no name specified,use the name of the file
             std::string name;
-            if (matches.size() < 2)
+            if (!found || (matches.size() < 2) || (matches[1] == ""))
             {
                name = themeFile.stem();
             }
@@ -168,13 +168,13 @@ void getThemesInLocation(
             }
 
             // Find out if the theme is dark or not.
-            boost::regex_search(
+            found = boost::regex_search(
                      themeContents,
                      matches,
                      boost::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
 
             bool isDark = false;
-            if (matches.size() >= 2)
+            if (found && (matches.size() >= 2))
             {
                try
                {

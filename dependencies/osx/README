@@ -10,7 +10,9 @@ Building RStudio requires installations of a number of applications
 - CMake:     http://www.cmake.org/
 
 Note that after installing XCode you should also be sure to install the XCode
-Command Line Tools (which can be done via Preferences -> Downloads)
+Command Line Tools (which can be done by running the following:
+
+xcode-select --install
 
 Satisfy Additional Dependencies
 =============================================================================

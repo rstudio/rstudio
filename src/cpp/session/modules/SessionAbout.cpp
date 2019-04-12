@@ -41,6 +41,8 @@ Error productInfo(const json::JsonRpcRequest& request,
    result["commit"] = RSTUDIO_GIT_COMMIT;
    result["build"] = RSTUDIO_BUILD_ID;
    result["notice"] = module_context::resourceFileAsString("NOTICE");
+   result["date"] = RSTUDIO_BUILD_DATE;
+   result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
    pResponse->setResult(result);
    return Success();
 }

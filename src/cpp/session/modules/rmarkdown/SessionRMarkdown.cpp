@@ -16,6 +16,9 @@
 #include "session-config.h"
 
 #include "SessionRMarkdown.hpp"
+
+#include <gsl/gsl>
+
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
@@ -78,8 +81,10 @@ std::string utf8ToConsole(const std::string& string)
    std::vector<wchar_t> wide(string.length() + 1);
    int chars = ::MultiByteToWideChar(
             CP_UTF8, 0,
-            string.data(), string.size(),
-            &wide[0], static_cast<int>(wide.size()));
+            string.data(),
+            gsl::narrow_cast<int>(string.size()),
+            &wide[0],
+            gsl::narrow_cast<int>(wide.size()));
 
    if (chars == 0)
    {
@@ -1469,7 +1474,7 @@ Error initialize()
          LOG_ERROR(error);
       else
       {
-         s_currentRenderOutput = static_cast<int>(s_renderOutputs.size());
+         s_currentRenderOutput = gsl::narrow_cast<int>(s_renderOutputs.size());
          s_renderOutputs.reserve(kMaxRenderOutputs);
       }
    }

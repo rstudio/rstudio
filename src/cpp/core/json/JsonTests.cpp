@@ -824,12 +824,16 @@ TEST_CASE("Json")
       base["p3"] = p3base;
       overlay["p3"] = p3overlay;
       
-      // Regular properties should pick up values from the overlay
+      // Regular properties should pick up values from the overlay (ensure they are copied, not
+      // moved)
       auto result = json::merge(base, overlay);
       REQUIRE(result["p1"] == "overlay");
+      REQUIRE(overlay["p1"] == "overlay");
 
-      // Properties with no overlay should pick up values from the base
+      // Properties with no overlay should pick up values from the base (ensure they are copied, not
+      // moved)
       REQUIRE(result["p2"] == "base");
+      REQUIRE(base["p2"] == "base");
 
       // Sub-objects with interleaved properties should inherit the union of properties
       auto p3result = result["p3"].get_obj();

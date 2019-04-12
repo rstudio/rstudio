@@ -21,6 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -704,7 +705,7 @@ public:
          const FileInfo& fileInfo = (*it).fileInfo;
          if (fileInfo.isDirectory())
          {
-            int lastSlashIndex = static_cast<int>(fileInfo.absolutePath().rfind('/'));
+            int lastSlashIndex = gsl::narrow_cast<int>(fileInfo.absolutePath().rfind('/'));
 
             std::string fileName =
                   fileInfo.absolutePath().substr(lastSlashIndex + 1);
@@ -749,7 +750,7 @@ public:
          if (fileInfo.empty())
             continue;
 
-         int lastSlashIndex = static_cast<int>(fileInfo.absolutePath().rfind('/'));
+         int lastSlashIndex = gsl::narrow_cast<int>(fileInfo.absolutePath().rfind('/'));
 
          std::string fileName =
                fileInfo.absolutePath().substr(lastSlashIndex + 1);
@@ -1296,7 +1297,7 @@ int scoreMatch(std::string const& suggestion,
    int totalPenalty = 0;
 
    // Loop over the matches and assign a score
-   for (int j = 0, n = static_cast<int>(matches.size()); j < n; j++)
+   for (int j = 0, n = gsl::narrow_cast<int>(matches.size()); j < n; j++)
    {
       int matchPos = matches[j];
       int penalty = matchPos;
@@ -1332,7 +1333,7 @@ int scoreMatch(std::string const& suggestion,
       ++totalPenalty;
    
    // Penalize unmatched characters
-   totalPenalty += static_cast<int>((query.size() - matches.size()) * query.size());
+   totalPenalty += gsl::narrow_cast<int>((query.size() - matches.size()) * query.size());
 
    return totalPenalty;
 }
@@ -1350,8 +1351,8 @@ void filterScores(std::vector< std::pair<int, int> >* pScore1,
                   std::vector< std::pair<int, int> >* pScore2,
                   int maxAmount)
 {
-   int s1_n = static_cast<int>(pScore1->size());
-   int s2_n = static_cast<int>(pScore2->size());
+   int s1_n = gsl::narrow_cast<int>(pScore1->size());
+   int s2_n = gsl::narrow_cast<int>(pScore2->size());
 
    int s1Count = 0;
    int s2Count = 0;
@@ -1607,7 +1608,8 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> fileScores;
    for (std::size_t i = 0; i < paths.size(); ++i)
    {
-      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term, true)));
+      fileScores.push_back(std::make_pair(gsl::narrow_cast<int>(i),
+                                          scoreMatch(names[i], term, true)));
    }
 
    // sort by score (lower is better)
@@ -1625,7 +1627,7 @@ Error searchCode(const json::JsonRpcRequest& request,
          continue;
          
       int score = scoreMatch(item.name(), term, false);
-      srcItemScores.push_back(std::make_pair(i, score));
+      srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
 
@@ -1634,7 +1636,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::size_t srcItemScoresSizeBefore = srcItemScores.size();
    std::size_t fileScoresSizeBefore = fileScores.size();
 
-   filterScores(&fileScores, &srcItemScores, static_cast<int>(maxResults));
+   filterScores(&fileScores, &srcItemScores, gsl::narrow_cast<int>(maxResults));
 
    moreFilesAvailable = fileScoresSizeBefore > fileScores.size();
    moreSourceItemsAvailable = srcItemScoresSizeBefore > srcItemScores.size();
@@ -2336,7 +2338,7 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
       return R_NilValue;
    
-   int n = static_cast<int>(suggestions.size());
+   int n = gsl::narrow_cast<int>(suggestions.size());
    std::vector<int> scores;
    scores.reserve(n);
    

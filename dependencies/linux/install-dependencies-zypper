@@ -50,7 +50,7 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common --install-crashpad-sudo
 cd ../linux
 
 # desktop dependencies (qt)

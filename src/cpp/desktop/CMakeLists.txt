@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,13 +13,11 @@
 #
 #
 
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.4.3)
 
 project(DESKTOP)
 
-if(CMAKE_VERSION VERSION_GREATER "3.0.0")
-   cmake_policy(SET CMP0043 NEW)
-endif()
+cmake_policy(SET CMP0043 NEW)
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -280,6 +278,7 @@ include_directories(
   ${CORE_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${EXT_SOURCE_DIR}
   ${TESTS_INCLUDE_DIR}
 )
 

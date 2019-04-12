@@ -14,11 +14,18 @@
  */
 package org.rstudio.studio.client.common.spelling;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.jsonrpc.RequestLog;
+import org.rstudio.core.client.jsonrpc.RequestLogEntry;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -53,10 +60,12 @@ public class TypoSpellChecker
       contextDictionary_ = context_.readDictionary();
 
       // subscribe to spelling prefs changes (invalidateAll on changes)
-      uiPrefs_.realTimeSpellChecking().addValueChangeHandler(prefChangedHandler_);
-      uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(prefChangedHandler_);
-      uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler_);
-      uiPrefs_.spellingDictionaryLanguage().addValueChangeHandler(languageChangedHandler_);
+      ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
+      ValueChangeHandler<String> dictChangedHandler = (event) -> loadDictionary();
+      uiPrefs_.realTimeSpellChecking().addValueChangeHandler(prefChangedHandler);
+      uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(prefChangedHandler);
+      uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
+      uiPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -89,7 +98,7 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return typoNative_.check(word);
+      return allIgnoredWords_.contains(word) || typoNative_.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
@@ -191,33 +200,50 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
-         typoNative_ = new TypoNative(
-            uiPrefs_.spellingDictionaryLanguage().getValue(),
-            null,
-            null,
-            null
-         );
-      };
-      new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+      String dictLanguage = uiPrefs_.spellingDictionaryLanguage().getValue();
+      String path = GWT.getHostPageBaseURL() + "dictionaries/" + dictLanguage + "/" + dictLanguage;
+
+      RequestLogEntry affLogEntry = RequestLog.log(dictLanguage + "_aff_request", "");
+      RequestLogEntry dicLogEntry = RequestLog.log(dictLanguage + "_dic_request", "");
+
+      try
+      {
+         new RequestBuilder(RequestBuilder.GET, path + ".aff").sendRequest("", new RequestCallback() {
+            @Override
+            public void onResponseReceived(Request affReq, Response affResp) {
+               try
+               {
+                  new RequestBuilder(RequestBuilder.GET, path + ".dic").sendRequest("", new RequestCallback() {
+                     @Override
+                     public void onResponseReceived(Request dicReq, Response dicResp) {
+                        ExternalJavaScriptLoader.Callback loadTypoCallback = () ->
+                           typoNative_ = new TypoNative(dictLanguage, affResp.getText(), dicResp.getText(), null);
+                        new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
+                     }
+
+                     @Override
+                     public void onError(Request res, Throwable throwable) {
+                        dicLogEntry.logResponse(RequestLogEntry.ResponseType.Error, throwable.getLocalizedMessage());
+                     }
+                  });
+               }
+               catch (RequestException e)
+               {
+                  dicLogEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
+               }
+            }
+
+            @Override
+            public void onError(Request res, Throwable throwable) {
+               affLogEntry.logResponse(RequestLogEntry.ResponseType.Error, throwable.getLocalizedMessage());
+            }
+         });
+      }
+      catch (RequestException e)
+      {
+         affLogEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
+      }
    }
-
-   private ValueChangeHandler<Boolean> prefChangedHandler_ = new ValueChangeHandler<Boolean>() {
-      @Override
-      public void onValueChange(ValueChangeEvent<Boolean> event)
-      {
-         context_.invalidateAllWords();
-      }
-   };
-
-   private ValueChangeHandler<String> languageChangedHandler_ = new ValueChangeHandler<String>() {
-      @Override
-      public void onValueChange(ValueChangeEvent<String> event)
-      {
-         loadDictionary();
-      }
-   };
-
    private final Context context_;
 
    private TypoNative typoNative_;

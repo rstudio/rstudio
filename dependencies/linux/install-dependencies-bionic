@@ -54,6 +54,7 @@ sudo apt-get -y install \
   libuser1-dev \
   libxslt1-dev \
   lsof \
+  patchelf \
   pkg-config \
   python \
   rrdtool \
@@ -86,7 +87,7 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common --install-crashpad-sudo
 cd ../linux
 
 # Qt for desktop

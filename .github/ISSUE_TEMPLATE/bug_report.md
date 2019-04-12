@@ -5,7 +5,7 @@ about : Report a bug in RStudio.
 
 <!--
 
-RStudio v1.2 is currently available as a preview release, from https://www.rstudio.com/products/rstudio/download/preview/. If you are reporting a bug with RStudio v1.1, it would be greatly appreciated if you could check if the issue also reproduces in the preview release before reporting an issue.
+RStudio v1.2 is now available for download at https://www.rstudio.com/products/rstudio/download/. If you're currently using an older version of RStudio, we would appreciate it if you could update to RStudio v1.2 and confirm whether the problem still persists.
 
 This issue tracker is for bugs and feature requests in the RStudio IDE. If you're having trouble with R itself or an R package, see https://www.r-project.org/help.html, and if you want to ask a question rather than report a bug, go to https://community.rstudio.com/. Finally, if you use RStudio Server Pro, get in touch with our Pro support team at support@rstudio.com.
 

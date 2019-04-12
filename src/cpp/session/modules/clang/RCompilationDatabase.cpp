@@ -16,6 +16,7 @@
 #include "RCompilationDatabase.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
@@ -1061,7 +1062,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                             index,
                             cppPath.absolutePath().c_str(),
                             argsArray.args(),
-                            argsArray.argCount(),
+                            gsl::narrow_cast<int>(argsArray.argCount()),
                             0,
                             0,
                             CXTranslationUnit_ForSerialization);
