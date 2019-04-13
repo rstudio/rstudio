@@ -3,7 +3,7 @@
 #
 # install-qt-sdk
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@ if [ -z "$QT_VERSION" ]; then
     QT_VERSION=5.12.1
 fi
 if [ -z "$QT_SDK_BINARY" ]; then
-    QT_SDK_BINARY=qt-unified-linux-x64-3.0.5-online.run
+    QT_SDK_BINARY=qt-opensource-linux-x64-${QT_VERSION}.run
 fi
 if [ -z "$QT_PACKAGES" ]; then
     QT_PACKAGES=qt.qt5.5121.gcc_64,qt.qt5.5121.qtwebengine,qt.qt5.5121.qtwebengine.gcc_64
@@ -127,16 +127,10 @@ then
       chmod u+x /tmp/$QT_SDK_BINARY
       write_qt_script
 
-      # online installer sometimes fails, keep trying...
-      retryCounter=0
-      while [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ] && [ $retryCounter -le 5 ] 
-      do
-         echo "Installing Qt, this will take a while."
-         echo " - Ignore warnings about QtAccount credentials and/or XDG_RUNTIME_DIR."
-         echo " - Do not click on any Qt setup dialogs, it is controlled by a script."
-         /tmp/$QT_SDK_BINARY --script $QT_SCRIPT
-         ((retryCounter++))
-      done
+      echo "Installing Qt, this will take a while."
+      echo " - Ignore warnings about QtAccount credentials and/or XDG_RUNTIME_DIR."
+      echo " - Do not click on any Qt setup dialogs, it is controlled by a script."
+      /tmp/$QT_SDK_BINARY --script $QT_SCRIPT || true
       rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
    else
       QT_SDK_BINARY=$QT_SDK_CUSTOM
