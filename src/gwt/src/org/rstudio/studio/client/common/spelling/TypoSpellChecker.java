@@ -201,11 +201,17 @@ public class TypoSpellChecker
    private void loadDictionary()
    {
       String dictLanguage = uiPrefs_.spellingDictionaryLanguage().getValue();
+
+      // don't load the same dictionary again
+      if (typoLoaded_ && loadedDict_ == dictLanguage)
+         return;
+
       String path = GWT.getHostPageBaseURL() + "dictionaries/" + dictLanguage + "/" + dictLanguage;
 
       RequestLogEntry affLogEntry = RequestLog.log(dictLanguage + "_aff_request", "");
       RequestLogEntry dicLogEntry = RequestLog.log(dictLanguage + "_dic_request", "");
 
+      typoLoaded_ = false;
       try
       {
          new RequestBuilder(RequestBuilder.GET, path + ".aff").sendRequest("", new RequestCallback() {
@@ -216,8 +222,11 @@ public class TypoSpellChecker
                   new RequestBuilder(RequestBuilder.GET, path + ".dic").sendRequest("", new RequestCallback() {
                      @Override
                      public void onResponseReceived(Request dicReq, Response dicResp) {
-                        ExternalJavaScriptLoader.Callback loadTypoCallback = () ->
+                        ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
                            typoNative_ = new TypoNative(dictLanguage, affResp.getText(), dicResp.getText(), null);
+                           loadedDict_ = dictLanguage;
+                           typoLoaded_ = true;
+                        };
                         new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
                      }
 
@@ -244,9 +253,15 @@ public class TypoSpellChecker
          affLogEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
       }
    }
+
+   private static boolean isLoaded() { return typoLoaded_; }
+
    private final Context context_;
 
-   private TypoNative typoNative_;
+   private static String loadedDict_;
+   private static boolean typoLoaded_ = false;
+   private static TypoNative typoNative_;
+
    private WorkbenchList userDictionary_;
    private ArrayList<String> userDictionaryWords_;
    private ArrayList<String> contextDictionary_;

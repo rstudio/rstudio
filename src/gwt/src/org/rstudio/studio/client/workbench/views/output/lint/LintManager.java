@@ -167,9 +167,9 @@ public class LintManager
       });
    }
 
-   public void forceRelint()
+   public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+      timer_.schedule(delayMills == -1 ? uiPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
    }
 
    @Inject
@@ -187,7 +187,7 @@ public class LintManager
       // don't lint if this is an unsaved document
       if (target_.getPath() == null)
          return;
-      
+
       if (context.showMarkers)
       {
          target_.saveThenExecute(null, new Command()
@@ -314,9 +314,6 @@ public class LintManager
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
    {
-      if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
-         return;
-
       JsArray<LintItem> finalLint;
 
       // Filter out items at the last cursor position, if the cursor hasn't moved.

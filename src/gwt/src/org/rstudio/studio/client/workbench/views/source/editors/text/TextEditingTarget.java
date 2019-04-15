@@ -1667,6 +1667,7 @@ public class TextEditingTarget implements
       
       syncPublishPath(document.getPath());
       initStatusBar();
+      lintManager_.relintAfterDelay(5000);
    }
    
    private void updateBreakpointWarningBar()
