@@ -103,6 +103,7 @@ done < /tmp/oss-patch.csv
 if [[ -z "$PATCH" ]]; then
     log "Warning: no patch found for commit ${COMMITS[0]}; presuming $MAX_PATCH"
     PATCH=$MAX_PATCH
+    PATCH_INDEX=1
 fi
 
 # for pro, we need to determine the version suffix as well
