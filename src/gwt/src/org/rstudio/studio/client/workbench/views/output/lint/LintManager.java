@@ -170,7 +170,7 @@ public class LintManager
 
    public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(delayMills == -1 ? uiPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? uiPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
    }
 
    @Inject
@@ -315,6 +315,9 @@ public class LintManager
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
    {
+      if (docDisplay_.isPopupVisible())
+         return;
+
       JsArray<LintItem> finalLint;
 
       // Filter out items at the last cursor position, if the cursor hasn't moved.
@@ -379,7 +382,9 @@ public class LintManager
       });
       $wnd.setTimeout(callback, 100);
    }-*/;
-   
+
+   public final static int DEFAULT_LINT_DELAY = -1;
+
    private final Timer timer_;
    private final TextEditingTarget target_;
    private final DocDisplay docDisplay_;

@@ -143,7 +143,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public void invalidateAllWords()
    {
-      lintManager_.relintAfterDelay(-1);
+      lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
    }
 
    @Override
