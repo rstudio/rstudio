@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ const std::string kEnvCommand = "/usr/bin/env";
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
-      TerminalShell::TerminalShellType* pSelectedShellType)
+      TerminalShell::ShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
@@ -69,7 +69,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
 
-   // ammend shell paths as appropriate
+   // amend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 
    // set options
@@ -642,18 +642,10 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
-   AutoCloseMode autoClose = procInfo_->getAutoClose();
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
-      if (session::userSettings().terminalAutoclose())
-      {
-         autoClose = AlwaysAutoClose;
-      }
-      else
-      {
-         autoClose = NeverAutoClose;
-      }
-      procInfo_->setAutoClose(autoClose);
+      procInfo_->setAutoClose(
+            session::userSettings().terminalAutoclose() ? AlwaysAutoClose :  NeverAutoClose);
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)
@@ -860,10 +852,10 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 
          // Windows Command Prompt and PowerShell don't support reloading
          // buffers, so delete the buffer before we start the new process.
-         if (cp->getShellType() == TerminalShell::Cmd32 ||
-             cp->getShellType() == TerminalShell::Cmd64 ||
-             cp->getShellType() == TerminalShell::PS32 ||
-             cp->getShellType() == TerminalShell::PS64)
+         if (cp->getShellType() == TerminalShell::ShellType::Cmd32 ||
+             cp->getShellType() == TerminalShell::ShellType::Cmd64 ||
+             cp->getShellType() == TerminalShell::ShellType::PS32 ||
+             cp->getShellType() == TerminalShell::ShellType::PS64)
          {
             cp->deleteLogFile();
          }
@@ -897,7 +889,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
 {
-   TerminalShell::TerminalShellType actualShellType;
+   TerminalShell::ShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             *proc->procInfo_,
             &actualShellType);

@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfoTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ const std::string bogusHandle1("unit-test03");
 const int sequence = 1;
 const bool allowRestart = true;
 const InteractionMode mode = InteractionAlways;
-const TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+const TerminalShell::ShellType shellType = TerminalShell::ShellType::Default;
 const ChannelMode channelMode = Rpc;
 const std::string channelId("some channel Id");
 const bool altActive = false;
@@ -62,15 +62,15 @@ const int maxLines = kDefaultTerminalMaxOutputLines;
 
 bool testHandle(const std::string& handle)
 {
-   return !handle.compare(handle1);
+   return handle == handle1;
 }
 
 // helper returns true if ConsoleProcessInfo objs have same field values
 bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
 {
-   return (!first.getCaption().compare(second.getCaption()) &&
-           !first.getTitle().compare(second.getTitle()) &&
-           !first.getHandle().compare(second.getHandle()) &&
+   return (first.getCaption() == second.getCaption() &&
+           first.getTitle() == second.getTitle() &&
+           first.getHandle() == second.getHandle() &&
            first.getTerminalSequence() == second.getTerminalSequence() &&
            first.getAllowRestart() == second.getAllowRestart() &&
            first.getInteractionMode() == second.getInteractionMode() &&
@@ -80,7 +80,7 @@ bool sameCpi(const ConsoleProcessInfo& first, const ConsoleProcessInfo& second)
            first.getHasChildProcs() == second.getHasChildProcs() &&
            first.getShellType() == second.getShellType() &&
            first.getChannelMode() == second.getChannelMode() &&
-           !first.getChannelId().compare(second.getChannelId()) &&
+           first.getChannelId() == second.getChannelId() &&
            first.getAltBufferActive() == second.getAltBufferActive() &&
            first.getCwd() == second.getCwd() &&
            first.getCols() == second.getCols() &&
@@ -105,7 +105,7 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK_FALSE(title.compare(cpi.getTitle()));
       CHECK_FALSE(handle1.compare(cpi.getHandle()));
       CHECK((cpi.getTerminalSequence() == sequence));
-      CHECK((cpi.getAllowRestart() == true));
+      CHECK(cpi.getAllowRestart());
       CHECK((cpi.getInteractionMode() == InteractionAlways));
       CHECK((cpi.getMaxOutputLines() == maxLines));
 
@@ -187,7 +187,7 @@ TEST_CASE("ConsoleProcessInfo")
       std::string altChannelModeId = "Some other id";
       cpi.setChannelMode(altChannelMode, altChannelModeId);
       CHECK((altChannelMode == cpi.getChannelMode()));
-      CHECK(!altChannelModeId.compare(cpi.getChannelId()));
+      CHECK(altChannelModeId == cpi.getChannelId());
 
       cpi.setCwd(altCwd);
       CHECK((altCwd == cpi.getCwd()));

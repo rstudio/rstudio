@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& title,
          const std::string& handle,
          const int terminalSequence,
-         TerminalShell::TerminalShellType shellType,
+         TerminalShell::ShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
          int cols, int rows, bool zombie, bool trackEnv)
@@ -297,8 +297,7 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(const core::j
    error = json::getOptionalParam(obj, "shell_type", 0, &shellTypeInt);
    if (error)
       LOG_ERROR(error);
-   pProc->shellType_ =
-      static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
+   pProc->shellType_ = static_cast<TerminalShell::ShellType>(shellTypeInt);
 
    int channelModeInt = 0;
    error = json::getOptionalParam(obj, "channel_mode", 0, &channelModeInt);

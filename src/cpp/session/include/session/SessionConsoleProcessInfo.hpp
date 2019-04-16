@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,6 @@ enum ChannelMode
 {
    Rpc = 0,
    Websocket = 1,
-   NamedPipe = 2,
 };
 
 enum AutoCloseMode
@@ -85,7 +84,7 @@ public:
          const std::string& title,
          const std::string& handle,
          int terminalSequence,
-         TerminalShell::TerminalShellType shellType,
+         TerminalShell::ShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
          int cols, int rows, bool zombie, bool trackEnv);
@@ -96,7 +95,7 @@ public:
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
-   virtual ~ConsoleProcessInfo() {}
+   virtual ~ConsoleProcessInfo() = default;
 
    // Caption is shown on terminal tabs, e.g. Terminal 1
    void setCaption(std::string& caption) { caption_ = caption; }
@@ -151,8 +150,8 @@ public:
    bool getHasChildProcs() const { return childProcs_; }
 
    // What type of shell is this child process running in?
-   TerminalShell::TerminalShellType getShellType() const { return shellType_; }
-   void setShellType(TerminalShell::TerminalShellType type) { shellType_ = type; }
+   TerminalShell::ShellType getShellType() const { return shellType_; }
+   void setShellType(TerminalShell::ShellType type) { shellType_ = type; }
 
    // Type of channel for communicating input/output with client
    ChannelMode getChannelMode() const { return channelMode_; }
@@ -217,7 +216,7 @@ private:
    boost::optional<int> exitCode_;
    bool childProcs_ = true;
    bool altBufferActive_ = false;
-   TerminalShell::TerminalShellType shellType_ = TerminalShell::DefaultShell;
+   TerminalShell::ShellType shellType_ = TerminalShell::ShellType::Default;
    ChannelMode channelMode_ = Rpc;
    std::string channelId_;
    core::FilePath cwd_;

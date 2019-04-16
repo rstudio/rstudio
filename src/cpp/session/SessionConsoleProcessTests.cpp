@@ -35,7 +35,7 @@ test_context("queue and fetch input")
    boost::shared_ptr<ConsoleProcessInfo> pCPI =
          boost::shared_ptr<ConsoleProcessInfo>(new ConsoleProcessInfo(
             "test caption", "test title", "fakehandle", 9999 /*terminal*/,
-            TerminalShell::DefaultShell, false /*altBuffer*/, cwd,
+            TerminalShell::ShellType::Default, false /*altBuffer*/, cwd,
             core::system::kDefaultCols, core::system::kDefaultRows,
             false /*zombie*/, false /*trackEnv*/));
 
@@ -65,10 +65,10 @@ test_context("queue and fetch input")
    {
       const std::string orig = "abcdefghijklmnopqrstuvwxyz";
 
-      for (size_t i = 0; i < orig.length(); i++)
+      for (char ch : orig)
       {
          std::string oneChar;
-         oneChar.push_back(orig[i]);
+         oneChar.push_back(ch);
          pCP->enqueInput(ConsoleProcess::Input(oneChar));
       }
 
@@ -82,7 +82,7 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!orig.compare(result));
+      expect_true(orig == result);
    }
 
    test_that("in-order sequenced input is FIFO")
@@ -107,29 +107,29 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!orig.compare(result));
+      expect_true(orig == result);
    }
 
    test_that("mixed-up input is returned in correct order")
    {
       const std::string expected = "HELLO WORLD!";
       std::vector<ConsoleProcess::Input> input;
-      input.push_back(ConsoleProcess::Input(1,  std::string("E")));
-      input.push_back(ConsoleProcess::Input(0,  std::string("H")));
-      input.push_back(ConsoleProcess::Input(2,  std::string("L")));
-      input.push_back(ConsoleProcess::Input(3,  std::string("L")));
-      input.push_back(ConsoleProcess::Input(4,  std::string("O")));
-      input.push_back(ConsoleProcess::Input(5,  std::string(" ")));
-      input.push_back(ConsoleProcess::Input(7,  std::string("O")));
-      input.push_back(ConsoleProcess::Input(6,  std::string("W")));
-      input.push_back(ConsoleProcess::Input(8,  std::string("R")));
-      input.push_back(ConsoleProcess::Input(9,  std::string("L")));
-      input.push_back(ConsoleProcess::Input(10, std::string("D")));
-      input.push_back(ConsoleProcess::Input(11, std::string("!")));
+      input.emplace_back(1,  std::string("E"));
+      input.emplace_back(0,  std::string("H"));
+      input.emplace_back(2,  std::string("L"));
+      input.emplace_back(3,  std::string("L"));
+      input.emplace_back(4,  std::string("O"));
+      input.emplace_back(5,  std::string(" "));
+      input.emplace_back(7,  std::string("O"));
+      input.emplace_back(6,  std::string("W"));
+      input.emplace_back(8,  std::string("R"));
+      input.emplace_back(9,  std::string("L"));
+      input.emplace_back(10, std::string("D"));
+      input.emplace_back(11, std::string("!"));
 
-      for (size_t i = 0; i < input.size(); i++)
+      for (const auto &cpi : input)
       {
-         pCP->enqueInput(input[i]);
+         pCP->enqueInput(cpi);
       }
 
       std::string result;
@@ -143,7 +143,7 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!expected.compare(result));
+      expect_true(expected == result);
    }
 
    test_that("Autoflush kicks in when too much input with unresolved gap")
@@ -157,13 +157,13 @@ test_context("queue and fetch input")
       {
          std::string item = boost::lexical_cast<std::string>(i);
          expected += item;
-         input.push_back(ConsoleProcess::Input(gsl::narrow_cast<int>(i), item));
+         input.emplace_back(gsl::narrow_cast<int>(i), item);
          lastAdded = gsl::narrow_cast<int>(i);
       }
 
-      for (size_t i = 0; i < input.size(); i++)
+      for (const auto &cpi : input)
       {
-         pCP->enqueInput(input[i]);
+         pCP->enqueInput(cpi);
       }
 
       std::string result;
@@ -176,7 +176,7 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!expected.compare(result));
+      expect_true(expected == result);
 
       // make sure we can resume adding and removing
       pCP->enqueInput(ConsoleProcess::Input(lastAdded + 1, "HELLO"));
@@ -191,7 +191,7 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!result.compare("HELLO WORLD"));
+      expect_true(result == "HELLO WORLD");
    }
 
    test_that("Explicit flush returns input with gaps and resets sequence count")
@@ -206,31 +206,30 @@ test_context("queue and fetch input")
          {
             std::string item = boost::lexical_cast<std::string>(i);
             expected += item;
-            input.push_back(ConsoleProcess::Input(i, item));
+            input.emplace_back(i, item);
          }
       }
       std::string flushText = "FLUSH"; // value not significant
-      input.push_back(ConsoleProcess::Input(kFlushSequence, flushText));
+      input.emplace_back(kFlushSequence, flushText);
       expected += flushText;
       std::string postFlushText = "post-flush"; // value not significant
-      input.push_back(ConsoleProcess::Input(0, postFlushText));
+      input.emplace_back(0, postFlushText);
       expected += postFlushText;
 
-      for (size_t i = 0; i < input.size(); i++)
+      for (const auto &cpi : input)
       {
-         pCP->enqueInput(input[i]);
+         pCP->enqueInput(cpi);
       }
 
       std::string result;
       ConsoleProcess::Input next = pCP->dequeInput();
       expect_false(next.empty());
-      int itemCount = 1;
       while (!next.empty())
       {
          expect_false(next.interrupt);
          result += next.text;
 
-         if (!next.text.compare(postFlushText))
+         if (next.text == postFlushText)
             expect_true(next.sequence == 0);
          else
             expect_true(next.sequence == kIgnoreSequence);
@@ -238,7 +237,7 @@ test_context("queue and fetch input")
          next = pCP->dequeInput();
       }
 
-      expect_true(!expected.compare(result));
+      expect_true(expected == result);
    }
 }
 
