@@ -132,6 +132,7 @@ std::string TerminalShell::getShellName(ShellType type)
    case ShellType::NoShell:
       return "User command";
    }
+   return "Unknown";
 }
 
 // keep in sync with values supported by terminalCreate "shellType" argument in 
