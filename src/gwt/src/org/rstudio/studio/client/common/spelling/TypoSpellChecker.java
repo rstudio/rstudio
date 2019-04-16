@@ -254,7 +254,7 @@ public class TypoSpellChecker
       }
    }
 
-   private static boolean isLoaded() { return typoLoaded_; }
+   public static boolean isLoaded() { return typoLoaded_; }
 
    private final Context context_;
 

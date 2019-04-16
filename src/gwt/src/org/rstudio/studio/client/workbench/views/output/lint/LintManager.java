@@ -20,6 +20,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -328,7 +329,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (uiPrefs_.realTimeSpellChecking().getValue())
+      if (uiPrefs_.realTimeSpellChecking().getValue() && TypoSpellChecker.isLoaded())
       {
          JsArray<LintItem> spellingLint = target_.getSpellingTarget().getLint();
          for (int i = 0; i < spellingLint.length(); i++)
