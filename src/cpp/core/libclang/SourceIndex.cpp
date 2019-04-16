@@ -15,6 +15,8 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
+#include <gsl/gsl>
+
 #include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
 
@@ -245,7 +247,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          index_,
                          filename.c_str(),
                          argsArray.args(),
-                         static_cast<int>(argsArray.argCount()),
+                         gsl::narrow_cast<int>(argsArray.argCount()),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
                          options);

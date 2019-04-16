@@ -1,7 +1,7 @@
 /*
  * Win32PtyTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@
 #ifdef _WIN32
 
 #include "Win32Pty.hpp"
+
+#include <gsl/gsl>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -234,7 +236,7 @@ TEST_CASE("Win32PtyTests")
       std::string line1 = "echo This was once a place where words and letters and 32 numbers lived!";
 
       // console will word-wrap unless we set a large size
-      err = pty.setSize(line1.length() * 4, kRows);
+      err = pty.setSize(gsl::narrow_cast<int>(line1.length()) * 4, kRows);
       CHECK(!err);
 
       for (size_t i = 0; i < line1.length(); i++)

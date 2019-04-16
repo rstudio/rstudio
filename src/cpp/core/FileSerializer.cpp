@@ -1,7 +1,7 @@
 /*
  * FileSerializer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -193,7 +194,7 @@ Error readStringFromFile(const FilePath& filePath,
                // compute the portion of the line to be read; if this is the
                // start or end of the region to be read, use the character
                // offsets supplied
-               int lineLength = static_cast<int>(line.length());
+               int lineLength = gsl::narrow_cast<int>(line.length());
                content += line.substr(
                         currentLine == startLine ?
                            std::min(

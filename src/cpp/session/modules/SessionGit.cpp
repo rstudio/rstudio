@@ -14,6 +14,8 @@
  */
 #include "SessionGit.hpp"
 
+#include <gsl/gsl>
+
 #include <signal.h>
 #include <sys/stat.h>
 
@@ -1177,7 +1179,7 @@ public:
          if (error)
             return error;
 
-         *pLength = static_cast<int>(std::count(output.begin(), output.end(), '\n'));
+         *pLength = gsl::narrow_cast<int>(std::count(output.begin(), output.end(), '\n'));
          return Success();
       }
       else
@@ -1186,7 +1188,7 @@ public:
          Error error = log(rev, fileFilter, 0, -1, searchText, &output);
          if (error)
             return error;
-         *pLength = output.size();
+         *pLength = gsl::narrow_cast<int>(output.size());
          return Success();
       }
    }
@@ -1276,7 +1278,7 @@ public:
             parents.erase(parents.begin());
 
             gitgraph::Line line = graph.addCommit(commit, parents);
-            if (revListSkip <= 0 || static_cast<int>(i) >= revListSkip)
+            if (revListSkip <= 0 || gsl::narrow_cast<int>(i) >= revListSkip)
                graphLines.push_back(line.string());
          }
       }
@@ -1449,7 +1451,7 @@ public:
             return error;
 
          // commits == number of lines (since we used --oneline mode)
-         int commitsBehind = safe_convert::numberTo<int>(
+         int commitsBehind = safe_convert::numberTo<size_t, int>(
                         std::count(output.begin(), output.end(), '\n'), 0);
 
          *pRemoteBranchInfo = RemoteBranchInfo(name, commitsBehind);
@@ -2792,7 +2794,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
 
    // check the path of the shortcut
    std::vector<wchar_t> pathbuff(1024);
-   hr = pShellLink->GetPath(&(pathbuff[0]), pathbuff.capacity() - 1, nullptr, 0L);
+   hr = pShellLink->GetPath(&(pathbuff[0]), gsl::narrow_cast<int>(pathbuff.capacity() - 1), nullptr, 0L);
    if (FAILED(hr))
       return hr;
 
@@ -2842,7 +2844,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
    else if (boost::algorithm::contains(pathbuff, L"cmd.exe"))
    {
       std::vector<wchar_t> argbuff(1024);
-      hr = pShellLink->GetArguments(&(argbuff[0]), argbuff.capacity() - 1);
+      hr = pShellLink->GetArguments(&(argbuff[0]), gsl::narrow_cast<int>(argbuff.capacity() - 1));
       if (FAILED(hr))
          return hr;
 

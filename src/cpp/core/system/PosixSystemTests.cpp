@@ -179,7 +179,6 @@ test_context("PosixSystemTests")
          ::kill(pid, SIGKILL);
          ::waitpid(pid, nullptr, 0);
       }
-
    }
 
 #else

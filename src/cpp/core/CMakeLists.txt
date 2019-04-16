@@ -32,6 +32,7 @@ set (CORE_SOURCE_FILES
    Base64.cpp
    BoostErrors.cpp
    BrowserUtils.cpp
+   collection/MruList.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
@@ -327,6 +328,7 @@ endif()
 # include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
+   ${EXT_SOURCE_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
 )

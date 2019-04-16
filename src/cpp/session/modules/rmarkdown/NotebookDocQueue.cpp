@@ -14,6 +14,9 @@
  */
 
 #include "NotebookDocQueue.hpp"
+
+#include <gsl/gsl>
+
 #include "NotebookChunkDefs.hpp"
 
 #include <session/SessionModuleContext.hpp>
@@ -170,7 +173,7 @@ Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit,
          it = std::find_if(queue_.begin(), queue_.end(), 
                boost::bind(chunkIdEquals, _1, before));
          queue_.insert(it, unit);
-         maxUnits_ = std::max(maxUnits_, static_cast<int>(queue_.size()));
+         maxUnits_ = std::max(maxUnits_, gsl::narrow_cast<int>(queue_.size()));
          break;
 
       case QueueUpdate:
@@ -224,7 +227,7 @@ json::Object NotebookDocQueue::defaultChunkOptions() const
 
 int NotebookDocQueue::remainingUnits() const 
 {
-   return static_cast<int>(queue_.size());
+   return gsl::narrow_cast<int>(queue_.size());
 }
 
 int NotebookDocQueue::maxUnits() const

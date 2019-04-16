@@ -15,6 +15,8 @@
 
 #include "NotebookQueueUnit.hpp"
 
+#include <gsl/gsl>
+
 #include <session/SessionModuleContext.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -256,12 +258,12 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && static_cast<int>(idx) < (stop - 1))
+   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
    {
-      stop = idx;
+      stop = gsl::narrow_cast<int>(idx);
 
       // adjust the range to account for the code we're about to send
-      range.start = idx + 1;
+      range.start = gsl::narrow_cast<int>(idx) + 1;
    }
    else
    {
@@ -328,7 +330,7 @@ void NotebookQueueUnit::replaceCode(const std::string& code)
 
    // replace the pending queue with one that executes exactly the code given
    pending_.clear();
-   pending_.push_back(ExecRange(0, code_.length()));
+   pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
 }
 
 } // namespace notebook

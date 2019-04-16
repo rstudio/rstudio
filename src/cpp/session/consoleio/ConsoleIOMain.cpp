@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <gsl/gsl>
 
 #include <stdio.h>
 #include <windows.h>
@@ -221,7 +222,7 @@ BOOL capture_console_output(HANDLE hConsoleOut, std::string* pOutput)
 BOOL write_to_handle(const std::string& output, HANDLE hOutput)
 {
    const CHAR* pData = output.c_str();
-   DWORD bytesToWrite = output.size();
+   DWORD bytesToWrite = gsl::narrow_cast<DWORD>(output.size());
    while (bytesToWrite > 0)
    {
       DWORD bytesWritten;
@@ -290,7 +291,7 @@ void transferStdInToConsole(HANDLE hConIn)
 
    while (true)
    {
-      if (!::ReadFile(hStdIn, &(buf[0]), buf.size(), &bytesRead, nullptr))
+      if (!::ReadFile(hStdIn, &(buf[0]), gsl::narrow_cast<DWORD>(buf.size()), &bytesRead, nullptr))
          break;
 
       send_console_input(hConIn, buf.begin(), buf.begin() + bytesRead);

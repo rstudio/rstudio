@@ -320,7 +320,7 @@ TEST_CASE("Json")
 
    SECTION("Ref/copy semantics")
    {
-      std::string json = "{\"a\":\"Hello\",\"b\":\"world\",\"c\":25,\"c2\":25.5,\"d\":[1,2,3],\"e\":{\"a\":\"Inner hello\"}}";
+      std::string json = R"({"a":"Hello","b":"world","c":25,"c2":25.5,"d":[1,2,3],"e":{"a":"Inner hello"}})";
 
       json::Value value;
       REQUIRE(json::parse(json, &value));
@@ -759,6 +759,147 @@ TEST_CASE("Json")
    {
       json::Value val = getValue();
       REQUIRE(val.get_int() == 5);
+   }
+
+   SECTION("Parse errors")
+   {
+      std::string invalid = R"({ key: value )";
+      json::Value val;
+      Error err = json::parse(invalid, ERROR_LOCATION, &val);
+      REQUIRE(err != Success());
+   }
+
+   SECTION("Schema default parse") {
+      std::string schema = R"(
+      {
+         "$id": "https://rstudio.com/rstudio.preferences.json",
+         "$schema": "http://json-schema.org/draft-07/schema#",
+         "title": "Defaults Test Example Schema",
+         "type": "object",
+         "properties": {
+             "first": {
+                 "type": "int",
+                 "default": 5,
+                 "description": "A number. How about 5?"
+             },
+             "second": {
+                 "type": "object",
+                 "description": "An object which contains defaults.",
+                 "properties": {
+                     "foo": {
+                        "type": "int",
+                        "default": 10,
+                        "description": "Another number. How about 10?"
+                     }
+                 }
+             }
+           }
+        })";
+
+      json::Object defaults;
+      Error err = json::getSchemaDefaults(schema, &defaults);
+      INFO(err.description());
+      REQUIRE(err == Success());
+      
+      REQUIRE(defaults["first"] == 5);
+      json::Object second = defaults["second"].get_obj();
+      REQUIRE(second["foo"] == 10);
+   }
+
+   SECTION("Object merge") {
+      json::Object base;
+      json::Object overlay;
+
+      // Property 1: has an overlay
+      base["p1"] = "base";
+      overlay["p1"] = "overlay";
+
+      // Property 2: no overlay
+      base["p2"] = "base";
+
+      // Property 3: an object with non-overlapping properties
+      json::Object p3base, p3overlay;
+      p3base["p3-a"] = "base";
+      p3overlay["p3-b"] = "overlay";
+      base["p3"] = p3base;
+      overlay["p3"] = p3overlay;
+      
+      // Regular properties should pick up values from the overlay (ensure they are copied, not
+      // moved)
+      auto result = json::merge(base, overlay);
+      REQUIRE(result["p1"] == "overlay");
+      REQUIRE(overlay["p1"] == "overlay");
+
+      // Properties with no overlay should pick up values from the base (ensure they are copied, not
+      // moved)
+      REQUIRE(result["p2"] == "base");
+      REQUIRE(base["p2"] == "base");
+
+      // Sub-objects with interleaved properties should inherit the union of properties
+      auto p3result = result["p3"].get_obj();
+      REQUIRE(p3result["p3-a"] == "base");
+      REQUIRE(p3result["p3-b"] == "overlay");
+   }
+
+   SECTION("Schema validation")
+   {
+      std::string schema = R"(
+      {
+         "$id": "https://rstudio.com/rstudio.preferences.json",
+         "$schema": "http://json-schema.org/draft-07/schema#",
+         "title": "Unit Test Example Schema",
+         "type": "object",
+         "properties": {
+             "first": {
+                 "type": "boolean",
+                 "default": false,
+                 "description": "The first example property"
+             },
+             "second": {
+                 "type": "string",
+                 "enum": ["a", "b", "c"],
+                 "default": "b",
+                 "description": "The second example property"
+             }
+           }
+        })";
+         
+      // do valid documents pass validation?
+      std::string valid = R"(
+         { "first": true, "second": "a" }
+      )";
+
+      json::Value val;
+      Error err = json::parseAndValidate(valid, schema, ERROR_LOCATION, &val);
+      REQUIRE(err == Success());
+      REQUIRE(val.get_obj()["first"].get_bool());
+
+      // do invalid documents fail?
+      std::string invalid = R"(
+         { "first": 1, "second": "d" }
+      )";
+      err = json::parseAndValidate(invalid, schema, ERROR_LOCATION, &val);
+      REQUIRE(err != Success());
+
+      // finally, test the defaults:
+      std::string partial = R"(
+         { "first": true }
+      )";
+      // ... parse according to the schema
+      err = json::parseAndValidate(partial, schema, ERROR_LOCATION, &val);
+      REQUIRE(err == Success());
+
+      // ... extract defaults from the schema (RapidJSON doesn't do defaults)
+      json::Value defaults;
+      err = json::getSchemaDefaults(schema, &defaults);
+      REQUIRE(err == Success());
+
+      // ... overlay the document on the defaults
+      json::Object result = json::merge(defaults.get_obj(), val.get_obj());
+
+      // ... see if we got what we expected.
+      REQUIRE(result["first"] == true);   // non-default value
+      REQUIRE(result["second"] == "b");   // default value
    }
 }
 

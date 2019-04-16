@@ -455,8 +455,10 @@ install(FILES "resources/NOTICE"
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
 # citation
-install(FILES "resources/CITATION"
-        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+configure_file("resources/CITATION.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/CITATION")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/CITATION"
+        DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
 # themes
 file(GLOB THEME_RESOURCE_FILES "resources/themes/*.rstheme" "resources/themes/*.R")

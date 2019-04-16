@@ -1,3 +1,22 @@
+#
+# CMakeLists.txt
+#
+# Copyright (C) 2009-19 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+if(POLICY CMP0077)
+   cmake_policy(SET CMP0077 NEW)
+endif()
+
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
@@ -13,10 +32,8 @@ endif()
 if (RSTUDIO_PACKAGE_BUILD)
    INSTALL(CODE "
      # don't follow symlinks in GLOB_RECURSE
-     if(CMAKE_VERSION VERSION_GREATER \"3.0.0\")
-        cmake_policy(SET CMP0009 NEW)
-        cmake_policy(SET CMP0011 NEW)
-     endif()
+     cmake_policy(SET CMP0009 NEW)
+     cmake_policy(SET CMP0011 NEW)
 
      list (APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
 

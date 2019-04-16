@@ -1,7 +1,7 @@
 /*
  * RStdCallbacks.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 #define R_INTERNAL_FUNCTIONS
+
+#include <gsl/gsl>
 
 #include <boost/function.hpp>
 #include <boost/regex.hpp>
@@ -117,7 +119,8 @@ SA_TYPE saveAsk()
       while(true)
       {
          // read input
-         RReadConsole(prompt.c_str(), &(inputBuffer[0]), inputBuffer.size(), 0);
+         RReadConsole(prompt.c_str(), &(inputBuffer[0]),
+                      gsl::narrow_cast<int>(inputBuffer.size()), 0);
          std::string input(1, inputBuffer[0]);
          boost::algorithm::to_lower(input);
 
@@ -477,7 +480,7 @@ int RChooseFile (int newFile, char *buf, int len)
          buf[absolutePath.length()] = '\0';
          
          // return the length of the filepath buffer
-         return absolutePath.length();
+         return gsl::narrow_cast<int>(absolutePath.length());
       }
       else
       {

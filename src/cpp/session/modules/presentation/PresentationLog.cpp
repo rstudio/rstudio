@@ -97,13 +97,13 @@ void Log::onSlideDeckChanged(const SlideDeck& slideDeck)
       const std::vector<Command>& commands = slides[i].commands();
       for (const Command& command : commands)
       {
-         recordCommand(i, command);
+         recordCommand(gsl::narrow_cast<int>(i), command);
       }
 
       const std::vector<AtCommand>& atCommands = slides[i].atCommands();
       for (const AtCommand& atCommand : atCommands)
       {
-         recordCommand(i, atCommand.command());
+         recordCommand(gsl::narrow_cast<int>(i), atCommand.command());
       }
    }
 }
@@ -113,7 +113,7 @@ void Log::onSlideIndexChanged(int index)
    currentSlideIndex_ = index;
 
    append(NavigationEntry,
-          currentSlideIndex_,
+          gsl::narrow_cast<int>(currentSlideIndex_),
           currentSlideType(),
           currentSlideHelpTopic(),
           currentSlideHelpDoc(),
@@ -138,10 +138,10 @@ void Log::onConsolePrompt(const std::string& prompt)
 
       // check to see if this command was one of the ones instrumented
       // by the current slide
-      if (slideDeckInputCommands_[currentSlideIndex_].count(input) == 0)
+      if (slideDeckInputCommands_[gsl::narrow_cast<int>(currentSlideIndex_)].count(input) == 0)
       {
          append(InputEntry,
-                currentSlideIndex_,
+                gsl::narrow_cast<int>(currentSlideIndex_),
                 currentSlideType(),
                 currentSlideHelpTopic(),
                 currentSlideHelpDoc(),

@@ -17,6 +17,8 @@
 #define RSTUDIO_DEBUG_LABEL "rsexp"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
+#include <gsl/gsl>
+
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
 
@@ -1191,7 +1193,7 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
 
 SEXP create(const ListBuilder& builder, Protect *pProtect)
 {
-   int n = builder.names().size();
+   int n = gsl::narrow_cast<int>(builder.names().size());
 
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_allocVector(VECSXP, n));

@@ -138,7 +138,7 @@ public:
       for (std::size_t i=0; i<lines.size(); i++)
       {
          if (regex_utils::match(lines[i], match, re))
-            chunkLineNumbers.push_back(i+1);
+            chunkLineNumbers.push_back(gsl::narrow_cast<int>(i) + 1);
       }
 
       // determine chunk number and error message

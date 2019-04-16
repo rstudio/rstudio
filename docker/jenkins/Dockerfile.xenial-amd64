@@ -38,6 +38,7 @@ RUN apt-get update && \
     libpam-dev \
     libpango1.0-dev \
     libssl-dev \
+    libuser1-dev \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \
