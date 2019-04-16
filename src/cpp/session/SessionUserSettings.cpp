@@ -621,24 +621,24 @@ void UserSettings::setShowLastDotValue(bool show)
    settings_.set("showLastDotValue", show);
 }
 
-console_process::TerminalShell::TerminalShellType UserSettings::defaultTerminalShellValue() const
+console_process::TerminalShell::ShellType UserSettings::defaultTerminalShellValue() const
 {
-   using ShellType = console_process::TerminalShell::TerminalShellType;
+   using ShellType = console_process::TerminalShell::ShellType;
    ShellType type = static_cast<ShellType>(
             settings_.getInt(kDefaultTerminalShell,
-            static_cast<int>(console_process::TerminalShell::DefaultShell)));
+            static_cast<int>(console_process::TerminalShell::ShellType::Default)));
 
    // map obsolete 32-bit shell types to their 64-bit equivalents
-   if (type == console_process::TerminalShell::Cmd32)
-      type = console_process::TerminalShell::Cmd64;
-   else if (type == console_process::TerminalShell::PS32)
-      type = console_process::TerminalShell::PS64;
+   if (type == console_process::TerminalShell::ShellType::Cmd32)
+      type = console_process::TerminalShell::ShellType::Cmd64;
+   else if (type == console_process::TerminalShell::ShellType::PS32)
+      type = console_process::TerminalShell::ShellType::PS64;
 
-   return static_cast<console_process::TerminalShell::TerminalShellType>(type);
+   return static_cast<console_process::TerminalShell::ShellType>(type);
 }
 
 void UserSettings::setDefaultTerminalShellValue(
-      console_process::TerminalShell::TerminalShellType shell)
+      console_process::TerminalShell::ShellType shell)
 {
    settings_.set(kDefaultTerminalShell, static_cast<int>(shell));
 }
@@ -801,7 +801,7 @@ CRANMirror UserSettings::cranMirror() const
       mirror.url = "http://cran.rstudio.com/";
 
    // remap url without trailing slash
-   if (mirror.url.size() > 0 && !boost::algorithm::ends_with(mirror.url, "/"))
+   if (!mirror.url.empty() && !boost::algorithm::ends_with(mirror.url, "/"))
       mirror.url += "/";
 
    return mirror;

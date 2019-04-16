@@ -1,7 +1,7 @@
 /*
  * TerminalPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,10 +35,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -68,13 +65,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       spaced(terminalShell_);
       add(terminalShell_);
       terminalShell_.setEnabled(false);
-      terminalShell_.addChangeHandler(new ChangeHandler() {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            manageCustomShellControlVisibility();
-         }
-      });
+      terminalShell_.addChangeHandler(event -> manageCustomShellControlVisibility());
 
       String textboxWidth = "250px";
       customShellPathLabel_ = new Label("Custom shell binary (fully qualified path):");
@@ -146,13 +137,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          spaced(busyMode_);
          add(busyMode_);
          busyMode_.setEnabled(false);
-         busyMode_.addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(ChangeEvent event)
-            {
-               manageBusyModeControlVisibility();
-            }
-         });
+         busyMode_.addChangeHandler(event -> manageBusyModeControlVisibility());
          busyWhitelistLabel_ = new Label("Don't ask before killing:");
          add(busyWhitelistLabel_);
          busyWhitelist_ = new TextBox();
@@ -185,55 +170,49 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       final TerminalPrefs terminalPrefs = prefs.getTerminalPrefs();
 
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleDeferred(() -> server_.getTerminalShells(
+            new ServerRequestCallback<JsArray<TerminalShellInfo>>()
       {
          @Override
-         public void execute()
+         public void onResponseReceived(JsArray<TerminalShellInfo> shells)
          {
-            server_.getTerminalShells(new ServerRequestCallback<JsArray<TerminalShellInfo>>()
+            int currentShell = terminalPrefs.getDefaultTerminalShellValue();
+            int currentShellIndex = 0;
+
+            TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
+
+            boolean hasCustom = false;
+
+            for (int i = 0; i < shells.length(); i++)
             {
-               @Override
-               public void onResponseReceived(JsArray<TerminalShellInfo> shells)
-               {
-                  int currentShell = terminalPrefs.getDefaultTerminalShellValue();
-                  int currentShellIndex = 0;
+               TerminalShellInfo info = shells.get(i);
+               if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
+                  hasCustom = true;
+               TerminalPreferencesPane.this.terminalShell_.addChoice(
+                     info.getShellName(), Integer.toString(info.getShellType()));
+               if (info.getShellType() == currentShell)
+                  currentShellIndex = i;
+            }
+            if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
+            {
+               TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
+               TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
+            }
 
-                  TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
-
-                  boolean hasCustom = false;
-
-                  for (int i = 0; i < shells.length(); i++)
-                  {
-                     TerminalShellInfo info = shells.get(i);
-                     if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
-                        hasCustom = true;
-                     TerminalPreferencesPane.this.terminalShell_.addChoice(
-                           info.getShellName(), Integer.toString(info.getShellType()));
-                     if (info.getShellType() == currentShell)
-                        currentShellIndex = i;
-                  }
-                  if (TerminalPreferencesPane.this.terminalShell_.getListBox().getItemCount() > 0)
-                  {
-                     TerminalPreferencesPane.this.terminalShell_.setEnabled((true));
-                     TerminalPreferencesPane.this.terminalShell_.getListBox().setSelectedIndex(currentShellIndex);
-                  }
-
-                  if (hasCustom)
-                  {
-                     customShellPath_.setText(
-                           terminalPrefs.getCustomTerminalShellPath());
-                     customShellPath_.setEnabled(true);
-                     customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
-                     customShellOptions_.setEnabled(true);
-                  }
-                  manageCustomShellControlVisibility();
-               }
-
-               @Override
-               public void onError(ServerError error) { }
-            });
+            if (hasCustom)
+            {
+               customShellPath_.setText(
+                     terminalPrefs.getCustomTerminalShellPath());
+               customShellPath_.setEnabled(true);
+               customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
+               customShellOptions_.setEnabled(true);
+            }
+            manageCustomShellControlVisibility();
          }
-      });
+
+         @Override
+         public void onError(ServerError error) { }
+      }));
 
       if (busyMode_ != null)
       {
@@ -342,11 +321,11 @@ public class TerminalPreferencesPane extends PreferencesPane
       busyWhitelist_.setVisible(whitelistEnabled);
    }
   
-   private SelectWidget terminalShell_;
-   private Label customShellPathLabel_;
-   private TextBox customShellPath_;
-   private Label customShellOptionsLabel_;
-   private TextBox customShellOptions_;
+   private final SelectWidget terminalShell_;
+   private final Label customShellPathLabel_;
+   private final TextBox customShellPath_;
+   private final Label customShellOptionsLabel_;
+   private final TextBox customShellOptions_;
 
    private SelectWidget busyMode_;
    private Label busyWhitelistLabel_;

@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@ namespace console_process {
 namespace {
 
 void addShell(const core::FilePath& expectedPath,
-              TerminalShell::TerminalShellType type,
+              TerminalShell::ShellType type,
               const std::string& title,
               std::vector<std::string> args,
               std::vector<TerminalShell>* pShells,
@@ -57,7 +57,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       return;
    }
 
-   addShell(getGitBashShell(), TerminalShell::GitBash, "Git Bash", args, pShells);
+   addShell(getGitBashShell(), TerminalShell::ShellType::GitBash, "Git Bash", args, pShells);
 
    core::FilePath cmd64;
    core::FilePath ps64;
@@ -67,12 +67,12 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
    ps64 = core::FilePath(windir + sys32 + ps);
    bashWSL = core::FilePath(windir + sys32 + bash);
 
-   addShell(cmd64, TerminalShell::Cmd64, "Command Prompt", args, pShells);
-   addShell(ps64, TerminalShell::PS64, "Windows PowerShell", args, pShells);
+   addShell(cmd64, TerminalShell::ShellType::Cmd64, "Command Prompt", args, pShells);
+   addShell(ps64, TerminalShell::ShellType::PS64, "Windows PowerShell", args, pShells);
 
    // Is there a better way to detect WSL? This will match any 64-bit
    // bash.exe found in same location as the WSL bash.
-   addShell(bashWSL, TerminalShell::WSLBash,
+   addShell(bashWSL, TerminalShell::ShellType::WSLBash,
             "Bash (Windows Subsystem for Linux)", args, pShells);
 #endif
 
@@ -103,67 +103,66 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 core::json::Object TerminalShell::toJson() const
 {
    core::json::Object resultJson;
-   resultJson["type"] = type;
+   resultJson["type"] = static_cast<int>(type);
    resultJson["name"] = name;
    return resultJson;
 }
 
 // keep in sync with TerminalShellInfo::getShellName in client code
-std::string TerminalShell::getShellName(TerminalShellType type)
+std::string TerminalShell::getShellName(ShellType type)
 {
    switch (type)
    {
-   case DefaultShell:
+   case ShellType::Default:
       return "Default";
-   case GitBash:
+   case ShellType::GitBash:
       return "Git Bash";
-   case WSLBash:
+   case ShellType::WSLBash:
       return "WSL";
-   case Cmd32:
-   case Cmd64:
+   case ShellType::Cmd32:
+   case ShellType::Cmd64:
       return "Command Prompt";
-   case PS32:
-   case PS64:
+   case ShellType::PS32:
+   case ShellType::PS64:
       return "PowerShell";
-   case PosixBash:
+   case ShellType::PosixBash:
       return "Bash";
-   case CustomShell:
+   case ShellType::CustomShell:
       return "Custom";
-   case NoShell:
+   case ShellType::NoShell:
       return "User command";
-   default:
-      return "Unknown";
    }
+   return "Unknown";
 }
 
 // keep in sync with values supported by terminalCreate "shellType" argument in 
 // rstudioapi and rs_terminalCreate
-TerminalShell::TerminalShellType TerminalShell::shellTypeFromString(const std::string& str)
+TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& str)
 {
    std::string typeStr = core::string_utils::toLower(str);
    if (typeStr == "win-cmd")
    {
-      return TerminalShell::TerminalShellType::Cmd64;
+      return TerminalShell::ShellType::Cmd64;
    }
    else if (typeStr == "win-ps")
    {
-      return TerminalShell::TerminalShellType::PS64;
+      return TerminalShell::ShellType::PS64;
    }
    else if (typeStr == "win-git-bash")
    {
-      return TerminalShell::TerminalShellType::GitBash;
+      return TerminalShell::ShellType::GitBash;
    }
    else if (typeStr == "win-wsl-bash")
    {
-      return TerminalShell::TerminalShellType::WSLBash;
+      return TerminalShell::ShellType::WSLBash;
    }
    else if (typeStr == "custom")
    {
-      return TerminalShell::TerminalShellType::CustomShell;
+      return TerminalShell::ShellType::CustomShell;
    }
-   else // implicity includes "default"
+   else // implicitly includes "default"
    {
-      return TerminalShell::TerminalShellType::DefaultShell;
+      return TerminalShell::ShellType::Default;
    }
 }
 
@@ -180,13 +179,13 @@ void AvailableTerminalShells::toJson(core::json::Array* pArray) const
    }
 }
 
-bool AvailableTerminalShells::getInfo(TerminalShell::TerminalShellType type,
+bool AvailableTerminalShells::getInfo(TerminalShell::ShellType type,
                                       TerminalShell* pShellInfo) const
 {
-   if (type == TerminalShell::DefaultShell)
+   if (type == TerminalShell::ShellType::Default)
    {
       type = userSettings().defaultTerminalShellValue();
-      if (type == TerminalShell::DefaultShell)
+      if (type == TerminalShell::ShellType::Default)
       {
          // Preference never set; pick first one available
          if (!shells_.empty())
@@ -226,11 +225,11 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
    pShellInfo->path = core::system::expandComSpec();
-   pShellInfo->type = TerminalShell::Cmd64;
+   pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
 #else
    pShellInfo->name = "Bash";
-   pShellInfo->type = TerminalShell::PosixBash;
+   pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
    pShellInfo->args.emplace_back("-l"); // act like a login shell
@@ -241,7 +240,7 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
    pShellInfo->name = "Custom";
-   pShellInfo->type = TerminalShell::CustomShell;
+   pShellInfo->type = TerminalShell::ShellType::CustomShell;
    pShellInfo->path = userSettings().customShellCommand();
 
    // arguments are space separated, currently no way to represent a literal space
