@@ -940,7 +940,7 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
 
 // Given a JSON schema document, return an object representing the default values named in the
 // schema.
-Error getSchemaDefaults(const std::string& schema, Value* pValue);
+Error getSchemaDefaults(const std::string& schema, Object* pValue);
 
 // Given two JSON objects, return their union, with properties in "overlay" preferred when both
 // objects contain a property of the same name. Merges sub-objects.
