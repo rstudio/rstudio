@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -295,7 +295,6 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("knitr", "1.18"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
-      deps.add(Dependency.cranPackage("rprojroot", "1.0"));
       deps.add(Dependency.cranPackage("mime", "0.5"));
       deps.add(Dependency.cranPackage("rmarkdown", "1.10"));
       return deps;
