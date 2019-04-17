@@ -16,11 +16,16 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import java.util.List;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.Server;
@@ -67,14 +72,37 @@ public class TerminalPreferencesPane extends PreferencesPane
       terminalShell_.setEnabled(false);
       terminalShell_.addChangeHandler(event -> manageCustomShellControlVisibility());
 
+      // custom shell exe path chooser
+      Command onShellExePathChosen = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (BrowseCap.isWindowsDesktop())
+            {
+               String shellExePath = customShellChooser_.getText();
+               if (!shellExePath.endsWith(".exe"))
+               {
+                  String message = "The program '" + shellExePath + "'" +
+                     " is unlikely to be a valid shell executable.";
+                  
+                  globalDisplay.showMessage(
+                        GlobalDisplay.MSG_WARNING,
+                        "Invalid Shell Executable",
+                        message);
+               }
+            }
+         }
+      };
+
       String textboxWidth = "250px";
-      customShellPathLabel_ = new Label("Custom shell binary (fully qualified path):");
-      add(spacedBefore(customShellPathLabel_));
-      customShellPath_ = new TextBox();
-      customShellPath_.getElement().setAttribute("spellcheck", "false");
-      customShellPath_.setWidth(textboxWidth);
-      add(customShellPath_);
-      customShellPath_.setEnabled(false);
+      customShellChooser_ = new FileChooserTextBox("",
+                                                   "(Not Found)",
+                                                   null,
+                                                   onShellExePathChosen);
+      customShellPathLabel_ = new Label("Custom shell binary:");
+      addTextBoxChooser(textboxWidth, customShellPathLabel_, customShellChooser_);
+      customShellChooser_.setEnabled(false);
 
       customShellOptionsLabel_ = new Label("Custom shell command-line options:");
       add(spacedBefore(customShellOptionsLabel_));
@@ -201,9 +229,8 @@ public class TerminalPreferencesPane extends PreferencesPane
 
             if (hasCustom)
             {
-               customShellPath_.setText(
-                     terminalPrefs.getCustomTerminalShellPath());
-               customShellPath_.setEnabled(true);
+               customShellChooser_.setText(terminalPrefs.getCustomTerminalShellPath());
+               customShellChooser_.setEnabled(true);
                customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
                customShellOptions_.setEnabled(true);
             }
@@ -264,7 +291,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
       } 
       TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
-            customShellPath_.getText(),
+            customShellChooser_.getText(),
             customShellOptions_.getText());
       rPrefs.setTerminalPrefs(terminalPrefs);
 
@@ -302,7 +329,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    {
       boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
       customShellPathLabel_.setVisible(customEnabled);
-      customShellPath_.setVisible(customEnabled);
+      customShellChooser_.setVisible(customEnabled);
       customShellOptionsLabel_.setVisible(customEnabled);
       customShellOptions_.setVisible(customEnabled);
    }
@@ -320,10 +347,29 @@ public class TerminalPreferencesPane extends PreferencesPane
       busyWhitelistLabel_.setVisible(whitelistEnabled);
       busyWhitelist_.setVisible(whitelistEnabled);
    }
-  
+   
+   private void addTextBoxChooser(String textWidth, Label captionLabel, TextBoxWithButton chooser)
+   {
+      HorizontalPanel captionPanel = new HorizontalPanel();
+      captionPanel.setWidth(textWidth);
+      nudgeRight(captionPanel);
+
+      captionPanel.add(captionLabel);
+      captionPanel.setCellHorizontalAlignment(captionLabel,
+            HasHorizontalAlignment.ALIGN_LEFT);
+
+      add(tight(captionPanel));
+
+      chooser.setTextWidth(textWidth);
+      nudgeRight(chooser);
+      textBoxWithChooser(chooser);
+      spaced(chooser);
+      add(chooser);
+   }
+
    private final SelectWidget terminalShell_;
    private final Label customShellPathLabel_;
-   private final TextBox customShellPath_;
+   private final TextBoxWithButton customShellChooser_;
    private final Label customShellOptionsLabel_;
    private final TextBox customShellOptions_;
 

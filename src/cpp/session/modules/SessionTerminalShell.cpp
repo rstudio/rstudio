@@ -20,6 +20,7 @@
 #include <core/StringUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
 
 namespace rstudio {
@@ -86,7 +87,6 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       }
    }
 
-#ifndef _WIN32
    // Add user-selectable shell command option
    TerminalShell customShell;
    if (AvailableTerminalShells::getCustomShell(&customShell))
@@ -95,7 +95,6 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
                customShell.args, pShells,
                false /*checkPathExists*/);
    }
-#endif // !_WIN32
 }
 
 } // anonymous namespace
@@ -241,7 +240,7 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = userSettings().customShellCommand();
+   pShellInfo->path = module_context::resolveAliasedPath(userSettings().customShellCommand().absolutePath());
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
