@@ -284,19 +284,25 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public static List<Dependency> rmarkdownDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
-      deps.add(Dependency.cranPackage("evaluate", "0.8"));
-      deps.add(Dependency.cranPackage("digest", "0.6"));
-      deps.add(Dependency.cranPackage("highr", "0.3"));
-      deps.add(Dependency.cranPackage("markdown", "0.7"));
-      deps.add(Dependency.cranPackage("stringr", "1.2.0"));
-      deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
-      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
-      deps.add(Dependency.cranPackage("knitr", "1.18"));
-      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
+      deps.add(Dependency.cranPackage("digest", "0.6"));
+      deps.add(Dependency.cranPackage("evaluate", "0.13"));
+      deps.add(Dependency.cranPackage("glue", "1.3.0"));
+      deps.add(Dependency.cranPackage("highr", "0.3"));
+      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
+      deps.add(Dependency.cranPackage("knitr", "1.22"));
+      deps.add(Dependency.cranPackage("magrittr", "1.5"));
+      deps.add(Dependency.cranPackage("markdown", "0.7"));
       deps.add(Dependency.cranPackage("mime", "0.5"));
-      deps.add(Dependency.cranPackage("rmarkdown", "1.10"));
+      deps.add(Dependency.cranPackage("rmarkdown", "1.12"));
+      deps.add(Dependency.cranPackage("rprojroot", "1.0"));
+      deps.add(Dependency.cranPackage("stringi", "1.2.4"));
+      deps.add(Dependency.cranPackage("stringr", "1.2.0"));
+      deps.add(Dependency.cranPackage("tinytex", "0.11"));
+      deps.add(Dependency.cranPackage("xfun", "0.3"));
+      deps.add(Dependency.cranPackage("yaml", "2.1.19"));
       return deps;
    }
    
