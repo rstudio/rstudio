@@ -14,6 +14,9 @@
 - Fix "Reload App" button for Shiny applications in Firefox on RStudio Server (#4552)
 - Fix issue where themes without names would not use the file name as a name instead (#4553)
 - Fix NULL in code preview on first attempt to import data (#4563)
+- Add explicit dependency on required `libxkbcommon` package on Linux (#4610)
+- Remove unnecessary dependency on `rprojroot` package (#4628)
+
 
 ### Miscellaneous
 
