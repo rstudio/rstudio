@@ -5,6 +5,8 @@
 * Add automated crash handling and reporting
 * Upgrade internal JSON parsing engine for speed improvements (#1830)
 * Add "Safe Mode" for opening sessions without profile scripts or workspace restoration (#4338)
+* PowerShell Core option in terminal (Windows-only)
+* Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 
 ### Bugfixes
 

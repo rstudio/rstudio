@@ -45,8 +45,9 @@ struct TerminalShell
       PosixBash    = 7, // Posix: Bash
       CustomShell  = 8, // User-specified shell command
       NoShell      = 9, // Non-interactive job with no shell
+      PSCore      = 10, // PowerShell Core (v6)
 
-      Max          = NoShell
+      Max          = PSCore
    };
 
    TerminalShell() = default;

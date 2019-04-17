@@ -1,7 +1,7 @@
 /*
  * TerminalShellInfo.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,8 @@ public class TerminalShellInfo extends JavaScriptObject
 
    public static final int SHELL_PS32 = 5; // Powershell
    public static final int SHELL_PS64 = 6;
-   // -- End Windows-only	
+   public static final int SHELL_PSCORE = 10;
+   // -- End Windows-only
    
    public static final int SHELL_POSIX_BASH = 7;
    public static final int SHELL_CUSTOM = 8;
@@ -64,6 +65,8 @@ public class TerminalShellInfo extends JavaScriptObject
       case SHELL_PS32:
       case SHELL_PS64:
          return "PowerShell";
+      case SHELL_PSCORE:
+         return "PowerShell Core";
       case SHELL_POSIX_BASH:
          return "Bash";
       case SHELL_CUSTOM:

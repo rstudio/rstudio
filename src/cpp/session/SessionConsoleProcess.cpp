@@ -704,9 +704,8 @@ std::string ConsoleProcess::getChannelMode() const
       return "rpc";
    case Websocket:
       return "websocket";
-   default:
-      return "unknown";
    }
+   return "unknown";
 }
 
 void ConsoleProcess::setRpcMode()
@@ -855,7 +854,12 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
          if (cp->getShellType() == TerminalShell::ShellType::Cmd32 ||
              cp->getShellType() == TerminalShell::ShellType::Cmd64 ||
              cp->getShellType() == TerminalShell::ShellType::PS32 ||
-             cp->getShellType() == TerminalShell::ShellType::PS64)
+             cp->getShellType() == TerminalShell::ShellType::PS64 ||
+#ifdef _WIN32
+             // Ditto for custom shell on Windows.
+             cp->getShellType() == TerminalShell::ShellType::CustomShell ||
+#endif
+             cp->getShellType() == TerminalShell::ShellType::PSCore)
          {
             cp->deleteLogFile();
          }

@@ -20,6 +20,7 @@
 #include <core/StringUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
 
 namespace rstudio {
@@ -48,6 +49,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
    const std::string cmd("cmd.exe");
    const std::string ps("WindowsPowerShell\\v1.0\\powershell.exe");
    const std::string bash("bash.exe");
+   const std::string pscore("PowerShell\\6\\pwsh.exe");
 
    std::string windir;
    core::Error err = core::system::expandEnvironmentVariables("%windir%\\", &windir);
@@ -56,19 +58,24 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       LOG_ERROR(err);
       return;
    }
+   std::string progfiles;
+   err = core::system::expandEnvironmentVariables("%ProgramFiles%\\", &progfiles);
+   if (err)
+   {
+      LOG_ERROR(err);
+      return;
+   }
 
    addShell(getGitBashShell(), TerminalShell::ShellType::GitBash, "Git Bash", args, pShells);
 
-   core::FilePath cmd64;
-   core::FilePath ps64;
-   core::FilePath bashWSL; // Windows Subsystem for Linux
-
-   cmd64 = core::FilePath(windir + sys32 + cmd);
-   ps64 = core::FilePath(windir + sys32 + ps);
-   bashWSL = core::FilePath(windir + sys32 + bash);
+   core::FilePath cmd64 = core::FilePath(windir + sys32 + cmd);
+   core::FilePath ps64 = core::FilePath(windir + sys32 + ps);
+   core::FilePath bashWSL = core::FilePath(windir + sys32 + bash);
+   core::FilePath psCore = core::FilePath(progfiles + pscore);
 
    addShell(cmd64, TerminalShell::ShellType::Cmd64, "Command Prompt", args, pShells);
    addShell(ps64, TerminalShell::ShellType::PS64, "Windows PowerShell", args, pShells);
+   addShell(psCore, TerminalShell::ShellType::PSCore, "PowerShell Core", args, pShells);
 
    // Is there a better way to detect WSL? This will match any 64-bit
    // bash.exe found in same location as the WSL bash.
@@ -86,7 +93,6 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       }
    }
 
-#ifndef _WIN32
    // Add user-selectable shell command option
    TerminalShell customShell;
    if (AvailableTerminalShells::getCustomShell(&customShell))
@@ -95,7 +101,6 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
                customShell.args, pShells,
                false /*checkPathExists*/);
    }
-#endif // !_WIN32
 }
 
 } // anonymous namespace
@@ -125,6 +130,8 @@ std::string TerminalShell::getShellName(ShellType type)
    case ShellType::PS32:
    case ShellType::PS64:
       return "PowerShell";
+   case ShellType::PSCore:
+      return "PowerShell Core";
    case ShellType::PosixBash:
       return "Bash";
    case ShellType::CustomShell:
@@ -147,6 +154,10 @@ TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& s
    else if (typeStr == "win-ps")
    {
       return TerminalShell::ShellType::PS64;
+   }
+   else if (typeStr == "ps-core")
+   {
+      return TerminalShell::ShellType::PSCore;
    }
    else if (typeStr == "win-git-bash")
    {
@@ -241,7 +252,7 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = userSettings().customShellCommand();
+   pShellInfo->path = module_context::resolveAliasedPath(userSettings().customShellCommand().absolutePath());
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
