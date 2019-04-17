@@ -66,8 +66,11 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
+  # rpm dependencies
+  set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, ")
+
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, ")
   
 endif()
 
