@@ -74,7 +74,8 @@ public class RStudioDataGrid<T> extends DataGrid<T>
          Element el = children.getItem(i);
          com.google.gwt.dom.client.Style style = el.getStyle();
          String overflow = style.getOverflow();
-         if (!StringUtil.isNullOrEmpty(overflow))
+         String visibility = style.getVisibility();
+         if (StringUtil.equals(visibility, "hidden") && !StringUtil.isNullOrEmpty(overflow))
             style.setOverflowX(Overflow.HIDDEN);
       }
       
