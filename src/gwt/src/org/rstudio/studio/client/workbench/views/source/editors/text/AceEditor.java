@@ -417,23 +417,28 @@ public class AceEditor implements DocDisplay,
                for (HandlerRegistration handler : editorEventListeners_)
                   handler.removeHandler();
                editorEventListeners_.clear();
+               
                if (completionManager_ != null)
                {
                   completionManager_.detach();
                   completionManager_ = null;
                }
+               
+               if (s_lastFocusedEditor == AceEditor.this)
+               {
+                  s_lastFocusedEditor = null;
+               }
             }
          }
       });
       
-      widget_.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            String id = AceEditor.this.getWidget().getElement().getId();
-            MainWindowObject.lastFocusedEditorId().set(id);
-         }
+      widget_.addFocusHandler((FocusEvent event) -> {
+         String id = AceEditor.this.getWidget().getElement().getId();
+         MainWindowObject.lastFocusedEditorId().set(id);
+      });
+      
+      addFocusHandler((FocusEvent event) -> {
+         s_lastFocusedEditor = this;
       });
       
       events_.addHandler(
@@ -444,11 +449,15 @@ public class AceEditor implements DocDisplay,
                public void onEditorCommand(AceEditorCommandEvent event)
                {
                   // skip this if this is only for the actively focused Ace instance
-                  if (event.getExecutionPolicy() == AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED &&
-                      !AceEditor.this.isFocused())
-                  {
+                  // (note: in RStudio Server, the Ace Editor instance may become
+                  // unfocused when e.g. executing commands from the menu, so we
+                  // need to ensure this routes to the most recently focused editor)
+                  boolean ignore = 
+                        event.getExecutionPolicy() == AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED &&
+                        AceEditor.this != s_lastFocusedEditor;
+                  
+                  if (ignore)
                      return;
-                  }
                   
                   switch (event.getCommand())
                   {
@@ -4165,6 +4174,7 @@ public class AceEditor implements DocDisplay,
    private long lastModifiedTime_;
    private String yankedText_ = null;
    
+   private static AceEditor s_lastFocusedEditor = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
 }
