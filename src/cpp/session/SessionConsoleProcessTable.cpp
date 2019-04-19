@@ -182,14 +182,14 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 
    // When shutting down, only preserve ConsoleProcesses that are marked
    // with allow_restart. Others should not survive a shutdown/restart.
-   ProcTable::const_iterator nextIt = s_procs.begin();
+   ProcTable::const_iterator nextIt;
    for (ProcTable::const_iterator it = s_procs.begin();
         it != s_procs.end();
         it = nextIt)
    {
       nextIt = it;
       ++nextIt;
-      if (it->second->getAllowRestart() == false)
+      if (!it->second->getAllowRestart())
       {
          s_procs.erase(it->second->handle());
       }
@@ -280,7 +280,7 @@ Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
 
    cpi->setCaption(computedCaption);
 
-   TerminalShell::TerminalShellType actualShellType;
+   TerminalShell::ShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             *cpi, &actualShellType);
 
@@ -347,7 +347,7 @@ Error createTerminalExecuteConsoleProc(
                title,
                std::string() /*handle*/,
                termSequence,
-               TerminalShell::NoShell,
+               TerminalShell::ShellType::NoShell,
                false /*altBuffer*/,
                cwd,
                core::system::kDefaultCols, core::system::kDefaultRows,

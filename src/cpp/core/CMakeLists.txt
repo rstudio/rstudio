@@ -328,6 +328,7 @@ endif()
 # include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
+   ${EXT_SOURCE_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
 )

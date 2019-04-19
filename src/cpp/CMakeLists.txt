@@ -377,6 +377,9 @@ if(NOT RSTUDIO_ADDINS_PATH)
    endif()
 endif()
 
+# external libraries
+add_subdirectory(ext)
+
 # core library
 add_subdirectory(core)
 
@@ -384,9 +387,6 @@ add_subdirectory(core)
 if (RSTUDIO_SERVER)
    add_subdirectory(server_core)
 endif()
-
-# external libraries
-add_subdirectory(ext)
 
 # echo configuration modes
 if(RSTUDIO_DEVELOPMENT)

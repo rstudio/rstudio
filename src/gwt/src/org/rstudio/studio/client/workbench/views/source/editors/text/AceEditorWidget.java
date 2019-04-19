@@ -1016,6 +1016,8 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.info();
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
+         else if (item.getType() == "spelling")
+            clazz = lintStyles_.warning();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
          
@@ -1023,6 +1025,11 @@ public class AceEditorWidget extends Composite
                annotations.get(i),
                range,
                id));
+
+         if (item.getType() == "spelling")
+            editor_.getRenderer().removeGutterDecoration(
+               range.getStart().getColumn(),
+               "ace_warning");
       }
    }
    

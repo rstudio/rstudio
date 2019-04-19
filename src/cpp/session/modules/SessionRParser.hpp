@@ -29,6 +29,7 @@
 #include <set>
 #include <iostream>
 #include <iomanip>
+#include <gsl/gsl>
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>
@@ -242,10 +243,10 @@ struct LintItem
    LintItem(const RToken& item,
             LintType type,
             const std::string& message)
-      : startRow(item.row()),
-        startColumn(item.column()),
-        endRow(item.row()),
-        endColumn(item.column() + item.length()),
+      : startRow(gsl::narrow_cast<int>(item.row())),
+        startColumn(gsl::narrow_cast<int>(item.column())),
+        endRow(gsl::narrow_cast<int>(item.row())),
+        endColumn(gsl::narrow_cast<int>(item.column() + item.length())),
         type(type),
         message(message)
    {}
@@ -253,10 +254,10 @@ struct LintItem
    LintItem(const ParseItem& item,
             LintType type,
             const std::string& message)
-      : startRow(item.position.row),
-        startColumn(item.position.column),
-        endRow(item.position.row),
-        endColumn(item.position.column + item.symbol.length()),
+      : startRow(gsl::narrow_cast<int>(item.position.row)),
+        startColumn(gsl::narrow_cast<int>(item.position.column)),
+        endRow(gsl::narrow_cast<int>(item.position.row)),
+        endColumn(gsl::narrow_cast<int>(item.position.column + item.symbol.length())),
         type(type),
         message(message)
    {}
@@ -291,7 +292,12 @@ public:
             LintType type,
             const std::string& message)
    {
-      LintItem item(startRow, startColumn, endRow, endColumn, type, message);
+      LintItem item(gsl::narrow_cast<int>(startRow),
+                    gsl::narrow_cast<int>(startColumn),
+                    gsl::narrow_cast<int>(endRow),
+                    gsl::narrow_cast<int>(endColumn),
+                    type,
+                    message);
       add(item);
    }
    
@@ -360,10 +366,10 @@ public:
    void symbolDefinedAfterUsage(const ParseItem& item,
                                 const Position& position)
    {
-      LintItem lint(position.row,
-                    position.column,
-                    position.row,
-                    position.column + item.symbol.length(),
+      LintItem lint(gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
+                    gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column + item.symbol.length()),
                     LintTypeInfo,
                     "'" + item.symbol + "' is defined after it is used");
       
@@ -407,10 +413,10 @@ public:
 
    void tooManyErrors(const Position& position)
    {
-      LintItem lint(position.row,
-                    position.column,
-                    position.row,
-                    position.column,
+      LintItem lint(gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
+                    gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
                     LintTypeError,
                     "too many errors emitted; stopping now");
       lintItems_.push_back(lint);

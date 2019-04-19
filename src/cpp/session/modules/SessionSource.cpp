@@ -18,6 +18,7 @@
 
 #include <string>
 #include <map>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/utility.hpp>
@@ -146,7 +147,7 @@ int numSourceDocuments()
 {
    std::vector<boost::shared_ptr<SourceDocument> > docs;
    source_database::list(&docs);
-   return static_cast<int>(docs.size());
+   return gsl::narrow_cast<int>(docs.size());
 }
 
 // wrap source_database::put for situations where there are new contents
@@ -1048,7 +1049,7 @@ Error setDocOrder(const json::JsonRpcRequest& request,
          // docs are ordered starting at 1; the special value 0 indicates a
          // document with no order
          if (pDoc->id() == ids[i].get_str() && 
-             pDoc->relativeOrder() != static_cast<int>(i + 1))
+             pDoc->relativeOrder() != gsl::narrow_cast<int>(i + 1))
          {
             pDoc->setRelativeOrder(i + 1);
             source_database::put(pDoc);

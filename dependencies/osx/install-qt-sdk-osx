@@ -3,7 +3,7 @@
 #
 # install-qt-sdk-osx
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 # If no location provided, checks against a set of common locations and installs if not found.
 
 QT_VERSION=5.12.1
-QT_SDK_BINARY_BASE=qt-unified-mac-x64-3.0.6-online
+QT_SDK_BINARY_BASE=qt-opensource-mac-x64-${QT_VERSION}
 QT_SDK_BINARY=${QT_SDK_BINARY_BASE}.tar.gz
 QT_SDK_INSTALLER=${QT_SDK_BINARY_BASE}.app
 QT_SDK_INSTALLER_BIN=${QT_SDK_INSTALLER}/Contents/MacOS/${QT_SDK_BINARY_BASE}
@@ -115,16 +115,12 @@ then
    tar xzf /tmp/$QT_SDK_BINARY
    write_qt_script   
    
-   # online installer sometimes fails, keep trying...
-   retryCounter=0
-   while [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ] && [ $retryCounter -le 5 ] 
-   do
-      echo "Installing Qt, this will take a while."
-      echo " - Ignore warnings about QtAccount credentials."
-      echo " - Do not click on the setup interface, it is controlled by a script."
-      ./$QT_SDK_INSTALLER_BIN --script $QT_SCRIPT
-      ((retryCounter++))
-   done
+   echo "Installing Qt, this will take a while."
+   echo " - Ignore warnings about QtAccount credentials."
+   echo " - Do not click on the setup interface, it is controlled by a script."
+
+   ./$QT_SDK_INSTALLER_BIN --script $QT_SCRIPT
+
    rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
    rm -rf /tmp/$QT_SDK_INSTALLER
    if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]; then

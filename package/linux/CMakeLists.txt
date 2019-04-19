@@ -66,8 +66,11 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
+  # rpm dependencies
+  set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, ")
+
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, ")
   
 endif()
 
@@ -180,7 +183,7 @@ set(PACKAGE_LONG_DESCRIPTION "RStudio is a set of integrated tools designed to h
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}\n ${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.7)")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= 2.11.1)")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED})")
 
 # rpm-specific
 set(CPACK_RPM_PACKAGE_SUMMARY "${CPACK_PACKAGE_NAME}")

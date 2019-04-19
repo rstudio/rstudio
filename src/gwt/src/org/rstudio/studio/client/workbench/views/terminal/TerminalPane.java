@@ -322,6 +322,7 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void onFailure(String msg)
          {
+            globalDisplay_.showErrorMessage("Terminal Creation Failure", msg);
             Debug.log(msg);
             creatingTerminal_ = false;
          }
@@ -708,6 +709,12 @@ public class TerminalPane extends WorkbenchPane
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
             else
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
+         }
+
+         // always keep pane open for non-zero exit code so user can see what happened
+         if (exitCode != 0)
+         {
+            autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
          }
 
          if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_NEVER)

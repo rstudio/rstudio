@@ -493,7 +493,12 @@ public class UIPrefsAccessor extends Prefs
       return object("spelling_custom_dictionaries", 
                     JsArrayString.createArray().<JsArrayString>cast());
    }
-   
+
+   public PrefValue<Integer> documentLoadLintDelay()
+   {
+      return integer("document_load_lint_delay", 5000);
+   }
+
    public PrefValue<Boolean> ignoreWordsInUppercase()
    {
       return bool("ignore_uppercase_words", true);

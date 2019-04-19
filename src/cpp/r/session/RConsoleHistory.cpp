@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/SafeConvert.hpp>
+#include <gsl/gsl>
 
 using namespace rstudio::core;
 
@@ -54,8 +55,7 @@ void ConsoleHistory::setCapacityFromRHistsize()
    std::string histSize = core::system::getenv("R_HISTSIZE");
    if (!histSize.empty())
    {
-      setCapacity(
-         safe_convert::stringTo<std::size_t>(histSize, capacity()));
+      setCapacity(safe_convert::stringTo<int>(histSize, capacity()));
    }
 }
 

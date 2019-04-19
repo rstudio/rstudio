@@ -132,7 +132,7 @@ std::string getLastFunction(const std::string& fileContents)
    // discard all the comments in the file. we used to use boost::regex here
    // but it can barf on some user input
    std::string contents = fileContents;
-   auto position = 0;
+   size_t position = 0;
    while (true)
    {
       auto commentIndex = contents.find('#', position);

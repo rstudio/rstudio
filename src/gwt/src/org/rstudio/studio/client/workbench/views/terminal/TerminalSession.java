@@ -294,7 +294,9 @@ public class TerminalSession extends XTermWidget
          if (shellType == TerminalShellInfo.SHELL_CMD32 ||
                shellType == TerminalShellInfo.SHELL_CMD64 ||
                shellType == TerminalShellInfo.SHELL_PS32 ||
-               shellType == TerminalShellInfo.SHELL_PS64)
+               shellType == TerminalShellInfo.SHELL_PS64 ||
+               shellType == TerminalShellInfo.SHELL_PSCORE ||
+               (BrowseCap.isWindowsDesktop() && shellType == TerminalShellInfo.SHELL_CUSTOM))
          {
             inputText = StringUtil.normalizeNewLinesToCR(inputText);
          }
@@ -700,10 +702,19 @@ public class TerminalSession extends XTermWidget
       case TerminalShellInfo.SHELL_CMD64:
       case TerminalShellInfo.SHELL_PS32:
       case TerminalShellInfo.SHELL_PS64:
+      case TerminalShellInfo.SHELL_PSCORE:
          // Do load the buffer if terminal was just created via API, as
          // the initial message and prompt may have been sent before the
          // client/server channel was opened.
          return createdByApi_;
+
+      case TerminalShellInfo.SHELL_CUSTOM:
+         // on Windows we don't know if custom shell supports reload so
+         // assume it does not
+         if (BrowseCap.isWindowsDesktop())
+            return createdByApi_;
+         else
+            return true;
 
       default:
          return true;

@@ -13,6 +13,10 @@
  *
  */
 
+#include "SessionRAddins.hpp"
+
+#include <gsl/gsl>
+
 #include <core/Macros.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
@@ -209,7 +213,7 @@ public:
             fields["Description"],
             interactive,
             fields["Binding"],
-            addins_.size() + 1));
+            gsl::narrow_cast<int>(addins_.size() + 1)));
    }
 
    void add(const std::string& pkgName, const FilePath& addinPath)

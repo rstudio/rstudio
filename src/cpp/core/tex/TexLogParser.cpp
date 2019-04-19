@@ -15,6 +15,8 @@
 
 #include <core/tex/TexLogParser.hpp>
 
+#include <gsl/gsl>
+
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -382,8 +384,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
-                                                                               logLineNum)),
+                                         gsl::narrow_cast<int>(calculateWrappedLine(
+                                                                  linesUnwrapped,
+                                                                  logLineNum)),
                                          LogEntry::Box,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -429,8 +432,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
-                                                                               logLineNum)),
+                                         gsl::narrow_cast<int>(calculateWrappedLine(
+                                                                  linesUnwrapped,
+                                                                  logLineNum)),
                                          LogEntry::Error,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -469,8 +473,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          }
 
          pLogEntries->push_back(LogEntry(logFilePath,
-                                         static_cast<int>(calculateWrappedLine(linesUnwrapped,
-                                                                               logLineNum)),
+                                         gsl::narrow_cast<int>(calculateWrappedLine(
+                                                                  linesUnwrapped,
+                                                                  logLineNum)),
                                          LogEntry::Warning,
                                          fileStack.currentFile(),
                                          lineNum,
@@ -494,8 +499,9 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          {
             int lineNum = safe_convert::stringTo<int>(cStyleErrorMatch[2], -1);
             pLogEntries->push_back(LogEntry(logFilePath,
-                                            static_cast<int>(calculateWrappedLine(linesUnwrapped,
-                                                                                  logLineNum)),
+                                            gsl::narrow_cast<int>(calculateWrappedLine(
+                                                                     linesUnwrapped,
+                                                                     logLineNum)),
                                             LogEntry::Error,
                                             cstyleFile,
                                             lineNum,
@@ -528,7 +534,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
          pLogEntries->push_back(
                LogEntry(
                      logFilePath,
-                     static_cast<int>((it - lines.begin()) + 1),
+                     gsl::narrow_cast<int>((it - lines.begin()) + 1),
                      LogEntry::Error,
                      texFilePath(match[3], logFilePath.parent()),
                      boost::lexical_cast<int>(match[2]),

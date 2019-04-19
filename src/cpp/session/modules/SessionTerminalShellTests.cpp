@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShellTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,8 +45,8 @@ test_context("session terminal shell tests")
       AvailableTerminalShells shells;
       expect_true(shells.count() > 0);
       TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::Cmd64, &shell));
-      expect_true(shell.type == TerminalShell::Cmd64);
+      expect_true(shells.getInfo(TerminalShell::ShellType::Cmd64, &shell));
+      expect_true(shell.type == TerminalShell::ShellType::Cmd64);
       expect_true(shell.path.exists());
    }
 
@@ -55,8 +55,8 @@ test_context("session terminal shell tests")
       AvailableTerminalShells shells;
       expect_true(shells.count() > 0);
       TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::PS64, &shell));
-      expect_true(shell.type == TerminalShell::PS64);
+      expect_true(shells.getInfo(TerminalShell::ShellType::PS64, &shell));
+      expect_true(shell.type == TerminalShell::ShellType::PS64);
       expect_true(shell.path.exists());
    }
 
@@ -65,9 +65,9 @@ test_context("session terminal shell tests")
          AvailableTerminalShells shells;
          expect_true(shells.count() > 0);
          TerminalShell shell;
-         if (shells.getInfo(TerminalShell::WSLBash, &shell))
+         if (shells.getInfo(TerminalShell::ShellType::WSLBash, &shell))
          {
-            expect_true(shell.type == TerminalShell::WSLBash);
+            expect_true(shell.type == TerminalShell::ShellType::WSLBash);
             expect_true(shell.path.exists());
          }
    }
@@ -76,9 +76,9 @@ test_context("session terminal shell tests")
    {
       AvailableTerminalShells shells;
       TerminalShell shell;
-      if (shells.getInfo(TerminalShell::GitBash, &shell))
+      if (shells.getInfo(TerminalShell::ShellType::GitBash, &shell))
       {
-         expect_true(shell.type == TerminalShell::GitBash);
+         expect_true(shell.type == TerminalShell::ShellType::GitBash);
          expect_true(shell.path.exists());
       }
    }
@@ -90,8 +90,8 @@ test_context("session terminal shell tests")
    {
       AvailableTerminalShells shells;
       TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::WSLBash, &shell));
-      expect_true(shell.type == TerminalShell::WSLBash);
+      expect_true(shells.getInfo(TerminalShell::ShellType::WSLBash, &shell));
+      expect_true(shell.type == TerminalShell::ShellType::WSLBash);
       expect_true(shell.path.exists());
    }
 
@@ -99,7 +99,7 @@ test_context("session terminal shell tests")
    {
       AvailableTerminalShells shells;
       TerminalShell shell;
-      expect_false(shells.getInfo(TerminalShell::PosixBash, &shell));
+      expect_false(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
     }
 
 #endif
@@ -110,10 +110,10 @@ test_context("session terminal shell tests")
    {
       AvailableTerminalShells shells;
       TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::PosixBash, &shell));
-      expect_true(shell.type == TerminalShell::PosixBash);
+      expect_true(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
+      expect_true(shell.type == TerminalShell::ShellType::PosixBash);
       expect_true(shell.path.exists());
-      expect_true(shell.args.size() > 0);
+      expect_false(shell.args.empty());
    }
 
 #endif

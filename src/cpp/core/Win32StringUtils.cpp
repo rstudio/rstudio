@@ -15,6 +15,8 @@
 
 #include <core/StringUtils.hpp>
 
+#include <gsl/gsl>
+
 #include <windows.h>
 
 #include <core/Log.hpp>
@@ -40,9 +42,12 @@ std::string wideToUtf8(const std::wstring& value)
    }
 
    std::vector<char> result(chars, 0);
-   chars = ::WideCharToMultiByte(CP_UTF8, 0,
-                                 cstr, -1,
-                                 &(result[0]), static_cast<int>(result.size()),
+   chars = ::WideCharToMultiByte(CP_UTF8,
+                                 0,
+                                 cstr,
+                                 -1,
+                                 &(result[0]),
+                                 gsl::narrow_cast<int>(result.size()),
                                  nullptr, nullptr);
 
    return std::string(&(result[0]));
@@ -70,7 +75,8 @@ std::wstring utf8ToWide(const std::string& value,
    std::vector<wchar_t> result(chars, 0);
    chars = ::MultiByteToWideChar(CP_UTF8, 0,
                                  cstr, -1,
-                                 &(result[0]), static_cast<int>(result.size()));
+                                 &(result[0]),
+                                 gsl::narrow_cast<int>(result.size()));
 
    return std::wstring(&(result[0]));
 }
