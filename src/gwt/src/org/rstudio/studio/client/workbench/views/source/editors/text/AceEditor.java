@@ -2577,18 +2577,21 @@ public class AceEditor implements DocDisplay,
    public void jumpToMatching()
    {
       widget_.getEditor().jumpToMatching(false, false);
+      scrollCursorIntoViewIfNecessary();
    }
 
    @Override
    public void selectToMatching()
    {
       widget_.getEditor().jumpToMatching(true, false);
+      scrollCursorIntoViewIfNecessary();
    }
 
    @Override
    public void expandToMatching()
    {
       widget_.getEditor().jumpToMatching(true, true);
+      scrollCursorIntoViewIfNecessary();
    }
    
    @Override
