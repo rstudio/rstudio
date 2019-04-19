@@ -18,6 +18,7 @@
 - Add explicit dependency on required `libxkbcommon` package on Linux (#4610)
 - Remove unnecessary dependency on `rprojroot` package (#4628)
 - Fixed an issue where the Files pane occasionally would fail to scroll to bottom (#4662)
+- Fixed an issue where RStudio would always use the discrete GPU on macOS (#4672)
 
 
 ### Miscellaneous
