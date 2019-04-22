@@ -20,6 +20,7 @@
 - Fix failure to launch RStudio Desktop when started as root user (#4631)
 - Fixed an issue where the Files pane occasionally would fail to scroll to bottom (#4662)
 - Fixed an issue where RStudio would always use the discrete GPU on macOS (#4672)
+- Fixed inability to execute editor commands from menu in RStudio Server (#4622)
 
 
 ### Miscellaneous
