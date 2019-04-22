@@ -22,6 +22,8 @@ COMPONENTS=(
 	lib/libQt5Sensors.so.5
 	lib/libQt5Sql.so.5
 	lib/libQt5Svg.so.5
+	lib/libQt5WaylandClient.so.5
+	lib/libQt5WaylandCompositor.so.5
 	lib/libQt5WebChannel.so.5
 	lib/libQt5WebEngine.so.5
 	lib/libQt5WebEngineCore.so.5
