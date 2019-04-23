@@ -36,15 +36,15 @@ var SpellingPrefetcher;
         var blobURL = URL.createObjectURL(new Blob(['(', ""+
 "           function(){"+
                this.typoJsCode +
-"              let typo = new Typo();"+
+"              var typo = new Typo();"+
 "              "+
 "              onmessage = function(event) {"+
-"                 let inTypo = event.data;"+
+"                 var inTypo = event.data;"+
 "                 "+
 "                 ['rules', 'dictionaryTable', 'compoundRules', 'compoundRuleCodes', 'replacementTable',"+
 "                  'flags', 'memoized', 'loaded'].forEach(function(e) { typo[e] = inTypo[e] });"+
 "                  "+
-"                 let s = {};"+
+"                 var s = {};"+
 "                 inTypo.inputwords.forEach(function(word) {"+
 "                    typo.suggest(word);"+
 "                    s[word] = typo.memoized[word];"+
