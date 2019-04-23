@@ -71,7 +71,8 @@ void set(const std::string& name,
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse);
+            core::http::Response* pResponse,
+            bool secure);
 
 // initialize with default secure cookie key file
 core::Error initialize();

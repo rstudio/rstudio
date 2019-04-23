@@ -229,9 +229,10 @@ void signIn(const http::Request& request,
             http::Response* pResponse)
 {
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserId,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -423,9 +424,10 @@ void signOut(const http::Request& request,
    }
 
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserId,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
