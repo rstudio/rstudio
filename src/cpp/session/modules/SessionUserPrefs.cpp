@@ -31,8 +31,35 @@ namespace prefs {
 namespace {
 
 static boost::shared_ptr<json::Object> s_pUserPrefs;
+static core::FilePath s_userPrefsFile;
 
+Error setPreference(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string key;
+   json::Value val;
+   Error error = json::readParams(request.params, &key, &val);
+   if (error)
+      return error;
+
+   auto it = s_pUserPrefs->find(key);
+   if (it != s_pUserPrefs->end() && (*it).value() == val)
+   {
+      // no work necessary if preference value is unchanged
+      return Success();
+   }
+
+   // save preference value
+   (*s_pUserPrefs)[key] = val;
+
+   // TODO: need to write changes. how to compute which changes to write? don't want to write
+   // defaults. maybe need a json method to compute intersection? sort of like merge... open
+   // question: do we want to diff against the defaults or against the system+defaults?
+
+   return Success();
 }
+
+} // anonymous namespace
 
 json::Object userPrefs()
 {
@@ -43,11 +70,18 @@ json::Object userPrefs()
 
 Error initialize()
 {
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "set_preference", setPreference));
+   Error error = initBlock.execute();
+   if (error)
+      return error;
+
    // Load schema for validation
    FilePath schemaFile = 
       options().rResourcesPath().complete("prefs").complete("user-prefs-schema.json");
    std::string schemaContents;
-   Error error = readStringFromFile(schemaFile, &schemaContents);
+   error = readStringFromFile(schemaFile, &schemaContents);
    if (error)
       return error;
 
