@@ -31,7 +31,7 @@
   </component>
   <component name="IdProvider" IDEtalkID="AC9390DF9D3D1C907504F5601CCC6695" />
   <component name="JavaScriptSettings">
-    <option name="languageLevel" value="ES6" />
+    <option name="languageLevel" value="ES5" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />

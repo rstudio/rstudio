@@ -227,7 +227,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          }
          word = docDisplay_.getTextForRange(wordRange);
 
-         if (word == null || word.length() < 2 || typoSpellChecker_.checkSpelling(word))
+         if (word == null || typoSpellChecker_.checkSpelling(word))
             return;
 
          // final variables for lambdas

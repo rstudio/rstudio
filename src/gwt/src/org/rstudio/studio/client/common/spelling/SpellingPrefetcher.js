@@ -33,29 +33,25 @@ var SpellingPrefetcher;
          *  See: https://stackoverflow.com/questions/5408406/web-workers-without-a-separate-javascript-file
          *  If interested in deeper research
          */
-        let blobURL = URL.createObjectURL(new Blob(['(', `
-           function(){
-              // inline typo.js
-              ${this.typoJsCode}
-              let typo = new Typo();
-              
-              onmessage = function(event) {
-                 // input Typo data
-                 let inTypo = event.data;
-                 
-                 // copy specific input Typo data into our local Typo object
-                 ['rules', 'dictionaryTable', 'compoundRules', 'compoundRuleCodes', 'replacementTable',
-                  'flags', 'memoized', 'loaded'].forEach(e => typo[e] = inTypo[e]);
-                  
-                 // run the prefetch on the inputwords
-                 let s = {};
-                 inTypo.inputwords.forEach(word => {
-                    typo.suggest(word);
-                    s[word] = typo.memoized[word];
-                 });
-                 this.postMessage(s);
-              }
-           }`,
+        var blobURL = URL.createObjectURL(new Blob(['(', ""+
+"           function(){"+
+               this.typoJsCode +
+"              let typo = new Typo();"+
+"              "+
+"              onmessage = function(event) {"+
+"                 let inTypo = event.data;"+
+"                 "+
+"                 ['rules', 'dictionaryTable', 'compoundRules', 'compoundRuleCodes', 'replacementTable',"+
+"                  'flags', 'memoized', 'loaded'].forEach(function(e) { typo[e] = inTypo[e] });"+
+"                  "+
+"                 let s = {};"+
+"                 inTypo.inputwords.forEach(function(word) {"+
+"                    typo.suggest(word);"+
+"                    s[word] = typo.memoized[word];"+
+"                 });"+
+"                 this.postMessage(s);"+
+"              }"+
+"           }",
             ')()'], {type: 'application/javascript'}));
         this.w = new Worker(blobURL);
         URL.revokeObjectURL(blobURL);
@@ -72,9 +68,9 @@ var SpellingPrefetcher;
             // Worker output consumer, bound to local typojs parameter
             this.w.onmessage = function (event) {
                 if (!!event.data) {
-                    let suggestions = event.data;
+                    var suggestions = event.data;
 
-                    for (let s in suggestions) {
+                    for (var s in suggestions) {
                         if (suggestions.hasOwnProperty(s) && typeof suggestions[s] !== 'function') {
                             typojs.memoized[s] = suggestions[s];
                         }
@@ -87,7 +83,7 @@ var SpellingPrefetcher;
             // where we're calling on only already fetched data
             typojs.inputwords = [];
             words = words.split(',');
-            words.forEach(w => {
+            words.forEach(function(w) {
                if (!typojs.memoized.hasOwnProperty(w)) {
                    typojs.inputwords.push(w);
                }

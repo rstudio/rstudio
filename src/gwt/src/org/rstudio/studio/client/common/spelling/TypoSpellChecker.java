@@ -22,6 +22,8 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.TextResource;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsonrpc.RequestLog;
@@ -49,6 +51,12 @@ public class TypoSpellChecker
       void invalidateMisspelledWords();
 
       void releaseOnDismiss(HandlerRegistration handler);
+   }
+
+   interface Resources extends ClientBundle
+   {
+      @Source("./typo.min.js")
+      TextResource typoJsCode();
    }
 
    public TypoSpellChecker(Context context)
@@ -94,7 +102,7 @@ public class TypoSpellChecker
       {
          spellingWorkerInitialized_ = true;
          ExternalJavaScriptLoader.Callback loadSpellingWorker = () -> {
-            spellingPrefetcherNative_ = new SpellingPrefetcherNative(TypoJsEscaped.typoJsCode);
+            spellingPrefetcherNative_ = new SpellingPrefetcherNative(RES.typoJsCode().getText());
          };
          new ExternalJavaScriptLoader(
             SpellingPrefetcherResources.INSTANCE.spellingprefetcherjs().getSafeUri().asString()
@@ -276,6 +284,7 @@ public class TypoSpellChecker
    public static boolean isLoaded() { return typoLoaded_; }
 
    private final Context context_;
+   private static final Resources RES = GWT.create(Resources.class);
 
    private static SpellingPrefetcherNative spellingPrefetcherNative_;
    private static boolean spellingWorkerInitialized_ = false;
