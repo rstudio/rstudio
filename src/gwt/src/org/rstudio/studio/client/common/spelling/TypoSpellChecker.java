@@ -90,6 +90,17 @@ public class TypoSpellChecker
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
 
+      if (!spellingWorkerInitialized_)
+      {
+         spellingWorkerInitialized_ = true;
+         ExternalJavaScriptLoader.Callback loadSpellingWorker = () -> {
+            spellingPrefetcherNative_ = new SpellingPrefetcherNative(TypoJsEscaped.typoJsCode);
+         };
+         new ExternalJavaScriptLoader(
+            SpellingPrefetcherResources.INSTANCE.spellingprefetcherjs().getSafeUri().asString()
+         ).addCallback(loadSpellingWorker);
+      }
+
       loadDictionary();
    }
 
@@ -254,9 +265,20 @@ public class TypoSpellChecker
       }
    }
 
+   public void prefetchWords(ArrayList<String> words)
+   {
+      if (spellingWorkerInitialized_)
+      {
+         spellingPrefetcherNative_.prefetch(String.join(",", words), typoNative_);
+      }
+   }
+
    public static boolean isLoaded() { return typoLoaded_; }
 
    private final Context context_;
+
+   private static SpellingPrefetcherNative spellingPrefetcherNative_;
+   private static boolean spellingWorkerInitialized_ = false;
 
    private static String loadedDict_;
    private static boolean typoLoaded_ = false;
