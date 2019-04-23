@@ -185,7 +185,7 @@ Error setClientState(const json::JsonRpcRequest& request,
 // IN: WorkbenchMetrics object
 // OUT: Void
 Error setWorkbenchMetrics(const json::JsonRpcRequest& request, 
-                          json::JsonRpcResponse* pResponse)
+                          json::JsonRpcResponse* /*pResponse*/)
 {
    // extract fields
    r::session::RClientMetrics metrics ;
@@ -495,7 +495,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       return error;
    userSettings().beginUpdate();
    userSettings().setDefaultTerminalShellValue(
-      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
+      static_cast<console_process::TerminalShell::ShellType>(defaultTerminalShell));
    userSettings().setCustomShellCommand(customShellPath);
    userSettings().setCustomShellOptions(customShellOptions);
    userSettings().endUpdate();
@@ -511,7 +511,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
 
 Error setUiPrefs(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+                 json::JsonRpcResponse* /*pResponse*/)
 {
    json::Object uiPrefs;
    Error error = json::readParams(request.params, &uiPrefs);
@@ -629,7 +629,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get terminal prefs
    json::Object terminalPrefs;
-   terminalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
+   terminalPrefs["default_shell"] = static_cast<int>(userSettings().defaultTerminalShellValue());
    terminalPrefs["shell_exe_path"] = userSettings().customShellCommand().absolutePath();
    terminalPrefs["shell_exe_options"] = userSettings().customShellOptions();
 
@@ -660,8 +660,8 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
    // Shell type is needed on Windows to make additional shell-type
    // specific tweaks, see DesktopGwtCallback.cpp::openTerminal
-   console_process::TerminalShell::TerminalShellType shellType =
-         console_process::TerminalShell::DefaultShell;
+   console_process::TerminalShell::ShellType shellType =
+         console_process::TerminalShell::ShellType::Default;
 
 #if defined(_WIN32)
 
@@ -707,14 +707,14 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    optionsJson["working_directory"] =
                   module_context::shellWorkingDirectory().absolutePath();
    optionsJson["extra_path_entries"] = extraPathEntries;
-   optionsJson["shell_type"] = shellType;
+   optionsJson["shell_type"] = static_cast<int>(shellType);
    pResponse->setResult(optionsJson);
 
    return Success();
 }
 
 Error adaptToLanguage(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse* /*pResponse*/)
 {
    // get the requested language
    std::string language;
@@ -725,7 +725,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    // check to see what language is active in main console
    using namespace r::exec;
    
-   // check to see what langauge is currently active (but default to r)
+   // check to see what language is currently active (but default to r)
    std::string activeLanguage = "R";
    if (reticulate::isReplActive())
       activeLanguage = "Python";
@@ -773,7 +773,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
 }
 
 Error executeCode(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+                  json::JsonRpcResponse* /*pResponse*/)
 {
    // get the code
    std::string code;
@@ -959,7 +959,7 @@ void editFilePostback(const std::string& file,
 }
 
 Error setCRANMirror(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+                    json::JsonRpcResponse* /*pResponse*/)
 {
    json::Object cranMirrorJson;
    Error error = json::readParam(request.params, 0, &cranMirrorJson);

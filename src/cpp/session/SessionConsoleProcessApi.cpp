@@ -121,7 +121,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
       return R_NilValue;
    }
 
-   TerminalShell::TerminalShellType shellType = TerminalShell::DefaultShell;
+   TerminalShell::ShellType shellType = TerminalShell::ShellType::Default;
    std::string terminalTypeStr;
    if (!r::sexp::isNull(shellTypeSEXP))
       terminalTypeStr = r::sexp::asString(shellTypeSEXP);

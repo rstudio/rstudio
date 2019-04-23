@@ -102,7 +102,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                   range.getEnd().getRow(),
                   range.getEnd().getColumn(),
                   "Spellcheck warning",
-                  "warning"));
+                  "spelling"));
             }
          }
       }
@@ -143,7 +143,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public void invalidateAllWords()
    {
-      lintManager_.forceRelint();
+      lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
    }
 
    @Override

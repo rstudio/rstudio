@@ -47,6 +47,10 @@
 #include <Windows.h>
 #endif
 
+#ifdef Q_OS_LINUX
+#include <core/system/PosixSystem.hpp>
+#endif
+
 QProcess* pRSessionProcess;
 QString sharedSecret;
 
@@ -583,12 +587,25 @@ int main(int argc, char* argv[])
       }
 #endif
 
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
+#if defined(Q_OS_LINUX) 
+
+      static char noSandbox[] = "--no-sandbox";
+
+#if (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
       // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
       // https://bugreports.qt.io/browse/QTBUG-67023
       // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
       arguments.push_back(noSandbox);
+
+#else
+      // is this root? if so, we need --no-sandbox on Linux. 
+      // see https://crbug.com/638180.
+      if (core::system::effectiveUserIsRoot())
+      {
+         arguments.push_back(noSandbox);
+      }
+#endif
+
 #endif
       
       // allow users to supply extra command-line arguments

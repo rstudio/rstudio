@@ -1,7 +1,7 @@
 /*
  * SessionUserSettings.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ struct BioconductorMirror
 class UserSettings : boost::noncopyable
 {
 private:
-   UserSettings() {}
+   UserSettings() = default;
    friend UserSettings& userSettings();
 
 public:
@@ -69,7 +69,7 @@ public:
 public:
    // COPYING: boost::noncopyable
    
-   // intialize
+   // initialize
    core::Error initialize();
    
    // enable batch updates
@@ -130,8 +130,8 @@ public:
    bool showLastDotValue() const;
    void setShowLastDotValue(bool show);
 
-   console_process::TerminalShell::TerminalShellType defaultTerminalShellValue() const;
-   void setDefaultTerminalShellValue(console_process::TerminalShell::TerminalShellType shell);
+   console_process::TerminalShell::ShellType defaultTerminalShellValue() const;
+   void setDefaultTerminalShellValue(console_process::TerminalShell::ShellType shell);
 
    core::FilePath customShellCommand() const;
    void setCustomShellCommand(const std::string& commandPath);

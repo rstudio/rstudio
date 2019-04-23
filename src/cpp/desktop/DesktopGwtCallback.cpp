@@ -1186,14 +1186,14 @@ void GwtCallback::openTerminal(QString terminalPath,
 
 #elif defined(Q_OS_WIN)
 
-   // TODO: (gary) make these shell type constants shared with
-   // SessionTerminalShell.hpp instead of duplicating them
+   // keep these shell type constants consistent with SessionTerminalShell.hpp
    const int GitBash = 1; // Win32: Bash from Windows Git
    const int WSLBash = 2; // Win32: Windows Services for Linux
    const int Cmd32 = 3; // Win32: Windows command shell (32-bit)
    const int Cmd64 = 4; // Win32: Windows command shell (64-bit)
    const int PS32 = 5; // Win32: PowerShell (32-bit)
    const int PS64 = 6; // Win32: PowerShell (64-bit)
+   const int PSCore = 10; // Win32: PowerShell Core (v6)
 
    if (terminalPath.length() == 0)
    {

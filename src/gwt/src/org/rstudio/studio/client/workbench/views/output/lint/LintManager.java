@@ -20,6 +20,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -167,9 +168,9 @@ public class LintManager
       });
    }
 
-   public void forceRelint()
+   public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? uiPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
    }
 
    @Inject
@@ -187,7 +188,7 @@ public class LintManager
       // don't lint if this is an unsaved document
       if (target_.getPath() == null)
          return;
-      
+
       if (context.showMarkers)
       {
          target_.saveThenExecute(null, new Command()
@@ -314,7 +315,7 @@ public class LintManager
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
    {
-      if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
+      if (docDisplay_.isPopupVisible())
          return;
 
       JsArray<LintItem> finalLint;
@@ -331,7 +332,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (uiPrefs_.realTimeSpellChecking().getValue())
+      if (uiPrefs_.realTimeSpellChecking().getValue() && TypoSpellChecker.isLoaded())
       {
          JsArray<LintItem> spellingLint = target_.getSpellingTarget().getLint();
          for (int i = 0; i < spellingLint.length(); i++)
@@ -381,7 +382,9 @@ public class LintManager
       });
       $wnd.setTimeout(callback, 100);
    }-*/;
-   
+
+   public final static int DEFAULT_LINT_DELAY = -1;
+
    private final Timer timer_;
    private final TextEditingTarget target_;
    private final DocDisplay docDisplay_;
