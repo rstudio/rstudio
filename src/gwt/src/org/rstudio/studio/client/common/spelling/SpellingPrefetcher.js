@@ -66,7 +66,7 @@ var SpellingPrefetcher;
 
     SpellingPrefetcher.prototype = {
         prefetch : function (words, typojs) {
-            if (!words || !typojs)
+            if (!this.w || !words || !typojs)
                 return;
 
             // Worker output consumer, bound to local typojs parameter
