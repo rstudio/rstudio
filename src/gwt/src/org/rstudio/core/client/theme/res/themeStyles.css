@@ -393,12 +393,6 @@ pre {
 }
 
 
-.ace_gutter-cell.ace_chunk-queued-line,
-.ace_gutter-cell.ace_chunk-error-line
-{
-   position: relative;
-}
-
 .ace_chunk-queued-line:before,
 .ace_chunk-error-line:before
 {
