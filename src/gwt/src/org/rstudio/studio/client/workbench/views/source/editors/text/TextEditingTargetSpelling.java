@@ -92,9 +92,11 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
       JsArray<LintItem> lint = JsArray.createArray().cast();
       if (wordRanges.size() > 0)
       {
+         ArrayList<String> prefetchWords = new ArrayList<>();
          for (int i = 0; i < words.size(); i++) {
             String word = words.get(i);
             if (!typoSpellChecker_.checkSpelling(word)) {
+               prefetchWords.add(word);
                Range range = wordRanges.get(i);
                lint.push(LintItem.create(
                   range.getStart().getRow(),
@@ -105,6 +107,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                   "spelling"));
             }
          }
+         typoSpellChecker_.prefetchWords(prefetchWords);
       }
       return lint;
    }
@@ -224,7 +227,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          }
          word = docDisplay_.getTextForRange(wordRange);
 
-         if (word == null || word.length() < 2 || typoSpellChecker_.checkSpelling(word))
+         if (word == null || typoSpellChecker_.checkSpelling(word))
             return;
 
          // final variables for lambdas
