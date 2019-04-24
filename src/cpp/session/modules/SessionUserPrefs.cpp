@@ -18,7 +18,10 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/json/rapidjson/schema.h>
 
+#include <core/Exec.hpp>
+
 #include <session/SessionOptions.hpp>
+#include <session/SessionModuleContext.hpp>
 
 #include "SessionUserPrefs.hpp"
 
@@ -70,6 +73,8 @@ json::Object userPrefs()
 
 Error initialize()
 {
+   using namespace module_context;
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_preference", setPreference));
