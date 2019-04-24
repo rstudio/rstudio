@@ -118,6 +118,7 @@ public class ChunkRowExecState
          return;
       
       state_ = state;
+      resetTimer();
       if (state_ == LINE_RESTING)
       {
          timer_ = new Timer()
