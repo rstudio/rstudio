@@ -16,11 +16,11 @@
 - Fix NULL in code preview on first attempt to import data (#4563)
 - Prompt for permissions on macOS Mojave when R packages require them (#4579)
 - Add explicit dependency on required `libxkbcommon` package on Linux (#4610)
+- Fixed inability to execute editor commands from menu in RStudio Server (#4622)
 - Remove unnecessary dependency on `rprojroot` package (#4628)
 - Fix failure to launch RStudio Desktop when started as root user (#4631)
 - Fixed an issue where the Files pane occasionally would fail to scroll to bottom (#4662)
 - Fixed an issue where RStudio would always use the discrete GPU on macOS (#4672)
-- Fixed inability to execute editor commands from menu in RStudio Server (#4622)
 
 
 ### Miscellaneous
@@ -28,3 +28,5 @@
 - Improve detection of current working directory for terminals on macOS (#4570)
 - Update to Pandoc 2.7.2 on Windows to address occasional segfaults (#4618)
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
+- Set secure flag when clearing cookies for consistency (Pro #964)
+
