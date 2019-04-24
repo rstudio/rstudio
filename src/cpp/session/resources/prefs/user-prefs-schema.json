@@ -218,7 +218,7 @@
             "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
         },
         "show_help_tooltip_on_idle": {
-            "type": "bar",
+            "type": "boolean",
             "default": false,
             "description": "Whether to show help tooltips for functions when the cursor has not been recently moved."
         },
