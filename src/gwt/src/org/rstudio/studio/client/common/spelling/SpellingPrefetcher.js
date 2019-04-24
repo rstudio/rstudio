@@ -37,13 +37,14 @@ var SpellingPrefetcher;
 "           function(){"+
                this.typoJsCode +
 "              var typo = new Typo();"+
-"              "+
+""+
 "              onmessage = function(event) {"+
+"                 if (event.target.origin !== '" + window.origin + "') return;"+
 "                 var inTypo = event.data;"+
 "                 "+
 "                 ['rules', 'dictionaryTable', 'compoundRules', 'compoundRuleCodes', 'replacementTable',"+
 "                  'flags', 'memoized', 'loaded'].forEach(function(e) { typo[e] = inTypo[e] });"+
-"                  "+
+""+
 "                 var s = {};"+
 "                 inTypo.inputwords.forEach(function(word) {"+
 "                    typo.suggest(word);"+
