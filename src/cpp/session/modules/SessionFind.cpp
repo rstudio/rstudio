@@ -28,6 +28,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -504,6 +505,12 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 
    if (ignoreCase)
       cmd << "-i";
+
+   // add exclusions
+   std::vector<std::string> excludes;
+   excludes = r::options::getOption("rstudio.find_in_files.excludes", excludes, false);
+   for (auto&& exclude : excludes)
+      cmd << std::string("--exclude-dir=") + exclude;
 
    // Use -f to pass pattern via file, so we don't have to worry about
    // escaping double quotes, etc.

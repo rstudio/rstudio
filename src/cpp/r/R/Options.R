@@ -143,3 +143,5 @@ options(profvis.keep_output = TRUE)
 # indicate that we're not in a notebook by default
 options(rstudio.notebook.executing = FALSE)
 
+# find in files: exclude things in platform-specific subdirs
+options(rstudio.find_in_files.excludes = R.version$platform)
