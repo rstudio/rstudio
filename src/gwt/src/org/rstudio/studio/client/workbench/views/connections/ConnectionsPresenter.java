@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -112,7 +112,7 @@ public class ConnectionsPresenter extends BasePresenter
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
-                               UIPrefs uiPrefs,
+                               UserPrefs uiPrefs,
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
@@ -600,7 +600,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final Display display_ ;
    private final EventBus eventBus_;
    private final Commands commands_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private final ConnectionsServerOperations server_ ;
    @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    

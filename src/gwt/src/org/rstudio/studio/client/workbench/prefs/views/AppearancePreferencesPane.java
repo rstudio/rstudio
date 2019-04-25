@@ -41,7 +41,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -52,7 +52,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
-                                    UIPrefs uiPrefs,
+                                    UserPrefs uiPrefs,
                                     final AceThemes themes,
                                     WorkbenchContext workbenchContext,
                                     GlobalDisplay globalDisplay,
@@ -619,7 +619,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;

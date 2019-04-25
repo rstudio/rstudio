@@ -36,7 +36,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -85,7 +85,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    void initialize(EventBus events, 
                    GlobalDisplay globalDisplay,
                    FontSizeManager fontSizeManager,
-                   UIPrefs uiPrefs,
+                   UserPrefs uiPrefs,
                    LintServerOperations server)
    {
       events_ = events;
@@ -308,7 +308,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private EventBus events_;
    private GlobalDisplay globalDisplay_;
    private FontSizeManager fontSizeManager_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private LintServerOperations server_;
   
 

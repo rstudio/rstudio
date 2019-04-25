@@ -19,14 +19,14 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
 public class FontSizeManager
 {
    @Inject
    public FontSizeManager(final EventBus events,
-                          UIPrefs prefs)
+                          UserPrefs prefs)
    {
       prefs.fontSize().bind(new CommandWithArg<Double>()
       {

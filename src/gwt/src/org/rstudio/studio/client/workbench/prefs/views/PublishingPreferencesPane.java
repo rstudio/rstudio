@@ -49,7 +49,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
@@ -57,7 +57,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
                                     RSAccountConnector connector,
-                                    UIPrefs prefs,
+                                    UserPrefs prefs,
                                     DependencyManager deps)
    {
       reloadRequired_ = false;
@@ -403,7 +403,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
    
    private final GlobalDisplay display_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
    private final DependencyManager deps_;

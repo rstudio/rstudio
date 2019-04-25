@@ -23,7 +23,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
@@ -58,7 +58,7 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
                          Commands commands,
                          EventBus eventBus,
                          Session session, 
-                         UIPrefs uiPrefs)
+                         UserPrefs uiPrefs)
    {
       super("Connections", shim);
       binder.bind(commands, shim);

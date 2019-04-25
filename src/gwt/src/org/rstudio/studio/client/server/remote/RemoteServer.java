@@ -500,12 +500,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SET_PREFS, params, requestCallback);
 }
    
-   public void setUiPrefs(JavaScriptObject uiPrefs,
+   public void setUserPrefs(JavaScriptObject userPrefs,
                           ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  SET_UI_PREFS,
-                  uiPrefs,
+                  SET_USER_PREFS,
+                  userPrefs,
                   requestCallback);
    }
 
@@ -5942,7 +5942,7 @@ public class RemoteServer implements Server
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
-   private static final String SET_UI_PREFS = "set_ui_prefs";
+   private static final String SET_USER_PREFS = "set_user_prefs";
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";

@@ -235,13 +235,13 @@
         },
         "code_completion": {
             "type": "string",
-            "enum": ["never", "triggered", "manual"],
+            "enum": ["always", "never", "triggered", "manual"],
             "default": "always",
             "description": "When to use auto-completion for R code in the RStudio code editor."
         },
         "code_completion_other": {
             "type": "string",
-            "enum": ["never", "triggered", "manual"],
+            "enum": ["always", "triggered", "manual"],
             "default": "always",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
         },
@@ -319,6 +319,11 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to generate a warning if a variable is used without being defined in the current scope."
+        },
+        "warn_variable_defined_but_not_used": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to generate a warning if a variable is defined without being used in the current scope"
         },
         "auto_discover_package_dependencies": {
             "type": "boolean",
@@ -470,7 +475,7 @@
             "default": "default",
             "description": "The program to use to preview PDF files after generation."
         },
-        "always_enable_concordance": {
+        "always_enable_rnw_concordance": {
             "type": "boolean",
             "default": true,
             "description": "Whether to always enable the concordance for RNW files."

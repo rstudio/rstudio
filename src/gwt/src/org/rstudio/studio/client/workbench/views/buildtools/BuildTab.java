@@ -26,7 +26,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
@@ -72,7 +72,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    Binder binder, 
                    final Commands commands,
                    EventBus eventBus,
-                   UIPrefs uiPrefs)
+                   UserPrefs uiPrefs)
    {
       super("Build", shim);
       session_ = session;

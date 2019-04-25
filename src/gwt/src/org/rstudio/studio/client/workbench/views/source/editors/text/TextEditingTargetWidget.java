@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,7 +72,7 @@ import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -95,7 +95,7 @@ public class TextEditingTargetWidget
    public TextEditingTargetWidget(final TextEditingTarget target,
                                   DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
-                                  UIPrefs uiPrefs,
+                                  UserPrefs userPrefs,
                                   FileTypeRegistry fileTypeRegistry,
                                   final DocDisplay editor,
                                   TextFileType fileType,
@@ -107,7 +107,7 @@ public class TextEditingTargetWidget
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
@@ -409,7 +409,7 @@ public class TextEditingTargetWidget
                @Override
                public void onClick(ClickEvent event)
                {
-                  if (uiPrefs_.sourceWithEcho().getValue())
+                  if (userPrefs_.sourceWithEcho().getValue())
                      commands_.sourceActiveDocumentWithEcho().execute();
                   else
                      commands_.sourceActiveDocument().execute();
@@ -427,7 +427,7 @@ public class TextEditingTargetWidget
 
       createTestToolbarButtons(toolbar);
       
-      uiPrefs_.sourceWithEcho().addValueChangeHandler(
+      userPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -458,13 +458,13 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
-      chunksMenu.addItem(runSetupChunkOptionMenu_= new UIPrefMenuItem<Boolean>(
-            uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
-            uiPrefs_));
+      chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<Boolean>(
+            userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
+            userPrefs_));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
-      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      if (userPrefs_.showRmdChunkOutputInline().getValue())
       {
          chunksMenu.addSeparator();
          chunksMenu.addItem(
@@ -492,7 +492,7 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(plumberLaunchButton_);
       plumberLaunchButton_.setVisible(false);
 
-      if (SessionUtils.showPublishUi(session_, uiPrefs_))
+      if (SessionUtils.showPublishUi(session_, userPrefs_))
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
@@ -580,7 +580,7 @@ public class TextEditingTargetWidget
       
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
-      showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
+      showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          editor_.setShowInvisibles(event.getValue());
       });
@@ -601,7 +601,7 @@ public class TextEditingTargetWidget
    private ToolbarButton createLatexFormatButton()
    {
       ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(editor_,
-                                                                      uiPrefs_);
+                                                                      userPrefs_);
     
       ToolbarButton texButton = new ToolbarButton(
                            "Format", 
@@ -1143,21 +1143,21 @@ public class TextEditingTargetWidget
          DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
                "Document Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_DEFAULT);
          knitDirMenu.addItem(knitInDocDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
                "Project Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_PROJECT);
          knitDirMenu.addItem(knitInProjectDir);
          DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
                "Current Working Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_CURRENT);
          knitDirMenu.addItem(knitInCurrentDir);
@@ -1442,20 +1442,20 @@ public class TextEditingTargetWidget
          boolean isRmd, int type)
    {
       if (rmdViewerPaneMenuItem_ == null)
-         rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_PANE, 
-               "Preview in Viewer Pane", uiPrefs_);
+         rmdViewerPaneMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_PANE, 
+               "Preview in Viewer Pane", userPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
-         rmdViewerWindowMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
-               "Preview in Window", uiPrefs_);
+         rmdViewerWindowMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_WINDOW, 
+               "Preview in Window", userPrefs_);
       if (rmdViewerNoPreviewMenuItem_ == null)
-         rmdViewerNoPreviewMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_NONE,
-               "(No Preview)", uiPrefs_);
+         rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_NONE,
+               "(No Preview)", userPrefs_);
       
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
@@ -1470,7 +1470,7 @@ public class TextEditingTargetWidget
       
       menu.addSeparator();
 
-      String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = userPrefs_.showLatexPreviewOnCursorIdle().getValue();
       menu.addItem(new DocPropMenuItem(
             "Preview Images and Equations", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
@@ -1489,7 +1489,7 @@ public class TextEditingTargetWidget
       
       if (type != RmdOutput.TYPE_SHINY)
       {
-        boolean inline = uiPrefs_.showRmdChunkOutputInline().getValue();
+        boolean inline = userPrefs_.showRmdChunkOutputInline().getValue();
         menu.addItem(new DocPropMenuItem(
               "Chunk Output Inline", docUpdateSentinel_,
               inline,
@@ -1521,7 +1521,7 @@ public class TextEditingTargetWidget
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
    private final EventBus events_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
@@ -1554,7 +1554,7 @@ public class TextEditingTargetWidget
    private ToolbarButton testShinyButton_;
    private ToolbarButton compareTestButton_;
    private ToolbarButton sourceMenuButton_;
-   private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
+   private UserPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
    private ToolbarButton chunksButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton plumberLaunchButton_;

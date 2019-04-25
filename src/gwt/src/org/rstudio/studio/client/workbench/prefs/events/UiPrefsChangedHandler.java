@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface UiPrefsChangedHandler extends EventHandler
 {
-   void onUiPrefsChanged(UiPrefsChangedEvent e);
+   void onUiPrefsChanged(UserPrefsChangedEvent e);
 }

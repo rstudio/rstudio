@@ -99,10 +99,10 @@ public class SessionInfo extends JavaScriptObject
       return this.temp_dir;
    }-*/;
 
-   public final native JsObject getUiPrefs() /*-{
-      if (!this.ui_prefs)
-         this.ui_prefs = {};
-      return this.ui_prefs;
+   public final native JsObject getUserPrefs() /*-{
+      if (!this.user_prefs)
+         this.user_prefs = {};
+      return this.user_prefs;
    }-*/;
 
    public final static String DESKTOP_MODE = "desktop";

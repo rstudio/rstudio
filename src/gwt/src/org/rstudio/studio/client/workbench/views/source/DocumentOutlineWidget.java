@@ -22,7 +22,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
@@ -201,7 +201,7 @@ public class DocumentOutlineWidget extends Composite
    }
    
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
       uiPrefs_ = uiPrefs;
    }
@@ -495,7 +495,7 @@ public class DocumentOutlineWidget extends Composite
    private Scope currentScope_;
    private Scope currentVisibleScope_;
    
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource

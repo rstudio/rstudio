@@ -52,14 +52,14 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class PackagesPreferencesPane extends PreferencesPane
 {
    @Inject
    public PackagesPreferencesPane(PreferencesDialogResources res,
                                   GlobalDisplay globalDisplay,
-                                  UIPrefs uiPrefs,
+                                  UserPrefs uiPrefs,
                                   Session session,
                                   final DefaultCRANMirror defaultCRANMirror,
                                   MirrorsServerOperations server)

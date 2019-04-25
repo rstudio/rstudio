@@ -26,7 +26,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -51,7 +51,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    public Satellite(Session session,
                     EventBus eventBus,
                     Commands commands,
-                    Provider<UIPrefs> pUIPrefs)
+                    Provider<UserPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
@@ -292,7 +292,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    }
    
    private final Session session_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;

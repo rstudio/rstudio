@@ -45,7 +45,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -283,7 +283,7 @@ public class RSConnectDeploy extends Composite
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
                           GlobalDisplay display,
-                          UIPrefs prefs)
+                          UserPrefs prefs)
    {
       server_ = server;
       connector_ = connector;
@@ -1331,7 +1331,7 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    
    private RSConnectPublishSource source_;
    private boolean asMultipleRmd_;

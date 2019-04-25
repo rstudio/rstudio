@@ -57,7 +57,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
@@ -85,7 +85,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           EventBus eventBus,
                           WorkbenchContext workbenchContext,
                           SourceShim sourceShim,
-                          Provider<UIPrefs> pUiPrefs,
+                          Provider<UserPrefs> pUiPrefs,
                           Commands commands,
                           Binder binder,
                           TerminalHelper terminalHelper,
@@ -744,7 +744,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    // injected
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUiPrefs_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;

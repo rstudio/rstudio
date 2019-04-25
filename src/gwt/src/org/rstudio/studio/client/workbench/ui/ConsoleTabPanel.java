@@ -27,7 +27,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
@@ -47,7 +47,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
                           ConsoleClearButton consoleClearButton,
-                          UIPrefs uiPrefs,
+                          UserPrefs uiPrefs,
                           Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
@@ -554,7 +554,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private Session session_;
    private final WorkbenchTab testsTab_;
    private boolean testsTabVisible_;

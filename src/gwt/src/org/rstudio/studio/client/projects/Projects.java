@@ -79,7 +79,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.user.client.Command;
@@ -117,7 +117,7 @@ public class Projects implements OpenProjectFileHandler,
                    SessionOpener sessionOpener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<WorkbenchContext> pWorkbenchContext,
-                   Provider<UIPrefs> pUIPrefs)
+                   Provider<UserPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
@@ -393,7 +393,7 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
-            UIPrefs uiPrefs = pUIPrefs_.get();
+            UserPrefs uiPrefs = pUIPrefs_.get();
             
             // update default project location pref if necessary
             if ((newProject.getNewDefaultProjectLocation() != null) ||
@@ -417,8 +417,8 @@ public class Projects implements OpenProjectFileHandler,
                
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
-               projServer_.setUiPrefs(
-                     session_.getSessionInfo().getUiPrefs(),
+               projServer_.setUserPrefs(
+                     session_.getSessionInfo().getUserPrefs(),
                      new VoidServerRequestCallback(indicator) {
                         @Override
                         public void onResponseReceived(Void response)
@@ -1179,7 +1179,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Session session_;
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
    

@@ -51,7 +51,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -103,7 +103,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          GlobalDisplay display, 
          SourceShim sourceShim,
          Session session,
-         UIPrefs uiPrefs)
+         UserPrefs uiPrefs)
    {
       events_ = events;
       server_ = server;
@@ -1361,7 +1361,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
    private final SourceShim sourceShim_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

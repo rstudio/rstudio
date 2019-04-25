@@ -29,7 +29,7 @@ import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSo
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -66,7 +66,7 @@ public class RmdOutputPresenter implements
                              Commands commands,
                              EventBus eventBus,
                              Satellite satellite,
-                             UIPrefs prefs)
+                             UserPrefs prefs)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -189,7 +189,7 @@ public class RmdOutputPresenter implements
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
   
    private final SlideNavigationPresenter slideNavigationPresenter_;
    private final ShinyDisconnectNotifier disconnectNotifier_;

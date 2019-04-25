@@ -47,7 +47,7 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
@@ -58,7 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UIPrefs prefs,
+   public EditingPreferencesPane(UserPrefs prefs,
                                  SourceServerOperations server,
                                  PreferencesDialogResources res)
    {
@@ -327,7 +327,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       final CheckBox alwaysCompleteInConsole = checkboxPref(
             "Allow automatic completions in console",
-            prefs.alwaysCompleteInConsole());
+            prefs.consoleCodeCompletion());
       completionPanel.add(alwaysCompleteInConsole);
       
       showCompletions_.addChangeHandler(new ChangeHandler()
@@ -356,9 +356,9 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
 
-      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showFunctionTooltipOnIdle()));
+      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showHelpTooltipOnIdle()));
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
-      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
+      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.tabMultilineCompletion()));
       
       
       Label otherLabel = headerLabel("Other Languages");
@@ -393,10 +393,10 @@ public class EditingPreferencesPane extends PreferencesPane
       
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
           numericPref("Show completions after characters entered:",
-                      prefs.alwaysCompleteCharacters())));
+                      prefs.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ = 
           numericPref("Show completions after keyboard idle (ms):",
-                      prefs.alwaysCompleteDelayMs())));
+                      prefs.codeCompletionDelay())));
         
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
@@ -493,19 +493,11 @@ public class EditingPreferencesPane extends PreferencesPane
       // editing prefs
       EditingPrefs editingPrefs = prefs.getEditingPrefs();
       lineEndings_.setIntValue(editingPrefs.getLineEndings());
-      consoleColorMode_.setValue(Integer.toString(prefs_.consoleAnsiMode().getValue()));
+      consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       
-      showCompletions_.setValue(prefs_.codeComplete().getValue());
-      showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
-      if (prefs_.useVimMode().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
-      else if (prefs_.enableEmacsKeybindings().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
-      else if (prefs_.enableSublimeKeybindings().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME);
-      else
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
-      
+      showCompletions_.setValue(prefs_.codeCompletion().getValue());
+      showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
+      editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
@@ -518,22 +510,20 @@ public class EditingPreferencesPane extends PreferencesPane
       
       // editing prefs
       prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
-      prefs_.consoleAnsiMode().setGlobalValue(StringUtil.parseInt(
-            consoleColorMode_.getValue(), VirtualConsole.ANSI_COLOR_ON));
+      prefs_.ansiConsoleMode().setGlobalValue(
+            consoleColorMode_.getValue(), UserPrefs.ANSI_CONSOLE_MODE_ON);
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
       
-      prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
-      prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
+      prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
+      prefs_.codeCompletionOther().setGlobalValue(showCompletionsOther_.getValue());
       
       String editorMode = editorMode_.getValue();
+
+      prefs_.editorKeybindings().setGlobalValue(editorMode);
       boolean isVim = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
       boolean isEmacs = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
       boolean isSublime = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME;
-      
-      prefs_.useVimMode().setGlobalValue(isVim);
-      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
-      prefs_.enableSublimeKeybindings().setGlobalValue(isSublime);
       
       if (isVim)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
@@ -582,7 +572,7 @@ public class EditingPreferencesPane extends PreferencesPane
          encoding_.setText(encoding);
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;

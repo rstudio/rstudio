@@ -24,7 +24,7 @@ import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -175,7 +175,7 @@ public class LintManager
 
    @Inject
    void initialize(LintServerOperations server,
-                   UIPrefs uiPrefs,
+                   UserPrefs uiPrefs,
                    EventBus eventBus)
    {
       server_ = server;
@@ -395,7 +395,7 @@ public class LintManager
    private boolean excludeCurrentStatement_;
    
    private LintServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
    

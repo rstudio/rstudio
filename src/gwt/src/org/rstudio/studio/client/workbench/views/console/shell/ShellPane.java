@@ -22,13 +22,13 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class ShellPane extends ShellWidget implements Shell.Display
 {
    @Inject
-   public ShellPane(final AceEditor editor, UIPrefs uiPrefs, EventBus events)
+   public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events)
    {
       super(editor, uiPrefs, events);
 

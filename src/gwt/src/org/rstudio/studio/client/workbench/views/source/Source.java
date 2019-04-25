@@ -115,7 +115,7 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -262,7 +262,7 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UIPrefs uiPrefs,
+                 UserPrefs uiPrefs,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
@@ -4862,7 +4862,7 @@ public class Source implements InsertSourceHandler,
    private final Session session_;
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

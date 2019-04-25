@@ -17,27 +17,27 @@ package org.rstudio.studio.client.common.console;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.VirtualConsole.Preferences;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class VirtualConsolePreferences implements Preferences
 {
    @Inject
-   public VirtualConsolePreferences(Provider<UIPrefs> pUIPrefs)
+   public VirtualConsolePreferences(Provider<UserPrefs> pUIPrefs)
    {
-      pUIPrefs_ = pUIPrefs; 
+      pUserPrefs_ = pUIPrefs; 
    }
    
    @Override
    public int truncateLongLinesInConsoleHistory()
    {
-      return pUIPrefs_.get().truncateLongLinesInConsoleHistory().getGlobalValue();
+      return pUserPrefs_.get().truncateLongLinesInConsoleHistory().getGlobalValue();
    }
    
    @Override
-   public int consoleAnsiMode()
+   public String consoleAnsiMode()
    {
-      return pUIPrefs_.get().consoleAnsiMode().getValue();
+      return pUserPrefs_.get().ansiConsoleMode().getValue();
    }
    
-   private final Provider<UIPrefs> pUIPrefs_; 
+   private final Provider<UserPrefs> pUserPrefs_; 
 }

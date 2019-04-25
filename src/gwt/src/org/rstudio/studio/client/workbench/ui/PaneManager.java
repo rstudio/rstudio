@@ -62,7 +62,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -206,7 +206,7 @@ public class PaneManager
                       Session session,
                       Binder binder,
                       Commands commands,
-                      UIPrefs uiPrefs,
+                      UserPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
                       SourceShim source,
                       @Named("History") final WorkbenchTab historyTab,
@@ -1220,7 +1220,7 @@ public class PaneManager
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;

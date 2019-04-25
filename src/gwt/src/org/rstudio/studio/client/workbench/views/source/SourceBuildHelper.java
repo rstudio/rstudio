@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 
@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
 public class SourceBuildHelper
 {
    @Inject
-   public SourceBuildHelper(UIPrefs uiPrefs,
+   public SourceBuildHelper(UserPrefs uiPrefs,
                             SourceShim sourceShim)
    {
       uiPrefs_ = uiPrefs;
@@ -101,5 +101,5 @@ public class SourceBuildHelper
    }
    
    private final SourceShim sourceShim_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
 }

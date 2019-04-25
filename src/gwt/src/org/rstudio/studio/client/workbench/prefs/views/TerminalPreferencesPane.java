@@ -34,7 +34,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.TerminalPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
@@ -51,7 +51,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 {
 
    @Inject
-   public TerminalPreferencesPane(UIPrefs prefs,
+   public TerminalPreferencesPane(UserPrefs prefs,
                                   PreferencesDialogResources res,
                                   Session session,
                                   final GlobalDisplay globalDisplay,
@@ -378,7 +378,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private TextBox busyWhitelist_;
    
    // Injected ----  
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
    private final Session session_;
    private final Server server_;

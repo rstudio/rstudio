@@ -45,7 +45,7 @@ import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -60,7 +60,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
-                                 UIPrefs prefs,
+                                 UserPrefs prefs,
                                  Session session,
                                  GlobalDisplay globalDisplay,
                                  WorkbenchContext context,
@@ -615,7 +615,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
    private CheckBox enableCrashReporting_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;

@@ -42,7 +42,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -97,7 +97,7 @@ public class TerminalSession extends XTermWidget
    private void initialize(WorkbenchServerOperations server,
                            EventBus events,
                            final Session session,
-                           UIPrefs uiPrefs,
+                           UserPrefs uiPrefs,
                            GlobalDisplay globalDisplay)
    {
       server_ = server;
@@ -877,7 +877,7 @@ public class TerminalSession extends XTermWidget
    // Injected ---- 
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
    private GlobalDisplay globalDisplay_;
 }

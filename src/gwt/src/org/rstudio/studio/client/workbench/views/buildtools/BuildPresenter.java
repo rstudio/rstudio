@@ -48,9 +48,9 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -95,7 +95,7 @@ public class BuildPresenter extends BasePresenter
    @Inject
    public BuildPresenter(Display display, 
                          GlobalDisplay globalDisplay,
-                         UIPrefs uiPrefs,
+                         UserPrefs uiPrefs,
                          WorkbenchContext workbenchContext,
                          BuildServerOperations server,
                          final Commands commands,
@@ -199,12 +199,12 @@ public class BuildPresenter extends BasePresenter
       
       // invalidate devtools load all path whenever the project ui prefs
       // or working directory changes
-      eventBus.addHandler(UiPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
       {
          @Override
-         public void onUiPrefsChanged(UiPrefsChangedEvent e)
+         public void onUiPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
+            if (e.getType() == UserPrefsChangedEvent.PROJECT_TYPE)
                devtoolsLoadAllPath_ = null;
          }
       });
@@ -496,7 +496,7 @@ public class BuildPresenter extends BasePresenter
    private String devtoolsLoadAllPath_ = null;
    
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final BuildServerOperations server_;
    private FilesServerOperations fileServer_;
    private final Display view_ ; 

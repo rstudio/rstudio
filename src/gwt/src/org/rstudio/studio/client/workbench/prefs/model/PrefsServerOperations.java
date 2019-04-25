@@ -22,9 +22,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 public interface PrefsServerOperations
 {
    void setPrefs(RPrefs rPrefs,
-                 JavaScriptObject uiPrefs,
+                 JavaScriptObject userPrefs,
                  ServerRequestCallback<Void> requestCallback);
 
-   void setUiPrefs(JavaScriptObject uiPrefs,
-                   ServerRequestCallback<Void> requestCallback);
+   void setUserPrefs(JavaScriptObject userPrefs,
+                     ServerRequestCallback<Void> requestCallback);
 }

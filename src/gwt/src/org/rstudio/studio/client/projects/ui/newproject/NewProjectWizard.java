@@ -27,7 +27,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -37,7 +37,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
 {
    public NewProjectWizard(
          SessionInfo sessionInfo,
-         UIPrefs uiPrefs,
+         UserPrefs uiPrefs,
          WorkbenchContext workbenchContext,
          NewProjectInput input,
          boolean allowOpenInNewWindow,

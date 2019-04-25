@@ -56,7 +56,7 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -141,7 +141,7 @@ public class RSConnectPublishButton extends Composite
          EventBus events, 
          Commands commands,
          GlobalDisplay display,
-         Provider<UIPrefs> pUiPrefs,
+         Provider<UserPrefs> pUiPrefs,
          Session session,
          PlotPublishMRUList plotMru)
    {
@@ -955,7 +955,7 @@ public class RSConnectPublishButton extends Composite
    private Commands commands_;
    private GlobalDisplay display_;
    private Session session_;
-   private Provider<UIPrefs> pUiPrefs_;
+   private Provider<UserPrefs> pUiPrefs_;
    private PlotPublishMRUList plotMru_;
 
    private String contentPath_;

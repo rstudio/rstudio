@@ -23,7 +23,7 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -76,7 +76,7 @@ public class EditingTargetCodeExecution
    
    @Inject
    void initialize(EventBus events,
-                   UIPrefs prefs,
+                   UserPrefs prefs,
                    Commands commands,
                    SourceServerOperations server)
    {
@@ -526,7 +526,7 @@ public class EditingTargetCodeExecution
    
    // Injected ----
    private EventBus events_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Commands commands_;
    @SuppressWarnings("unused")
    private SourceServerOperations server_;

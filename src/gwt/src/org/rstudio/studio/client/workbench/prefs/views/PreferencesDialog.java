@@ -26,9 +26,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
 {
@@ -47,7 +47,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             SpellingPreferencesPane spelling, 
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
-                            UIPrefs uiPrefs)
+                            UserPrefs uiPrefs)
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -100,7 +100,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
       // save changes
       server_.setPrefs(
          rPrefs, 
-         session_.getSessionInfo().getUiPrefs(),
+         session_.getSessionInfo().getUserPrefs(),
          new SimpleRequestCallback<Void>() {
 
             @Override
@@ -122,9 +122,9 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
       
       // broadcast UI pref changes to satellites
       RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
-                     new UiPrefsChangedEvent(UiPrefsChangedEvent.Data.create(
-                           UiPrefsChangedEvent.GLOBAL_TYPE,
-                           session_.getSessionInfo().getUiPrefs())));
+                     new UserPrefsChangedEvent(UserPrefsChangedEvent.Data.create(
+                           UserPrefsChangedEvent.GLOBAL_TYPE,
+                           session_.getSessionInfo().getUserPrefs())));
    }
   
    public static void ensureStylesInjected()

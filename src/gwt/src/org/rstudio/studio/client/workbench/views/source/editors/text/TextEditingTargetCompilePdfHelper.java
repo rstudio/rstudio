@@ -33,7 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
@@ -53,7 +53,7 @@ public class TextEditingTargetCompilePdfHelper
    }
    
    @Inject
-   public void initialize(UIPrefs prefs,
+   public void initialize(UserPrefs prefs,
                           Session session,
                           TexServerOperations server,
                           RnwWeaveRegistry rnwWeaveRegistry,
@@ -444,7 +444,7 @@ public class TextEditingTargetCompilePdfHelper
    
    private final DocDisplay docDisplay_;
    
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Session session_;
    private TexServerOperations server_;
    private RnwWeaveRegistry rnwWeaveRegistry_;

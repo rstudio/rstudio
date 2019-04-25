@@ -31,7 +31,7 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -309,7 +309,7 @@ public class ChunkOutputStream extends FlowPanel
          flushQueuedErrors();
       }
       
-      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
+      UserPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
       ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
             this, null);
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());

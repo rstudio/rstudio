@@ -69,7 +69,7 @@ import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
@@ -102,7 +102,7 @@ public class Workbench implements BusyHandler,
                     Commands commands,
                     EventBus eventBus,
                     Session session,
-                    Provider<UIPrefs> pPrefs,
+                    Provider<UserPrefs> pPrefs,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
@@ -645,7 +645,7 @@ public class Workbench implements BusyHandler,
    private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;
    private final Session session_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final WorkbenchMainView view_;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;

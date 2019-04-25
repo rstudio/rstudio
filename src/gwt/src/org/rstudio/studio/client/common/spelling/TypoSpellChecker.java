@@ -32,7 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -85,7 +85,7 @@ public class TypoSpellChecker
    }
 
    @Inject
-   void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UIPrefs uiPrefs)
+   void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       uiPrefs_ = uiPrefs;
@@ -267,6 +267,6 @@ public class TypoSpellChecker
    private ArrayList<String> contextDictionary_;
    private final HashSet<String> allIgnoredWords_ = new HashSet<>();
 
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
 }
 

@@ -17,7 +17,7 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
@@ -30,7 +30,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UIPrefs uiPrefs,
+   public static void initializeThemes(UserPrefs uiPrefs,
                                        Document document,
                                        Element element)
    {
@@ -69,7 +69,7 @@ public class RStudioThemes
       }
    }
 
-   public static boolean isFlat(UIPrefs prefs) {
+   public static boolean isFlat(UserPrefs prefs) {
       return prefs.getFlatTheme().getValue() != "classic"; 
    }
    
@@ -88,7 +88,7 @@ public class RStudioThemes
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUiPrefs(UIPrefs prefs) {
+   public static String getThemeFromUiPrefs(UserPrefs prefs) {
       return suggestThemeFromAceTheme(
         prefs.theme().getGlobalValue(),
         prefs.getFlatTheme().getGlobalValue()

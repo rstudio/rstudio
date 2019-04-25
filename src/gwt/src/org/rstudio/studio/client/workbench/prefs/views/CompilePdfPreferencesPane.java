@@ -28,14 +28,14 @@ import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
-   public CompilePdfPreferencesPane(UIPrefs prefs,
+   public CompilePdfPreferencesPane(UserPrefs prefs,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;
@@ -172,7 +172,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       return requiresRestart;
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;

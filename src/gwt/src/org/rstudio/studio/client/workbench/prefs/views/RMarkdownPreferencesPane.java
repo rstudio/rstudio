@@ -24,13 +24,13 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
    @Inject
-   public RMarkdownPreferencesPane(UIPrefs prefs,
+   public RMarkdownPreferencesPane(UserPrefs prefs,
                                    PreferencesDialogResources res,
                                    Session session)
    {
@@ -68,9 +68,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "(None)"
             },
             new String[] {
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_PANE).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_NONE).toString()
+                  UserPrefs.RMD_VIEWER_TYPE_WINDOW,
+                  UserPrefs.RMD_VIEWER_TYPE_PANE,
+                  UserPrefs.RMD_VIEWER_TYPE_NONE
             },
             false,
             true,
@@ -200,7 +200,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       return requiresRestart;
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    private final PreferencesDialogResources res_;
    

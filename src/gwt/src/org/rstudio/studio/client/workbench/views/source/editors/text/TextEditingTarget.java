@@ -125,7 +125,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -421,7 +421,7 @@ public class TextEditingTarget implements
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs, 
+                            UserPrefs prefs, 
                             BreakpointManager breakpointManager,
                             SourceBuildHelper sourceBuildHelper,
                             DependencyManager dependencyManager)
@@ -6635,7 +6635,7 @@ public class TextEditingTarget implements
    
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UIPrefs prefs,
+                     UserPrefs prefs,
                      ProjectConfig projectConfig,
                      DocDisplay docDisplay,
                      final SourceDocument sourceDoc)
@@ -6659,7 +6659,7 @@ public class TextEditingTarget implements
    
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UIPrefs prefs,
+                     UserPrefs prefs,
                      final ProjectConfig projectConfig,
                      final DocDisplay docDisplay,
                      final PrefsContext context)
@@ -6739,27 +6739,27 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setHighlightRFunctionCalls(arg);
                }}));
-      releaseOnDismiss.add(prefs.useVimMode().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseVimMode(arg);
+      releaseOnDismiss.add(prefs.editorKeybindings().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.setUseVimMode(arg == UserPrefs.EDITOR_KEYBINDINGS_VIM);
                }}));
-      releaseOnDismiss.add(prefs.enableEmacsKeybindings().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseEmacsKeybindings(arg);
+      releaseOnDismiss.add(prefs.editorKeybindings().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
                }}));
-      releaseOnDismiss.add(prefs.codeCompleteOther().bind(
+      releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             new CommandWithArg<String>() {
                public void execute(String arg) {
                   docDisplay.syncCompletionPrefs();
                }}));
-      releaseOnDismiss.add(prefs.alwaysCompleteCharacters().bind(
+      releaseOnDismiss.add(prefs.codeCompletionCharacters().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.syncCompletionPrefs();
                }}));
-      releaseOnDismiss.add(prefs.alwaysCompleteDelayMs().bind(
+      releaseOnDismiss.add(prefs.codeCompletionDelay().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.syncCompletionPrefs();
@@ -7288,7 +7288,7 @@ public class TextEditingTarget implements
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;

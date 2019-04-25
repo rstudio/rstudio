@@ -25,7 +25,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -130,7 +130,7 @@ public class TerminalInfoDialog extends ModalDialogBase
    }
 
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
       uiPrefs_ = uiPrefs;
    } 
@@ -146,5 +146,5 @@ public class TerminalInfoDialog extends ModalDialogBase
    private ThemedButton appendBufferButton_;
 
    // Injected ---- 
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
 }

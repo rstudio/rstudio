@@ -35,6 +35,7 @@
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionUserPrefs.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
@@ -272,7 +273,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                         "experience unexpected issues as a result.\n\n");
    }
 
-   sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+   sessionInfo["user_prefs"] = modules::prefs::userPrefs();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();

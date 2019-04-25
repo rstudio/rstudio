@@ -109,7 +109,7 @@ import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEve
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -529,8 +529,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.UiPrefsChanged)
          {
-            UiPrefsChangedEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new UiPrefsChangedEvent(data));
+            UserPrefsChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new UserPrefsChangedEvent(data));
          }
          else if (type == ClientEvent.ContextDepthChanged) {
             EnvironmentContextData data = event.getData();

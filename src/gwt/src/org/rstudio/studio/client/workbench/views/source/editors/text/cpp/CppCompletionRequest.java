@@ -22,7 +22,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -83,7 +83,7 @@ public class CppCompletionRequest
    }
 
    @Inject
-   void initialize(CppServerOperations server, UIPrefs uiPrefs)
+   void initialize(CppServerOperations server, UserPrefs uiPrefs)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
@@ -466,7 +466,7 @@ public class CppCompletionRequest
    }
    
    private CppServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
   
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;

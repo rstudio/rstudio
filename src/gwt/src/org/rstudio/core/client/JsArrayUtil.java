@@ -138,7 +138,7 @@ public class JsArrayUtil
    
    public static JsArrayString createStringArray(String ...strings)
    {
-      JsArrayString result = create();
+      JsArrayString result = JsArray.createArray().cast();
       for (String str: strings)
       {
          result.push(str);

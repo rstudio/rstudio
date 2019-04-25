@@ -70,7 +70,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -109,7 +109,7 @@ public class RSConnect implements SessionInitHandler,
                     SourceServerOperations sourceServer,
                     RPubsServerOperations rpubsServer,
                     RSAccountConnector connector,
-                    Provider<UIPrefs> pUiPrefs,
+                    Provider<UserPrefs> pUiPrefs,
                     PlotPublishMRUList plotMru)
    {
       commands_ = commands;
@@ -1183,7 +1183,7 @@ public class RSConnect implements SessionInitHandler,
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final RSAccountConnector connector_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUiPrefs_;
    private final PlotPublishMRUList plotMru_;
    
    private boolean launchBrowser_ = false;

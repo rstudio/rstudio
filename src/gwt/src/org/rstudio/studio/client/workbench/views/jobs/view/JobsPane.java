@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -33,7 +33,7 @@ public class JobsPane extends WorkbenchPane
                       implements JobsPresenter.Display
 {
    @Inject
-   public JobsPane(UIPrefs uiPrefs,
+   public JobsPane(UserPrefs uiPrefs,
                    JobsPaneWidgets widgets)
    {
       super("Jobs");
@@ -115,6 +115,6 @@ public class JobsPane extends WorkbenchPane
    private JobsDisplayImpl baseImpl_;
    
    // injected
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final JobsPaneWidgets widgets_;
 }

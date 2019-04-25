@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleState;
@@ -37,7 +37,7 @@ public class AceEditorIdleCommands
    }
    
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
       prefs_ = uiPrefs;
    }
@@ -106,7 +106,7 @@ public class AceEditorIdleCommands
       return Position.create(0, 0);
    }
 
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;

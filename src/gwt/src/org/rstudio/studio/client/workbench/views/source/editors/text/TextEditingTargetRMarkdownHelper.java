@@ -71,7 +71,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -105,7 +105,7 @@ public class TextEditingTargetRMarkdownHelper
    public void initialize(Session session,
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
-                          UIPrefs prefs,
+                          UserPrefs prefs,
                           ConsoleDispatcher consoleDispatcher,
                           WorkbenchContext workbenchContext,
                           FileTypeCommands fileTypeCommands,
@@ -1122,7 +1122,7 @@ public class TextEditingTargetRMarkdownHelper
    private Session session_;
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private ConsoleDispatcher consoleDispatcher_;
    private WorkbenchContext workbenchContext_;
    private FileTypeCommands fileTypeCommands_;

@@ -23,7 +23,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -76,12 +76,12 @@ public class CppCompletionManager implements CompletionManager
    @Inject
    void initialize(CppServerOperations server, 
                    FileTypeRegistry fileTypeRegistry,
-                   UIPrefs uiPrefs)
+                   UserPrefs uiPrefs)
    {
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
-      uiPrefs_ = uiPrefs;
-      suggestionTimer_ = new SuggestionTimer(this, uiPrefs_);
+      userPrefs_ = uiPrefs;
+      suggestionTimer_ = new SuggestionTimer(this, userPrefs_);
    }
    
    // close the completion popup (if any)
@@ -256,7 +256,7 @@ public class CppCompletionManager implements CompletionManager
 
       // don't do implicit completions if the user has set completion to manual
       // (but always do them if the completion popup is visible)
-      if (uiPrefs_.codeComplete().getValue() != UIPrefsAccessor.COMPLETION_MANUAL ||
+      if (userPrefs_.codeCompletion().getValue() != UserPrefs.CODE_COMPLETION_MANUAL ||
             isCompletionPopupVisible())
       {
          deferredSuggestCompletions(false, true);
@@ -305,9 +305,9 @@ public class CppCompletionManager implements CompletionManager
                                  ((request_ != null) && request_.isExplicit());
       
       // see if we even have a completion position
-      boolean alwaysComplete = uiPrefs_.codeComplete().getValue() ==
+      boolean alwaysComplete = userPrefs_.codeCompletion().getValue() ==
                                             UIPrefsAccessor.COMPLETION_ALWAYS;
-      int autoChars = uiPrefs_.alwaysCompleteCharacters().getValue();
+      int autoChars = userPrefs_.codeCompletionCharacters().getValue();
       final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,
                                                      positionExplicit,
@@ -375,10 +375,10 @@ public class CppCompletionManager implements CompletionManager
    
    private static class SuggestionTimer
    {
-      SuggestionTimer(CppCompletionManager manager, UIPrefs uiPrefs)
+      SuggestionTimer(CppCompletionManager manager, UserPrefs uiPrefs)
       {
          manager_ = manager;
-         uiPrefs_ = uiPrefs;
+         userPrefs_ = uiPrefs;
          timer_ = new Timer()
          {
             @Override
@@ -392,7 +392,7 @@ public class CppCompletionManager implements CompletionManager
       public void schedule(CompletionPosition completionPosition)
       {
          completionPosition_ = completionPosition;
-         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
+         timer_.schedule(userPrefs_.codeCompletionDelay().getValue());
       }
       
       public void cancel()
@@ -401,7 +401,7 @@ public class CppCompletionManager implements CompletionManager
       }
       
       private final CppCompletionManager manager_;
-      private final UIPrefs uiPrefs_;
+      private final UserPrefs userPrefs_;
       private final Timer timer_;
       private CompletionPosition completionPosition_;
    }
@@ -444,7 +444,7 @@ public class CppCompletionManager implements CompletionManager
    }
    
    private CppServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;

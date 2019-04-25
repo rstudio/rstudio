@@ -53,7 +53,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.Source;
@@ -271,7 +271,7 @@ public class TextEditingTargetNotebook
          ConsoleServerOperations console,
          SourceServerOperations source,
          Session session,
-         UIPrefs prefs,
+         UserPrefs prefs,
          Commands commands,
          ConsoleLanguageTracker languageTracker,
          Provider<SourceWindowManager> pSourceWindowManager,
@@ -1858,7 +1858,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Commands commands_;
    private ConsoleLanguageTracker languageTracker_;
    private NotebookHtmlRenderer htmlRenderer_;

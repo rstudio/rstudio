@@ -32,7 +32,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class ClearAllDialog extends ModalDialogBase
 {  
@@ -60,7 +60,7 @@ public class ClearAllDialog extends ModalDialogBase
    }
    
    @Inject 
-   void initialize(UIPrefs prefs)
+   void initialize(UserPrefs prefs)
    {
       prefs_ = prefs;
    }
@@ -124,6 +124,6 @@ public class ClearAllDialog extends ModalDialogBase
    
    private ProgressIndicator progress_ ;
    private CheckBox chkIncludeHidden_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private int numObjects_;
 }

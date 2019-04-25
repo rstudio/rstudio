@@ -39,7 +39,7 @@ import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -66,7 +66,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    public PlumberAPI(EventBus eventBus, 
                      Commands commands,
                      Binder binder,
-                     Provider<UIPrefs> pPrefs,
+                     Provider<UserPrefs> pPrefs,
                      final SatelliteManager satelliteManager, 
                      PlumberServerOperations server,
                      GlobalDisplay display,
@@ -335,7 +335,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
 
    private void setPlumberViewerType(int viewerType)
    {
-      UIPrefs prefs = pPrefs_.get();
+      UserPrefs prefs = pPrefs_.get();
       prefs.plumberViewerType().setGlobalValue(viewerType);
       prefs.writeUIPrefs();
 
@@ -431,7 +431,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    private final SatelliteManager satelliteManager_;
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final PlumberServerOperations server_;
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;

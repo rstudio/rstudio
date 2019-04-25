@@ -39,7 +39,7 @@ import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerOptions;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -66,7 +66,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    public ShinyApplication(EventBus eventBus, 
                            Commands commands,
                            Binder binder,
-                           Provider<UIPrefs> pPrefs,
+                           Provider<UserPrefs> pPrefs,
                            final SatelliteManager satelliteManager, 
                            ShinyServerOperations server,
                            GlobalDisplay display,
@@ -361,7 +361,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    private void setShinyViewerType(int viewerType)
    {
-      UIPrefs prefs = pPrefs_.get();
+      UserPrefs prefs = pPrefs_.get();
       prefs.shinyViewerType().setGlobalValue(viewerType);
       prefs.writeUIPrefs();
 
@@ -466,7 +466,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private final SatelliteManager satelliteManager_;
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final ShinyServerOperations server_;
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;

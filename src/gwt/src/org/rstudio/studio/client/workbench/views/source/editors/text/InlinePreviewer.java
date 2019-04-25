@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
@@ -30,7 +30,7 @@ public class InlinePreviewer
                         ValueChangeHandler<String>
 {
    public InlinePreviewer(TextEditingTarget target, DocUpdateSentinel sentinel, 
-         UIPrefs prefs)
+         UserPrefs prefs)
    {
       display_ = target.getDocDisplay();
       sentinel_ = sentinel;
@@ -94,7 +94,7 @@ public class InlinePreviewer
 
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final ImagePreviewer images_;
    private final MathJaxPreviewer mathjax_;
    private HandlerRegistration scopeReg_;

@@ -60,7 +60,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -109,7 +109,7 @@ public class ViewerPresenter extends BasePresenter
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          Provider<UIPrefs> pUIPrefs,
+                          Provider<UserPrefs> pUIPrefs,
                           HtmlMessageListener htmlMessageListener)
    {
       super(display);
@@ -603,7 +603,7 @@ public class ViewerPresenter extends BasePresenter
          {
             public void execute(ExportPlotOptions options)
             {
-               UIPrefs uiPrefs = pUIPrefs_.get();
+               UserPrefs uiPrefs = pUIPrefs_.get();
                if (!ExportPlotOptions.areEqual(
                                options,
                                uiPrefs.exportViewerOptions().getValue()))
@@ -623,7 +623,7 @@ public class ViewerPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileSystemContext_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final SourceShim sourceShim_; 
    private final ShinyDisconnectNotifier shinyNotifier_;
    

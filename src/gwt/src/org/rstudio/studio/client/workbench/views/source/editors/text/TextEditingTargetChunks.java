@@ -20,7 +20,7 @@ import java.util.Map;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
@@ -104,7 +104,7 @@ public class TextEditingTargetChunks
    // Private methods ---------------------------------------------------------
    
    @Inject
-   private void initialize(UIPrefs prefs)
+   private void initialize(UserPrefs prefs)
    {
       prefs_ = prefs;
       dark_ = prefs.theme().getValue().isDark();
@@ -267,7 +267,7 @@ public class TextEditingTargetChunks
    private boolean dark_;
    private boolean initialized_;
    
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
 
    private int lastRow_;
    

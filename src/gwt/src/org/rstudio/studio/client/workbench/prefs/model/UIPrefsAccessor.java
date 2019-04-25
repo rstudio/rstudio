@@ -581,7 +581,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> rmdViewerType()
    {
-      return integer("rmd_viewer_type", RmdOutput.RMD_VIEWER_TYPE_WINDOW);
+      return integer("rmd_viewer_type", UserPrefs.RMD_VIEWER_TYPE_WINDOW);
    }
    
    public PrefValue<Boolean> showPublishUi()

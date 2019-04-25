@@ -31,7 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 
 public class OptionsLoader
@@ -45,7 +45,7 @@ public class OptionsLoader
 
    @Inject
    OptionsLoader(GlobalDisplay globalDisplay,
-                 UIPrefs uiPrefs,
+                 UserPrefs uiPrefs,
                  Commands commands,
                  WorkbenchServerOperations server,
                  Provider<PreferencesDialog> pPrefDialog)
@@ -170,6 +170,6 @@ public class OptionsLoader
    private final GlobalDisplay globalDisplay_;
    private final WorkbenchServerOperations server_;
    private final Commands commands_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final Provider<PreferencesDialog> pPrefDialog_;
 }

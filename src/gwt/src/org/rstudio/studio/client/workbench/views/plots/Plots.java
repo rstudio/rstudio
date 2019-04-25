@@ -52,7 +52,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -98,7 +98,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
                 WorkbenchContext workbenchContext,
-                Provider<UIPrefs> uiPrefs,
+                Provider<UserPrefs> uiPrefs,
                 Commands commands,
                 EventBus events,
                 final PlotsServerOperations server,
@@ -377,7 +377,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                 options,
                                                 currentOptions))
                        {
-                          UIPrefs prefs = uiPrefs_.get();
+                          UserPrefs prefs = uiPrefs_.get();
                           prefs.savePlotAsPdfOptions().setGlobalValue(options);
                           prefs.writeUIPrefs();    
                        }
@@ -417,7 +417,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       {
          public void execute(ExportPlotOptions options)
          {
-            UIPrefs uiPrefs = uiPrefs_.get();
+            UserPrefs uiPrefs = uiPrefs_.get();
             if (!ExportPlotOptions.areEqual(
                             options,
                             uiPrefs.exportPlotOptions().getValue()))
@@ -612,7 +612,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> uiPrefs_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    private WindowEx zoomWindow_;

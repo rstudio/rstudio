@@ -31,7 +31,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SpellingPreferencesPane extends PreferencesPane
 {
@@ -39,7 +39,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    public SpellingPreferencesPane(GlobalDisplay globalDisplay,
                                   PreferencesDialogResources res,
                                   SpellingService spellingService,
-                                  UIPrefs prefs)
+                                  UserPrefs prefs)
    {
       globalDisplay_ = globalDisplay;
       res_ = res;
@@ -157,7 +157,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
    private final SpellingCustomDictionariesWidget customDictsWidget_;

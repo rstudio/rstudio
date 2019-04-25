@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
@@ -37,7 +37,7 @@ public class HtmlMessageListener
    @Inject
    public HtmlMessageListener(FileTypeRegistry fileTypeRegistry,
                                  EventBus eventBus,
-                                 Provider<UIPrefs> pUIPrefs)
+                                 Provider<UserPrefs> pUIPrefs)
    {
       htmlMessageListener_ = this;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -46,12 +46,12 @@ public class HtmlMessageListener
       
       initializeMessageListeners();
 
-      eventBus.addHandler(UiPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
       {
          @Override
-         public void onUiPrefsChanged(UiPrefsChangedEvent e)
+         public void onUiPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (e.getType() == UiPrefsChangedEvent.GLOBAL_TYPE)
+            if (e.getType() == UserPrefsChangedEvent.GLOBAL_TYPE)
             {
                for (JavaScriptObject themeSource : themeSources_) {
                   postThemeMessage(themeSource, themeOrigin_);
@@ -174,7 +174,7 @@ public class HtmlMessageListener
    
    private final FileTypeRegistry fileTypeRegistry_;
    private static HtmlMessageListener htmlMessageListener_;
-   private Provider<UIPrefs> pUIPrefs_;
+   private Provider<UserPrefs> pUIPrefs_;
 
    private String url_;
    private boolean highlightAllowed_;

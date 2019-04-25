@@ -1,7 +1,7 @@
 /*
- * UiPrefsChangedEvent.java
+ * UserPrefsChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.core.client.JavaScriptObject;
 
 @JavaScriptSerializable
-public class UiPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandler>
+public class UserPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandler>
 {
    public static final String GLOBAL_TYPE = "global";
    public static final String PROJECT_TYPE = "project";
@@ -50,11 +50,11 @@ public class UiPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandler>
    
    public static final Type<UiPrefsChangedHandler> TYPE = new Type<UiPrefsChangedHandler>();
    
-   public UiPrefsChangedEvent()
+   public UserPrefsChangedEvent()
    {
    }
 
-   public UiPrefsChangedEvent(Data data)
+   public UserPrefsChangedEvent(Data data)
    {
       data_ = data;
    }

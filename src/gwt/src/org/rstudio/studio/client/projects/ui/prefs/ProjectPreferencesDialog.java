@@ -32,7 +32,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -51,7 +51,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
-                                   Provider<UIPrefs> pUIPrefs,
+                                   Provider<UserPrefs> pUIPrefs,
                                    Provider<EventBus> pEventBus,
                                    Provider<PackratUtil> pPackratUtil,
                                    Provider<Session> session,
@@ -117,7 +117,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
-                UIPrefs uiPrefs = pUIPrefs_.get();
+                UserPrefs uiPrefs = pUIPrefs_.get();
                 uiPrefs.useSpacesForTab().setProjectValue(
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
@@ -279,7 +279,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
  
    private final Provider<Session> session_;
    private final ProjectsServerOperations server_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final Provider<EventBus> pEventBus_;
    private final Provider<PackratUtil> pPackratUtil_;
    

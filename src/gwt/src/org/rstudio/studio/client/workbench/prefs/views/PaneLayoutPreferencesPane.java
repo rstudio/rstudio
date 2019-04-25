@@ -28,7 +28,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
 import java.util.ArrayList;
@@ -151,7 +151,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
-                                    UIPrefs uiPrefs)
+                                    UserPrefs uiPrefs)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
@@ -378,7 +378,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final ListBox leftTop_;
    private final ListBox leftBottom_;
    private final ListBox rightTop_;

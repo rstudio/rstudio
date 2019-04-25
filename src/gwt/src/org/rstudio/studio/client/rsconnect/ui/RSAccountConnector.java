@@ -38,7 +38,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
@@ -73,7 +73,7 @@ public class RSAccountConnector implements
          OptionsLoader.Shim optionsLoader,
          EventBus events,
          Session session,
-         Provider<UIPrefs> pUiPrefs,
+         Provider<UserPrefs> pUiPrefs,
          Satellite satellite)
    {
       server_ = server;
@@ -387,7 +387,7 @@ public class RSAccountConnector implements
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUiPrefs_;
    private final Session session_;
    
    private boolean showingWizard_;

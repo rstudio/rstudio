@@ -21,16 +21,16 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.UIPrefMenuItem;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class FileCommandToolbar extends Toolbar
 {
    @Inject
-   public FileCommandToolbar(Commands commands, Session session, UIPrefs prefs)
+   public FileCommandToolbar(Commands commands, Session session, UserPrefs prefs)
    {
       StandardIcons icons = StandardIcons.INSTANCE;
 
@@ -55,7 +55,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
+      moreMenu.addItem(new UserPrefMenuItem<Boolean>(
             prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
       ToolbarButton moreButton = new ToolbarButton("More",

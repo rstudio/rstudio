@@ -26,7 +26,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
@@ -207,7 +207,7 @@ public class AceBackgroundHighlighter
    }
    
    @Inject
-   private void initialize(UIPrefs prefs)
+   private void initialize(UserPrefs prefs)
    {
       prefs_ = prefs;
    }
@@ -477,7 +477,7 @@ public class AceBackgroundHighlighter
    private static final Map<String, List<HighlightPattern>> HIGHLIGHT_PATTERN_REGISTRY;
    
    // Injected ----
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    
    // Static Members ----
    

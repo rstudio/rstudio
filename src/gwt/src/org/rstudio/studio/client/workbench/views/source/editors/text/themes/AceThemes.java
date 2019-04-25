@@ -37,7 +37,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
@@ -49,7 +49,7 @@ public class AceThemes
 {
    @Inject
    public AceThemes(ThemeServerOperations themeServerOperations,
-                    final Provider<UIPrefs> prefs,
+                    final Provider<UserPrefs> prefs,
                     EventBus events)
    {
       themeServerOperations_ = themeServerOperations;
@@ -248,7 +248,7 @@ public class AceThemes
 
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
-   private final Provider<UIPrefs> prefs_;
+   private final Provider<UserPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
    private HashMap<String, AceTheme> themes_;
 }

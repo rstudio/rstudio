@@ -34,7 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -73,7 +73,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UIPrefs prefs, EventBus events)
+   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
@@ -774,7 +774,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    // A list of errors that have occurred between console prompts. 
    private Map<String, List<Element>> errorNodes_ = new TreeMap<String, List<Element>>();

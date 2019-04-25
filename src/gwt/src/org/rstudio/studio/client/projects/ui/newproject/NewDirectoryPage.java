@@ -27,7 +27,7 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
@@ -95,7 +95,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
-      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       

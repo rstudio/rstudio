@@ -53,7 +53,7 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -102,7 +102,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 Display display,
                 Session session,
                 Commands commands,
-                UIPrefs uiPrefs, 
+                UserPrefs uiPrefs, 
                 ErrorManager errorManager,
                 DependencyManager dependencyManager,
                 ConsoleEditorProvider editorProvider,
@@ -768,7 +768,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    private final ConsoleLanguageTracker languageTracker_;
    

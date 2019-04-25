@@ -26,7 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -206,7 +206,7 @@ public class SignatureToolTipManager
    }
    
    @Inject
-   public void initialize(UIPrefs uiPrefs,
+   public void initialize(UserPrefs uiPrefs,
                           EventBus events,
                           CodeToolsServerOperations server)
    {
@@ -589,7 +589,7 @@ public class SignatureToolTipManager
    private AnchoredSelection anchor_;
    private boolean ready_;
 
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private EventBus events_;
    private CodeToolsServerOperations server_;
    

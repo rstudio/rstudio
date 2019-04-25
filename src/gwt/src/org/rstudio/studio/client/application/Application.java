@@ -83,7 +83,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -103,7 +103,7 @@ public class Application implements ApplicationEventHandlers
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
                       SessionOpener sessionOpener,
-                      Provider<UIPrefs> uiPrefs,
+                      Provider<UserPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -1197,7 +1197,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
    private final SessionOpener sessionOpener_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> uiPrefs_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;

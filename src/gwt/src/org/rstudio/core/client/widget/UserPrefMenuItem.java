@@ -1,7 +1,7 @@
 /*
- * UIPrefMenuItem.java
+ * UserPrefMenuItem.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -25,10 +25,10 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 // A menu item that represents a given value for a given UIPref. Shows a check
 // when the UIPref is set to the value. Invoking the menu item sets the UIPref
 // to the value.
-public class UIPrefMenuItem <T> extends CheckableMenuItem
+public class UserPrefMenuItem <T> extends CheckableMenuItem
 {
-   public UIPrefMenuItem(PrefValue<T> prefValue, T targetValue, 
-                         String label, UIPrefs uiPrefs)
+   public UserPrefMenuItem(PrefValue<T> prefValue, T targetValue, 
+                         String label, UserPrefs uiPrefs)
    {
       targetValue_ = targetValue;
       label_ = label;
@@ -79,6 +79,6 @@ public class UIPrefMenuItem <T> extends CheckableMenuItem
    
    T targetValue_;
    PrefValue<T> prefValue_;
-   UIPrefs uiPrefs_;
+   UserPrefs uiPrefs_;
    String label_;
 }

@@ -42,7 +42,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
@@ -62,7 +62,7 @@ public class DesktopHooks
                        EventBus events,
                        Session session,
                        GlobalDisplay globalDisplay,
-                       Provider<UIPrefs> pUIPrefs,
+                       Provider<UserPrefs> pUIPrefs,
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
@@ -240,7 +240,7 @@ public class DesktopHooks
    private final EventBus events_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;

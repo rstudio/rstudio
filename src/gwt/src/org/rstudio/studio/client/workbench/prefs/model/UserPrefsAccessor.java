@@ -421,6 +421,7 @@ public class UserPrefsAccessor extends Prefs
       return string("code_completion", "always");
    }
 
+   public final static String CODE_COMPLETION_ALWAYS = "always";
    public final static String CODE_COMPLETION_NEVER = "never";
    public final static String CODE_COMPLETION_TRIGGERED = "triggered";
    public final static String CODE_COMPLETION_MANUAL = "manual";
@@ -433,7 +434,7 @@ public class UserPrefsAccessor extends Prefs
       return string("code_completion_other", "always");
    }
 
-   public final static String CODE_COMPLETION_OTHER_NEVER = "never";
+   public final static String CODE_COMPLETION_OTHER_ALWAYS = "always";
    public final static String CODE_COMPLETION_OTHER_TRIGGERED = "triggered";
    public final static String CODE_COMPLETION_OTHER_MANUAL = "manual";
 
@@ -555,6 +556,14 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> warnIfNoSuchVariableInScope()
    {
       return bool("warn_if_no_such_variable_in_scope", false);
+   }
+
+   /**
+    * Whether to generate a warning if a variable is defined without being used in the current scope
+    */
+   public PrefValue<Boolean> warnVariableDefinedButNotUsed()
+   {
+      return bool("warn_variable_defined_but_not_used", false);
    }
 
    /**
@@ -813,9 +822,9 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Whether to always enable the concordance for RNW files.
     */
-   public PrefValue<Boolean> alwaysEnableConcordance()
+   public PrefValue<Boolean> alwaysEnableRnwConcordance()
    {
-      return bool("always_enable_concordance", true);
+      return bool("always_enable_rnw_concordance", true);
    }
 
    /**

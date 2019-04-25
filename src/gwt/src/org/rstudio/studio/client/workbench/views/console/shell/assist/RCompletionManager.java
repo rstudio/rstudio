@@ -55,7 +55,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -119,7 +119,7 @@ public class RCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTipManager_ = new SignatureToolTipManager(docDisplay_);
-      suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
+      suggestTimer_ = new SuggestionTimer(this, userPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
@@ -243,13 +243,13 @@ public class RCompletionManager implements CompletionManager
                           FileTypeRegistry fileTypeRegistry,
                           EventBus eventBus,
                           HelpStrategy helpStrategy,
-                          UIPrefs uiPrefs)
+                          UserPrefs uiPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    }
    
    public void detach()
@@ -681,7 +681,7 @@ public class RCompletionManager implements CompletionManager
       boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
       
-      if (isConsole_ && !uiPrefs_.alwaysCompleteInConsole().getValue())
+      if (isConsole_ && !userPrefs_.consoleCodeCompletion().getValue())
          canAutoPopup = false;
 
       if (canAutoPopup)
@@ -798,8 +798,8 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue() ==
-               UIPrefsAccessor.COMPLETION_ALWAYS;
+         boolean autoPopupEnabled = userPrefs_.codeCompletion().getValue() ==
+               UserPrefs.CODE_COMPLETION_ALWAYS;
 
          if (!autoPopupEnabled)
             return false;
@@ -835,7 +835,7 @@ public class RCompletionManager implements CompletionManager
          }
          
          // Check for a valid number of R identifier characters for autopopup
-         boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
+         boolean canAutoPopup = checkCanAutoPopup(c, userPrefs_.codeCompletionCharacters().getValue() - 1);
          
          // Attempt to pop up completions immediately after a function call.
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
@@ -1170,7 +1170,7 @@ public class RCompletionManager implements CompletionManager
       
       // don't auto-complete with tab on lines with only whitespace,
       // if the insertion character was a tab (unless the user has opted in)
-      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
+      if (!userPrefs_.tabMultilineCompletion().getValue())
       {
          if (nativeEvent_ != null &&
                nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB)
@@ -1980,7 +1980,7 @@ public class RCompletionManager implements CompletionManager
          }
          
          boolean insertParen =
-               uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
+               userPrefs_.insertParensAfterFunctionCompletion().getValue() &&
                RCompletionType.isFunctionType(qualifiedName.type);
          
          // Don't insert a paren if there is already a '(' following
@@ -2051,7 +2051,7 @@ public class RCompletionManager implements CompletionManager
                !overrideInsertParens_ &&
                !textFollowingCursorIsOpenParen;
          
-         boolean insertMatching = uiPrefs_.insertMatching().getValue();
+         boolean insertMatching = userPrefs_.insertMatching().getValue();
          boolean needToMoveCursorInsideParens = false;
          if (shouldInsertParens)
          {
@@ -2074,7 +2074,7 @@ public class RCompletionManager implements CompletionManager
 
             // don't add spaces around equals if requested
             final String kSpaceEquals = " = ";
-            if (!uiPrefs_.insertSpacesAroundEquals().getValue() &&
+            if (!userPrefs_.insertSpacesAroundEquals().getValue() &&
                   value.endsWith(kSpaceEquals))
             {
                value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
@@ -2168,7 +2168,7 @@ public class RCompletionManager implements CompletionManager
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
    private HelpStrategy helpStrategy_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
@@ -2201,10 +2201,10 @@ public class RCompletionManager implements CompletionManager
    
    private static class SuggestionTimer
    {
-      SuggestionTimer(RCompletionManager manager, UIPrefs uiPrefs)
+      SuggestionTimer(RCompletionManager manager, UserPrefs uiPrefs)
       {
          manager_ = manager;
-         uiPrefs_ = uiPrefs;
+         userPrefs_ = uiPrefs;
          timer_ = new Timer()
          {
             @Override
@@ -2225,7 +2225,7 @@ public class RCompletionManager implements CompletionManager
          flushCache_ = flushCache;
          implicit_ = implicit;
          canAutoInsert_ = canAutoInsert;
-         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
+         timer_.schedule(userPrefs_.codeCompletionDelay().getValue());
       }
       
       public void cancel()
@@ -2234,7 +2234,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       private final RCompletionManager manager_;
-      private final UIPrefs uiPrefs_;
+      private final UserPrefs userPrefs_;
       private final Timer timer_;
       
       private boolean flushCache_;
