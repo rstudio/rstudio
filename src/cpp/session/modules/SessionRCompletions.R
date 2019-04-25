@@ -70,8 +70,14 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionType", function(object)
 {
+   # Control-flow keywords
+   if (identical(object, base::`break`) ||
+       identical(object, base::`next`) ||
+       identical(object, base::`repeat`))
+      .rs.acCompletionTypes$KEYWORD
+   
    # Reference classes
-   if (inherits(object, "refMethodDef"))
+   else if (inherits(object, "refMethodDef"))
       .rs.acCompletionTypes$R5_METHOD
    else if (inherits(object, "refObjectGenerator"))
       .rs.acCompletionTypes$R5_CLASS
@@ -1566,9 +1572,6 @@ assign(x = ".rs.acCompletionTypes",
       rep.int(names[i], length(objects[[i]]))
    }))
    
-   # Keywords are really from the base package
-   packages[packages == "keywords"] <- "base"
-   
    # discover completion matches for this token
    keep <- .rs.fuzzyMatches(results, token)
    results <- results[keep]
@@ -1626,6 +1629,9 @@ assign(x = ".rs.acCompletionTypes",
       return(type)
       
    }, FUN.VALUE = numeric(1), USE.NAMES = FALSE)
+   
+   # Keywords are really from the base package
+   packages[packages == "keywords"] <- "base"
    
    .rs.makeCompletions(token = token,
                        results = results,
