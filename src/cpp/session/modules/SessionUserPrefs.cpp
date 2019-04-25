@@ -84,7 +84,7 @@ Error initialize()
 
    // Load schema for validation
    FilePath schemaFile = 
-      options().rResourcesPath().complete("prefs").complete("user-prefs-schema.json");
+      options().rResourcesPath().complete("schema").complete("user-prefs-schema.json");
    std::string schemaContents;
    error = readStringFromFile(schemaFile, &schemaContents);
    if (error)

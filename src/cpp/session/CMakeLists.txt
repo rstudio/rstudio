@@ -151,6 +151,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionUserPrefs.cpp
+   modules/SessionUserState.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/build/SessionBuild.cpp

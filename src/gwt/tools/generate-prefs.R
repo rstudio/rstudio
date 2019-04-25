@@ -4,7 +4,7 @@ require(jsonlite)
 require(stringi)
 
 # Extract prefs from JSON schema
-schema <- jsonlite::read_json("../../cpp/session/resources/prefs/user-prefs-schema.json")
+schema <- jsonlite::read_json("../../cpp/session/resources/schema/user-prefs-schema.json")
 prefs <- schema$properties
 java <- ""
 
