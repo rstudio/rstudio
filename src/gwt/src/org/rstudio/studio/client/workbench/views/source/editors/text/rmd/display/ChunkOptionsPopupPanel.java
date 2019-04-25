@@ -240,6 +240,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             "message");
       panel_.add(showMessagesInOutputCb_);
 
+      cacheChunkCb_ = makeTriStateToggle(
+            "Cache chunk",
+            "cache");
+      panel_.add(cacheChunkCb_);
+      cacheChunkCb_.setVisible(false);
+
       printTableAsTextCb_ = makeTriStateToggle(
             "Use paged tables",
             "paged.print");
