@@ -36,6 +36,7 @@
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionUserPrefs.hpp"
+#include "modules/SessionUserState.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
@@ -274,6 +275,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    sessionInfo["user_prefs"] = modules::prefs::userPrefs();
+   sessionInfo["user_state"] = modules::state::userState();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();
