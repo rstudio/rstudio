@@ -116,6 +116,7 @@ function prepare() {
                   var errorDiv = document.getElementById('errorpanel');
                   errorDiv.innerHTML = '';
                   var errorp = document.createElement('p');
+                  errorp.id = "errortext";
                   errorDiv.appendChild(errorp);
                   if (typeof(errorp.innerText) == 'undefined')
                      errorp.textContent = errorMessage;
@@ -155,8 +156,9 @@ function submitRealForm() {
 <header role="banner" id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a></header>
 <main role="main">
 <div id="errorpanel">
-<p>Error: #errorMessage#</p>
+<p id="errortext">Error: #errorMessage#</p>
 </div>
+<div aria-live="assertive" class="visuallyhidden" id="live-error"></div>
 
 <form method="POST" #!formAction#>
 <table id="border" align="center">
@@ -212,9 +214,19 @@ function submitRealForm() {
 #!loginPageHtml#
 </div>
 
-
 <script type="text/javascript">
 document.getElementById('username').focus();
+
+// If error message displayed, give time for screen reader to catch up then
+// copy error message to aria-live region
+var errorPanel = document.getElementById('errorpanel');
+var displayProp = window.getComputedStyle(errorPanel, null).getPropertyValue("display");
+if (displayProp !== "none")
+{
+   setTimeout(function () {
+      document.getElementById("live-error").innerText = document.getElementById("errortext").innerText;
+   }, 2000);
+}
 </script>
 </main>
 </html>
