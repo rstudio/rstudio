@@ -765,6 +765,23 @@ Error FilePath::copy(const FilePath& targetPath) const
 }
 
 
+bool FilePath::isRegularFile() const
+{
+   try
+   {
+      if (!exists())
+         return false;
+      else
+      {
+         return boost::filesystem::is_regular_file(pImpl_->path);
+      }
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      return false;
+   }
+}
 
 bool FilePath::isHidden() const
 {

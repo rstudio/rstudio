@@ -161,6 +161,9 @@ public:
    // copy to path
    Error copy(const FilePath& targetPath) const;
 
+   // is this a regular file?
+   bool isRegularFile() const ;
+
    // is this a hidden file?
    bool isHidden() const ;
 
