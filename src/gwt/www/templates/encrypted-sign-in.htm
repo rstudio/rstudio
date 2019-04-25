@@ -21,7 +21,7 @@
 <title>RStudio Sign In</title>
 <link rel="shortcut icon" href="images/favicon.ico" />
 
-<script language='javascript'>
+<script>
 function verifyMe()
 {
    if(document.getElementById('username').value=='')
@@ -72,13 +72,13 @@ input[type=text], input[type=password] {
 #errorpanel {
   text-align: center;
   padding: 0 25% 0 25%;
-  color: red;
+  color: #e60000;
   display: #errorDisplay#;
   font-weight: bold;
 }
 
 button.fancy {
-  background-color: #75aadb;
+  background-color: #1e77bc;
   border-radius: 4px;
   font-weight: bold;
   font-size: 14px;
@@ -151,9 +151,9 @@ function submitRealForm() {
 </script>
 
 </head>
-
-<h3 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="27" title="RStudio"/></a></h3>
-
+<div id="skipnav"><a href="#username">Skip navigation</a></div>
+<header role="banner" id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a></header>
+<main role="main">
 <div id="errorpanel">
 <p>Error: #errorMessage#</p>
 </div>
@@ -162,7 +162,8 @@ function submitRealForm() {
 <table id="border" align="center">
   <tr>
     <td>
-      <h2 id="caption">Sign in to RStudio</h2>
+      <h1 id="caption">Sign in to RStudio</h1>
+      <div role="group" aria-labelledby="caption">
       <p>
          <label for="username">Username:</label><br />
          <input type='text' 
@@ -192,6 +193,7 @@ function submitRealForm() {
          <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
          <label for="staySignedIn">Stay signed in</label>
       </p>
+      </div>
        <input type="hidden" name="appUri" value="#appUri#"/>
        <div id="buttonpanel"><button class="fancy" type="submit">Sign In</button></div>
     </td>
@@ -214,5 +216,5 @@ function submitRealForm() {
 <script type="text/javascript">
 document.getElementById('username').focus();
 </script>
-</body>
+</main>
 </html>
