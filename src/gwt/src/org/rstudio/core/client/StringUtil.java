@@ -1405,14 +1405,10 @@ public class StringUtil
     */
    public static char charAt(String str, int pos)
    {
-      try
-      {
-         return str.charAt(pos);         
-      }
-      catch (StringIndexOutOfBoundsException ex)
-      {
-         return '\0';         
-      }
+      if (pos < 0 || pos >= str.length())
+         return '\0';
+      
+      return str.charAt(pos);
    }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
