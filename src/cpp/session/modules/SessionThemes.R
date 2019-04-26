@@ -878,6 +878,11 @@
          "\" is valid.",
          call. = FALSE)
    }
+   
+   if (length(themeLines) == 0)
+   {
+      stop("The theme file is empty.", call. = FALSE);
+   }
       
    # Check if a theme with the same name already exists in the current location.
    dupTheme <- .rs.getThemes()[[tolower(name)]]

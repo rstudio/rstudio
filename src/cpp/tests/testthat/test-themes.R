@@ -1669,6 +1669,13 @@ AFTER_FUN = function() {
    }
 })
 
+test_that("adTheme gives an error when adding an empty theme", {
+   themePath <- file.path(inputFileLocation, "rsthemes", "empty.rstheme")
+   expect_error(
+      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      paste0("The theme file is empty."))
+})
+
 test_that_wrapped("addTheme gives error when the theme already exists", {
    themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
    .rs.addTheme(themePath, FALSE, FALSE, FALSE)
