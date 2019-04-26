@@ -26,14 +26,14 @@ function verifyMe()
 {
    if(document.getElementById('username').value=='')
    {
-      alert('You must enter a username');
       document.getElementById('username').focus();
+      showError('You must enter a username');
       return false;
    }
    if(document.getElementById('password').value=='')
    {
-      alert('You must enter a password');
       document.getElementById('password').focus();
+      showError('You must enter a password');
       return false;
    }
    return true;
@@ -95,6 +95,25 @@ button.fancy {
 
 <script type="text/javascript" src="js/encrypt.min.js"></script>
 <script type="text/javascript">
+
+function speakError() {
+   document.getElementById("live-error").innerText = document.getElementById("errortext").innerText;
+}
+
+function showError(errorMessage) {
+   var errorDiv = document.getElementById('errorpanel');
+   errorDiv.innerHTML = '';
+   var errorp = document.createElement('p');
+   errorp.id = "errortext";
+   errorDiv.appendChild(errorp);
+   if (typeof(errorp.innerText) == 'undefined')
+      errorp.textContent = errorMessage;
+   else
+      errorp.innerText = errorMessage;
+   errorDiv.style.display = 'block';
+   speakError();
+}
+
 function prepare() {
    if (!verifyMe())
       return false;
@@ -112,17 +131,7 @@ function prepare() {
                      errorMessage = "Error: Could not reach server--check your internet connection";
                   else
                      errorMessage = "Error: " + xhr.statusText;
-                     
-                  var errorDiv = document.getElementById('errorpanel');
-                  errorDiv.innerHTML = '';
-                  var errorp = document.createElement('p');
-                  errorp.id = "errortext";
-                  errorDiv.appendChild(errorp);
-                  if (typeof(errorp.innerText) == 'undefined')
-                     errorp.textContent = errorMessage;
-                  else
-                     errorp.innerText = errorMessage;
-                  errorDiv.style.display = 'block';
+                  showError(errorMessage);
                }
                else {
                   var response = xhr.responseText;
@@ -137,12 +146,12 @@ function prepare() {
                }
             }
          } catch (exception) {
-            alert("Error: " + exception);
+            showError("Error: " + exception);
          }
       };
       xhr.send(null);
    } catch (exception) {
-      alert("Error: " + exception);
+      showError("Error: " + exception);
    }
 }
 function submitRealForm() {
@@ -158,7 +167,7 @@ function submitRealForm() {
 <div id="errorpanel">
 <p id="errortext">Error: #errorMessage#</p>
 </div>
-<div aria-live="assertive" class="visuallyhidden" id="live-error"></div>
+<div role="alert" aria-atomic="true" class="visuallyhidden" id="live-error"></div>
 
 <form method="POST" #!formAction#>
 <table id="border" align="center">
@@ -223,9 +232,9 @@ if (displayProp !== "none")
 {
    document.title = "Error: RStudio Sign In Failed";
    // If error message displayed, give time for screen reader to catch up then
-   // copy error message to aria-live region
+   // copy error message to aria-live region to trigger announcement
    setTimeout(function () {
-      document.getElementById("live-error").innerText = document.getElementById("errortext").innerText;
+      speakError();
    }, 2000);
 }
 </script>
