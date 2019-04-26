@@ -18,7 +18,8 @@ generate <- function (schemaPath) {
       type <- def[["type"]]
       if (type == "object") {
          # Rich objects are converted to JavaScript native types
-         type <- stringi::stri_trans_totitle(camel)
+         type <- paste0(toupper(substring(camel, 1, 1)), 
+                        substring(camel, 2))
       } else if (type == "numeric") {
          # Numerics (not integers) become Double objects
          type <- "Double"
@@ -28,7 +29,8 @@ generate <- function (schemaPath) {
          type <- "JsArrayString"
       } else {
          # For all other types, we uppercase the type name to get a class name
-         type <- stringi::stri_trans_totitle(type)
+         type <- paste0(toupper(substring(type, 1, 1)), 
+                        substring(type, 2))
       }
       
       preftype <- def[["type"]]
@@ -72,7 +74,7 @@ generate <- function (schemaPath) {
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
       
-      # Emit JSNI for object types
+      # Emit JSNI for object types 
       if (identical(def[["type"]], "object")) {
          java <- paste0(java,
             "   public class ", type, " extends JavaScriptObject\n",
@@ -86,6 +88,8 @@ generate <- function (schemaPath) {
                proptype <- "JsArrayEx"
             } else if (identical(proptype, "string")) {
                proptype <- "String"
+            } else if (identical(proptype, "integer")) {
+               proptype <- "Integer"
             }
             java <- paste0(java,
               "      public final native ", proptype, " get",  propname, "() /*-{\n",

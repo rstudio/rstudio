@@ -47,7 +47,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             SpellingPreferencesPane spelling, 
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
-                            UserPrefs uiPrefs)
+                            UserPrefs userPrefs
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -73,7 +73,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
          hidePane(PublishingPreferencesPane.class);
       
       else if (!session.getSessionInfo().getAllowExternalPublish() &&
-               !uiPrefs.enableRStudioConnect().getValue())
+               !userPrefs.enableRStudioConnect().getValue())
       {
          hidePane(PublishingPreferencesPane.class);
       }

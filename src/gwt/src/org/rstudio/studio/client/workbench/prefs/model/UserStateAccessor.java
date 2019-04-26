@@ -105,18 +105,18 @@ public class UserStateAccessor extends Prefs
    /**
     * The most recently used plot export options.
     */
-   public PrefValue<Exportplotoptions> exportPlotOptions()
+   public PrefValue<ExportPlotOptions> exportPlotOptions()
    {
       return object("export_plot_options", null);
    }
 
-   public class Exportplotoptions extends JavaScriptObject
+   public class ExportPlotOptions extends JavaScriptObject
    {
-      public final native integer getWidth() /*-{
+      public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native integer getHeight() /*-{
+      public final native Integer getHeight() /*-{
          return this.height;
       }-*/;
 
@@ -140,18 +140,18 @@ public class UserStateAccessor extends Prefs
    /**
     * The most recently used viewer export options.
     */
-   public PrefValue<Exportvieweroptions> exportViewerOptions()
+   public PrefValue<ExportViewerOptions> exportViewerOptions()
    {
       return object("export_viewer_options", null);
    }
 
-   public class Exportvieweroptions extends JavaScriptObject
+   public class ExportViewerOptions extends JavaScriptObject
    {
-      public final native integer getWidth() /*-{
+      public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native integer getHeight() /*-{
+      public final native Integer getHeight() /*-{
          return this.height;
       }-*/;
 
@@ -175,18 +175,18 @@ public class UserStateAccessor extends Prefs
    /**
     * The most recently used options for saving a plot as a PDF.
     */
-   public PrefValue<Saveplotaspdfoptions> savePlotAsPdfOptions()
+   public PrefValue<SavePlotAsPdfOptions> savePlotAsPdfOptions()
    {
       return object("save_plot_as_pdf_options", null);
    }
 
-   public class Saveplotaspdfoptions extends JavaScriptObject
+   public class SavePlotAsPdfOptions extends JavaScriptObject
    {
-      public final native integer getWidth() /*-{
+      public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native integer getHeight() /*-{
+      public final native Integer getHeight() /*-{
          return this.height;
       }-*/;
 
@@ -206,12 +206,12 @@ public class UserStateAccessor extends Prefs
    /**
     * Most recently used settings for compiling a notebook from an R script.
     */
-   public PrefValue<Complernotebookprefs> compleRNotebookPrefs()
+   public PrefValue<CompileRNotebookPrefs> compileRNotebookPrefs()
    {
-      return object("comple_r_notebook_prefs", null);
+      return object("compile_r_notebook_prefs", null);
    }
 
-   public class Complernotebookprefs extends JavaScriptObject
+   public class CompileRNotebookPrefs extends JavaScriptObject
    {
       public final native String getAuthor() /*-{
          return this.author;
@@ -225,15 +225,15 @@ public class UserStateAccessor extends Prefs
    /**
     * Most recently used settings for compiling a notebook using R Markdown.
     */
-   public PrefValue<Complermarkdownnotebookprefs> compleRMarkdownNotebookPrefs()
+   public PrefValue<CompleRMarkdownNotebookPrefs> compleRMarkdownNotebookPrefs()
    {
       return object("comple_r_markdown_notebook_prefs", null);
    }
 
-   public class Complermarkdownnotebookprefs extends JavaScriptObject
+   public class CompleRMarkdownNotebookPrefs extends JavaScriptObject
    {
-      public final native  getType() /*-{
-         return this.type;
+      public final native String getFormat() /*-{
+         return this.format;
       }-*/;
 
    }
@@ -262,14 +262,14 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * quuux
+    * The default (last) account used for publishing
     */
-   public PrefValue<Preferredpublishaccount> preferredPublishAccount()
+   public PrefValue<PreferredPublishAccount> preferredPublishAccount()
    {
       return object("preferred_publish_account", null);
    }
 
-   public class Preferredpublishaccount extends JavaScriptObject
+   public class PreferredPublishAccount extends JavaScriptObject
    {
    }
    /**

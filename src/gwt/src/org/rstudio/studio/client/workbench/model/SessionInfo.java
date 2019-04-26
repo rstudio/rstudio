@@ -105,6 +105,12 @@ public class SessionInfo extends JavaScriptObject
       return this.user_prefs;
    }-*/;
 
+   public final native JsObject getUserState() /*-{
+      if (!this.user_state)
+         this.user_state = {};
+      return this.user_state;
+   }-*/;
+
    public final static String DESKTOP_MODE = "desktop";
    public final static String SERVER_MODE = "server";
    

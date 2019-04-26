@@ -198,7 +198,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
       displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", 
             prefs.showMargin(), false /*defaultSpace*/)));
-      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
+      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.marginColumn())));
       displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
@@ -432,7 +432,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
       diagnosticsPanel.add(checkboxPref("Show diagnostics whenever source files are saved", prefs.diagnosticsOnSave()));
       diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", 
-            prefs.enableBackgroundDiagnostics(), false /*defaultSpace*/)));
+            prefs.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
             numericPref("Keyboard idle time (ms):", prefs.backgroundDiagnosticsDelayMs())));
       

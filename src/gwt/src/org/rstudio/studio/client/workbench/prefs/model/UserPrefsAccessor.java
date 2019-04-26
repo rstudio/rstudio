@@ -852,6 +852,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The number of milliseconds to wait before linting a document after it is loaded.
+    */
+   public PrefValue<Integer> documentLoadLintDelay()
+   {
+      return integer("document_load_lint_delay", 5000);
+   }
+
+   /**
     * Whether to ignore words in uppercase when spell checking.
     */
    public PrefValue<Boolean> ignoreUppercaseWords()

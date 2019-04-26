@@ -121,7 +121,7 @@
             },
             "description": "The most recently used options for saving a plot as a PDF."
         },
-        "comple_r_notebook_prefs": {
+        "compile_r_notebook_prefs": {
             "type": "object",
             "properties": {
                 "author": {
@@ -137,8 +137,8 @@
         "comple_r_markdown_notebook_prefs": {
             "type": "object",
             "properties": {
-                "type": {
-                    "format": "string",
+                "format": {
+                    "type": "string",
                     "enum": ["html_document", "pdf_document", "word_document"]
                 }
             },
@@ -164,7 +164,7 @@
         "preferred_publish_account": {
             "type": "object",
             "default": {},
-            "description": "quuux"
+            "description": "The default (last) account used for publishing"
         },
         "preferred_document_outline_width": {
             "type": "integer",

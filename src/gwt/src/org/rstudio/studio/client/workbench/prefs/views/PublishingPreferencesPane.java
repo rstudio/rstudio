@@ -62,7 +62,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    {
       reloadRequired_ = false;
       display_ = globalDisplay;
-      uiPrefs_ = prefs;
+      userPrefs_ = prefs;
       server_ = server;
       connector_ = connector;
       deps_ = deps;
@@ -188,14 +188,14 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(missingPkgPanel);
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
-            uiPrefs_.enableRStudioConnect());
+            userPrefs_.enableRStudioConnect());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
                                                         "rstudio_connect");
       lessSpaced(rsconnectPanel);
       
       add(headerLabel("Settings"));
       CheckBox chkEnablePublishing = checkboxPref("Enable publishing documents, apps, and APIs", 
-            uiPrefs_.showPublishUi());
+            userPrefs_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -211,22 +211,22 @@ public class PublishingPreferencesPane extends PreferencesPane
          add(rsconnectPanel);
       
       add(checkboxPref("Show diagnostic information when publishing",
-            uiPrefs_.showPublishDiagnostics()));
+            userPrefs_.showPublishDiagnostics()));
       
       add(spacedBefore(headerLabel("SSL Certificates")));
 
       add(checkboxPref("Check SSL certificates when publishing",
-            uiPrefs_.publishCheckCertificates()));
+            userPrefs_.publishCheckCertificates()));
       
       CheckBox useCaBundle = checkboxPref("Use custom CA bundle",
-            uiPrefs_.usePublishCABundle());
+            userPrefs_.usePublishCABundle());
       useCaBundle.addValueChangeHandler(
             val -> caBundlePath_.setVisible(val.getValue()));
       add(useCaBundle);
 
       caBundlePath_ = new FileChooserTextBox("", "(none)", null, null);
-      caBundlePath_.setText(uiPrefs_.publishCABundle().getValue());
-      caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
+      caBundlePath_.setText(userPrefs_.publishCaBundle().getValue());
+      caBundlePath_.setVisible(userPrefs_.usePublishCaBundle().getValue());
       add(caBundlePath_);
 
       add(spacedBefore(new HelpLink("Troubleshooting Deployments", 
@@ -261,7 +261,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    {
       boolean reload = super.onApply(rPrefs);
       
-      uiPrefs_.publishCABundle().setGlobalValue(caBundlePath_.getText());
+      userPrefs_.publishCABundle().setGlobalValue(caBundlePath_.getText());
 
       return reload || reloadRequired_;
    }
@@ -403,7 +403,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
    
    private final GlobalDisplay display_;
-   private final UserPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
    private final DependencyManager deps_;

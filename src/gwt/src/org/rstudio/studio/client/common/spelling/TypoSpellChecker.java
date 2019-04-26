@@ -1,7 +1,7 @@
 /*
  * SpellChecker.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,10 +62,10 @@ public class TypoSpellChecker
       // subscribe to spelling prefs changes (invalidateAll on changes)
       ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
       ValueChangeHandler<String> dictChangedHandler = (event) -> loadDictionary();
-      uiPrefs_.realTimeSpellChecking().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
+      userPrefs_.realTimeSpellchecking().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.ignoreUppercaseWords().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -88,7 +88,7 @@ public class TypoSpellChecker
    void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
       userDictionary_ = workbenchListManager.getUserDictionaryList();
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
 
       loadDictionary();
    }
@@ -167,7 +167,7 @@ public class TypoSpellChecker
 
    private boolean ignoreUppercaseWord(String word)
    {
-      if (!uiPrefs_.ignoreWordsInUppercase().getValue())
+      if (!userPrefs_.ignoreWordsInUppercase().getValue())
          return false;
 
       for (char c: word.toCharArray())
@@ -180,7 +180,7 @@ public class TypoSpellChecker
 
    private boolean ignoreWordWithNumbers(String word)
    {
-      if (!uiPrefs_.ignoreWordsWithNumbers().getValue())
+      if (!userPrefs_.ignoreWordsWithNumbers().getValue())
          return false;
 
       for (char c: word.toCharArray())
@@ -200,7 +200,7 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      String dictLanguage = uiPrefs_.spellingDictionaryLanguage().getValue();
+      String dictLanguage = userPrefs_.spellingDictionaryLanguage().getValue();
 
       // don't load the same dictionary again
       if (typoLoaded_ && loadedDict_ == dictLanguage)
@@ -267,6 +267,6 @@ public class TypoSpellChecker
    private ArrayList<String> contextDictionary_;
    private final HashSet<String> allIgnoredWords_ = new HashSet<>();
 
-   private UserPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
 }
 

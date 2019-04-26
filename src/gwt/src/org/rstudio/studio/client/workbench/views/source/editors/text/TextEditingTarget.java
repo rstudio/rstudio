@@ -4049,7 +4049,7 @@ public class TextEditingTarget implements
                                                 cursorRowIndex, cursorColIndex);
 
       int maxLineLength =
-                        prefs_.printMarginColumn().getValue() - prefix.length();
+                        prefs_.marginColumn().getValue() - prefix.length();
 
       WordWrap wordWrap = new WordWrap(maxLineLength, false)
       {
@@ -4637,7 +4637,7 @@ public class TextEditingTarget implements
                Position pos = moveCursorToNextInsertLocation();
                
                // truncate length to print margin - 5
-               int printMarginColumn = prefs_.printMarginColumn().getValue();
+               int printMarginColumn = prefs_.marginColumn().getValue();
                int length = printMarginColumn - 5;
                
                // truncate label to maxLength - 10 (but always allow at 
@@ -6714,7 +6714,7 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setBlinkingCursor(arg);
                }}));
-      releaseOnDismiss.add(prefs.printMarginColumn().bind(
+      releaseOnDismiss.add(prefs.marginColumn().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.setPrintMarginColumn(arg);
