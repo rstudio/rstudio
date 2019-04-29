@@ -92,4 +92,13 @@ public class AceTheme extends UserStateAccessor.Theme
    {
       return StringUtil.equalsIgnoreCase(other.getName(), this.getName());
    }
+
+   public final static String getThemeErrorClass(AceTheme theme)
+   {    
+      if (theme == null || createDefault().isEqualTo(theme))
+         return " ace_constant";
+      else  
+         return " ace_constant ace_language";
+   }
+   
 }

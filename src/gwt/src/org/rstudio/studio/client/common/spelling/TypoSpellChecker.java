@@ -167,7 +167,7 @@ public class TypoSpellChecker
 
    private boolean ignoreUppercaseWord(String word)
    {
-      if (!userPrefs_.ignoreWordsInUppercase().getValue())
+      if (!userPrefs_.ignoreUppercaseWords().getValue())
          return false;
 
       for (char c: word.toCharArray())

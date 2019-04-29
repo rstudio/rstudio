@@ -55,11 +55,11 @@ public class SpellingPreferencesPane extends PreferencesPane
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
             
-      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreWordsInUppercase()));
+      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreUppercaseWords()));
       
-      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsInUppercase()));
+      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers()));
 
-      add(checkboxPref("Use real time spellchecking", prefs.realTimeSpellChecking()));
+      add(checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking()));
    }
 
    

@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.user.client.ui.Composite;
 
@@ -88,7 +89,8 @@ public class CompileOutputBufferWithHighlight extends Composite
    private String getErrorClass()
    {
       return styles_.output() + " " + 
-             RStudioGinjector.INSTANCE.getUserPrefs().getThemeErrorClass();
+             AceTheme.getThemeErrorClass(
+                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
    }
  
    PreWidget output_;
