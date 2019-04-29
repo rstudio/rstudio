@@ -1,7 +1,7 @@
 /*
  * Plots.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -98,7 +99,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
                 WorkbenchContext workbenchContext,
-                Provider<UserPrefs> uiPrefs,
+                Provider<UserPrefs> userPrefs,
+                Provider<UserState> userState,
                 Commands commands,
                 EventBus events,
                 final PlotsServerOperations server,
@@ -108,7 +110,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_ = view;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
@@ -321,7 +324,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                      server_, 
                      context, 
                      ExportPlotOptions.adaptToSize(
-                           uiPrefs_.get().exportPlotOptions().getValue(),
+                           userState_.get().exportPlotOptions().getValue().cast(),
                            getPlotSize()),
                      saveExportOptionsOperation_);  
             }
@@ -358,7 +361,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
                Size size = getPlotSize();
                final SavePlotAsPdfOptions currentOptions = 
-                         uiPrefs_.get().savePlotAsPdfOptions().getValue();
+                         userPrefs_.get().savePlotAsPdfOptions().getValue();
                
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
@@ -377,7 +380,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                 options,
                                                 currentOptions))
                        {
-                          UserPrefs prefs = uiPrefs_.get();
+                          UserPrefs prefs = userPrefs_.get();
                           prefs.savePlotAsPdfOptions().setGlobalValue(options);
                           prefs.writeUIPrefs();    
                        }
@@ -402,7 +405,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       exportPlot_.copyPlotToClipboard(
                               server_, 
                               ExportPlotOptions.adaptToSize(
-                                    uiPrefs_.get().exportPlotOptions().getValue(),
+                                    userState_.get().exportPlotOptions().getValue().cast(),
                                     getPlotSize()),
                               saveExportOptionsOperation_);    
    }
@@ -417,13 +420,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       {
          public void execute(ExportPlotOptions options)
          {
-            UserPrefs uiPrefs = uiPrefs_.get();
+            UserState userState = userState_.get();
             if (!ExportPlotOptions.areEqual(
                             options,
-                            uiPrefs.exportPlotOptions().getValue()))
+                            userState.exportPlotOptions().getValue().cast()))
             {
-               uiPrefs.exportPlotOptions().setGlobalValue(options);
-               uiPrefs.writeUIPrefs();
+               userState.exportPlotOptions().setGlobalValue(options);
+               userState.writeState();
             }
          }
       };
@@ -612,7 +615,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
-   private final Provider<UserPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    private WindowEx zoomWindow_;

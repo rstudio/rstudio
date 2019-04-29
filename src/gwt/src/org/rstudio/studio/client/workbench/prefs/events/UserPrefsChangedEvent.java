@@ -21,7 +21,7 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.core.client.JavaScriptObject;
 
 @JavaScriptSerializable
-public class UserPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandler>
+public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHandler>
 {
    public static final String GLOBAL_TYPE = "global";
    public static final String PROJECT_TYPE = "project";
@@ -48,7 +48,7 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandle
       }-*/;
    }
    
-   public static final Type<UiPrefsChangedHandler> TYPE = new Type<UiPrefsChangedHandler>();
+   public static final Type<UserPrefsChangedHandler> TYPE = new Type<UserPrefsChangedHandler>();
    
    public UserPrefsChangedEvent()
    {
@@ -70,13 +70,13 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UiPrefsChangedHandle
    }
 
    @Override
-   public Type<UiPrefsChangedHandler> getAssociatedType()
+   public Type<UserPrefsChangedHandler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(UiPrefsChangedHandler handler)
+   protected void dispatch(UserPrefsChangedHandler handler)
    {
       handler.onUiPrefsChanged(this);
    }

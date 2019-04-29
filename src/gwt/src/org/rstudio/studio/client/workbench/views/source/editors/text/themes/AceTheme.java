@@ -18,14 +18,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
 /**
  * Represents an editor theme.
  */
-public class AceTheme extends JavaScriptObject
+public class AceTheme extends UserStateAccessor.Theme
 {
-   protected AceTheme() {}
-   
    public static final AceTheme createDefault()
    {
       return createDefault(false);
@@ -50,11 +50,6 @@ public class AceTheme extends JavaScriptObject
       theme.url = url;
       theme.isDark = isDark;
       return theme;
-   }-*/;
-   
-   public native final String getName()
-   /*-{
-      return this.name;
    }-*/;
    
    public native final String getUrl()

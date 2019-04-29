@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,6 +126,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -422,6 +423,7 @@ public class TextEditingTarget implements
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
                             UserPrefs prefs, 
+                            UserState state, 
                             BreakpointManager breakpointManager,
                             SourceBuildHelper sourceBuildHelper,
                             DependencyManager dependencyManager)
@@ -446,6 +448,7 @@ public class TextEditingTarget implements
       dirtyState_ = new DirtyState(docDisplay_, false);
       lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
+      state_ = state;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
@@ -511,7 +514,7 @@ public class TextEditingTarget implements
                jumpToNextFunction();
             }
             else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
-                     !prefs_.useVimMode().getValue())
+                     prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
             {
                event.preventDefault();
                event.stopPropagation();
@@ -5704,7 +5707,7 @@ public class TextEditingTarget implements
       String defaultAuthor = docUpdateSentinel_.getProperty(NOTEBOOK_AUTHOR);
       if (StringUtil.isNullOrEmpty(defaultAuthor))
       {
-         defaultAuthor = prefs_.compileNotebookOptions().getValue().getAuthor();
+         defaultAuthor = state_.compileRNotebookPrefs().getValue().getAuthor();
          if (StringUtil.isNullOrEmpty(defaultAuthor))
             defaultAuthor = session_.getSessionInfo().getUserIdentity();
       }
@@ -5713,7 +5716,7 @@ public class TextEditingTarget implements
       String defaultType = docUpdateSentinel_.getProperty(NOTEBOOK_TYPE);
       if (StringUtil.isNullOrEmpty(defaultType))
       {
-         defaultType = prefs_.compileNotebookOptions().getValue().getType();
+         defaultType = state_.compileRNotebookPrefs().getValue().getType();
          if (StringUtil.isNullOrEmpty(defaultType))
             defaultType = CompileNotebookOptions.TYPE_DEFAULT;
       }
@@ -5761,10 +5764,10 @@ public class TextEditingTarget implements
                                           input.getNotebookType());
             if (!CompileNotebookPrefs.areEqual(
                                   prefs, 
-                                  prefs_.compileNotebookOptions().getValue()))
+                                  state_.compileRNotebookPrefs().getValue().cast()))
             {
-               prefs_.compileNotebookOptions().setGlobalValue(prefs);
-               prefs_.writeUIPrefs();
+               state_.compileRNotebookPrefs().setGlobalValue(prefs.cast());
+               state_.writeState();
             }
          }
       }
@@ -7289,6 +7292,7 @@ public class TextEditingTarget implements
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UserPrefs prefs_;
+   private final UserState state_;
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;

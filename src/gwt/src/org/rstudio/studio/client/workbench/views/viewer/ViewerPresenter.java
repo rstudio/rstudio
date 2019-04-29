@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -109,7 +110,8 @@ public class ViewerPresenter extends BasePresenter
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          Provider<UserPrefs> pUIPrefs,
+                          Provider<UserPrefs> pUserPrefs,
+                          Provider<UserState> pUserState,
                           HtmlMessageListener htmlMessageListener)
    {
       super(display);
@@ -123,7 +125,8 @@ public class ViewerPresenter extends BasePresenter
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
-      pUIPrefs_ = pUIPrefs;
+      pUserPrefs_ = pUserPrefs;
+      pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
       
       binder.bind(commands, this);
@@ -366,7 +369,7 @@ public class ViewerPresenter extends BasePresenter
                    display_.getUrl(),
                    context,
                    ExportPlotOptions.adaptToSize(
-                         pUIPrefs_.get().exportViewerOptions().getValue(),
+                         pUserState_.get().exportViewerOptions().getValue().cast(),
                          display_.getViewerFrameSize()),
                    saveExportOptionsOperation_
                ).showModal();
@@ -435,7 +438,7 @@ public class ViewerPresenter extends BasePresenter
       new CopyViewerPlotToClipboardDesktopDialog(
          display_.getUrl(), 
          ExportPlotOptions.adaptToSize(
-               pUIPrefs_.get().exportViewerOptions().getValue(),
+               pUserState_.get().exportViewerOptions().getValue().cast(),
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
       ).showModal();;    
@@ -603,13 +606,13 @@ public class ViewerPresenter extends BasePresenter
          {
             public void execute(ExportPlotOptions options)
             {
-               UserPrefs uiPrefs = pUIPrefs_.get();
+               UserState userState = pUserState_.get();
                if (!ExportPlotOptions.areEqual(
                                options,
-                               uiPrefs.exportViewerOptions().getValue()))
+                               userState.exportViewerOptions().getValue().cast()))
                {
-                  uiPrefs.exportViewerOptions().setGlobalValue(options);
-                  uiPrefs.writeUIPrefs();
+                  userState.exportViewerOptions().setGlobalValue(options.cast());
+                  userState.writeState();
                }
             }
          };
@@ -623,7 +626,8 @@ public class ViewerPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileSystemContext_;
-   private final Provider<UserPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<UserState> pUserState_;
    private final SourceShim sourceShim_; 
    private final ShinyDisconnectNotifier shinyNotifier_;
    

@@ -21,6 +21,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
@@ -109,13 +111,13 @@ public class TextEditingTargetChunks
       prefs_ = prefs;
       dark_ = prefs.theme().getValue().isDark();
       
-      prefs_.theme().addValueChangeHandler(new ValueChangeHandler<AceTheme>()
+      state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<AceTheme> theme)
+         public void onValueChange(ValueChangeEvent<UserStateAccessor.Theme> theme)
          {
             // recompute dark state
-            boolean isDark = theme.getValue().isDark();
+            boolean isDark = theme.getValue().getDark();
             
             // redraw all the toolbars if necessary
             if (isDark != dark_)
@@ -268,6 +270,7 @@ public class TextEditingTargetChunks
    private boolean initialized_;
    
    private UserPrefs prefs_;
+   private UserState state_;
 
    private int lastRow_;
    

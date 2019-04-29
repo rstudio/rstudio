@@ -309,7 +309,7 @@ public class ChunkOutputStream extends FlowPanel
          flushQueuedErrors();
       }
       
-      UserPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
+      UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
             this, null);
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
@@ -590,7 +590,7 @@ public class ChunkOutputStream extends FlowPanel
    private String classOfOutput(int type)
    {
       if (type == ChunkConsolePage.CONSOLE_ERROR)
-        return RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+        return RStudioGinjector.INSTANCE.getUserPrefs().getThemeErrorClass();
       else if (type == ChunkConsolePage.CONSOLE_INPUT)
         return "ace_keyword";
       return null;

@@ -95,7 +95,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
-      UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       

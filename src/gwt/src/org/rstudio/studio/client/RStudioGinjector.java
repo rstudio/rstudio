@@ -92,6 +92,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
@@ -301,7 +302,8 @@ public interface RStudioGinjector extends Ginjector
    RnwWeaveRegistry getRnwWeaveRegistry();
    LatexProgramRegistry getLatexProgramRegistry();
    Commands getCommands();
-   UserPrefs getUIPrefs();
+   UserPrefs getUserPrefs();
+   UserState getUserState();
    Session getSession();
    HelpStrategy getHelpStrategy();
    ShortcutViewer getShortcutViewer();

@@ -1,7 +1,7 @@
 /*
- * UiPrefsChangedHandler.java
+ * UserPrefsChangedHandler.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@ package org.rstudio.studio.client.workbench.prefs.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface UiPrefsChangedHandler extends EventHandler
+public interface UserPrefsChangedHandler extends EventHandler
 {
-   void onUiPrefsChanged(UserPrefsChangedEvent e);
+   void onUserPrefsChanged(UserPrefsChangedEvent e);
 }

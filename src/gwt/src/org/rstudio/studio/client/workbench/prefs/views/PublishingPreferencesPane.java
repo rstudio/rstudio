@@ -188,7 +188,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(missingPkgPanel);
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
-            userPrefs_.enableRStudioConnect());
+            userState_.enableRStudioConnect());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
                                                         "rstudio_connect");
       lessSpaced(rsconnectPanel);
@@ -404,6 +404,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private final GlobalDisplay display_;
    private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
    private final DependencyManager deps_;

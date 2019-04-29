@@ -43,7 +43,7 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
                             EventBus events,
                             ThemeServerOperations server)
    {
-      uiPrefs_ = pUiPrefs;
+      userPrefs_ = pUiPrefs;
       pAceThemes_ = pAceThemes;
       events_ = events;
       server_ = server;
@@ -59,8 +59,8 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
       // set the initial theme.
-      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      userPrefs_.get().globalTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      userPrefs_.get().editorTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
       events_.fireEvent(new ThemeChangedEvent());
       
       // Ensure creation of the Ace themes instance
@@ -108,12 +108,12 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get(),
+      RStudioThemes.initializeThemes(userPrefs_.get(),
                                      Document.get(),
                                      root_);
    }
    
-   private final Provider<UserPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
    private final Provider<AceThemes> pAceThemes_;
    private final EventBus events_;
    private final ThemeServerOperations server_;

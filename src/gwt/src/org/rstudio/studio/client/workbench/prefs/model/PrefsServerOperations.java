@@ -1,7 +1,7 @@
 /*
  * PrefsServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dev.json.JsonValue;
 
 public interface PrefsServerOperations
 {
@@ -27,4 +28,15 @@ public interface PrefsServerOperations
 
    void setUserPrefs(JavaScriptObject userPrefs,
                      ServerRequestCallback<Void> requestCallback);
+   
+   void setUserPrefValue(String key,
+                         JsonValue value,
+                         ServerRequestCallback<Void> requestCallback);
+
+   void setUserState(JavaScriptObject userState,
+                     ServerRequestCallback<Void> requestCallback);
+
+   void setUserStateValue(String key,
+                          JsonValue value,
+                          ServerRequestCallback<Void> requestCallback);
 }

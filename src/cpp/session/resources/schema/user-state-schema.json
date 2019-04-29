@@ -134,7 +134,7 @@
             },
             "description": "Most recently used settings for compiling a notebook from an R script."
         },
-        "comple_r_markdown_notebook_prefs": {
+        "compile_r_markdown_notebook_prefs": {
             "type": "object",
             "properties": {
                 "format": {
@@ -170,6 +170,12 @@
             "type": "integer",
             "default": 110,
             "description": "The preferred width, in pixels, of the document outline pane."
+        },
+        "connect_via": {
+            "type": "string",
+            "enum": ["connect-r-console", "connect-new-r-script", "connect-new-r-notebook", "connect-copy-to-clipboard"],
+            "default": "connect-r-console",
+            "description": "How to create new connections to data sources."
         }
     }
 }

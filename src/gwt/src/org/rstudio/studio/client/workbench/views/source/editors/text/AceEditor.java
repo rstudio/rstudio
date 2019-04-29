@@ -693,7 +693,7 @@ public class AceEditor implements DocDisplay,
    {
       if (fileType_ == null ||
           !fileType_.canAutoIndent() ||
-          !RStudioGinjector.INSTANCE.getUIPrefs().reindentOnPaste().getValue())
+          !RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue())
       {
          return;
       }
@@ -1344,7 +1344,7 @@ public class AceEditor implements DocDisplay,
          // the frame using the browser
          PrintIFrame printIFrame = new PrintIFrame(
                getCode(),
-               RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
+               RStudioGinjector.INSTANCE.getUserPrefs().fontSizePoints().getValue());
          RootPanel.get().add(printIFrame);
       }
    }

@@ -71,8 +71,10 @@ public class UserStateAccessor extends Prefs
       return object("theme", null);
    }
 
-   public class Theme extends JavaScriptObject
+   public static class Theme extends JavaScriptObject
    {
+      protected Theme() {} 
+
       public final native String getName() /*-{
          return this.name;
       }-*/;
@@ -86,6 +88,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * The directory path under which to place new projects by default. Shadows a uipref.
     */
@@ -110,8 +113,10 @@ public class UserStateAccessor extends Prefs
       return object("export_plot_options", null);
    }
 
-   public class ExportPlotOptions extends JavaScriptObject
+   public static class ExportPlotOptions extends JavaScriptObject
    {
+      protected ExportPlotOptions() {} 
+
       public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
@@ -137,6 +142,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * The most recently used viewer export options.
     */
@@ -145,8 +151,10 @@ public class UserStateAccessor extends Prefs
       return object("export_viewer_options", null);
    }
 
-   public class ExportViewerOptions extends JavaScriptObject
+   public static class ExportViewerOptions extends JavaScriptObject
    {
+      protected ExportViewerOptions() {} 
+
       public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
@@ -172,6 +180,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * The most recently used options for saving a plot as a PDF.
     */
@@ -180,8 +189,10 @@ public class UserStateAccessor extends Prefs
       return object("save_plot_as_pdf_options", null);
    }
 
-   public class SavePlotAsPdfOptions extends JavaScriptObject
+   public static class SavePlotAsPdfOptions extends JavaScriptObject
    {
+      protected SavePlotAsPdfOptions() {} 
+
       public final native Integer getWidth() /*-{
          return this.width;
       }-*/;
@@ -203,6 +214,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * Most recently used settings for compiling a notebook from an R script.
     */
@@ -211,8 +223,10 @@ public class UserStateAccessor extends Prefs
       return object("compile_r_notebook_prefs", null);
    }
 
-   public class CompileRNotebookPrefs extends JavaScriptObject
+   public static class CompileRNotebookPrefs extends JavaScriptObject
    {
+      protected CompileRNotebookPrefs() {} 
+
       public final native String getAuthor() /*-{
          return this.author;
       }-*/;
@@ -222,21 +236,25 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * Most recently used settings for compiling a notebook using R Markdown.
     */
-   public PrefValue<CompleRMarkdownNotebookPrefs> compleRMarkdownNotebookPrefs()
+   public PrefValue<CompileRMarkdownNotebookPrefs> compileRMarkdownNotebookPrefs()
    {
-      return object("comple_r_markdown_notebook_prefs", null);
+      return object("compile_r_markdown_notebook_prefs", null);
    }
 
-   public class CompleRMarkdownNotebookPrefs extends JavaScriptObject
+   public static class CompileRMarkdownNotebookPrefs extends JavaScriptObject
    {
+      protected CompileRMarkdownNotebookPrefs() {} 
+
       public final native String getFormat() /*-{
          return this.format;
       }-*/;
 
    }
+
    /**
     * The root document to use when compiling PDF documents.
     */
@@ -269,9 +287,12 @@ public class UserStateAccessor extends Prefs
       return object("preferred_publish_account", null);
    }
 
-   public class PreferredPublishAccount extends JavaScriptObject
+   public static class PreferredPublishAccount extends JavaScriptObject
    {
+      protected PreferredPublishAccount() {} 
+
    }
+
    /**
     * The preferred width, in pixels, of the document outline pane.
     */
@@ -279,6 +300,19 @@ public class UserStateAccessor extends Prefs
    {
       return integer("preferred_document_outline_width", 110);
    }
+
+   /**
+    * How to create new connections to data sources.
+    */
+   public PrefValue<String> connectVia()
+   {
+      return string("connect_via", "connect-r-console");
+   }
+
+   public final static String CONNECT_VIA_CONNECT_R_CONSOLE = "connect-r-console";
+   public final static String CONNECT_VIA_CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
+   public final static String CONNECT_VIA_CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
+   public final static String CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
 
    
 }

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
 {
@@ -47,7 +48,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             SpellingPreferencesPane spelling, 
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
-                            UserPrefs userPrefs
+                            UserPrefs userPrefs,
+                            UserState userState)
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -73,7 +75,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
          hidePane(PublishingPreferencesPane.class);
       
       else if (!session.getSessionInfo().getAllowExternalPublish() &&
-               !userPrefs.enableRStudioConnect().getValue())
+               !userState.enableRsconnectPublishUi().getValue())
       {
          hidePane(PublishingPreferencesPane.class);
       }

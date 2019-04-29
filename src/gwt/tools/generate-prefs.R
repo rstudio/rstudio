@@ -20,7 +20,7 @@ generate <- function (schemaPath) {
          # Rich objects are converted to JavaScript native types
          type <- paste0(toupper(substring(camel, 1, 1)), 
                         substring(camel, 2))
-      } else if (type == "numeric") {
+      } else if (type == "numeric" || type == "number") {
          # Numerics (not integers) become Double objects
          type <- "Double"
       } else if (type == "array") {
@@ -74,11 +74,12 @@ generate <- function (schemaPath) {
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
       
-      # Emit JSNI for object types 
+      # Emit JSNI for object types
       if (identical(def[["type"]], "object")) {
          java <- paste0(java,
-            "   public class ", type, " extends JavaScriptObject\n",
-            "   {\n")
+            "   public static class ", type, " extends JavaScriptObject\n",
+            "   {\n",
+            "      protected ", type, "() {} \n\n")
          props <- def[["properties"]]
          for (prop in names(props)) {
             propdef <- props[[prop]]
@@ -96,7 +97,7 @@ generate <- function (schemaPath) {
               "         return this.", prop, ";\n",
               "      }-*/;\n\n")
          }
-         java <- paste0(java, "   }\n")
+         java <- paste0(java, "   }\n\n")
       }
       
       # Emit convenient enum constants if supplied

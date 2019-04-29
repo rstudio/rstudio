@@ -64,7 +64,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
@@ -91,7 +91,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   NotebookRenderFinishedEvent.Handler,
                                   RmdRenderPendingEvent.Handler,
                                   QuitInitiatedHandler,
-                                  UiPrefsChangedHandler
+                                  UserPrefsChangedHandler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}

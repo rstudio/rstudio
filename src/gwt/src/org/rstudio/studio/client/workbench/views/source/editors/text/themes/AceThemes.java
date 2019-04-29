@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
@@ -49,15 +50,15 @@ public class AceThemes
 {
    @Inject
    public AceThemes(ThemeServerOperations themeServerOperations,
-                    final Provider<UserPrefs> prefs,
+                    final Provider<UserState> state,
                     EventBus events)
    {
       themeServerOperations_ = themeServerOperations;
       events_ = events;
-      prefs_ = prefs;
+      state_ = state;
       themes_ = new HashMap<>();
 
-      prefs.get().theme().bind(theme -> applyTheme(theme));
+      state.get().theme().bind(theme -> applyTheme((AceTheme)theme.cast()));
    }
    
    private void applyTheme(Document document, final AceTheme theme)
@@ -137,7 +138,7 @@ public class AceThemes
 
    public void applyTheme(Document document)
    {
-      applyTheme(document, prefs_.get().theme().getValue());
+      applyTheme(document, (AceTheme)state_.get().theme().getValue());
    }
    
    public void getThemes(
@@ -248,7 +249,7 @@ public class AceThemes
 
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
-   private final Provider<UserPrefs> prefs_;
+   private final Provider<UserState> state_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
    private HashMap<String, AceTheme> themes_;
 }

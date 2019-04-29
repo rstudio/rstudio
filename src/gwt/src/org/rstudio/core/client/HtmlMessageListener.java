@@ -27,7 +27,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -46,7 +46,7 @@ public class HtmlMessageListener
       
       initializeMessageListeners();
 
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
       {
          @Override
          public void onUiPrefsChanged(UserPrefsChangedEvent e)

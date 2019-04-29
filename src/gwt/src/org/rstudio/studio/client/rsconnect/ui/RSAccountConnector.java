@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
@@ -74,12 +75,14 @@ public class RSAccountConnector implements
          EventBus events,
          Session session,
          Provider<UserPrefs> pUiPrefs,
+         Provider<UserState> pState,
          Satellite satellite)
    {
       server_ = server;
       display_ = display;
       optionsLoader_ = optionsLoader;
       pUiPrefs_ = pUiPrefs;
+      pState_ = pState;
       session_ = session;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
@@ -96,7 +99,7 @@ public class RSAccountConnector implements
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      if (pState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -177,8 +180,8 @@ public class RSAccountConnector implements
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pUiPrefs_.get().enableRStudioConnect().setGlobalValue(event.getEnable());
-      pUiPrefs_.get().writeUIPrefs();
+      pState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pState_.get().writeState();
    }
 
    // Private methods --------------------------------------------------------
@@ -388,6 +391,7 @@ public class RSAccountConnector implements
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UserPrefs> pUiPrefs_;
+   private final Provider<UserState> pState_;
    private final Session session_;
    
    private boolean showingWizard_;

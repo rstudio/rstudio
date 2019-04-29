@@ -1,5 +1,5 @@
 /*
- * UserPrefs.java
+ * UserState.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -34,16 +34,15 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
-public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHandler, SessionInitHandler
+public class UserState extends UserStateAccessor implements UserStateChangedEvent.Handler, SessionInitHandler
 {
    @Inject
-   public UserPrefs(Session session, 
+   public UserState(Session session, 
                   EventBus eventBus,
                   PrefsServerOperations server,
                   SatelliteManager satelliteManager)
@@ -51,32 +50,27 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
       super(session.getSessionInfo(),
             (session.getSessionInfo() == null ? 
                JsObject.createJsObject() :
-               session.getSessionInfo().getUserPrefs()),
-            (session.getSessionInfo() == null ? 
-               JsObject.createJsObject() :
-               session.getSessionInfo().getProjectUIPrefs()));
+               session.getSessionInfo().getUserState()), null);
 
       session_ = session;
       server_ = server;
       satelliteManager_ = satelliteManager;
 
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
+      eventBus.addHandler(UserStateChangedEvent.TYPE, this);
       eventBus.addHandler(SessionInitEvent.TYPE, this);
    }
    
-   public void writeUIPrefs()
+   public void writeState()
    {
-      server_.setUserPrefs(
-         session_.getSessionInfo().getUserPrefs(),
+      server_.setUserState(
+         session_.getSessionInfo().getUserState(),
          new ServerRequestCallback<Void>() 
          {
             @Override
             public void onResponseReceived(Void v)
             {
-               UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     UserPrefsChangedEvent.Data.create(
-                              UserPrefsChangedEvent.GLOBAL_TYPE,
-                              session_.getSessionInfo().getUiPrefs()));
+               UserStateChangedEvent event = new UserStateChangedEvent(
+                              session_.getSessionInfo().getUserState());
 
                if (Satellite.isCurrentWindowSatellite())
                {
@@ -100,10 +94,10 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
    @Override
    public void onSessionInit(SessionInitEvent e)
    {
-      // First update the theme and flat theme so the event will trigger.
       /*
+      // First update the theme and flat theme so the event will trigger.
       SessionInfo sessionInfo = session_.getSessionInfo();
-      JsObject jsUiPrefs = sessionInfo.getUserPrefs();
+      JsObject jsUiPrefs = sessionInfo.getUserState();
       AceTheme aceTheme = jsUiPrefs.getElement("rstheme");
       if (null != aceTheme)
       {

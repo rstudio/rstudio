@@ -180,8 +180,8 @@ public class RSConnectDeploy extends Composite
          hideCheckUncheckAllButton();
       }
 
-      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUIPrefs()
-            .enableRStudioConnect().getGlobalValue();
+      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUserState()
+            .enableRsconnectPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)

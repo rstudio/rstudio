@@ -389,7 +389,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String getErrorClass()
    {
       return styles_.error() + " " + 
-             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+             RStudioGinjector.INSTANCE.getUserPrefs().getThemeErrorClass();
    }
 
    /**

@@ -1345,7 +1345,7 @@ public class TextEditingTargetNotebook
          // otherwise, use the global preference to set the value
          docDisplay_.setShowChunkOutputInline(
             docDisplay_.getModeId() == "mode/rmarkdown" &&
-            RStudioGinjector.INSTANCE.getUIPrefs()
+            RStudioGinjector.INSTANCE.getUserPrefs()
                                      .showRmdChunkOutputInline().getValue());
       }
 

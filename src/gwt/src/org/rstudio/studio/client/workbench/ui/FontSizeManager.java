@@ -28,7 +28,7 @@ public class FontSizeManager
    public FontSizeManager(final EventBus events,
                           UserPrefs prefs)
    {
-      prefs.fontSize().bind(new CommandWithArg<Double>()
+      prefs.fontSizePoints().bind(new CommandWithArg<Double>()
       {
          public void execute(Double value)
          {

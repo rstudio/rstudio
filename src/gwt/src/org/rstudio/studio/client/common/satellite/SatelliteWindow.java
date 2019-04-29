@@ -66,9 +66,9 @@ public abstract class SatelliteWindow extends Composite
       // arrives with the theme settings)
       pEventBus.get().addHandler(SessionInitEvent.TYPE, (evt) ->
       {
-         UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-         uiPrefs.theme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
-         uiPrefs.getFlatTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+         UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
+         userPrefs.editorTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+         userPrefs.globalTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
       });
        
       // init widget
@@ -88,7 +88,7 @@ public abstract class SatelliteWindow extends Composite
       if (supportsThemes())
       {
          RStudioThemes.initializeThemes(
-            RStudioGinjector.INSTANCE.getUIPrefs(),
+            RStudioGinjector.INSTANCE.getUserPrefs(),
             Document.get(),
             mainPanel_.getElement());
             

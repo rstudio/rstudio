@@ -417,14 +417,14 @@
             "description": "Whether to save all open, unsaved files before building the project."
         },
         "font_size_points": {
-            "type": "numeric",
+            "type": "number",
             "default": 10.0,
             "description": "The default editor font size, in points."
         },
-        "theme": {
+        "editor_theme": {
             "type": "string",
             "default": "Textmate (default)",
-            "description": "The name of the color theme to apply to RStudio."
+            "description": "The name of the color theme to apply to the text editor in RStudio."
         },
         "default_encoding": {
             "type": "string",
@@ -571,12 +571,6 @@
             "type": "string",
             "default": "",
             "description": "The default name to use as the document author when creating new documents."
-        },
-        "connect_via": {
-            "type": "string",
-            "enum": ["connect-r-console", "connect-new-r-script", "connect-new-r-notebook", "connect-copy-to-clipboard"],
-            "default": "connect-r-console",
-            "description": "How to create new connections to data sources."
         },
         "rmd_preferred_template_path": {
             "type": "string",
@@ -726,10 +720,11 @@
             "default": false,
             "description": "Whether to wrap around when going to the previous or next editor tab."
         },
-        "flat_theme": {
+        "global_theme": {
             "type": "string",
-            "default": "defaul",
-            "description": "Whether to use the new RStudio flat theme."
+            "default": "default",
+            "enum": ["classic", "default", "alternate"],
+            "description": "The theme to use for the main RStudio user interface."
         },
         "git_diff_ignore_whitespace": {
             "type": "boolean",

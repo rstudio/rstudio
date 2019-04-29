@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetRMarkdownHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,6 +72,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -229,7 +230,7 @@ public class TextEditingTargetRMarkdownHelper
       String format = sourceDoc.getProperty(NOTEBOOK_FORMAT);
       if (StringUtil.isNullOrEmpty(format))
       {
-         format = prefs_.compileNotebookv2Options()
+         format = state_.compileRMarkdownNotebookPrefs()
                                              .getValue().getFormat();
          if (StringUtil.isNullOrEmpty(format))
             format = CompileNotebookv2Options.FORMAT_DEFAULT;
@@ -256,10 +257,10 @@ public class TextEditingTargetRMarkdownHelper
                   CompileNotebookv2Prefs.create(input.getFormat());
             if (!CompileNotebookv2Prefs.areEqual(
                   prefs, 
-                  prefs_.compileNotebookv2Options().getValue()))
+                  state_.compileRMarkdownNotebookPrefs().getValue().cast()))
             {
-               prefs_.compileNotebookv2Options().setGlobalValue(prefs);
-               prefs_.writeUIPrefs();
+               state_.compileRMarkdownNotebookPrefs().setGlobalValue(prefs.cast());
+               state_.writeState();
             }
          }
       }
@@ -1123,6 +1124,7 @@ public class TextEditingTargetRMarkdownHelper
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
    private UserPrefs prefs_;
+   private UserState state_;
    private ConsoleDispatcher consoleDispatcher_;
    private WorkbenchContext workbenchContext_;
    private FileTypeCommands fileTypeCommands_;

@@ -253,8 +253,10 @@ public class UserPrefsAccessor extends Prefs
       return object("panes", null);
    }
 
-   public class Panes extends JavaScriptObject
+   public static class Panes extends JavaScriptObject
    {
+      protected Panes() {} 
+
       public final native JsArrayEx getLayout() /*-{
          return this.layout;
       }-*/;
@@ -268,6 +270,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
    }
+
    /**
     * Whether to insert spaces when pressing the Tab key.
     */
@@ -722,15 +725,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Double> fontSizePoints()
    {
-      return dbl("font_size_points", 10.0);
+      return number("font_size_points", 10);
    }
 
    /**
-    * The name of the color theme to apply to RStudio.
+    * The name of the color theme to apply to the text editor in RStudio.
     */
-   public PrefValue<String> theme()
+   public PrefValue<String> editorTheme()
    {
-      return string("theme", "Textmate (default)");
+      return string("editor_theme", "Textmate (default)");
    }
 
    /**
@@ -982,19 +985,6 @@ public class UserPrefsAccessor extends Prefs
    {
       return string("document_author", "");
    }
-
-   /**
-    * How to create new connections to data sources.
-    */
-   public PrefValue<String> connectVia()
-   {
-      return string("connect_via", "connect-r-console");
-   }
-
-   public final static String CONNECT_VIA_CONNECT_R_CONSOLE = "connect-r-console";
-   public final static String CONNECT_VIA_CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
-   public final static String CONNECT_VIA_CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
-   public final static String CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
 
    /**
     * The path to the preferred R Markdown template.
@@ -1252,12 +1242,16 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use the new RStudio flat theme.
+    * The theme to use for the main RStudio user interface.
     */
-   public PrefValue<String> flatTheme()
+   public PrefValue<String> globalTheme()
    {
-      return string("flat_theme", "defaul");
+      return string("global_theme", "default");
    }
+
+   public final static String GLOBAL_THEME_CLASSIC = "classic";
+   public final static String GLOBAL_THEME_DEFAULT = "default";
+   public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 
    /**
     * Whether to ignore whitespace when generating diffs of version controlled files.

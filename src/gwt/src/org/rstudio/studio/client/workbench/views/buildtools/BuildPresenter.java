@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
@@ -199,7 +199,7 @@ public class BuildPresenter extends BasePresenter
       
       // invalidate devtools load all path whenever the project ui prefs
       // or working directory changes
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
       {
          @Override
          public void onUiPrefsChanged(UserPrefsChangedEvent e)

@@ -88,7 +88,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    private String getErrorClass()
    {
       return styles_.output() + " " + 
-             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+             RStudioGinjector.INSTANCE.getUserPrefs().getThemeErrorClass();
    }
  
    PreWidget output_;

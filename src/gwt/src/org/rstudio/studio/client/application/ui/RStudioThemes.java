@@ -34,7 +34,7 @@ public class RStudioThemes
                                        Document document,
                                        Element element)
    {
-      String themeName = getThemeFromUiPrefs(uiPrefs);
+      String themeName = getThemeFromUserPrefs(uiPrefs);
       initializeThemes(themeName, document, element);
    }
 
@@ -70,7 +70,7 @@ public class RStudioThemes
    }
 
    public static boolean isFlat(UserPrefs prefs) {
-      return prefs.getFlatTheme().getValue() != "classic"; 
+      return prefs.globalTheme().getValue() != UserPrefs.GLOBAL_THEME_CLASSIC;
    }
    
    public static boolean isFlat() {
@@ -88,10 +88,10 @@ public class RStudioThemes
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUiPrefs(UserPrefs prefs) {
+   public static String getThemeFromUserPrefs(UserPrefs prefs) {
       return suggestThemeFromAceTheme(
-        prefs.theme().getGlobalValue(),
-        prefs.getFlatTheme().getGlobalValue()
+        prefs.editorTheme().getGlobalValue(),
+        prefs.globalTheme().getGlobalValue()
       );
    }
    
