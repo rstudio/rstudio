@@ -1,5 +1,5 @@
 /*
- * TypoResources.java
+ * SpellingWorkerResources.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -19,10 +19,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import org.rstudio.core.client.resources.StaticDataResource;
 
-public interface TypoResources extends ClientBundle
+public interface SpellingPrefetcherResources extends ClientBundle
 {
-   TypoResources INSTANCE = GWT.create(TypoResources.class);
+   SpellingPrefetcherResources INSTANCE = GWT.create(SpellingPrefetcherResources.class);
 
-   @Source("typo.min.js")
-   StaticDataResource typojs();
+   @Source("SpellingPrefetcher.js")
+   StaticDataResource spellingprefetcherjs();
 }
+

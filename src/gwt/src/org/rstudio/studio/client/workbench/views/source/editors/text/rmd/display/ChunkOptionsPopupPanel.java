@@ -240,6 +240,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             "message");
       panel_.add(showMessagesInOutputCb_);
 
+      cacheChunkCb_ = makeTriStateToggle(
+            "Cache chunk",
+            "cache");
+      panel_.add(cacheChunkCb_);
+      cacheChunkCb_.setVisible(false);
+
       printTableAsTextCb_ = makeTriStateToggle(
             "Use paged tables",
             "paged.print");
@@ -568,6 +574,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
             if (has("paged.print"))
                printTableAsTextCb_.setValue(getBoolean("paged.print"));
+
+            if (has("cache"))
+               cacheChunkCb_.setValue(getBoolean("cache"));
             
             if (has("engine.path"))
             {
@@ -666,6 +675,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Toggle showWarningsInOutputCb_;
    protected final Toggle showMessagesInOutputCb_;
    protected final Toggle printTableAsTextCb_;
+   protected final Toggle cacheChunkCb_;
    
    protected String originalLine_;
    protected String chunkPreamble_;

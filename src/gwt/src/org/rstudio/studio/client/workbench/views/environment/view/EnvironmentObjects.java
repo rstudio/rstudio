@@ -705,8 +705,14 @@ public class EnvironmentObjects extends ResizeComposite
    // container's physical limit
    private void redrawRowSafely(int idx)
    {
-      if (idx < MAX_ENVIRONMENT_OBJECTS)
-         objectDisplay_.redrawRow(idx);
+      boolean oob =
+            idx >= MAX_ENVIRONMENT_OBJECTS ||
+            idx >= objectDisplay_.getRowCount();
+
+      if (oob)
+         return;
+            
+      objectDisplay_.redrawRow(idx);
    }
    
    private final static String EMPTY_ENVIRONMENT_MESSAGE =

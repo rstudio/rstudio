@@ -1,5 +1,5 @@
 /*
- * TypoResources.java
+ * SpellingWorkerNative.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -15,14 +15,14 @@
 
 package org.rstudio.studio.client.common.spelling;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import org.rstudio.core.client.resources.StaticDataResource;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
-public interface TypoResources extends ClientBundle
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "SpellingPrefetcher")
+public class SpellingPrefetcherNative
 {
-   TypoResources INSTANCE = GWT.create(TypoResources.class);
+   SpellingPrefetcherNative(String typoJsCode) {}
 
-   @Source("typo.min.js")
-   StaticDataResource typojs();
+   public native void prefetch(String words, Object typoNative);
 }
+

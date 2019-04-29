@@ -2,6 +2,7 @@
 
 ### Miscellaneous
 
+* Files with extension '.q' are no longer indexed or parsed as R files. (#4696)
 * Add automated crash handling and reporting
 * Upgrade internal JSON parsing engine for speed improvements (#1830)
 * Add "Safe Mode" for opening sessions without profile scripts or workspace restoration (#4338)

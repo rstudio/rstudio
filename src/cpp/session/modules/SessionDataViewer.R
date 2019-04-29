@@ -554,8 +554,9 @@
 })
 
 .rs.addFunction("viewHook", function(original, x, title) {
-   # remember the expression from which the data was generated
-   expr <- deparse(substitute(x))
+   
+  # remember the expression from which the data was generated
+   expr <- deparse(substitute(x), backtick = TRUE)
 
    # generate title if necessary (from deparsed expr)
    if (missing(title))
