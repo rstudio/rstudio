@@ -116,6 +116,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -262,7 +263,8 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UserPrefs uiPrefs,
+                 UserPrefs userPrefs,
+                 UserState userState,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
@@ -283,7 +285,8 @@ public class Source implements InsertSourceHandler,
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
-      userPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       dependencyManager_ = dependencyManager;
@@ -1619,7 +1622,7 @@ public class Source implements InsertSourceHandler,
                   if (author.length() > 0)
                   {
                      userPrefs_.documentAuthor().setGlobalValue(author);
-                     userPrefs_.writeUIPrefs();
+                     userPrefs_.writeUserPrefs();
                   }
                   newRMarkdownV2Doc(doc);
                }
@@ -3856,7 +3859,7 @@ public class Source implements InsertSourceHandler,
    private void manageRSConnectCommands()
    {
       boolean rsCommandsAvailable = 
-            SessionUtils.showPublishUi(session_, userPrefs_) &&
+            SessionUtils.showPublishUi(session_, userState_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() != null &&
@@ -4863,6 +4866,7 @@ public class Source implements InsertSourceHandler,
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
    private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

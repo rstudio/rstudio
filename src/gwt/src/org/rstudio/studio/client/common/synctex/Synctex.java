@@ -98,7 +98,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.pdfPreviewer().getValue();
       
       boolean synctexSupported =
                   // internal previewer

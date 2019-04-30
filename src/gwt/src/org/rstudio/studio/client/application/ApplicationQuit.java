@@ -98,7 +98,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       eventBus_ = eventBus;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
-      pUiPrefs_ = pUiPrefs;
+      pUserPrefs_ = pUiPrefs;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
       pSessionOpener_ = pSessionOpener;
@@ -133,7 +133,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
-      int busyMode = pUiPrefs_.get().terminalBusyMode().getValue();
+      String busyMode = pUserPrefs_.get().busyDetection().getValue();
 
       boolean busy = workbenchContext_.isServerBusy() || terminalHelper_.warnBeforeClosing(busyMode);
       String msg = null;
@@ -168,7 +168,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       else
       {
          // if we aren't restoring source documents then close them all now
-         if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
+         if (!pUserPrefs_.get().restoreSourceDocuments().getValue())
          {
             sourceShim_.closeAllSourceDocs(caption,
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext));
@@ -504,7 +504,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         SuspendOptions.createSaveMinimal(saveChanges),
                         null));
                }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
-                  pUiPrefs_.get().terminalBusyMode().getValue());
+                  pUserPrefs_.get().busyDetection().getValue());
             }
          });
    }
@@ -744,7 +744,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    // injected
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<UserPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;

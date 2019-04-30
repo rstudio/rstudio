@@ -282,23 +282,31 @@ public class UserStateAccessor extends Prefs
    /**
     * The default (last) account used for publishing
     */
-   public PrefValue<PreferredPublishAccount> preferredPublishAccount()
+   public PrefValue<PublishAccount> publishAccount()
    {
-      return object("preferred_publish_account", null);
+      return object("publish_account", null);
    }
 
-   public static class PreferredPublishAccount extends JavaScriptObject
+   public static class PublishAccount extends JavaScriptObject
    {
-      protected PreferredPublishAccount() {} 
+      protected PublishAccount() {} 
+
+      public final native String getName() /*-{
+         return this.name;
+      }-*/;
+
+      public final native String getServer() /*-{
+         return this.server;
+      }-*/;
 
    }
 
    /**
     * The preferred width, in pixels, of the document outline pane.
     */
-   public PrefValue<Integer> preferredDocumentOutlineWidth()
+   public PrefValue<Integer> documentOutlineWidth()
    {
-      return integer("preferred_document_outline_width", 110);
+      return integer("document_outline_width", 110);
    }
 
    /**

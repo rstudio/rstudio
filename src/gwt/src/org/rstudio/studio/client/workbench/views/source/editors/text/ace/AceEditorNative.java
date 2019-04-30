@@ -537,12 +537,12 @@ public class AceEditorNative extends JavaScriptObject {
       $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
    }-*/;
    
-   public final static void syncUiPrefs(UserPrefs uiPrefs)
+   public final static void syncUiPrefs(UserPrefs userPrefs)
    {
       if (uiPrefsSynced_)
          return;
 
-      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
+      userPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
       {
          @Override
          public void execute(Boolean arg) 
@@ -551,7 +551,7 @@ public class AceEditorNative extends JavaScriptObject {
          }
       });
       
-      uiPrefs.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      userPrefs.verticallyAlignArgumentsIndent().bind(new CommandWithArg<Boolean>()
       {
          @Override
          public void execute(Boolean arg)

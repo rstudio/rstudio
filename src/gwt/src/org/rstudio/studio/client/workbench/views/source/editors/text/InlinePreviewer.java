@@ -42,7 +42,7 @@ public class InlinePreviewer
    
    public void preview()
    {
-      String pref = prefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = prefs_.latexPreviewOnCursorIdle().getValue();
       regs_.add(sentinel_.addPropertyValueChangeHandler(
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, this));
       regs_.add(sentinel_.addPropertyValueChangeHandler(

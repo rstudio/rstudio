@@ -130,7 +130,7 @@ public class Projects implements OpenProjectFileHandler,
       session_ = session;
       pWorkbenchContext_ = pWorkbenchContext;
       pPrefDialog_ = pPrefDialog;
-      pUIPrefs_ = pUIPrefs;
+      pUserPrefs_ = pUIPrefs;
       opener_ = opener;
       sessionOpener_ = sessionOpener;
 
@@ -245,11 +245,11 @@ public class Projects implements OpenProjectFileHandler,
                    {
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
-                         pUIPrefs_.get(),
+                         pUserPrefs_.get(),
                          pWorkbenchContext_.get(),
                          new NewProjectInput(
                             FileSystemItem.createDir(
-                               pUIPrefs_.get().defaultProjectLocation().getValue()), 
+                               pUserPrefs_.get().defaultProjectLocation().getValue()), 
                             context
                          ),
                          allowOpenInNewWindow,
@@ -393,25 +393,25 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
-            UserPrefs uiPrefs = pUIPrefs_.get();
+            UserPrefs userPrefs = pUserPrefs_.get();
             
             // update default project location pref if necessary
             if ((newProject.getNewDefaultProjectLocation() != null) ||
                 (newProject.getCreateGitRepo() != 
-                 uiPrefs.newProjGitInit().getValue()))
+                 userPrefs.newProjGitInit().getValue()))
             {
                indicator.onProgress("Saving defaults...");
 
                if (newProject.getNewDefaultProjectLocation() != null)
                {
-                  uiPrefs.defaultProjectLocation().setGlobalValue(
+                  userPrefs.defaultProjectLocation().setGlobalValue(
                      newProject.getNewDefaultProjectLocation());
                }
                
                if (newProject.getCreateGitRepo() != 
-                   uiPrefs.newProjGitInit().getValue())
+                   userPrefs.newProjGitInit().getValue())
                {
-                  uiPrefs.newProjGitInit().setGlobalValue(
+                  userPrefs.newProjGitInit().setGlobalValue(
                                           newProject.getCreateGitRepo());
                }
                
@@ -1179,7 +1179,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Session session_;
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
-   private final Provider<UserPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
    

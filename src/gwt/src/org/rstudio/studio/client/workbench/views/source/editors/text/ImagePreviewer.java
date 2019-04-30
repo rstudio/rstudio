@@ -536,7 +536,7 @@ public class ImagePreviewer
       if (el != null)
          return;
       
-      String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
+      String pref = prefs.latexPreviewOnCursorIdle().getValue();
       
       // skip if disabled entirely
       if (!sentinel.getBoolProperty(
@@ -549,7 +549,7 @@ public class ImagePreviewer
       if (isStandaloneMarkdownLink(line) && 
           sentinel.getBoolProperty(
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-            prefs.showLatexPreviewOnCursorIdle().getValue() == 
+            prefs.latexPreviewOnCursorIdle().getValue() == 
                 UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          onPreviewImageLineWidget(display, sentinel,

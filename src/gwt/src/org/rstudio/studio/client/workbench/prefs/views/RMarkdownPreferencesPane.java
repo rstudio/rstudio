@@ -40,7 +40,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       add(headerLabel("R Markdown"));
       
       add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
+      add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
       add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       
       docOutlineDisplay_ = new SelectWidget(
@@ -81,7 +81,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       // show output inline for all Rmds
       final CheckBox rmdInlineOutput = checkboxPref(
             "Show output inline for all R Markdown documents",
-            prefs_.showRmdChunkOutputInline());
+            prefs_.rmdChunkOutputInline());
       add(rmdInlineOutput);
       
       // behavior for latex and image preview popups
@@ -170,9 +170,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(RPrefs prefs)
    {
-      docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
+      docOutlineDisplay_.setValue(prefs_.docOutlineShow().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
-      latexPreviewWidget_.setValue(prefs_.showLatexPreviewOnCursorIdle().getValue().toString());
+      latexPreviewWidget_.setValue(prefs_.latexPreviewOnCursorIdle().getValue());
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
    }
@@ -182,13 +182,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       boolean requiresRestart = super.onApply(rPrefs);
       
-      prefs_.shownSectionsInDocumentOutline().setGlobalValue(
+      prefs_.docOutlineShow().setGlobalValue(
             docOutlineDisplay_.getValue());
       
-      prefs_.rmdViewerType().setGlobalValue(Integer.decode(
-            rmdViewerMode_.getValue()));
+      prefs_.rmdViewerType().setGlobalValue(
+            rmdViewerMode_.getValue());
       
-      prefs_.showLatexPreviewOnCursorIdle().setGlobalValue(
+      prefs_.latexPreviewOnCursorIdle().setGlobalValue(
             latexPreviewWidget_.getValue());
       
       if (knitWorkingDir_ != null)

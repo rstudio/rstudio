@@ -135,7 +135,7 @@ public class TerminalTabPresenter extends BasePresenter
       super(view);
       view_ = view;
       terminalHelper_ = terminalHelper;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    }
 
    @Handler
@@ -259,7 +259,7 @@ public class TerminalTabPresenter extends BasePresenter
          onConfirmed.execute();
       }, caption, "Are you sure you want to close all terminals? Any running jobs " +
             "will be stopped",
-            uiPrefs_.terminalBusyMode().getValue());
+            userPrefs_.busyDetection().getValue());
    }
 
    private void shutDownTerminals()
@@ -270,5 +270,5 @@ public class TerminalTabPresenter extends BasePresenter
    // Injected ---- 
    private final Display view_;
    private final TerminalHelper terminalHelper_;
-   private final UserPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
 }

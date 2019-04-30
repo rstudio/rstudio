@@ -89,6 +89,7 @@ public abstract class SatelliteWindow extends Composite
       {
          RStudioThemes.initializeThemes(
             RStudioGinjector.INSTANCE.getUserPrefs(),
+            RStudioGinjector.INSTANCE.getUserState(),
             Document.get(),
             mainPanel_.getElement());
             

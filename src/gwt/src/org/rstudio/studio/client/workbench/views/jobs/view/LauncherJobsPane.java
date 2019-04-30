@@ -106,7 +106,7 @@ public class LauncherJobsPane extends WorkbenchPane
       if (uiPrefs_.showLauncherJobsTab().getValue() != show)
       {
          uiPrefs_.showLauncherJobsTab().setGlobalValue(show);
-         uiPrefs_.writeUIPrefs();
+         uiPrefs_.writeUserPrefs();
       }
    }
 

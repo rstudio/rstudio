@@ -113,7 +113,7 @@ public class ClearAllDialog extends ModalDialogBase
             public void onValueChange(ValueChangeEvent<Boolean> event)
             {
                state_.clearHidden().setGlobalValue(event.getValue());
-               state_.write();
+               state_.writeState();
             }
          });
          optionPanel.add(chkIncludeHidden_);

@@ -720,7 +720,7 @@ public class RSConnect implements SessionInitHandler,
       // "Manage accounts" can be invoked any time we're permitted to
       // publish 
       commands_.rsconnectManageAccounts().setVisible(
-            SessionUtils.showPublishUi(session_, pUserPrefs_.get()));
+            SessionUtils.showPublishUi(session_, pUserState_.get()));
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used

@@ -86,7 +86,7 @@ public class CppCompletionRequest
    void initialize(CppServerOperations server, UserPrefs uiPrefs)
    {
       server_ = server;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    }
    
    public boolean isExplicit()
@@ -149,7 +149,7 @@ public class CppCompletionRequest
       }
       
       // add in snippets if they are enabled and this is a global scope
-      if (uiPrefs_.enableSnippets().getValue() &&
+      if (userPrefs_.enableSnippets().getValue() &&
           (completionPosition_.getScope() == CompletionPosition.Scope.Global))
       {
          ArrayList<String> snippets = snippets_.getAvailableSnippets();
@@ -393,9 +393,9 @@ public class CppCompletionRequest
      
       String insertText = completion.getTypedText();
       if (completion.getType() == CppCompletion.FUNCTION &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue())
+            userPrefs_.insertParensAfterFunctionCompletion().getValue())
       {
-         if (uiPrefs_.insertMatching().getValue())
+         if (userPrefs_.insertMatching().getValue())
             insertText = insertText + "()";
          else
             insertText = insertText + "(";
@@ -418,8 +418,8 @@ public class CppCompletionRequest
       docDisplay_.replaceSelection(insertText, true);
       
       if (completion.hasParameters() &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
-            uiPrefs_.insertMatching().getValue())
+            userPrefs_.insertParensAfterFunctionCompletion().getValue() &&
+            userPrefs_.insertMatching().getValue())
       {
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
@@ -447,7 +447,7 @@ public class CppCompletionRequest
       }
       
       if (completion.hasParameters() &&
-          uiPrefs_.showSignatureTooltips().getValue())
+          userPrefs_.showFunctionSignatureTooltips().getValue())
       {
          new CppCompletionSignatureTip(completion, docDisplay_);
       }
@@ -466,7 +466,7 @@ public class CppCompletionRequest
    }
    
    private CppServerOperations server_;
-   private UserPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
   
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;

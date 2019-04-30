@@ -508,7 +508,7 @@ public class GitReviewPresenter implements ReviewPresenter
                {
                   boolean value = event.getValue();
                   uiPrefs_.gitDiffIgnoreWhitespace().setGlobalValue(value);
-                  uiPrefs_.writeUIPrefs();
+                  uiPrefs_.writeUserPrefs();
                   updateDiff(false);
                }
             });

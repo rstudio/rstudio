@@ -361,7 +361,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
                Size size = getPlotSize();
                final SavePlotAsPdfOptions currentOptions = 
-                         userPrefs_.get().savePlotAsPdfOptions().getValue();
+                         userState_.get().savePlotAsPdfOptions().getValue().cast();
                
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
@@ -380,12 +380,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                 options,
                                                 currentOptions))
                        {
-                          UserPrefs prefs = userPrefs_.get();
-                          prefs.savePlotAsPdfOptions().setGlobalValue(options);
-                          prefs.writeUIPrefs();    
+                          UserState state = userState_.get();
+                          state.savePlotAsPdfOptions().setGlobalValue(options);
+                          state.writeState();
                        }
-                    }    
-                 }) ;  
+                    }
+                 });
             }
 
             @Override

@@ -134,8 +134,9 @@ public class RStudioThemedFrame extends RStudioFrame
             if (removeBodyStyle) body.removeAttribute("style");
             
             RStudioThemes.initializeThemes(
-              RStudioGinjector.INSTANCE.getUserPrefs(),
-              document, document.getBody());
+               RStudioGinjector.INSTANCE.getUserPrefs(),
+               RStudioGinjector.INSTANCE.getUserState(),
+               document, document.getBody());
             
             body.addClassName("ace_editor_theme");
          }

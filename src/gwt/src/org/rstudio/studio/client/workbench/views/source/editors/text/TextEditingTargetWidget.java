@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -96,6 +97,7 @@ public class TextEditingTargetWidget
                                   DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
                                   UserPrefs userPrefs,
+                                  UserState userState,
                                   FileTypeRegistry fileTypeRegistry,
                                   final DocDisplay editor,
                                   TextFileType fileType,
@@ -108,6 +110,7 @@ public class TextEditingTargetWidget
       docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
       userPrefs_ = userPrefs;
+      userState_ = userState;
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
@@ -464,7 +467,7 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
-      if (userPrefs_.showRmdChunkOutputInline().getValue())
+      if (userPrefs_.rmdChunkOutputInline().getValue())
       {
          chunksMenu.addSeparator();
          chunksMenu.addItem(
@@ -492,7 +495,7 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(plumberLaunchButton_);
       plumberLaunchButton_.setVisible(false);
 
-      if (SessionUtils.showPublishUi(session_, userPrefs_))
+      if (SessionUtils.showPublishUi(session_, userState_))
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
@@ -1470,7 +1473,7 @@ public class TextEditingTargetWidget
       
       menu.addSeparator();
 
-      String pref = userPrefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
       menu.addItem(new DocPropMenuItem(
             "Preview Images and Equations", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
@@ -1489,7 +1492,7 @@ public class TextEditingTargetWidget
       
       if (type != RmdOutput.TYPE_SHINY)
       {
-        boolean inline = userPrefs_.showRmdChunkOutputInline().getValue();
+        boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
         menu.addItem(new DocPropMenuItem(
               "Chunk Output Inline", docUpdateSentinel_,
               inline,
@@ -1522,6 +1525,7 @@ public class TextEditingTargetWidget
    private final Commands commands_;
    private final EventBus events_;
    private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;

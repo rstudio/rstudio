@@ -459,7 +459,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }
 
    @Override
-   public void onUiPrefsChanged(UserPrefsChangedEvent e)
+   public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
       onViewerTypeChanged(prefs_.rmdViewerType().getValue());
    }

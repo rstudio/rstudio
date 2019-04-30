@@ -314,7 +314,7 @@ public class TextEditingTargetNotebook
       // subscribe to global rmd output inline preference and sync
       // again when it changes
       releaseOnDismiss_.add(
-         prefs_.showRmdChunkOutputInline().addValueChangeHandler(
+         prefs_.rmdChunkOutputInline().addValueChangeHandler(
             new ValueChangeHandler<Boolean>() {
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -1346,7 +1346,7 @@ public class TextEditingTargetNotebook
          docDisplay_.setShowChunkOutputInline(
             docDisplay_.getModeId() == "mode/rmarkdown" &&
             RStudioGinjector.INSTANCE.getUserPrefs()
-                                     .showRmdChunkOutputInline().getValue());
+                                     .rmdChunkOutputInline().getValue());
       }
 
       // watch for scope tree changes if showing output inline

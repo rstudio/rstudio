@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -53,6 +54,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,
+                                    UserState userState,
                                     final AceThemes themes,
                                     WorkbenchContext workbenchContext,
                                     GlobalDisplay globalDisplay,
@@ -61,6 +63,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       res_ = res;
       userPrefs_ = userPrefs;
+      userState_ = userState;
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       
@@ -208,7 +211,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
       theme_.addStyleName(res.styles().themeChooser());
    
-      AceTheme currentTheme = userPrefs_.theme().getGlobalValue();
+      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       addThemeButton_ = new ThemedButton("Add...", event ->
          fileDialogs.openFile(
             "Theme Files (*.tmTheme *.rstheme)",
@@ -286,7 +289,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
-      AceTheme currentTheme = userPrefs_.theme().getGlobalValue();
+      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
       {
          showCantRemoveActiveThemeDialog(currentTheme.getName());
@@ -369,7 +372,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          
             // It's possible the current theme was removed outside the context of
             // RStudio, so choose a default if it can't be found.
-            AceTheme currentTheme = userPrefs_.theme().getGlobalValue();
+            AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
             if (!themeList_.containsKey(currentTheme.getName()))
             {
                StringBuilder warningMsg = new StringBuilder();
@@ -380,7 +383,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                   .append("default theme: \"");
                
                currentTheme = AceTheme.createDefault(currentTheme.isDark());
-               userPrefs_.theme().setGlobalValue(currentTheme);
+               userState_.theme().setGlobalValue(currentTheme);
                preview_.setTheme(currentTheme.getUrl());
                
                warningMsg.append(currentTheme.getName())
@@ -542,9 +545,9 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       userPrefs_.fontSizePoints().setGlobalValue(fontSize);
-      if (!StringUtil.equals(theme_.getValue(), userPrefs_.theme().getGlobalValue()))
+      if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
-         userPrefs_.theme().setGlobalValue(theme_.getValue());
+         userPrefs_.editorTheme().setGlobalValue(theme_.getValue());
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
       }
       

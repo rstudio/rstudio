@@ -3,6 +3,24 @@
 require(jsonlite)
 require(stringi)
 
+enum <- function(def, pref, type, indent) {
+   java <- ""
+   # Emit convenient enum constants if supplied
+   if (!is.null(def[["enum"]])) {
+      for (enumval in def[["enum"]]) {
+         # Create syntactically valid variable name
+         varname <- toupper(pref)
+         valname <- toupper(gsub("[^A-Za-z0-9_]", "_", enumval))
+         java <- paste0(java, indent,
+            "public final static ", type, " ", varname, "_", 
+            valname, " = \"", enumval, "\";\n"
+         )
+      }
+      java <- paste0(java, "\n")
+   }
+   java
+}
+
 generate <- function (schemaPath) {
    # Extract prefs from JSON schema
    schema <- jsonlite::read_json(schemaPath)
@@ -36,7 +54,7 @@ generate <- function (schemaPath) {
       preftype <- def[["type"]]
       if (identical(preftype, "boolean")) {
          preftype <- "bool"
-      } else if (identical(preftype, "numeric")) {
+      } else if (identical(preftype, "numeric") || identical(preftype, "number")) {
          preftype <- "dbl"
       } else if (identical(preftype, "array")) {
          preftype <- "object"
@@ -49,7 +67,8 @@ generate <- function (schemaPath) {
       } else if (identical(def[["type"]], "boolean")) {
          # Convert Booleans from R-style (TRUE, FALSE) to Java style (true, false)
          defaultval <- tolower(defaultval)
-      } else if (identical(def[["type"]], "numeric")) {
+      } else if (identical(def[["type"]], "numeric") || 
+                 identical(def[["type"]], "number")) {
          # Ensure floating point numbers have a decimal
          if (!grepl(".", defaultval, fixed = TRUE)) {
             defaultval <- paste0(defaultval, ".0")
@@ -86,7 +105,14 @@ generate <- function (schemaPath) {
             propname <- gsub("(^|_)(.)", "\\U\\2\\E", prop, perl = TRUE)
             proptype <- propdef[["type"]]
             if (identical(proptype, "array")) {
-               proptype <- "JsArrayEx"
+               proptype <- "JsArrayString"
+               if (!is.null(propdef[["items"]])) {
+                  enumtype <- propdef[["items"]][["type"]]
+                  enumtype <- paste0(toupper(substring(enumtype, 1, 1)), 
+                                     substring(enumtype, 2))
+                  java <- paste0(java, enum(propdef[["items"]], propname, 
+                                            enumtype, "      "))
+               }
             } else if (identical(proptype, "string")) {
                proptype <- "String"
             } else if (identical(proptype, "integer")) {
@@ -100,20 +126,8 @@ generate <- function (schemaPath) {
          java <- paste0(java, "   }\n\n")
       }
       
-      # Emit convenient enum constants if supplied
-      if (!is.null(def[["enum"]])) {
-         for (enumval in def[["enum"]]) {
-            # Create syntactically valid variable name
-            varname <- toupper(pref)
-            valname <- toupper(gsub("[^A-Za-z0-9_]", "_", enumval))
-            java <- paste0(java,
-               "   public final static ", type, " ", varname, "_", 
-               valname, " = \"", enumval, "\";\n"
-            )
-         }
-         java <- paste0(java, "\n")
-      }
-      
+      # add enums if present
+      java <- paste0(java, enum(def, pref, type, "   "))
    }
    
    # Return computed Java

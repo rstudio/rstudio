@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
@@ -95,7 +96,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
-      UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      UserPrefs userState = RStudioGinjector.INSTANCE.getUserPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
@@ -107,7 +108,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
-         chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
+         chkGitInit_.setValue(userState.newProjGitInit().getValue());
          chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
          if (optionsPanel != null)
          {

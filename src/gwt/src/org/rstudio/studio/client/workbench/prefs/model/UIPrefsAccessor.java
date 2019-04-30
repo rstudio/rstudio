@@ -579,11 +579,6 @@ public class UIPrefsAccessor extends Prefs
       return string("rmd_preferred_template_path", "");
    }
    
-   public PrefValue<Integer> rmdViewerType()
-   {
-      return integer("rmd_viewer_type", UserPrefs.RMD_VIEWER_TYPE_WINDOW);
-   }
-   
    public PrefValue<Boolean> showPublishUi()
    {
       return bool("show_publish_ui", true);
@@ -785,7 +780,7 @@ public class UIPrefsAccessor extends Prefs
    protected void UpdateSessionInfo(SessionInfo sessionInfo)
    {
       sessionInfo_ = sessionInfo;
-      UpdatePrefs(sessionInfo_.getUiPrefs(), sessionInfo_.getProjectUIPrefs());
+      UpdatePrefs(sessionInfo_.getUserPrefs(), sessionInfo_.getProjectUIPrefs());
    }
    
    private String getDefaultPdfPreview()

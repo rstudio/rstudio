@@ -68,7 +68,7 @@ public class UserPrefMenuItem <T> extends CheckableMenuItem
          // for other value types the menu item always sets to the target value
          prefValue_.setGlobalValue(targetValue_, true);
       }
-      uiPrefs_.writeUIPrefs();
+      uiPrefs_.writeUserPrefs();
    }
 
    @Override

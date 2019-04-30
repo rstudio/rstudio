@@ -81,8 +81,8 @@ public class RSAccountConnector implements
       server_ = server;
       display_ = display;
       optionsLoader_ = optionsLoader;
-      pUiPrefs_ = pUiPrefs;
-      pState_ = pState;
+      pUserPrefs_ = pUiPrefs;
+      pUserState_ = pState;
       session_ = session;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
@@ -99,7 +99,7 @@ public class RSAccountConnector implements
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pState_.get().enableRsconnectPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -180,8 +180,8 @@ public class RSAccountConnector implements
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
-      pState_.get().writeState();
+      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().writeState();
    }
 
    // Private methods --------------------------------------------------------
@@ -224,7 +224,7 @@ public class RSAccountConnector implements
             display_,
             forFirstAccount,
             withCloudOption && 
-               SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
+               SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
@@ -390,8 +390,8 @@ public class RSAccountConnector implements
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
-   private final Provider<UserPrefs> pUiPrefs_;
-   private final Provider<UserState> pState_;
+   private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<UserState> pUserState_;
    private final Session session_;
    
    private boolean showingWizard_;

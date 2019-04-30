@@ -22,6 +22,7 @@ import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
@@ -38,12 +39,14 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
                                           ComputeThemeColorsEvent.Handler
 {
    @Inject
-   public ApplicationThemes(Provider<UserPrefs> pUiPrefs,
+   public ApplicationThemes(Provider<UserPrefs> pUserPrefs,
+                            Provider<UserState> pUserState,
                             Provider<AceThemes> pAceThemes,
                             EventBus events,
                             ThemeServerOperations server)
    {
-      userPrefs_ = pUiPrefs;
+      userPrefs_ = pUserPrefs;
+      userState_ = pUserState;
       pAceThemes_ = pAceThemes;
       events_ = events;
       server_ = server;
@@ -109,11 +112,13 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    public void onThemeChanged(ThemeChangedEvent event)
    {
       RStudioThemes.initializeThemes(userPrefs_.get(),
+                                     userState_.get(),
                                      Document.get(),
                                      root_);
    }
    
    private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Provider<AceThemes> pAceThemes_;
    private final EventBus events_;
    private final ThemeServerOperations server_;

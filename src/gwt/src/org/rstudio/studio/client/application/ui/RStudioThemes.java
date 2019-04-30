@@ -18,6 +18,7 @@ package org.rstudio.studio.client.application.ui;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
@@ -30,11 +31,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UserPrefs uiPrefs,
+   public static void initializeThemes(UserPrefs userPrefs,
+                                       UserState userState,
                                        Document document,
                                        Element element)
    {
-      String themeName = getThemeFromUserPrefs(uiPrefs);
+      String themeName = getThemeFromUserPrefs(userPrefs, userState);
       initializeThemes(themeName, document, element);
    }
 
@@ -88,9 +90,9 @@ public class RStudioThemes
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUserPrefs(UserPrefs prefs) {
+   public static String getThemeFromUserPrefs(UserPrefs prefs, UserState state) {
       return suggestThemeFromAceTheme(
-        prefs.editorTheme().getGlobalValue(),
+        state.theme().getGlobalValue().cast(),
         prefs.globalTheme().getGlobalValue()
       );
    }

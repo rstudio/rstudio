@@ -149,7 +149,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       pdfPreview_.addChoice("System Viewer",
                             UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
       
-      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      pdfPreview_.setValue(prefs_.pdfPreviewer().getValue());
    }
    
    @Override
@@ -162,7 +162,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
       
-      prefs_.pdfPreview().setGlobalValue(pdfPreview_.getValue());
+      prefs_.pdfPreviewer().setGlobalValue(pdfPreview_.getValue());
          
       CompilePdfPrefs prefs = CompilePdfPrefs.create(
                                        chkCleanTexi2DviOutput_.getValue(),

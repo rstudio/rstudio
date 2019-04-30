@@ -64,7 +64,7 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
       eventBus.addHandler(SessionInitEvent.TYPE, this);
    }
    
-   public void writeUIPrefs()
+   public void writeUserPrefs()
    {
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
@@ -76,7 +76,7 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
                      UserPrefsChangedEvent.Data.create(
                               UserPrefsChangedEvent.GLOBAL_TYPE,
-                              session_.getSessionInfo().getUiPrefs()));
+                              session_.getSessionInfo().getUserPrefs()));
 
                if (Satellite.isCurrentWindowSatellite())
                {

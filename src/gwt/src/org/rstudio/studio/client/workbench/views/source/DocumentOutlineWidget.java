@@ -203,7 +203,7 @@ public class DocumentOutlineWidget extends Composite
    @Inject
    private void initialize(UserPrefs uiPrefs)
    {
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    }
    
    public DocumentOutlineWidget(TextEditingTarget target)
@@ -292,7 +292,7 @@ public class DocumentOutlineWidget extends Composite
       
       handlers_.add(target_.addEditorThemeStyleChangedHandler(this));
       
-      handlers_.add(uiPrefs_.shownSectionsInDocumentOutline().bind(new CommandWithArg<String>()
+      handlers_.add(userPrefs_.docOutlineShow().bind(new CommandWithArg<String>()
       {
          @Override
          public void execute(String prefValue)
@@ -410,7 +410,7 @@ public class DocumentOutlineWidget extends Composite
    
    private boolean shouldDisplayNode(Scope node)
    {
-      String shownSectionsPref = uiPrefs_.shownSectionsInDocumentOutline().getGlobalValue();
+      String shownSectionsPref = userPrefs_.docOutlineShow().getGlobalValue();
       if (node.isChunk() && shownSectionsPref == UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY)
          return false;
       
@@ -495,7 +495,7 @@ public class DocumentOutlineWidget extends Composite
    private Scope currentScope_;
    private Scope currentVisibleScope_;
    
-   private UserPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource

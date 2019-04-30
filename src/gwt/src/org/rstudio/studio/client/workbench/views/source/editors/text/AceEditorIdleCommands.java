@@ -65,7 +65,7 @@ public class AceEditorIdleCommands
       if (range == null)
          return;
       
-      String pref = prefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = prefs_.latexPreviewOnCursorIdle().getValue();
       
       // preview if preview is always enabled, or specifically enabled for this
       // document

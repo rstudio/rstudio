@@ -78,7 +78,7 @@ public class EditingPreferencesPane extends PreferencesPane
             "will be automatically detected."));
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
-      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
+      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
@@ -94,9 +94,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Quotes & Brackets"
             },
             new String[] {
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_NEVER,
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES,
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS
+                  UserPrefs.SURROUND_SELECTION_NEVER,
+                  UserPrefs.SURROUND_SELECTION_QUOTES,
+                  UserPrefs.SURROUND_SELECTION_QUOTES_AND_BRACKETS
             },
             false,
             true,
@@ -226,7 +226,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       displayPanel.add(headerLabel("Console"));
       NumericValueWidget limitLengthPref =
-            numericPref("Limit length of lines displayed in console to:", prefs_.truncateLongLinesInConsoleHistory());
+            numericPref("Limit length of lines displayed in console to:", prefs_.consoleLineLengthLimit());
       limitLengthPref.setWidth("36px");
       displayPanel.add(nudgeRightPlus(limitLengthPref));
 
@@ -347,7 +347,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       final CheckBox showSignatureTooltipsCheckbox =
            checkboxPref("Show help tooltip after function completions",
-                 prefs.showSignatureTooltips());
+                 prefs.showFunctionSignatureTooltips());
       
       addEnabledDependency(
             insertParensAfterFunctionCompletionsCheckbox,
@@ -510,8 +510,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       // editing prefs
       prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
-      prefs_.ansiConsoleMode().setGlobalValue(
-            consoleColorMode_.getValue(), UserPrefs.ANSI_CONSOLE_MODE_ON);
+      prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
       

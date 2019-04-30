@@ -970,7 +970,7 @@ public class TextEditingTargetRMarkdownHelper
                   // we'll default to it the next time we load the template list
                   prefs_.rmdPreferredTemplatePath().setGlobalValue(
                         template.getTemplatePath());
-                  prefs_.writeUIPrefs();
+                  prefs_.writeUserPrefs();
                   FileSystemItem file =
                         FileSystemItem.createFile(created.getPath());
                   eventBus_.fireEvent(new FileEditEvent(file));

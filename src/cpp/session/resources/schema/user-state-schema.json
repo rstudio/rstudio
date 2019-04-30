@@ -112,7 +112,7 @@
                 "portrait": {
                     "type": "boolean"
                 },
-                "cairoPdf": {
+                "cairo_pdf": {
                     "type": "boolean"
                 },
                 "viewAfterSave": {
@@ -147,10 +147,6 @@
             },
             "description": "Most recently used settings for compiling a notebook using R Markdown."
         },
-        "root_document": {
-            "type": "string",
-            "description": "The root document to use when compiling PDF documents."
-        },
         "show_publish_ui": {
             "type": "boolean",
             "default": true,
@@ -161,12 +157,23 @@
             "default": true,
             "description": "Whether to show UI for publishing content to RStudio Connect."
         },
-        "preferred_publish_account": {
+        "publish_account": {
             "type": "object",
-            "default": {},
+            "default": {
+                "name": "",
+                "server": ""
+            },
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "server": {
+                    "type": "string"
+                }
+            },
             "description": "The default (last) account used for publishing"
         },
-        "preferred_document_outline_width": {
+        "document_outline_width": {
             "type": "integer",
             "default": 110,
             "description": "The preferred width, in pixels, of the document outline pane."

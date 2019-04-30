@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 
 import com.google.gwt.user.client.Command;
@@ -40,9 +41,9 @@ public class TerminalHelper
             event -> warnBeforeClosing_ = event.isBusy());
    }
    
-   public boolean warnBeforeClosing(int busyMode)
+   public boolean warnBeforeClosing(String busyMode)
    {
-      if (busyMode == UIPrefsAccessor.BUSY_DETECT_NEVER)
+      if (busyMode == UserPrefs.BUSY_DETECTION_NEVER)
          warnBeforeClosing_ = false;
       
       return warnBeforeClosing_;
@@ -51,7 +52,7 @@ public class TerminalHelper
    public void warnBusyTerminalBeforeCommand(final Command command, 
                                              String caption,
                                              String question,
-                                             int busyMode)
+                                             String busyMode)
    {
       if (!warnBeforeClosing(busyMode))
       {

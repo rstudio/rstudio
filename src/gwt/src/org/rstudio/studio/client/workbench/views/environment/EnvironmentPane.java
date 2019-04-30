@@ -425,13 +425,13 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public boolean getShowInternalFunctions()
    {
-      return prefs_.showInternalFunctionsInTraceback().getValue();
+      return prefs_.showInternalFunctions().getValue();
    }
 
    @Override
    public void setShowInternalFunctions(boolean show)
    {
-      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
+      prefs_.showInternalFunctions().setProjectValue(show);
    }
 
    public void fillObjectContents(final RObject object, 

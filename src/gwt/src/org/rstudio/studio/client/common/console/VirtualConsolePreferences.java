@@ -30,7 +30,7 @@ public class VirtualConsolePreferences implements Preferences
    @Override
    public int truncateLongLinesInConsoleHistory()
    {
-      return pUserPrefs_.get().truncateLongLinesInConsoleHistory().getGlobalValue();
+      return pUserPrefs_.get().consoleLineLengthLimit().getGlobalValue();
    }
    
    @Override

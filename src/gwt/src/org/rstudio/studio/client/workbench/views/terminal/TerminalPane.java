@@ -1077,7 +1077,7 @@ public class TerminalPane extends WorkbenchPane
       if (uiPrefs_.showTerminalTab().getValue() != show)
       {
          uiPrefs_.showTerminalTab().setGlobalValue(show);
-         uiPrefs_.writeUIPrefs();
+         uiPrefs_.writeUserPrefs();
       }
    }
 

@@ -50,6 +50,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
@@ -58,11 +59,13 @@ public class PublishingPreferencesPane extends PreferencesPane
                                     RSConnectServerOperations server,
                                     RSAccountConnector connector,
                                     UserPrefs prefs,
+                                    UserState state,
                                     DependencyManager deps)
    {
       reloadRequired_ = false;
       display_ = globalDisplay;
       userPrefs_ = prefs;
+      userState_ = state;
       server_ = server;
       connector_ = connector;
       deps_ = deps;
@@ -188,14 +191,14 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(missingPkgPanel);
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
-            userState_.enableRStudioConnect());
+            userState_.enableRsconnectPublishUi());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
                                                         "rstudio_connect");
       lessSpaced(rsconnectPanel);
       
       add(headerLabel("Settings"));
       CheckBox chkEnablePublishing = checkboxPref("Enable publishing documents, apps, and APIs", 
-            userPrefs_.showPublishUi());
+            userState_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -219,7 +222,7 @@ public class PublishingPreferencesPane extends PreferencesPane
             userPrefs_.publishCheckCertificates()));
       
       CheckBox useCaBundle = checkboxPref("Use custom CA bundle",
-            userPrefs_.usePublishCABundle());
+            userPrefs_.usePublishCaBundle());
       useCaBundle.addValueChangeHandler(
             val -> caBundlePath_.setVisible(val.getValue()));
       add(useCaBundle);
@@ -261,7 +264,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    {
       boolean reload = super.onApply(rPrefs);
       
-      userPrefs_.publishCABundle().setGlobalValue(caBundlePath_.getText());
+      userPrefs_.publishCaBundle().setGlobalValue(caBundlePath_.getText());
 
       return reload || reloadRequired_;
    }

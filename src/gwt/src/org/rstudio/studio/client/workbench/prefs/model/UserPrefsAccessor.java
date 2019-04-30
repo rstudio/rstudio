@@ -257,8 +257,21 @@ public class UserPrefsAccessor extends Prefs
    {
       protected Panes() {} 
 
-      public final native JsArrayEx getLayout() /*-{
-         return this.layout;
+      public final static String QUADRANTS_SOURCE = "Source";
+      public final static String QUADRANTS_CONSOLE = "Console";
+      public final static String QUADRANTS_TABSET1 = "TabSet1";
+      public final static String QUADRANTS_TABSET2 = "TabSet2";
+
+      public final native JsArrayString getQuadrants() /*-{
+         return this.quadrants;
+      }-*/;
+
+      public final native JsArrayString getTabSet1() /*-{
+         return this.tabSet1;
+      }-*/;
+
+      public final native JsArrayString getTabSet2() /*-{
+         return this.tabSet2;
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
@@ -725,7 +738,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Double> fontSizePoints()
    {
-      return number("font_size_points", 10);
+      return dbl("font_size_points", 10.0);
    }
 
    /**
@@ -1267,6 +1280,22 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> consoleDoubleClickSelect()
    {
       return bool("console_double_click_select", false);
+   }
+
+   /**
+    * Whether a git repo should be initialized inside new projects by default.
+    */
+   public PrefValue<Boolean> newProjGitInit()
+   {
+      return bool("new_proj_git_init", false);
+   }
+
+   /**
+    * The root document to use when compiling PDF documents.
+    */
+   public PrefValue<String> rootDocument()
+   {
+      return string("root_document", "");
    }
 
    

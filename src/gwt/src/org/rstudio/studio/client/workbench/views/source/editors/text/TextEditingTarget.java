@@ -646,9 +646,9 @@ public class TextEditingTarget implements
                   {
                      String state = event.getParams().getState();
                      if (event.getParams().getViewerType() != 
-                            ShinyViewerType.SHINY_VIEWER_PANE &&
+                            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
                          event.getParams().getViewerType() != 
-                            ShinyViewerType.SHINY_VIEWER_WINDOW)
+                            UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
                      {
                         // we can't control the state when it's not in an
                         // RStudio-owned window, so treat the app as stopped
@@ -674,9 +674,9 @@ public class TextEditingTarget implements
                   {
                      String state = event.getParams().getState();
                      if (event.getParams().getViewerType() != 
-                            PlumberViewerType.PLUMBER_VIEWER_PANE &&
+                            UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
                          event.getParams().getViewerType() != 
-                            PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+                            UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
                      {
                         // we can't control the state when it's not in an
                         // RStudio-owned window, so treat the app as stopped
@@ -1301,6 +1301,7 @@ public class TextEditingTarget implements
                                           docUpdateSentinel_,
                                           commands_,
                                           prefs_,
+                                          state_,
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
@@ -2517,7 +2518,7 @@ public class TextEditingTarget implements
                         if (d.getValue().isSaveAsDefault())
                         {
                            prefs_.defaultEncoding().setGlobalValue(newEncoding);
-                           prefs_.writeUIPrefs();
+                           prefs_.writeUserPrefs();
                         }
 
                         command.execute(newEncoding);
@@ -5257,7 +5258,7 @@ public class TextEditingTarget implements
       if (prefs_.sourceWithEcho().getValue() != echo)
       {
          prefs_.sourceWithEcho().setGlobalValue(echo, true);
-         prefs_.writeUIPrefs();
+         prefs_.writeUserPrefs();
       }
    }
    
@@ -5816,7 +5817,7 @@ public class TextEditingTarget implements
    @Handler
    void onCompilePDF()
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.pdfPreviewer().getValue();
       boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
@@ -6916,8 +6917,8 @@ public class TextEditingTarget implements
    
    public void setPreferredOutlineWidgetSize(double size)
    {
-      prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
-      prefs_.writeUIPrefs();
+      state_.documentOutlineWidth().setGlobalValue((int) size);
+      state_.writeState();
       docUpdateSentinel_.setProperty(DOC_OUTLINE_SIZE, size + "");
    }
    
@@ -6925,7 +6926,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_SIZE);
       if (StringUtil.isNullOrEmpty(property))
-         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+         return state_.documentOutlineWidth().getGlobalValue();
       
       try {
          double value = Double.parseDouble(property);
@@ -6942,7 +6943,7 @@ public class TextEditingTarget implements
          
          return value;
       } catch (Exception e) {
-         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+         return state_.documentOutlineWidth().getGlobalValue();
       }
    }
    
@@ -6955,7 +6956,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
       return StringUtil.isNullOrEmpty(property)
-            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
+            ? (getTextFileType().isRmd() && prefs_.showDocOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
    }
    

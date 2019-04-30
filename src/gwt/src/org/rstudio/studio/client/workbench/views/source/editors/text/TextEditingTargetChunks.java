@@ -106,10 +106,11 @@ public class TextEditingTargetChunks
    // Private methods ---------------------------------------------------------
    
    @Inject
-   private void initialize(UserPrefs prefs)
+   private void initialize(UserPrefs prefs, UserState state)
    {
       prefs_ = prefs;
-      dark_ = prefs.theme().getValue().isDark();
+      state_ = state;
+      dark_ = state.theme().getValue().getDark();
       
       state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {

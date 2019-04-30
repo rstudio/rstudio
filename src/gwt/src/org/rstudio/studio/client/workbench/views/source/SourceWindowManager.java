@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -112,7 +113,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       sourceShim_ = sourceShim;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       
@@ -552,7 +553,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (SourceWindowManager.isMainSourceWindow())
       {
          // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
          if (hasSourceAndConsolePaired(paneConfig.getPanes()))
@@ -567,7 +568,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (SourceWindowManager.isMainSourceWindow())
       {
          // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
          if (hasSourceAndConsolePaired(paneConfig.getPanes()))
@@ -1337,11 +1338,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private boolean hasSourceAndConsolePaired(String pane1, String pane2)
    {
-      return (pane1 == PaneConfig.SOURCE &&
-              pane2 == PaneConfig.CONSOLE)
+      return (pane1 == UserPrefsAccessor.Panes.QUADRANTS_SOURCE &&
+              pane2 == UserPrefsAccessor.Panes.QUADRANTS_CONSOLE)
                  ||
-             (pane1 == PaneConfig.CONSOLE &&
-              pane2 == PaneConfig.SOURCE);
+             (pane1 == UserPrefsAccessor.Panes.QUADRANTS_CONSOLE &&
+              pane2 == UserPrefsAccessor.Panes.QUADRANTS_SOURCE);
    }
 
    // Private types -----------------------------------------------------------
@@ -1361,7 +1362,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
    private final SourceShim sourceShim_;
-   private final UserPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

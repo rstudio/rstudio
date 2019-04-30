@@ -78,7 +78,7 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHand
    @Override
    protected void dispatch(UserPrefsChangedHandler handler)
    {
-      handler.onUiPrefsChanged(this);
+      handler.onUserPrefsChanged(this);
    }
 
    private Data data_;

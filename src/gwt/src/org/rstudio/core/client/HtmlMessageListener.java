@@ -1,7 +1,7 @@
 /*
  * HtmlMessageListener.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
@@ -41,7 +42,7 @@ public class HtmlMessageListener
    {
       htmlMessageListener_ = this;
       fileTypeRegistry_ = fileTypeRegistry;
-      pUIPrefs_ = pUIPrefs;
+      pUserPrefs_ = pUIPrefs;
       themeSources_ = new ArrayList<JavaScriptObject>();
       
       initializeMessageListeners();
@@ -49,7 +50,7 @@ public class HtmlMessageListener
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
       {
          @Override
-         public void onUiPrefsChanged(UserPrefsChangedEvent e)
+         public void onUserPrefsChanged(UserPrefsChangedEvent e)
          {
             if (e.getType() == UserPrefsChangedEvent.GLOBAL_TYPE)
             {
@@ -120,7 +121,7 @@ public class HtmlMessageListener
       themeOrigin_ = origin;
       themeSources_.add(source);
 
-      AceTheme editorTheme = pUIPrefs_.get().theme().getGlobalValue();
+      AceTheme editorTheme = pUserState_.get().theme().getGlobalValue().cast();
       if (editorTheme != null) {
          postThemeMessage(source, themeOrigin_);
       }
@@ -174,7 +175,8 @@ public class HtmlMessageListener
    
    private final FileTypeRegistry fileTypeRegistry_;
    private static HtmlMessageListener htmlMessageListener_;
-   private Provider<UserPrefs> pUIPrefs_;
+   private Provider<UserPrefs> pUserPrefs_;
+   private Provider<UserState> pUserState_;
 
    private String url_;
    private boolean highlightAllowed_;

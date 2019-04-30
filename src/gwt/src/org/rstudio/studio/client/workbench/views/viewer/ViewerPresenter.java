@@ -223,7 +223,7 @@ public class ViewerPresenter extends BasePresenter
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
       if (event.getParams().getViewerType() == 
-            ShinyViewerType.SHINY_VIEWER_PANE &&
+            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
           event.getParams().getState() == 
             ShinyApplicationParams.STATE_STARTED)
       {
@@ -239,7 +239,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
    {
-      if (event.getParams().getViewerType() == PlumberViewerType.PLUMBER_VIEWER_PANE &&
+      if (event.getParams().getViewerType() == UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
           event.getParams().getState() == PlumberAPIParams.STATE_STARTED)
       {
          // time out a bit to wait for swagger server to initialize

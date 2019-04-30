@@ -192,7 +192,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(useDevtools_);
       development.add(useDevtools_);
       
-      development.add(checkboxPref("Save all files prior to building packages", uiPrefs.saveAllBeforeBuild()));
+      development.add(checkboxPref("Save all files prior to building packages", uiPrefs.saveFilesBeforeBuild()));
       development.add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
       
       hideObjectFiles_ = new CheckBox("Hide object files in package src directory");

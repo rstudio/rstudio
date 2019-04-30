@@ -249,7 +249,7 @@ public class MathJax
       // preferences indicate otherwise
       if (sentinel_.getBoolProperty(
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-            prefs_.showLatexPreviewOnCursorIdle().getValue() == 
+            prefs_.latexPreviewOnCursorIdle().getValue() == 
                UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");

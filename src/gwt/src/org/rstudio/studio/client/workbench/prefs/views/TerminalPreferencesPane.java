@@ -128,7 +128,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (haveWebsocketPref())
       {
          CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
-               prefs_.terminalUseWebsockets(), 
+               prefs_.terminalWebsockets(), 
                "WebSockets are generally more responsive; try turning off if terminal won't connect.");
          add(chkTerminalWebsocket);
          showPerfLabel = true;
@@ -244,20 +244,22 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (busyMode_ != null)
       {
          busyMode_.getListBox().clear();
-         busyMode_.addChoice("Always", Integer.toString(UIPrefsAccessor.BUSY_DETECT_ALWAYS));
-         busyMode_.addChoice("Never", Integer.toString(UIPrefsAccessor.BUSY_DETECT_NEVER));
-         busyMode_.addChoice("Always except for whitelist", Integer.toString(UIPrefsAccessor.BUSY_DETECT_WHITELIST));
+         busyMode_.addChoice("Always", UserPrefs.BUSY_DETECTION_ALWAYS);
+         busyMode_.addChoice("Never", UserPrefs.BUSY_DETECTION_NEVER);
+         busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
          busyMode_.setEnabled(true);
          
-         int selection = prefs_.terminalBusyMode().getValue();
-         if (selection < UIPrefsAccessor.BUSY_DETECT_ALWAYS ||
-               selection > UIPrefsAccessor.BUSY_DETECT_WHITELIST)
-            selection = UIPrefsAccessor.BUSY_DETECT_ALWAYS;
-         
-         busyMode_.getListBox().setSelectedIndex(selection);
+         String selection = prefs_.busyDetection().getValue();
+         for (int i = 0; i < busyMode_.getListBox().getItemCount(); i++)
+         {
+            if (busyMode_.getListBox().getValue(i) == prefs_.busyDetection().getValue())
+            {
+               busyMode_.getListBox().setSelectedIndex(i);
+            }
+         }
          
          List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
-               prefs_.terminalBusyWhitelist().getValue());
+               prefs_.busyWhitelist().getValue());
          
          StringBuilder whitelist = new StringBuilder();
          for (String entry: whitelistArray)
@@ -287,8 +289,8 @@ public class TerminalPreferencesPane extends PreferencesPane
      
       if (haveBusyDetectionPref())
       {
-         prefs_.terminalBusyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
-         prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
+         prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.busyDetection().setGlobalValue(selectedBusyMode());
       } 
       TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
             customShellChooser_.getText(),
@@ -334,16 +336,15 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptions_.setVisible(customEnabled);
    }
 
-   private int selectedBusyMode()
+   private String selectedBusyMode()
    {
       int idx = busyMode_.getListBox().getSelectedIndex();
-      String valStr = busyMode_.getListBox().getValue(idx);
-      return StringUtil.parseInt(valStr, UIPrefsAccessor.BUSY_DETECT_ALWAYS);
+      return busyMode_.getListBox().getValue(idx);
    }
 
    private void manageBusyModeControlVisibility()
    {
-      boolean whitelistEnabled = selectedBusyMode() == UIPrefsAccessor.BUSY_DETECT_WHITELIST;
+      boolean whitelistEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_WHITELIST;
       busyWhitelistLabel_.setVisible(whitelistEnabled);
       busyWhitelist_.setVisible(whitelistEnabled);
    }

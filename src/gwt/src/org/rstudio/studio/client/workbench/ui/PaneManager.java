@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -206,7 +207,7 @@ public class PaneManager
                       Session session,
                       Binder binder,
                       Commands commands,
-                      UserPrefs uiPrefs,
+                      UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
                       SourceShim source,
                       @Named("History") final WorkbenchTab historyTab,
@@ -236,7 +237,7 @@ public class PaneManager
       eventBus_ = eventBus;
       session_ = session;
       commands_ = commands;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
       historyTab_ = historyTab;
@@ -265,10 +266,10 @@ public class PaneManager
       
       binder.bind(commands, this);
       
-      PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
+      PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
 
-      int splitterSize = RStudioThemes.isFlat(uiPrefs) ? 7 : 3;
+      int splitterSize = RStudioThemes.isFlat(userPrefs) ? 7 : 3;
 
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4, splitterSize);
@@ -303,11 +304,12 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL));
       }
 
-      uiPrefs.paneConfig().addValueChangeHandler(new ValueChangeHandler<PaneConfig>()
+      userPrefs.panes().addValueChangeHandler(new ValueChangeHandler<UserPrefsAccessor.Panes>()
       {
-         public void onValueChange(ValueChangeEvent<PaneConfig> evt)
+         public void onValueChange(ValueChangeEvent<UserPrefsAccessor.Panes> evt)
          {
-            ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue()));
+            ArrayList<LogicalWindow> newPanes = createPanes(
+                  validateConfig(evt.getValue().cast()));
             panes_ = newPanes;
             left_.replaceWindows(newPanes.get(0), newPanes.get(1));
             right_.replaceWindows(newPanes.get(2), newPanes.get(3));
@@ -545,13 +547,13 @@ public class PaneManager
          JsArrayString panes = JsArrayUtil.copy(paneConfig.getPanes());
          panes.set(consoleCurrentIndex, panes.get(consoleTargetIndex));
          panes.set(consoleTargetIndex, "Console");
-         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(
+         userPrefs_.panes().setGlobalValue(PaneConfig.create(
             panes, 
             paneConfig.getTabSet1(), 
             paneConfig.getTabSet2(),
             paneConfig.getConsoleLeftOnTop(),
-            paneConfig.getConsoleRightOnTop()));
-         uiPrefs_.writeUIPrefs();
+            paneConfig.getConsoleRightOnTop()).cast());
+         userPrefs_.writeUserPrefs();
       }
    }
    
@@ -1208,7 +1210,7 @@ public class PaneManager
    
    private PaneConfig getCurrentConfig()
    {
-      PaneConfig config = uiPrefs_.paneConfig().getValue();
+      PaneConfig config = userPrefs_.panes().getValue().cast();
 
       // use default config if pref isn't set yet
       if (config == null)
@@ -1220,7 +1222,7 @@ public class PaneManager
    private final EventBus eventBus_;
    private final Session session_;
    private final Commands commands_;
-   private final UserPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;

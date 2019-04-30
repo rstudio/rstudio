@@ -122,9 +122,27 @@
         "panes": {
             "type": "object",
             "properties": {
-                "layout": {
+                "quadrants": {
                     "type": "array",
-                    "description": "Allocation of panes to quadrants."
+                    "description": "Allocation of panes to quadrants.",
+                    "items": {
+                        "type": "string",
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2"]
+                    }
+                },
+                "tabSet1": {
+                    "type": "array",
+                    "description": "The panes included in the first tabset.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tabSet2": {
+                    "type": "array",
+                    "description": "The panes included in the second tabset.",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "console_left_on_top": {
                     "type": "boolean",
@@ -735,6 +753,15 @@
             "type": "boolean",
             "default": false,
             "description": "Whether double-clicking should select a word in the Console pane."
+        },
+        "new_proj_git_init": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "root_document": {
+            "type": "string",
+            "description": "The root document to use when compiling PDF documents."
         }
     }
 }

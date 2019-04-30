@@ -44,7 +44,7 @@ public class ShinyApplicationParams extends JavaScriptObject
       return this.url;
    }-*/;
    
-   public final native int getViewerType() /*-{
+   public final native String getViewerType() /*-{
       return this.viewer;
    }-*/;
 
@@ -60,7 +60,7 @@ public class ShinyApplicationParams extends JavaScriptObject
       this.state = state;
    }-*/;
    
-   public final native void setViewerType(int viewerType) /*-{
+   public final native void setViewerType(String viewerType) /*-{
       this.viewer = viewerType;
    }-*/;
 }
