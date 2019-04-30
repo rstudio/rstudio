@@ -62,6 +62,11 @@ pipeline {
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
             sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} ${wwwRstudioOrgPem}"
           }
+
+          // upload debug symbols to Sentry
+          withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+            sh 'cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym .'
+          }
         }
       }
     }
