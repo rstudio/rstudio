@@ -1,7 +1,7 @@
 /*
- * ServerSecureCookie.cpp
+ * SecureCookie.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -249,9 +249,10 @@ void set(const std::string& name,
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse)
+            core::http::Response* pResponse,
+            bool secure)
 {
-   // create vanilla cookie (no need for secure cookie since we are removing)
+   // create cookie
    http::Cookie cookie(request, name, std::string(), path);
 
    // expire delete
@@ -259,6 +260,14 @@ void remove(const http::Request& request,
 
    // secure cookies are set http only, so clear them that way
    cookie.setHttpOnly();
+
+   if (secure)
+   {
+      // set secure flag when removing secure cookies; there's no need for a "secure" empty value
+      // but best practices generally dictate always setting the secure flag on cookies delivered
+      // over https
+      cookie.setSecure();
+   }
 
    // add to response
    pResponse->addCookie(cookie);

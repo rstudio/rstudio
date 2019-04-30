@@ -938,23 +938,22 @@ private:
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
-      if (!filePath.isDirectory() && filePath.exists())
-      {
-         std::string lowerExtension = filePath.extensionLowerCase();
-         return
-               lowerExtension == ".r" ||
-               lowerExtension == ".s" ||
-               lowerExtension == ".q";
-      }
+      if (!filePath.isRegularFile())
+         return false;
 
-      return false;
+      // check for R extension
+      std::string ext = filePath.extensionLowerCase();
+      if (ext != ".r" && ext != ".s")
+         return false;
 
+      // skip large files
+      if (filePath.size() > 2 * 1024 * 1024)
+         return false;
+
+      // ok to index
+      return true;
    }
    
-public:
-   
-   boost::shared_ptr<EntryTree> entries() const { return pEntries_; }
-
 private:
    // index entries
    boost::shared_ptr<EntryTree> pEntries_;
