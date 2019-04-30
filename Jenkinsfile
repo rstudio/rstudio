@@ -80,6 +80,13 @@ def s3_upload(type, flavor, os, arch) {
   // }
 }
 
+def sentry_upload(type, flavor) {
+  withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+    def buildFolder = "package/linux/build-${flavor.capitalize()}-${type}"
+    sh 'cd ${buildFolder}/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf .'
+  }
+}
+
 def jenkins_user_build_args() {
   def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
   def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
@@ -214,6 +221,7 @@ try {
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
+                        sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
                     }
                 }
             }
