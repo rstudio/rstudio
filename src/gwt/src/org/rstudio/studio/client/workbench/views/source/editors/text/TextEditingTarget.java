@@ -127,7 +127,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -4209,19 +4209,19 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentLine()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_LINE);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
    }
 
    @Handler
    void onExecuteCurrentStatement()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_STATEMENT);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
    }
 
    @Handler
    void onExecuteCurrentParagraph()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
    }
 
    @Handler
@@ -5818,11 +5818,11 @@ public class TextEditingTarget implements
    void onCompilePDF()
    {
       String pdfPreview = prefs_.pdfPreviewer().getValue();
-      boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
+      boolean showPdf = !pdfPreview.equals(UserPrefs.PDF_PREVIEWER_NONE);
       boolean useInternalPreview = 
-            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+            pdfPreview.equals(UserPrefs.PDF_PREVIEWER_RSTUDIO);
       boolean useDesktopSynctexPreview = 
-            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+            pdfPreview.equals(UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX) &&
             Desktop.isDesktop();
       
       String action = new String();

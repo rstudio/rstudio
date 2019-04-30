@@ -74,7 +74,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
@@ -1148,21 +1148,21 @@ public class TextEditingTargetWidget
                docUpdateSentinel_, 
                userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_DEFAULT);
+               UserPrefs.KNIT_WORKING_DIR_DEFAULT);
          knitDirMenu.addItem(knitInDocDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
                "Project Directory", 
                docUpdateSentinel_, 
                userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_PROJECT);
+               UserPrefs.KNIT_WORKING_DIR_PROJECT);
          knitDirMenu.addItem(knitInProjectDir);
          DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
                "Current Working Directory", 
                docUpdateSentinel_, 
                userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_CURRENT);
+               UserPrefs.KNIT_WORKING_DIR_CURRENT);
          knitDirMenu.addItem(knitInCurrentDir);
 
          rmdFormatButton_.addSeparator();
@@ -1478,14 +1478,14 @@ public class TextEditingTargetWidget
             "Preview Images and Equations", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
-               pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER),
+               pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
             DocUpdateSentinel.PROPERTY_TRUE));
       menu.addItem(new DocPropMenuItem(
             "Show Previews Inline", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-                 pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS),
+                 pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
             DocUpdateSentinel.PROPERTY_TRUE));
       menu.addSeparator();

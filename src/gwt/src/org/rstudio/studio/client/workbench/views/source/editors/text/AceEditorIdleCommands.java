@@ -16,7 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -71,7 +71,7 @@ public class AceEditorIdleCommands
       // document
       if (sentinel.getBoolProperty(
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-            pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
+            pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER))
       {
          target.renderLatex(range, true);
       }

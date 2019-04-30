@@ -30,7 +30,7 @@ import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
@@ -134,20 +134,20 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
       chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
       
-      pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
+      pdfPreview_.addChoice("(No Preview)", UserPrefs.PDF_PREVIEWER_NONE);
       
       String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
       if (desktopSynctexViewer.length() > 0)
       {
          pdfPreview_.addChoice(desktopSynctexViewer  + " (Recommended)", 
-                               UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
+                               UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX);
       }
       
       pdfPreview_.addChoice("RStudio Viewer", 
-                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+                            UserPrefs.PDF_PREVIEWER_RSTUDIO);
       
       pdfPreview_.addChoice("System Viewer",
-                            UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
+                            UserPrefs.PDF_PREVIEWER_SYSTEM);
       
       pdfPreview_.setValue(prefs_.pdfPreviewer().getValue());
    }

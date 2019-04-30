@@ -23,7 +23,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -411,10 +411,10 @@ public class DocumentOutlineWidget extends Composite
    private boolean shouldDisplayNode(Scope node)
    {
       String shownSectionsPref = userPrefs_.docOutlineShow().getGlobalValue();
-      if (node.isChunk() && shownSectionsPref == UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY)
+      if (node.isChunk() && shownSectionsPref == UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY)
          return false;
       
-      if (isUnnamedNode(node) && shownSectionsPref != UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL)
+      if (isUnnamedNode(node) && shownSectionsPref != UserPrefs.DOC_OUTLINE_SHOW_ALL)
          return false;
       
       // NOTE: the 'is*' items are not mutually exclusive
@@ -427,7 +427,7 @@ public class DocumentOutlineWidget extends Composite
       
       // don't show R functions or R sections in .Rmd unless requested
       TextFileType fileType = target_.getDocDisplay().getFileType();
-      if (shownSectionsPref != UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL && fileType.isRmd())
+      if (shownSectionsPref != UserPrefs.DOC_OUTLINE_SHOW_ALL && fileType.isRmd())
       {
          if (node.isFunction())
             return false;

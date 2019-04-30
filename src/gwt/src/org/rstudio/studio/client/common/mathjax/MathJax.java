@@ -29,7 +29,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -250,7 +250,7 @@ public class MathJax
       if (sentinel_.getBoolProperty(
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
             prefs_.latexPreviewOnCursorIdle().getValue() == 
-               UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
+               UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS))
       {
          boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
          if (isLatexChunk)

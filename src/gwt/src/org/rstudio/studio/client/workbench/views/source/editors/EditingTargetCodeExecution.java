@@ -24,7 +24,7 @@ import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
@@ -335,7 +335,7 @@ public class EditingTargetCodeExecution
          endRowLimit = scope.getEnd().getRow() - 1;
       }
   
-      if (executionBehavior == UIPrefsAccessor.EXECUTE_STATEMENT)
+      if (executionBehavior == UserPrefs.EXECUTION_BEHAVIOR_STATEMENT)
       {
          // no scope to guard region, check the document itself to find
          // the region to execute
@@ -358,7 +358,7 @@ public class EditingTargetCodeExecution
          }
          range.getStart().setRow(startRow);
       }
-      else if (executionBehavior == UIPrefsAccessor.EXECUTE_PARAGRAPH)
+      else if (executionBehavior == UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH)
       {
          range = docDisplay_.getParagraph(
                docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);

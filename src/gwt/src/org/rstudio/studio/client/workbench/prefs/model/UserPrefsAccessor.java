@@ -1227,12 +1227,12 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> docOutlineShow()
    {
-      return string("doc_outline_show", "show_sections_only");
+      return string("doc_outline_show", "sections_only");
    }
 
-   public final static String DOC_OUTLINE_SHOW_SHOW_SECTIONS_ONLY = "show_sections_only";
-   public final static String DOC_OUTLINE_SHOW_SHOW_SECTIONS_AND_CHUNKS = "show_sections_and_chunks";
-   public final static String DOC_OUTLINE_SHOW_SHOW_ALL = "show_all";
+   public final static String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "sections_only";
+   public final static String DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS = "sections_and_chunks";
+   public final static String DOC_OUTLINE_SHOW_ALL = "all";
 
    /**
     * When to preview LaTeX mathematical equations when cursor has not moved recently.

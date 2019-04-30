@@ -48,7 +48,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -113,10 +113,10 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Sublime Text"
             },
             new String[] {
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME,
+                  UserPrefs.EDITOR_KEYBINDINGS_DEFAULT,
+                  UserPrefs.EDITOR_KEYBINDINGS_VIM,
+                  UserPrefs.EDITOR_KEYBINDINGS_EMACS,
+                  UserPrefs.EDITOR_KEYBINDINGS_SUBLIME,
             },
             false,
             true,
@@ -153,9 +153,9 @@ public class EditingPreferencesPane extends PreferencesPane
                "Multiple consecutive R lines"
             },
             new String[] {
-               UIPrefsAccessor.EXECUTE_LINE,
-               UIPrefsAccessor.EXECUTE_STATEMENT,
-               UIPrefsAccessor.EXECUTE_PARAGRAPH
+               UserPrefs.EXECUTION_BEHAVIOR_LINE,
+               UserPrefs.EXECUTION_BEHAVIOR_STATEMENT,
+               UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH
             },
             false,
             true,
@@ -314,9 +314,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Manually (Tab)"
             },
             new String[] {
-                  UIPrefsAccessor.COMPLETION_ALWAYS,
-                  UIPrefsAccessor.COMPLETION_WHEN_TRIGGERED,
-                  UIPrefsAccessor.COMPLETION_MANUAL
+                  UserPrefs.CODE_COMPLETION_ALWAYS,
+                  UserPrefs.CODE_COMPLETION_TRIGGERED,
+                  UserPrefs.CODE_COMPLETION_MANUAL
             },
             false, 
             true, 
@@ -336,7 +336,7 @@ public class EditingPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             alwaysCompleteInConsole.setVisible(
-                   showCompletions_.getValue() == UIPrefsAccessor.COMPLETION_ALWAYS);
+                   showCompletions_.getValue() == UserPrefs.CODE_COMPLETION_ALWAYS);
             
          }
       });
@@ -372,8 +372,8 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Manually (Ctrl+Space) "
             },
             new String[] {
-                  UIPrefsAccessor.COMPLETION_ALWAYS,
-                  UIPrefsAccessor.COMPLETION_MANUAL
+                  UserPrefs.CODE_COMPLETION_OTHER_ALWAYS,
+                  UserPrefs.CODE_COMPLETION_OTHER_MANUAL
             },
             false, 
             true, 
@@ -520,9 +520,9 @@ public class EditingPreferencesPane extends PreferencesPane
       String editorMode = editorMode_.getValue();
 
       prefs_.editorKeybindings().setGlobalValue(editorMode);
-      boolean isVim = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
-      boolean isEmacs = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
-      boolean isSublime = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME;
+      boolean isVim = editorMode == UserPrefs.EDITOR_KEYBINDINGS_VIM;
+      boolean isEmacs = editorMode == UserPrefs.EDITOR_KEYBINDINGS_EMACS;
+      boolean isSublime = editorMode == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME;
       
       if (isVim)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);

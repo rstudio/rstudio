@@ -18,7 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 

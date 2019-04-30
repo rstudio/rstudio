@@ -206,7 +206,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getCairoPdf() /*-{
-         return this.cairoPdf;
+         return this.cairo_pdf;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
@@ -253,14 +253,6 @@ public class UserStateAccessor extends Prefs
          return this.format;
       }-*/;
 
-   }
-
-   /**
-    * The root document to use when compiling PDF documents.
-    */
-   public PrefValue<String> rootDocument()
-   {
-      return string("root_document", "");
    }
 
    /**

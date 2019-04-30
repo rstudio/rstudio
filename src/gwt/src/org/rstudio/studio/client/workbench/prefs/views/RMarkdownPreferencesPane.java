@@ -25,7 +25,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
@@ -51,9 +51,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "Sections and All Chunks"
             },
             new String[] {
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
+                 UserPrefs.DOC_OUTLINE_SHOW_ALL
             },
             false,
             true,
@@ -93,9 +93,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "Inline"
             },
             new String[] {
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER,
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY,
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_INLINE_ONLY,
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS
             },
             false,
             true,
@@ -112,9 +112,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                      "Project"
                },
                new String[] {
-                     UIPrefsAccessor.KNIT_DIR_DEFAULT,
-                     UIPrefsAccessor.KNIT_DIR_CURRENT,
-                     UIPrefsAccessor.KNIT_DIR_PROJECT
+                     UserPrefs.KNIT_WORKING_DIR_DEFAULT,
+                     UserPrefs.KNIT_WORKING_DIR_CURRENT,
+                     UserPrefs.KNIT_WORKING_DIR_PROJECT
                },
                false,
                true,
