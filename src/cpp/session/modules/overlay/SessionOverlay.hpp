@@ -38,6 +38,8 @@ void streamLauncherOutput(const std::string& jobId,
 
 int verifyInstallation();
 
+void initMonitorClient();
+
 core::Error initialize();
    
 } // namespace overlay

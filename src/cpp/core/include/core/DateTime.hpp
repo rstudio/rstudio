@@ -34,6 +34,11 @@ double millisecondsSinceEpoch(std::time_t time);
    
 boost::posix_time::ptime timeFromSecondsSinceEpoch(double sec);
 boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms);
+inline boost::posix_time::ptime timeFromStdTime(std::time_t t)
+{
+   return boost::posix_time::ptime(boost::gregorian::date(1970,1,1)) +
+         boost::posix_time::seconds(static_cast<long>(t));
+}
 
 template <typename TimeType>
 std::string format(const TimeType& time,

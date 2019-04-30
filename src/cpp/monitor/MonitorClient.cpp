@@ -63,18 +63,43 @@ boost::shared_ptr<core::LogWriter> Client::createLogWriter(
 
 
 void initializeMonitorClient(const std::string& metricsSocket,
-                             const std::string& sharedSecret)
+                             const std::string& auth,
+                             bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);
-   s_pClient = new SyncClient(metricsSocket, sharedSecret);
+   s_pClient = new SyncClient(metricsSocket, auth, useSharedSecret);
 }
 
 void initializeMonitorClient(const std::string& metricsSocket,
-                             const std::string& sharedSecret,
-                             boost::asio::io_service& ioService)
+                             const std::string& auth,
+                             boost::asio::io_service& ioService,
+                             bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);
-   s_pClient = new AsyncClient(metricsSocket, sharedSecret, ioService);
+   s_pClient = new AsyncClient(metricsSocket, auth, ioService, useSharedSecret);
+}
+
+void initializeMonitorClient(const std::string& tcpAddress,
+                             const std::string& tcpPort,
+                             bool useSsl,
+                             const std::string& prefixUri,
+                             const std::string& auth,
+                             bool useSharedSecret)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new SyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, useSharedSecret);
+}
+
+void initializeMonitorClient(const std::string& tcpAddress,
+                             const std::string& tcpPort,
+                             bool useSsl,
+                             const std::string& prefixUri,
+                             const std::string& auth,
+                             boost::asio::io_service& ioService,
+                             bool useSharedSecret)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, ioService, useSharedSecret);
 }
 
 Client& client()

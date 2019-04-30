@@ -1600,6 +1600,18 @@ bool ensureUtf8Charset()
 #endif
 }
 
+void initMonitorClient()
+{
+   if (!options().getBoolOverlayOption(kLauncherSessionOption))
+   {
+      monitor::initializeMonitorClient(kMonitorSocketPath,
+                                       options().monitorSharedSecret());
+   }
+   else
+   {
+      modules::overlay::initMonitorClient();
+   }
+}
 
 } // anonymous namespace
 
@@ -1650,8 +1662,7 @@ int main (int argc, char * const argv[])
       core::system::setLogToStderr(options.logStderr());
 
       // initialize monitor
-      monitor::initializeMonitorClient(kMonitorSocketPath,
-                                       options.monitorSharedSecret());
+      initMonitorClient();
 
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
