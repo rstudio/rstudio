@@ -98,6 +98,13 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
    }
    
    @Override
+   public void onUserPrefsChanged(UserPrefsChangedEvent e)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
    public void onSessionInit(SessionInitEvent e)
    {
       // First update the theme and flat theme so the event will trigger.

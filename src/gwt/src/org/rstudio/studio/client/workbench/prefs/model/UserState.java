@@ -92,6 +92,13 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
    }
    
    @Override
+   public void onUserStateChanged(UserStateChangedEvent e)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
    public void onSessionInit(SessionInitEvent e)
    {
       /*

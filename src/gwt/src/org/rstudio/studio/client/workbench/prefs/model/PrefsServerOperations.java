@@ -18,7 +18,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dev.json.JsonValue;
 
 public interface PrefsServerOperations
 {
@@ -29,14 +28,6 @@ public interface PrefsServerOperations
    void setUserPrefs(JavaScriptObject userPrefs,
                      ServerRequestCallback<Void> requestCallback);
    
-   void setUserPrefValue(String key,
-                         JsonValue value,
-                         ServerRequestCallback<Void> requestCallback);
-
    void setUserState(JavaScriptObject userState,
                      ServerRequestCallback<Void> requestCallback);
-
-   void setUserStateValue(String key,
-                          JsonValue value,
-                          ServerRequestCallback<Void> requestCallback);
 }
