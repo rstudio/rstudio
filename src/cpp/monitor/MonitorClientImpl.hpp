@@ -25,8 +25,19 @@ class SyncClient : public Client
 {
 public:
    SyncClient(const std::string& metricsSocket,
-              const std::string& sharedSecret)
-      : Client(metricsSocket, sharedSecret)
+              const std::string& auth,
+              bool useSharedSecret = true)
+      : Client(metricsSocket, auth, useSharedSecret)
+   {
+   }
+
+   SyncClient(const std::string& tcpAddress,
+              const std::string& tcpPort,
+              bool useSsl,
+              const std::string& prefixUri,
+              const std::string& auth,
+              bool useSharedSecret = false)
+      : Client(tcpAddress, tcpPort, useSsl, prefixUri, auth, useSharedSecret)
    {
    }
 
@@ -47,9 +58,22 @@ class AsyncClient : public Client
 {
 public:
    AsyncClient(const std::string& metricsSocket,
-               const std::string& sharedSecret,
-               boost::asio::io_service& ioService)
-      : Client(metricsSocket, sharedSecret),
+               const std::string& auth,
+               boost::asio::io_service& ioService,
+               bool useSharedSecret = true)
+      : Client(metricsSocket, auth, useSharedSecret),
+        ioService_(ioService)
+   {
+   }
+
+   AsyncClient(const std::string& tcpAddress,
+               const std::string& tcpPort,
+               bool useSsl,
+               const std::string& prefixUri,
+               const std::string& auth,
+               boost::asio::io_service& ioService,
+               bool useSharedSecret = false)
+      : Client(tcpAddress, tcpPort, useSsl, prefixUri, auth, useSharedSecret),
         ioService_(ioService)
    {
    }
@@ -66,8 +90,7 @@ public:
 
    void logConsoleAction(const audit::ConsoleAction& action);
 
-protected:
-   boost::asio::io_service& ioService() { return ioService_; }
+   boost::asio::io_service& ioService() const { return ioService_; }
 
 private:
    boost::asio::io_service& ioService_;
