@@ -23,6 +23,7 @@ RUN apt-get update && \
     ant \
     build-essential \
     clang \
+    curl \
     debsigs \
     dpkg-sig \
     expect \

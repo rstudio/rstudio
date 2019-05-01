@@ -8,6 +8,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
+    curl \
     expect \
     fakeroot \
     gcc \

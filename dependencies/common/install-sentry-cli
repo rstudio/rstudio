@@ -17,4 +17,4 @@
 
 set -e
 
-wget -qO- https://sentry.io/get-cli/ | bash || true
+curl -sL https://sentry.io/get-cli/ | bash || true

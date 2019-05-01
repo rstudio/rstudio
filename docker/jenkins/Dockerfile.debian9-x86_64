@@ -15,6 +15,7 @@ RUN apt-get update -y && apt-get install -y \
     libboost-all-dev \
     bzip2 \
     clang-4.0 \
+    curl \
     debsigs \
     dpkg-sig \
     expect \

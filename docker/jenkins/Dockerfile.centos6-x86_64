@@ -8,6 +8,7 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     cmake \
+    curl \
     expect \
     gcc \
     gcc-c++ \
