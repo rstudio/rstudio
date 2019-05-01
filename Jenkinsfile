@@ -217,10 +217,12 @@ try {
                         stage('run tests') {
                             run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
+                        stage('sentry upload') {
+                            sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                        }
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
-                        sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
                     }
                 }
             }
