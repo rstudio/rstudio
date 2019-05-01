@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.plots.model;
 
 import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 public class SavePlotAsPdfOptions extends UserStateAccessor.SavePlotAsPdfOptions
 {
    protected SavePlotAsPdfOptions()

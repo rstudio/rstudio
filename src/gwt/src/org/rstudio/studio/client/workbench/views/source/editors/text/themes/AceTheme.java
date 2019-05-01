@@ -1,7 +1,7 @@
 /*
  * AceTheme.java
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
 /**

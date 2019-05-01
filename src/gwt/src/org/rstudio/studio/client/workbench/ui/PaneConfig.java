@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
