@@ -82,8 +82,7 @@ def s3_upload(type, flavor, os, arch) {
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    def buildFolder = "package/linux/build-${flavor.capitalize()}-${type}"
-    sh 'cd ${buildFolder}/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf .'
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf ."
   }
 }
 
