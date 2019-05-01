@@ -57,7 +57,7 @@ fi
 
 # get historical open source patch versions from AWS; this file is a CSV that
 # contains each open source commit and the patch version associated with it
-aws s3 cp s3://rstudio-ide-build/version/$VERSION/oss-patch.csv /tmp/oss-patch.csv $EXTRA_CP_ARGS
+aws s3 cp s3://rstudio-ide-build/version/$VERSION-patch/oss-patch.csv /tmp/oss-patch.csv $EXTRA_CP_ARGS
 
 if [[ -e "upstream/VERSION" ]]; then
     # only one upstream commit (RStudio Pro, which is downstream)
@@ -103,12 +103,13 @@ done < /tmp/oss-patch.csv
 if [[ -z "$PATCH" ]]; then
     log "Warning: no patch found for commit ${COMMITS[0]}; presuming $MAX_PATCH"
     PATCH=$MAX_PATCH
+    PATCH_INDEX=1
 fi
 
 # for pro, we need to determine the version suffix as well
 if [[ $PRO = true ]]; then
     SUFFIX=0
-    aws s3 cp s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv /tmp/pro-suffix.csv --quiet
+    aws s3 cp s3://rstudio-ide-build/version/$VERSION-patch/pro-suffix.csv /tmp/pro-suffix.csv --quiet
     while read PRO_SUFFIX; do
         ENTRY=(${PRO_SUFFIX//,/ })
         ENTRY_PATCH=${ENTRY[0]}
@@ -159,7 +160,7 @@ case "$ACTION" in
             echo "Push updated patch history to S3 and git"
         else
             # upload to s3
-            aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$VERSION/oss-patch.csv --quiet
+            aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$VERSION-patch/oss-patch.csv --quiet
 
             # tag the release on git (TODO: need Jenkins creds to do this)
             # git tag "v$OSS_VERSION"
@@ -187,7 +188,7 @@ case "$ACTION" in
         if [[ $DEBUG = true ]]; then
             echo "Push updated suffix to S3 and git"
         else
-            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION/pro-suffix.csv $EXTRA_CP_ARGS
+            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$VERSION-patch/pro-suffix.csv $EXTRA_CP_ARGS
 
             # tag the release on git (TODO: need Jenkins creds to do this)
             # git tag "v$PRO_VERSION-pro"
