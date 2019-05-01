@@ -17,7 +17,7 @@
 
 .ace_print-margin {
   width: 1px;
-  background: #e8e8e8;
+  background: #363948;
 }
 
 .ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
@@ -38,9 +38,12 @@
   color: #f8f8f0;
 }
 
-.ace_marker-layer .ace_active-line,
-.ace_marker-layer .ace_selection {
+.ace_marker-layer .ace_active-line {
   background: #44475a;
+}
+
+.ace_marker-layer .ace_selection {
+  background: #707092;
 }
 
 .ace_selection.ace_start {
