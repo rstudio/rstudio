@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -42,8 +43,8 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
    {
       super(session.getSessionInfo(),
             (session.getSessionInfo() == null ? 
-               JsObject.createJsObject() :
-               session.getSessionInfo().getUserState()), null);
+               JsArray.createArray().cast() :
+               session.getSessionInfo().getUserState()));
 
       session_ = session;
       server_ = server;

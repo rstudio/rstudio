@@ -20,6 +20,14 @@
 
 #define kUserPrefsFile "rstudio-prefs.json"
 
+enum PrefLayer
+{
+   LAYER_DEFAULT = 0,
+   LAYER_SYSTEM  = 1,
+   LAYER_USER    = 2,
+   LAYER_PROJECT = 3
+};
+
 namespace rstudio {
    namespace core {
       class Error;
@@ -31,7 +39,8 @@ namespace session {
 namespace modules {
 namespace prefs {
 
-core::json::Object userPrefs();
+core::json::Object getLayer(PrefLayer layer);
+core::json::Array allLayers();
 
 core::Error initialize();
 

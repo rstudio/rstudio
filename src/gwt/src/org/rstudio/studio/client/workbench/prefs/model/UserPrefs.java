@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -50,11 +51,8 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
    {
       super(session.getSessionInfo(),
             (session.getSessionInfo() == null ? 
-               JsObject.createJsObject() :
-               session.getSessionInfo().getUserPrefs()),
-            (session.getSessionInfo() == null ? 
-               JsObject.createJsObject() :
-               session.getSessionInfo().getProjectUIPrefs()));
+               JsArray.createArray().cast() :
+               session.getSessionInfo().getPrefs()));
 
       session_ = session;
       server_ = server;

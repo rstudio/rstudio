@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -99,15 +100,21 @@ public class SessionInfo extends JavaScriptObject
       return this.temp_dir;
    }-*/;
 
-   public final native JsObject getUserPrefs() /*-{
-      if (!this.user_prefs)
-         this.user_prefs = {};
-      return this.user_prefs;
+   public final native JsArray<JsObject> getPrefs() /*-{
+      if (!this.prefs)
+         this.prefs = [ {} ];
+      return this.prefs;
    }-*/;
+   
+   
+   public JsObject getUserPrefs()
+   {
+      return getPrefs().get(Math.min(getPrefs().length(), Prefs.LAYER_USER));
+   }
 
-   public final native JsObject getUserState() /*-{
+   public final native JsArray<JsObject> getUserState() /*-{
       if (!this.user_state)
-         this.user_state = {};
+         this.user_state = [ {} ];
       return this.user_state;
    }-*/;
 
@@ -260,12 +267,6 @@ public class SessionInfo extends JavaScriptObject
       }
    }
   
-   public final native JsObject getProjectUIPrefs() /*-{
-      if (!this.project_ui_prefs)
-         this.project_ui_prefs = {};
-      return this.project_ui_prefs;
-   }-*/;
-   
    public final native JsArrayString getProjectOpenDocs() /*-{
       if (!this.project_open_docs)
          this.project_open_docs = {};

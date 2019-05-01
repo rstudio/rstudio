@@ -24,8 +24,8 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.js.JsArrayEx;
 
 /**
  * Accessor class for user preferences.
@@ -33,11 +33,9 @@ import org.rstudio.core.client.js.JsArrayEx;
 public class UserPrefsAccessor extends Prefs
 {
    public UserPrefsAccessor(SessionInfo sessionInfo, 
-                            JsObject uiPrefs, 
-                            JsObject projectUiPrefs)
+                            JsArray<JsObject> prefLayers)
    {
-      super(uiPrefs, projectUiPrefs);
-      sessionInfo_ = sessionInfo;
+      super(prefLayers);
    }
    
    /**
@@ -1300,5 +1298,4 @@ public class UserPrefsAccessor extends Prefs
 
    
 
-   private SessionInfo sessionInfo_;
 }

@@ -22,6 +22,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "SessionUserPrefs.hpp"
 
@@ -33,12 +34,13 @@ namespace modules {
 namespace prefs {
 namespace {
 
-static boost::shared_ptr<json::Object> s_pUserPrefs;
+static boost::shared_ptr<json::Array> s_pLayers;
 static core::FilePath s_userPrefsFile;
 
 Error setPreference(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
+   /*
    std::string key;
    json::Value val;
    Error error = json::readParams(request.params, &key, &val);
@@ -54,6 +56,7 @@ Error setPreference(const json::JsonRpcRequest& request,
 
    // save preference value
    (*s_pUserPrefs)[key] = val;
+   */
 
    // TODO: need to write changes. how to compute which changes to write? don't want to write
    // defaults. maybe need a json method to compute intersection? sort of like merge... open
@@ -62,13 +65,103 @@ Error setPreference(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getSchemaContents(std::string *contents)
+{
+   FilePath schemaFile = 
+      options().rResourcesPath().complete("schema").complete("user-prefs-schema.json");
+   return readStringFromFile(schemaFile, contents);
+}
+
+Error getPrefDefaults(json::Object* layer)
+{
+   std::string schemaContents;
+   Error error = getSchemaContents(&schemaContents);
+   if (error)
+      return error;
+
+   return json::getSchemaDefaults(schemaContents, layer);
+}
+
+Error loadPrefsFromFile(const FilePath& prefsFile, json::Object* layer)
+{
+   std::string schemaContents;
+   Error error = getSchemaContents(&schemaContents);
+   if (error)
+      LOG_ERROR(error);
+
+   std::string globalPrefsContents;
+   error = readStringFromFile(globalPrefsFile, &globalPrefsContents);
+   if (error)
+   {
+      return error;
+   }
+   else
+   {
+      // We have a global preferences file; ensure it's valid.
+      json::Value globalPrefs;
+      if (schemaContents.empty())
+      {
+         // Shouldn't happen, but if we couldn't read the schema, we can still parse without it.
+         error = json::parse(globalPrefsContents, ERROR_LOCATION, &globalPrefs);
+      }
+      else
+      {
+         // Parse and validate against the schema.
+         error = json::parseAndValidate(globalPrefsContents, schemaContents, ERROR_LOCATION, 
+               &globalPrefs);
+      }
+      if (error)
+      {
+         return error;
+      }
+      else if (globalPrefs.type() == json::ObjectType)
+      {
+         *layer = globalPrefs.get_obj();
+      }
+   }
+   return Success();
+}
+
 } // anonymous namespace
 
-json::Object userPrefs()
+
+json::Object getLayer(PrefLayer layer)
 {
-   if (s_pUserPrefs)
-      return *s_pUserPrefs;
-   return json::Object();
+   // Is this layer already cached?
+   if (s_pLayers->size() > layer)
+      return (*s_pLayers)[layer].get_obj();
+
+   json::Object result;
+   Error error;
+   switch(layer)
+   {
+      case LAYER_DEFAULT:
+         error = getPrefDefaults(&result);
+         break;
+
+      case LAYER_SYSTEM:
+         error = loadPrefsFromFile(
+               core::system::xdg::systemConfigDir().complete(kUserPrefsFile),
+               &result);
+         break;
+
+      case LAYER_USER:
+         error = loadPrefsFromFile(
+               core::system::xdg::userConfigDir().complete(kUserPrefsFile),
+               &result);
+         break;
+
+      case LAYER_PROJECT:
+         if (projects::projectContext().hasProject())
+         {
+            result = projects::projectContext().uiPrefs();
+         }
+         break;
+   }
+   
+   // Ensure there's space for this layer
+   if (s_pLayers->size())
+   
 }
 
 Error initialize()
@@ -90,12 +183,20 @@ Error initialize()
    if (error)
       return error;
 
+   s_pLayers = boost::make_shared<json::Array>();
+
+   // Layer 0: Defaults -------------------------------------------------------
+   //
    // Extract default values from schema
    json::Object defaults;
    error = json::getSchemaDefaults(schemaContents, &defaults);
    if (error)
       return error;
 
+   s_pLayers->push_back(defaults);
+
+   // Layer 1: System ---------------------------------------------------------
+   //
    // If there's a system-wide configuration file, load that first.
    FilePath globalPrefsFile = core::system::xdg::systemConfigDir().complete(kUserPrefsFile);
    if (globalPrefsFile.exists())
@@ -119,42 +220,53 @@ Error initialize()
          }
          else if (globalPrefs.type() == json::ObjectType)
          {
-            // Overlay the globally specified values over the defaults.
-            defaults = json::merge(defaults.get_obj(), globalPrefs.get_obj());
+            s_pLayers->push_back(globalPrefs);
          }
       }
    }
 
-   // Use the defaults unless there's a valid user prefs file.
-   s_pUserPrefs = boost::make_shared<json::Object>(defaults);
+   // If we didn't get a system-wide config, push an empty layer.
+   if (s_pLayers->size() == LAYER_SYSTEM)
+   {
+      s_pLayers->push_back(json::Object());
+   }
 
+   // Layer 2: User -----------------------------------------------------------
+   //
+   // Load the user prefs file.
    FilePath prefsFile = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
-   if (!prefsFile.exists())
+   if (prefsFile.exists())
    {
-      // No user prefs file, just use whatever defaults we've accumulated.
-      return Success();
+      std::string prefsContents;
+      error = readStringFromFile(prefsFile, &prefsContents);
+      if (error)
+      {
+         // Don't fail here since it will cause startup to fail, we'll just live with no prefs.
+         LOG_ERROR(error);
+      }
+      else
+      {
+         json::Value prefs;
+         error = json::parseAndValidate(prefsContents, schemaContents, ERROR_LOCATION, &prefs);
+         if (error)
+         {
+            // Invalid or non-conforming user prefs; use defaults.
+            LOG_ERROR(error);
+         }
+         else
+         {
+            s_pLayers->push_back(prefs);
+         }
+      }
    }
 
-   std::string prefsContents;
-   error = readStringFromFile(prefsFile, &prefsContents);
-   if (error)
+   if (s_pLayers->size() <= LAYER_USER)
    {
-      // Don't fail here since it will cause startup to fail, we'll just live with no prefs.
-      LOG_ERROR(error);
-      return Success();
+      s_pLayers->push_back(json::Object());
    }
 
-   json::Value prefs;
-   error = json::parseAndValidate(prefsContents, schemaContents, ERROR_LOCATION, &prefs);
-   if (error)
-   {
-      // Invalid or non-conforming user prefs; use defaults.
-      LOG_ERROR(error);
-      return Success();
-   }
-
-   // Overlay user prefs over global prefs and defaults
-   *s_pUserPrefs = json::merge(defaults, prefs.get_obj());
+   // Layer 2: User -----------------------------------------------------------
+   //
 
    return Success();
 }

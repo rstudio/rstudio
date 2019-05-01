@@ -24,8 +24,9 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.js.JsArrayEx;
+
 
 /**
  * Accessor class for user state.
@@ -33,10 +34,9 @@ import org.rstudio.core.client.js.JsArrayEx;
 public class UserStateAccessor extends Prefs
 {
    public UserStateAccessor(SessionInfo sessionInfo, 
-                            JsObject uiPrefs, 
-                            JsObject projectUiPrefs)
+                            JsArray<JsObject> stateLayers)
    {
-      super(uiPrefs, projectUiPrefs);
+      super(stateLayers);
    }
    
 %STATE%   

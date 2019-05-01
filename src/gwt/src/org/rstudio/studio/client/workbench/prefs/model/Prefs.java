@@ -1,7 +1,7 @@
 /*
  * Prefs.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -23,6 +24,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 
 import java.util.HashMap;
 
@@ -76,17 +78,29 @@ public abstract class Prefs
       
       public T getValue()
       {
-         if (projectRoot_.hasKey(name_))
-            return doGetValue(projectRoot_);
-         else
-            return getGlobalValue();
+         // Work backwards through all layers, starting with the most specific
+         // and working towards the most general.
+         for (JsObject layer: JsUtil.asReverseIterable(layers_))
+         {
+            if (layer.hasKey(name_))
+            {
+               return doGetValue(layer);
+            }
+         }
+         return defaultValue_;
       }
 
       public T getGlobalValue()
       {
-         if (!globalRoot_.hasKey(name_))
-            return defaultValue_;
-         return doGetValue(globalRoot_);
+         // Skip the top layer when getting the global value
+         for (int i = Math.max(layers_.length() - 1, 0); i >= 0; i--)
+         {
+            if (layers_.get(i).hasKey(name_))
+            {
+               return doGetValue(layers_.get(i));
+            }
+         }
+         return defaultValue_;
       }
 
       public abstract T doGetValue(JsObject root);
@@ -98,7 +112,7 @@ public abstract class Prefs
 
       public void setGlobalValue(T value, boolean fireEvents)
       {
-         setValue(globalRoot_, value, fireEvents);
+         setValue(layers_.get(LAYER_USER), value, fireEvents);
       }
       
       public void setProjectValue(T value)
@@ -108,7 +122,7 @@ public abstract class Prefs
       
       public void setProjectValue(T value, boolean fireEvents)
       {
-         setValue(projectRoot_, value, fireEvents);
+         setValue(layers_.get(LAYER_PROJECT), value, fireEvents);
       }
 
       protected abstract void doSetValue(JsObject root, String name, T value);
@@ -249,10 +263,9 @@ public abstract class Prefs
       }
    }
 
-   public Prefs(JsObject root, JsObject projectRoot)
+   public Prefs(JsArray<JsObject> layers)
    {
-      globalRoot_ = root;
-      projectRoot_ = projectRoot;
+      layers_ = layers;
    }
 
    @SuppressWarnings("unchecked")
@@ -329,17 +342,17 @@ public abstract class Prefs
    }
    
    // Meant to be called when the satellite window receives the sessionInfo.
-   protected void UpdatePrefs(JsObject uiPrefs, JsObject projectPrefs)
+   protected void UpdatePrefs(JsArray<JsObject> layers)
    {
-      globalRoot_ = uiPrefs;
-      projectRoot_ = projectPrefs;
+      layers_ = layers;
    }
    
-   // NOTE: globalRoot_ and projectRoot_ should generally not be changed. The are only non-final
-   // because at the time the Prefs is created in a Satellite, the sessionInfo_ has not been
-   // received, and the Prefs object (concrete UIPrefs) is a singleton, and so cannot be replaced.
-   private JsObject globalRoot_;
-   private JsObject projectRoot_;
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_SYSTEM  = 1;
+   public static final int LAYER_USER    = 2;
+   public static final int LAYER_PROJECT = 3;
+   
+   private JsArray<JsObject> layers_;
    private final HashMap<String, PrefValue<?>> values_ =
          new HashMap<String, PrefValue<?>>();
 }

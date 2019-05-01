@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.TextResource;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
