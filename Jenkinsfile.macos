@@ -65,6 +65,22 @@ pipeline {
 
           // upload debug symbols to Sentry
           withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+            // construct release version
+            def RSTUDIO_RELEASE = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}"
+            if (params.RSTUDIO_VERSION_SUFFIX != 0) {
+              RSTUDIO_RELEASE = "${RSTUDIO_RELEASE}.${params.RSTUDIO_VERSION_SUFFIX}" 
+            }
+ 
+            // create new release on Sentry
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_RELEASE}"
+
+            // upload Javascript source maps
+            sh "cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite ."
+
+            // finalize release
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases finalize ${RSTUDIO_RELEASE}"
+
+            // upload C++ debug information
             sh "cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym ."
           }
         }
