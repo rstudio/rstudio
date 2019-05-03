@@ -27,7 +27,7 @@
 #include <core/system/Process.hpp>
 #include <core/terminal/PrivateCommand.hpp>
 
-#include <session/SessionConsoleProcessSocket.hpp>
+#include <session/SessionConsoleProcessConnectionCallbacks.hpp>
 
 namespace rstudio {
 namespace core {
