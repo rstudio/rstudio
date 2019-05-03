@@ -19,6 +19,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionConsoleProcessSocket.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
