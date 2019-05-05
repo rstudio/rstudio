@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,9 @@ endif()
 target_link_libraries(diagnostics
    rstudio-core
 )
-install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
+if(NOT RSTUDIO_SESSION_WIN32)
+   install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
+endif()
 
 # if doing a package build on MacOS, reroute the OpenSSL libraries to our bundled copies
 if(APPLE AND RSTUDIO_PACKAGE_BUILD)

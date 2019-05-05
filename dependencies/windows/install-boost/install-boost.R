@@ -126,7 +126,7 @@ exec("bcp", args)
 enter("rstudio")
 exec("cmd.exe", "/C call bootstrap.bat vc141")
 
-# construct common arguments for boost builds
+# construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
    
    prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
@@ -147,28 +147,13 @@ b2_build_args <- function(bitness) {
    )
 }
 
+# build 32bit Boost
+section("Building Boost 32bit...")
+exec("b2", b2_build_args("32"))
+
 # build 64bit Boost
 section("Building Boost 64bit...")
 exec("b2", b2_build_args("64"))
-
-# enter the build directory
-enter(install_dir)
-
-# zip it all up
-section("Creating archive '%s'...", output_name)
-if (file.exists(output_name))
-   unlink(output_name)
-
-zip(output_name, files = c("boost64"), extras = "-q")
-if (!file.exists(output_name))
-   fatal("Failed to create archive '%s'.", output_name)
-progress("Created archive '%s'.", output_name)
-
-# copy the generated file to the boost
-file.rename(output_name, output_file)
-if (!file.exists(output_file))
-   fatal("Failed to move archive to path '%s'.", output_file)
-progress("Moved archive to path '%s'.", output_file)
 
 # rejoice
 progress("Boost built successfully!")

@@ -3,6 +3,7 @@
 
 ### Bug Fixes
 
+- Restore capability to use 32-bit R on Windows (#3150)
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
@@ -30,4 +31,3 @@
 - Update to Pandoc 2.7.2 on Windows to address occasional segfaults (#4618)
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
 - Set secure flag when clearing cookies for consistency (Pro #964)
-

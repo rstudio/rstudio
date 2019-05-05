@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -153,8 +153,12 @@ else()
       -D_WIN32_WINNT=0x601
       -D_WIN32_IE=0x601
       -DWIN32_LEAN_AND_MEAN
-      -D_WIN64
       -DBOOST_USE_WINDOWS_H)
+
+   # ensure we use 64-bit APIs for 64-bit builds
+   if(NOT RSTUDIO_SESSION_WIN32)
+      add_definitions(-D_WIN64)
+   endif()
 endif()
 
 if(RSTUDIO_PACKAGE_BUILD)
@@ -228,7 +232,11 @@ if(UNIX)
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
-   set(BOOST_ARCH "64")
+   if(RSTUDIO_SESSION_WIN32)
+      set(BOOST_ARCH "32")
+   else()
+      set(BOOST_ARCH "64")
+   endif()
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(BOOST_SUFFIX "vc141-mt-1_65_1.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.65.1-win-msvc141-release-static/boost${BOOST_ARCH}")
@@ -263,9 +271,14 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 if(WIN32)
      # winpty - pseudoterminal support on Windows
-     set(WINPTY_ARCH "64")
+     if(RSTUDIO_SESSION_WIN32)
+        set(WINPTY_ARCH "32")
+     else()
+        set(WINPTY_ARCH "64")
+     endif()
      set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.3-msys2-2.7.0")
      set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/${WINPTY_ARCH}/include")
+     set(WINPTY_BINDIR_32 "${WINPTY_ROOT}/32/bin")
      set(WINPTY_BINDIR_64 "${WINPTY_ROOT}/64/bin")
 
      # add winpty as system include directory
@@ -278,7 +291,12 @@ if(WIN32)
         set(OPENSSL_BUILD_TYPE "release")
      endif()
 
-     set(OPENSSL_BITNESS "64")
+     if(RSTUDIO_SESSION_WIN32)
+        set(OPENSSL_BITNESS "32")
+     else()
+        set(OPENSSL_BITNESS "64")
+     endif()
+
      set(OPENSSL_NAME "openssl-1.0.2p")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
@@ -324,6 +342,9 @@ endif()
 if(RSTUDIO_CONFIG_CORE_DEV)
    message(STATUS "Configured to build CORE_DEV")
 endif()
+if(RSTUDIO_SESSION_WIN32)
+   message(STATUS "Configured to build SESSION_WIN32")
+endif()
 if(RSTUDIO_CONFIG_MONITOR_ONLY)
    message(STATUS "Configured to build MONITOR_ONLY")
 elseif(RSTUDIO_CONFIG_SESSION_ONLY)
@@ -351,6 +372,9 @@ else()
    if(NOT RSTUDIO_CONFIG_MONITOR_ONLY)
 
       # find LibR
+      if(RSTUDIO_SESSION_WIN32)
+         set(LIBR_FIND_WINDOWS_32BIT TRUE)
+      endif()
       find_package(LibR REQUIRED)
 
       # verify we got the required R version

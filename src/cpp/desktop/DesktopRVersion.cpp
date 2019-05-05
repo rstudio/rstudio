@@ -1,7 +1,7 @@
 /*
  * DesktopRVersion.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -136,6 +136,7 @@ void versionsFromRHome(QDir rHome, QList<RVersion>* pResults)
 {
    QStringList dirs = QStringList() <<
                       QString::fromUtf8("bin") <<
+                      QString::fromUtf8("bin/i386") <<
                       QString::fromUtf8("bin/x64");
    for (int i = 0; i < dirs.size(); i++)
    {
@@ -262,6 +263,8 @@ void enumRegistry(Architecture architecture, HKEY key, QList<RVersion>* pResults
 
 void enumRegistry(QList<RVersion>* pResults)
 {
+   enumRegistry(ArchX86, HKEY_CURRENT_USER, pResults);
+   enumRegistry(ArchX86, HKEY_LOCAL_MACHINE, pResults);
    enumRegistry(ArchX64, HKEY_CURRENT_USER, pResults);
    enumRegistry(ArchX64, HKEY_LOCAL_MACHINE, pResults);
 }
@@ -290,15 +293,6 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
       if (versions.at(i) == versions.at(i-1))
          versions.removeAt(i--);
    }
-
-   // Remove unsupported architectures
-   QMutableListIterator<RVersion> verList(versions);
-   while (verList.hasNext())
-   {
-      if (verList.next().architecture() != ArchX64)
-         verList.remove();
-   }
-
    return versions;
 }
 
@@ -366,17 +360,62 @@ RVersion autoDetect(Architecture architecture, bool preferredOnly)
 
 RVersion autoDetect()
 {
-   return autoDetect(ArchX64);
+   Options& options = desktop::options();
+
+   if (options.rBinDir().isNull())
+   {
+      // Special case where user has never specified a preference
+      // for R64 vs. R.
+
+      RVersion ver;
+
+      // rBinDir is getting set to null whenever it is empty
+      // (perhaps a change in Qt behavior?). we therefore
+      // need to look for 32bit first when preferR64 is false
+      if (!options.preferR64())
+      {
+         // Preferred R
+         ver = autoDetect(ArchX86, true);
+         if (ver.isValid())
+            return ver;
+      }
+
+      // Preferred R64
+      ver = autoDetect(ArchX64, true);
+      if (ver.isValid())
+         return ver;
+
+      // Preferred R
+      ver = autoDetect(ArchX86, true);
+      if (ver.isValid())
+         return ver;
+
+      // Any R64
+      ver = autoDetect(ArchX64);
+      if (ver.isValid())
+         return ver;
+
+      // Any R
+      ver = autoDetect(ArchX86);
+      if (ver.isValid())
+         return ver;
+
+      return RVersion();
+   }
+   else
+   {
+      return autoDetect(options.preferR64() ? ArchX64 : ArchX86);
+   }
 }
 
 /*
 Looks for a valid R directory in the following places:
 - Value of %R_HOME%
 - Value of HKEY_LOCAL_MACHINE\Software\R-core\R@InstallPath
-    (64-bit keys)
+    (both 32-bit and 64-bit keys)
 - Values under HKEY_LOCAL_MACHINE\Software\R-core\R\*@InstallPath
-    (64-bit keys)
-- Enumerate %ProgramFiles% directory (64-bit dirs)
+    (both 32-bit and 64-bit keys)
+- Enumerate %ProgramFiles% directory (both 32-bit and 64-bit dirs)
 
 If forceUi is true, we always show the picker dialog.
 Otherwise, we try to do our best to match the user's specified wishes,
@@ -386,14 +425,7 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
 {
    Options& options = desktop::options();
 
-   RVersion rVersion;
-
-   // if currently select R version is 32-bit, ignore it
-   RVersion rCurrentVersion(options.rBinDir());
-   if (!rCurrentVersion.isEmpty() && rCurrentVersion.architecture() == ArchX64)
-   {
-      rVersion = rCurrentVersion;
-   }
+   RVersion rVersion(options.rBinDir());
 
    if (!forceUi)
    {
@@ -418,7 +450,7 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
    // Now we show the dialog and make the user choose.
    QString renderingEngine = desktop::options().desktopRenderingEngine();
    ChooseRHome dialog(allRVersions(QList<RVersion>() << rVersion), parent);
-   dialog.setVersion(rVersion);
+   dialog.setVersion(rVersion, options.preferR64());
    dialog.setRenderingEngine(renderingEngine);
    if (dialog.exec() == QDialog::Accepted)
    {
@@ -427,6 +459,8 @@ RVersion detectRVersion(bool forceUi, QWidget* parent)
       // itself be accepted unless a valid installation is detected.
       rVersion = dialog.version();
       options.setRBinDir(rVersion.binDir());
+      if (rVersion.isEmpty())
+         options.setPreferR64(dialog.preferR64());
       options.setDesktopRenderingEngine(dialog.renderingEngine());
 
       // If we changed the rendering engine, we'll have to restart

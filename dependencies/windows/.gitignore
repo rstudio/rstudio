@@ -11,4 +11,8 @@ winutils/
 rtools*
 winpty*/
 openssl*/
+crashpad*/
 *.zip
+breakpad-tools-windows/
+install-crashpad/logs
+sentry-cli.exe
