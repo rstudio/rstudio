@@ -1569,7 +1569,7 @@ public class TextEditingTarget implements
          }
       }));
       
-      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_);
+      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
 
       // show/hide the debug toolbar when the dirty state changes. (note:

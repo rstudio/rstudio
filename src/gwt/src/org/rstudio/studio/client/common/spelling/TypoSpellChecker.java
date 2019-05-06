@@ -49,6 +49,7 @@ public class TypoSpellChecker
 
       void invalidateAllWords();
       void invalidateMisspelledWords();
+      void invalidateWord(String word);
 
       void releaseOnDismiss(HandlerRegistration handler);
    }
@@ -80,14 +81,8 @@ public class TypoSpellChecker
          {
             // detect whether this is the first delivery of the list
             // or if it is an update
-            boolean isUpdate = userDictionaryWords_ != null;
-
             userDictionaryWords_ = event.getList();
-
             updateIgnoredWordsIndex();
-
-            if (isUpdate)
-               context_.invalidateMisspelledWords();
          }
       ));
    }
@@ -156,16 +151,15 @@ public class TypoSpellChecker
    public void addToUserDictionary(final String word)
    {
       userDictionary_.append(word);
+      context_.invalidateWord(word);
    }
 
    public void addIgnoredWord(String word)
    {
       contextDictionary_.add(word);
       context_.writeDictionary(contextDictionary_);
-
       updateIgnoredWordsIndex();
-
-      context_.invalidateMisspelledWords();
+      context_.invalidateWord(word);
    }
 
    public String[] suggestionList(String word)

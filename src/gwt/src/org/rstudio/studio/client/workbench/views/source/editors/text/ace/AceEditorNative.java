@@ -156,7 +156,21 @@ public class AceEditorNative extends JavaScriptObject {
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
    }-*/;
-   
+
+   public native final void onChangeScrollTop(Command command) /*-{
+       this.getSession().on("changeScrollTop",
+           $entry(function () {
+               command.@com.google.gwt.user.client.Command::execute()();
+           }));
+   }-*/;
+
+   public native final <Tooltip> void onShowGutterTooltip(CommandWithArg<Tooltip> command) /*-{
+       this.on("showGutterTooltip",
+           $entry(function (arg) {
+               command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+           }));
+   }-*/;
+
    public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
       this.on("guttermousedown",
          $entry(function (arg) {
@@ -169,6 +183,8 @@ public class AceEditorNative extends JavaScriptObject {
       final LinkedList<JavaScriptObject> handles = new LinkedList<JavaScriptObject>();
       handles.add(addDomListener(getTextInputElement(), "keydown", handlers));
       handles.add(addDomListener(getTextInputElement(), "keypress", handlers));
+      handles.add(addDomListener(getTextInputElement(), "changeScrollTop", handlers));
+      handles.add(addDomListener(this.cast(), "showGutterTooltip", handlers));
       handles.add(addDomListener(this.<Element>cast(), "focus", handlers));
       handles.add(addDomListener(this.<Element>cast(), "blur", handlers));
 
