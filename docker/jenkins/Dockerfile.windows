@@ -1,9 +1,9 @@
 # escape=`
 
-# Use the latest Windows Server Core image with .NET Framework 4.7.1.
+# Use the latest Windows Server Core 1709 image with .NET Framework 4.7.1.
 # Otherwise there are problems installing Visual Studio 2017 buildtools into containers
 # See https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container
-FROM microsoft/dotnet-framework:4.7.1
+FROM microsoft/dotnet-framework:4.7.1-windowsservercore-1709
 
 # set RUN commands to use powershell
 SHELL ["powershell"]
