@@ -25,7 +25,9 @@ enum PrefLayer
    LAYER_DEFAULT = 0,
    LAYER_SYSTEM  = 1,
    LAYER_USER    = 2,
-   LAYER_PROJECT = 3
+   LAYER_PROJECT = 3,
+
+   LAYER_MAX     = LAYER_PROJECT
 };
 
 namespace rstudio {

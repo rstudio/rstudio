@@ -90,7 +90,7 @@ Error loadPrefsFromFile(const FilePath& prefsFile, json::Object* layer)
       LOG_ERROR(error);
 
    std::string globalPrefsContents;
-   error = readStringFromFile(globalPrefsFile, &globalPrefsContents);
+   error = readStringFromFile(prefsFile, &globalPrefsContents);
    if (error)
    {
       return error;
@@ -127,10 +127,23 @@ Error loadPrefsFromFile(const FilePath& prefsFile, json::Object* layer)
 
 json::Object getLayer(PrefLayer layer)
 {
-   // Is this layer already cached?
-   if (s_pLayers->size() > layer)
-      return (*s_pLayers)[layer].get_obj();
+   // Ensure we have a layer cache; add empty slots for each
+   if (!s_pLayers)
+   {
+      s_pLayers = boost::make_shared<json::Array>();
+      for (unsigned i = 0; i < LAYER_MAX; i++)
+      {
+         s_pLayers->push_back(json::Value());
+      }
+   }
 
+   // Is this layer already cached?
+   else if ((*s_pLayers)[layer].type() == json::ObjectType)
+   {
+      return (*s_pLayers)[layer].get_obj();
+   }
+
+   // Compute requested layer
    json::Object result;
    Error error;
    switch(layer)
@@ -159,9 +172,10 @@ json::Object getLayer(PrefLayer layer)
          break;
    }
    
-   // Ensure there's space for this layer
-   if (s_pLayers->size())
-   
+   // Cache result
+   (*s_pLayers)[layer] = result; 
+
+   return result;
 }
 
 Error initialize()
@@ -174,99 +188,6 @@ Error initialize()
    Error error = initBlock.execute();
    if (error)
       return error;
-
-   // Load schema for validation
-   FilePath schemaFile = 
-      options().rResourcesPath().complete("schema").complete("user-prefs-schema.json");
-   std::string schemaContents;
-   error = readStringFromFile(schemaFile, &schemaContents);
-   if (error)
-      return error;
-
-   s_pLayers = boost::make_shared<json::Array>();
-
-   // Layer 0: Defaults -------------------------------------------------------
-   //
-   // Extract default values from schema
-   json::Object defaults;
-   error = json::getSchemaDefaults(schemaContents, &defaults);
-   if (error)
-      return error;
-
-   s_pLayers->push_back(defaults);
-
-   // Layer 1: System ---------------------------------------------------------
-   //
-   // If there's a system-wide configuration file, load that first.
-   FilePath globalPrefsFile = core::system::xdg::systemConfigDir().complete(kUserPrefsFile);
-   if (globalPrefsFile.exists())
-   {
-      std::string globalPrefsContents;
-      error = readStringFromFile(globalPrefsFile, &globalPrefsContents);
-      if (error)
-      {
-         // Non-fatal; we will proceed with defaults and/or user prefs.
-         LOG_ERROR(error);
-      }
-      else
-      {
-         // We have a global preferences file; ensure it's valid.
-         json::Value globalPrefs;
-         error = json::parseAndValidate(globalPrefsContents, schemaContents, ERROR_LOCATION, 
-               &globalPrefs);
-         if (error)
-         {
-            LOG_ERROR(error);
-         }
-         else if (globalPrefs.type() == json::ObjectType)
-         {
-            s_pLayers->push_back(globalPrefs);
-         }
-      }
-   }
-
-   // If we didn't get a system-wide config, push an empty layer.
-   if (s_pLayers->size() == LAYER_SYSTEM)
-   {
-      s_pLayers->push_back(json::Object());
-   }
-
-   // Layer 2: User -----------------------------------------------------------
-   //
-   // Load the user prefs file.
-   FilePath prefsFile = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
-   if (prefsFile.exists())
-   {
-      std::string prefsContents;
-      error = readStringFromFile(prefsFile, &prefsContents);
-      if (error)
-      {
-         // Don't fail here since it will cause startup to fail, we'll just live with no prefs.
-         LOG_ERROR(error);
-      }
-      else
-      {
-         json::Value prefs;
-         error = json::parseAndValidate(prefsContents, schemaContents, ERROR_LOCATION, &prefs);
-         if (error)
-         {
-            // Invalid or non-conforming user prefs; use defaults.
-            LOG_ERROR(error);
-         }
-         else
-         {
-            s_pLayers->push_back(prefs);
-         }
-      }
-   }
-
-   if (s_pLayers->size() <= LAYER_USER)
-   {
-      s_pLayers->push_back(json::Object());
-   }
-
-   // Layer 2: User -----------------------------------------------------------
-   //
 
    return Success();
 }
