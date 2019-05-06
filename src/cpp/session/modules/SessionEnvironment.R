@@ -452,7 +452,7 @@
       # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
       # an attempt is made to compute their metrics exactly; avoid computing the size for these
       size <- if (computeSize) object.size(obj) else 0
-      len <- if (computeSize) length(obj) else 0
+      len <- length(obj)
    }
    class <- .rs.getSingleClass(obj)
    contents <- list()
@@ -501,7 +501,17 @@
              is.data.frame(obj) ||
              isS4(obj))
          {
-            contents <- .rs.valueContents(obj)
+            if (computeSize)
+            {
+               # normal object
+               contents <- .rs.valueContents(obj)
+            }
+            else
+            {
+               # don't prefetch content for altreps
+               val <- "NO_VALUE"
+               contents_deferred <- TRUE
+            }
          }
       }
    }
