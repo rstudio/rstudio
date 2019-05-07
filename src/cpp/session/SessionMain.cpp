@@ -184,8 +184,8 @@
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
-#include "modules/SessionUserPrefs.hpp"
-#include "modules/SessionUserState.hpp"
+#include "modules/prefs/UserPrefs.hpp"
+#include "modules/prefs/UserState.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -511,8 +511,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (r_utils::initialize)
 
       // modules with c++ implementations
-      (modules::prefs::initialize)
-      (modules::state::initialize)
+      (modules::prefs::initializePrefs)
+      (modules::prefs::initializeState)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)

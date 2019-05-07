@@ -150,8 +150,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionThemes.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
-   modules/SessionUserPrefs.cpp
-   modules/SessionUserState.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/build/SessionBuild.cpp
@@ -196,6 +194,16 @@ set (SESSION_SOURCE_FILES
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
    modules/preview/SessionPreview.cpp
+   modules/prefs/PrefLayer.cpp
+   modules/prefs/Preferences.cpp
+   modules/prefs/UserPrefs.cpp
+   modules/prefs/UserPrefsDefaultLayer.cpp
+   modules/prefs/UserPrefsLayer.cpp
+   modules/prefs/UserPrefsProjectLayer.cpp
+   modules/prefs/UserPrefsSystemLayer.cpp
+   modules/prefs/UserState.cpp
+   modules/prefs/UserStateDefaultLayer.cpp
+   modules/prefs/UserStateLayer.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp

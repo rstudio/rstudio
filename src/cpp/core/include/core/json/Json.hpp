@@ -932,6 +932,9 @@ bool parse(const std::string& input, Value* pValue);
 // Parses, returning the parse error that occurred.
 Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
 
+// Validates a JSON value according to a schema.
+Error validate(const json::Value& value, const std::string& schema, const ErrorLocation& location);
+
 // Parse input according to the given JSON schema document. Returns an error if either the input or
 // schema does not parse, or if the input is not valid according to the schema. Does not apply
 // default values from the schema.

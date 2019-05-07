@@ -1,5 +1,5 @@
 /*
- * SessionUserState.hpp
+ * UserPrefsLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,32 +13,26 @@
  *
  */
 
-#ifndef SESSION_USER_STATE_HPP
-#define SESSION_USER_STATE_HPP
+#ifndef SESSION_USER_PREF_SYSTEM_LAYER_HPP
+#define SESSION_USER_PREF_SYSTEM_LAYER_HPP
 
-#include <core/json/Json.hpp>
-
-#define kUserStateFile "rstudio-state.json"
-
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+#include "PrefLayer.hpp"
 
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace state {
+namespace prefs {
 
-core::json::Object userState();
+class UserPrefsSystemLayer: public PrefLayer
+{
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+};
 
-core::Error initialize();
-
-} // namespace state
+} // namespace prefs
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
 #endif
-

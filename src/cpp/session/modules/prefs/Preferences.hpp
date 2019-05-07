@@ -1,5 +1,5 @@
 /*
- * SessionUserPrefs.hpp
+ * Preferences.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,22 +13,12 @@
  *
  */
 
-#ifndef SESSION_USER_PREFS_HPP
-#define SESSION_USER_PREFS_HPP
+#ifndef SESSION_PREFERENCES_HPP
+#define SESSION_PREFERENCES_HPP
 
 #include <core/json/Json.hpp>
 
-#define kUserPrefsFile "rstudio-prefs.json"
-
-enum PrefLayer
-{
-   LAYER_DEFAULT = 0,
-   LAYER_SYSTEM  = 1,
-   LAYER_USER    = 2,
-   LAYER_PROJECT = 3,
-
-   LAYER_MAX     = LAYER_PROJECT
-};
+#include "PrefLayer.hpp"
 
 namespace rstudio {
    namespace core {
@@ -41,10 +31,18 @@ namespace session {
 namespace modules {
 namespace prefs {
 
-core::json::Object getLayer(PrefLayer layer);
-core::json::Array allLayers();
+class Preferences
+{
+public:
+   core::Error initialize();
+   core::json::Array allLayers();
+   core::Error writeLayer(size_t layer, const core::json::Object& prefs);
 
-core::Error initialize();
+   virtual core::Error createLayers() = 0;
+protected:
+   core::Error readLayers();
+   std::vector<boost::shared_ptr<PrefLayer>> layers_;
+};
 
 } // namespace prefs
 } // namespace modules

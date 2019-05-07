@@ -377,8 +377,7 @@ Error getSchemaDefaults(const std::string& schema, Object* pValue)
    return Success();
 }
 
-Error parseAndValidate(const std::string& input, const std::string& schema,
-      const ErrorLocation& location, Value* pValue)
+Error validate(const json::Value& value, const std::string& schema, const ErrorLocation& location)
 {
    Error error;
 
@@ -392,15 +391,10 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
       return error;
    }
 
-   // Next, parse the input.
-   error = pValue->parse(input, location);
-   if (error)
-      return error;
-
    // Validate the input according to the schema.
    rapidjson::SchemaDocument schemaDoc(sd) ;
    rapidjson::SchemaValidator validator(schemaDoc);
-   if (!pValue->get_impl().Accept(validator))
+   if (!value.get_impl().Accept(validator))
    {
       rapidjson::StringBuffer sb;
       error = Error(rapidjson::kParseErrorUnspecificSyntaxError, location);
@@ -413,6 +407,18 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
    }
 
    return Success();
+}
+
+Error parseAndValidate(const std::string& input, const std::string& schema,
+      const ErrorLocation& location, Value* pValue)
+{
+   Error error;
+
+   error = pValue->parse(input, location);
+   if (error)
+      return error;
+
+   return validate(*pValue, schema, location);
 }
 
 void write(const Value& value, std::ostream& os)
