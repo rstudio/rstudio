@@ -45,7 +45,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import java.util.function.Predicate;
+
+import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -101,7 +102,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
-import org.rstudio.studio.client.workbench.views.output.lint.model.AnchoredAceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
@@ -3718,7 +3718,7 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void removeMarkers(Predicate<AceAnnotation> predicate)
+   public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
    {
       widget_.removeMarkers(predicate);
    }

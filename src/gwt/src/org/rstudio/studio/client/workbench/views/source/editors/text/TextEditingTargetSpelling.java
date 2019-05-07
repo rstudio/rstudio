@@ -163,7 +163,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public void invalidateMisspelledWords()
    {
-      docDisplay_.removeMarkers((a) -> a != null && a.text().toLowerCase().contains("spellcheck"));
+      docDisplay_.removeMarkers((a, m) -> a != null && a.text().toLowerCase().contains("spellcheck"));
    }  
 
    @Override

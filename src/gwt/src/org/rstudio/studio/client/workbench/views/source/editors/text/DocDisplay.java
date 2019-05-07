@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeySequence;
@@ -381,7 +382,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void clearLint();
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
-   void removeMarkers(Predicate<AceAnnotation> predicate);
+   void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate);
    void removeMarkersAtWord(String word);
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);

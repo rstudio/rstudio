@@ -31,7 +31,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
-import java.util.function.Predicate;
+
+import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
@@ -1087,74 +1088,24 @@ public class AceEditorWidget extends Composite
    
    public void removeMarkersOnCursorLine()
    {
-      // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         
-         @Override
-         public void execute()
-         {
-            int cursorRow = editor_.getCursorPosition().getRow();
-            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-
-            for (int i = 0; i < annotations_.size(); i++)
-            {
-               AnchoredAceAnnotation annotation = annotations_.get(i);
-
-               int markerId = annotation.getMarkerId();
-               Marker marker = editor_.getSession().getMarker(markerId);
-               
-               // The marker may have already been removed in response to
-               // a previous action.
-               if (marker == null)
-                  continue;
-               
-               Range range = marker.getRange();
-               int rowStart = range.getStart().getRow();
-               int rowEnd = range.getEnd().getRow();
-               
-               if (cursorRow >= rowStart && cursorRow <= rowEnd)
-                  editor_.getSession().removeMarker(markerId);
-               else
-                  newAnnotations.push(annotation.asAceAnnotation());
-            }
-            editor_.getSession().setAnnotations(newAnnotations);
-            editor_.getRenderer().renderMarkers();
-         }
+      int cursorRow = editor_.getCursorPosition().getRow();
+      removeMarkers((annotation, marker) -> {
+         Range range = marker.getRange();
+         int rowStart = range.getStart().getRow();
+         int rowEnd = range.getEnd().getRow();
+         return cursorRow < rowStart || cursorRow > rowEnd;
       });
    }
 
    public void removeMarkersAtWord(String word)
    {
-      // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-
-         for (int i = 0; i < annotations_.size(); i++)
-         {
-            AnchoredAceAnnotation annotation = annotations_.get(i);
-            int markerId = annotation.getMarkerId();
-            Marker marker = editor_.getSession().getMarker(markerId);
-
-            // The marker may have already been removed in response to
-            // a previous action.
-            if (marker == null)
-               continue;
-
-            String textRange = editor_.getSession().getTextRange(marker.getRange());
-            if (textRange != word)
-               newAnnotations.push(annotation.asAceAnnotation());
-            else
-               editor_.getSession().removeMarker(markerId);
-         }
-
-         editor_.getSession().setAnnotations(newAnnotations);
-         editor_.getRenderer().renderMarkers();
+      removeMarkers((annotation, marker) -> {
+         String textRange = editor_.getSession().getTextRange(marker.getRange());
+         return textRange.equals(word);
       });
    }
 
-   public void removeMarkers(Predicate<AceAnnotation> predicate)
+   public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
    {
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(() ->
@@ -1172,8 +1123,7 @@ public class AceEditorWidget extends Composite
             if (marker == null)
                continue;
 
-            Debug.log(annotation.asAceAnnotation().text());
-            if (!predicate.test(annotation.asAceAnnotation()))
+            if (!predicate.test(annotation.asAceAnnotation(), marker))
             {
                newAnnotations.push(annotation.asAceAnnotation());
             }
