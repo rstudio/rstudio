@@ -79,8 +79,8 @@ public class UserStateAccessor extends Prefs
          return this.name;
       }-*/;
 
-      public final native String getPath() /*-{
-         return this.path;
+      public final native String getUrl() /*-{
+         return this.url;
       }-*/;
 
       public final native boolean getDark() /*-{
@@ -315,4 +315,18 @@ public class UserStateAccessor extends Prefs
    public final static String CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
 
    
+
+   public int userLayer()
+   {
+      return LAYER_USER;
+   }
+
+   public int projectLayer()
+   {
+      // There's currently no project-specific state here
+      return LAYER_USER;
+   }
+
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_USER    = 1;
 }

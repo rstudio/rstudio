@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -106,10 +107,9 @@ public class SessionInfo extends JavaScriptObject
       return this.prefs;
    }-*/;
    
-   
-   public JsObject getUserPrefs()
+   public final JsObject getUserPrefs()
    {
-      return getPrefs().get(Math.min(getPrefs().length(), Prefs.LAYER_USER));
+      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER));
    }
 
    public final native JsArray<JsObject> getUserState() /*-{

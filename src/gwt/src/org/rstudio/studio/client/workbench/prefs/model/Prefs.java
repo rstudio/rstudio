@@ -92,8 +92,8 @@ public abstract class Prefs
 
       public T getGlobalValue()
       {
-         // Skip the top layer when getting the global value
-         for (int i = Math.max(layers_.length() - 1, 0); i >= 0; i--)
+         // Skip the project layer if it exists by starting at the user layer.
+         for (int i = userLayer(); i >= 0; i--)
          {
             if (layers_.get(i).hasKey(name_))
             {
@@ -112,7 +112,7 @@ public abstract class Prefs
 
       public void setGlobalValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(LAYER_USER), value, fireEvents);
+         setValue(layers_.get(userLayer()), value, fireEvents);
       }
       
       public void setProjectValue(T value)
@@ -122,7 +122,7 @@ public abstract class Prefs
       
       public void setProjectValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(LAYER_PROJECT), value, fireEvents);
+         setValue(layers_.get(projectLayer()), value, fireEvents);
       }
 
       protected abstract void doSetValue(JsObject root, String name, T value);
@@ -267,6 +267,9 @@ public abstract class Prefs
    {
       layers_ = layers;
    }
+   
+   public abstract int userLayer();
+   public abstract int projectLayer();
 
    @SuppressWarnings("unchecked")
    protected PrefValue<Boolean> bool(String name, boolean defaultValue)
@@ -346,11 +349,6 @@ public abstract class Prefs
    {
       layers_ = layers;
    }
-   
-   public static final int LAYER_DEFAULT = 0;
-   public static final int LAYER_SYSTEM  = 1;
-   public static final int LAYER_USER    = 2;
-   public static final int LAYER_PROJECT = 3;
    
    private JsArray<JsObject> layers_;
    private final HashMap<String, PrefValue<?>> values_ =

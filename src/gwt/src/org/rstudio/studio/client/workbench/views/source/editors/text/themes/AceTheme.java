@@ -24,6 +24,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
  */
 public class AceTheme extends UserStateAccessor.Theme
 {
+   protected AceTheme() {}
+   
    public static final AceTheme createDefault()
    {
       return createDefault(false);
@@ -48,17 +50,6 @@ public class AceTheme extends UserStateAccessor.Theme
       theme.url = url;
       theme.isDark = isDark;
       return theme;
-   }-*/;
-   
-   public native final String getUrl()
-   /*-{
-      if ((this.url !== null) &&
-          (this.url !== undefined) &&
-          (this.url !== "") &&
-          (this.url.charAt(0) === '/'))
-         return this.url.substr(1);
-      else
-         return this.url;
    }-*/;
    
    public native final Boolean isDark()

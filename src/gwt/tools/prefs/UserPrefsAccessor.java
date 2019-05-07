@@ -40,4 +40,18 @@ public class UserPrefsAccessor extends Prefs
    
 %PREFS%   
 
+   public int userLayer()
+   {
+      return LAYER_USER;
+   }
+
+   public int projectLayer()
+   {
+      return LAYER_PROJECT;
+   }
+
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_SYSTEM  = 1;
+   public static final int LAYER_USER    = 2;
+   public static final int LAYER_PROJECT = 3;
 }

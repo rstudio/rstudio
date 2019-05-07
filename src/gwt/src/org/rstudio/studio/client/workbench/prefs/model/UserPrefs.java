@@ -126,6 +126,11 @@ public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHand
       */
    }
    
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_SYSTEM  = 1;
+   public static final int LAYER_USER    = 2;
+   public static final int LAYER_PROJECT = 3;
+   
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;

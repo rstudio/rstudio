@@ -1,7 +1,7 @@
 /*
  * ExportPlotOptions.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
 public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
 {
+   protected ExportPlotOptions() {}
+   
    public static final ExportPlotOptions createDefault()
    {
       return create(550, 450, false, "PNG", false, false);

@@ -40,4 +40,18 @@ public class UserStateAccessor extends Prefs
    }
    
 %STATE%   
+
+   public int userLayer()
+   {
+      return LAYER_USER;
+   }
+
+   public int projectLayer()
+   {
+      // There's currently no project-specific state here
+      return LAYER_USER;
+   }
+
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_USER    = 1;
 }
