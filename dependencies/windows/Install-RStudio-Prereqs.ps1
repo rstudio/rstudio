@@ -79,9 +79,6 @@ choco install -y activeperl
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
-# register msdia DLL (needed for uploading debug symbols to Sentry)
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
-
 [System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 
 Write-Host "-----------------------------------------------------------"
