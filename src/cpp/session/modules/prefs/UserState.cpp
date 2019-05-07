@@ -73,6 +73,10 @@ Error initializeState()
    if (error)
       return error;
 
+   error = s_state.initialize();
+   if (error)
+      return error;
+
    return Success();
 }
 

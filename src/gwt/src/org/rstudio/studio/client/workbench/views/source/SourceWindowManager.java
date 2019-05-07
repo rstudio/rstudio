@@ -556,7 +556,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         if (hasSourceAndConsolePaired(paneConfig.getQuadrants()))
          {
             events_.fireEvent(new MaximizeSourceWindowEvent());
          }  
@@ -571,7 +571,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         if (hasSourceAndConsolePaired(paneConfig.getQuadrants()))
          {
             events_.fireEvent(new EnsureVisibleSourceWindowEvent());
          }  

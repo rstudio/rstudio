@@ -154,11 +154,13 @@
                 }
             },
             "default": {
-                "layout": [
+                "quadrants": [
                     "Source", 
                     "Console", 
-                    ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
-                    ["Files", "Plots", "Packages", "Help", "Viewer"]],
+                    "TabSet1",
+                    "TabSet2"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
+                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "console_left_on_top": false,
                 "console_right_on_top": true
             },

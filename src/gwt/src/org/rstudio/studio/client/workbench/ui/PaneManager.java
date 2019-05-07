@@ -544,7 +544,7 @@ public class PaneManager
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
       if (consoleCurrentIndex != consoleTargetIndex)
       {
-         JsArrayString panes = JsArrayUtil.copy(paneConfig.getPanes());
+         JsArrayString panes = JsArrayUtil.copy(paneConfig.getQuadrants());
          panes.set(consoleCurrentIndex, panes.get(consoleTargetIndex));
          panes.set(consoleTargetIndex, "Console");
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -780,7 +780,7 @@ public class PaneManager
    {
       ArrayList<LogicalWindow> results = new ArrayList<LogicalWindow>();
 
-      JsArrayString panes = config.getPanes();
+      JsArrayString panes = config.getQuadrants();
       for (int i = 0; i < 4; i++)
       {
          results.add(panesByName_.get(panes.get(i)));

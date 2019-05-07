@@ -30,16 +30,15 @@
                     "type": "string",
                     "description": "The relative path/URL to the theme."
                 },
-                "dark": {
+                "isDark": {
                     "type": "boolean",
                     "description": "Whether the theme should be treated as a dark theme."
                 }
             },
             "default": {
                 "name": "Textmate (default)",
-                "path": "theme/default/textmate.rstheme",
-                "dark": false
-                
+                "url": "theme/default/textmate.rstheme",
+                "isDark": false
             },
             "description": "The color theme to apply."
         },

@@ -83,8 +83,8 @@ public class UserStateAccessor extends Prefs
          return this.url;
       }-*/;
 
-      public final native boolean getDark() /*-{
-         return this.dark;
+      public final native boolean getIsDark() /*-{
+         return this.isDark;
       }-*/;
 
    }

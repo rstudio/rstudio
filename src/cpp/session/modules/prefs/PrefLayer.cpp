@@ -46,7 +46,20 @@ core::Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    std::string contents;
    Error error = readStringFromFile(prefsFile, &contents);
    if (error)
-      return error;
+   {
+      if (isPathNotFoundError(error))
+      {
+         // It's normal for a preference file not to exist; create an empty cache in this case.
+         cache_ = boost::make_shared<json::Object>();
+      }
+      else
+      {
+         // If we hit some other error (e.g. permission denied), it's still not fatal (we can live
+         // without a prefs file) but users might like to know.
+         LOG_ERROR(error);
+      }
+      return Success();
+   }
 
    error = json::parse(contents, ERROR_LOCATION, &val);
    if (error)

@@ -40,7 +40,9 @@ core::Error Preferences::readLayers()
    {
       error = layer->readPrefs();
       if (error)
-         return error;
+      {
+         LOG_ERROR(error);
+      }
    }
    return Success();
 }

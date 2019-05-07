@@ -145,13 +145,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
    }
 
-   public native final JsArrayString getPanes() /*-{
-      return this.panes;
-   }-*/;
-
    public final int getConsoleIndex()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       for (int i = 0; i<panes.length(); i++)
          if (panes.get(i) == "Console")
             return i;
@@ -161,7 +157,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    
    public final boolean getConsoleLeft()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       return panes.get(0) == "Console" || panes.get(1) == "Console";
    }
    
@@ -172,7 +168,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    
    public final boolean validateAndAutoCorrect()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       if (panes == null)
          return false;
       if (!sameElements(panes, getAllPanes()))
@@ -254,7 +250,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
    public final PaneConfig copy()
    {
-      return create(copy(getPanes()),
+      return create(copy(getQuadrants()),
                     copy(getTabSet1()),
                     copy(getTabSet2()),
                     getConsoleLeftOnTop(),

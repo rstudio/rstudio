@@ -110,7 +110,7 @@ public class TextEditingTargetChunks
    {
       prefs_ = prefs;
       state_ = state;
-      dark_ = state.theme().getValue().getDark();
+      dark_ = state.theme().getValue().getIsDark();
       
       state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {
@@ -118,7 +118,7 @@ public class TextEditingTargetChunks
          public void onValueChange(ValueChangeEvent<UserStateAccessor.Theme> theme)
          {
             // recompute dark state
-            boolean isDark = theme.getValue().getDark();
+            boolean isDark = theme.getValue().getIsDark();
             
             // redraw all the toolbars if necessary
             if (isDark != dark_)

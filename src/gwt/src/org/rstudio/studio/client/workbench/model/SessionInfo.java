@@ -102,9 +102,9 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    public final native JsArray<JsObject> getPrefs() /*-{
-      if (!this.prefs)
-         this.prefs = [ {} ];
-      return this.prefs;
+      if (!this.user_prefs)
+         this.user_prefs = [ {} ];
+      return this.user_prefs;
    }-*/;
    
    public final JsObject getUserPrefs()
