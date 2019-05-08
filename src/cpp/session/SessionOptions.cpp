@@ -593,11 +593,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    std::string completion;
    if (pty.isWithin(resourcePath_))
    {
+#ifdef RSTUDIO_SESSION_WIN32
+      completion = "x86/winpty.dll";
+#else
       completion = "winpty.dll";
+#endif
    }
    else
    {
+#ifdef RSTUDIO_SESSION_WIN32
+      completion = "32/bin/winpty.dll";
+#else
       completion = "64/bin/winpty.dll";
+#endif
    }
    winptyPath_ = pty.complete(completion).absolutePath();
 #endif // _WIN32

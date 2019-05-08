@@ -1,7 +1,7 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -118,8 +118,13 @@ void setMemoryLimit()
    DWORDLONG virtualMemory = memoryStatus.ullTotalVirtual - VIRTUAL_OFFSET;
    DWORDLONG physicalMem = memoryStatus.ullTotalPhys;
 
-   // use physical memory on win64
+   // use physical memory on win64. on win32 further constrain by
+   // virtual memory minus an offset (for the os and other programs)
+ #ifdef _WIN64
    DWORDLONG maxMemory = physicalMem;
+ #else
+   DWORDLONG maxMemory = std::min(virtualMemory, physicalMem);
+ #endif
 
    // call the memory.limit function
    maxMemory = maxMemory / MB_TO_BYTES;
