@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -641,15 +641,6 @@ QString GwtCallback::getRVersion()
 {
 #ifdef Q_OS_WIN32
    bool defaulted = options().rBinDir().isEmpty();
-   if (!defaulted)
-   {
-      // If an older version has set a 32-bit R version, use default
-      RVersion rCurrentVersion(options().rBinDir());
-      if (rCurrentVersion.architecture() != ArchX64)
-      {
-         defaulted = true;
-      }
-   }
    QString rDesc = defaulted
                    ? QString::fromUtf8("[Default] ") + autoDetect().description()
                    : RVersion(options().rBinDir()).description();
