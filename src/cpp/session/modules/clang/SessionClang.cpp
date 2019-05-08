@@ -51,10 +51,10 @@ namespace {
 
 std::string embeddedLibClangPath()
 {
-#if defined(RSTUDIO_SESSION_WIN32)
-   std::string libclang = "x86/libclang.dll";
-#elif defined(_WIN32)
+#if defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
 #elif defined(__APPLE__)
    std::string libclang = "libclang.dylib";
 #else
