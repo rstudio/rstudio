@@ -532,6 +532,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler, S
          // allow drag and drop of text in the editor
          enableTextDrag().setGlobalValue(
                newUiPrefs.enableTextDrag().getGlobalValue());
+
+         // set max prefetch words
+         maxPrefetchWords().setGlobalValue(
+            newUiPrefs.maxPrefetchWords().getGlobalValue());
+
+         // set max check words
+         maxCheckWords().setGlobalValue(
+            newUiPrefs.maxCheckWords().getGlobalValue());
       }
       else if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
       {
