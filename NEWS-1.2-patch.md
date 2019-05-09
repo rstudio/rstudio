@@ -3,6 +3,7 @@
 
 ### Bug Fixes
 
+- Restore capability to use 32-bit R on Windows (#3150)
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
@@ -22,6 +23,7 @@
 - Fix failure to launch RStudio Desktop when started as root user (#4631)
 - Fixed an issue where the Files pane occasionally would fail to scroll to bottom (#4662)
 - Fixed an issue where RStudio would always use the discrete GPU on macOS (#4672)
+- Fix startup failure when using multiple CRAN repos (#4751)
 
 
 ### Miscellaneous
@@ -30,4 +32,3 @@
 - Update to Pandoc 2.7.2 on Windows to address occasional segfaults (#4618)
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
 - Set secure flag when clearing cookies for consistency (Pro #964)
-

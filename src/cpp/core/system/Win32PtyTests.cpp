@@ -49,7 +49,12 @@ FilePath getWinPtyPath()
    if (!ptyPath.empty())
       return FilePath(ptyPath);
 
+#ifdef _WIN64
    std::string suffix("/64/bin/winpty.dll");
+#else
+   std::string suffix("/32/bin/winpty.dll");
+#endif
+
    std::string prefix("external-winpty-path=");
    std::ifstream in("./conf/rdesktop-dev.conf");
 

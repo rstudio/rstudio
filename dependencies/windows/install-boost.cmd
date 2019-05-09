@@ -1,4 +1,8 @@
 @echo off
+setlocal
+
+set PATH=%CD%\tools;%PATH%
+
 
 REM Build Boost.
 cd install-boost

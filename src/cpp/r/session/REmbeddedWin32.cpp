@@ -118,8 +118,13 @@ void setMemoryLimit()
    DWORDLONG virtualMemory = memoryStatus.ullTotalVirtual - VIRTUAL_OFFSET;
    DWORDLONG physicalMem = memoryStatus.ullTotalPhys;
 
-   // use physical memory on win64
+   // use physical memory on win64. on win32 further constrain by
+   // virtual memory minus an offset (for the os and other programs)
+ #ifdef _WIN64
    DWORDLONG maxMemory = physicalMem;
+ #else
+   DWORDLONG maxMemory = std::min(virtualMemory, physicalMem);
+ #endif
 
    // call the memory.limit function
    maxMemory = maxMemory / MB_TO_BYTES;

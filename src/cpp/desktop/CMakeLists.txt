@@ -307,8 +307,10 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
-   add_subdirectory(urlopener)
-   add_subdirectory(synctex/rsinverse)
+   if(NOT RSTUDIO_SESSION_WIN32)
+      add_subdirectory(urlopener)
+      add_subdirectory(synctex/rsinverse)
+   endif()
 
    set(
       CMAKE_EXE_LINKER_FLAGS

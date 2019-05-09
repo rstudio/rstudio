@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -325,6 +325,14 @@ void Options::setUseFontConfigDatabase(bool use)
 #ifdef _WIN32
 QString Options::rBinDir() const
 {
+   // HACK: If RBinDir doesn't appear at all, that means the user has never
+   // specified a preference for R64 vs. 32-bit R. In this situation we should
+   // accept either. We'll distinguish between this case (where preferR64
+   // should be ignored) and the other case by using null for this case and
+   // empty string for the other.
+   if (!settings_.contains(QString::fromUtf8("RBinDir")))
+      return QString::null;
+
    QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
 }
@@ -334,6 +342,20 @@ void Options::setRBinDir(QString path)
    settings_.setValue(QString::fromUtf8("RBinDir"), path);
 }
 
+bool Options::preferR64() const
+{
+   if (!core::system::isWin64())
+      return false;
+
+   if (!settings_.contains(QString::fromUtf8("PreferR64")))
+      return true;
+   return settings_.value(QString::fromUtf8("PreferR64")).toBool();
+}
+
+void Options::setPreferR64(bool preferR64)
+{
+   settings_.setValue(QString::fromUtf8("PreferR64"), preferR64);
+}
 #endif
 
 FilePath Options::scriptsPath() const
