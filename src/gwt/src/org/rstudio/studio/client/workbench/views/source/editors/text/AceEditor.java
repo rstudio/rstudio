@@ -45,6 +45,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+
+import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -121,6 +123,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSes
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.FoldingRules;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.KeyboardHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -159,6 +162,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -1061,7 +1065,7 @@ public class AceEditor implements DocDisplay,
                   events_.fireEvent(new AceKeyboardActivityEvent(event));
                }
             }));
-      
+
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
    }
@@ -1111,15 +1115,15 @@ public class AceEditor implements DocDisplay,
          ed.getSession().getSelection().moveCursorTo(cursorPos.getRow(),
                                                      cursorPos.getColumn(),
                                                      false);
-         ed.getRenderer().scrollToY(scrollTop);
-         ed.getRenderer().scrollToX(scrollLeft);
+         scrollToY(scrollTop, 0);
+         scrollToX(scrollLeft);
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
             public void execute()
             {
-               ed.getRenderer().scrollToY(scrollTop);
-               ed.getRenderer().scrollToX(scrollLeft);
+               scrollToY(scrollTop, 0);
+               scrollToX(scrollLeft);
             }
          });
       }
@@ -1155,6 +1159,8 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().getRenderer().scrollToY(y);
       else
          scrollAnimator_ = new ScrollAnimator(y, animateMs);
+
+      fireEvent(new ScrollYEvent(Position.create(getFirstVisibleRow(), 0)));
    }
 
    public void insertCode(String code)
@@ -2354,6 +2360,11 @@ public class AceEditor implements DocDisplay,
       return widget_.addContextMenuHandler(handler);
    }
 
+   public HandlerRegistration addScrollYHandler(ScrollYEvent.Handler handler)
+   {
+      return widget_.addScrollYHandler(handler);
+   }
+
    public Scope getScopeAtPosition(Position position)
    {
       if (hasCodeModelScopeTree())
@@ -2511,7 +2522,7 @@ public class AceEditor implements DocDisplay,
    {
       Position cursorPos = getCursorPosition();
       int cursorRow = cursorPos.getRow();
-      
+
       if (cursorRow >= widget_.getEditor().getLastVisibleRow() - rowsAround)
       {
          Position alignPos = Position.create(cursorRow + rowsAround, 0);
@@ -2523,7 +2534,7 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().getRenderer().alignCursor(alignPos, 0);
       }
    }
-   
+
    @Override
    public void scrollCursorIntoViewIfNecessary()
    {
@@ -2535,12 +2546,12 @@ public class AceEditor implements DocDisplay,
    {
       return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
    }
-   
+
    public void gotoPageUp()
    {
       widget_.getEditor().gotoPageUp();
    }
-   
+
    public void gotoPageDown()
    {
       widget_.getEditor().gotoPageDown();
@@ -2556,12 +2567,12 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().revealRange(range, animate);
    }
-   
+
    public CodeModel getCodeModel()
    {
       return getSession().getMode().getCodeModel();
    }
-   
+
    public boolean hasCodeModel()
    {
       return getSession().getMode().hasCodeModel();
@@ -2571,19 +2582,19 @@ public class AceEditor implements DocDisplay,
    {
       return hasCodeModel() && getCodeModel().hasScopes();
    }
-   
+
    public void buildScopeTree()
    {
       // Builds the scope tree as a side effect
       if (hasCodeModelScopeTree())
          getScopeTree();
    }
-   
+
    public int buildScopeTreeUpToRow(int row)
    {
       if (!hasCodeModelScopeTree())
          return 0;
-      
+
       return getSession().getMode().getRCodeModel().buildScopeTreeUpToRow(row);
    }
 
@@ -2591,10 +2602,10 @@ public class AceEditor implements DocDisplay,
    {
       if (hasCodeModelScopeTree())
          return getSession().getMode().getCodeModel().getScopeTree();
-      
+
       if (scopes_ != null)
          return scopes_.getScopeTree();
-      
+
       return JavaScriptObject.createArray().cast();
    }
 
@@ -2621,19 +2632,19 @@ public class AceEditor implements DocDisplay,
    {
       getSession().toggleFold();
    }
-   
+
    @Override
    public void setFoldStyle(String style)
    {
       getSession().setFoldStyle(style);
    }
-   
+
    @Override
    public JsMap<Position> getMarks()
    {
       return widget_.getEditor().getMarks();
    }
-   
+
    @Override
    public void setMarks(JsMap<Position> marks)
    {
@@ -2657,25 +2668,25 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().jumpToMatching(true, true);
    }
-   
+
    @Override
    public void addCursorAbove()
    {
       widget_.getEditor().execCommand("addCursorAbove");
    }
-   
+
    @Override
    public void addCursorBelow()
    {
       widget_.getEditor().execCommand("addCursorBelow");
    }
-   
+
    @Override
    public void editLinesFromStart()
    {
       editLines_.editLinesFromStart();
    }
-   
+
    @Override
    public void moveLinesUp()
    {
@@ -2717,7 +2728,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().splitIntoLines();
    }
-   
+
    @Override
    public int getFirstFullyVisibleRow()
    {
@@ -3707,6 +3718,18 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
+   {
+      widget_.removeMarkers(predicate);
+   }
+
+   @Override
+   public void removeMarkersAtWord(String word)
+   {
+      widget_.removeMarkersAtWord(word);
+   }
+
+   @Override
    public void showLint(JsArray<LintItem> lint)
    {
       widget_.showLint(lint);
@@ -4135,14 +4158,13 @@ public class AceEditor implements DocDisplay,
          double elapsed = timestamp - startTime_;
          if (elapsed >= ms_)
          {
-            widget_.getEditor().getRenderer().scrollToY(targetY_);
+            scrollToY(targetY_, 0);
             complete();
             return;
          }
 
          // ease-out exponential
-         widget_.getEditor().getRenderer().scrollToY(
-               (int)(delta_ * (-Math.pow(2, -10 * elapsed / ms_) + 1)) + startY_);
+         scrollToY((int)(delta_ * (-Math.pow(2, -10 * elapsed / ms_) + 1)) + startY_, 0);
 
          // request next frame
          handle_ = AnimationScheduler.get().requestAnimationFrame(this);

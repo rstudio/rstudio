@@ -494,6 +494,16 @@ public class UIPrefsAccessor extends Prefs
                     JsArrayString.createArray().<JsArrayString>cast());
    }
 
+   public PrefValue<Integer> maxCheckWords()
+   {
+      return integer("max_check_words", 500);
+   }
+
+   public PrefValue<Integer> maxPrefetchWords()
+   {
+      return integer("max_prefetch_words", 20);
+   }
+
    public PrefValue<Integer> documentLoadLintDelay()
    {
       return integer("document_load_lint_delay", 5000);

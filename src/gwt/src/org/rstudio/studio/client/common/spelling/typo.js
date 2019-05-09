@@ -753,7 +753,7 @@ Typo.prototype = {
 
 		limit = limit || 5;
 
-		if (this.memoized.hasOwnProperty(word)) {
+		if (this.memoized.hasOwnProperty(word) && !!this.memoized[word]) {
 			var memoizedLimit = this.memoized[word]['limit'];
 
 			// Only return the cached list if it's big enough or if there weren't enough suggestions
