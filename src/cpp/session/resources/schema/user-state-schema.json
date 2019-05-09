@@ -44,6 +44,7 @@
         },
         "default_project_location": {
             "type": "string",
+            "default": "",
             "description": "The directory path under which to place new projects by default. Shadows a uipref."
         },
         "clear_hidden": {
@@ -73,6 +74,7 @@
                     "type": "boolean"
                 }
             },
+            "default": {},
             "description": "The most recently used plot export options."
         },
         "export_viewer_options": {
@@ -97,6 +99,7 @@
                     "type": "boolean"
                 }
             },
+            "default": {},
             "description": "The most recently used viewer export options."
         },
         "save_plot_as_pdf_options": {
@@ -118,6 +121,7 @@
                     "type": "boolean"
                 }
             },
+            "default": {},
             "description": "The most recently used options for saving a plot as a PDF."
         },
         "compile_r_notebook_prefs": {
@@ -131,6 +135,7 @@
                     "enum": ["default", "stitch", "spin"]
                 }
             },
+            "default": {},
             "description": "Most recently used settings for compiling a notebook from an R script."
         },
         "compile_r_markdown_notebook_prefs": {

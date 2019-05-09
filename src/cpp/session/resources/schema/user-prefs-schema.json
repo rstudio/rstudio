@@ -22,6 +22,7 @@
         },
         "initial_working_directory": {
             "type": "string",
+            "default": "",
             "description": "The initial working directory for new R sessions."
         },
         "cran_mirror_name": {
@@ -41,6 +42,7 @@
         },
         "cran_mirror_repos": {
             "type": "string",
+            "default": "",
             "description": "The secondary CRAN mirror."
         },
         "cran_mirror_country": {
@@ -98,10 +100,12 @@
         },
         "custom_shell_command": {
             "type": "string",
+            "default": "",
             "description": "The fully qualified path to the custom shell command to use in the Terminal tab."  
         },
         "custom_shell_options": {
             "type": "string",
+            "default": "",
             "description": "The command-line options to pass to the custom shell command."  
         },
         "show_line_numbers": {
@@ -388,6 +392,7 @@
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
+            "default": "begin-and-end",
             "description": "The style of folding to use."
         },
         "save_before_sourcing": {
@@ -448,6 +453,7 @@
         },
         "default_encoding": {
             "type": "string",
+            "default": "",
             "description": "The default character encoding to use when saving files."
         },
         "toolbar_visible": {
@@ -457,6 +463,7 @@
         },
         "default_project_location": {
             "type": "string",
+            "default": "",
             "description": "The directory path under which to place new projects by default."
         },
         "source_with_echo": {
@@ -763,6 +770,7 @@
         },
         "root_document": {
             "type": "string",
+            "default": "",
             "description": "The root document to use when compiling PDF documents."
         }
     }
