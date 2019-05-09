@@ -418,7 +418,7 @@
         "ansi_console_mode": {
             "type": "string",
             "enum": ["off", "on", "strip"],
-            "default": "quux",
+            "default": "on",
             "description": "How to treat ANSI escape codes in the console."
         },
         "show_inline_toolbar_for_r_code_chunks": {
@@ -686,7 +686,7 @@
         },
         "show_hidden_files": {
             "type": "boolean",
-            "default": "false",
+            "default": false,
             "description": "Whether to show hidden files in the Files pane."
         },
         "jobs_tab_visibility": {

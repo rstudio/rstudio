@@ -38,12 +38,12 @@ public:
    virtual ~PrefLayer();
 
    core::json::Object allPrefs();
+   core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
 protected:
    core::Error loadPrefsFromFile(const core::FilePath& prefsFile);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
    core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
-   core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
    boost::shared_ptr<core::json::Object> cache_;
 };
