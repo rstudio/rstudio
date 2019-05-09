@@ -18,6 +18,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include "PrefLayer.hpp"
 
 namespace rstudio {
@@ -38,7 +40,30 @@ public:
    core::json::Array allLayers();
    core::Error writeLayer(size_t layer, const core::json::Object& prefs);
 
+   template <typename T> T readPref(const std::string& name)
+   {
+      // Work backwards through the layers, starting with the most specific (project or user-level
+      // settings) and working towards the most general (basic defaults)
+      for (auto layer: boost::adaptors::reverse(layers_))
+      {
+         boost::optional<T> val = layer->readPref<T>(name);
+         if (val)
+         {
+            return *val;
+         }
+      }
+      
+      // Every value must have a default (and we enforce this with tests), so it's an error to reach
+      // this code. Return zero-initialized value in this case.
+      core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
+      error.addProperty("description", "missing default value for preference '" + name);
+      LOG_ERROR(error);
+      T value;
+      return value;
+   }
+
    virtual core::Error createLayers() = 0;
+
 protected:
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
