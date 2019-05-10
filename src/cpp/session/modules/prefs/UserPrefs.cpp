@@ -28,7 +28,7 @@
 #include "UserPrefsLayer.hpp"
 #include "UserPrefsSystemLayer.hpp"
 #include "UserPrefsProjectLayer.hpp"
-#include "Preferences.hpp"
+#include "UserPrefValues.hpp"
 
 using namespace rstudio::core;
 
@@ -38,7 +38,7 @@ namespace modules {
 namespace prefs {
 namespace {
 
-class UserPrefs: public Preferences
+class UserPrefs: public UserPrefValues
 {
    Error createLayers()
    {

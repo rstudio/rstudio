@@ -649,7 +649,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> foldStyle()
    {
-      return string("fold_style", "");
+      return string("fold_style", "begin-and-end");
    }
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
@@ -700,7 +700,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> ansiConsoleMode()
    {
-      return string("ansi_console_mode", "quux");
+      return string("ansi_console_mode", "on");
    }
 
    public final static String ANSI_CONSOLE_MODE_OFF = "off";

@@ -21,11 +21,13 @@ enum <- function(def, pref, type, indent) {
    java
 }
 
-generate <- function (schemaPath) {
+generate <- function (schemaPath, className) {
    # Extract prefs from JSON schema
    schema <- jsonlite::read_json(schemaPath)
    prefs <- schema$properties
    java <- ""
+   cpp <- ""
+   hpp <- ""
    
    for (pref in names(prefs)) {
       # Convert the preference name from camel case to snake case
@@ -54,10 +56,19 @@ generate <- function (schemaPath) {
       preftype <- def[["type"]]
       if (identical(preftype, "boolean")) {
          preftype <- "bool"
+         cpptype <- "bool"
       } else if (identical(preftype, "numeric") || identical(preftype, "number")) {
          preftype <- "dbl"
+         cpptype <- "double"
       } else if (identical(preftype, "array")) {
          preftype <- "object"
+         cpptype <- "core::json::Object"
+      } else if (identical(preftype, "integer")) {
+         preftype <- "integer"
+         cpptype <- "int"
+      } else if (identical(preftype, "string")) {
+         preftype <- "string"
+         cpptype <- "std::string"
       }
       
       defaultval <- as.character(def[["default"]])
@@ -84,14 +95,25 @@ generate <- function (schemaPath) {
          defaultval <- "null"
       }
       
-      java <- paste0(java,
+      comment <- paste0(
          "   /**\n",
          "    * ", def[["description"]], "\n",
-         "    */\n",
+         "    */\n")
+      
+      java <- paste0(java,
+         comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
          "   {\n",
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
+      
+      signature <- paste0()
+      hpp <- paste0(hpp, "   ", cpptype, " ", camel, "();\n")
+      cpp <- paste0(cpp,
+         cpptype, " ", className, "::", camel, "()\n",
+         "{\n",
+         "   return readPref<", cpptype, ">(\"", pref, "\");\n",
+         "}\n\n")
       
       # Emit JSNI for object types
       if (identical(def[["type"]], "object")) {
@@ -131,17 +153,28 @@ generate <- function (schemaPath) {
    }
    
    # Return computed Java
-   java
+   list(
+      java = java,
+      cpp = cpp,
+      hpp = hpp)
 }
 
 # Generate preferences
-java <- generate("../../cpp/session/resources/schema/user-prefs-schema.json")
-javaTemplate <- readLines("prefs/UserPrefsAccessor.java")
-writeLines(gsub("%PREFS%", java, javaTemplate), 
+result <- generate("../../cpp/session/resources/schema/user-prefs-schema.json",
+                   "UserPrefValues")
+template <- readLines("prefs/UserPrefsAccessor.java")
+writeLines(gsub("%PREFS%", result$java, template), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
+template <- readLines("prefs/UserPrefValues.hpp")
+writeLines(gsub("%PREFS%", result$hpp, template), 
+           con = "../../cpp/session/modules/prefs/UserPrefValues.hpp")
+template <- readLines("prefs/UserPrefValues.cpp")
+writeLines(gsub("%PREFS%", result$cpp, template), 
+           con = "../../cpp/session/modules/prefs/UserPrefValues.cpp")
 
 # Generate state
-java <- generate("../../cpp/session/resources/schema/user-state-schema.json")
+result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
+                   "UserStateValues")
 javaTemplate <- readLines("prefs/UserStateAccessor.java")
-writeLines(gsub("%STATE%", java, javaTemplate), 
+writeLines(gsub("%STATE%", result$java, javaTemplate), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")

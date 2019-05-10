@@ -196,6 +196,7 @@ set (SESSION_SOURCE_FILES
    modules/preview/SessionPreview.cpp
    modules/prefs/PrefLayer.cpp
    modules/prefs/Preferences.cpp
+   modules/prefs/UserPrefValues.cpp
    modules/prefs/UserPrefs.cpp
    modules/prefs/UserPrefsDefaultLayer.cpp
    modules/prefs/UserPrefsLayer.cpp

@@ -56,10 +56,10 @@ public:
       // Every value must have a default (and we enforce this with tests), so it's an error to reach
       // this code. Return zero-initialized value in this case.
       core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
-      error.addProperty("description", "missing default value for preference '" + name);
+      error.addProperty("description", "missing default value for preference '" + 
+            name + "'");
       LOG_ERROR(error);
-      T value;
-      return value;
+      return T();
    }
 
    virtual core::Error createLayers() = 0;
