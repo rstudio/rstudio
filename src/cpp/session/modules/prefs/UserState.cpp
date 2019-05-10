@@ -20,7 +20,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "UserState.hpp"
+#include "UserStateValues.hpp"
 #include "UserStateDefaultLayer.hpp"
 #include "UserStateLayer.hpp"
 #include "Preferences.hpp"
@@ -33,7 +33,7 @@ namespace modules {
 namespace prefs {
 namespace {
 
-class UserState: public Preferences
+class UserState: public UserStateValues
 {
    Error createLayers()
    {

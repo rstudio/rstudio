@@ -29,6 +29,10 @@ generate <- function (schemaPath, className) {
    cpp <- ""
    hpp <- ""
    
+   cppenum <- paste0("enum ", toupper(substring(className, 1, 1)), 
+                      substring(className, 2, nchar(className) - 1),
+                     "\n{\n")
+   
    for (pref in names(prefs)) {
       # Convert the preference name from camel case to snake case
       camel <- gsub("_(.)", "\\U\\1\\E", pref, perl = TRUE)
@@ -178,3 +182,9 @@ result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
 javaTemplate <- readLines("prefs/UserStateAccessor.java")
 writeLines(gsub("%STATE%", result$java, javaTemplate), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
+template <- readLines("prefs/UserStateValues.hpp")
+writeLines(gsub("%STATE%", result$hpp, template), 
+           con = "../../cpp/session/modules/prefs/UserStateValues.hpp")
+template <- readLines("prefs/UserStateValues.cpp")
+writeLines(gsub("%STATE%", result$cpp, template), 
+           con = "../../cpp/session/modules/prefs/UserStateValues.cpp")

@@ -205,6 +205,7 @@ set (SESSION_SOURCE_FILES
    modules/prefs/UserState.cpp
    modules/prefs/UserStateDefaultLayer.cpp
    modules/prefs/UserStateLayer.cpp
+   modules/prefs/UserStateValues.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
