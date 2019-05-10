@@ -488,11 +488,9 @@ public class EditingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // editing prefs
-      EditingPrefs editingPrefs = prefs.getEditingPrefs();
-      lineEndings_.setIntValue(editingPrefs.getLineEndings());
+      lineEndings_.setValue(prefs.lineEndingConversion().getValue());
       consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
@@ -504,12 +502,12 @@ public class EditingPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public boolean onApply(RPrefs prefs)
+   public boolean onApply(UserPrefs prefs)
    {
       boolean reload = super.onApply(prefs);
       
       // editing prefs
-      prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
+      prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
       prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);

@@ -111,7 +111,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    };
    
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs rPrefs)
    {
       SpellingPrefsContext context = rPrefs.getSpellingPrefsContext();
       languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
@@ -125,7 +125,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
                                        languageWidget_.getSelectedLanguage());

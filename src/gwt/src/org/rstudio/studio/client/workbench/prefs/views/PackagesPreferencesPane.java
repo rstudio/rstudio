@@ -253,11 +253,8 @@ public class PackagesPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // packages prefs
-      PackagesPrefs packagesPrefs = prefs.getPackagesPrefs();
-      
       cranMirrorTextBox_.setEnabled(true);
       if (!packagesPrefs.getCRANMirror().isEmpty())
       {
@@ -283,7 +280,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       }
       
       useInternet2_.setEnabled(true);
-      useInternet2_.setValue(packagesPrefs.getUseInternet2());
+      useInternet2_.setValue(prefs.useInternet2().getValue());
       useInternet2_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -297,22 +294,22 @@ public class PackagesPreferencesPane extends PreferencesPane
       });
       
       cleanupAfterCheckSuccess_.setEnabled(true);
-      cleanupAfterCheckSuccess_.setValue(packagesPrefs.getCleanupAfterCheckSuccess());
+      cleanupAfterCheckSuccess_.setValue(prefs.cleanupAfterRCmdCheck().getValue());
       
       viewDirAfterCheckFailure_.setEnabled(true);
-      viewDirAfterCheckFailure_.setValue(packagesPrefs.getViewDirAfterCheckFailure());
+      viewDirAfterCheckFailure_.setValue(prefs.viewDirAfterRCmdCheck().getValue());
       
       hideObjectFiles_.setEnabled(true);
-      hideObjectFiles_.setValue(packagesPrefs.getHideObjectFiles());
+      hideObjectFiles_.setValue(prefs.hideObjectFiles().getValue());
       
       useDevtools_.setEnabled(true);
-      useDevtools_.setValue(packagesPrefs.getUseDevtools());
+      useDevtools_.setValue(prefs.useDevtools().getValue());
       
       useSecurePackageDownload_.setEnabled(true);
-      useSecurePackageDownload_.setValue(packagesPrefs.getUseSecureDownload());
+      useSecurePackageDownload_.setValue(prefs.useSecureDownload().getValue());
       
       useNewlineInMakefiles_.setEnabled(true);
-      useNewlineInMakefiles_.setValue(packagesPrefs.getUseNewlineInMakefiles());
+      useNewlineInMakefiles_.setValue(prefs.useNewlinesInMakefiles().getValue());
 
       server_.getCRANActives(
          new SimpleRequestCallback<JsArray<CRANMirror>>() {

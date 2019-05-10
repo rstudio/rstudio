@@ -162,6 +162,7 @@ public class UserPrefsAccessor extends Prefs
       return string("line_ending_conversion", "native");
    }
 
+   public final static String LINE_ENDING_CONVERSION_DEFAULT = "default";
    public final static String LINE_ENDING_CONVERSION_WINDOWS = "windows";
    public final static String LINE_ENDING_CONVERSION_POSIX = "posix";
    public final static String LINE_ENDING_CONVERSION_NATIVE = "native";

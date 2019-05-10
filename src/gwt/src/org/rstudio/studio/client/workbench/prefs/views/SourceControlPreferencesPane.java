@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SourceControlPreferencesPane extends PreferencesPane
 {
@@ -146,22 +147,19 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // source control prefs
-      SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
-
       chkVcsEnabled_.setEnabled(true);
       gitExePathChooser_.setEnabled(true);
       svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
 
-      chkVcsEnabled_.setValue(prefs.getVcsEnabled());
-      gitExePathChooser_.setText(prefs.getGitExePath());
-      svnExePathChooser_.setText(prefs.getSvnExePath());
-      terminalPathChooser_.setText(prefs.getTerminalPath());
+      chkVcsEnabled_.setValue(prefs.vcsEnabled().getValue());
+      gitExePathChooser_.setText(prefs.gitExePath().getValue());
+      svnExePathChooser_.setText(prefs.svnExePath().getValue());
+      terminalPathChooser_.setText(prefs.terminalPath().getValue());
       
-      sshKeyWidget_.setRsaSshKeyPath(prefs.getRsaKeyPath(),
+      sshKeyWidget_.setRsaSshKeyPath(prefs.rsaKeyPath().getValue(),
                                      prefs.getHaveRsaKey());
       sshKeyWidget_.setProgressIndicator(getProgressIndicator());
 

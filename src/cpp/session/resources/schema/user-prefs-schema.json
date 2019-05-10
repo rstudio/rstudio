@@ -77,7 +77,7 @@
         },
         "line_ending_conversion": {
             "type": "string",
-            "enum": ["windows", "posix", "native", "passthrough"],
+            "enum": ["default", "windows", "posix", "native", "passthrough"],
             "default": "native",
             "description": "The line ending format to use when saving files."
         },

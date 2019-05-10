@@ -31,7 +31,7 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
-public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
+public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,

@@ -168,7 +168,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
       docOutlineDisplay_.setValue(prefs_.docOutlineShow().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
@@ -178,7 +178,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean requiresRestart = super.onApply(rPrefs);
       

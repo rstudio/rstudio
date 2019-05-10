@@ -350,11 +350,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // general prefs
-      final GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
-      
       boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
       showServerHomePage_.setEnabled(!isLauncherSession);
       
@@ -364,44 +361,41 @@ public class GeneralPreferencesPane extends PreferencesPane
       dirChooser_.setEnabled(true);
       
       if (!isLauncherSession)
-         showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
+         showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
       else
-    	  showServerHomePage_.setValue("always");
+         showServerHomePage_.setValue(UserPrefs.SHOW_USER_HOME_PAGE_ALWAYS);
       
-      reuseSessionsForProjectLinks_.setValue(generalPrefs.getReuseSessionsForProjectLinks());
+      reuseSessionsForProjectLinks_.setValue(prefs.reuseSessionsForProjectLinks().getValue());
       
       int saveWorkspaceIndex;
-      switch (generalPrefs.getSaveAction())
+      switch (prefs.saveWorkspace().getValue())
       {
-         case SaveAction.NOSAVE: 
+         case UserPrefs.SAVE_WORKSPACE_NEVER: 
             saveWorkspaceIndex = 1; 
             break;
-         case SaveAction.SAVE: 
+         case UserPrefs.SAVE_WORKSPACE_ALWAYS: 
             saveWorkspaceIndex = 0; 
             break; 
-         case SaveAction.SAVEASK:
+         case UserPrefs.SAVE_WORKSPACE_ASK:
          default: 
             saveWorkspaceIndex = 2; 
             break; 
       }
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
-      loadRData_.setValue(generalPrefs.getLoadRData());
-      dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
+      loadRData_.setValue(prefs.loadWorkspace().getValue());
+      dirChooser_.setText(prefs.initialWorkingDirectory().getValue());
         
-      // history prefs
-      HistoryPrefs historyPrefs = rPrefs.getHistoryPrefs();
-      
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);
       
-      alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
-      removeHistoryDuplicates_.setValue(historyPrefs.getRemoveDuplicates());
+      alwaysSaveHistory_.setValue(prefs.alwaysSaveHistory().getValue());
+      removeHistoryDuplicates_.setValue(prefs.removeHistoryDuplicates().getValue());
       
-      rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
+      rProfileOnResume_.setValue(prefs.runRprofileOnResume().getValue());
       rProfileOnResume_.setEnabled(true);
       
-      showLastDotValue_.setValue(generalPrefs.getShowLastDotValue());
+      showLastDotValue_.setValue(prefs.showLastDotValue().getValue());
       showLastDotValue_.setEnabled(true);
       
       if (rServerRVersion_ != null)
@@ -416,9 +410,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       enableCrashReporting_.setValue(generalPrefs.getEnableCrashReporting());
      
       // projects prefs
-      ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
       restoreLastProject_.setEnabled(true);
-      restoreLastProject_.setValue(projectsPrefs.getRestoreLastProject());
+      restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
    }
    
 

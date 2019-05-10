@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class LineEndingsSelectWidget extends SelectWidget
 {
@@ -54,11 +55,11 @@ public class LineEndingsSelectWidget extends SelectWidget
    {
       ArrayList<String> values = new ArrayList<String>();
       if (includeDefault)
-         values.add("-1");
-      values.add(Integer.toString(EditingPrefs.LINEENDINGS_PASSTHROUGH));
-      values.add(Integer.toString(EditingPrefs.LINEENDINGS_NATIVE));
-      values.add(Integer.toString(EditingPrefs.LINEENDINGS_POSIX));
-      values.add(Integer.toString(EditingPrefs.LINEENDINGS_WINDOWS));
+         values.add(UserPrefs.LINE_ENDING_CONVERSION_DEFAULT);
+      values.add(UserPrefs.LINE_ENDING_CONVERSION_PASSTHROUGH);
+      values.add(UserPrefs.LINE_ENDING_CONVERSION_NATIVE);
+      values.add(UserPrefs.LINE_ENDING_CONVERSION_POSIX);
+      values.add(UserPrefs.LINE_ENDING_CONVERSION_WINDOWS);
       
       return values.toArray(new String[0]);
    }

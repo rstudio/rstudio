@@ -255,12 +255,12 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs rPrefs)
    {
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean reload = super.onApply(rPrefs);
       

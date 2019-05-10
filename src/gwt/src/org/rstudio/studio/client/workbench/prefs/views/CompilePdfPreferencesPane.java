@@ -128,11 +128,10 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      CompilePdfPrefs compilePdfPrefs = prefs.getCompilePdfPrefs();
-      chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
-      chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
+      chkCleanTexi2DviOutput_.setValue(prefs.cleanTexi2dviOutput().getValue());
+      chkEnableShellEscape_.setValue(prefs.latexShellEscape().getValue());
       
       pdfPreview_.addChoice("(No Preview)", UserPrefs.PDF_PREVIEWER_NONE);
       
@@ -153,7 +152,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean requiresRestart = super.onApply(rPrefs);
       
@@ -163,12 +162,13 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                     defaultLatexProgram_.getValue());
       
       prefs_.pdfPreviewer().setGlobalValue(pdfPreview_.getValue());
-         
-      CompilePdfPrefs prefs = CompilePdfPrefs.create(
-                                       chkCleanTexi2DviOutput_.getValue(),
-                                       chkEnableShellEscape_.getValue());
-      rPrefs.setCompilePdfPrefs(prefs);
       
+      prefs_.cleanTexi2dviOutput().setGlobalValue(
+            chkCleanTexi2DviOutput_.getValue());
+      
+      prefs_.latexShellEscape().setGlobalValue(
+            chkEnableShellEscape_.getValue());
+         
       return requiresRestart;
    }
 

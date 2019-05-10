@@ -291,12 +291,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
 

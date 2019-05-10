@@ -283,7 +283,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
      

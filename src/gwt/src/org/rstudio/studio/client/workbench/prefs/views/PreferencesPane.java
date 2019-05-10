@@ -23,13 +23,14 @@ import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
 
-public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
+public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPrefs>
 { 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
