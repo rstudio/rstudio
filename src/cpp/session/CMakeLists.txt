@@ -198,6 +198,7 @@ set (SESSION_SOURCE_FILES
    modules/prefs/Preferences.cpp
    modules/prefs/UserPrefValues.cpp
    modules/prefs/UserPrefs.cpp
+   modules/prefs/UserPrefsComputedLayer.cpp
    modules/prefs/UserPrefsDefaultLayer.cpp
    modules/prefs/UserPrefsLayer.cpp
    modules/prefs/UserPrefsProjectLayer.cpp

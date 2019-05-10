@@ -50,8 +50,9 @@ public class UserPrefsAccessor extends Prefs
       return LAYER_PROJECT;
    }
 
-   public static final int LAYER_DEFAULT = 0;
-   public static final int LAYER_SYSTEM  = 1;
-   public static final int LAYER_USER    = 2;
-   public static final int LAYER_PROJECT = 3;
+   public static final int LAYER_DEFAULT  = 0;
+   public static final int LAYER_COMPUTED = 1;
+   public static final int LAYER_SYSTEM   = 2;
+   public static final int LAYER_USER     = 3;
+   public static final int LAYER_PROJECT  = 4;
 }

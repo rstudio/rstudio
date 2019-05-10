@@ -772,6 +772,87 @@
             "type": "string",
             "default": "",
             "description": "The root document to use when compiling PDF documents."
+        },
+        "show_user_home_page": {
+            "type": "string",
+            "enum": ["always", "never", "sessions"],
+            "default": "sessions",
+            "description": "When to show the server home page in RStudio Server Pro."
+        },
+        "reuse_sessions_for_project_links": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to reuse sessions when opening projects in RStudio Server Pro."
+        },
+        "vcs_enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enable RStudio's version control system interface."
+        },
+        "git_exe_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the Git executable to use."
+        },
+        "svn_exe_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the Subversion executable to use."
+        },
+        "terminal_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the terminal executable to use."
+        },
+        "rsa_key_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the RSA key file to use."
+        },
+        "use_devtools": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use the devtools R package."
+        },
+        "use_internet2": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use Internet2 for networking on R for Windows."
+        },
+        "use_secure_download": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use secure downloads when fetching R packages."
+        },
+        "cleanup_after_r_cmd_check": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to clean up temporary files after running R CMD CHECK."
+        },
+        "view_dir_after_r_cmd_check": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to view the directory after running R CMD CHECK."
+        },
+        "hide_object_files": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to hide object files in the Files pane."
+        },
+        "restore_last_project": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to restore the last project when starting RStudio."
+        },
+        "clean_texi2dvi_output": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to clean output after running Texi2Dvi."
+        },
+        "latex_shell_escape": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable shell escaping with LaTeX documents."
         }
     }
 }

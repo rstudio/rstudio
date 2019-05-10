@@ -27,153 +27,954 @@ namespace session {
 namespace modules {
 namespace prefs {
 
+#define kRunRprofileOnResume "run_rprofile_on_resume"
+#define kSaveWorkspace "save_workspace"
+#define kLoadWorkspace "load_workspace"
+#define kInitialWorkingDirectory "initial_working_directory"
+#define kCranMirrorName "cran_mirror_name"
+#define kCranMirrorHost "cran_mirror_host"
+#define kCranMirrorUrl "cran_mirror_url"
+#define kCranMirrorRepos "cran_mirror_repos"
+#define kCranMirrorCountry "cran_mirror_country"
+#define kBioconductorMirrorName "bioconductor_mirror_name"
+#define kBioconductorMirrorUrl "bioconductor_mirror_url"
+#define kAlwaysSaveHistory "always_save_history"
+#define kRemoveHistoryDuplicates "remove_history_duplicates"
+#define kShowLastDotValue "show_last_dot_value"
+#define kLineEndingConversion "line_ending_conversion"
+#define kUseNewlinesInMakefiles "use_newlines_in_makefiles"
+#define kWindowsTerminalShell "windows_terminal_shell"
+#define kPosixTerminalShell "posix_terminal_shell"
+#define kCustomShellCommand "custom_shell_command"
+#define kCustomShellOptions "custom_shell_options"
+#define kShowLineNumbers "show_line_numbers"
+#define kHighlightSelectedWord "highlight_selected_word"
+#define kHighlightSelectedLine "highlight_selected_line"
+#define kPanes "panes"
+#define kUseSpacesForTab "use_spaces_for_tab"
+#define kNumSpacesForTab "num_spaces_for_tab"
+#define kAutoDetectIndentation "auto_detect_indentation"
+#define kShowMargin "show_margin"
+#define kBlinkingCursor "blinking_cursor"
+#define kMarginColumn "margin_column"
+#define kShowInvisibles "show_invisibles"
+#define kShowIndentGuides "show_indent_guides"
+#define kContinueCommentsOnNewline "continue_comments_on_newline"
+#define kEditorKeybindings "editor_keybindings"
+#define kInsertMatching "insert_matching"
+#define kInsertSpacesAroundEquals "insert_spaces_around_equals"
+#define kInsertParensAfterFunctionCompletion "insert_parens_after_function_completion"
+#define kTabMultilineCompletion "tab_multiline_completion"
+#define kShowHelpTooltipOnIdle "show_help_tooltip_on_idle"
+#define kSurroundSelection "surround_selection"
+#define kEnableSnippets "enable_snippets"
+#define kCodeCompletion "code_completion"
+#define kCodeCompletionOther "code_completion_other"
+#define kConsoleCodeCompletion "console_code_completion"
+#define kCodeCompletionDelay "code_completion_delay"
+#define kCodeCompletionCharacters "code_completion_characters"
+#define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
+#define kShowDiagnosticsR "show_diagnostics_r"
+#define kShowDiagnosticsCpp "show_diagnostics_cpp"
+#define kShowDiagnosticsOther "show_diagnostics_other"
+#define kStyleDiagnostics "style_diagnostics"
+#define kDiagnosticsOnSave "diagnostics_on_save"
+#define kBackgroundDiagnostics "background_diagnostics"
+#define kBackgroundDiagnosticsDelayMs "background_diagnostics_delay_ms"
+#define kDiagnosticsInRFunctionCalls "diagnostics_in_r_function_calls"
+#define kCheckArgumentsToRFunctionCalls "check_arguments_to_r_function_calls"
+#define kCheckUnexpectedAssignmentInFunctionCall "check_unexpected_assignment_in_function_call"
+#define kWarnIfNoSuchVariableInScope "warn_if_no_such_variable_in_scope"
+#define kWarnVariableDefinedButNotUsed "warn_variable_defined_but_not_used"
+#define kAutoDiscoverPackageDependencies "auto_discover_package_dependencies"
+#define kAutoAppendNewline "auto_append_newline"
+#define kStripTrailingWhitespace "strip_trailing_whitespace"
+#define kRestoreSourceDocumentCursorPosition "restore_source_document_cursor_position"
+#define kReindentOnPaste "reindent_on_paste"
+#define kVerticallyAlignArgumentsIndent "vertically_align_arguments_indent"
+#define kSoftWrapRFiles "soft_wrap_r_files"
+#define kFocusConsoleAfterExec "focus_console_after_exec"
+#define kFoldStyle "fold_style"
+#define kSaveBeforeSourcing "save_before_sourcing"
+#define kSyntaxColorConsole "syntax_color_console"
+#define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kConsoleLineLengthLimit "console_line_length_limit"
+#define kAnsiConsoleMode "ansi_console_mode"
+#define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
+#define kHighlightCodeChunks "highlight_code_chunks"
+#define kSaveFilesBeforeBuild "save_files_before_build"
+#define kFontSizePoints "font_size_points"
+#define kEditorTheme "editor_theme"
+#define kDefaultEncoding "default_encoding"
+#define kToolbarVisible "toolbar_visible"
+#define kDefaultProjectLocation "default_project_location"
+#define kSourceWithEcho "source_with_echo"
+#define kNewProjectGitInit "new_project_git_init"
+#define kDefaultSweaveEngine "default_sweave_engine"
+#define kDefaultLatexProgram "default_latex_program"
+#define kUseRoxygen "use_roxygen"
+#define kUseDataimport "use_dataimport"
+#define kPdfPreviewer "pdf_previewer"
+#define kAlwaysEnableRnwConcordance "always_enable_rnw_concordance"
+#define kInsertNumberedLatexSections "insert_numbered_latex_sections"
+#define kSpellingDictionaryLanguage "spelling_dictionary_language"
+#define kSpellingCustomDictionaries "spelling_custom_dictionaries"
+#define kDocumentLoadLintDelay "document_load_lint_delay"
+#define kIgnoreUppercaseWords "ignore_uppercase_words"
+#define kIgnoreWordsWithNumbers "ignore_words_with_numbers"
+#define kRealTimeSpellchecking "real_time_spellchecking"
+#define kNavigateToBuildError "navigate_to_build_error"
+#define kPackagesPaneEnabled "packages_pane_enabled"
+#define kUseRcppTemplate "use_rcpp_template"
+#define kRestoreSourceDocuments "restore_source_documents"
+#define kHandleErrorsInUserCodeOnly "handle_errors_in_user_code_only"
+#define kAutoExpandErrorTracebacks "auto_expand_error_tracebacks"
+#define kCheckForUpdates "check_for_updates"
+#define kShowInternalFunctions "show_internal_functions"
+#define kShinyViewerType "shiny_viewer_type"
+#define kPlumberViewerType "plumber_viewer_type"
+#define kDocumentAuthor "document_author"
+#define kRmdPreferredTemplatePath "rmd_preferred_template_path"
+#define kRmdViewerType "rmd_viewer_type"
+#define kShowPublishDiagnostics "show_publish_diagnostics"
+#define kPublishCheckCertificates "publish_check_certificates"
+#define kUsePublishCaBundle "use_publish_ca_bundle"
+#define kPublishCaBundle "publish_ca_bundle"
+#define kRmdChunkOutputInline "rmd_chunk_output_inline"
+#define kShowDocOutlineRmd "show_doc_outline_rmd"
+#define kAutoRunSetupChunk "auto_run_setup_chunk"
+#define kHideConsoleOnChunkExecute "hide_console_on_chunk_execute"
+#define kExecutionBehavior "execution_behavior"
+#define kShowTerminalTab "show_terminal_tab"
+#define kTerminalLocalEcho "terminal_local_echo"
+#define kTerminalWebsockets "terminal_websockets"
+#define kTerminalAutoClose "terminal_auto_close"
+#define kTerminalTrackEnvironment "terminal_track_environment"
+#define kShowRmdRenderCommand "show_rmd_render_command"
+#define kEnableTextDrag "enable_text_drag"
+#define kShowHiddenFiles "show_hidden_files"
+#define kJobsTabVisibility "jobs_tab_visibility"
+#define kShowLauncherJobsTab "show_launcher_jobs_tab"
+#define kLauncherJobsSort "launcher_jobs_sort"
+#define kBusyDetection "busy_detection"
+#define kBusyWhitelist "busy_whitelist"
+#define kKnitWorkingDir "knit_working_dir"
+#define kDocOutlineShow "doc_outline_show"
+#define kLatexPreviewOnCursorIdle "latex_preview_on_cursor_idle"
+#define kWrapTabNavigation "wrap_tab_navigation"
+#define kGlobalTheme "global_theme"
+#define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
+#define kConsoleDoubleClickSelect "console_double_click_select"
+#define kNewProjGitInit "new_proj_git_init"
+#define kRootDocument "root_document"
+#define kShowUserHomePage "show_user_home_page"
+#define kReuseSessionsForProjectLinks "reuse_sessions_for_project_links"
+#define kVcsEnabled "vcs_enabled"
+#define kGitExePath "git_exe_path"
+#define kSvnExePath "svn_exe_path"
+#define kTerminalPath "terminal_path"
+#define kRsaKeyPath "rsa_key_path"
+#define kUseDevtools "use_devtools"
+#define kUseInternet2 "use_internet2"
+#define kUseSecureDownload "use_secure_download"
+#define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
+#define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
+#define kHideObjectFiles "hide_object_files"
+#define kRestoreLastProject "restore_last_project"
+#define kCleanTexi2dviOutput "clean_texi2dvi_output"
+#define kLatexShellEscape "latex_shell_escape"
+
 class UserPrefValues: public Preferences
 {
-public:
+   /**
+    * Whether to run .Rprofile again after resuming a suspended R session.
+    */
    bool runRprofileOnResume();
+
+   /**
+    * Whether to save the workspace after the R session ends.
+    */
    std::string saveWorkspace();
+
+   /**
+    * Whether to load the workspace when the R session begins.
+    */
    bool loadWorkspace();
+
+   /**
+    * The initial working directory for new R sessions.
+    */
    std::string initialWorkingDirectory();
+
+   /**
+    * The name of the default CRAN mirror.
+    */
    std::string cranMirrorName();
+
+   /**
+    * The host of the default CRAN mirror.
+    */
    std::string cranMirrorHost();
+
+   /**
+    * The URL of the default CRAN mirror.
+    */
    std::string cranMirrorUrl();
+
+   /**
+    * The secondary CRAN mirror.
+    */
    std::string cranMirrorRepos();
+
+   /**
+    * The country of the default CRAN mirror.
+    */
    std::string cranMirrorCountry();
+
+   /**
+    * The name of the default Bioconductor mirror.
+    */
    std::string bioconductorMirrorName();
+
+   /**
+    * The URL of the default Bioconductor mirror.
+    */
    std::string bioconductorMirrorUrl();
+
+   /**
+    * Whether to always save the R console history.
+    */
    bool alwaysSaveHistory();
+
+   /**
+    * Whether to remove duplicate entries from the R console history.
+    */
    bool removeHistoryDuplicates();
+
+   /**
+    * Show the result of the last expression (.Last.value) in the Environment pane.
+    */
    bool showLastDotValue();
+
+   /**
+    * The line ending format to use when saving files.
+    */
    std::string lineEndingConversion();
+
+   /**
+    * Whether to use newlines when saving Makefiles.
+    */
    bool useNewlinesInMakefiles();
+
+   /**
+    * The terminal shell to use on Windows.
+    */
    std::string windowsTerminalShell();
+
+   /**
+    * The terminal shell to use on POSIX operating systems (MacOS and Linux).
+    */
    std::string posixTerminalShell();
+
+   /**
+    * The fully qualified path to the custom shell command to use in the Terminal tab.
+    */
    std::string customShellCommand();
+
+   /**
+    * The command-line options to pass to the custom shell command.
+    */
    std::string customShellOptions();
+
+   /**
+    * Show line numbers in RStudio's code editor.
+    */
    bool showLineNumbers();
+
+   /**
+    * Highlight the selected word in RStudio's code editor.
+    */
    bool highlightSelectedWord();
+
+   /**
+    * Highlight the selected line in RStudio's code editor.
+    */
    bool highlightSelectedLine();
+
+   /**
+    * Layout of panes in the RStudio workbench.
+    */
    bool panes();
+
+   /**
+    * Whether to insert spaces when pressing the Tab key.
+    */
    bool useSpacesForTab();
+
+   /**
+    * The number of spaces to insert when pressing the Tab key.
+    */
    int numSpacesForTab();
+
+   /**
+    * Whether to automatically detect indentation settings from file contents.
+    */
    bool autoDetectIndentation();
+
+   /**
+    * Whether to show the margin guide in the RStudio code editor.
+    */
    bool showMargin();
+
+   /**
+    * Whether to flash the cursor off and on.
+    */
    bool blinkingCursor();
+
+   /**
+    * The number of columns of text after which the margin is shown.
+    */
    int marginColumn();
+
+   /**
+    * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
+    */
    bool showInvisibles();
+
+   /**
+    * Whether to show indentation guides in the RStudio code editor.
+    */
    bool showIndentGuides();
+
+   /**
+    * Whether continue comments (by inserting the comment character) after adding a new line.
+    */
    bool continueCommentsOnNewline();
+
+   /**
+    * The keybindings to use in the RStudio code editor.
+    */
    std::string editorKeybindings();
+
+   /**
+    * Whether to insert matching pairs, such as () and [], when the first is typed.
+    */
    bool insertMatching();
+
+   /**
+    * Whether to insert spaces around the equals sign in R code.
+    */
    bool insertSpacesAroundEquals();
+
+   /**
+    * Whether to insert parentheses after function completions.
+    */
    bool insertParensAfterFunctionCompletion();
+
+   /**
+    * Whether to attempt completion of multiple-line statements when pressing Tab.
+    */
    bool tabMultilineCompletion();
+
+   /**
+    * Whether to show help tooltips for functions when the cursor has not been recently moved.
+    */
    bool showHelpTooltipOnIdle();
+
+   /**
+    * Which kinds of delimiters can be used to surround the current selection.
+    */
    std::string surroundSelection();
+
+   /**
+    * Whether to enable code snippets in the RStudio code editor.
+    */
    bool enableSnippets();
+
+   /**
+    * When to use auto-completion for R code in the RStudio code editor.
+    */
    std::string codeCompletion();
+
+   /**
+    * When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.
+    */
    std::string codeCompletionOther();
+
+   /**
+    * Whether to always use code completion in the R console.
+    */
    bool consoleCodeCompletion();
+
+   /**
+    * The number of milliseconds to wait before offering code suggestions.
+    */
    int codeCompletionDelay();
+
+   /**
+    * The number of characters in a symbol that can be entered before completions are offered.
+    */
    int codeCompletionCharacters();
+
+   /**
+    * Whether to show function signature tooltips during autocompletion.
+    */
    bool showFunctionSignatureTooltips();
+
+   /**
+    * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
+    */
    bool showDiagnosticsR();
+
+   /**
+    * Whether to show diagnostic messages for C++ code as you type.
+    */
    bool showDiagnosticsCpp();
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R or C++).
+    */
    bool showDiagnosticsOther();
+
+   /**
+    * Whether to show style diagnostics (suggestions for improving R code style)
+    */
    bool styleDiagnostics();
+
+   /**
+    * Whether to check code for problems after saving it.
+    */
    bool diagnosticsOnSave();
+
+   /**
+    * Whether to run code diagnostics in the background, as you type.
+    */
    bool backgroundDiagnostics();
+
+   /**
+    * The number of milliseconds to delay before running code diagnostics in the background.
+    */
    int backgroundDiagnosticsDelayMs();
+
+   /**
+    * Whether to run diagnostics in R function calls.
+    */
    bool diagnosticsInRFunctionCalls();
+
+   /**
+    * Whether to check arguments to R function calls.
+    */
    bool checkArgumentsToRFunctionCalls();
+
+   /**
+    * Whether to check for unexpected variable assignments inside R function calls.
+    */
    bool checkUnexpectedAssignmentInFunctionCall();
+
+   /**
+    * Whether to generate a warning if a variable is used without being defined in the current scope.
+    */
    bool warnIfNoSuchVariableInScope();
+
+   /**
+    * Whether to generate a warning if a variable is defined without being used in the current scope
+    */
    bool warnVariableDefinedButNotUsed();
+
+   /**
+    * Whether to automatically discover and offer to install missing R package dependenices.
+    */
    bool autoDiscoverPackageDependencies();
+
+   /**
+    * Whether to ensure that source files end with a newline character.
+    */
    bool autoAppendNewline();
+
+   /**
+    * Whether to strip trailing whitespace from each line when saving.
+    */
    bool stripTrailingWhitespace();
+
+   /**
+    * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+    */
    bool restoreSourceDocumentCursorPosition();
+
+   /**
+    * Whether to automatically re-indent code when it's pasted into RStudio.
+    */
    bool reindentOnPaste();
+
+   /**
+    * Whether to vertically align arguments to R function calls during automatic indentation.
+    */
    bool verticallyAlignArgumentsIndent();
+
+   /**
+    * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
+    */
    bool softWrapRFiles();
+
+   /**
+    * Whether to focus the R console after executing an R command from a script.
+    */
    bool focusConsoleAfterExec();
+
+   /**
+    * The style of folding to use.
+    */
    std::string foldStyle();
+
+   /**
+    * Whether to automatically save scripts before executing them.
+    */
    bool saveBeforeSourcing();
+
+   /**
+    * Whether to use syntax highlighting in the R console.
+    */
    bool syntaxColorConsole();
+
+   /**
+    * Whether to allow scrolling past the end of a file.
+    */
    bool scrollPastEndOfDocument();
+
+   /**
+    * Whether to highlight R function calls in the code editor.
+    */
    bool highlightRFunctionCalls();
+
+   /**
+    * The maximum number of characters to display in a single line in the R console.
+    */
    int consoleLineLengthLimit();
+
+   /**
+    * How to treat ANSI escape codes in the console.
+    */
    std::string ansiConsoleMode();
+
+   /**
+    * Whether to show a toolbar on code chunks in R Markdown documents.
+    */
    bool showInlineToolbarForRCodeChunks();
+
+   /**
+    * Whether to highlight code chunks in R Markdown documents with a different background color.
+    */
    bool highlightCodeChunks();
+
+   /**
+    * Whether to save all open, unsaved files before building the project.
+    */
    bool saveFilesBeforeBuild();
+
+   /**
+    * The default editor font size, in points.
+    */
    double fontSizePoints();
+
+   /**
+    * The name of the color theme to apply to the text editor in RStudio.
+    */
    std::string editorTheme();
+
+   /**
+    * The default character encoding to use when saving files.
+    */
    std::string defaultEncoding();
+
+   /**
+    * Whether to show the toolbar at the top of the RStudio workbench.
+    */
    bool toolbarVisible();
+
+   /**
+    * The directory path under which to place new projects by default.
+    */
    std::string defaultProjectLocation();
+
+   /**
+    * Whether to echo R code when sourcing it.
+    */
    bool sourceWithEcho();
+
+   /**
+    * Whether to initialize new projects with a Git repo by default.
+    */
    bool newProjectGitInit();
+
+   /**
+    * The default engine to use when processing Sweave documents.
+    */
    std::string defaultSweaveEngine();
+
+   /**
+    * The default program to use when processing LaTeX documents.
+    */
    std::string defaultLatexProgram();
+
+   /**
+    * Whether to use Roxygen for documentation.
+    */
    bool useRoxygen();
+
+   /**
+    * Whether to use RStudio's data import feature.
+    */
    bool useDataimport();
+
+   /**
+    * The program to use to preview PDF files after generation.
+    */
    std::string pdfPreviewer();
+
+   /**
+    * Whether to always enable the concordance for RNW files.
+    */
    bool alwaysEnableRnwConcordance();
+
+   /**
+    * Whether to insert numbered sections in LaTeX.
+    */
    bool insertNumberedLatexSections();
+
+   /**
+    * The language of the spelling dictionary to use for spell checking.
+    */
    std::string spellingDictionaryLanguage();
+
+   /**
+    * The list of custom dictionaries to use when spell checking.
+    */
    core::json::Object spellingCustomDictionaries();
+
+   /**
+    * The number of milliseconds to wait before linting a document after it is loaded.
+    */
    int documentLoadLintDelay();
+
+   /**
+    * Whether to ignore words in uppercase when spell checking.
+    */
    bool ignoreUppercaseWords();
+
+   /**
+    * Whether to ignore words with numbers in them when spell checking.
+    */
    bool ignoreWordsWithNumbers();
+
+   /**
+    * Whether to enable real-time spellchecking by default.
+    */
    bool realTimeSpellchecking();
+
+   /**
+    * Whether to navigate to build errors.
+    */
    bool navigateToBuildError();
+
+   /**
+    * Whether to enable RStudio's Packages pane.
+    */
    bool packagesPaneEnabled();
+
+   /**
+    * Whether to use RCPP templates.
+    */
    bool useRcppTemplate();
+
+   /**
+    * Whether to restore the last opened source documents when RStudio starts up.
+    */
    bool restoreSourceDocuments();
+
+   /**
+    * Whether to handle errors only when user code is on the stack.
+    */
    bool handleErrorsInUserCodeOnly();
+
+   /**
+    * Whether to automatically expand tracebacks when an error occurs.
+    */
    bool autoExpandErrorTracebacks();
+
+   /**
+    * Whether to check for new versions of RStudio when RStudio starts.
+    */
    bool checkForUpdates();
+
+   /**
+    * Whether to show functions without source references in the Traceback pane while debugging.
+    */
    bool showInternalFunctions();
+
+   /**
+    * Where to display Shiny applications when they are run.
+    */
    std::string shinyViewerType();
+
+   /**
+    * Where to display Shiny applications when they are run.
+    */
    std::string plumberViewerType();
+
+   /**
+    * The default name to use as the document author when creating new documents.
+    */
    std::string documentAuthor();
+
+   /**
+    * The path to the preferred R Markdown template.
+    */
    std::string rmdPreferredTemplatePath();
+
+   /**
+    * Where to display R Markdown documents when they have completed rendering.
+    */
    std::string rmdViewerType();
+
+   /**
+    * Whether to show verbose diagnostic information when publishing content.
+    */
    bool showPublishDiagnostics();
+
+   /**
+    * Whether to check remote server SSL certificates when publishing content.
+    */
    bool publishCheckCertificates();
+
+   /**
+    * Whether to use a custom certificate authority (CA) bundle when publishing content.
+    */
    bool usePublishCaBundle();
+
+   /**
+    * The path to the custom certificate authority (CA) bundle to use when publishing content.
+    */
    std::string publishCaBundle();
+
+   /**
+    * Whether to show chunk output inline for ordinary R Markdown documents.
+    */
    bool rmdChunkOutputInline();
+
+   /**
+    * Whether to show the document outline by default when opening R Markdown documents.
+    */
    bool showDocOutlineRmd();
+
+   /**
+    * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
+    */
    bool autoRunSetupChunk();
+
+   /**
+    * Whether to hide the R console when executing inline R Markdown chunks.
+    */
    bool hideConsoleOnChunkExecute();
+
+   /**
+    * The unit of R code to execute when the Execute command is invoked.
+    */
    std::string executionBehavior();
+
+   /**
+    * Whether to show the Terminal tab.
+    */
    bool showTerminalTab();
+
+   /**
+    * Whether to use local echo in the Terminal.
+    */
    bool terminalLocalEcho();
+
+   /**
+    * Whether to use websockets to communicate with the shell in the Terminal tab.
+    */
    bool terminalWebsockets();
+
+   /**
+    * Whether to automatically close the Terminal tab.
+    */
    bool terminalAutoClose();
+
+   /**
+    * Whether to track and save changes to system environment variables in the Terminal.
+    */
    bool terminalTrackEnvironment();
+
+   /**
+    * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
+    */
    bool showRmdRenderCommand();
+
+   /**
+    * Whether to enable moving text on the editing surface by clicking and dragging it.
+    */
    bool enableTextDrag();
+
+   /**
+    * Whether to show hidden files in the Files pane.
+    */
    bool showHiddenFiles();
+
+   /**
+    * The visibility of the Jobs tab.
+    */
    std::string jobsTabVisibility();
+
+   /**
+    * Whether to show the Launcher jobs tab in RStudio Pro.
+    */
    bool showLauncherJobsTab();
+
+   /**
+    * How to sort jobs in the Launcher tab in RStudio Pro.
+    */
    std::string launcherJobsSort();
+
+   /**
+    * How to detect busy status in the Terminal.
+    */
    std::string busyDetection();
+
+   /**
+    * A whitelist of apps that should not be considered busy in the Terminal.
+    */
    core::json::Object busyWhitelist();
+
+   /**
+    * The working directory to use when knitting R Markdown documents.
+    */
    std::string knitWorkingDir();
+
+   /**
+    * Which objects to show in the document outline pane.
+    */
    std::string docOutlineShow();
+
+   /**
+    * When to preview LaTeX mathematical equations when cursor has not moved recently.
+    */
    std::string latexPreviewOnCursorIdle();
+
+   /**
+    * Whether to wrap around when going to the previous or next editor tab.
+    */
    bool wrapTabNavigation();
+
+   /**
+    * The theme to use for the main RStudio user interface.
+    */
    std::string globalTheme();
+
+   /**
+    * Whether to ignore whitespace when generating diffs of version controlled files.
+    */
    bool gitDiffIgnoreWhitespace();
+
+   /**
+    * Whether double-clicking should select a word in the Console pane.
+    */
    bool consoleDoubleClickSelect();
+
+   /**
+    * Whether a git repo should be initialized inside new projects by default.
+    */
    bool newProjGitInit();
+
+   /**
+    * The root document to use when compiling PDF documents.
+    */
    std::string rootDocument();
-     
+
+   /**
+    * When to show the server home page in RStudio Server Pro.
+    */
+   std::string showUserHomePage();
+
+   /**
+    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    */
+   bool reuseSessionsForProjectLinks();
+
+   /**
+    * Whether to enable RStudio's version control system interface.
+    */
+   bool vcsEnabled();
+
+   /**
+    * The path to the Git executable to use.
+    */
+   std::string gitExePath();
+
+   /**
+    * The path to the Subversion executable to use.
+    */
+   std::string svnExePath();
+
+   /**
+    * The path to the terminal executable to use.
+    */
+   std::string terminalPath();
+
+   /**
+    * The path to the RSA key file to use.
+    */
+   std::string rsaKeyPath();
+
+   /**
+    * Whether to use the devtools R package.
+    */
+   bool useDevtools();
+
+   /**
+    * Whether to use Internet2 for networking on R for Windows.
+    */
+   bool useInternet2();
+
+   /**
+    * Whether to use secure downloads when fetching R packages.
+    */
+   bool useSecureDownload();
+
+   /**
+    * Whether to clean up temporary files after running R CMD CHECK.
+    */
+   bool cleanupAfterRCmdCheck();
+
+   /**
+    * Whether to view the directory after running R CMD CHECK.
+    */
+   bool viewDirAfterRCmdCheck();
+
+   /**
+    * Whether to hide object files in the Files pane.
+    */
+   bool hideObjectFiles();
+
+   /**
+    * Whether to restore the last project when starting RStudio.
+    */
+   bool restoreLastProject();
+
+   /**
+    * Whether to clean output after running Texi2Dvi.
+    */
+   bool cleanTexi2dviOutput();
+
+   /**
+    * Whether to enable shell escaping with LaTeX documents.
+    */
+   bool latexShellEscape();
+
 };
 
+        
 }
 }
 }

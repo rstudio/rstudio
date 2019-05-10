@@ -27,12 +27,8 @@ namespace session {
 namespace modules {
 namespace prefs {
 
-class UserPrefValues: public Preferences
-{
-public:
-%PREFS%     
-};
-
+%PREFS%
+        
 }
 }
 }

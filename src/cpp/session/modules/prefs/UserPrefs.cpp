@@ -25,6 +25,7 @@
 
 #include "UserPrefs.hpp"
 #include "UserPrefsDefaultLayer.hpp"
+#include "UserPrefsComputedLayer.hpp"
 #include "UserPrefsLayer.hpp"
 #include "UserPrefsSystemLayer.hpp"
 #include "UserPrefsProjectLayer.hpp"
@@ -43,8 +44,9 @@ class UserPrefs: public UserPrefValues
    Error createLayers()
    {
       layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_USER
-      layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_SYSTEM
+      layers_.push_back(boost::make_shared<UserPrefsComputedLayer>()); // PREF_LAYER_COMPUTED
+      layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
+      layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
       layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
       return Success();
    }

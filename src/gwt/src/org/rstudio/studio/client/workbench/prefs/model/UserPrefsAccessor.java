@@ -1296,6 +1296,138 @@ public class UserPrefsAccessor extends Prefs
       return string("root_document", "");
    }
 
+   /**
+    * When to show the server home page in RStudio Server Pro.
+    */
+   public PrefValue<String> showUserHomePage()
+   {
+      return string("show_user_home_page", "sessions");
+   }
+
+   public final static String SHOW_USER_HOME_PAGE_ALWAYS = "always";
+   public final static String SHOW_USER_HOME_PAGE_NEVER = "never";
+   public final static String SHOW_USER_HOME_PAGE_SESSIONS = "sessions";
+
+   /**
+    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    */
+   public PrefValue<Boolean> reuseSessionsForProjectLinks()
+   {
+      return bool("reuse_sessions_for_project_links", false);
+   }
+
+   /**
+    * Whether to enable RStudio's version control system interface.
+    */
+   public PrefValue<Boolean> vcsEnabled()
+   {
+      return bool("vcs_enabled", true);
+   }
+
+   /**
+    * The path to the Git executable to use.
+    */
+   public PrefValue<String> gitExePath()
+   {
+      return string("git_exe_path", "");
+   }
+
+   /**
+    * The path to the Subversion executable to use.
+    */
+   public PrefValue<String> svnExePath()
+   {
+      return string("svn_exe_path", "");
+   }
+
+   /**
+    * The path to the terminal executable to use.
+    */
+   public PrefValue<String> terminalPath()
+   {
+      return string("terminal_path", "");
+   }
+
+   /**
+    * The path to the RSA key file to use.
+    */
+   public PrefValue<String> rsaKeyPath()
+   {
+      return string("rsa_key_path", "");
+   }
+
+   /**
+    * Whether to use the devtools R package.
+    */
+   public PrefValue<Boolean> useDevtools()
+   {
+      return bool("use_devtools", true);
+   }
+
+   /**
+    * Whether to use Internet2 for networking on R for Windows.
+    */
+   public PrefValue<Boolean> useInternet2()
+   {
+      return bool("use_internet2", true);
+   }
+
+   /**
+    * Whether to use secure downloads when fetching R packages.
+    */
+   public PrefValue<Boolean> useSecureDownload()
+   {
+      return bool("use_secure_download", true);
+   }
+
+   /**
+    * Whether to clean up temporary files after running R CMD CHECK.
+    */
+   public PrefValue<Boolean> cleanupAfterRCmdCheck()
+   {
+      return bool("cleanup_after_r_cmd_check", true);
+   }
+
+   /**
+    * Whether to view the directory after running R CMD CHECK.
+    */
+   public PrefValue<Boolean> viewDirAfterRCmdCheck()
+   {
+      return bool("view_dir_after_r_cmd_check", false);
+   }
+
+   /**
+    * Whether to hide object files in the Files pane.
+    */
+   public PrefValue<Boolean> hideObjectFiles()
+   {
+      return bool("hide_object_files", true);
+   }
+
+   /**
+    * Whether to restore the last project when starting RStudio.
+    */
+   public PrefValue<Boolean> restoreLastProject()
+   {
+      return bool("restore_last_project", true);
+   }
+
+   /**
+    * Whether to clean output after running Texi2Dvi.
+    */
+   public PrefValue<Boolean> cleanTexi2dviOutput()
+   {
+      return bool("clean_texi2dvi_output", true);
+   }
+
+   /**
+    * Whether to enable shell escaping with LaTeX documents.
+    */
+   public PrefValue<Boolean> latexShellEscape()
+   {
+      return bool("latex_shell_escape", false);
+   }
+
    
 
    public int userLayer()
@@ -1308,8 +1440,9 @@ public class UserPrefsAccessor extends Prefs
       return LAYER_PROJECT;
    }
 
-   public static final int LAYER_DEFAULT = 0;
-   public static final int LAYER_SYSTEM  = 1;
-   public static final int LAYER_USER    = 2;
-   public static final int LAYER_PROJECT = 3;
+   public static final int LAYER_DEFAULT  = 0;
+   public static final int LAYER_COMPUTED = 1;
+   public static final int LAYER_SYSTEM   = 2;
+   public static final int LAYER_USER     = 3;
+   public static final int LAYER_PROJECT  = 4;
 }

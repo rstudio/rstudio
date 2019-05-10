@@ -27,12 +27,8 @@ namespace session {
 namespace modules {
 namespace prefs {
 
-class UserStateValues: public Preferences
-{
-public:
-%STATE%     
-};
-
+%STATE%
+   
 }
 }
 }

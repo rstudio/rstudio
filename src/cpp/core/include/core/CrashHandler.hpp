@@ -55,7 +55,7 @@ bool isHandlerEnabled();
 // explicitly enables/disables crash handling for this particular user
 // this overwrites the user settings file on disk
 // note: this does not actually start/stop the handler for this process
-// and does not take affect until the process is restarted
+// and does not take effect until the process is restarted
 Error setUserHandlerEnabled(bool handlerEnabled);
 
 } // namespace crash_handler

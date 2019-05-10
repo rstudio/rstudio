@@ -23,6 +23,7 @@
 #include "UserStateValues.hpp"
 #include "UserStateDefaultLayer.hpp"
 #include "UserStateLayer.hpp"
+#include "UserState.hpp"
 #include "Preferences.hpp"
 
 using namespace rstudio::core;

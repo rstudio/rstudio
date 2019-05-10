@@ -1,5 +1,5 @@
 /*
- * SessionUserPrefs.hpp
+ * UserPrefsComputedLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,41 +13,26 @@
  *
  */
 
-#ifndef SESSION_USER_PREFS_HPP
-#define SESSION_USER_PREFS_HPP
+#ifndef SESSION_USER_PREF_COMPUTED_LAYER_HPP
+#define SESSION_USER_PREF_COMPUTED_LAYER_HPP
 
-#include <core/json/Json.hpp>
+#include "UserPrefValues.hpp"
 
-#define kUserPrefsFile "rstudio-prefs.json"
-#define kUserPrefsSchemaFile "user-prefs-schema.json"
-
-enum PrefLayer
-{
-   PREF_LAYER_MIN      = 0,
-
-   PREF_LAYER_DEFAULT  = PREF_LAYER_MIN,
-   PREF_LAYER_COMPUTED = 1,
-   PREF_LAYER_SYSTEM   = 2,
-   PREF_LAYER_USER     = 3,
-   PREF_LAYER_PROJECT  = 4,
-
-   PREF_LAYER_MAX      = PREF_LAYER_PROJECT
-};
-
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace prefs {
 
-core::json::Array userPrefs();
-
-core::Error initializePrefs();
+class UserPrefsComputedLayer: public PrefLayer
+{
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+private:
+   core::FilePath detectedTerminalPath();
+};
 
 } // namespace prefs
 } // namespace modules
@@ -55,4 +40,3 @@ core::Error initializePrefs();
 } // namespace rstudio
 
 #endif
-

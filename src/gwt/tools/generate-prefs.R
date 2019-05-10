@@ -30,8 +30,9 @@ generate <- function (schemaPath, className) {
    hpp <- ""
    
    cppenum <- paste0("enum ", toupper(substring(className, 1, 1)), 
-                      substring(className, 2, nchar(className) - 1),
+                      substring(className, 2),
                      "\n{\n")
+   cppstrings <- ""
    
    for (pref in names(prefs)) {
       # Convert the preference name from camel case to snake case
@@ -99,6 +100,9 @@ generate <- function (schemaPath, className) {
          defaultval <- "null"
       }
       
+      cppstrings <- paste0(cppstrings,
+                           "#define k", toupper(substring(camel, 1, 1)), 
+                           substring(camel, 2), " \"", pref, "\"\n")
       comment <- paste0(
          "   /**\n",
          "    * ", def[["description"]], "\n",
@@ -111,13 +115,14 @@ generate <- function (schemaPath, className) {
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
       
-      signature <- paste0()
-      hpp <- paste0(hpp, "   ", cpptype, " ", camel, "();\n")
-      cpp <- paste0(cpp,
+      hpp <- paste0(hpp, comment,
+                    "   ", cpptype, " ", camel, "();\n\n")
+      cpp <- paste0(cpp, comment,
          cpptype, " ", className, "::", camel, "()\n",
          "{\n",
          "   return readPref<", cpptype, ">(\"", pref, "\");\n",
          "}\n\n")
+      cppenum <- paste0(cppenum, "   ", camel, ", \n")
       
       # Emit JSNI for object types
       if (identical(def[["type"]], "object")) {
@@ -155,6 +160,14 @@ generate <- function (schemaPath, className) {
       # add enums if present
       java <- paste0(java, enum(def, pref, type, "   "))
    }
+   
+   cppenum <- paste0(cppenum, "   ", className, "Max\n};\n\n")
+   hpp <- paste0(cppstrings, "\n",
+                 "class ", className, ": public Preferences\n", 
+                 "{\n",
+                 hpp,
+                 "};\n")
+   
    
    # Return computed Java
    list(

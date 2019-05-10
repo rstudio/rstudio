@@ -27,28 +27,108 @@ namespace session {
 namespace modules {
 namespace prefs {
 
+#define kContextId "context_id"
+#define kAgreementHash "agreement_hash"
+#define kAutoCreatedProfile "auto_created_profile"
+#define kTheme "theme"
+#define kDefaultProjectLocation "default_project_location"
+#define kClearHidden "clear_hidden"
+#define kExportPlotOptions "export_plot_options"
+#define kExportViewerOptions "export_viewer_options"
+#define kSavePlotAsPdfOptions "save_plot_as_pdf_options"
+#define kCompileRNotebookPrefs "compile_r_notebook_prefs"
+#define kCompileRMarkdownNotebookPrefs "compile_r_markdown_notebook_prefs"
+#define kShowPublishUi "show_publish_ui"
+#define kEnableRsconnectPublishUi "enable_rsconnect_publish_ui"
+#define kPublishAccount "publish_account"
+#define kDocumentOutlineWidth "document_outline_width"
+#define kConnectVia "connect_via"
+
 class UserStateValues: public Preferences
 {
-public:
+   /**
+    * A unique identifier representing the user and machine.
+    */
    std::string contextId();
+
+   /**
+    * Hash of the agreement that the user has accepted.
+    */
    std::string agreementHash();
+
+   /**
+    * Whether we have automatically created an .Rprofile for this user.
+    */
    bool autoCreatedProfile();
+
+   /**
+    * The color theme to apply.
+    */
    bool theme();
+
+   /**
+    * The directory path under which to place new projects by default. Shadows a uipref.
+    */
    std::string defaultProjectLocation();
+
+   /**
+    * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
+    */
    bool clearHidden();
+
+   /**
+    * The most recently used plot export options.
+    */
    bool exportPlotOptions();
+
+   /**
+    * The most recently used viewer export options.
+    */
    bool exportViewerOptions();
+
+   /**
+    * The most recently used options for saving a plot as a PDF.
+    */
    bool savePlotAsPdfOptions();
+
+   /**
+    * Most recently used settings for compiling a notebook from an R script.
+    */
    bool compileRNotebookPrefs();
+
+   /**
+    * Most recently used settings for compiling a notebook using R Markdown.
+    */
    bool compileRMarkdownNotebookPrefs();
+
+   /**
+    * Whether to show UI for publishing content.
+    */
    bool showPublishUi();
+
+   /**
+    * Whether to show UI for publishing content to RStudio Connect.
+    */
    bool enableRsconnectPublishUi();
+
+   /**
+    * The default (last) account used for publishing
+    */
    bool publishAccount();
+
+   /**
+    * The preferred width, in pixels, of the document outline pane.
+    */
    int documentOutlineWidth();
+
+   /**
+    * How to create new connections to data sources.
+    */
    std::string connectVia();
-     
+
 };
 
+   
 }
 }
 }
