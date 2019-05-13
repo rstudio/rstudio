@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -319,12 +319,13 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
-               insertions.add(range);
+               if (!range.text().isEmpty())
+                  insertions.add(range);
 
                // move the shortened range to its new start position
                moves.put(l, overlap.start);
 
-               if (parent_ != null)
+               if (parent_ != null && !range.text().isEmpty())
                   parent_.insertBefore(range.element, overlap.element);
               
             }
