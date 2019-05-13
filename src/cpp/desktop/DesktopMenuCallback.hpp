@@ -79,7 +79,7 @@ private:
                                     QKeySequence keySequence,
                                     bool checkable);
 private:
-    QMenuBar* pMainMenu_;
+    QMenuBar* pMainMenu_ = nullptr;
     QStack<SubMenu*> menuStack_;
     QMap<QString, QAction*> actions_;
 };

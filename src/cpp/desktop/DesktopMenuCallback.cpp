@@ -341,7 +341,8 @@ void MenuCallback::setCommandChecked(QString commandId, bool checked)
 
 void MenuCallback::setMainMenuEnabled(bool enabled)
 {
-   pMainMenu_->setEnabled(enabled);
+   if (pMainMenu_)
+      pMainMenu_->setEnabled(enabled);
 }
 
 MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)
