@@ -922,7 +922,7 @@ public class VirtualConsoleTests extends GWTTestCase
    public void testProgressBar4777Part1()
    {
       PreElement ele = Document.get().createPreElement();
-      VirtualConsole vc = new VirtualConsole(ele);
+      VirtualConsole vc = getVC(ele);
 
       vc.submit("=>---------- 1.11 kB/s");
       vc.submit("\r");
@@ -957,7 +957,7 @@ public class VirtualConsoleTests extends GWTTestCase
    public void testProgressBar4777Part2()
    {
       PreElement ele = Document.get().createPreElement();
-      VirtualConsole vc = new VirtualConsole(ele);
+      VirtualConsole vc = getVC(ele);
 
       String color = "\033[32m";
       String restore = "\033[39m";
@@ -995,7 +995,7 @@ public class VirtualConsoleTests extends GWTTestCase
    public void testProgressBar4777Part3()
    {
       PreElement ele = Document.get().createPreElement();
-      VirtualConsole vc = new VirtualConsole(ele);
+      VirtualConsole vc = getVC(ele);
 
       String color = "\033[32m";
       String restore = "\033[39m";
