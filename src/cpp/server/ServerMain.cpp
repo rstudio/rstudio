@@ -17,8 +17,9 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include <core/Error.hpp>
 #include <core/CrashHandler.hpp>
+#include <core/Error.hpp>
+#include <core/FileLock.hpp>
 #include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
@@ -188,7 +189,7 @@ void httpServerAddHandlers()
    // establish json-rpc handlers
    using namespace server::auth;
    using namespace server::session_proxy;
-   uri_handlers::add("/rpc", secureAsyncJsonRpcHandler(proxyRpcRequest));
+   uri_handlers::add("/rpc", secureAsyncJsonRpcHandlerEx(proxyRpcRequest));
    uri_handlers::add("/events", secureAsyncJsonRpcHandler(proxyEventsRequest));
 
    // establish content handlers
@@ -518,6 +519,9 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // initialize File Lock
+      FileLock::initialize();
+
       // initialize crypto utils
       core::system::crypto::initialize();
 
@@ -566,6 +570,11 @@ int main(int argc, char * const argv[])
          program_options::reportError(errMsg, ERROR_LOCATION);
          return EXIT_FAILURE;
       }
+
+      // initialize base authorization routines
+      error = auth::handler::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
 
       // add handlers and initiliaze addins (offline has distinct behavior)
       if (server::options().serverOffline())

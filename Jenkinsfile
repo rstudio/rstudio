@@ -65,6 +65,15 @@ def s3_upload(type, flavor, os, arch) {
     returnStdout: true
   ).trim()
 
+  // rename package to not include the build type
+  def renamedFile = sh (
+    script: "echo ${packageFile} | sed 's/-relwithdebinfo//'",
+    returnStdout: true
+  ).trim()
+
+  sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
+  packageFile = renamedFile
+
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
 

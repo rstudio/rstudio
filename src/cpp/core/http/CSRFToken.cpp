@@ -29,7 +29,19 @@ namespace core {
 namespace http {
 
 void setCSRFTokenCookie(const http::Request& request, 
-                        boost::optional<boost::gregorian::days> expiry,
+                        const boost::optional<boost::gregorian::days>& expiry,
+                        const std::string& token,
+                        http::Response* pResponse)
+{
+   boost::optional<boost::posix_time::time_duration> expiresFromNow;
+   if (expiry.is_initialized())
+      expiresFromNow = boost::posix_time::time_duration(24 * expiry->days(), 0, 0);
+
+   setCSRFTokenCookie(request, expiresFromNow, token, pResponse);
+}
+
+void setCSRFTokenCookie(const http::Request& request,
+                        const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
                         const std::string& token,
                         http::Response* pResponse)
 {
@@ -40,17 +52,17 @@ void setCSRFTokenCookie(const http::Request& request,
 
    // generate CSRF token cookie
    http::Cookie cookie(
-            request, 
-            kCSRFTokenCookie, 
-            csrfToken, 
+            request,
+            kCSRFTokenCookie,
+            csrfToken,
             "/",  // cookie for root path
             true, // HTTP only
             // secure if delivered via SSL
             boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    // set expiration for cookie
-   if (expiry.is_initialized())
-      cookie.setExpires(*expiry);
+   if (expiresFromNow.is_initialized())
+      cookie.setExpires(*expiresFromNow);
 
    pResponse->addCookie(cookie);
 }

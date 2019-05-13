@@ -79,16 +79,9 @@ make ${MAKEFLAGS}
 if [ "$2" != "DEB" ]
 then
   fakeroot cpack -G "$2"
-  PACKAGE=$(ls *.rpm)
 else
   cpack -G $2
   $PKG_DIR/fix-debian-permissions `ls *.deb`
-  PACKAGE=$(ls *.deb)
 fi
-
-# strip off cmake build type from file name
-PACKAGE_TYPE=$(echo $CMAKE_BUILD_TYPE | tr '[:upper:]' '[:lower:]')
-MODIFIED_PACKAGE=$(echo $PACKAGE | sed "s/-${PACKAGE_TYPE}//")
-mv $PACKAGE $MODIFIED_PACKAGE
 
 cd $PREV_WD

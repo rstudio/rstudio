@@ -44,6 +44,18 @@ typedef boost::function<void(
                      boost::shared_ptr<core::http::AsyncConnection>)>
                                           SecureAsyncUriHandlerFunction;
 
+typedef boost::function<void(
+                           const std::string& username,
+                           const std::string& userIdentifier,
+                           const core::http::Request&,
+                           core::http::Response*)> SecureUriHandlerFunctionEx;
+
+typedef boost::function<void(
+                     const std::string& username,
+                     const std::string& userIdentifier,
+                     boost::shared_ptr<core::http::AsyncConnection>)>
+                                          SecureAsyncUriHandlerFunctionEx;
+
       
 core::http::UriHandlerFunction secureHttpHandler(
                                     SecureUriHandlerFunction handler,
@@ -52,15 +64,22 @@ core::http::UriHandlerFunction secureHttpHandler(
 core::http::UriHandlerFunction secureJsonRpcHandler(
                                     SecureUriHandlerFunction handler);
 
+core::http::UriHandlerFunction secureJsonRpcHandlerEx(
+                                    SecureUriHandlerFunctionEx handler);
+
 core::http::UriHandlerFunction secureUploadHandler(
                                     SecureUriHandlerFunction handler);
 
 core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
-                                    bool authenticate = false);
+                                    bool authenticate = false,
+                                    bool refreshAuthCookies = true);
 
 core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler);
+
+core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
+                                    SecureAsyncUriHandlerFunctionEx handler);
 
 core::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
                                     SecureAsyncUriHandlerFunction handler);

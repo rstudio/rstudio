@@ -61,6 +61,7 @@ void proxyContentRequest(
 
 void proxyRpcRequest(
       const std::string& username,
+      const std::string& userIdentifier,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
 
 void proxyEventsRequest(
@@ -92,6 +93,8 @@ typedef boost::function<bool(
     const std::string&,
     core::r_util::SessionContext*)> SessionContextSource;
 void setSessionContextSource(SessionContextSource source);
+
+core::http::Headers getAuthCookies(const core::http::Response& response);
 
 } // namespace session_proxy
 } // namespace server

@@ -30,7 +30,12 @@ namespace http {
 // Adds a CSRF (cross site request forgery) cookie. This is simply a cookie with
 // a random value (token).
 void setCSRFTokenCookie(const Request& request, 
-      boost::optional<boost::gregorian::days> expiry,
+      const boost::optional<boost::gregorian::days>& expiry,
+      const std::string& token,
+      core::http::Response* pResponse);
+
+void setCSRFTokenCookie(const Request& request,
+      const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
       const std::string& token,
       core::http::Response* pResponse);
 
