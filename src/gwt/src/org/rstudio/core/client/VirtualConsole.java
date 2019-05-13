@@ -290,12 +290,13 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
-               insertions.add(range);
+               if (!range.text().isEmpty())
+                  insertions.add(range);
 
                // move the shortened range to its new start position
                moves.put(l, overlap.start);
 
-               if (parent_ != null)
+               if (parent_ != null && !range.text().isEmpty())
                   parent_.insertBefore(range.element, overlap.element);
               
             }
