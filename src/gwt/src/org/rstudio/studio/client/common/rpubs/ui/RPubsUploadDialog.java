@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rpubs.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -76,7 +77,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                              StaticHtmlGenerator htmlGenerator,
                              boolean isPublished)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;

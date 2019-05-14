@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -38,7 +39,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                boolean includeSaveAsDefault,
                                OperationWithInput<String> operation)
    {
-      super("Choose Encoding", DialogRole.Dialog, operation);
+      super("Choose Encoding", Roles.getDialogRole(), operation);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;

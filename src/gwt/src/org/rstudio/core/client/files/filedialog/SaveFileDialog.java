@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -30,7 +31,7 @@ public class SaveFileDialog extends FileDialog
                          boolean forceDefaultExtension,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, DialogRole.Dialog, buttonLabel, true, true, true, context, "", operation);
+      super(title, null, Roles.getDialogRole(), buttonLabel, true, true, true, context, "", operation);
       defaultExtension_ = defaultExtension;
       forceDefaultExtension_ = forceDefaultExtension;
    }

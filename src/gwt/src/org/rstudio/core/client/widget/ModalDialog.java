@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.HelpLink;
 
@@ -25,14 +26,14 @@ import com.google.gwt.user.client.Command;
 public abstract class ModalDialog<T> extends ModalDialogBase
 {
    public ModalDialog(String caption,
-                      ModalDialogBase.DialogRole role,
+                      DialogRole role,
                       OperationWithInput<T> operation)
    {
       this(caption, role, operation, null);
    }
    
    public ModalDialog(String caption,
-                      ModalDialogBase.DialogRole role,
+                      DialogRole role,
                       final OperationWithInput<T> operation,
                       Operation cancelOperation)
    {
@@ -65,14 +66,14 @@ public abstract class ModalDialog<T> extends ModalDialogBase
 
 
    public ModalDialog(String caption,
-                      ModalDialogBase.DialogRole role,
+                      DialogRole role,
                       final ProgressOperationWithInput<T> operation)
    {
       this(caption, role, operation, null);
    }
 
    public ModalDialog(String caption,
-                      ModalDialogBase.DialogRole role,
+                      DialogRole role,
                       final ProgressOperationWithInput<T> operation,
                       Operation cancelOperation)
    {

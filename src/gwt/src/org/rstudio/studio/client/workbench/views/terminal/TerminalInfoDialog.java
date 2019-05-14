@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ResultCallback;
@@ -36,7 +37,7 @@ public class TerminalInfoDialog extends ModalDialogBase
 
    public TerminalInfoDialog(String globalInfo, final TerminalSession session)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText("Terminal Diagnostics");

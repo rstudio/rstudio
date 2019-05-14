@@ -16,6 +16,7 @@ package org.rstudio.studio.client.packrat.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -47,7 +48,7 @@ public class PackratResolveConflictDialog
                ArrayList<PackratConflictActions> conflictActions,
                OperationWithInput<PackratConflictResolution> onResolved)
    {
-      super("Resolve Conflict", DialogRole.AlertDialog, onResolved);
+      super("Resolve Conflict", Roles.getDialogRole(), onResolved);
       
       setOkButtonCaption("Resolve");
          

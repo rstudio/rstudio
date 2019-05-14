@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
@@ -34,7 +35,7 @@ public class SVNResolveDialog extends ModalDialog<String>
                            String caption,
                            OperationWithInput<String> operation)
    {
-      super(caption, DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
       fileCount_ = fileCount;
    }
 

@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -34,7 +35,7 @@ public class OpenProjectDialog extends FileDialog
                 boolean newSessionOption,
                 final ProgressOperationWithInput<OpenProjectParams> operation)
    {
-      super("Open Project", null, DialogRole.Dialog, "Open", false, false, false, context, 
+      super("Open Project", null, Roles.getDialogRole(), "Open", false, false, false, context, 
             "R Projects (*.RProj)", 
             new ProgressOperationWithInput<FileSystemItem>()
             {

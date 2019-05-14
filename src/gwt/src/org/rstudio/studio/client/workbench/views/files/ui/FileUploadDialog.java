@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
@@ -44,7 +45,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          OperationWithInput<PendingFileUpload> completedOperation)
    {
       super("Upload Files",
-            DialogRole.Dialog,
+            Roles.getDialogRole(),
             "Uploading file...",
             actionURL,
             completedOperation);

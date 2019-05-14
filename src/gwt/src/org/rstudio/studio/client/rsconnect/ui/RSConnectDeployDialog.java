@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -46,7 +47,7 @@ public class RSConnectDeployDialog
                                 RSConnectPublishSource source,
                                 RSConnectDeploymentRecord fromPrevious)
    {
-      super(server, DialogRole.Dialog, display, new RSConnectDeploy(source, 
+      super(server, Roles.getDialogRole(), display, new RSConnectDeploy(source, 
             contentType, fromPrevious, false));
       setText("Publish to Server");
       setWidth("350px");

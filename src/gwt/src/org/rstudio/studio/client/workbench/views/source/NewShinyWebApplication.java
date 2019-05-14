@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -184,7 +184,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    public NewShinyWebApplication(String caption, 
                                  OperationWithInput<Result> operation)
    {
-      super(caption, ModalDialogBase.DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Create");

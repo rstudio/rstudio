@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -92,7 +93,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          final Command onCancelled)
    {
       super(title,
-            DialogRole.AlertDialog,
+            Roles.getAlertdialogRole(),
             saveOperation, 
             onCancelled != null ? new Operation() {
                                     @Override

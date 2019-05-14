@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -37,7 +38,7 @@ public class RSConnectAccountWizard
          boolean showCloudPage,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
-      super("Connect Account", "Connect Account", DialogRole.Dialog,
+      super("Connect Account", "Connect Account", Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             forFirstAccount ? 
                createIntroPage(showCloudPage) : 

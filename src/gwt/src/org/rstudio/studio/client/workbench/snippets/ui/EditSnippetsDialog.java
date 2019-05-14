@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -66,7 +67,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
 {
    public EditSnippetsDialog()
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       setText("Edit Snippets");
       RStudioGinjector.INSTANCE.injectMembers(this);
       

@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.cell.client.EditTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -225,7 +226,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public ModifyKeyboardShortcutsWidget(String filterText)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initialFilterText_ = filterText;

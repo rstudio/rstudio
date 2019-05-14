@@ -16,7 +16,7 @@ package org.rstudio.core.client.widget;
 
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -42,12 +42,6 @@ import java.util.ArrayList;
 
 public abstract class ModalDialogBase extends DialogBox
 {
-   public enum DialogRole
-   {
-      Dialog,
-      AlertDialog
-   }
-   
    protected ModalDialogBase(DialogRole role)
    {
       this(null, role);
@@ -62,10 +56,9 @@ public abstract class ModalDialogBase extends DialogBox
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
 
-      if (role == DialogRole.AlertDialog)
-         Roles.getAlertdialogRole().set(getElement());
-      else
-         Roles.getDialogRole().set(getElement());
+      // ARIA window role
+      role_ = role;
+      role_.set(getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -561,6 +554,13 @@ public abstract class ModalDialogBase extends DialogBox
       currentAnimation_.run(200);
    }
 
+   @Override
+   public void setText(String text)
+   {
+      super.setText(text);
+      role_.setAriaLabelProperty(getElement(), text);
+   }
+
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
@@ -577,4 +577,5 @@ public abstract class ModalDialogBase extends DialogBox
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
+   private DialogRole role_;
 }

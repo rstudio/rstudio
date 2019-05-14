@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.vcs.ignore;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -40,7 +41,7 @@ public class IgnoreDialog extends ModalDialogBase
    @Inject
    public IgnoreDialog()
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       dirChooser_ = new DirectoryChooserTextBox("Directory:", 
                                                 "", 
                                                 null);

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -45,7 +46,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
                             String code,
                             OperationWithInput<JobLaunchSpec> operation)
    {
-      super(caption, DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
 
       controls_ = new JobLauncherControls();
 

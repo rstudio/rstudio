@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 import java.util.Iterator;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
@@ -35,7 +36,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -386,7 +386,7 @@ public class Presentation extends BasePresenter
       EditDialog editDialog = new EditDialog("Provide Feedback",
                                              "Submit",
                                              "",
-                                             DialogRole.Dialog,
+                                             Roles.getDialogRole(),
                                              false,
                                              true,
                                              new Size(450,300),

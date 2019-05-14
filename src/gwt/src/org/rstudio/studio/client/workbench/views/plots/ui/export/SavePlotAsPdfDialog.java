@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -68,7 +69,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                               double plotHeight,
                               final OperationWithInput<SavePlotAsPdfOptions> onClose)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       setText("Save Plot as PDF");
       
       globalDisplay_ = globalDisplay;

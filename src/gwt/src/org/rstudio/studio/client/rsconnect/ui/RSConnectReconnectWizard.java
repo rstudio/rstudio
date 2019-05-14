@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
@@ -33,7 +34,7 @@ public class RSConnectReconnectWizard
          String serverUrl,
          ProgressOperationWithInput<NewRSConnectAccountResult> onCompleted) 
    {
-      super("Reconnect Account", "Connect Account", DialogRole.Dialog,
+      super("Reconnect Account", "Connect Account", Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);

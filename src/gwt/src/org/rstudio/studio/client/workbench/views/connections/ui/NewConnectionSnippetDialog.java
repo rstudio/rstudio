@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -53,7 +54,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
       ArrayList<NewConnectionSnippetParts> config,
       NewConnectionInfo newConnectionInfo)
    {
-      super("Advanced Options", DialogRole.Dialog, operation);
+      super("Advanced Options", Roles.getDialogRole(), operation);
       initialConfig_ = config;
       newConnectionInfo_ = newConnectionInfo;
 

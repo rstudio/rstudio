@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -49,7 +50,7 @@ public class RmdTemplateOptionsDialog
          Operation onCancelled)
    {
       super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
-            template.getName() + " Options", DialogRole.Dialog, onSaved, onCancelled);
+            template.getName() + " Options", Roles.getDialogRole(), onSaved, onCancelled);
       setWidth("425px");
       setHeight(
          RStudioThemes.isFlat() ? "430px" : "450px"

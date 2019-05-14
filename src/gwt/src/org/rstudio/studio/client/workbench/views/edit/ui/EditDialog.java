@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;

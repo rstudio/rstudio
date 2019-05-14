@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rstudioapi.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -55,7 +56,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
-      super(title, DialogRole.Dialog, okOperation, cancelOperation);
+      super(title, Roles.getDialogRole(), okOperation, cancelOperation);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      

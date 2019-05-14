@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -66,7 +67,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Packages", DialogRole.Dialog, operation);
+      super("Install Packages", Roles.getDialogRole(), operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;

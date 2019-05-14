@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -45,7 +46,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    {
       super("New Project", 
             "Create Project",
-            DialogRole.Dialog,
+            Roles.getDialogRole(), 
             input, 
             createFirstPage(sessionInfo),
             operation);

@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;

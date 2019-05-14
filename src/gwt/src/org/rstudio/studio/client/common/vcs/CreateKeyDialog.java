@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -46,7 +47,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                           final VCSServerOperations server,
                           final OperationWithInput<String> onCompleted)
    {
-      super("Create RSA Key", DialogRole.Dialog, new ProgressOperationWithInput<CreateKeyOptions>() {
+      super("Create RSA Key", Roles.getDialogRole(), new ProgressOperationWithInput<CreateKeyOptions>() {
          
          @Override
          public void execute(final CreateKeyOptions input, 

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -39,7 +40,7 @@ public class ClearAllDialog extends ModalDialogBase
    public ClearAllDialog(int numObjects, 
                          final ProgressOperationWithInput<Boolean> okOperation)
    {
-      super(DialogRole.AlertDialog);
+      super(Roles.getAlertdialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       numObjects_ = numObjects;
       

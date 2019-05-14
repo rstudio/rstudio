@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -44,7 +45,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                                 OperationWithInput<ArrayList<PackageUpdate>> checkOperation,
                                 Operation cancelOperation)
    {
-      super("Update Packages", "Install Updates", DialogRole.Dialog, updatesDS, checkOperation, cancelOperation);
+      super("Update Packages", "Install Updates", Roles.getDialogRole(), updatesDS, checkOperation, cancelOperation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       indicator_ = addProgressIndicator();

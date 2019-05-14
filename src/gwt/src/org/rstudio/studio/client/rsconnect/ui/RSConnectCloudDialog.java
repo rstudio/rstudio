@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -27,7 +28,7 @@ public class RSConnectCloudDialog extends ModalDialog<NewRSConnectAccountResult>
          ProgressOperationWithInput<NewRSConnectAccountResult> operation,
          Operation cancelOperation)
    {
-      super("Connecting your ShinyApps Account", DialogRole.Dialog, operation, cancelOperation);
+      super("Connecting your ShinyApps Account", Roles.getDialogRole(), operation, cancelOperation);
       setWidth("400px");
    }
 

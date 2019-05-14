@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.htmlpreview.ui;
 
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.studio.client.common.compile.CompileOutputBuffer;
 
@@ -38,7 +39,7 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
    
    public HTMLPreviewProgressDialog(String caption, int maxHeight)
    {
-      super(caption, DialogRole.Dialog, new Integer(maxHeight));  
+      super(caption, Roles.getDialogRole(), new Integer(maxHeight));
    }
    
    @Override

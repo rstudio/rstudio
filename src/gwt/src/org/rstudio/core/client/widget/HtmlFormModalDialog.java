@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;

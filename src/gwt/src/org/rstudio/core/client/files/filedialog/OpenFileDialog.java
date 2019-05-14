@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -29,7 +30,7 @@ public class OpenFileDialog extends FileDialog
                          boolean canChooseDirectories,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, DialogRole.Dialog, label, false, false, false, context, filter, operation);
+      super(title, null, Roles.getDialogRole(), label, false, false, false, context, filter, operation);
       canChooseDirectories_ = canChooseDirectories;
    }
    

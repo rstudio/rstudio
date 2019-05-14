@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn.commit;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -58,7 +59,7 @@ public class SVNCommitDialog extends ModalDialogBase
                           GlobalDisplay globalDisplay,
                           Session session)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       server_ = server;
       globalDisplay_ = globalDisplay;
       session_ = session;

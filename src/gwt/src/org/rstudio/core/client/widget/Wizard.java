@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;

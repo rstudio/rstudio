@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -49,7 +50,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
    
    public NewRdDialog(OperationWithInput<Result> operation)
    {
-      super("New R Documentation File", DialogRole.Dialog, operation);
+      super("New R Documentation File", Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
    }

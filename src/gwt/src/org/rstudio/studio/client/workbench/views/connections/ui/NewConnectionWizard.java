@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -56,7 +57,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       super(
          "New Connection",
          "OK",
-         DialogRole.Dialog,
+            Roles.getDialogRole(),
          context,
          createFirstPage(context, warning),
          operation

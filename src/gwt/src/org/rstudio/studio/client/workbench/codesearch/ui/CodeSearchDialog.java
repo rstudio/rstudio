@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -32,7 +33,7 @@ public class CodeSearchDialog extends ModalDialogBase
 {
    public CodeSearchDialog(Provider<CodeSearch> pCodeSearch)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       
       setGlassEnabled(false);
       setAutoHideEnabled(true);

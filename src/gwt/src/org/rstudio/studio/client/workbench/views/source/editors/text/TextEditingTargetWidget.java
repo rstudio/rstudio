@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -53,7 +54,6 @@ import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -1011,7 +1011,7 @@ public class TextEditingTargetWidget
    public void debug_dumpContents()
    {
       String dump = editor_.debug_getDocumentDump();
-      new EditDialog(dump, DialogRole.AlertDialog, false, false, new ProgressOperationWithInput<String>()
+      new EditDialog(dump, Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)
@@ -1024,7 +1024,7 @@ public class TextEditingTargetWidget
    @Override
    public void debug_importDump()
    {
-      new EditDialog("", DialogRole.AlertDialog, false, false, new ProgressOperationWithInput<String>()
+      new EditDialog("", Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)

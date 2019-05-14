@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;

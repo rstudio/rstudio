@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
@@ -38,7 +39,7 @@ public class MessageDialog extends ModalDialogBase
    
    public MessageDialog(int type, String caption, Widget message)
    {
-      super(DialogRole.AlertDialog);
+      super(Roles.getAlertdialogRole());
       type_ = type;
       setText(caption);
       messageWidget_ = message;

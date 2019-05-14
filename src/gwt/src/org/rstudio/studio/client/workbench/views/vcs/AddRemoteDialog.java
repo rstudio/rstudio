@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -60,7 +61,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                           String defaultUrl,
                           OperationWithInput<Input> operation)
    {
-      super(caption, DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
       
       container_ = new VerticalPanel();

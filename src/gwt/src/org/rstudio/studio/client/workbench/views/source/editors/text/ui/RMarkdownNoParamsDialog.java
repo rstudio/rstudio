@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,7 +33,7 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
 {  
    public RMarkdownNoParamsDialog()
    {
-      super(DialogRole.AlertDialog);
+      super(Roles.getAlertdialogRole());
       setText("No Parameters Defined");
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       

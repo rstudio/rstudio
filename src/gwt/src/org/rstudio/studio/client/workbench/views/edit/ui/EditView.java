@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.Command;
-import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -31,7 +31,7 @@ public class EditView implements Display
       {
          public void execute()
          {
-            new EditDialog(text, DialogRole.Dialog, isRCode, lineWrapping, operation).showModal();
+            new EditDialog(text, Roles.getDialogRole(), isRCode, lineWrapping, operation).showModal();
          }
       });
    }

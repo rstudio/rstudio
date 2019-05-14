@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;

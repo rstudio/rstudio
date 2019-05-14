@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -64,12 +65,12 @@ public abstract class ProgressDialog extends ModalDialogBase
       resources_.styles().ensureInjected();
    }
 
-   public ProgressDialog(String title, ModalDialogBase.DialogRole role)
+   public ProgressDialog(String title, DialogRole role)
    {
       this(title, role, null);
    }
 
-   public ProgressDialog(String title, ModalDialogBase.DialogRole role, Object param)
+   public ProgressDialog(String title, DialogRole role, Object param)
    {
       super(role);
       addStyleName(resources_.styles().progressDialog());

@@ -15,6 +15,7 @@
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -27,7 +28,7 @@ public class RSConnectPublishWizard
    public RSConnectPublishWizard(RSConnectPublishInput input, 
          ProgressOperationWithInput<RSConnectPublishResult> operation)
    {
-      super("Publish", "Publish", DialogRole.Dialog, input, createFirstPage(input), operation);
+      super("Publish", "Publish", Roles.getDialogRole(), input, createFirstPage(input), operation);
    }
    
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>

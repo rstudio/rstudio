@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
@@ -176,7 +177,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    public NewPlumberAPI(String caption, 
                         OperationWithInput<Result> operation)
    {
-      super(caption, DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Create");

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -52,7 +53,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       OperationWithInput<DataImportOptionsCsvLocale> operation,
       DataImportOptionsCsvLocale locale)
    {
-      super("Configure Locale", DialogRole.Dialog, operation);
+      super("Configure Locale", Roles.getDialogRole(), operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
 

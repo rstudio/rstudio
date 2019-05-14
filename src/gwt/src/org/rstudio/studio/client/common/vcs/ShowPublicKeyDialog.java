@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -38,7 +39,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
  
    public ShowPublicKeyDialog(String caption, String publicKey)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       publicKey_ = publicKey;
       
       setText(caption);

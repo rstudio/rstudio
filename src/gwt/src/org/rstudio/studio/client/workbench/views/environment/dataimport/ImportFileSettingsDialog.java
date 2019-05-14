@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -76,7 +77,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
          OperationWithInput<ImportFileSettingsDialogResult> operation,
          GlobalDisplay globalDisplay)
    {
-      super(caption, DialogRole.Dialog, operation);
+      super(caption, Roles.getDialogRole(), operation);
       server_ = server;
       sourceServer_ = sourceServer;
       dataFile_ = dataFile;

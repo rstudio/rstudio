@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -186,7 +187,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          String author,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown", DialogRole.Dialog, operation);
+      super("New R Markdown", Roles.getDialogRole(), operation);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -27,7 +28,7 @@ public class ExportPlotDialog extends ModalDialogBase
    public ExportPlotDialog(ExportPlotOptions options,
                            ExportPlotPreviewer previewer)
    {
-      super(DialogRole.Dialog);
+      super(Roles.getDialogRole());
       options_ = options;
       previewer_ = previewer;
    }

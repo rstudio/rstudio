@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -48,7 +49,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
 {  
    public CompilePdfProgressDialog()
    {
-      super("Compiling PDF...", DialogRole.Dialog);
+      super("Compiling PDF...", Roles.getDialogRole());
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       

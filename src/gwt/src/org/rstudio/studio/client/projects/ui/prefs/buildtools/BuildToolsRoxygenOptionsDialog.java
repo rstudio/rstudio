@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.projects.model.RProjectAutoRoxygenizeOptions;
@@ -38,7 +39,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
                BuildToolsRoxygenOptions options,
                OperationWithInput<BuildToolsRoxygenOptions> operation)
    {
-      super("Roxygen Options", DialogRole.Dialog, operation);
+      super("Roxygen Options", Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       chkRocletRd_.setValue(options.getRocletRd());

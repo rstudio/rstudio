@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -58,7 +59,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                              OperationWithInput<CRANMirror> inputOperation,
                              MirrorsServerOperations mirrorOperations)
    {
-      super("Retrieving list of CRAN mirrors...", DialogRole.Dialog, inputOperation);
+      super("Retrieving list of CRAN mirrors...", Roles.getDialogRole(), inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
       mirrorOperations_ = mirrorOperations;

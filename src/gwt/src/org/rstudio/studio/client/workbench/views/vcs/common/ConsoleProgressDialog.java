@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -69,7 +70,7 @@ public class ConsoleProgressDialog extends ProgressDialog
                                 Integer exitCode,
                                 CryptoServerOperations server)
    {
-      super(title, DialogRole.Dialog);
+      super(title, Roles.getDialogRole());
       
       if (consoleProcess == null && exitCode == null)
       {
