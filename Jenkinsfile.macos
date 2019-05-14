@@ -78,7 +78,7 @@ pipeline {
             sh "cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite ."
 
             // finalize release
-            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases finalize ${RSTUDIO_RELEASE}"
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_RELEASE}"
 
             // upload C++ debug information
             sh "cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym ."

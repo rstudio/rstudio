@@ -24,6 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/FileMode.hpp>
+#include <core/system/PosixUser.hpp>
 #include <core/Thread.hpp>
 
 #include <server/ServerConstants.hpp>
@@ -348,6 +349,7 @@ void invalidateAuthCookie(const std::string& cookie,
       {
          LOG_ERROR_MESSAGE("Could not invalidate user auth cookie - could not acquire revocation list lockfile");
          LOG_ERROR(error);
+         return;
       }
    }
 
@@ -370,6 +372,7 @@ void invalidateAuthCookie(const std::string& cookie,
    {
       LOG_ERROR_MESSAGE("Could not invalidate user auth cookie - could not write to revocation list");
       LOG_ERROR(error);
+      return;
    }
 
    // store the revoked cookie in memory - we only check the memory cache when
@@ -413,23 +416,40 @@ Error initialize()
 
       // successfully acquired lock
       // create file if it does not exist
-      if (!s_revocationList.exists())
+      error = s_revocationList.ensureFile();
+      if (error)
       {
-         error = s_revocationList.ensureFile();
-         if (error)
-         {
-            LOG_ERROR_MESSAGE("Could not create revocation list");
-            return error;
-         }
+         LOG_ERROR_MESSAGE("Could not create revocation list");
+         return error;
+      }
 
-         // ensure that only the server user can read/write to it, so other users of the system
-         // cannot muck with the contents!
-         error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
+      if (core::system::effectiveUserIsRoot())
+      {
+         // ensure revocation file is owned by the server user
+         // this ensures that it can be written to even when we drop privilege
+         core::system::user::User serverUser;
+         error = core::system::user::userFromUsername(options().serverUser(), &serverUser);
          if (error)
-         {
-            LOG_ERROR_MESSAGE("Could not set revocation file permissions");
             return error;
-         }
+
+         error = core::system::posixCall<int>(
+                  boost::bind(::chown,
+                              s_revocationList.absolutePath().c_str(),
+                              serverUser.userId,
+                              serverUser.groupId),
+                  ERROR_LOCATION);
+
+         if (error)
+            return error;
+      }
+
+      // ensure that only the server user can read/write to it, so other users of the system
+      // cannot muck with the contents!
+      error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
+      if (error)
+      {
+         LOG_ERROR_MESSAGE("Could not set revocation file permissions");
+         return error;
       }
 
       // read the current revocation list into memory
