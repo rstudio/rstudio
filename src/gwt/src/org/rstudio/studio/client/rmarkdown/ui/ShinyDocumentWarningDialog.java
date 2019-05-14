@@ -1,7 +1,7 @@
 /*
  * ShinyDocumentWarningDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
    public ShinyDocumentWarningDialog(
          final OperationWithInput<Integer> onSelected)
    {
+      super(DialogRole.AlertDialog);
       warning_ = new ShinyDocumentWarning();
       setWidth("400px");
       setText("Shiny Content");

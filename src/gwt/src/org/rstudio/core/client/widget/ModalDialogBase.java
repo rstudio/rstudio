@@ -1,7 +1,7 @@
 /*
  * ModalDialogBase.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -39,15 +40,20 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import java.util.ArrayList;
 
-
 public abstract class ModalDialogBase extends DialogBox
 {
-   protected ModalDialogBase()
+   public enum DialogRole
    {
-      this(null);
+      Dialog,
+      AlertDialog
+   }
+   
+   protected ModalDialogBase(DialogRole role)
+   {
+      this(null, role);
    }
 
-   protected ModalDialogBase(SimplePanel containerPanel)
+   protected ModalDialogBase(SimplePanel containerPanel, DialogRole role)
    {
       // core initialization. passing false for modal works around
       // modal PopupPanel supressing global keyboard accelerators (like
@@ -55,6 +61,11 @@ public abstract class ModalDialogBase extends DialogBox
       super(false, false);
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
+
+      if (role == DialogRole.AlertDialog)
+         Roles.getAlertdialogRole().set(getElement());
+      else
+         Roles.getDialogRole().set(getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();

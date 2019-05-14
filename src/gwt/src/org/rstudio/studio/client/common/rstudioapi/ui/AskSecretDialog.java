@@ -1,7 +1,7 @@
 /*
  * AskSecretDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,7 +55,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
-      super(title, okOperation, cancelOperation);
+      super(title, DialogRole.Dialog, okOperation, cancelOperation);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      

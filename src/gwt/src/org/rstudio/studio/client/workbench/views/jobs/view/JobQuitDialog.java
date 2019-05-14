@@ -1,7 +1,7 @@
 /*
  * JobQuitControls.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@ public class JobQuitDialog extends ModalDialog<Boolean>
                         OperationWithInput<Boolean> onConfirmed,
                         Operation cancelOperation)
    {
-      super("Terminate Running Jobs", onConfirmed, cancelOperation);
+      super("Terminate Running Jobs", DialogRole.AlertDialog, onConfirmed, cancelOperation);
       running_ = runningJobs;
       setOkButtonCaption("Terminate Jobs");
    }

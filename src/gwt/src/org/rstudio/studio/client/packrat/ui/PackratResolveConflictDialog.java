@@ -1,6 +1,6 @@
 /* PackratResolveConflictDialog.java
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2014-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,7 +47,7 @@ public class PackratResolveConflictDialog
                ArrayList<PackratConflictActions> conflictActions,
                OperationWithInput<PackratConflictResolution> onResolved)
    {
-      super("Resolve Conflict", onResolved);
+      super("Resolve Conflict", DialogRole.AlertDialog, onResolved);
       
       setOkButtonCaption("Resolve");
          

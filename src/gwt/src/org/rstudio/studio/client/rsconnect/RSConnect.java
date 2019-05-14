@@ -1,7 +1,7 @@
 /*
  * RSConnect.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -674,7 +675,7 @@ public class RSConnect implements SessionInitHandler,
       }
       final String serverUrl = failedPath;
       
-      new ModalDialogBase()
+      new ModalDialogBase(DialogRole.AlertDialog)
       {
          @Override
          protected Widget createMainWidget()

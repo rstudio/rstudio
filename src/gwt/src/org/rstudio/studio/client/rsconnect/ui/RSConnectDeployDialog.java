@@ -1,7 +1,7 @@
 /*
  * RSConnectDeployDialog.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ public class RSConnectDeployDialog
                                 RSConnectPublishSource source,
                                 RSConnectDeploymentRecord fromPrevious)
    {
-      super(server, display, new RSConnectDeploy(source, 
+      super(server, DialogRole.Dialog, display, new RSConnectDeploy(source, 
             contentType, fromPrevious, false));
       setText("Publish to Server");
       setWidth("350px");

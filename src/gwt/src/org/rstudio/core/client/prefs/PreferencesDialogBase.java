@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                    boolean showApplyButton,
                                    PreferencesDialogPaneBase<T>[] panes)
    {
-      super();
+      super(DialogRole.Dialog);
       setText(caption);
       panes_ = panes;
       

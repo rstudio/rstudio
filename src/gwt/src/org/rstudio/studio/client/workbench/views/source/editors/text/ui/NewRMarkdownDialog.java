@@ -1,7 +1,7 @@
 /*
  * NewRMarkdownDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -186,7 +186,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          String author,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown", operation);
+      super("New R Markdown", DialogRole.Dialog, operation);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);

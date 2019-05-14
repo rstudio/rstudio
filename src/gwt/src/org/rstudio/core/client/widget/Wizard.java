@@ -1,7 +1,7 @@
 /*
  * Wizard.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,11 +38,12 @@ public class Wizard<I,T> extends ModalDialog<T>
 {
    public Wizard(String caption, 
                  String okCaption,
+                 DialogRole role,
                  I initialData,
                  WizardPage<I, T> firstPage,
                  final ProgressOperationWithInput<T> operation)
    {
-      super(caption, operation);
+      super(caption, role, operation);
 
       initialData_ = initialData;
       okCaption_ = okCaption;

@@ -1,7 +1,7 @@
 /*
  * ChooseMirrorDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                              OperationWithInput<CRANMirror> inputOperation,
                              MirrorsServerOperations mirrorOperations)
    {
-      super("Retrieving list of CRAN mirrors...", inputOperation);
+      super("Retrieving list of CRAN mirrors...", DialogRole.Dialog, inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
       mirrorOperations_ = mirrorOperations;

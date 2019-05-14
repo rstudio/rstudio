@@ -1,7 +1,7 @@
 /*
  * RmdTemplateOptionsDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,7 +49,7 @@ public class RmdTemplateOptionsDialog
          Operation onCancelled)
    {
       super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
-            template.getName() + " Options", onSaved, onCancelled);
+            template.getName() + " Options", DialogRole.Dialog, onSaved, onCancelled);
       setWidth("425px");
       setHeight(
          RStudioThemes.isFlat() ? "430px" : "450px"

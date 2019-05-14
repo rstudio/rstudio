@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,7 @@ import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -1010,7 +1011,7 @@ public class TextEditingTargetWidget
    public void debug_dumpContents()
    {
       String dump = editor_.debug_getDocumentDump();
-      new EditDialog(dump, false, false, new ProgressOperationWithInput<String>()
+      new EditDialog(dump, DialogRole.AlertDialog, false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)
@@ -1023,7 +1024,7 @@ public class TextEditingTargetWidget
    @Override
    public void debug_importDump()
    {
-      new EditDialog("", false, false, new ProgressOperationWithInput<String>()
+      new EditDialog("", DialogRole.AlertDialog, false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)

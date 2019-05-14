@@ -1,7 +1,7 @@
 /*
  * RSConnectDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,10 +23,12 @@ import com.google.gwt.user.client.ui.Widget;
 public abstract class RSConnectDialog<W extends Widget> 
                 extends ModalDialogBase
 {
-   public RSConnectDialog(RSConnectServerOperations server, 
+   public RSConnectDialog(RSConnectServerOperations server,
+                          DialogRole role,
                           final GlobalDisplay display, 
                           W contents)
    {
+      super(role);
       server_ = server;
       display_ = display;
       contents_ = contents;

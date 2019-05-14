@@ -1,7 +1,7 @@
 /*
  * EditView.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -30,7 +31,7 @@ public class EditView implements Display
       {
          public void execute()
          {
-            new EditDialog(text, isRCode, lineWrapping, operation).showModal();
+            new EditDialog(text, DialogRole.Dialog, isRCode, lineWrapping, operation).showModal();
          }
       });
    }

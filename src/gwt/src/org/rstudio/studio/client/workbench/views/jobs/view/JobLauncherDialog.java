@@ -45,7 +45,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
                             String code,
                             OperationWithInput<JobLaunchSpec> operation)
    {
-      super(caption, operation);
+      super(caption, DialogRole.Dialog, operation);
 
       controls_ = new JobLauncherControls();
 

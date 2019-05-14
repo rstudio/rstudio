@@ -1,7 +1,7 @@
 /*
  * SecondaryReposDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -57,7 +58,8 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                String cranRepoUrl,
                                boolean cranIsCustom)
    {
-      super("Retrieving list of secondary repositories...", operation);
+      super("Retrieving list of secondary repositories...", 
+            ModalDialogBase.DialogRole.Dialog, operation);
 
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;

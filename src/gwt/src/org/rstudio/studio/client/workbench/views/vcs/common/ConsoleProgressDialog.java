@@ -1,7 +1,7 @@
 /*
  * ConsoleProgressDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@ public class ConsoleProgressDialog extends ProgressDialog
                                 Integer exitCode,
                                 CryptoServerOperations server)
    {
-      super(title);
+      super(title, DialogRole.Dialog);
       
       if (consoleProcess == null && exitCode == null)
       {

@@ -1,7 +1,7 @@
 /*
  * ProgressDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,13 +64,14 @@ public abstract class ProgressDialog extends ModalDialogBase
       resources_.styles().ensureInjected();
    }
 
-   public ProgressDialog(String title)
+   public ProgressDialog(String title, ModalDialogBase.DialogRole role)
    {
-      this(title, null);
+      this(title, role, null);
    }
 
-   public ProgressDialog(String title, Object param)
+   public ProgressDialog(String title, ModalDialogBase.DialogRole role, Object param)
    {
+      super(role);
       addStyleName(resources_.styles().progressDialog());
 
       setText(title);

@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,7 +91,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          final OperationWithInput<Result> saveOperation,
          final Command onCancelled)
    {
-      super(title, 
+      super(title,
+            DialogRole.AlertDialog,
             saveOperation, 
             onCancelled != null ? new Operation() {
                                     @Override

@@ -1,7 +1,7 @@
 /*
  * ClearAllDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ public class ClearAllDialog extends ModalDialogBase
    public ClearAllDialog(int numObjects, 
                          final ProgressOperationWithInput<Boolean> okOperation)
    {
+      super(DialogRole.AlertDialog);
       RStudioGinjector.INSTANCE.injectMembers(this);
       numObjects_ = numObjects;
       

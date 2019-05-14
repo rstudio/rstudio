@@ -1,7 +1,7 @@
 /*
  * OpenFileDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@ public class OpenFileDialog extends FileDialog
                          boolean canChooseDirectories,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, label, false, false, false, context, filter, operation);
+      super(title, null, DialogRole.Dialog, label, false, false, false, context, filter, operation);
       canChooseDirectories_ = canChooseDirectories;
    }
    

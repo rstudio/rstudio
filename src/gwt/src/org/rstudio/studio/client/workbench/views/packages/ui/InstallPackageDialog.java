@@ -1,7 +1,7 @@
 /*
  * InstallPackageDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Packages", operation);
+      super("Install Packages", DialogRole.Dialog, operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;

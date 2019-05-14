@@ -1,7 +1,7 @@
 /*
  * ShinyGadgetDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
 {
    public ShinyGadgetDialog(String caption, String url, Size preferredSize)
    {
+      super(DialogRole.Dialog);
       RStudioGinjector.INSTANCE.injectMembers(this);
       url_ = url;
       preferredSize_ = preferredSize;

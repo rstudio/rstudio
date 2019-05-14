@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsUiCsvLocale.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       OperationWithInput<DataImportOptionsCsvLocale> operation,
       DataImportOptionsCsvLocale locale)
    {
-      super("Configure Locale", operation);
+      super("Configure Locale", DialogRole.Dialog, operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
 

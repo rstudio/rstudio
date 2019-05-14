@@ -1,7 +1,7 @@
 /*
  * RSConnectReconnectWizard.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@ public class RSConnectReconnectWizard
          String serverUrl,
          ProgressOperationWithInput<NewRSConnectAccountResult> onCompleted) 
    {
-      super("Reconnect Account", "Connect Account",
+      super("Reconnect Account", "Connect Account", DialogRole.Dialog,
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);

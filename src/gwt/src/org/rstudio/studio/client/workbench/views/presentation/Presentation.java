@@ -2,7 +2,7 @@
  * Presentation.java
 
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.ModalDialogBase.DialogRole;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -383,9 +384,10 @@ public class Presentation extends BasePresenter
    void onTutorialFeedback()
    {
       EditDialog editDialog = new EditDialog("Provide Feedback",
-                                             "Submit", 
+                                             "Submit",
                                              "",
-                                             false, 
+                                             DialogRole.Dialog,
+                                             false,
                                              true,
                                              new Size(450,300),
                      new ProgressOperationWithInput<String>() {
@@ -673,8 +675,6 @@ public class Presentation extends BasePresenter
    private final PresentationDispatcher dispatcher_;
    private final SlideNavigationPresenter navigationPresenter_;
    private PresentationState currentState_ = null;
-  
-   private boolean usingRmd_ = false;
   
    private FileSystemItem saveAsStandaloneDefaultPath_ = null;
    

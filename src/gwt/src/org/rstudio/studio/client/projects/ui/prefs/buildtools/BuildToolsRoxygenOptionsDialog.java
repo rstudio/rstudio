@@ -1,7 +1,7 @@
 /*
  * BuildToolsRoxygenOptionsDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
                BuildToolsRoxygenOptions options,
                OperationWithInput<BuildToolsRoxygenOptions> operation)
    {
-      super("Roxygen Options", operation);
+      super("Roxygen Options", DialogRole.Dialog, operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       chkRocletRd_.setValue(options.getRocletRd());

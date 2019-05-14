@@ -1,7 +1,7 @@
 /*
  * CleanUnusedDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,7 @@ public class CleanUnusedDialog
          OperationWithInput<ArrayList<PackratPackageAction>> checkOperation,
          Operation cancelOperation)
    {
-      super("Clean Unused Packages", "Remove Packages", cleanDS, checkOperation, 
+      super("Clean Unused Packages", "Remove Packages", DialogRole.Dialog, cleanDS, checkOperation,
             cancelOperation);
       globalDisplay_ = globalDisplay;
    }

@@ -1,7 +1,7 @@
 /*
  * NewConnectionSnippetDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
       ArrayList<NewConnectionSnippetParts> config,
       NewConnectionInfo newConnectionInfo)
    {
-      super("Advanced Options", operation);
+      super("Advanced Options", DialogRole.Dialog, operation);
       initialConfig_ = config;
       newConnectionInfo_ = newConnectionInfo;
 

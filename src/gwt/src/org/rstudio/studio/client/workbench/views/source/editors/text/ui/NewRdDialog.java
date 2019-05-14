@@ -1,7 +1,7 @@
 /*
  * NewRdDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,7 +49,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
    
    public NewRdDialog(OperationWithInput<Result> operation)
    {
-      super("New R Documentation File", operation);
+      super("New R Documentation File", DialogRole.Dialog, operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
    }

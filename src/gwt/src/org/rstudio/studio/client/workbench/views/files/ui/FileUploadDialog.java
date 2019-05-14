@@ -1,7 +1,7 @@
 /*
  * FileUploadDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,9 +43,10 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          RemoteFileSystemContext fileSystemContext,
          OperationWithInput<PendingFileUpload> completedOperation)
    {
-      super("Upload Files", 
-            "Uploading file...", 
-            actionURL, 
+      super("Upload Files",
+            DialogRole.Dialog,
+            "Uploading file...",
+            actionURL,
             completedOperation);
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
