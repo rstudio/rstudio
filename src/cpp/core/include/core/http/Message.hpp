@@ -135,7 +135,11 @@ private:
 
    void setExtraHeader(const Header& header)
    {
-      setHeader(header);
+      // multiple Set-Cookie directives are allowed on the message
+      if (header.name == "Set-Cookie")
+         addHeader(header);
+      else
+         setHeader(header);
    }
    
 private:

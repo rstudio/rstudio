@@ -41,7 +41,8 @@ public class RpcRequest
                      String resultFieldName,
                      String sourceWindow,
                      String clientId,
-                     String clientVersion)
+                     String clientVersion,
+                     boolean refreshCredentials)
    {
       url_ = url;
       method_ = method;
@@ -58,6 +59,7 @@ public class RpcRequest
       else
          clientId_ = null;
       clientVersion_ = new JSONString(clientVersion);
+      refreshCredentials_ = refreshCredentials;
    }
    
    public void send(RpcRequestCallback callback)
@@ -81,7 +83,7 @@ public class RpcRequest
       // add client id if we have it
       if (clientId_ != null)
          request.put("clientId", clientId_);
-      
+
       // add client version
       request.put("clientVersion", clientVersion_);
       
@@ -97,6 +99,10 @@ public class RpcRequest
       {
          builder.setHeader("X-CSRF-Token", ApplicationCsrfToken.getCsrfToken());
       }
+
+      // inform the server if we should not refresh auth creds
+      if (!refreshCredentials_)
+         builder.setHeader("X-RStudio-Refresh-Auth-Creds", "0");
       
       // send request
       try
@@ -267,6 +273,11 @@ public class RpcRequest
       return clientVersion_.toString();
    }
 
+   public boolean getRefreshCreds()
+   {
+      return refreshCredentials_;
+   }
+
    final private String url_ ;
    final private String method_ ;
    final private JSONArray params_ ;
@@ -276,8 +287,8 @@ public class RpcRequest
    final private JSONString sourceWindow_;
    final private JSONString clientId_;
    final private JSONString clientVersion_;
+   final private boolean refreshCredentials_;
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
-   
-     
+
 }

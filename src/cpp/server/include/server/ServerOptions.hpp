@@ -154,6 +154,11 @@ public:
       return authStaySignedInDays_;
    }
 
+   int authTimeoutMinutes()
+   {
+      return authTimeoutMinutes_;
+   }
+
    bool authEncryptPassword()
    {
       return authEncryptPassword_;
@@ -172,6 +177,11 @@ public:
    unsigned int authMinimumUserId()
    {
       return authMinimumUserId_;
+   }
+
+   int authSignInThrottleSeconds()
+   {
+      return authSignInThrottleSeconds_;
    }
 
    std::string authPamHelperPath() const
@@ -286,11 +296,13 @@ private:
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
+   int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
+   int authSignInThrottleSeconds_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

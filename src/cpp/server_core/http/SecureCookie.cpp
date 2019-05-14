@@ -215,7 +215,7 @@ void set(const std::string& name,
                       value,
                       request,
                       validDuration,
-                      boost::none,
+                      boost::optional<boost::gregorian::days>(),
                       path,
                       pResponse,
                       secure);
@@ -241,6 +241,31 @@ void set(const std::string& name,
    // expire from browser as requested
    if (cookieExpiresDays.is_initialized())
       cookie.setExpires(*cookieExpiresDays);
+
+   // add to response
+   pResponse->addCookie(cookie);
+}
+
+void set(const std::string& name,
+         const std::string& value,
+         const http::Request& request,
+         const boost::posix_time::time_duration& validDuration,
+         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const std::string& path,
+         http::Response* pResponse,
+         bool secure)
+{
+   // create secure cookie
+   http::Cookie cookie = createSecureCookie(name,
+                                            value,
+                                            request,
+                                            validDuration,
+                                            path,
+                                            secure);
+
+   // expire from browser as requested
+   if (expiresFromNow.is_initialized())
+      cookie.setExpires(*expiresFromNow);
 
    // add to response
    pResponse->addCookie(cookie);

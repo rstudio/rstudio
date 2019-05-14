@@ -385,7 +385,17 @@ void Response::addCookie(const Cookie& cookie)
 	addHeader("Set-Cookie", cookie.cookieHeaderValue()) ;
 }
 
-   
+ Headers Response::getCookies() const
+ {
+    http::Headers headers;
+    for (const http::Header& header : headers_)
+    {
+       if (header.name == "Set-Cookie")
+          headers.push_back(header);
+    }
+    return headers;
+ }
+
 Error Response::setBody(const std::string& content)
 {
    std::istringstream is(content);

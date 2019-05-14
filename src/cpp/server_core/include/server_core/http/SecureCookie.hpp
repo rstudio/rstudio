@@ -68,6 +68,15 @@ void set(const std::string& name,
          http::Response* pResponse,
          bool secure);
 
+void set(const std::string& name,
+         const std::string& value,
+         const http::Request& request,
+         const boost::posix_time::time_duration& validDuration,
+         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const std::string& path,
+         http::Response* pResponse,
+         bool secure);
+
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
