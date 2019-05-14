@@ -312,7 +312,10 @@ ProgramStatus Options::read(int argc,
         "deprecated: will always be true")
       ("auth-sign-in-throttle-seconds",
         value<int>(&authSignInThrottleSeconds_)->default_value(5),
-        "minimum amount of time a user must wait before attempting to sign in again");
+        "minimum amount of time a user must wait before attempting to sign in again")
+      ("auth-revocation-list-dir",
+        value<std::string>(&authRevocationListDir_)->default_value("/var/run/rstudio-server"),
+        "path to the directory which contains the revocation list to be used for storing expired auth tokens");
 
    options_description monitor("monitor");
    monitor.add_options()

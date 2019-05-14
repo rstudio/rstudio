@@ -207,9 +207,9 @@ Error initialize(ProgramMode programMode)
             return error;
 
          // ensure that it is writeable by all users
-         error = core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
-         if (error)
-            return error;
+         // this is best case and we swallow the error because it is legitimately possible we
+         // lack the permissions to perform this (such as if we are an unprivileged rsession user)
+         core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
 
          databasePathStr = databasePath.absolutePath();
       }
@@ -268,6 +268,21 @@ Error initialize(ProgramMode programMode)
    // open the crashpad database
    std::unique_ptr<crashpad::CrashReportDatabase> pDatabase =
          crashpad::CrashReportDatabase::Initialize(databasePath);
+
+   // in server mode, attempt to give full access to the entire database for all users
+   // this is necessary so unprivileged processes can write crash dumps properly
+   // again, we swallow the errors here because unprivileged processes cannot change permissions
+#ifdef RSTUDIO_SERVER
+   if (s_programMode == ProgramMode::Server)
+   {
+      std::vector<FilePath> dbFolders;
+      FilePath(databasePathStr).children(&dbFolders);
+      for (const FilePath& subPath : dbFolders)
+         core::system::changeFileMode(subPath, core::system::EveryoneReadWriteExecuteMode);
+   }
+#endif
+
+   // ensure database is properly initialized
    if (pDatabase != nullptr && pDatabase->GetSettings() != nullptr)
       pDatabase->GetSettings()->SetUploadsEnabled(uploadDumps);
    else
