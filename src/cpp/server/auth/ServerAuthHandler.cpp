@@ -383,9 +383,16 @@ void invalidateAuthCookie(const std::string& cookie,
 Error initialize()
 {
    // initialize by loading the current contents of the revocation list into memory
-   FilePath sharedStoragePath(options().getOverlayOption(kSessionSharedStoragePath));
-   s_revocationList = sharedStoragePath.childPath("revocation-list");
-   s_revocationLockFile = sharedStoragePath.childPath("revocation-list.lock");
+   FilePath rootDir(options().authRevocationListDir());
+   Error error = rootDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Could not create revocation list directory");
+      return error;
+   }
+
+   s_revocationList = rootDir.childPath("revocation-list");
+   s_revocationLockFile = rootDir.childPath("revocation-list.lock");
 
    // create a file lock to gain exclusive access to the revocation list
    boost::shared_ptr<FileLock> lock = FileLock::createDefault();
@@ -394,7 +401,7 @@ Error initialize()
    while (numTries < 30)
    {
       ScopedFileLock fileLock(lock, s_revocationLockFile);
-      Error error = fileLock.error();
+      error = fileLock.error();
       if (error)
       {
          // if we could not acquire the lock, some other rserver process has

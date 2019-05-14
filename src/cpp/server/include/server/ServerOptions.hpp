@@ -189,6 +189,11 @@ public:
       return std::string(authPamHelperPath_.c_str());
    }
 
+   std::string authRevocationListDir() const
+   {
+      return authRevocationListDir_;
+   }
+
    // rsession
    std::string rsessionWhichR() const
    {
@@ -303,6 +308,7 @@ private:
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
    int authSignInThrottleSeconds_;
+   std::string authRevocationListDir_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;
