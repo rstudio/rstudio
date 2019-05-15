@@ -1,7 +1,7 @@
 /*
  * ModalDialogBase.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -39,15 +40,14 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import java.util.ArrayList;
 
-
 public abstract class ModalDialogBase extends DialogBox
 {
-   protected ModalDialogBase()
+   protected ModalDialogBase(DialogRole role)
    {
-      this(null);
+      this(null, role);
    }
 
-   protected ModalDialogBase(SimplePanel containerPanel)
+   protected ModalDialogBase(SimplePanel containerPanel, DialogRole role)
    {
       // core initialization. passing false for modal works around
       // modal PopupPanel supressing global keyboard accelerators (like
@@ -55,6 +55,10 @@ public abstract class ModalDialogBase extends DialogBox
       super(false, false);
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
+
+      // ARIA window role
+      role_ = role;
+      role_.set(getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -550,6 +554,13 @@ public abstract class ModalDialogBase extends DialogBox
       currentAnimation_.run(200);
    }
 
+   @Override
+   public void setText(String text)
+   {
+      super.setText(text);
+      role_.setAriaLabelProperty(getElement(), text);
+   }
+
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
@@ -566,4 +577,5 @@ public abstract class ModalDialogBase extends DialogBox
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
+   private DialogRole role_;
 }

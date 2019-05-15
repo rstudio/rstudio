@@ -1,7 +1,7 @@
 /*
  * EditSnippetsPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -66,6 +67,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
 {
    public EditSnippetsDialog()
    {
+      super(Roles.getDialogRole());
       setText("Edit Snippets");
       RStudioGinjector.INSTANCE.injectMembers(this);
       

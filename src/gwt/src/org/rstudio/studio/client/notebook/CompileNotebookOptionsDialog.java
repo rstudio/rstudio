@@ -1,7 +1,7 @@
 /*
  * CompileNotebookOptionsDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.notebook;
 
 import java.util.Date;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Style;
@@ -50,7 +51,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String defaultType,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
-      super("Compile Report from R Script", operation);
+      super("Compile Report from R Script", Roles.getDialogRole(), operation);
       docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
 

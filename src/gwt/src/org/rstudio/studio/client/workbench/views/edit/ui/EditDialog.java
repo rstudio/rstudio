@@ -1,7 +1,7 @@
 /*
  * EditDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 public class EditDialog extends ModalDialogBase
 {
    public EditDialog(String text,
+                     DialogRole role,
                      boolean isRCode,
                      boolean lineWrapping,
                      final ProgressOperationWithInput<String> operation)
@@ -35,6 +37,7 @@ public class EditDialog extends ModalDialogBase
       this("Edit", 
            "Save",
            text, 
+           role,
            isRCode, 
            lineWrapping, 
            new Size(0,0), 
@@ -44,11 +47,13 @@ public class EditDialog extends ModalDialogBase
    public EditDialog(String caption,
                      String saveCaption,
                      String text,
+                     DialogRole role,
                      boolean isRCode,
                      boolean lineWrapping,
                      Size minimumSize,
                      final ProgressOperationWithInput<String> operation)
    {
+      super(role);
       editor_ = new AceEditor();
       setText(caption);
       sourceText_ = text;

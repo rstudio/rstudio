@@ -1,7 +1,7 @@
 /*
  * NewConnectionWizard.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -56,6 +57,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       super(
          "New Connection",
          "OK",
+            Roles.getDialogRole(),
          context,
          createFirstPage(context, warning),
          operation

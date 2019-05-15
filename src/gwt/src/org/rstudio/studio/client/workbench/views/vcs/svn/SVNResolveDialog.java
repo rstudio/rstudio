@@ -1,7 +1,7 @@
 /*
  * SVNResolveDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
@@ -34,7 +35,7 @@ public class SVNResolveDialog extends ModalDialog<String>
                            String caption,
                            OperationWithInput<String> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       fileCount_ = fileCount;
    }
 

@@ -1,7 +1,7 @@
 /*
  * AddRemoteDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -60,7 +61,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                           String defaultUrl,
                           OperationWithInput<Input> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
       
       container_ = new VerticalPanel();

@@ -1,7 +1,7 @@
 /*
  * TerminalInfoDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ResultCallback;
@@ -36,6 +37,7 @@ public class TerminalInfoDialog extends ModalDialogBase
 
    public TerminalInfoDialog(String globalInfo, final TerminalSession session)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText("Terminal Diagnostics");

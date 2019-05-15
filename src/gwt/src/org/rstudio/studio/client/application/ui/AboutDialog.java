@@ -1,7 +1,7 @@
 /*
  * AboutDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 package org.rstudio.studio.client.application.ui;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -28,6 +29,7 @@ public class AboutDialog extends ModalDialogBase
 {
    public AboutDialog(ProductInfo info)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText("About " + editionInfo_.editionName());

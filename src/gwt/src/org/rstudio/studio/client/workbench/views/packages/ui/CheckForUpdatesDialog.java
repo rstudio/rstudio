@@ -1,7 +1,7 @@
 /*
  * CheckForUpdatesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -44,7 +45,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                                 OperationWithInput<ArrayList<PackageUpdate>> checkOperation,
                                 Operation cancelOperation)
    {
-      super("Update Packages", "Install Updates", updatesDS, checkOperation, cancelOperation);
+      super("Update Packages", "Install Updates", Roles.getDialogRole(), updatesDS, checkOperation, cancelOperation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       indicator_ = addProgressIndicator();

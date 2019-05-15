@@ -1,7 +1,7 @@
 /*
  * CompilePdfProgressDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.compilepdf.dialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -48,7 +49,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
 {  
    public CompilePdfProgressDialog()
    {
-      super("Compiling PDF...");
+      super("Compiling PDF...", Roles.getDialogRole());
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       

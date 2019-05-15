@@ -1,7 +1,7 @@
 /*
  * MessageDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
@@ -38,6 +39,7 @@ public class MessageDialog extends ModalDialogBase
    
    public MessageDialog(int type, String caption, Widget message)
    {
+      super(Roles.getAlertdialogRole());
       type_ = type;
       setText(caption);
       messageWidget_ = message;

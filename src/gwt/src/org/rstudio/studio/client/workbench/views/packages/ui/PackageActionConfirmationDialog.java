@@ -1,7 +1,7 @@
 /*
  * PackageActionConfirmationDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -50,11 +51,12 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    public PackageActionConfirmationDialog(
          String caption,
          String okCaption,
+         DialogRole role,
          ServerDataSource<JsArray<T>> actionsDS,
          OperationWithInput<ArrayList<T>> checkOperation,
          Operation cancelOperation)
    {
-      super(caption, checkOperation, cancelOperation);
+      super(caption, role, checkOperation, cancelOperation);
       actionsDS_ = actionsDS;
       
       setOkButtonCaption(okCaption);

@@ -2,7 +2,7 @@
  * Presentation.java
 
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 import java.util.Iterator;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
@@ -383,9 +384,10 @@ public class Presentation extends BasePresenter
    void onTutorialFeedback()
    {
       EditDialog editDialog = new EditDialog("Provide Feedback",
-                                             "Submit", 
+                                             "Submit",
                                              "",
-                                             false, 
+                                             Roles.getDialogRole(),
+                                             false,
                                              true,
                                              new Size(450,300),
                      new ProgressOperationWithInput<String>() {
@@ -673,8 +675,6 @@ public class Presentation extends BasePresenter
    private final PresentationDispatcher dispatcher_;
    private final SlideNavigationPresenter navigationPresenter_;
    private PresentationState currentState_ = null;
-  
-   private boolean usingRmd_ = false;
   
    private FileSystemItem saveAsStandaloneDefaultPath_ = null;
    

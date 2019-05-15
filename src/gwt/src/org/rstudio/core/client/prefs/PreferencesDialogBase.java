@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.prefs;
 
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -42,7 +43,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                    boolean showApplyButton,
                                    PreferencesDialogPaneBase<T>[] panes)
    {
-      super();
+      super(Roles.getDialogRole());
       setText(caption);
       panes_ = panes;
       

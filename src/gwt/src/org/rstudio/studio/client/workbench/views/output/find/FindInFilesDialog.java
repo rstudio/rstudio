@@ -1,7 +1,7 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -93,7 +94,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    public FindInFilesDialog(OperationWithInput<State> operation)
    {
-      super("Find in Files", operation);
+      super("Find in Files", Roles.getDialogRole(), operation);
 
       dirChooser_ = new DirectoryChooserTextBox("Search in:", null);
       dirChooser_.setText("");

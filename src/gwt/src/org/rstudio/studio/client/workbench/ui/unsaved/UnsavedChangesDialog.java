@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -91,7 +92,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          final OperationWithInput<Result> saveOperation,
          final Command onCancelled)
    {
-      super(title, 
+      super(title,
+            Roles.getAlertdialogRole(),
             saveOperation, 
             onCancelled != null ? new Operation() {
                                     @Override
