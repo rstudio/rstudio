@@ -185,10 +185,12 @@ public class UserPrefsAccessor extends Prefs
    }
 
    public final static String WINDOWS_TERMINAL_SHELL_DEFAULT = "default";
-   public final static String WINDOWS_TERMINAL_SHELL_GIT_BASH = "git-bash";
-   public final static String WINDOWS_TERMINAL_SHELL_WSL_BASH = "wsl-bash";
-   public final static String WINDOWS_TERMINAL_SHELL_CMD = "cmd";
-   public final static String WINDOWS_TERMINAL_SHELL_POWERSHELL = "powershell";
+   public final static String WINDOWS_TERMINAL_SHELL_WIN_GIT_BASH = "win-git-bash";
+   public final static String WINDOWS_TERMINAL_SHELL_WIN_WSL_BASH = "win-wsl-bash";
+   public final static String WINDOWS_TERMINAL_SHELL_WIN_CMD = "win-cmd";
+   public final static String WINDOWS_TERMINAL_SHELL_WIN_PS = "win-ps";
+   public final static String WINDOWS_TERMINAL_SHELL_PS_CORE = "ps-core";
+   public final static String WINDOWS_TERMINAL_SHELL_CUSTOM = "custom";
    public final static String WINDOWS_TERMINAL_SHELL_NONE = "none";
 
    /**

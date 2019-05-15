@@ -154,11 +154,18 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
-            new String[] {
-                  "Always",
-                  "Never",
-                  "Ask"
-            });
+            new String[]
+            {
+               "Always",
+               "Never",
+               "Ask"
+            },
+            new String[]
+            {
+               UserPrefs.SAVE_WORKSPACE_ALWAYS,
+               UserPrefs.SAVE_WORKSPACE_NEVER,
+               UserPrefs.SAVE_WORKSPACE_ASK
+            }, false);
       spaced(saveWorkspace_);
       basic.add(saveWorkspace_);
       
@@ -422,9 +429,9 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs prefs)
    {
-      boolean uiReloadRequired = super.onApply(rPrefs);
+      boolean uiReloadRequired = super.onApply(prefs);
       boolean restartRequired = false;
 
       if (enableAccessibility_ != null &&
@@ -477,45 +484,20 @@ public class GeneralPreferencesPane extends PreferencesPane
  
       if (saveWorkspace_.isEnabled())
       {
-         int saveAction;
-         switch (saveWorkspace_.getListBox().getSelectedIndex())
-         {
-            case 0: 
-               saveAction = SaveAction.SAVE; 
-               break; 
-            case 1: 
-               saveAction = SaveAction.NOSAVE; 
-               break; 
-            case 2:
-            default: 
-               saveAction = SaveAction.SAVEASK; 
-               break; 
-         }
+         prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
+         prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
+         prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
+         prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
+         prefs.runRprofileOnResume().setGlobalValue(loadRData_.getValue());
+         prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+         prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
+         prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
+         prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
+         prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
          
-         // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
-                                                         reuseSessionsForProjectLinks_.getValue(),
-                                                         saveAction, 
-                                                         loadRData_.getValue(),
-                                                         rProfileOnResume_.getValue(),
-                                                         dirChooser_.getText(),
-                                                         getDefaultRVersion(),
-                                                         getRestoreProjectRVersion(),
-                                                         showLastDotValue_.getValue(),
-                                                         enableCrashReporting_.getValue());
-         rPrefs.setGeneralPrefs(generalPrefs);
-         
-         // set history prefs
-         HistoryPrefs historyPrefs = HistoryPrefs.create(
-                                          alwaysSaveHistory_.getValue(),
-                                          removeHistoryDuplicates_.getValue());
-         rPrefs.setHistoryPrefs(historyPrefs);
-         
-         
-         // set projects prefs
-         ProjectsPrefs projectsPrefs = ProjectsPrefs.create(
-                                             restoreLastProject_.getValue());
-         rPrefs.setProjectsPrefs(projectsPrefs);
+         // TODO: Default R version
+         // TODO: Restore project R version
+         // TODO: Enable crash reporting
       }
       
       if (restartRequired)

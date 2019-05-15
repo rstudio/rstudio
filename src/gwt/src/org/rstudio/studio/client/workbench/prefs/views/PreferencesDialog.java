@@ -87,14 +87,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    }
    
    @Override
-   protected RPrefs createEmptyPrefs()
-   {
-      return RPrefs.createEmpty();
-   }
-
-  
-   @Override
-   protected void doSaveChanges(final RPrefs rPrefs,
+   protected void doSaveChanges(final UserPrefs rPrefs,
                                 final Operation onCompleted,
                                 final ProgressIndicator progressIndicator,
                                 final boolean reload)

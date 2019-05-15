@@ -23,6 +23,7 @@ import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -64,40 +65,21 @@ public class OptionsLoader
 
    public void showOptions(final Class<?> paneClass)
    {
-      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
-                                                      "Error Reading Options");
-      indicator.onProgress("Reading options...");
-
-      server_.getRPrefs(
-         new SimpleRequestCallback<RPrefs>() {
-
-            @Override
-            public void onResponseReceived(RPrefs rPrefs)
-            {
-               indicator.onCompleted();
-               PreferencesDialog prefDialog = pPrefDialog_.get();
-               prefDialog.initialize(rPrefs);
-               if (paneClass != null)
-                  prefDialog.activatePane(paneClass);
-               prefDialog.showModal();
-               
-               // if the user changes global sweave or latex options notify
-               // them if this results in the current project being out
-               // of sync with the global settings
-               new SweaveProjectOptionsNotifier(prefDialog);
-               
-               // activate main window if we are in desktop mode (because on
-               // the mac you can actually show prefs from a satellite window)
-               if (Desktop.isDesktop())
-                  Desktop.getFrame().bringMainFrameToFront();
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               indicator.onError(error.getUserMessage());
-            }           
-         });        
+      PreferencesDialog prefDialog = pPrefDialog_.get();
+      prefDialog.initialize(RStudioGinjector.INSTANCE.getUserPrefs());
+      if (paneClass != null)
+         prefDialog.activatePane(paneClass);
+      prefDialog.showModal();
+      
+      // if the user changes global sweave or latex options notify
+      // them if this results in the current project being out
+      // of sync with the global settings
+      new SweaveProjectOptionsNotifier(prefDialog);
+      
+      // activate main window if we are in desktop mode (because on
+      // the mac you can actually show prefs from a satellite window)
+      if (Desktop.isDesktop())
+         Desktop.getFrame().bringMainFrameToFront();
    }
 
    

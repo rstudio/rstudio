@@ -185,15 +185,14 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs prefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
-
-      SourceControlPrefs prefs = SourceControlPrefs.create(
-            chkVcsEnabled_.getValue(), gitExePathChooser_.getText(),
-            svnExePathChooser_.getText(), terminalPathChooser_.getText());
-
-      rPrefs.setSourceControlPrefs(prefs);
+      boolean restartRequired = super.onApply(prefs);
+      
+      prefs.vcsEnabled().setGlobalValue(chkVcsEnabled_.getValue());
+      prefs.gitExePath().setGlobalValue(gitExePathChooser_.getText());
+      prefs.svnExePath().setGlobalValue(svnExePathChooser_.getText());
+      prefs.terminalPath().setGlobalValue(terminalPathChooser_.getText());
 
       return restartRequired;
    }

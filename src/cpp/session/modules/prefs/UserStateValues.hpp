@@ -43,6 +43,10 @@ namespace prefs {
 #define kPublishAccount "publish_account"
 #define kDocumentOutlineWidth "document_outline_width"
 #define kConnectVia "connect_via"
+#define kConnectViaConnectRConsole "connect-r-console"
+#define kConnectViaConnectNewRScript "connect-new-r-script"
+#define kConnectViaConnectNewRNotebook "connect-new-r-notebook"
+#define kConnectViaConnectCopyToClipboard "connect-copy-to-clipboard"
 
 class UserStateValues: public Preferences
 {

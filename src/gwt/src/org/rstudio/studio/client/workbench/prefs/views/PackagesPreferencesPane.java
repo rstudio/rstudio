@@ -358,9 +358,9 @@ public class PackagesPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs prefs)
    {
-      boolean reload = super.onApply(rPrefs);
+      boolean reload = super.onApply(prefs);
 
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
@@ -394,17 +394,14 @@ public class PackagesPreferencesPane extends PreferencesPane
       );
      
       // set packages prefs
-      PackagesPrefs packagesPrefs = PackagesPrefs.create(
-                                              cranMirror_, 
-                                              useInternet2_.getValue(),
-                                              null,
-                                              cleanupAfterCheckSuccess_.getValue(),
-                                              viewDirAfterCheckFailure_.getValue(),
-                                              hideObjectFiles_.getValue(),
-                                              useDevtools_.getValue(),
-                                              useSecurePackageDownload_.getValue(),
-                                              useNewlineInMakefiles_.getValue());
-      rPrefs.setPackagesPrefs(packagesPrefs);
+      // TODO: set CRAN mirror prefs
+      prefs.useInternet2().setGlobalValue(useInternet2_.getValue());
+      prefs.cleanupAfterRCmdCheck().setGlobalValue(cleanupAfterCheckSuccess_.getValue());
+      prefs.viewDirAfterRCmdCheck().setGlobalValue(viewDirAfterCheckFailure_.getValue());
+      prefs.hideObjectFiles().setGlobalValue(hideObjectFiles_.getValue());
+      prefs.useDevtools().setGlobalValue(useDevtools_.getValue());
+      prefs.useSecureDownload().setGlobalValue(useSecurePackageDownload_.getValue());
+      prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
       
       return reload || reloadRequired_;
    }

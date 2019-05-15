@@ -60,7 +60,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                {
                   closeDialog();
                }
-            });        
+            });
          }
       });
       ElementIds.assignElementId(okButton.getElement(), ElementIds.PREFERENCES_CONFIRM);

@@ -707,7 +707,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    optionsJson["working_directory"] =
                   module_context::shellWorkingDirectory().absolutePath();
    optionsJson["extra_path_entries"] = extraPathEntries;
-   optionsJson["shell_type"] = static_cast<int>(shellType);
+   optionsJson["shell_type"] = console_process::TerminalShell::getShellName(shellType);
    pResponse->setResult(optionsJson);
 
    return Success();

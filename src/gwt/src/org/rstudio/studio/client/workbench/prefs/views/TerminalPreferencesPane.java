@@ -194,17 +194,17 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      final TerminalPrefs terminalPrefs = prefs.getTerminalPrefs();
-
       Scheduler.get().scheduleDeferred(() -> server_.getTerminalShells(
             new ServerRequestCallback<JsArray<TerminalShellInfo>>()
       {
          @Override
          public void onResponseReceived(JsArray<TerminalShellInfo> shells)
          {
-            int currentShell = terminalPrefs.getDefaultTerminalShellValue();
+            String currentShell = BrowseCap.isWindowsDesktop() ?
+               prefs.windowsTerminalShell().getValue() :
+               prefs.posixTerminalShell().getValue();
             int currentShellIndex = 0;
 
             TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
@@ -214,10 +214,10 @@ public class TerminalPreferencesPane extends PreferencesPane
             for (int i = 0; i < shells.length(); i++)
             {
                TerminalShellInfo info = shells.get(i);
-               if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
+               if (StringUtil.equals(info.getShellType(), UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM))
                   hasCustom = true;
                TerminalPreferencesPane.this.terminalShell_.addChoice(
-                     info.getShellName(), Integer.toString(info.getShellType()));
+                     info.getShellName(), info.getShellType());
                if (info.getShellType() == currentShell)
                   currentShellIndex = i;
             }
@@ -229,9 +229,9 @@ public class TerminalPreferencesPane extends PreferencesPane
 
             if (hasCustom)
             {
-               customShellChooser_.setText(terminalPrefs.getCustomTerminalShellPath());
+               customShellChooser_.setText(prefs.customShellCommand().getValue());
                customShellChooser_.setEnabled(true);
-               customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
+               customShellOptions_.setText(prefs.customShellOptions().getValue());
                customShellOptions_.setEnabled(true);
             }
             manageCustomShellControlVisibility();
@@ -292,10 +292,14 @@ public class TerminalPreferencesPane extends PreferencesPane
          prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
          prefs_.busyDetection().setGlobalValue(selectedBusyMode());
       } 
-      TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
-            customShellChooser_.getText(),
-            customShellOptions_.getText());
-      rPrefs.setTerminalPrefs(terminalPrefs);
+      
+      if (BrowseCap.isWindowsDesktop())
+         prefs_.windowsTerminalShell().setGlobalValue(selectedShellType());
+      else
+         prefs_.posixTerminalShell().setGlobalValue(selectedShellType());
+
+      prefs_.customShellCommand().setGlobalValue(customShellChooser_.getText());
+      prefs_.customShellOptions().setGlobalValue(customShellOptions_.getText());
 
       return restartRequired;
    }
@@ -320,16 +324,15 @@ public class TerminalPreferencesPane extends PreferencesPane
       return !BrowseCap.isWindowsDesktop();
    }
 
-   private int selectedShellType()
+   private String selectedShellType()
    {
       int idx = terminalShell_.getListBox().getSelectedIndex();
-      String valStr = terminalShell_.getListBox().getValue(idx);
-      return StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
+      return terminalShell_.getListBox().getValue(idx);
    }
 
    private void manageCustomShellControlVisibility()
    {
-      boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
+      boolean customEnabled = (selectedShellType() == UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM);
       customShellPathLabel_.setVisible(customEnabled);
       customShellChooser_.setVisible(customEnabled);
       customShellOptionsLabel_.setVisible(customEnabled);

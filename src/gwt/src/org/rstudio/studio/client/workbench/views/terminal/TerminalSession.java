@@ -290,13 +290,11 @@ public class TerminalSession extends XTermWidget
       String inputText = input;
       if (inputText != null && BrowseCap.isWindowsDesktop())
       {
-         int shellType = getProcInfo().getShellType();
-         if (shellType == TerminalShellInfo.SHELL_CMD32 ||
-               shellType == TerminalShellInfo.SHELL_CMD64 ||
-               shellType == TerminalShellInfo.SHELL_PS32 ||
-               shellType == TerminalShellInfo.SHELL_PS64 ||
-               shellType == TerminalShellInfo.SHELL_PSCORE ||
-               (BrowseCap.isWindowsDesktop() && shellType == TerminalShellInfo.SHELL_CUSTOM))
+         String shellType = getProcInfo().getShellType();
+         if (shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD ||
+             shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS ||
+             shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE ||
+               (BrowseCap.isWindowsDesktop() && shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM))
          {
             inputText = StringUtil.normalizeNewLinesToCR(inputText);
          }
@@ -698,17 +696,15 @@ public class TerminalSession extends XTermWidget
       {
       // Windows command-prompt and PowerShell don't support buffer reloading
       // due to limitations of how they work with WinPty.
-      case TerminalShellInfo.SHELL_CMD32:
-      case TerminalShellInfo.SHELL_CMD64:
-      case TerminalShellInfo.SHELL_PS32:
-      case TerminalShellInfo.SHELL_PS64:
-      case TerminalShellInfo.SHELL_PSCORE:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
          // Do load the buffer if terminal was just created via API, as
          // the initial message and prompt may have been sent before the
          // client/server channel was opened.
          return createdByApi_;
 
-      case TerminalShellInfo.SHELL_CUSTOM:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
          // on Windows we don't know if custom shell supports reload so
          // assume it does not
          if (BrowseCap.isWindowsDesktop())

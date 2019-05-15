@@ -88,7 +88,7 @@
         },
         "windows_terminal_shell": {
             "type": "string",
-            "enum": ["default", "git-bash", "wsl-bash", "cmd", "powershell", "none"],
+            "enum": ["default", "win-git-bash", "win-wsl-bash", "win-cmd", "win-ps", "ps-core", "custom", "none"],
             "default": "default", 
             "description": "The terminal shell to use on Windows."
         },

@@ -22,6 +22,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
+#include "prefs/UserPrefValues.hpp"
 
 namespace rstudio {
 namespace session {
@@ -147,27 +148,27 @@ std::string TerminalShell::getShellName(ShellType type)
 TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& str)
 {
    std::string typeStr = core::string_utils::toLower(str);
-   if (typeStr == "win-cmd")
+   if (typeStr == kWindowsTerminalShellWinCmd)
    {
       return TerminalShell::ShellType::Cmd64;
    }
-   else if (typeStr == "win-ps")
+   else if (typeStr == kWindowsTerminalShellWinPs)
    {
       return TerminalShell::ShellType::PS64;
    }
-   else if (typeStr == "ps-core")
+   else if (typeStr == kWindowsTerminalShellPsCore)
    {
       return TerminalShell::ShellType::PSCore;
    }
-   else if (typeStr == "win-git-bash")
+   else if (typeStr == kWindowsTerminalShellWinGitBash)
    {
       return TerminalShell::ShellType::GitBash;
    }
-   else if (typeStr == "win-wsl-bash")
+   else if (typeStr == kWindowsTerminalShellWinWslBash)
    {
       return TerminalShell::ShellType::WSLBash;
    }
-   else if (typeStr == "custom")
+   else if (typeStr == kWindowsTerminalShellCustom)
    {
       return TerminalShell::ShellType::CustomShell;
    }
