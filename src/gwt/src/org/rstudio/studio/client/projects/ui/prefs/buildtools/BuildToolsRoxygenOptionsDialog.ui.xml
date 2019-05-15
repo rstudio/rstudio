@@ -8,8 +8,8 @@
       }
       
       .topParagraph {
-	      margin-top: 0px;
-	   }
+         margin-top: 0px;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.panel}">

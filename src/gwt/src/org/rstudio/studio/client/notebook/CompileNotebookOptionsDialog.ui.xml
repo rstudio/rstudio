@@ -6,7 +6,7 @@
          width: 300px;
       }
       .dialog  {
-	      width: 305px;
+         width: 305px;
       }
       
       .type {

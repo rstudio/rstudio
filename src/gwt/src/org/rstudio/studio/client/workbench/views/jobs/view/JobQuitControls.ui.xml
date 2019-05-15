@@ -1,26 +1,26 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
-		@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-		
-		.outer {
-			margin: 5px;
-		}
-		
-		.spaced {
-			margin-bottom: 5px;
-		}
-		
-		.list {
-			font-family: fixedWidthFont;
-			padding: 5px;
-			width: 100%;
-		}
-	</ui:style>
-	<g:VerticalPanel styleName="{style.outer}">
-		<g:Label styleName="{style.spaced}" text="The following jobs are still running."></g:Label>
-		<g:ListBox styleName="{style.spaced} {style.list}" visibleItemCount="5" ui:field="jobList_"></g:ListBox>
-		<g:Label styleName="{style.spaced}" text="Quitting the session will terminate these jobs."></g:Label>
-	</g:VerticalPanel>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+      
+      .outer {
+         margin: 5px;
+      }
+      
+      .spaced {
+         margin-bottom: 5px;
+      }
+      
+      .list {
+         font-family: fixedWidthFont;
+         padding: 5px;
+         width: 100%;
+      }
+   </ui:style>
+   <g:VerticalPanel styleName="{style.outer}">
+      <g:Label styleName="{style.spaced}" text="The following jobs are still running."></g:Label>
+      <g:ListBox styleName="{style.spaced} {style.list}" visibleItemCount="5" ui:field="jobList_"></g:ListBox>
+      <g:Label styleName="{style.spaced}" text="Quitting the session will terminate these jobs."></g:Label>
+   </g:VerticalPanel>
 </ui:UiBinder> 

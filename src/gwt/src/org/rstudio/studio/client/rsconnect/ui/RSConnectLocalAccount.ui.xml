@@ -6,7 +6,7 @@
     <ui:style>
     .explanatoryText
     {
-    	font-size: x-small;
+       font-size: x-small;
     }
     .spaced
     {
@@ -46,5 +46,5 @@
                        ui:field="connectHelpLink_">
          </rsc:HelpLink>
        </g:VerticalPanel>
-	</g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 
