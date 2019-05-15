@@ -57,8 +57,7 @@ public class AboutDialog extends ModalDialogBase
    @Override
    protected void onDialogShown()
    {
-      contents_.refresh();
-      super.onDialogShown();
+      focusOkButton();
    }
 
    @Inject
