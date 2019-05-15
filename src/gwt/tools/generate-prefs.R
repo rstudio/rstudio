@@ -3,7 +3,7 @@
 require(jsonlite)
 require(stringi)
 
-enum <- function(def, pref, type, indent) {
+javaenum <- function(def, pref, type, indent) {
    java <- ""
    # Emit convenient enum constants if supplied
    if (!is.null(def[["enum"]])) {
@@ -21,6 +21,26 @@ enum <- function(def, pref, type, indent) {
    java
 }
 
+cppenum <- function(def, pref, type, indent) {
+   cpp <- ""
+   # Emit convenient enum constants if supplied
+   if (!is.null(def[["enum"]])) {
+      for (enumval in def[["enum"]]) {
+         # Create syntactically valid variable name
+         varname <- paste0("k", 
+                           toupper(substring(pref, 1, 1)),
+                           substring(pref, 2))
+         valname <- gsub("[^A-Za-z0-9_]", "_", enumval)
+         valname <- gsub("_(.)", "\\U\\1\\E", valname, perl = TRUE)
+         cpp <- paste0(cpp, indent,
+            "#define ", varname,  
+            toupper(substring(valname, 1, 1)),
+            substring(valname, 2), " \"", enumval, "\"\n")
+      }
+   }
+   cpp
+}
+
 generate <- function (schemaPath, className) {
    # Extract prefs from JSON schema
    schema <- jsonlite::read_json(schemaPath)
@@ -29,7 +49,7 @@ generate <- function (schemaPath, className) {
    cpp <- ""
    hpp <- ""
    
-   cppenum <- paste0("enum ", toupper(substring(className, 1, 1)), 
+   cppprefenum <- paste0("enum ", toupper(substring(className, 1, 1)), 
                       substring(className, 2),
                      "\n{\n")
    cppstrings <- ""
@@ -103,6 +123,7 @@ generate <- function (schemaPath, className) {
       cppstrings <- paste0(cppstrings,
                            "#define k", toupper(substring(camel, 1, 1)), 
                            substring(camel, 2), " \"", pref, "\"\n")
+      cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
       comment <- paste0(
          "   /**\n",
          "    * ", def[["description"]], "\n",
@@ -122,7 +143,6 @@ generate <- function (schemaPath, className) {
          "{\n",
          "   return readPref<", cpptype, ">(\"", pref, "\");\n",
          "}\n\n")
-      cppenum <- paste0(cppenum, "   ", camel, ", \n")
       
       # Emit JSNI for object types
       if (identical(def[["type"]], "object")) {
@@ -141,8 +161,8 @@ generate <- function (schemaPath, className) {
                   enumtype <- propdef[["items"]][["type"]]
                   enumtype <- paste0(toupper(substring(enumtype, 1, 1)), 
                                      substring(enumtype, 2))
-                  java <- paste0(java, enum(propdef[["items"]], propname, 
-                                            enumtype, "      "))
+                  java <- paste0(java, javaenum(propdef[["items"]], propname, 
+                                                enumtype, "      "))
                }
             } else if (identical(proptype, "string")) {
                proptype <- "String"
@@ -158,16 +178,15 @@ generate <- function (schemaPath, className) {
       }
       
       # add enums if present
-      java <- paste0(java, enum(def, pref, type, "   "))
+      java <- paste0(java, javaenum(def, pref, type, "   "))
    }
    
-   cppenum <- paste0(cppenum, "   ", className, "Max\n};\n\n")
+   cppeprefnum <- paste0(cppprefenum, "   ", className, "Max\n};\n\n")
    hpp <- paste0(cppstrings, "\n",
                  "class ", className, ": public Preferences\n", 
                  "{\n",
                  hpp,
                  "};\n")
-   
    
    # Return computed Java
    list(
