@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -24,16 +25,21 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.a11y.ARIA;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -59,18 +65,25 @@ public abstract class ModalDialogBase extends DialogBox
       // ARIA window role
       role_ = role;
       role_.set(getElement());
+      ARIA.setModal(getElement());
 
       // main panel used to host UI
-      mainPanel_ = new VerticalPanel();
-      bottomPanel_ = new HorizontalPanel();
+      mainPanel_ = new VerticalPanelLayout();
+      firstControl_ = new Button("First");
+      lastControl_ = new Button("Last");
+      bottomPanel_ = new HorizontalPanelLayout();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
       bottomPanel_.setWidth("100%");
-      buttonPanel_ = new HorizontalPanel();
-      leftButtonPanel_ = new HorizontalPanel();
+      buttonPanel_ = new HorizontalPanelLayout();
+      leftButtonPanel_ = new HorizontalPanelLayout();
       bottomPanel_.add(leftButtonPanel_);
       bottomPanel_.add(buttonPanel_);
+      bottomPanel_.add(lastControl_);
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+      mainPanel_.add(firstControl_);
       mainPanel_.add(bottomPanel_);
+      DomUtils.visuallyHide(firstControl_.getElement());
+      DomUtils.visuallyHide(lastControl_.getElement());
 
       // embed main panel in a custom container if specified
       containerPanel_ = containerPanel;
@@ -93,6 +106,30 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      // Set ARIA role of the underlying DecoratorPanel's <table>, which is child
+      // of the SimplePanel's <div>.
+      if (DOM.getChildCount(getElement()) != 1)
+      {
+         Debug.log("ARIA: Unexpected DOM layout in modal dialog (top element child count != 1");
+         return;
+      }
+      if (DOM.getChildCount(DOM.getChild(getElement(), 0)) != 1)
+      {
+         Debug.log("Unexpected DOM layout in modal dialog (first child's child count != 1");
+         return;
+      }
+      Roles.getPresentationRole().set(DOM.getFirstChild(DOM.getFirstChild(getElement())));
+
+      firstControl_.addFocusHandler(event -> {
+         // hidden first control in dialog got focus, wrap around to last control
+         focusLastControl();
+      });
+      
+      lastControl_.addFocusHandler(event -> {
+         // hidden last control in dialog got focus, wrap around to first control
+         focusFirstControl();
+      });
    }
 
    @Override
@@ -167,7 +204,8 @@ public abstract class ModalDialogBase extends DialogBox
          // get the main widget to line up with the right edge of the buttons.
          mainWidget_.getElement().getStyle().setMarginRight(2, Unit.PX);
 
-         mainPanel_.insert(mainWidget_, 0);
+         // insert after hidden control used to wrap focus when tabbing through dialog
+         mainPanel_.insert(mainWidget_, 1);
       }
 
       originallyActiveElement_ = DomUtils.getActiveElement();
@@ -560,16 +598,26 @@ public abstract class ModalDialogBase extends DialogBox
       super.setText(text);
       role_.setAriaLabelProperty(getElement(), text);
    }
+   
+   // invoked when user hits Tab key with focus on last control in dialog
+   protected void focusFirstControl()
+   {
+   }
+   
+   // invoked when user hits Shift+Tab key with focus on first control in dialog
+   protected void focusLastControl()
+   {
+   }
 
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
    private boolean enterDisabled_ = false;
    private SimplePanel containerPanel_;
-   private VerticalPanel mainPanel_;
-   private HorizontalPanel bottomPanel_;
-   private HorizontalPanel buttonPanel_;
-   private HorizontalPanel leftButtonPanel_;
+   private VerticalPanelLayout mainPanel_;
+   private HorizontalPanelLayout bottomPanel_;
+   private HorizontalPanelLayout buttonPanel_;
+   private HorizontalPanelLayout leftButtonPanel_;
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
@@ -578,4 +626,6 @@ public abstract class ModalDialogBase extends DialogBox
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
    private DialogRole role_;
+   private Button firstControl_;
+   private Button lastControl_;
 }

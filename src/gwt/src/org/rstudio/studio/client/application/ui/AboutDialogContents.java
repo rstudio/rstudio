@@ -82,6 +82,11 @@ public class AboutDialogContents extends Composite
          }
       }
    }
+   
+   public void focusFirstControl()
+   {
+      noticeBox.setFocus(true);
+   }
 
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
