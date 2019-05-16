@@ -160,7 +160,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       terminalPathChooser_.setText(prefs.terminalPath().getValue());
       
       sshKeyWidget_.setRsaSshKeyPath(prefs.rsaKeyPath().getValue(),
-                                     prefs.getHaveRsaKey());
+                                     prefs.haveRsaKey().getValue());
       sshKeyWidget_.setProgressIndicator(getProgressIndicator());
 
       manageControlVisibility();

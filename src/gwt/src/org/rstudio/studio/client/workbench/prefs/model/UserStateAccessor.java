@@ -314,6 +314,14 @@ public class UserStateAccessor extends Prefs
    public final static String CONNECT_VIA_CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
    public final static String CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
 
+   /**
+    * Whether the CRAN mirror has been changed from its default.
+    */
+   public PrefValue<Boolean> cranMirrorChanged()
+   {
+      return bool("cran_mirror_changed", false);
+   }
+
    
 
    public int userLayer()

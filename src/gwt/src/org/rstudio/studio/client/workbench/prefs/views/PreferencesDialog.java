@@ -93,7 +93,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                                 final boolean reload)
    {
       // save changes
-      server_.setPrefs(
+      server_.setUserPrefs(
          rPrefs, 
          session_.getSessionInfo().getUserPrefs(),
          new SimpleRequestCallback<Void>() {
@@ -112,8 +112,8 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
             public void onError(ServerError error)
             {
                progressIndicator.onError(error.getUserMessage());
-            }           
-         });  
+            }
+         });
       
       // broadcast UI pref changes to satellites
       RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(

@@ -113,7 +113,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs rPrefs)
    {
-      SpellingPrefsContext context = rPrefs.getSpellingPrefsContext();
+      SpellingPrefsContext context = uiPrefs_.spellingPrefsContext().getValue();
       languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
                                    context.getAvailableLanguages());
       

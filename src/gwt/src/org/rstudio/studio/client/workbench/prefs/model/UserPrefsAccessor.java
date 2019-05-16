@@ -75,43 +75,37 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The name of the default CRAN mirror.
+    * The CRAN mirror to use.
     */
-   public PrefValue<String> cranMirrorName()
+   public PrefValue<CranMirror> cranMirror()
    {
-      return string("cran_mirror_name", "Global (CDN)");
+      return object("cran_mirror", null);
    }
 
-   /**
-    * The host of the default CRAN mirror.
-    */
-   public PrefValue<String> cranMirrorHost()
+   public static class CranMirror extends JavaScriptObject
    {
-      return string("cran_mirror_host", "RStudio");
-   }
+      protected CranMirror() {} 
 
-   /**
-    * The URL of the default CRAN mirror.
-    */
-   public PrefValue<String> cranMirrorUrl()
-   {
-      return string("cran_mirror_url", "http://cran.rstudio.com/");
-   }
+      public final native String getName() /*-{
+         return this.name;
+      }-*/;
 
-   /**
-    * The secondary CRAN mirror.
-    */
-   public PrefValue<String> cranMirrorRepos()
-   {
-      return string("cran_mirror_repos", "");
-   }
+      public final native String getHost() /*-{
+         return this.host;
+      }-*/;
 
-   /**
-    * The country of the default CRAN mirror.
-    */
-   public PrefValue<String> cranMirrorCountry()
-   {
-      return string("cran_mirror_country", "us");
+      public final native String getUrl() /*-{
+         return this.url;
+      }-*/;
+
+      public final native String getRepos() /*-{
+         return this.repos;
+      }-*/;
+
+      public final native String getCountry() /*-{
+         return this.country;
+      }-*/;
+
    }
 
    /**
@@ -1429,6 +1423,14 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> latexShellEscape()
    {
       return bool("latex_shell_escape", false);
+   }
+
+   /**
+    * Whether to restore the last version of R used by the project in RStudio Pro.
+    */
+   public PrefValue<Boolean> restoreProjectRVersion()
+   {
+      return bool("restore_project_r_version", true);
    }
 
    

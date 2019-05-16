@@ -57,43 +57,11 @@ std::string UserPrefValues::initialWorkingDirectory()
 }
 
    /**
-    * The name of the default CRAN mirror.
+    * The CRAN mirror to use.
     */
-std::string UserPrefValues::cranMirrorName()
+std::string UserPrefValues::cranMirror()
 {
-   return readPref<std::string>("cran_mirror_name");
-}
-
-   /**
-    * The host of the default CRAN mirror.
-    */
-std::string UserPrefValues::cranMirrorHost()
-{
-   return readPref<std::string>("cran_mirror_host");
-}
-
-   /**
-    * The URL of the default CRAN mirror.
-    */
-std::string UserPrefValues::cranMirrorUrl()
-{
-   return readPref<std::string>("cran_mirror_url");
-}
-
-   /**
-    * The secondary CRAN mirror.
-    */
-std::string UserPrefValues::cranMirrorRepos()
-{
-   return readPref<std::string>("cran_mirror_repos");
-}
-
-   /**
-    * The country of the default CRAN mirror.
-    */
-std::string UserPrefValues::cranMirrorCountry()
-{
-   return readPref<std::string>("cran_mirror_country");
+   return readPref<std::string>("cran_mirror");
 }
 
    /**
@@ -1278,6 +1246,14 @@ bool UserPrefValues::cleanTexi2dviOutput()
 bool UserPrefValues::latexShellEscape()
 {
    return readPref<bool>("latex_shell_escape");
+}
+
+   /**
+    * Whether to restore the last version of R used by the project in RStudio Pro.
+    */
+bool UserPrefValues::restoreProjectRVersion()
+{
+   return readPref<bool>("restore_project_r_version");
 }
 
    

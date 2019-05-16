@@ -406,15 +406,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(true);
       
       if (rServerRVersion_ != null)
-         rServerRVersion_.setRVersion(generalPrefs.getDefaultRVersion());
+         rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue());
       
       if (rememberRVersionForProjects_ != null)
       {
          rememberRVersionForProjects_.setValue(
-                                   generalPrefs.getRestoreProjectRVersion()); 
+                                   prefs.restoreProjectRVersion().getValue());
       }
 
-      enableCrashReporting_.setValue(generalPrefs.getEnableCrashReporting());
+      enableCrashReporting_.setValue(prefs.enableCrashReporting().getValue());
      
       // projects prefs
       restoreLastProject_.setEnabled(true);

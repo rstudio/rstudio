@@ -34,11 +34,7 @@ namespace prefs {
 #define kSaveWorkspaceAsk "ask"
 #define kLoadWorkspace "load_workspace"
 #define kInitialWorkingDirectory "initial_working_directory"
-#define kCranMirrorName "cran_mirror_name"
-#define kCranMirrorHost "cran_mirror_host"
-#define kCranMirrorUrl "cran_mirror_url"
-#define kCranMirrorRepos "cran_mirror_repos"
-#define kCranMirrorCountry "cran_mirror_country"
+#define kCranMirror "cran_mirror"
 #define kBioconductorMirrorName "bioconductor_mirror_name"
 #define kBioconductorMirrorUrl "bioconductor_mirror_url"
 #define kAlwaysSaveHistory "always_save_history"
@@ -267,6 +263,7 @@ namespace prefs {
 #define kRestoreLastProject "restore_last_project"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
+#define kRestoreProjectRVersion "restore_project_r_version"
 
 class UserPrefValues: public Preferences
 {
@@ -291,29 +288,9 @@ class UserPrefValues: public Preferences
    std::string initialWorkingDirectory();
 
    /**
-    * The name of the default CRAN mirror.
+    * The CRAN mirror to use.
     */
-   std::string cranMirrorName();
-
-   /**
-    * The host of the default CRAN mirror.
-    */
-   std::string cranMirrorHost();
-
-   /**
-    * The URL of the default CRAN mirror.
-    */
-   std::string cranMirrorUrl();
-
-   /**
-    * The secondary CRAN mirror.
-    */
-   std::string cranMirrorRepos();
-
-   /**
-    * The country of the default CRAN mirror.
-    */
-   std::string cranMirrorCountry();
+   std::string cranMirror();
 
    /**
     * The name of the default Bioconductor mirror.
@@ -1054,6 +1031,11 @@ class UserPrefValues: public Preferences
     * Whether to enable shell escaping with LaTeX documents.
     */
    bool latexShellEscape();
+
+   /**
+    * Whether to restore the last version of R used by the project in RStudio Pro.
+    */
+   bool restoreProjectRVersion();
 
 };
 

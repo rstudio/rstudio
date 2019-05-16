@@ -25,30 +25,38 @@
             "default": "",
             "description": "The initial working directory for new R sessions."
         },
-        "cran_mirror_name": {
-            "type": "string",
-            "default": "Global (CDN)",
-            "description": "The name of the default CRAN mirror."
-        },
-        "cran_mirror_host": {
-            "type": "string",
-            "default": "RStudio",
-            "description": "The host of the default CRAN mirror."
-        },
-        "cran_mirror_url": {
-            "type": "string",
-            "default": "http://cran.rstudio.com/",
-            "description": "The URL of the default CRAN mirror."
-        },
-        "cran_mirror_repos": {
-            "type": "string",
-            "default": "",
-            "description": "The secondary CRAN mirror."
-        },
-        "cran_mirror_country": {
-            "type": "string",
-            "default": "us",
-            "description": "The country of the default CRAN mirror."
+        "cran_mirror": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the default CRAN mirror."
+                },
+                "host": {
+                    "type": "string",
+                    "description": "The host of the default CRAN mirror."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the default CRAN mirror."
+                },
+                "repos": {
+                    "type": "string",
+                    "description": "The secondary CRAN mirror."
+                },
+                "country": {
+                    "type": "string",
+                    "description": "The country of the default CRAN mirror."
+                }
+            },
+            "description": "The CRAN mirror to use.",
+            "default": {
+                "name": "Global (CDN)",
+                "host": "RStudio",
+                "url": "http://cran.rstudio.com/",
+                "repos": "",
+                "country": "us"
+            }
         },
         "bioconductor_mirror_name": {
             "type": "string",
@@ -853,6 +861,11 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to enable shell escaping with LaTeX documents."
+        },
+        "restore_project_r_version": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to restore the last version of R used by the project in RStudio Pro."
         }
     }
 }

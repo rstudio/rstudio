@@ -39,6 +39,7 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PackagesPreferencesPane extends PreferencesPane
 {
@@ -256,9 +258,10 @@ public class PackagesPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       cranMirrorTextBox_.setEnabled(true);
-      if (!packagesPrefs.getCRANMirror().isEmpty())
+      CRANMirror mirror = prefs.cranMirror().getValue().cast();
+      if (!mirror.isEmpty())
       {
-         cranMirror_ = packagesPrefs.getCRANMirror();
+         cranMirror_ = mirror;
          
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
@@ -361,16 +364,19 @@ public class PackagesPreferencesPane extends PreferencesPane
    public boolean onApply(UserPrefs prefs)
    {
       boolean reload = super.onApply(prefs);
+      UserState state = RStudioGinjector.INSTANCE.getUserState();
 
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
       if (!mirrorTextValue.equals(cranMirrorStored_))
-         cranMirror_.setChanged(true);
+      {
+         state.cranMirrorChanged().setGlobalValue(true);
+      }
 
       boolean cranRepoChangedToUrl = !mirrorTextValue.equals(cranMirrorStored_) && 
                                       mirrorTextValue.startsWith("http");
    
-      cranMirror_.setChanged(true);
+      state.cranMirrorChanged().setGlobalValue(true);
 
       if (cranRepoChangedToUrl)
       {
@@ -393,8 +399,6 @@ public class PackagesPreferencesPane extends PreferencesPane
          }
       );
      
-      // set packages prefs
-      // TODO: set CRAN mirror prefs
       prefs.useInternet2().setGlobalValue(useInternet2_.getValue());
       prefs.cleanupAfterRCmdCheck().setGlobalValue(cleanupAfterCheckSuccess_.getValue());
       prefs.viewDirAfterRCmdCheck().setGlobalValue(viewDirAfterCheckFailure_.getValue());
@@ -402,6 +406,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       prefs.useDevtools().setGlobalValue(useDevtools_.getValue());
       prefs.useSecureDownload().setGlobalValue(useSecurePackageDownload_.getValue());
       prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
+      prefs.cranMirror().setGlobalValue(cranMirror_);
       
       return reload || reloadRequired_;
    }

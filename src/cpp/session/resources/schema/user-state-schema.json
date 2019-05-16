@@ -187,6 +187,11 @@
             "enum": ["connect-r-console", "connect-new-r-script", "connect-new-r-notebook", "connect-copy-to-clipboard"],
             "default": "connect-r-console",
             "description": "How to create new connections to data sources."
+        },
+        "cran_mirror_changed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the CRAN mirror has been changed from its default."
         }
     }
 }

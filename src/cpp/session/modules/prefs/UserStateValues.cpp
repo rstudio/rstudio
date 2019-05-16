@@ -152,6 +152,14 @@ std::string UserStateValues::connectVia()
    return readPref<std::string>("connect_via");
 }
 
+   /**
+    * Whether the CRAN mirror has been changed from its default.
+    */
+bool UserStateValues::cranMirrorChanged()
+{
+   return readPref<bool>("cran_mirror_changed");
+}
+
    
 
 }

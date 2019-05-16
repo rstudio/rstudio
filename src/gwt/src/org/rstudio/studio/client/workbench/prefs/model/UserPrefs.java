@@ -41,7 +41,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOption
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 @Singleton
-public class UserPrefs extends UserPrefsAccessor implements UserPrefsChangedHandler, SessionInitHandler
+public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHandler, SessionInitHandler
 {
    @Inject
    public UserPrefs(Session session, 

@@ -47,6 +47,7 @@ namespace prefs {
 #define kConnectViaConnectNewRScript "connect-new-r-script"
 #define kConnectViaConnectNewRNotebook "connect-new-r-notebook"
 #define kConnectViaConnectCopyToClipboard "connect-copy-to-clipboard"
+#define kCranMirrorChanged "cran_mirror_changed"
 
 class UserStateValues: public Preferences
 {
@@ -129,6 +130,11 @@ class UserStateValues: public Preferences
     * How to create new connections to data sources.
     */
    std::string connectVia();
+
+   /**
+    * Whether the CRAN mirror has been changed from its default.
+    */
+   bool cranMirrorChanged();
 
 };
 
