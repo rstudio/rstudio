@@ -503,9 +503,9 @@ public abstract class ModalDialogBase extends DialogBox
             if (enterDisabled_)
                break;
 
-            // allow Enter on textareas
+            // allow Enter on textareas or anchors
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA"))
+            if (e.hasTagName("TEXTAREA") || e.hasTagName("A"))
                return;
 
             ThemedButton defaultButton = defaultOverrideButton_ == null
