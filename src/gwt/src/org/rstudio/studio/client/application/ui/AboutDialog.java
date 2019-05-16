@@ -46,7 +46,6 @@ public class AboutDialog extends ModalDialogBase
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
       setWidth("600px");
-      setARIADescribedBy(contents_.getDescriptionElement());
    }
 
    @Override
@@ -72,7 +71,13 @@ public class AboutDialog extends ModalDialogBase
    {
       focusOkButton();
    }
-
+   
+   @Override
+   protected void setDialogDescription()
+   {
+      setARIADescribedBy(contents_.getDescriptionElement());
+   }
+ 
    @Inject
    private void initialize(ProductEditionInfo editionInfo)
    {

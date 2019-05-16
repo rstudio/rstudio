@@ -63,15 +63,20 @@ public abstract class ModalDialogBase extends DialogBox
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
 
-      // ARIA window role
+      // a11y
       role_ = role;
       role_.set(getElement());
       ARIA.setModal(getElement());
+      firstControl_ = new Button("First");
+      lastControl_ = new Button("Last");
+      noDescription_ = new Label("Warning: dialog may not be accessible");
+      noDescription_.getElement().setId("noDescription");
+      DomUtils.visuallyHide(firstControl_.getElement());
+      DomUtils.visuallyHide(lastControl_.getElement());
+      DomUtils.visuallyHide(noDescription_.getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanelLayout();
-      firstControl_ = new Button("First");
-      lastControl_ = new Button("Last");
       bottomPanel_ = new HorizontalPanelLayout();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
       bottomPanel_.setWidth("100%");
@@ -82,9 +87,8 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.add(lastControl_);
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       mainPanel_.add(firstControl_);
+      mainPanel_.add(noDescription_);
       mainPanel_.add(bottomPanel_);
-      DomUtils.visuallyHide(firstControl_.getElement());
-      DomUtils.visuallyHide(lastControl_.getElement());
 
       // embed main panel in a custom container if specified
       containerPanel_ = containerPanel;
@@ -208,6 +212,8 @@ public abstract class ModalDialogBase extends DialogBox
          // insert after hidden control used to wrap focus when tabbing through dialog
          mainPanel_.insert(mainWidget_, 1);
       }
+
+      setDialogDescription();
 
       originallyActiveElement_ = DomUtils.getActiveElement();
       if (originallyActiveElement_ != null)
@@ -628,6 +634,12 @@ public abstract class ModalDialogBase extends DialogBox
    {
    }
 
+   // set the aria-describedby for the dialog
+   protected void setDialogDescription()
+   {
+      setARIADescribedBy(Id.of(noDescription_.getElement()));
+   }
+   
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
@@ -647,4 +659,5 @@ public abstract class ModalDialogBase extends DialogBox
    private DialogRole role_;
    private Button firstControl_;
    private Button lastControl_;
+   private Label noDescription_;
 }
