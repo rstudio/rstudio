@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -598,7 +599,25 @@ public abstract class ModalDialogBase extends DialogBox
       super.setText(text);
       role_.setAriaLabelProperty(getElement(), text);
    }
-   
+
+   /**
+    * Optional description of dialog for accessibility tools 
+    * @param element element containing the description
+    */
+   protected void setARIADescribedBy(Element element)
+   {
+      role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
+   }
+
+   /**
+    * Optional description of dialog for accessibility tools; use for multiple elements
+    * @param value one or more ids
+    */
+   protected void setARIADescribedBy(Id... value)
+   {
+      role_.setAriaDescribedbyProperty(getElement(), value);
+   }
+
    // invoked when user hits Tab key with focus on last control in dialog
    protected void focusFirstControl()
    {

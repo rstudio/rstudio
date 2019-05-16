@@ -46,6 +46,7 @@ public class AboutDialog extends ModalDialogBase
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
       setWidth("600px");
+      setARIADescribedBy(contents_.getDescriptionElement());
    }
 
    @Override

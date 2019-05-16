@@ -14,6 +14,11 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.Anchor;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -53,6 +58,13 @@ public class AboutDialogContents extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionLabel.setText(info.version);
+      
+      // a11y
+      productInfo.getElement().setId("productinfo");
+      gplLinkLabel.getElement().setId("gplLinkLabel");
+      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
+      DomUtils.visuallyHide(gplLinkLabel.getElement());
+      
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
@@ -85,9 +97,14 @@ public class AboutDialogContents extends Composite
    
    public void focusFirstControl()
    {
-      noticeBox.setFocus(true);
+      gplLink.setFocus(true);
    }
 
+   public Element getDescriptionElement()
+   {
+      return productInfo.getElement();
+   }
+   
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
@@ -97,4 +114,7 @@ public class AboutDialogContents extends Composite
    @UiField Label licenseLabel;
    @UiField TextArea licenseBox;
    @UiField Label productName;
+   @UiField HTMLPanel productInfo;
+   @UiField Anchor gplLink;
+   @UiField Label gplLinkLabel;
 }
