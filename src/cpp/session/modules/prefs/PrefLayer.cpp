@@ -110,6 +110,15 @@ core::Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
 
    std::ostringstream oss;
    json::writeFormatted(prefs, oss);
+
+   // If the preferences file doesn't exist, ensure its directory does.
+   if (!prefsFile.exists())
+   {
+      Error error = prefsFile.parent().ensureDirectory();
+      if (error)
+         return error;
+   }
+
    return writeStringToFile(prefsFile, oss.str());
 }
 

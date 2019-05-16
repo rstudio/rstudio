@@ -268,6 +268,11 @@ public abstract class Prefs
       layers_ = layers;
    }
    
+   public JsObject getUserLayer()
+   {
+      return layers_.get(userLayer());
+   }
+   
    public abstract int userLayer();
    public abstract int projectLayer();
 

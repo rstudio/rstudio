@@ -25,7 +25,7 @@
 #define kRVersionSettings              "rversion-settings"
 #define kDefaultRVersion               "defaultRVersion"
 #define kDefaultRVersionHome           "defaultRVersionHome"
-#define kRestoreProjectRVersion        "restoreProjectRVersion"
+#define kRestoreProjectRVersionFlag    "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
 #define kRVersionProjectFile           "RVersion"
@@ -63,12 +63,12 @@ public:
 
    bool restoreProjectRVersion()
    {
-      return readSetting(kRestoreProjectRVersion) != "0";
+      return readSetting(kRestoreProjectRVersionFlag) != "0";
    }
 
    void setRestoreProjectRVersion(bool restoreProjectRVersion)
    {
-      writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
+      writeSetting(kRestoreProjectRVersionFlag, restoreProjectRVersion ? "1" : "0");
    }
 
    void setProjectLastRVersion(const std::string& projectDir,

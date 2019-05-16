@@ -60,9 +60,7 @@ Error setPreferences(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   s_prefs.writeLayer(PREF_LAYER_USER, val.get_obj()); 
-
-   return Success();
+   return s_prefs.writeLayer(PREF_LAYER_USER, val.get_obj()); 
 }
 
 } // anonymous namespace

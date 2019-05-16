@@ -86,6 +86,13 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       }
    }
    
+
+   @Override
+   protected UserPrefs createEmptyPrefs()
+   {
+      return RStudioGinjector.INSTANCE.getUserPrefs();
+   }
+  
    @Override
    protected void doSaveChanges(final UserPrefs rPrefs,
                                 final Operation onCompleted,
@@ -94,8 +101,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    {
       // save changes
       server_.setUserPrefs(
-         rPrefs, 
-         session_.getSessionInfo().getUserPrefs(),
+         rPrefs.getUserLayer(),
          new SimpleRequestCallback<Void>() {
 
             @Override
@@ -131,6 +137,4 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
   
    private final WorkbenchServerOperations server_;
    private final Session session_;
-  
-  
 }

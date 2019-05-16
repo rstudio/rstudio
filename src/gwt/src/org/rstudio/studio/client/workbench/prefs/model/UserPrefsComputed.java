@@ -34,7 +34,7 @@ public class UserPrefsComputed extends UserPrefsAccessor
    
    public PrefValue<SpellingPrefsContext> spellingPrefsContext()
    {
-      return object("spelling_prefs_context", null);
+      return object("spelling", null);
    }
    
    public PrefValue<Boolean> enableCrashReporting()

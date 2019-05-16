@@ -59,7 +59,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.allow_restart = true;
       procInfo.title = "";
       procInfo.child_procs = true;
-      procInfo.shell_type = @org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo::SHELL_DEFAULT,
+      procInfo.shell_type = @org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor::WINDOWS_TERMINAL_SHELL_DEFAULT;
       procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
       procInfo.channel_id = "";
       procInfo.alt_buffer = false;

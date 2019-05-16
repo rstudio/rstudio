@@ -47,6 +47,10 @@
                 "country": {
                     "type": "string",
                     "description": "The country of the default CRAN mirror."
+                },
+                "secondary": {
+                    "type": "string",
+                    "description": "A pipe-separated list of secondary repositories."
                 }
             },
             "description": "The CRAN mirror to use.",
@@ -55,7 +59,8 @@
                 "host": "RStudio",
                 "url": "http://cran.rstudio.com/",
                 "repos": "",
-                "country": "us"
+                "country": "us",
+                "secondary": ""
             }
         },
         "bioconductor_mirror_name": {

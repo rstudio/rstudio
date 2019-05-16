@@ -6799,7 +6799,7 @@ public class TextEditingTarget implements
             new CommandWithArg<String>() {
                public void execute(String style)
                {
-                  docDisplay.setFoldStyle(style);
+                  docDisplay.setFoldStyle(FoldStyle.fromPref(style));
                }}));
       releaseOnDismiss.add(prefs.surroundSelection().bind(
             new CommandWithArg<String>() {

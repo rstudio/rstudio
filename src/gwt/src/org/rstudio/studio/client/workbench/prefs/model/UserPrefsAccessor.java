@@ -106,6 +106,10 @@ public class UserPrefsAccessor extends Prefs
          return this.country;
       }-*/;
 
+      public final native String getSecondary() /*-{
+         return this.secondary;
+      }-*/;
+
    }
 
    /**
