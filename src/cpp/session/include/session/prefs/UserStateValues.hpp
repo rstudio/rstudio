@@ -51,6 +51,7 @@ namespace prefs {
 
 class UserStateValues: public Preferences
 {
+public:
    /**
     * A unique identifier representing the user and machine.
     */

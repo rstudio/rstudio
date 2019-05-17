@@ -37,6 +37,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "shiny/SessionShiny.hpp"
 
@@ -641,22 +642,22 @@ ParseResults parse(const std::wstring& rCode,
    ParseOptions options;
    
    options.setLintRFunctions(
-            userSettings().lintRFunctionCalls());
+            prefs::userPrefs().diagnosticsInRFunctionCalls());
    
    options.setCheckArgumentsToRFunctionCalls(
-            userSettings().checkArgumentsToRFunctionCalls());
+            prefs::userPrefs().checkArgumentsToRFunctionCalls());
    
    options.setCheckUnexpectedAssignmentInFunctionCall(
-            userSettings().checkUnexpectedAssignmentInFunctionCall());
+            prefs::userPrefs().checkUnexpectedAssignmentInFunctionCall());
    
    options.setWarnIfVariableIsDefinedButNotUsed(
-            isExplicit && userSettings().warnIfVariableDefinedButNotUsed());
+            isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
    
    options.setWarnIfNoSuchVariableInScope(
-            userSettings().warnIfNoSuchVariableInScope());
+            prefs::userPrefs().warnIfNoSuchVariableInScope());
    
    options.setRecordStyleLint(
-            userSettings().enableStyleDiagnostics());
+            prefs::userPrefs().styleDiagnostics());
    
    bool noLint = false;
    setFileLocalParseOptions(rCode, &options, &noLint);

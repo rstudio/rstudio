@@ -23,6 +23,7 @@
 #include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
@@ -142,7 +143,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
                core::FilePath() /*cwd*/,
                core::system::kDefaultCols, core::system::kDefaultRows,
                false /*zombie*/,
-               session::userSettings().terminalTrackEnv()));
+               modules::prefs::userPrefs().terminalTrackEnvironment()));
 
    pCpi->setHasChildProcs(false);
 

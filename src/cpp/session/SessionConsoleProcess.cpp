@@ -19,6 +19,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
@@ -645,7 +646,7 @@ void ConsoleProcess::onExit(int exitCode)
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
       procInfo_->setAutoClose(
-            session::userSettings().terminalAutoclose() ? AlwaysAutoClose :  NeverAutoClose);
+            modules::prefs::userPrefs().terminalAutoClose() ? AlwaysAutoClose :  NeverAutoClose);
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)
@@ -985,7 +986,7 @@ std::string ConsoleProcess::getShellName() const
 bool ConsoleProcess::useWebsockets()
 {
    return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
+                     modules::prefs::userPrefs().terminalWebsockets();
 }
 
 core::json::Array processesAsJson(SerializationMode serialMode)

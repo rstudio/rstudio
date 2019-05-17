@@ -198,6 +198,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "workers/SessionWebRequestWorker.hpp"
 
 #include <session/SessionHttpConnectionListener.hpp>
@@ -665,7 +667,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
-                                 userSettings().removeHistoryDuplicates());
+                                 modules::prefs::userPrefs().removeHistoryDuplicates());
 
 
    // register function editor on windows
@@ -1392,29 +1394,13 @@ bool restoreWorkspaceOption()
    }
 
    // no project override
-   return userSettings().loadRData() ||
+   return modules::prefs::userPrefs().loadWorkspace() ||
           !rsession::options().initialEnvironmentFileOverride().empty();
 }
 
 bool alwaysSaveHistoryOption()
 {
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().alwaysSaveHistory)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   return userSettings().alwaysSaveHistory();
+   return modules::prefs::userPrefs().alwaysSaveHistory();
 }
 
 FilePath getStartupEnvironmentFilePath()
@@ -1909,7 +1895,7 @@ int main (int argc, char * const argv[])
          core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
       // set ANSI support environment variable before running code from .Rprofile
-      userSettings().syncConsoleColorEnv();
+      modules::console::syncConsoleColorEnv();
 
       // r options
       rstudio::r::session::ROptions rOptions ;

@@ -188,6 +188,7 @@ generate <- function (schemaPath, className) {
    hpp <- paste0(cppstrings, "\n",
                  "class ", className, ": public Preferences\n", 
                  "{\n",
+                 "public:\n",
                  hpp,
                  "};\n")
    

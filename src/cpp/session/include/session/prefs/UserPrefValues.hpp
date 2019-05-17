@@ -267,6 +267,7 @@ namespace prefs {
 
 class UserPrefValues: public Preferences
 {
+public:
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */
