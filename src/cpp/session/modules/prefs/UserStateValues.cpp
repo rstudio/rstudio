@@ -17,144 +17,144 @@
  * rebuild this file.
  */
 
-#include "UserStateValues.hpp"
+#include <session/prefs/UserStateValues.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace prefs {
 
-   /**
-    * A unique identifier representing the user and machine.
-    */
+/**
+ * A unique identifier representing the user and machine.
+ */
 std::string UserStateValues::contextId()
 {
    return readPref<std::string>("context_id");
 }
 
-   /**
-    * Hash of the agreement that the user has accepted.
-    */
+/**
+ * Hash of the agreement that the user has accepted.
+ */
 std::string UserStateValues::agreementHash()
 {
    return readPref<std::string>("agreement_hash");
 }
 
-   /**
-    * Whether we have automatically created an .Rprofile for this user.
-    */
+/**
+ * Whether we have automatically created an .Rprofile for this user.
+ */
 bool UserStateValues::autoCreatedProfile()
 {
    return readPref<bool>("auto_created_profile");
 }
 
-   /**
-    * The color theme to apply.
-    */
+/**
+ * The color theme to apply.
+ */
 bool UserStateValues::theme()
 {
    return readPref<bool>("theme");
 }
 
-   /**
-    * The directory path under which to place new projects by default. Shadows a uipref.
-    */
+/**
+ * The directory path under which to place new projects by default. Shadows a uipref.
+ */
 std::string UserStateValues::defaultProjectLocation()
 {
    return readPref<std::string>("default_project_location");
 }
 
-   /**
-    * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
-    */
+/**
+ * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
+ */
 bool UserStateValues::clearHidden()
 {
    return readPref<bool>("clear_hidden");
 }
 
-   /**
-    * The most recently used plot export options.
-    */
+/**
+ * The most recently used plot export options.
+ */
 bool UserStateValues::exportPlotOptions()
 {
    return readPref<bool>("export_plot_options");
 }
 
-   /**
-    * The most recently used viewer export options.
-    */
+/**
+ * The most recently used viewer export options.
+ */
 bool UserStateValues::exportViewerOptions()
 {
    return readPref<bool>("export_viewer_options");
 }
 
-   /**
-    * The most recently used options for saving a plot as a PDF.
-    */
+/**
+ * The most recently used options for saving a plot as a PDF.
+ */
 bool UserStateValues::savePlotAsPdfOptions()
 {
    return readPref<bool>("save_plot_as_pdf_options");
 }
 
-   /**
-    * Most recently used settings for compiling a notebook from an R script.
-    */
+/**
+ * Most recently used settings for compiling a notebook from an R script.
+ */
 bool UserStateValues::compileRNotebookPrefs()
 {
    return readPref<bool>("compile_r_notebook_prefs");
 }
 
-   /**
-    * Most recently used settings for compiling a notebook using R Markdown.
-    */
+/**
+ * Most recently used settings for compiling a notebook using R Markdown.
+ */
 bool UserStateValues::compileRMarkdownNotebookPrefs()
 {
    return readPref<bool>("compile_r_markdown_notebook_prefs");
 }
 
-   /**
-    * Whether to show UI for publishing content.
-    */
+/**
+ * Whether to show UI for publishing content.
+ */
 bool UserStateValues::showPublishUi()
 {
    return readPref<bool>("show_publish_ui");
 }
 
-   /**
-    * Whether to show UI for publishing content to RStudio Connect.
-    */
+/**
+ * Whether to show UI for publishing content to RStudio Connect.
+ */
 bool UserStateValues::enableRsconnectPublishUi()
 {
    return readPref<bool>("enable_rsconnect_publish_ui");
 }
 
-   /**
-    * The default (last) account used for publishing
-    */
+/**
+ * The default (last) account used for publishing
+ */
 bool UserStateValues::publishAccount()
 {
    return readPref<bool>("publish_account");
 }
 
-   /**
-    * The preferred width, in pixels, of the document outline pane.
-    */
+/**
+ * The preferred width, in pixels, of the document outline pane.
+ */
 int UserStateValues::documentOutlineWidth()
 {
    return readPref<int>("document_outline_width");
 }
 
-   /**
-    * How to create new connections to data sources.
-    */
+/**
+ * How to create new connections to data sources.
+ */
 std::string UserStateValues::connectVia()
 {
    return readPref<std::string>("connect_via");
 }
 
-   /**
-    * Whether the CRAN mirror has been changed from its default.
-    */
+/**
+ * Whether the CRAN mirror has been changed from its default.
+ */
 bool UserStateValues::cranMirrorChanged()
 {
    return readPref<bool>("cran_mirror_changed");

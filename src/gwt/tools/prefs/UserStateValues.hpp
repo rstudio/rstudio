@@ -20,7 +20,7 @@
 #ifndef SESSION_USER_STATE_VALUES_HPP
 #define SESSION_USER_STATE_VALUES_HPP
 
-#include "Preferences.hpp"
+#include <session/prefs/Preferences.hpp>
 
 namespace rstudio {
 namespace session {

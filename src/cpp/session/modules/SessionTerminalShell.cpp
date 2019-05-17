@@ -22,7 +22,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
-#include "prefs/UserPrefValues.hpp"
+#include <session/prefs/UserPrefs.hpp>
 
 namespace rstudio {
 namespace session {

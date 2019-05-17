@@ -17,7 +17,7 @@
  * rebuild this file.
  */
 
-#include "UserStateValues.hpp"
+#include <session/prefs/UserStateValues.hpp>
 
 namespace rstudio {
 namespace session {

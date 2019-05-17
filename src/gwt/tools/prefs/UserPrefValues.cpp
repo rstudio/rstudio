@@ -17,7 +17,7 @@
  * rebuild this file.
  */
 
-#include "UserPrefValues.hpp"
+#include <session/prefs/UserPrefValues.hpp>
 
 namespace rstudio {
 namespace session {

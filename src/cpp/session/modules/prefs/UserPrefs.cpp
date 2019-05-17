@@ -29,7 +29,6 @@
 #include "UserPrefsLayer.hpp"
 #include "UserPrefsSystemLayer.hpp"
 #include "UserPrefsProjectLayer.hpp"
-#include "UserPrefValues.hpp"
 
 using namespace rstudio::core;
 
@@ -65,9 +64,14 @@ Error setPreferences(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
-json::Array userPrefs()
+json::Array allPrefLayers()
 {
    return s_prefs.allLayers();
+}
+
+UserPrefValues& userPrefs()
+{
+   return s_prefs;
 }
 
 Error initializePrefs()

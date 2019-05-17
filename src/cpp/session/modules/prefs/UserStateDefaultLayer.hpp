@@ -16,7 +16,7 @@
 #ifndef SESSION_USER_STATE_DEFAULT_LAYER_HPP
 #define SESSION_USER_STATE_DEFAULT_LAYER_HPP
 
-#include "PrefLayer.hpp"
+#include <session/prefs/PrefLayer.hpp>
 
 namespace rstudio {
 namespace session {

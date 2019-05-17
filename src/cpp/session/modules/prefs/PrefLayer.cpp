@@ -13,7 +13,7 @@
  *
  */
 
-#include "PrefLayer.hpp"
+#include <session/prefs/PrefLayer.hpp>
 
 #include <core/FileSerializer.hpp>
 

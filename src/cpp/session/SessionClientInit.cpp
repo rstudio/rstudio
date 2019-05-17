@@ -35,7 +35,6 @@
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
-#include "modules/prefs/UserPrefs.hpp"
 #include "modules/prefs/UserState.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/build/SessionBuild.hpp"
@@ -68,6 +67,7 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -274,7 +274,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                         "experience unexpected issues as a result.\n\n");
    }
 
-   sessionInfo["user_prefs"] = modules::prefs::userPrefs();
+   sessionInfo["user_prefs"] = modules::prefs::allPrefLayers();
    sessionInfo["user_state"] = modules::prefs::userState();
 
    sessionInfo["have_advanced_step_commands"] =

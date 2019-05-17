@@ -138,7 +138,10 @@ generate <- function (schemaPath, className) {
       
       hpp <- paste0(hpp, comment,
                     "   ", cpptype, " ", camel, "();\n\n")
-      cpp <- paste0(cpp, comment,
+      cpp <- paste0(cpp, 
+         "/**\n",
+         " * ", def[["description"]], "\n",
+         " */\n",
          cpptype, " ", className, "::", camel, "()\n",
          "{\n",
          "   return readPref<", cpptype, ">(\"", pref, "\");\n",
@@ -203,7 +206,7 @@ writeLines(gsub("%PREFS%", result$java, template),
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
 template <- readLines("prefs/UserPrefValues.hpp")
 writeLines(gsub("%PREFS%", result$hpp, template), 
-           con = "../../cpp/session/modules/prefs/UserPrefValues.hpp")
+           con = "../../cpp/session/include/session/prefs/UserPrefValues.hpp")
 template <- readLines("prefs/UserPrefValues.cpp")
 writeLines(gsub("%PREFS%", result$cpp, template), 
            con = "../../cpp/session/modules/prefs/UserPrefValues.cpp")
@@ -216,7 +219,7 @@ writeLines(gsub("%STATE%", result$java, javaTemplate),
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
 template <- readLines("prefs/UserStateValues.hpp")
 writeLines(gsub("%STATE%", result$hpp, template), 
-           con = "../../cpp/session/modules/prefs/UserStateValues.hpp")
+           con = "../../cpp/session/include/session/prefs/UserStateValues.hpp")
 template <- readLines("prefs/UserStateValues.cpp")
 writeLines(gsub("%STATE%", result$cpp, template), 
            con = "../../cpp/session/modules/prefs/UserStateValues.cpp")

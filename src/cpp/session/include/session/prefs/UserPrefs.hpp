@@ -13,12 +13,15 @@
  *
  */
 
-#ifndef SESSION_MODULE_USER_PREFS_HPP
-#define SESSION_MODULE_USER_PREFS_HPP
+#ifndef SESSION_USER_PREFS_HPP
+#define SESSION_USER_PREFS_HPP
+
+#define kUserPrefsFile "rstudio-prefs.json"
+#define kUserPrefsSchemaFile "user-prefs-schema.json"
+
+#include "UserPrefValues.hpp"
 
 #include <core/json/Json.hpp>
-
-#include <session/prefs/UserPrefs.hpp>
 
 namespace rstudio {
    namespace core {
@@ -31,7 +34,22 @@ namespace session {
 namespace modules {
 namespace prefs {
 
-core::Error initializePrefs();
+enum PrefLayers
+{
+   PREF_LAYER_MIN      = 0,
+
+   PREF_LAYER_DEFAULT  = PREF_LAYER_MIN,
+   PREF_LAYER_COMPUTED = 1,
+   PREF_LAYER_SYSTEM   = 2,
+   PREF_LAYER_USER     = 3,
+   PREF_LAYER_PROJECT  = 4,
+
+   PREF_LAYER_MAX      = PREF_LAYER_PROJECT
+};
+
+UserPrefValues& userPrefs();
+
+core::json::Array allPrefLayers();
 
 } // namespace prefs
 } // namespace modules
@@ -39,4 +57,3 @@ core::Error initializePrefs();
 } // namespace rstudio
 
 #endif
-

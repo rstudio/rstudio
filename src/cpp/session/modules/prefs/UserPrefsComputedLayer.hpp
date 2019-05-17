@@ -16,7 +16,7 @@
 #ifndef SESSION_USER_PREF_COMPUTED_LAYER_HPP
 #define SESSION_USER_PREF_COMPUTED_LAYER_HPP
 
-#include "UserPrefValues.hpp"
+#include <session/prefs/UserPrefValues.hpp>
 
 #include <core/FilePath.hpp>
 

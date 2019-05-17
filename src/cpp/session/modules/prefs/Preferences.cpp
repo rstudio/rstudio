@@ -14,7 +14,7 @@
  */
 
 
-#include "Preferences.hpp"
+#include <session/prefs/Preferences.hpp>
 
 using namespace rstudio::core;
 

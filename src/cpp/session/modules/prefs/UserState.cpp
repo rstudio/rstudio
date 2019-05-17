@@ -20,11 +20,12 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "UserStateValues.hpp"
+#include <session/prefs/UserStateValues.hpp>
+#include <session/prefs/Preferences.hpp>
+
 #include "UserStateDefaultLayer.hpp"
 #include "UserStateLayer.hpp"
 #include "UserState.hpp"
-#include "Preferences.hpp"
 
 using namespace rstudio::core;
 

@@ -14,7 +14,8 @@
  */
 
 #include "UserPrefsComputedLayer.hpp"
-#include "UserPrefValues.hpp"
+
+#include <session/prefs/UserPrefValues.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
