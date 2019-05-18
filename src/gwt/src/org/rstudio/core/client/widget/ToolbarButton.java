@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -270,11 +271,13 @@ public class ToolbarButton extends FocusWidget
       setInfoText(null);
       leftImageWidget_ = leftImage == null ? new Image() : leftImage;
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());
+      A11y.setDecorativeImage(leftImageWidget_.getElement());
       leftImageCell_.appendChild(leftImageWidget_.getElement());
       if (rightImage != null)
       {
          rightImageWidget_ = new Image(rightImage);
          rightImageWidget_.setStylePrimaryName(styles_.toolbarButtonRightImage());
+         A11y.setDecorativeImage(rightImageWidget_.getElement());
          rightImageCell_.appendChild(rightImageWidget_.getElement());
       }
 

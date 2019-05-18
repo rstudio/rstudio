@@ -212,9 +212,7 @@ public class WebApplicationHeader extends Composite
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, 
-                                   eventBus,
-                                   pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
       

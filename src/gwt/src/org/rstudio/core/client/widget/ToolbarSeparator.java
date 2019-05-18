@@ -1,7 +1,7 @@
 /*
- * ToolbarLabel.java
+ * ToolbarSeparator.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,9 @@
 
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.OrientationValue;
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.user.client.ui.Image;
@@ -26,6 +29,8 @@ public class ToolbarSeparator extends Image
       super(ThemeResources.INSTANCE.toolbarSeparator());
       setStylePrimaryName(
                ThemeResources.INSTANCE.themeStyles().toolbarSeparator());
+      A11y.setDecorativeImage(getElement());
+      Roles.getSeparatorRole().set(getElement());
+      Roles.getSeparatorRole().setAriaOrientationProperty(getElement(), OrientationValue.VERTICAL);
    }
-
 }

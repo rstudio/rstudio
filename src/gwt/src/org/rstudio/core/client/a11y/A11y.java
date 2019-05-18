@@ -1,5 +1,5 @@
 /*
- * ARIA.java
+ * A11y.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -17,12 +17,22 @@ package org.rstudio.core.client.a11y;
 import com.google.gwt.dom.client.Element;
 
 /**
- * ARIA support for newer things not included with GWT
+ * Accessibility helpers including newer ARIA stuff not included with GWT
  */
-public class ARIA
+public class A11y
 {
    public static void setModal(Element element)
    {
       element.setAttribute("aria-modal", "true");
+   }
+
+   /**
+    * Flag an image that does not convey content, is decorative, or is
+    * redundant (purpose already conveyed in text).
+    * @param element Image element
+    */
+   public static void setDecorativeImage(Element element)
+   {
+      element.setAttribute("alt", "");
    }
 }

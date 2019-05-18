@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentC
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
-import org.rstudio.core.client.a11y.ARIA;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -66,7 +66,7 @@ public abstract class ModalDialogBase extends DialogBox
       // a11y
       role_ = role;
       role_.set(getElement());
-      ARIA.setModal(getElement());
+      A11y.setModal(getElement());
       firstControl_ = new Button("First");
       lastControl_ = new Button("Last");
       noDescription_ = new Label("Warning: dialog may not be accessible");
