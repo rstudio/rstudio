@@ -1,7 +1,7 @@
 /*
  * GlobalToolbar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,7 +75,8 @@ public class GlobalToolbar extends Toolbar
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
-      ToolbarButton newButton = new ToolbarButton("",
+      ToolbarButton newButton = new ToolbarButton(ToolbarButton.NoText,
+                                                  "New File",
                                                   new ImageResource2x(icons.stock_new2x()),
                                                   newMenu_);
       addLeftWidget(newButton);
@@ -106,8 +107,10 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
       
-      ToolbarButton mruButton = new ToolbarButton(mruMenu, false);
-      mruButton.setTitle("Open recent files");
+      ToolbarButton mruButton = new ToolbarButton(ToolbarButton.NoText, 
+                                                  "Open recent files", 
+                                                  mruMenu, 
+                                                  false);
       addLeftWidget(mruButton);
       addLeftSeparator();
       
@@ -192,10 +195,10 @@ public class GlobalToolbar extends Toolbar
             vcsIcon = new ImageResource2x(icons.svn2x());
          
          ToolbarButton vcsButton = new ToolbarButton(
-               null,
+               ToolbarButton.NoText,
+               "Version control",
                vcsIcon, 
                vcsMenu);
-         vcsButton.setTitle("Version control");
          addLeftWidget(vcsButton);
       }
       
@@ -227,10 +230,10 @@ public class GlobalToolbar extends Toolbar
       
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarButton paneLayoutButton = new ToolbarButton(
-            null,
+            ToolbarButton.NoText,
+            "Workspace Panes",
             paneLayoutIcon,
             paneLayoutMenu);
-      paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
       

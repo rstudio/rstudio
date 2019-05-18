@@ -1,7 +1,7 @@
 /*
  * GitPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,7 +92,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
-      toolbar.addLeftWidget(new ToolbarButton(pullMoreMenu, true));
+      toolbar.addLeftWidget(new ToolbarButton(ToolbarButton.NoText, "Pull options", pullMoreMenu, true));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -100,6 +100,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(moreButton_ = new ToolbarButton(
             "More",
+            ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
             moreMenu));
 
@@ -113,6 +114,8 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addRightSeparator();
       
       toolbar.addRightWidget(new ToolbarButton(
+            ToolbarButton.NoText,
+            commands_.vcsRefresh().getTooltip(),
             commands_.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override

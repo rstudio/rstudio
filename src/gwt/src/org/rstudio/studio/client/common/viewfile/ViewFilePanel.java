@@ -282,7 +282,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar_ = new ViewFileToolbar();
       
       toolbar_.addLeftWidget(new ToolbarButton(
-         "Save As", 
+         "Save As",
+         ToolbarButton.NoTitle,
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
             @Override
@@ -295,7 +296,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar_.addLeftSeparator();
       
       toolbar_.addLeftWidget(new ToolbarButton(
-         null,
+         ToolbarButton.NoText,
+         commands_.printSourceDoc().getTooltip(),
          commands_.printSourceDoc().getImageResource(),
          new ClickHandler() {
 

@@ -1,7 +1,7 @@
 /*
  * PresentationPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
          
          ToolbarButton moreButton = new ToolbarButton("More",
+                                                      "More presentation commands",
                                                       new ImageResource2x(
                                                          StandardIcons.INSTANCE.more_actions2x()),
                                                       moreMenu);
@@ -154,6 +155,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       toolbar.addRightWidget(refreshButton_);
 
       progressButton_ = new ToolbarButton(
+                              ToolbarButton.NoText,
+                              ToolbarButton.NoTitle,
                               CoreResources.INSTANCE.progress_gray(),
                               new ClickHandler() {
                                  @Override

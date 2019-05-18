@@ -1,7 +1,7 @@
 /*
  * ProjectPopupMenu.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,7 +81,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                   "Project: (None)";
           
          toolbarButton_ = new ToolbarButton(
-                buttonText, 
+                buttonText,
+                ToolbarButton.NoTitle,
                 new ImageResource2x(RESOURCES.projectMenu2x()),
                 this, 
                 true);

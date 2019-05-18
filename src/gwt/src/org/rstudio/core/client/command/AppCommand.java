@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,11 +46,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
    { 
-      public CommandToolbarButton(String buttonLabel,
+      public CommandToolbarButton(String buttonLabel, String buttonTitle,
             ImageResourceProvider imageResourceProvider, AppCommand command,
             boolean synced)
       {
-         super(buttonLabel, imageResourceProvider, command);
+         super(buttonLabel, buttonTitle, imageResourceProvider, command);
          command_ = command;
          synced_ = synced;
       }
@@ -457,6 +457,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public ToolbarButton createToolbarButton(boolean synced)
    {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
+                                                             getDesc(),
                                                              this, 
                                                              this, 
                                                              synced);

@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -406,8 +406,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));
       menu.addItem(commands_.goToDefinition().createMenuItem(false));
-      ToolbarButton codeTools = new ToolbarButton("", icon, menu);
-      codeTools.setTitle("Code Tools");
+      ToolbarButton codeTools = new ToolbarButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());

@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -131,6 +131,7 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
       viewButton_ = new ToolbarButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            ToolbarButton.NoTitle,
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
       toolbar.addRightWidget(viewButton_);
@@ -151,7 +152,7 @@ public class EnvironmentPane extends WorkbenchPane
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
+      toolbar.addRightWidget(new ToolbarButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
 
       return toolbar;
    }
@@ -164,6 +165,7 @@ public class EnvironmentPane extends WorkbenchPane
       environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarButton(
             friendlyEnvironmentName(),
+            ToolbarButton.NoTitle,
             imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
       toolbar.addLeftWidget(environmentButton_);
@@ -491,6 +493,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       dataImportButton_ = new ToolbarButton(
               "Import Dataset",
+              ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
       return dataImportButton_;

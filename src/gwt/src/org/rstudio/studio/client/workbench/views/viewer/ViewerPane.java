@@ -83,7 +83,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
       
       exportButton_ = new ToolbarButton(
-            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+            "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       toolbar_.addLeftWidget(exportButton_);  
       exportButton_.setVisible(false);

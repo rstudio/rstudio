@@ -1,7 +1,7 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,7 +92,8 @@ public class BuildPane extends WorkbenchPane
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
          BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
-         ToolbarButton buildMenuButton = new ToolbarButton(buildPopupMenu, true);
+         ToolbarButton buildMenuButton = new ToolbarButton(ToolbarButton.NoText,
+               "Build book options", buildPopupMenu, true);
          toolbar.addLeftWidget(buildMenuButton);
       }
       
@@ -138,6 +139,7 @@ public class BuildPane extends WorkbenchPane
          // add more menu
          ToolbarButton moreButton = new ToolbarButton(
                                       "More",
+                                      ToolbarButton.NoTitle,
                                       new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
                                       moreMenu);
          toolbar.addLeftWidget(moreButton);

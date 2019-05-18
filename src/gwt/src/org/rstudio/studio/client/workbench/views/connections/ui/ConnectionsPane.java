@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -361,8 +361,9 @@ public class ConnectionsPane extends WorkbenchPane
          connectionExplorer_.setFilterText(event.getValue()));
       
       backToConnectionsButton_ = new ToolbarButton(
-            commands_.helpBack().getImageResource(), (ClickHandler)null);
-      backToConnectionsButton_.setTitle("View all connections");
+            ToolbarButton.NoText,
+            "View all connections",
+            commands_.helpBack().getImageResource());
        
       // connect meuu
       ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
@@ -388,7 +389,8 @@ public class ConnectionsPane extends WorkbenchPane
                ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
       }
       connectMenuButton_ = new ToolbarButton(
-            "Connect", 
+            "Connect",
+            ToolbarButton.NoTitle,
             commands_.newConnection().getImageResource(), 
             connectMenu);
       
@@ -506,7 +508,8 @@ public class ConnectionsPane extends WorkbenchPane
                icon.setHeight("18px");
             }
              
-            ToolbarButton button = new ToolbarButton(action.getName(), 
+            ToolbarButton button = new ToolbarButton(action.getName(),
+                  ToolbarButton.NoTitle,
                   icon, // left image
                   null, // right image
                   // invoke the action when the button is clicked

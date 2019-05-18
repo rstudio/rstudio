@@ -1576,7 +1576,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="executeCurrentSection"
         label="Execute Current Code Section"
-	    buttonLabel="Run Section"
+        buttonLabel="Run Section"
         menuLabel="Run Code _Section"
         desc="Run the code section that contains the cursor"
         context="r"/>
@@ -2028,8 +2028,8 @@ well as menu structures (for main menu and popup menus).
         desc="Sync PDF view to editor location (Ctrl+Click)"/>
 
    <cmd id="checkSpelling"
-	    menuLabel="Check _Spelling..."
-	    desc="Check spelling in document"/>
+        menuLabel="Check _Spelling..."
+        desc="Check spelling in document"/>
 
    <cmd id="newFolder"
         label="Create a New Folder..."
@@ -2211,13 +2211,14 @@ well as menu structures (for main menu and popup menus).
         label="Clear Console"
         menuLabel="Cle_ar Console"
         windowMode="main"
-        desc="Clear Console"/>
+        desc="Clear console"/>
         
    <cmd id="interruptR"
         label="Interrupt R Session"
         buttonLabel=""
         menuLabel="_Interrupt R"
-        windowMode="main"/>
+        windowMode="main"
+        desc="Interrupt R"/>
         
    <cmd id="restartR"
         label="Restart R Session"
@@ -2446,11 +2447,13 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."
-        windowMode="main"/>
+        windowMode="main"
+        desc="Load workspace"/>
         
    <cmd id="saveWorkspace"
         menuLabel="_Save Workspace As..."
-        windowMode="main"/>
+        windowMode="main"
+        desc="Save workspace as"/>
         
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
@@ -2552,16 +2555,16 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh Package listing"/>
 
    <cmd id="packratBootstrap"
-   		buttonLabel="Packrat"
-   		menuLabel="_Initialize Packrat..."
-   		desc="Use packrat with this project"
-   		rebindable="false"
-   		context="packrat"/>
+        buttonLabel="Packrat"
+        menuLabel="_Initialize Packrat..."
+        desc="Use packrat with this project"
+        rebindable="false"
+        context="packrat"/>
 
    <cmd id="packratClean"
          menuLabel="_Clean Unused Packages..."
          desc="Remove unused packages from your packrat library"
-   		 rebindable="false"
+         rebindable="false"
          context="packrat"/>
 
    <cmd id="packratHelp"
@@ -2578,11 +2581,11 @@ well as menu structures (for main menu and popup menus).
          context="packrat"/>
          
    <cmd id="packratBundle"
-   		buttonLabel="Bundle"
-   		menuLabel="Export Project _Bundle..."
-   		desc="Bundle a Packrat Project"
-   		rebindable="false"
-   		context="packrat"/>
+        buttonLabel="Bundle"
+        menuLabel="Export Project _Bundle..."
+        desc="Bundle a Packrat Project"
+        rebindable="false"
+        context="packrat"/>
 
    <cmd id="packratCheckStatus"
          menuLabel="Check Library _Status..."
@@ -2636,7 +2639,7 @@ well as menu structures (for main menu and popup menus).
         desc="Change terminal session name"/>
 
    <cmd id="closeTerminal"
-   	    buttonLabel=""
+        buttonLabel=""
         label="Close Terminal"
         menuLabel="Cl_ose Terminal"
         desc="Close current terminal session"/>

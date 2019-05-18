@@ -1,7 +1,7 @@
 /*
  * PackagesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,7 +213,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packratMenu.addSeparator();
       packratMenu.addItem(commands_.packratOptions().createMenuItem(false));
       packratMenuButton_ = new ToolbarButton(
-            "Packrat", commands_.packratBootstrap().getImageResource(), 
+            "Packrat", 
+            ToolbarButton.NoTitle,
+            commands_.packratBootstrap().getImageResource(),
             packratMenu
        );
       toolbar.addLeftWidget(packratMenuButton_);

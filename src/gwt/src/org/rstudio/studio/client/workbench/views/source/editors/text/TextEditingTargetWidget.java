@@ -252,6 +252,7 @@ public class TextEditingTargetWidget
    {
       compareTestButton_ = new ToolbarButton(
             "Compare Results", 
+            ToolbarButton.NoTitle,
             commands_.shinyCompareTest().getImageResource(), 
             new ClickHandler() 
             {
@@ -268,6 +269,7 @@ public class TextEditingTargetWidget
 
       testThatButton_ = new ToolbarButton(
             "Run Tests", 
+            ToolbarButton.NoTitle,
             commands_.testTestthatFile().getImageResource(), 
             new ClickHandler() 
             {
@@ -284,6 +286,7 @@ public class TextEditingTargetWidget
 
       testShinyButton_ = new ToolbarButton(
             "Run Tests", 
+            ToolbarButton.NoTitle,
             commands_.testShinytestFile().getImageResource(), 
             new ClickHandler() 
             {
@@ -337,7 +340,10 @@ public class TextEditingTargetWidget
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
       if (fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(shinyTestMenu, true);
+         shinyLaunchButton_ = new ToolbarButton(
+               ToolbarButton.NoText,
+               "Shiny test options",
+               shinyTestMenu, true);
          toolbar.addLeftWidget(shinyLaunchButton_);
       }
 
@@ -360,7 +366,8 @@ public class TextEditingTargetWidget
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
       
       rmdOptionsButton_ = new ToolbarButton(
-            null,  
+            ToolbarButton.NoText,
+            commands_.editRmdFormatOptions().getTooltip(),
             new ImageResource2x(StandardIcons.INSTANCE.options2x()),
             rmdOptionsMenu, 
             false);
@@ -384,6 +391,7 @@ public class TextEditingTargetWidget
 
       insertChunkMenu_ = new ToolbarButton(
                        "Insert",
+                       commands_.insertChunk().getTooltip(),
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
                        true);
@@ -404,6 +412,7 @@ public class TextEditingTargetWidget
       
       sourceButton_ = new ToolbarButton(
             "Source", 
+            SOURCE_BUTTON_TITLE,
             commands_.sourceActiveDocument().getImageResource(), 
             new ClickHandler() 
             {
@@ -416,8 +425,6 @@ public class TextEditingTargetWidget
                      commands_.sourceActiveDocument().execute();
                }
             });
-      
-      sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
 
       previewJsButton_ = commands_.previewJS().createToolbarButton(false);
@@ -447,8 +454,8 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceAsLauncherJob().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceAsJob().createMenuItem(false));
          
-      sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
-      toolbar.addRightWidget(sourceMenuButton_);  
+      sourceMenuButton_ = new ToolbarButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
+      toolbar.addRightWidget(sourceMenuButton_);
 
       //toolbar.addRightSeparator();
      
@@ -477,6 +484,7 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
                        "Run",
+                       ToolbarButton.NoTitle,
                        commands_.executeCode().getImageResource(),
                        chunksMenu,
                        true);
@@ -484,12 +492,20 @@ public class TextEditingTargetWidget
       
       ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
       if (!fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(shinyLaunchMenu, true);
+         shinyLaunchButton_ = new ToolbarButton(
+               ToolbarButton.NoText,
+               "Run app options",
+               shinyLaunchMenu, 
+               true);
          toolbar.addRightWidget(shinyLaunchButton_);
       }
       shinyLaunchButton_.setVisible(false);
 
-      plumberLaunchButton_ = new ToolbarButton(plumberViewerMenu_, true);
+      plumberLaunchButton_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Run API options",
+            plumberViewerMenu_, 
+            true);
       toolbar.addRightWidget(plumberLaunchButton_);
       plumberLaunchButton_.setVisible(false);
 
@@ -510,7 +526,8 @@ public class TextEditingTargetWidget
       }
       
       toggleDocOutlineButton_ = new LatchingToolbarButton(
-         "",
+            ToolbarButton.NoText,
+            ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             new ClickHandler()
             {
@@ -606,6 +623,7 @@ public class TextEditingTargetWidget
     
       ToolbarButton texButton = new ToolbarButton(
                            "Format", 
+                           ToolbarButton.NoTitle,
                            fileTypeRegistry_.getIconForFilename("foo.tex"), 
                            texMenu, 
                            false);
@@ -640,8 +658,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.showDiagnosticsProject().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.profileCode().createMenuItem(false));
-         codeTransform_ = new ToolbarButton("", icon, menu);
-         codeTransform_.setTitle("Code Tools");
+         codeTransform_ = new ToolbarButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       }
       
       return codeTransform_;
