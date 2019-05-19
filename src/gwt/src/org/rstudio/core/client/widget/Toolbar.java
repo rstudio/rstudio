@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
@@ -107,6 +108,8 @@ public class Toolbar extends Composite
       super();
 
       toolbarWrapper_ = new HTMLPanel("");
+
+      Roles.getToolbarRole().set(toolbarWrapper_.getElement());
 
       horizontalPanel_ = new HorizontalPanelLayout();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -318,7 +321,6 @@ public class Toolbar extends Composite
          }
       }, left);
    }
-   
 
    private Widget addPopupMenu(final MenuLabel menuLabel, 
          final MenuSource menuSource,
@@ -356,7 +358,6 @@ public class Toolbar extends Composite
       
       return image;
    }
-   
 
    private HorizontalPanelLayout horizontalPanel_ ;
    private HorizontalPanelLayout leftToolbarPanel_ ;
