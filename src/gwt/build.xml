@@ -186,7 +186,7 @@
          <arg value="-noserver"/>
          <arg value="-startupUrl"/>
          <arg value="http://localhost:8787"/>
-         <arg line="-bindAddress 0.0.0.0"/>
+         <arg line="-bindAddress 127.0.0.1"/>
          <arg value="-generateJsInteropExports"/>
          <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
