@@ -66,7 +66,7 @@ public abstract class ModalDialogBase extends DialogBox
       // a11y
       role_ = role;
       role_.set(getElement());
-      A11y.setModal(getElement());
+      A11y.setARIADialogModal(getElement());
       firstControl_ = new Button("First");
       lastControl_ = new Button("Last");
       Roles.getButtonRole().setAriaHiddenState(firstControl_.getElement(), true);

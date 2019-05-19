@@ -66,13 +66,14 @@ public class BaseMenuBar extends MenuBar
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
 
-      // verify layout assumptions in case GWT changes them; we need to mark table
-      // created by MenuBar as being for presentation-only as presentation-only
+      // verify layout assumptions in case GWT changes them
       if (DOM.getChildCount(getElement()) != 2)
       {
          Debug.log("Unexpected DOM layout in menubar (child count = " + DOM.getChildCount(getElement()));
          return;
       }
+
+      // mark Table created by MenuBar as being for presentation only
       Roles.getPresentationRole().set(DOM.getChild(getElement(), 1));
    }
    

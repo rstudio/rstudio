@@ -21,7 +21,7 @@ import com.google.gwt.dom.client.Element;
  */
 public class A11y
 {
-   public static void setModal(Element element)
+   public static void setARIADialogModal(Element element)
    {
       element.setAttribute("aria-modal", "true");
    }
@@ -34,5 +34,10 @@ public class A11y
    public static void setDecorativeImage(Element element)
    {
       element.setAttribute("alt", "");
+   }
+
+   public static void setARIAMenuItemExpanded(Element element, boolean expanded)
+   {
+      element.setAttribute("aria-expanded", expanded ? "true" : "false");
    }
 }
