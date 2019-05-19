@@ -1,7 +1,7 @@
 /*
  * ChunkOptionsPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -104,7 +106,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
       
-      panel_ = new VerticalPanel();
+      panel_ = new VerticalPanelLayout();
       add(panel_);
       
       header_ = new Label();
@@ -346,7 +348,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(enginePanel_);
       
-      HorizontalPanel footerPanel = new HorizontalPanel();
+      HorizontalPanelLayout footerPanel = new HorizontalPanelLayout();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
@@ -354,7 +356,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       HelpLink helpLink = new HelpLink("Chunk options", "chunk-options", false);
       linkPanel.add(helpLink);
       
-      HorizontalPanel buttonPanel = new HorizontalPanel();
+      HorizontalPanelLayout buttonPanel = new HorizontalPanelLayout();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
@@ -658,7 +660,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return sortedMap;
    }
    
-   protected final VerticalPanel panel_;
+   protected final VerticalPanelLayout panel_;
    protected final Label header_;
    protected final Label chunkLabel_;
    protected final TextBoxWithCue tbChunkLabel_;

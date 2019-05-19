@@ -1,7 +1,7 @@
 /*
  * CodeFilesList.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,8 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
@@ -29,10 +31,8 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class CodeFilesList extends Composite
@@ -41,23 +41,23 @@ public class CodeFilesList extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       panel.addStyleName(RES.styles().wizardMainColumn());
       
-      HorizontalPanel labelPanel = new HorizontalPanel();
+      HorizontalPanelLayout labelPanel = new HorizontalPanelLayout();
       Label label = new Label("Create package based on source files:");
       label.addStyleName(RES.styles().wizardTextEntryLabel());
       labelPanel.add(label);
       panel.add(labelPanel);
       
-      HorizontalPanel dictionariesPanel = new HorizontalPanel();
+      HorizontalPanelLayout dictionariesPanel = new HorizontalPanelLayout();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(true);
       listBox_.addStyleName(RES.styles().codeFilesListBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       dictionariesPanel.add(listBox_);
       
-      VerticalPanel buttonPanel = new VerticalPanel();
+      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

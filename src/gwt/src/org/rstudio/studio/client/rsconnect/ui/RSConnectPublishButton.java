@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -65,7 +66,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -94,7 +94,7 @@ public class RSConnectPublishButton extends Composite
       boundCommand_ = boundCommand;
       
       // create root widget
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       
       // create publish button itself
       publishButton_ = new ToolbarButton(

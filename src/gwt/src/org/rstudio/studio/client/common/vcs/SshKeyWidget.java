@@ -1,7 +1,7 @@
 /*
  * SshKeyWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -31,7 +32,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -46,7 +46,7 @@ public class SshKeyWidget extends Composite
       FlowPanel panel = new FlowPanel();
            
       // caption panel
-      HorizontalPanel captionPanel = new HorizontalPanel();
+      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
       Label sshKeyPathLabel = new Label("SSH RSA key:");
@@ -55,7 +55,7 @@ public class SshKeyWidget extends Composite
                                           sshKeyPathLabel,
                                           HasHorizontalAlignment.ALIGN_LEFT);
    
-      HorizontalPanel linkPanel = new HorizontalPanel();
+      HorizontalPanelLayout linkPanel = new HorizontalPanelLayout();
       publicKeyLink_ = new HyperlinkLabel("View public key");
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
       publicKeyLink_.addClickHandler(new ClickHandler() {
@@ -82,7 +82,7 @@ public class SshKeyWidget extends Composite
       
     
       // ssh key path action buttons
-      HorizontalPanel sshButtonPanel = new HorizontalPanel();
+      HorizontalPanelLayout sshButtonPanel = new HorizontalPanelLayout();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       createKeyButton_ = new SmallButton();
       createKeyButton_.setText("Create RSA Key...");

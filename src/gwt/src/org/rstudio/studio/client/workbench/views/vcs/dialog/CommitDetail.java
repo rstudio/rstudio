@@ -1,7 +1,7 @@
 /*
  * CommitDetail.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
@@ -256,11 +257,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    Label labelParent_;
    @UiField
-   VerticalPanel tocPanel_;
+   VerticalPanelLayout tocPanel_;
    @UiField(provided = true)
    ProgressPanel progressPanel_;
    @UiField
-   VerticalPanel detailPanel_;
+   VerticalPanelLayout detailPanel_;
    @UiField(provided = true)
    SizeWarningWidget sizeWarning_;
    @UiField

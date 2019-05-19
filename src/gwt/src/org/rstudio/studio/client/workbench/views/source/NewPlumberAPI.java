@@ -18,6 +18,8 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -42,11 +44,9 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -184,7 +184,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       
       loadAndPersistClientState();
         
-      controls_ = new VerticalPanel();
+      controls_ = new VerticalPanelLayout();
       
       // Create individual widgets
       apiNameLabel_ = new Label("API name:");
@@ -206,7 +206,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       
       controls_.add(new VerticalSpacer("20px"));
       
-      container_ = new HorizontalPanel();
+      container_ = new HorizontalPanelLayout();
       Image image = new Image(NewProjectResources.INSTANCE.plumberAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
@@ -276,8 +276,8 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       session_.persistClientState();
    }
    
-   private HorizontalPanel container_;
-   private VerticalPanel controls_;
+   private HorizontalPanelLayout container_;
+   private VerticalPanelLayout controls_;
    
    private Label   apiNameLabel_;
    private TextBox apiNameTextBox_;

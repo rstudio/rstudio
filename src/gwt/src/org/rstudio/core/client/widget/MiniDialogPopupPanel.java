@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -22,9 +24,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
@@ -51,11 +51,11 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    {
       addStyleName(ThemeStyles.INSTANCE.miniDialogPopupPanel());
       
-      verticalPanel_ = new VerticalPanel();
+      verticalPanel_ = new VerticalPanelLayout();
       verticalPanel_.setStyleName(ThemeStyles.INSTANCE.miniDialogContainer());
       
       // title bar
-      HorizontalPanel titleBar = new HorizontalPanel();
+      HorizontalPanelLayout titleBar = new HorizontalPanelLayout();
       titleBar.setWidth("100%");
       
       captionLabel_ = new Label();
@@ -64,7 +64,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       titleBar.setCellHorizontalAlignment(captionLabel_, 
                                           HasHorizontalAlignment.ALIGN_LEFT);
      
-      HorizontalPanel toolsPanel = new HorizontalPanel();
+      HorizontalPanelLayout toolsPanel = new HorizontalPanelLayout();
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
             ToolbarButton.NoText,
@@ -115,7 +115,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       focusContext_.restore();
    }
    
-   private VerticalPanel verticalPanel_;
+   private VerticalPanelLayout verticalPanel_;
    private Label captionLabel_ ;
    private FocusContext focusContext_ = new FocusContext();
 }

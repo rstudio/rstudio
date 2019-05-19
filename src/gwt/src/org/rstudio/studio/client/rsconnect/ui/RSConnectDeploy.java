@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -69,11 +71,9 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -1314,10 +1314,10 @@ public class RSConnectDeploy extends Composite
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
-   @UiField VerticalPanel fileListPanel_;
-   @UiField VerticalPanel filePanel_;
-   @UiField VerticalPanel descriptionPanel_;
-   @UiField HorizontalPanel publishFromPanel_;
+   @UiField VerticalPanelLayout fileListPanel_;
+   @UiField VerticalPanelLayout filePanel_;
+   @UiField VerticalPanelLayout descriptionPanel_;
+   @UiField HorizontalPanelLayout publishFromPanel_;
    @UiField RSConnectAccountEntry accountEntry_;
    
    // provided fields

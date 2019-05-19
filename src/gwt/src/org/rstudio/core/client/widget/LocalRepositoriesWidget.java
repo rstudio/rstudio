@@ -1,8 +1,24 @@
+/*
+ * LocalRepositoriesWidget.java
+ *
+ * Copyright (C) 2009-19 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -14,9 +30,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class LocalRepositoriesWidget extends Composite
@@ -25,18 +39,18 @@ public class LocalRepositoriesWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       panel.add(new LabelWithHelp("Local repositories:",
             "packrat_local_repos"));
       
-      HorizontalPanel hp = new HorizontalPanel();
+      HorizontalPanelLayout hp = new HorizontalPanelLayout();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(true);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       hp.add(listBox_);
       
-      VerticalPanel buttonPanel = new VerticalPanel();
+      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

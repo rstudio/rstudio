@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs.ignore;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -31,7 +32,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -144,7 +144,7 @@ public class IgnoreDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel verticalPanel = new VerticalPanel();
+      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
       
       verticalPanel.add(dirChooser_);
       

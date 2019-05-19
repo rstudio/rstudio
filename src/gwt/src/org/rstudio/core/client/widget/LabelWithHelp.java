@@ -1,7 +1,7 @@
 /*
  * LabelWithHelp.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,8 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class LabelWithHelp extends Composite
 {
@@ -31,7 +31,7 @@ public class LabelWithHelp extends Composite
                         String helpTopic, 
                         boolean includeVersionInfo)
    {
-      HorizontalPanel labelPanel = new HorizontalPanel();
+      HorizontalPanelLayout labelPanel = new HorizontalPanelLayout();
       Label label = new Label(text);
       labelPanel.add(label);
       HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo);

@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'
              xmlns:rsw='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field="res"
@@ -22,10 +23,10 @@
          </g:layer>
          <g:layer right='0px' width='175px'>
             <g:SimplePanel>
-               <g:HorizontalPanel styleName="{res.styles.viewFilePanel}">
+               <rsl:HorizontalPanelLayout styleName="{res.styles.viewFilePanel}">
                   <g:Image ui:field="separatorImage_"/>
                   <rsw:HyperlinkLabel ui:field="viewFileHyperlink_"/>
-               </g:HorizontalPanel>
+               </rsl:HorizontalPanelLayout>
             </g:SimplePanel>
          </g:layer>
       </g:LayoutPanel>

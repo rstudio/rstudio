@@ -1,7 +1,7 @@
 /*
  * Shelf.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,10 +29,11 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class Shelf extends Composite
 {
-   interface Binder extends UiBinder<HorizontalPanel, Shelf> {}
+   interface Binder extends UiBinder<HorizontalPanelLayout, Shelf> {}
    interface Resources extends ClientBundle
    {
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -66,7 +67,7 @@ public class Shelf extends Composite
    public Shelf(boolean large)
    {
       large_ = large;
-      HorizontalPanel mainPanel = binder.createAndBindUi(this);
+      HorizontalPanelLayout mainPanel = binder.createAndBindUi(this);
       if (large_)
          mainPanel.setStyleName(RES.styles().largeShelf());
   
@@ -114,12 +115,10 @@ public class Shelf extends Composite
 
    private static final Binder binder = GWT.create(Binder.class);
 
-   @UiField
-   HorizontalPanel left_;
-   @UiField
-   HorizontalPanel right_;
+   @UiField HorizontalPanelLayout left_;
+   @UiField HorizontalPanelLayout right_;
    
-   private boolean large_ = false;
+   private boolean large_;
    
-   private static final Resources RES = (Resources)GWT.create(Resources.class);
+   private static final Resources RES = GWT.create(Resources.class);
 }

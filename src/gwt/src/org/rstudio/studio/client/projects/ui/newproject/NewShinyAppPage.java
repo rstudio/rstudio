@@ -1,7 +1,7 @@
 /*
  * NewShinyAppPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
-
-import com.google.gwt.user.client.ui.HorizontalPanel;
-
 
 public class NewShinyAppPage extends NewDirectoryPage
 {
@@ -33,7 +31,7 @@ public class NewShinyAppPage extends NewDirectoryPage
    }
     
    @Override 
-   protected void onAddTopPanelWidgets(HorizontalPanel panel)
+   protected void onAddTopPanelWidgets(HorizontalPanelLayout panel)
    {
       
    }

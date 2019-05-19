@@ -32,7 +32,6 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -43,6 +42,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -170,7 +170,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       list_ = list;
       
-      container_ = new VerticalPanel();
+      container_ = new VerticalPanelLayout();
       container_.add(list_);
       if (truncated)
          container_.add(truncated_);
@@ -463,7 +463,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
    private static QualifiedName lastSelectedValue_;
-   private VerticalPanel container_;
+   private VerticalPanelLayout container_;
    private final Label truncated_;
    private final NativePreviewHandler handler_;
    private HandlerRegistration handlerRegistration_;

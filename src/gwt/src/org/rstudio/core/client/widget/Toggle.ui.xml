@@ -1,5 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
 
 <ui:style field="styles_" type="org.rstudio.core.client.widget.Toggle.Styles">
 
@@ -58,13 +59,13 @@
 
 </ui:style>
 
-<g:HorizontalPanel ui:field="container_" styleName="{styles_.container}">
+<rsl:HorizontalPanelLayout ui:field="container_" styleName="{styles_.container}">
    <g:FlowPanel ui:field="track_" styleName="{styles_.track}">
       <g:FlowPanel ui:field="knob_" styleName="{styles_.knob}">
       </g:FlowPanel>
    </g:FlowPanel>
    <g:Label ui:field="label_" styleName="{styles_.label}">
    </g:Label>
-</g:HorizontalPanel>
+</rsl:HorizontalPanelLayout>
 
 </ui:UiBinder> 

@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
@@ -81,7 +82,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -689,7 +689,7 @@ public class RSConnect implements SessionInitHandler,
                   closeDialog();
                }
             }));
-            HorizontalPanel panel = new HorizontalPanel();
+            HorizontalPanelLayout panel = new HorizontalPanelLayout();
             Image errorImage = 
                   new Image(new ImageResource2x(MessageDialogImages.INSTANCE.dialog_error2x()));
             errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);

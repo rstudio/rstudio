@@ -1,7 +1,7 @@
 /*
  * BuildToolsPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -33,10 +34,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class BuildToolsPanel extends VerticalPanel
+public abstract class BuildToolsPanel extends VerticalPanelLayout
 {
    public BuildToolsPanel()
    {
@@ -192,7 +192,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
       
       AdditionalArguments(Widget captionWidget)
       {
-         VerticalPanel panel = new VerticalPanel();
+         VerticalPanelLayout panel = new VerticalPanelLayout();
          panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
          
      

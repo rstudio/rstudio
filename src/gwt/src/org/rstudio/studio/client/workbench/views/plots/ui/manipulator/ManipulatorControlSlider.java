@@ -1,7 +1,7 @@
 /*
  * ManipulatorControlSlider.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONNumber;
@@ -36,10 +38,10 @@ public class ManipulatorControlSlider extends ManipulatorControl
       ManipulatorStyles styles = ManipulatorResources.INSTANCE.manipulatorStyles();
       
       // containing panel
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       
       // setup caption panel and add it
-      HorizontalPanel captionPanel = new HorizontalPanel();
+      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
   
       Label captionLabel = new Label();
       captionLabel.setStyleName(styles.captionLabel());

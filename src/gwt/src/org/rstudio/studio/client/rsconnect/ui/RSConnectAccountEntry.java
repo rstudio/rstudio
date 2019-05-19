@@ -1,7 +1,7 @@
 /*
  * RSConnectAccountEntry.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 
@@ -21,7 +22,6 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 
@@ -34,7 +34,7 @@ public class RSConnectAccountEntry extends Composite
    
    public RSConnectAccountEntry(RSConnectAccount account)
    {
-      panel_ = new HorizontalPanel();
+      panel_ = new HorizontalPanelLayout();
       initWidget(panel_);
       if (account != null)
          setAccount(account);
@@ -76,6 +76,6 @@ public class RSConnectAccountEntry extends Composite
    }
    
    private RSConnectAccount account_;
-   private final HorizontalPanel panel_;
+   private final HorizontalPanelLayout panel_;
 }
 

@@ -1,7 +1,7 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,15 +23,15 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -66,7 +66,7 @@ public class EditingPreferencesPane extends PreferencesPane
       server_ = server;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
-      VerticalPanel editingPanel = new VerticalPanel();
+      VerticalPanelLayout editingPanel = new VerticalPanelLayout();
       editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(), 
             false /*defaultSpace*/)));
@@ -103,7 +103,7 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       editingPanel.add(delimiterSurroundWidget_);
       
-      HorizontalPanel keyboardPanel = new HorizontalPanel();
+      HorizontalPanelLayout keyboardPanel = new HorizontalPanelLayout();
       editorMode_ = new SelectWidget(
             "Keybindings:",
             new String[] {
@@ -167,7 +167,7 @@ public class EditingPreferencesPane extends PreferencesPane
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(snippetsLabel);
       
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       CheckBox enableSnippets = checkboxPref("Enable code snippets", prefs_.enableSnippets());
       panel.add(enableSnippets);
      
@@ -191,7 +191,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(panel);
       
       
-      VerticalPanel displayPanel = new VerticalPanel();
+      VerticalPanelLayout displayPanel = new VerticalPanelLayout();
       displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
@@ -247,7 +247,7 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       displayPanel.add(consoleColorMode_);
       
-      VerticalPanel savePanel = new VerticalPanel();
+      VerticalPanelLayout savePanel = new VerticalPanelLayout();
       
       savePanel.add(headerLabel("General"));
       savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
@@ -302,7 +302,7 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
       
-      VerticalPanel completionPanel = new VerticalPanel();
+      VerticalPanelLayout completionPanel = new VerticalPanelLayout();
       
       completionPanel.add(headerLabel("R and C/C++"));
      
@@ -399,12 +399,12 @@ public class EditingPreferencesPane extends PreferencesPane
                       prefs.alwaysCompleteDelayMs())));
         
       
-      VerticalPanel diagnosticsPanel = new VerticalPanel();
+      VerticalPanelLayout diagnosticsPanel = new VerticalPanelLayout();
       diagnosticsPanel.add(headerLabel("R Diagnostics"));
       final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
       
-      final VerticalPanel rOptionsPanel = new VerticalPanel();
+      final VerticalPanelLayout rOptionsPanel = new VerticalPanelLayout();
       rOptionsPanel.add(checkboxPref("Enable diagnostics within R function calls", prefs.diagnosticsInRFunctionCalls()));
       rOptionsPanel.add(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls()));
       rOptionsPanel.add(checkboxPref("Check usage of '<-' in function call", prefs.checkUnexpectedAssignmentInFunctionCall()));

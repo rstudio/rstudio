@@ -1,7 +1,7 @@
 /*
  * Toolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -107,9 +108,9 @@ public class Toolbar extends Composite
 
       toolbarWrapper_ = new HTMLPanel("");
 
-      horizontalPanel_ = new HorizontalPanel();
+      horizontalPanel_ = new HorizontalPanelLayout();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      leftToolbarPanel_ = new HorizontalPanel();
+      leftToolbarPanel_ = new HorizontalPanelLayout();
       leftToolbarPanel_.setVerticalAlignment(
                                           HasVerticalAlignment.ALIGN_MIDDLE);
       horizontalPanel_.add(leftToolbarPanel_);
@@ -117,7 +118,7 @@ public class Toolbar extends Composite
                                           leftToolbarPanel_,
                                           HasHorizontalAlignment.ALIGN_LEFT);
 
-      rightToolbarPanel_ = new HorizontalPanel();
+      rightToolbarPanel_ = new HorizontalPanelLayout();
       rightToolbarPanel_.setVerticalAlignment(
                                           HasVerticalAlignment.ALIGN_MIDDLE);
       horizontalPanel_.add(rightToolbarPanel_);
@@ -298,7 +299,7 @@ public class Toolbar extends Composite
       return toolbarWrapper_;
    }
    
-   private void removeAllWidgets(HorizontalPanel panel)
+   private void removeAllWidgets(HorizontalPanelLayout panel)
    {
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)
          panel.remove(i);
@@ -357,9 +358,9 @@ public class Toolbar extends Composite
    }
    
 
-   private HorizontalPanel horizontalPanel_ ;
-   private HorizontalPanel leftToolbarPanel_ ;
-   private HorizontalPanel rightToolbarPanel_ ;
+   private HorizontalPanelLayout horizontalPanel_ ;
+   private HorizontalPanelLayout leftToolbarPanel_ ;
+   private HorizontalPanelLayout rightToolbarPanel_ ;
    private HTMLPanel toolbarWrapper_;
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;

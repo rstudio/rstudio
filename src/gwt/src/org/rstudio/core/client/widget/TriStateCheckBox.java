@@ -1,7 +1,7 @@
 /*
  * TriStateCheckBox.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -48,7 +49,7 @@ public class TriStateCheckBox extends Composite
    
    public TriStateCheckBox(String label)
    {
-      panel_ = new HorizontalPanel();
+      panel_ = new HorizontalPanelLayout();
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
       panel_.addDomHandler(new ClickHandler()
       {
@@ -138,7 +139,7 @@ public class TriStateCheckBox extends Composite
       return state_ == STATE_INDETERMINATE;
    }
    
-   private final HorizontalPanel panel_;
+   private final HorizontalPanelLayout panel_;
    private final Label label_;
    
    private final InlineHTML alignHelper_;

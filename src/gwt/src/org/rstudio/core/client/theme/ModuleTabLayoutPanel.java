@@ -1,7 +1,7 @@
 /*
  * ModuleTabLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -42,7 +43,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    {
       public ModuleTab(String title, ThemeStyles styles, boolean canClose)
       {
-         layoutPanel_ = new HorizontalPanel();
+         layoutPanel_ = new HorizontalPanelLayout();
          layoutPanel_.setStylePrimaryName(styles.tabLayout());
          
          // Assign a unique element ID based on the tab's title
@@ -53,7 +54,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          left.setStylePrimaryName(styles.tabLayoutLeft());
          layoutPanel_.add(left);
 
-         HorizontalPanel center = new HorizontalPanel();
+         HorizontalPanelLayout center = new HorizontalPanelLayout();
          center.setStylePrimaryName(styles.rstheme_tabLayoutCenter());
          Label label = new Label(title, false);
          center.add(label);
@@ -109,7 +110,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          {
             if (busySpinner_ == null)
             {
-               HorizontalPanel center = (HorizontalPanel)closeButton_.getParent();
+               HorizontalPanelLayout center = (HorizontalPanelLayout)closeButton_.getParent();
                
                busySpinner_ = new ProgressSpinner(center.getElement());
                
@@ -134,7 +135,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          }
       }
 
-      private HorizontalPanel layoutPanel_;
+      private HorizontalPanelLayout layoutPanel_;
       private Image closeButton_;
       private ProgressSpinner busySpinner_;
    }

@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
 
    <ui:style>
       .dialog input {
@@ -29,16 +30,14 @@
       </p>
  
       <div ui:field="divTypeSelector_">
-         <g:HorizontalPanel ui:field="typeLabelPanel_">
+         <rsl:HorizontalPanelLayout ui:field="typeLabelPanel_">
             <g:Label ui:field="lblType_" text="Report type:"/>
-         </g:HorizontalPanel>
+         </rsl:HorizontalPanelLayout>
          <g:ListBox ui:field="listType_"
                     styleName="{style.type}">
             <g:item value="default">(Default)</g:item>
             <g:item value="spin">knitr::spin</g:item>
          </g:ListBox>
       </div>
- 
    </g:HTMLPanel>
-
 </ui:UiBinder>

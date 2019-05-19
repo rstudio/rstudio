@@ -1,7 +1,7 @@
 /*
  * NotebookProgressWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,10 +35,10 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class NotebookProgressWidget extends Composite
                                     implements HasClickHandlers
@@ -213,7 +213,7 @@ public class NotebookProgressWidget extends Composite
    }
    
    @UiField HTMLPanel progressBar_;
-   @UiField HorizontalPanel root_;
+   @UiField HorizontalPanelLayout root_;
    @UiField Label progressLabel_;
    @UiField Image interruptButton_;
 

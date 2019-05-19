@@ -1,7 +1,7 @@
 /*
  * NewConnectionShinyHost.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -48,7 +49,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -148,15 +148,15 @@ public class NewConnectionShinyHost extends Composite
    
    private Widget createWidget()
    {
-      VerticalPanel container = new VerticalPanel();    
+      VerticalPanelLayout container = new VerticalPanelLayout();
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
       frame_.setSize("100%", "140px");
 
-      container.add(frame_);      
+      container.add(frame_);
       
-      // add the code panel     
+      // add the code panel
       codePanel_ = new ConnectionCodePanel();
       codePanel_.addStyleName(RES.styles().dialogCodePanel());
       

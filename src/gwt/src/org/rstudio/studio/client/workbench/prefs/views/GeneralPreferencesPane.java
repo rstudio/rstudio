@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -52,7 +53,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class GeneralPreferencesPane extends PreferencesPane
@@ -76,7 +76,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       quit_ = quit;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
-      VerticalPanel basic = new VerticalPanel();
+      VerticalPanelLayout basic = new VerticalPanelLayout();
       
       basic.add(headerLabel("R Sessions"));
       if (BrowseCap.isWindowsDesktop())
@@ -197,7 +197,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(enableCrashReporting_);
       }
 
-      VerticalPanel advanced = new VerticalPanel();
+      VerticalPanelLayout advanced = new VerticalPanelLayout();
 
       showServerHomePage_ = new SelectWidget(
             "Show server home page:",

@@ -1,7 +1,7 @@
 /*
  * SectionChooser.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,11 +30,13 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 
 class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
 {
-   private class ClickableVerticalPanel extends VerticalPanel
+   private class ClickableVerticalPanel extends VerticalPanelLayout
       implements HasClickHandlers
    {
 
@@ -59,7 +61,7 @@ class SectionChooser extends SimplePanel implements
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
       panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
-      final HorizontalPanel innerPanel = new HorizontalPanel();
+      final HorizontalPanelLayout innerPanel = new HorizontalPanelLayout();
       innerPanel.setWidth("0px");
       innerPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
       innerPanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
@@ -122,7 +124,7 @@ class SectionChooser extends SimplePanel implements
    }
 
    private Integer selectedIndex_;
-   private final VerticalPanel inner_ = new VerticalPanel();
+   private final VerticalPanelLayout inner_ = new VerticalPanelLayout();
    private static final PreferencesDialogBaseResources res_ = 
                                     PreferencesDialogBaseResources.INSTANCE;
 }

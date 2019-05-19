@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'
              xmlns:hist='urn:import:org.rstudio.studio.client.workbench.views.vcs.dialog'
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
@@ -72,8 +73,8 @@
             </tr>
          </table>
          <hist:SizeWarningWidget ui:field="sizeWarning_"/>
-         <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
-         <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />
+         <rsl:VerticalPanelLayout ui:field="tocPanel_" styleName="{style.toc}" />
+         <rsl:VerticalPanelLayout ui:field="detailPanel_" styleName="{style.detailPanel}" />
 
          <widget:ProgressPanel ui:field="progressPanel_" visible="false"
                                styleName="{style.progressPanel}"/>

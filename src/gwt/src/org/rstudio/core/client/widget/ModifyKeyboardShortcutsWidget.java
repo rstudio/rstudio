@@ -54,7 +54,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
@@ -75,6 +74,7 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
@@ -968,7 +968,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      VerticalPanel container = new VerticalPanel();
+      VerticalPanelLayout container = new VerticalPanelLayout();
       
       FlowPanel headerPanel = new FlowPanel();
       

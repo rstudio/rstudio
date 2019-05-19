@@ -1,7 +1,7 @@
 /*
  * AppearancePreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,12 +22,12 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.Operation;
@@ -64,7 +64,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       
-      VerticalPanel leftPanel = new VerticalPanel();
+      VerticalPanelLayout leftPanel = new VerticalPanelLayout();
       
       relaunchRequired_ = false;
 
@@ -247,7 +247,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
       
-      HorizontalPanel buttonPanel = new HorizontalPanel();
+      HorizontalPanelLayout buttonPanel = new HorizontalPanelLayout();
       buttonPanel.add(addThemeButton_);
       buttonPanel.add(removeThemeButton_);
       
@@ -266,7 +266,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
-      HorizontalPanel hpanel = new HorizontalPanel();
+      HorizontalPanelLayout hpanel = new HorizontalPanelLayout();
       hpanel.setWidth("100%");
       hpanel.add(leftPanel);
       hpanel.setCellWidth(leftPanel, "160px");

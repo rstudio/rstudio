@@ -1,7 +1,7 @@
 /*
  * MinimizedWindowFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -60,7 +61,7 @@ public class MinimizedWindowFrame
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);
       layout_.addEast(createDiv(themeStyles.right()), 8);
 
-      HorizontalPanel inner = new HorizontalPanel();
+      HorizontalPanelLayout inner = new HorizontalPanelLayout();
       inner.setWidth("100%");
       inner.setStylePrimaryName(themeStyles.rstheme_center());
 

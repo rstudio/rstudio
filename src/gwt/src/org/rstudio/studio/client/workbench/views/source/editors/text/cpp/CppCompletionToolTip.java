@@ -1,7 +1,7 @@
 /*
  * CppCompletionToolTip.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionText;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CppCompletionToolTip extends PopupPanel
@@ -49,10 +49,10 @@ public class CppCompletionToolTip extends PopupPanel
       CppCompletionResources.Styles styles = 
                               CppCompletionResources.INSTANCE.styles();
       
-      panel_ = new HorizontalPanel();
+      panel_ = new HorizontalPanelLayout();
       panel_.addStyleName(styles.toolTip());
       
-      VerticalPanel textPanel = new VerticalPanel();
+      VerticalPanelLayout textPanel = new VerticalPanelLayout();
       textPanel.add(label_ = new Label()); 
       label_.addStyleName(styles.toolTipText());
       commentLabel_ = new Label();
@@ -131,5 +131,5 @@ public class CppCompletionToolTip extends PopupPanel
    
    private Label label_;
    private Label commentLabel_;
-   private HorizontalPanel panel_;
+   private HorizontalPanelLayout panel_;
 }

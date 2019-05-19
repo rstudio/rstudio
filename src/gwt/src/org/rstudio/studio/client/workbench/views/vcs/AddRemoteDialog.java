@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
@@ -28,7 +29,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
@@ -64,7 +64,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
       
-      container_ = new VerticalPanel();
+      container_ = new VerticalPanelLayout();
       lblName_ = label("Remote Name:");
       lblUrl_ = label("Remote URL:");
       tbName_ = textBox();
@@ -140,5 +140,5 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    private final Label lblUrl_;
    private final TextBox tbName_;
    private final TextBox tbUrl_;
-   private final VerticalPanel container_;
+   private final VerticalPanelLayout container_;
 }

@@ -18,10 +18,10 @@ import java.util.List;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -350,7 +350,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    
    private void addTextBoxChooser(String textWidth, Label captionLabel, TextBoxWithButton chooser)
    {
-      HorizontalPanel captionPanel = new HorizontalPanel();
+      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
       captionPanel.setWidth(textWidth);
       nudgeRight(captionPanel);
 

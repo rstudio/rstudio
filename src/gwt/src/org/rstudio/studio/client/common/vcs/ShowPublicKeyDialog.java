@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -31,7 +32,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShowPublicKeyDialog extends ModalDialogBase
@@ -58,7 +58,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;

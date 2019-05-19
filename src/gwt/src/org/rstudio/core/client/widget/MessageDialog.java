@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
@@ -105,7 +106,7 @@ public class MessageDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      HorizontalPanel horizontalPanel = new HorizontalPanel();
+      HorizontalPanelLayout horizontalPanel = new HorizontalPanelLayout();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
       // add image

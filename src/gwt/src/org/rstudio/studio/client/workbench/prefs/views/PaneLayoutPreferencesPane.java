@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -90,7 +91,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       ModuleList()
       {
          checkBoxes_ = new ArrayList<CheckBox>();
-         VerticalPanel panel = new VerticalPanel();
+         VerticalPanelLayout panel = new VerticalPanelLayout();
          for (String module : PaneConfig.getAllTabs())
          {
             CheckBox checkBox = new CheckBox(module, false);
@@ -215,8 +216,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                                  res.styles().paneLayoutTable());
       add(grid);
 
-      allPanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
-                                            rightTopPanel_, rightBottomPanel_};
+      allPanePanels_ = new VerticalPanelLayout[] {leftTopPanel_, leftBottomPanel_,
+                                                  rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
       tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet1()));
@@ -263,9 +264,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       updateTabSetLabels();
    }
 
-   private VerticalPanel createPane(ListBox listBox)
+   private VerticalPanelLayout createPane(ListBox listBox)
    {
-      VerticalPanel vp = new VerticalPanel();
+      VerticalPanelLayout vp = new VerticalPanelLayout();
       vp.add(listBox);
       return vp;
    }
@@ -384,11 +385,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ListBox rightTop_;
    private final ListBox rightBottom_;
    private final ListBox[] allPanes_;
-   private final VerticalPanel leftTopPanel_;
-   private final VerticalPanel leftBottomPanel_;
-   private final VerticalPanel rightTopPanel_;
-   private final VerticalPanel rightBottomPanel_;
-   private final VerticalPanel[] allPanePanels_;
+   private final VerticalPanelLayout leftTopPanel_;
+   private final VerticalPanelLayout leftBottomPanel_;
+   private final VerticalPanelLayout rightTopPanel_;
+   private final VerticalPanelLayout rightBottomPanel_;
+   private final VerticalPanelLayout[] allPanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private boolean dirty_ = false;

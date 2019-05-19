@@ -1,7 +1,7 @@
 /*
  * TextBoxWithPrefix.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,15 +18,15 @@ import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class TextBoxWithPrefix extends Composite
 {
    public TextBoxWithPrefix()
    {
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
 
       prefixLabel_ = new Label();
       panel.add(prefixLabel_);

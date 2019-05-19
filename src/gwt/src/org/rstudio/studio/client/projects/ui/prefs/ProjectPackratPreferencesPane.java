@@ -1,7 +1,7 @@
 /*
  * ProjectPackratPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
@@ -49,7 +50,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
@@ -131,7 +131,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         spaced(chkUseCache_);
         add(chkUseCache_);
         
-        panelExternalPackages_ = new VerticalPanel();
+        panelExternalPackages_ = new VerticalPanelLayout();
         panelExternalPackages_.add(new LabelWithHelp(
               "External packages (comma separated):",
               "packrat_external_packages",
@@ -328,7 +328,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
    
-   private VerticalPanel panelExternalPackages_;
+   private VerticalPanelLayout panelExternalPackages_;
    private TextArea taExternalPackages_;
    
    private LocalRepositoriesWidget widgetLocalRepos_;

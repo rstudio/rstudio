@@ -25,6 +25,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -66,7 +67,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShellWidget extends Composite implements ShellDisplay,
@@ -174,7 +174,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       inputLine_.setCellWidth(input_.asWidget(), "100%");
       inputLine_.setWidth("100%");
 
-      verticalPanel_ = new VerticalPanel();
+      verticalPanel_ = new VerticalPanelLayout();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_.getWidget());
@@ -768,7 +768,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final HTML prompt_ ;
    protected final AceEditor input_ ;
    private final DockPanel inputLine_ ;
-   private final VerticalPanel verticalPanel_ ;
+   private final VerticalPanelLayout verticalPanel_ ;
    protected final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand resizeCommand_;

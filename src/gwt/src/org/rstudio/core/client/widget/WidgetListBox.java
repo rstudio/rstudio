@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.shared.GWT;
@@ -96,7 +97,7 @@ public class WidgetListBox<T extends Widget>
       addStyleName(style_.outerPanel());
 
       // create the panel that will host the widgets
-      panel_ = new VerticalPanel();
+      panel_ = new VerticalPanelLayout();
       panel_.addStyleName(style_.listPanel());
 
       // wrap in a scroll panel
@@ -106,7 +107,7 @@ public class WidgetListBox<T extends Widget>
       add(scrollPanel_);
      
       emptyTextLabel_ = new Label();
-      emptyTextBox_ = new VerticalPanel();
+      emptyTextBox_ = new VerticalPanelLayout();
       emptyTextBox_.addStyleName(style_.scrollPanel());
       emptyTextBox_.addStyleName(style_.emptyMessage());
       emptyTextBox_.add(emptyTextLabel_);
@@ -302,8 +303,8 @@ public class WidgetListBox<T extends Widget>
    private int selectedIdx_ = 0;
 
    private ScrollPanel scrollPanel_;
-   private VerticalPanel panel_;
-   private VerticalPanel emptyTextBox_;
+   private VerticalPanelLayout panel_;
+   private VerticalPanelLayout emptyTextBox_;
    private Label emptyTextLabel_;
    private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
    private List<T> items_ = new ArrayList<T>();

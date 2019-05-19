@@ -1,10 +1,11 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.history.view.Shelf.Resources"/>
 
-   <g:HorizontalPanel styleName="{res.styles.shelf}">
-      <g:HorizontalPanel styleName="{res.styles.left}" ui:field="left_"/>
-      <g:HorizontalPanel styleName="{res.styles.right}" ui:field="right_"/>
-   </g:HorizontalPanel>
+   <rsl:HorizontalPanelLayout styleName="{res.styles.shelf}">
+      <rsl:HorizontalPanelLayout styleName="{res.styles.left}" ui:field="left_"/>
+      <rsl:HorizontalPanelLayout styleName="{res.styles.right}" ui:field="right_"/>
+   </rsl:HorizontalPanelLayout>
 </ui:UiBinder>

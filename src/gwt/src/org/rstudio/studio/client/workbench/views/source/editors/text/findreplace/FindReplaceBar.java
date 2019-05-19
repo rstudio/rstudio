@@ -1,7 +1,7 @@
 /*
  * FindReplaceBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -66,11 +68,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.setWidth("100%");
       shelf.addStyleName("rstudio-themes-background"); 
 
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       ElementIds.assignElementId(panel.getElement(), 
                                  ElementIds.FIND_REPLACE_BAR);
       
-      HorizontalPanel findReplacePanel = new HorizontalPanel();
+      HorizontalPanelLayout findReplacePanel = new HorizontalPanelLayout();
       findReplacePanel.addStyleName(RES.styles().findPanel());
       findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
       txtFind_.setIconVisible(true);
@@ -87,7 +89,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       
       panel.add(findReplacePanel);
       
-      HorizontalPanel optionsPanel = new HorizontalPanel();
+      HorizontalPanelLayout optionsPanel = new HorizontalPanelLayout();
       optionsPanel.addStyleName(RES.styles().optionsPanel());
         
       optionsPanel.add(chkInSelection_ = new CheckBox());

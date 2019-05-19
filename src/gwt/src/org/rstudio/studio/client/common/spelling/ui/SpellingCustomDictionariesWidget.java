@@ -1,7 +1,7 @@
 /*
  * SpellingCustomDictionariesWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.common.spelling.ui;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -37,9 +39,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class SpellingCustomDictionariesWidget extends Composite
@@ -48,19 +48,19 @@ public class SpellingCustomDictionariesWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       
       panel.add(new LabelWithHelp("Custom dictionaries:", 
                                   "custom_dictionaries"));
       
-      HorizontalPanel dictionariesPanel = new HorizontalPanel();
+      HorizontalPanelLayout dictionariesPanel = new HorizontalPanelLayout();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(4);
       dictionariesPanel.add(listBox_);
       
-      VerticalPanel buttonPanel = new VerticalPanel();
+      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

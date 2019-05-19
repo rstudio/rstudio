@@ -24,6 +24,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -72,9 +74,9 @@ public class ClearAllDialog extends ModalDialogBase
    {
       progress_ = addProgressIndicator();
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       
-      HorizontalPanel horizontalPanel = new HorizontalPanel();
+      HorizontalPanelLayout horizontalPanel = new HorizontalPanelLayout();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
       // add image
@@ -99,7 +101,7 @@ public class ClearAllDialog extends ModalDialogBase
       panel.add(horizontalPanel);
       
       // add include hidden option
-      HorizontalPanel optionPanel = new HorizontalPanel();
+      HorizontalPanelLayout optionPanel = new HorizontalPanelLayout();
       Style optionStyle = optionPanel.getElement().getStyle();
       optionStyle.setMarginLeft(image.getWidth(), Unit.PX);
       optionStyle.setMarginBottom(10, Unit.PX);

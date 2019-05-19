@@ -1,7 +1,7 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -38,7 +39,7 @@ public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
 {
    
-   interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
+   interface Binder extends UiBinder<HorizontalPanelLayout, StatusBarWidget>
    {
    }
 
@@ -295,7 +296,7 @@ public class StatusBarWidget extends Composite
    }
    
    public static Resources RES = GWT.create(Resources.class);
-   private final HorizontalPanel panel_;
+   private final HorizontalPanelLayout panel_;
    private final Timer hideTimer_;
    private final Timer hideProgressTimer_;
    

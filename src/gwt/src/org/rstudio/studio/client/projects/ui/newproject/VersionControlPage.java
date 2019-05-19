@@ -1,7 +1,7 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -39,7 +40,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class VersionControlPage extends NewProjectWizardPage
 {
@@ -64,7 +64,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          NewProjectResources.Styles styles = 
                                  NewProjectResources.INSTANCE.styles();   
          
-         VerticalPanel verticalPanel = new VerticalPanel();
+         VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
          verticalPanel.addStyleName(styles.vcsNotInstalledWidget());
          
          if (Desktop.isDesktop())
@@ -123,7 +123,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    { 
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();   
       
-      VerticalPanel urlPanel = new VerticalPanel();
+      VerticalPanelLayout urlPanel = new VerticalPanelLayout();
       urlPanel.addStyleName(styles.wizardMainColumn());
       Label urlLabel = new Label("Repository URL:");
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
@@ -148,7 +148,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       
       if (includeCredentials())
       {  
-         VerticalPanel usernamePanel = new VerticalPanel();
+         VerticalPanelLayout usernamePanel = new VerticalPanelLayout();
          usernamePanel.addStyleName(styles.wizardMainColumn());
          Label usernameLabel = new Label("Username (if required for this repository URL):");
          usernameLabel.addStyleName(styles.wizardTextEntryLabel());

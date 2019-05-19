@@ -1,7 +1,7 @@
 /*
  * ProjectTemplateWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,8 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
@@ -28,10 +30,8 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ProjectTemplateWidget extends Composite
@@ -69,8 +69,8 @@ public class ProjectTemplateWidget extends Composite
          widgets_.add(createWidget(descriptions.get(i)));
       
       // initialize panel
-      VerticalPanel leftPanel = new VerticalPanel();
-      VerticalPanel rightPanel = new VerticalPanel();
+      VerticalPanelLayout leftPanel = new VerticalPanelLayout();
+      VerticalPanelLayout rightPanel = new VerticalPanelLayout();
       for (int i = 0; i < n; i++)
       {
          String position = StringUtil.notNull(descriptions.get(i).getPosition());
@@ -95,7 +95,7 @@ public class ProjectTemplateWidget extends Composite
       else
       {
          // both sides have widgets -- populate appropriately
-         HorizontalPanel panel = new HorizontalPanel();
+         HorizontalPanelLayout panel = new HorizontalPanelLayout();
          panel.add(leftPanel);
          panel.add(rightPanel);
          primaryWidget = panel;

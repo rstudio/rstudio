@@ -1,7 +1,7 @@
 /*
  * MinimizedModuleTabLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -33,14 +33,14 @@ public class MinimizedModuleTabLayoutPanel
 {
    public MinimizedModuleTabLayoutPanel()
    {
-      super(null, new HorizontalPanel());
+      super(null, new HorizontalPanelLayout());
       addStyleName(ThemeResources.INSTANCE.themeStyles().moduleTabPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().minimized());
    }
 
    public void setTabs(String[] tabNames)
    {
-      HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
+      HorizontalPanelLayout horiz = (HorizontalPanelLayout) getExtraWidget();
       horiz.clear();
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();

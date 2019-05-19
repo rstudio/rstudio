@@ -1,7 +1,7 @@
 /*
  * Debug.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,8 +24,8 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AttachDetachException;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.server.ServerError;
@@ -176,7 +176,7 @@ public class Debug
          return el;
                
       final MiniPopupPanel popupPanel = new MiniPopupPanel(false, false);
-      VerticalPanel verticalPanel = new VerticalPanel();
+      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
       FlowPanel contentPanel = new FlowPanel();
       contentPanel.getElement().setId("rstudio_debug_output");
       verticalPanel.add(new HTML("<h3 style='margin: 0;'>RStudio Debug Output</h4><hr />"));

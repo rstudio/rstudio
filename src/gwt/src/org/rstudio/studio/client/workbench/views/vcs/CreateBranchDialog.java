@@ -22,6 +22,8 @@ import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -42,10 +44,8 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
@@ -98,7 +98,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       setOkButtonCaption("Create");
       enableOkButton(false);
       
-      container_ = new VerticalPanel();
+      container_ = new VerticalPanelLayout();
       
       tbBranch_ = textBox();
       tbBranch_.getElement().setAttribute("placeholder", "Branch name");
@@ -175,7 +175,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       ctrBranch.setWidget(0, 0, new Label("Branch:"));
       ctrBranch.setWidget(0, 1, tbBranch_);
       
-      HorizontalPanel ctrRemote = new HorizontalPanel();
+      HorizontalPanelLayout ctrRemote = new HorizontalPanelLayout();
       ctrRemote.setWidth("100%");
       ctrRemote.add(sbRemote_);
       sbRemote_.getElement().getStyle().setFloat(Style.Float.LEFT);
@@ -184,7 +184,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       btnAddRemote_.getElement().getStyle().setMarginTop(2, Unit.PX);
       btnAddRemote_.getElement().getStyle().setMarginRight(3, Unit.PX);
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       panel.add(ctrBranch);
       panel.add(new VerticalSpacer("6px"));
       panel.add(ctrRemote);
@@ -269,7 +269,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    
    private JsArray<RemotesInfo> remotesInfo_;
    
-   private final VerticalPanel container_;
+   private final VerticalPanelLayout container_;
    private final TextBox tbBranch_;
    private final SelectWidget sbRemote_;
    private final SmallButton btnAddRemote_;

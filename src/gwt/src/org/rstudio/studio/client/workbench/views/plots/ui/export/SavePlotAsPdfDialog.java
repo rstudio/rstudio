@@ -21,6 +21,8 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -49,12 +51,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class SavePlotAsPdfDialog extends ModalDialogBase
@@ -154,9 +154,9 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       
       // orientation
       grid.setWidget(1, 0, new Label("Orientation:"));
-      HorizontalPanel orientationPanel = new HorizontalPanel();
+      HorizontalPanelLayout orientationPanel = new HorizontalPanelLayout();
       orientationPanel.setSpacing(kComponentSpacing);
-      VerticalPanel orientationGroupPanel = new VerticalPanel();
+      VerticalPanelLayout orientationGroupPanel = new VerticalPanelLayout();
       final String kOrientationGroup = new String("Orientation");
       portraitRadioButton_ = new RadioButton(kOrientationGroup, "Portrait");
       orientationGroupPanel.add(portraitRadioButton_);
@@ -168,7 +168,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       boolean haveCairoPdf = sessionInfo_.isCairoPdfAvailable();
       if (haveCairoPdf)
          grid.setWidget(2,  0, new Label("Options:"));
-      HorizontalPanel cairoPdfPanel = new HorizontalPanel();
+      HorizontalPanelLayout cairoPdfPanel = new HorizontalPanelLayout();
       String label = "Use cairo_pdf device";
       if (BrowseCap.isMacintoshDesktop())
          label = label + " (requires X11)";
@@ -373,7 +373,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
          paperSizes_.add(new PaperSize("5 x 7 in.", 5, 7));
          paperSizes_.add(new PaperSize("6 x 8 in.", 6, 8));
            
-         HorizontalPanel panel = new HorizontalPanel();
+         HorizontalPanelLayout panel = new HorizontalPanelLayout();
          panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);   
          panel.setSpacing(kComponentSpacing);
           
@@ -411,7 +411,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
          });
          panel.add(paperSizeListBox_);   
          
-         HorizontalPanel editPanel = new HorizontalPanel();
+         HorizontalPanelLayout editPanel = new HorizontalPanelLayout();
          widthTextBox_ = new TextBox();
          widthTextBox_.setStylePrimaryName(styles.savePdfPaperSizeTextBox());
          widthTextBox_.addChangeHandler(sizeTextBoxChangeHandler_);

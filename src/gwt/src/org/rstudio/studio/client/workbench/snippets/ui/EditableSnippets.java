@@ -1,7 +1,7 @@
 /*
  * SnippetType.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.snippets.ui;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 
@@ -33,7 +33,7 @@ public class EditableSnippets extends Composite
    public EditableSnippets(String name, TextFileType fileType)
    {
       fileType_ = fileType;
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       Image icon = new Image(fileType.getDefaultIcon());
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel.add(icon);

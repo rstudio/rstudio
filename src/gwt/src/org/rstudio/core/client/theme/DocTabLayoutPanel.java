@@ -2,7 +2,7 @@
  * 
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -73,7 +74,6 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
@@ -1046,7 +1046,7 @@ public class DocTabLayoutPanel
       {
          docId_ = docId;
          
-         final HorizontalPanel layoutPanel = new HorizontalPanel();
+         final HorizontalPanelLayout layoutPanel = new HorizontalPanelLayout();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
          layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
          layoutPanel.getElement().setDraggable("true");
@@ -1083,7 +1083,7 @@ public class DocTabLayoutPanel
          left.setStylePrimaryName(styles_.tabLayoutLeft());
          layoutPanel.add(left);
 
-         contentPanel_ = new HorizontalPanel();
+         contentPanel_ = new HorizontalPanelLayout();
          contentPanel_.setTitle(tooltip);
          contentPanel_.setStylePrimaryName(styles_.rstheme_tabLayoutCenter());
          contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -1194,7 +1194,7 @@ public class DocTabLayoutPanel
       private final Label label_;
       private final String docId_;
 
-      private final HorizontalPanel contentPanel_;
+      private final HorizontalPanelLayout contentPanel_;
    }
 
    public void replaceDocName(int index,

@@ -1,7 +1,7 @@
 /*
  * NewConnectionInstallPackagePage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -33,7 +34,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -127,7 +127,7 @@ public class NewConnectionInstallPackagePage
    @Override
    protected Widget createWidget()
    {
-      Widget widget = new VerticalPanel(); 
+      Widget widget = new VerticalPanelLayout(); 
       return widget;
    }
 

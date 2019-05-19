@@ -1,7 +1,7 @@
 /*
  * BuildToolsPackagePanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -34,8 +36,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 
@@ -70,9 +70,9 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
-      roxygenizePanel_ = new VerticalPanel();
+      roxygenizePanel_ = new VerticalPanelLayout();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
-      HorizontalPanel rocletPanel = new HorizontalPanel();
+      HorizontalPanelLayout rocletPanel = new HorizontalPanelLayout();
       chkUseRoxygen_ = checkBox("Generate documentation with Roxygen");
       rocletPanel.add(chkUseRoxygen_);
       btnConfigureRoxygen_ = new ThemedButton("Configure...");
@@ -211,7 +211,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
      
    private BuildToolsRoxygenOptions roxygenOptions_;
    
-   private VerticalPanel roxygenizePanel_;
+   private VerticalPanelLayout roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
    private CheckBox chkUseDevtools_;
    private ThemedButton btnConfigureRoxygen_;

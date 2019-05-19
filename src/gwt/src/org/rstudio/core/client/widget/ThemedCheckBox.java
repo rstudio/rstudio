@@ -1,7 +1,7 @@
 /*
  * ThemedCheckBox.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,13 +33,14 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.Label;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class ThemedCheckBox extends Composite implements HasValueChangeHandlers<Boolean>
 {
    public ThemedCheckBox(String label, boolean initialValue)
    {
-      panel_ = new HorizontalPanel();
+      panel_ = new HorizontalPanelLayout();
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
       panel_.addDomHandler(new ClickHandler()
       {
@@ -108,7 +109,7 @@ public class ThemedCheckBox extends Composite implements HasValueChangeHandlers<
          checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
    }
    
-   private final HorizontalPanel panel_;
+   private final HorizontalPanelLayout panel_;
    private final Label label_;
    
    private final InlineHTML alignHelper_;

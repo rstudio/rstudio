@@ -1,7 +1,7 @@
 /*
  * ObjectBrowser.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -42,7 +43,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ObjectBrowser extends Composite implements RequiresResize
 {
@@ -152,7 +152,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
-      objectsWrapper_ = new VerticalPanel();
+      objectsWrapper_ = new VerticalPanelLayout();
       objectsWrapper_.setWidth("100%");
       objectsWrapper_.add(objects_);
       
@@ -303,7 +303,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private final SimplePanelWithProgress hostPanel_;
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
-   private VerticalPanel objectsWrapper_;
+   private VerticalPanelLayout objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
    private HandlerRegistration registration_;

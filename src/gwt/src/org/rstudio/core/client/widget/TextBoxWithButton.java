@@ -1,7 +1,7 @@
 /*
  * TextBoxWithButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
@@ -65,7 +66,7 @@ public class TextBoxWithButton extends Composite
 
       themedButton_ = new ThemedButton(action, handler);
 
-      inner_ = new HorizontalPanel();
+      inner_ = new HorizontalPanelLayout();
       inner_.add(textBox_);
       inner_.add(themedButton_);
       inner_.setCellWidth(textBox_, "100%");
@@ -77,7 +78,7 @@ public class TextBoxWithButton extends Composite
          Label lblCaption = new Label(label, true);
          if (helpButton != null)
          {
-            HorizontalPanel panel = new HorizontalPanel();
+            HorizontalPanelLayout panel = new HorizontalPanelLayout();
             panel.add(lblCaption);
             helpButton.getElement().getStyle().setMarginLeft(5, Unit.PX);
             panel.add(helpButton);
@@ -178,7 +179,7 @@ public class TextBoxWithButton extends Composite
       textBox_.setFocus(true);
    }
 
-   private HorizontalPanel inner_;
+   private HorizontalPanelLayout inner_;
    private TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;

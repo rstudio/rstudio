@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -247,7 +248,7 @@ public class SVNCommitDialog extends ModalDialogBase
    @UiField
    TextArea message_;
    @UiField
-   HorizontalPanel topHPanel_;
+   HorizontalPanelLayout topHPanel_;
    @UiField
    SmallButton btnClearSelection_;
    @UiField

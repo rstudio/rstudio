@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -32,10 +34,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
@@ -64,7 +64,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    {
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       panel.addStyleName(styles.wizardMainColumn());
       
       // create the dir name label
@@ -75,7 +75,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       onAddTopPanelWidgets(panel);
       
       // dir name
-      VerticalPanel namePanel = new VerticalPanel();
+      VerticalPanelLayout namePanel = new VerticalPanelLayout();
       namePanel.addStyleName(styles.newProjectDirectoryName());
       namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
@@ -99,9 +99,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
-      HorizontalPanel optionsPanel = null;
+      HorizontalPanelLayout optionsPanel = null;
       if (getOptionsSideBySide())
-         optionsPanel = new HorizontalPanel();
+         optionsPanel = new HorizontalPanelLayout();
       
       chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
@@ -151,7 +151,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
    
-   protected void onAddTopPanelWidgets(HorizontalPanel panel)
+   protected void onAddTopPanelWidgets(HorizontalPanelLayout panel)
    {
    }
    

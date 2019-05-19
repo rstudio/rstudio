@@ -1,7 +1,7 @@
 /*
  * ConnectionCodePanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,8 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -32,11 +34,9 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class ConnectionCodePanel extends Composite implements RequiresResize
@@ -49,16 +49,16 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    public ConnectionCodePanel(boolean connectViaUI)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      container_ = new VerticalPanel();
+      container_ = new VerticalPanelLayout();
       container_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
-      HorizontalPanel codeHeaderPanel = new HorizontalPanel();
+      HorizontalPanelLayout codeHeaderPanel = new HorizontalPanelLayout();
       codeHeaderPanel.addStyleName(RES.styles().codePanelHeader());
       codeHeaderPanel.setWidth("100%");
       Label codeLabel = new Label("Connection:");
       codeHeaderPanel.add(codeLabel);
       codeHeaderPanel.setCellHorizontalAlignment(
                codeLabel, HasHorizontalAlignment.ALIGN_LEFT);
-      HorizontalPanel connectPanel = new HorizontalPanel();
+      HorizontalPanelLayout connectPanel = new HorizontalPanelLayout();
       Label connectLabel = new Label("Connect from:");
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
@@ -200,7 +200,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    }
    
    
-   private VerticalPanel container_;
+   private VerticalPanelLayout container_;
    private ListBox connectVia_;
    private AceEditorWidget codeViewer_;
    private boolean settingCode_ = false;

@@ -2,6 +2,7 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs.common'
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.common.diff'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPanel.Resources"/>
@@ -42,7 +43,7 @@
       <g:center>
          <g:DockLayoutPanel>
             <g:north size="28">
-               <g:HorizontalPanel ui:field="toolbarWrapper_" styleName="{res.styles.toolbarWrapper} {res.styles.diffToolbarWrapper}">
+               <rsl:HorizontalPanelLayout ui:field="toolbarWrapper_" styleName="{res.styles.toolbarWrapper} {res.styles.diffToolbarWrapper}">
                   <g:FlowPanel ui:field="diffViewOptions_" styleName="{res.styles.diffViewOptions}">
                      <g:Label text="Show" styleName="{res.styles.stagedLabel}"/>
                      <g:RadioButton ui:field="stagedCheckBox_"
@@ -68,7 +69,7 @@
                                   styleName="{res.styles.ignoreWhitespace}"/>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
-               </g:HorizontalPanel>
+               </rsl:HorizontalPanelLayout>
             </g:north>
             <g:center>
                <g:ScrollPanel ui:field="diffScroll_" styleName="{res.styles.whitebg}" width="100%" height="100%">

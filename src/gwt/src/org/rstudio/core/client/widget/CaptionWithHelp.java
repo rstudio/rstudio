@@ -1,7 +1,7 @@
 /*
  * CaptionWithHelp.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -27,7 +28,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -47,11 +47,11 @@ public class CaptionWithHelp extends Composite
       
       rstudioLinkName_ = rstudioLinkName;
       
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       panel.setWidth("100%");
       captionLabel_ = new Label(caption);
       panel.add(captionLabel_);
-      helpPanel_ = new HorizontalPanel();
+      helpPanel_ = new HorizontalPanelLayout();
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
       helpPanel_.add(helpImage);
@@ -127,7 +127,7 @@ public class CaptionWithHelp extends Composite
    private Label captionLabel_;
    private String rstudioLinkName_;
    private boolean includeVersionInfo_ = true;
-   private HorizontalPanel helpPanel_;
-   private HorizontalPanel outerPanel_;
+   private HorizontalPanelLayout helpPanel_;
+   private HorizontalPanelLayout outerPanel_;
    private GlobalDisplay globalDisplay_;
 }

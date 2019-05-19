@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rsl="urn:import:org.rstudio.core.client.layout"
     xmlns:rsw="urn:import:org.rstudio.core.client.widget"
     xmlns:rsc="urn:import:org.rstudio.studio.client.common">
     <ui:style>
@@ -29,7 +30,7 @@
     }
     </ui:style>
     <g:HTMLPanel>
-      <g:VerticalPanel>
+      <rsl:VerticalPanelLayout>
          <g:Label text="Enter the public URL of the RStudio Connect server:">
          </g:Label>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
@@ -45,6 +46,6 @@
                        styleName="{style.connectHelpLink}"
                        ui:field="connectHelpLink_">
          </rsc:HelpLink>
-       </g:VerticalPanel>
+       </rsl:VerticalPanelLayout>
    </g:HTMLPanel>
 </ui:UiBinder> 

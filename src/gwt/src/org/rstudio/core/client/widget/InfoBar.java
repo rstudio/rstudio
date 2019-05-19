@@ -1,7 +1,7 @@
 /*
  * InfoBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,6 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -67,7 +67,7 @@ public class InfoBar extends Composite
          break;
       }
      
-      labelRight_ = new HorizontalPanel();
+      labelRight_ = new HorizontalPanelLayout();
       initWidget(binder.createAndBindUi(this));
       
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
@@ -172,7 +172,7 @@ public class InfoBar extends Composite
    @UiField
    protected Label label_;
    @UiField(provided = true)
-   protected HorizontalPanel labelRight_;
+   protected HorizontalPanelLayout labelRight_;
    @UiField
    Image dismiss_;
 

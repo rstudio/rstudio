@@ -1,7 +1,7 @@
 /*
  * HelpLink.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -23,7 +24,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 
 public class HelpLink extends Composite
@@ -55,7 +55,7 @@ public class HelpLink extends Composite
       isRStudioLink_ = isRStudioLink;
       withVersionInfo_ = withVersionInfo;
 
-      HorizontalPanel helpPanel = new HorizontalPanel();
+      HorizontalPanelLayout helpPanel = new HorizontalPanelLayout();
     
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);

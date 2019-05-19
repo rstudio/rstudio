@@ -30,7 +30,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -42,6 +41,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.FilterWidget;
@@ -145,7 +145,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       headerPanel.add(filterWidget_);
       headerPanel.add(helpLink_);
       
-      container_ = new VerticalPanel();
+      container_ = new VerticalPanelLayout();
       container_.add(headerPanel);
       container_.add(new VerticalSeparator("4px"));
       container_.add(table_);
@@ -339,7 +339,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    }
    
    // Private members ----
-   private final VerticalPanel container_;
+   private final VerticalPanelLayout container_;
    private final FilterWidget filterWidget_;
    private final HelpLink helpLink_;
    

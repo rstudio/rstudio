@@ -1,7 +1,7 @@
 /*
  * ViewFilePanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
@@ -58,7 +59,6 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -245,7 +245,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       // header widget has icon + label
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
      
       Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
       imgFile.addStyleName(styles.fullscreenCaptionIcon());

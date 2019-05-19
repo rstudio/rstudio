@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -42,11 +44,9 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import com.google.inject.Inject;
@@ -179,13 +179,13 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel root = new VerticalPanel();
+      VerticalPanelLayout root = new VerticalPanelLayout();
 
-      HorizontalPanel customPanel = new HorizontalPanel();
+      HorizontalPanelLayout customPanel = new HorizontalPanelLayout();
       customPanel.setStylePrimaryName(RESOURCES.styles().customPanel());
       root.add(customPanel);
 
-      VerticalPanel namePanel = new VerticalPanel();
+      VerticalPanelLayout namePanel = new VerticalPanelLayout();
       namePanel.setStylePrimaryName(RESOURCES.styles().namePanel());
       Label nameLabel = new Label("Name:");
       namePanel.add(nameLabel);
@@ -194,7 +194,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       namePanel.add(nameTextBox_);
       customPanel.add(namePanel);
 
-      VerticalPanel urlPanel = new VerticalPanel();
+      VerticalPanelLayout urlPanel = new VerticalPanelLayout();
       Label urlLabel = new Label("Url:");
       urlPanel.add(urlLabel);
       urlTextBox_ = new TextBox();

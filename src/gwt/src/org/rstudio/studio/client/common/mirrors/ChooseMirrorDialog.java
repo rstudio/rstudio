@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -42,7 +43,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
@@ -157,7 +157,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel root = new VerticalPanel();
+      VerticalPanelLayout root = new VerticalPanelLayout();
 
       Label customLabel = new Label("Custom:");
       root.add(customLabel);

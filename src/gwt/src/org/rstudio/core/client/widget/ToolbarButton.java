@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -99,7 +100,7 @@ public class ToolbarButton extends FocusWidget
    {
       this(text,
            title,
-           new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), 
+           new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()),
            (ImageResource) null,
            (ClickHandler) null);
       
@@ -155,10 +156,11 @@ public class ToolbarButton extends FocusWidget
       addStyleName(styles_.toolbarButtonMenu());
    }
    
-   
-   private void addMenuHandlers(final ToolbarPopupMenu popupMenu, 
+   private void addMenuHandlers(final ToolbarPopupMenu popupMenu,
                                 final boolean rightAlignMenu)
    {
+      Roles.getButtonRole().setAriaHaspopupProperty(getElement(), true);
+      
       menu_ = popupMenu;
       rightAlignMenu_ = rightAlignMenu;
       
@@ -193,6 +195,7 @@ public class ToolbarButton extends FocusWidget
                   {
                      removeStyleName(styles_.toolbarButtonPushed());
                      menu.hide();
+                     Roles.getButtonRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
                   }
                   else
                   {
@@ -219,6 +222,7 @@ public class ToolbarButton extends FocusWidget
                         menu.showRelativeTo(ToolbarButton.this);
                      }
                      menuShowing[0] = true;
+                     Roles.getButtonRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
                   }
                }
             });
@@ -233,7 +237,7 @@ public class ToolbarButton extends FocusWidget
             {
                public void execute()
                {
-                  menuShowing[0] = false;               
+                  menuShowing[0] = false;
                }
             });
          }

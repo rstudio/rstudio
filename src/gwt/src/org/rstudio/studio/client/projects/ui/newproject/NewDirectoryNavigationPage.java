@@ -1,7 +1,7 @@
 /*
  * NewDirectoryNavigationPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -44,7 +45,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewDirectoryNavigationPage 
@@ -111,7 +111,7 @@ public class NewDirectoryNavigationPage
          scrollPanel.setSize("100%", "100%");
          scrollPanel.addStyleName(styles.wizardPageSelector());
 
-         VerticalPanel verticalPanel = new VerticalPanel();
+         VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
          verticalPanel.setSize("100%", "100%");
 
          for (int i = 0, n = pages.size(); i < n; i++)

@@ -1,6 +1,7 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs.common'
+             xmlns:rsl='urn:import:org.rstudio.core.client.layout'
              xmlns:rs='urn:import:org.rstudio.core.client.widget'>
 
    <ui:style>
@@ -32,11 +33,11 @@
 
    <g:DockLayoutPanel>
       <g:north size="22"><!-- 19 is the height of SmallButton -->
-         <g:HorizontalPanel ui:field="topHPanel_" width="100%">
+         <rsl:HorizontalPanelLayout ui:field="topHPanel_" width="100%">
             <g:Label ui:field="selectLabel_" text="Select items to commit:"/>
             <rs:SmallButton ui:field="btnClearSelection_"
                             text="Clear Selection"/>
-         </g:HorizontalPanel>
+         </rsl:HorizontalPanelLayout>
       </g:north>
       <g:center>
          <vcs:ChangelistTable ui:field="changelist_" styleName="{style.changelistTableBackground}" />

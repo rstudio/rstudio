@@ -1,7 +1,7 @@
 /*
  * ManipulatorControlPicker.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -22,7 +23,6 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 
@@ -41,7 +41,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
       ManipulatorStyles styles = ManipulatorResources.INSTANCE.manipulatorStyles();
    
       // main control
-      HorizontalPanel panel = new HorizontalPanel();
+      HorizontalPanelLayout panel = new HorizontalPanelLayout();
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
   

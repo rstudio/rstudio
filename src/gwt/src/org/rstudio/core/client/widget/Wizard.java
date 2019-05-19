@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -31,7 +32,6 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -111,7 +111,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       WizardResources res = WizardResources.INSTANCE;
       WizardResources.Styles styles = res.styles();
       
-      VerticalPanel mainWidget = new VerticalPanel();
+      VerticalPanelLayout mainWidget = new VerticalPanelLayout();
       mainWidget.addStyleName(getMainWidgetStyle());
       
       headerPanel_ = new LayoutPanel();

@@ -19,6 +19,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -54,7 +55,6 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -125,7 +125,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    protected Widget createMainWidget()
    {
       // vertical panel
-      VerticalPanel mainPanel = new VerticalPanel();
+      VerticalPanelLayout mainPanel = new VerticalPanelLayout();
       mainPanel.setSpacing(2);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       

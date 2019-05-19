@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -38,8 +38,7 @@ public class ProfilerEditingTargetWidget extends Composite
    
    public ProfilerEditingTargetWidget(Commands commands, PublishHtmlSource publishHtmlSource)
    {
-      VerticalPanel panel = new VerticalPanel();
-
+      VerticalPanelLayout panel = new VerticalPanelLayout();
 
       PanelWithToolbars mainPanel = new PanelWithToolbars(
                                           createToolbar(commands, publishHtmlSource), 

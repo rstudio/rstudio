@@ -17,6 +17,8 @@ package org.rstudio.studio.client.common.rpubs.ui;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
@@ -39,13 +41,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -119,9 +119,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       SimplePanel mainPanel = new SimplePanel();
       mainPanel.addStyleName(styles.mainWidget());
       
-      VerticalPanel verticalPanel = new VerticalPanel();
+      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
   
-      HorizontalPanel headerPanel = new HorizontalPanel();
+      HorizontalPanelLayout headerPanel = new HorizontalPanelLayout();
       headerPanel.addStyleName(styles.headerPanel());
       headerPanel.add(new Image(new ImageResource2x(RESOURCES.publishLarge2x())));
       
@@ -343,7 +343,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       enableOkButton(false);
       
       // add progress
-      HorizontalPanel progressPanel = new HorizontalPanel();
+      HorizontalPanelLayout progressPanel = new HorizontalPanelLayout();
       ProgressImage progressImage =  new ProgressImage(
                                        CoreResources.INSTANCE.progress_gray());
       progressImage.addStyleName(RESOURCES.styles().progressImage());

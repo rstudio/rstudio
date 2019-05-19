@@ -1,7 +1,7 @@
 /*
  * SelectWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -22,7 +23,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
@@ -90,7 +90,7 @@ public class SelectWidget extends Composite
       Panel panel = null;
       if (horizontalLayout)
       {
-         horizontalPanel_ = new HorizontalPanel();
+         horizontalPanel_ = new HorizontalPanelLayout();
          label_ = new Label(label);
          if (listOnLeft)
          {
@@ -222,7 +222,7 @@ public class SelectWidget extends Composite
       listBox_.insertItem(label, value, index);
    }
    
-   private HorizontalPanel horizontalPanel_ = null;
+   private HorizontalPanelLayout horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private Label label_ = null;
    private final ListBox listBox_;

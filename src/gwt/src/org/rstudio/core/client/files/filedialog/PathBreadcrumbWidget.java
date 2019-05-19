@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -51,7 +52,7 @@ public class PathBreadcrumbWidget
       
       context_ = context;
   
-      pathPanel_ = new HorizontalPanel();
+      pathPanel_ = new HorizontalPanelLayout();
       pathPanel_.setStylePrimaryName(RES.styles().path());
 
       if (INCLUDE_UP_LINK)
@@ -67,7 +68,7 @@ public class PathBreadcrumbWidget
       else
          linkUp_ = null;
 
-      panel_ = new HorizontalPanel();
+      panel_ = new HorizontalPanelLayout();
       panel_.setSize("100%", "100%");
       panel_.add(pathPanel_);
       if (linkUp_ != null)
@@ -312,8 +313,8 @@ public class PathBreadcrumbWidget
       onWidthsChanged();
    }
 
-   private final HorizontalPanel panel_;
-   private final HorizontalPanel pathPanel_;
+   private final HorizontalPanelLayout panel_;
+   private final HorizontalPanelLayout pathPanel_;
    private final Anchor linkUp_;
    private final Element fade_;
    private final FileSystemContext context_;

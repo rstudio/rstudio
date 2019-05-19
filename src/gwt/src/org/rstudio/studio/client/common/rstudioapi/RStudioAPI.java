@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.common.rstudioapi;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -38,7 +39,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -84,7 +84,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
                            String message,
                            final String url)
    {
-      VerticalPanel verticalPanel = new VerticalPanel();
+      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
       verticalPanel.addStyleName(RES.styles().textInfoWidget());
 
       SafeHtml safeMsg = DialogHtmlSanitizer.sanitizeHtml(message);

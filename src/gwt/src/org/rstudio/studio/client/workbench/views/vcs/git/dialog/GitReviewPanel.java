@@ -44,6 +44,7 @@ import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -678,7 +679,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @UiField
    FlowPanel diffViewOptions_;
    @UiField
-   HorizontalPanel toolbarWrapper_;
+   HorizontalPanelLayout toolbarWrapper_;
    @UiField
    CheckBox ignoreWhitespaceCheckbox_;
 

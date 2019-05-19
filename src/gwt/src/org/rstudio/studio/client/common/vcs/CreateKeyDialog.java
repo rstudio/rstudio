@@ -16,6 +16,8 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -34,11 +36,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
@@ -186,10 +186,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    {
       Styles styles = RESOURCES.styles();
       
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanelLayout panel = new VerticalPanelLayout();
       panel.addStyleName(styles.mainWidget());
       
-      VerticalPanel namePanel = new VerticalPanel();
+      VerticalPanelLayout namePanel = new VerticalPanelLayout();
       namePanel.setWidth("100%");
      
       // path
@@ -210,10 +210,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       
       panel.add(namePanel);
       
-      HorizontalPanel passphrasePanel = new HorizontalPanel();
+      HorizontalPanelLayout passphrasePanel = new HorizontalPanelLayout();
       passphrasePanel.addStyleName(styles.newSection());
       
-      VerticalPanel passphrasePanel1 = new VerticalPanel();
+      VerticalPanelLayout passphrasePanel1 = new VerticalPanelLayout();
       Label passphraseLabel1 = new Label("Passphrase (optional):");
       passphraseLabel1.addStyleName(styles.entryLabel());
       passphrasePanel1.add(passphraseLabel1);
@@ -223,7 +223,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
-      VerticalPanel passphrasePanel2 = new VerticalPanel();
+      VerticalPanelLayout passphrasePanel2 = new VerticalPanelLayout();
       passphrasePanel2.addStyleName(styles.lastSection());
       Label passphraseLabel2 = new Label("Confirm:");
       passphraseLabel2.addStyleName(styles.entryLabel());
