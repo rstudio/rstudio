@@ -69,6 +69,8 @@ public abstract class ModalDialogBase extends DialogBox
       A11y.setModal(getElement());
       firstControl_ = new Button("First");
       lastControl_ = new Button("Last");
+      Roles.getButtonRole().setAriaHiddenState(firstControl_.getElement(), true);
+      Roles.getButtonRole().setAriaHiddenState(lastControl_.getElement(), true);
       noDescription_ = new Label("Warning: dialog may not be accessible");
       noDescription_.getElement().setId("noDescription");
       DomUtils.visuallyHide(firstControl_.getElement());

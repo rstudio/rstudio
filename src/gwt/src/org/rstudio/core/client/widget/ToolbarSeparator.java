@@ -26,11 +26,22 @@ public class ToolbarSeparator extends Image
 {
    public ToolbarSeparator()
    {
+      this(false);
+   }
+
+   /**
+    * @param significant should this separator be mentioned by accessibility tools?
+    */
+   public ToolbarSeparator(boolean significant)
+   {
       super(ThemeResources.INSTANCE.toolbarSeparator());
       setStylePrimaryName(
                ThemeResources.INSTANCE.themeStyles().toolbarSeparator());
       A11y.setDecorativeImage(getElement());
-      Roles.getSeparatorRole().set(getElement());
-      Roles.getSeparatorRole().setAriaOrientationProperty(getElement(), OrientationValue.VERTICAL);
+      if (significant)
+      {
+         Roles.getSeparatorRole().set(getElement());
+         Roles.getSeparatorRole().setAriaOrientationProperty(getElement(), OrientationValue.VERTICAL);
+      }
    }
 }
