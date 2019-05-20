@@ -68,6 +68,11 @@ td.expandCol
    width: 20px;
 }
 
+td.resizeCol {
+   width: 1px;
+   position: relative;
+}
+
 td.valueCol
 {
    border: 1px solid #f0f0f0;
@@ -156,4 +161,14 @@ td.decoratedValueCol
 .rstudio-themes-flat .rstudio-themes-alternate .detailRow,
 .rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.colResizer
+{
+   cursor: ew-resize;
+   width: 4px;
+   top: 0px;
+   left: -2px;
+   height: 100%;
+   position: absolute;
 }
