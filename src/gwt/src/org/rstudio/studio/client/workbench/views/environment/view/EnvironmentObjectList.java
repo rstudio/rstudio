@@ -245,6 +245,8 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             @Override
             public String getValue(RObjectEntry object)
             {
+               // We don't have ready access to the DOM (still under
+               // construction at this point), so we use a window method here.
                return "<div class=\"" + style_.colResizer() + "\" " +
                       "onmousedown=\"rstudio_beginResize(this, " +
                       "\'" + style_.nameCol() + "'" +
@@ -290,7 +292,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          });
       }
    }-*/;
-   
    
    private void expandObject(final int index, final RObjectEntry object)
    {
