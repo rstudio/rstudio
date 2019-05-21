@@ -283,7 +283,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                if (top < 20)
                   top = bounds.getBottom();
 
-               if (offset_ >= 0)
+               if (offset_ >= 0 && offset_ < resp.length())
                {
                   // Reuse the existing search offset
                   popup_.selectIndex(offset_);
