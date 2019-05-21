@@ -133,6 +133,16 @@ bool SessionScope::isJupyterNotebook() const
    return project_.id() == kJupyterNotebookId;
 }
 
+std::string SessionScope::workbench() const
+{
+   if (!isJupyter())
+      return kWorkbenchRStudio;
+   else if (isJupyterLab())
+      return kWorkbenchJupyterLab;
+   else
+      return kWorkbenchJupyterNotebook;
+}
+
 // This function is intended to tell us whether a given path corresponds to an
 // RStudio shared project owned by another user but shared with this user. It
 // is primarily used to disallow opening shared projects when they're disabled.

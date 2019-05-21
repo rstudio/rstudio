@@ -318,6 +318,12 @@ r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionCon
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(context, extraArgs);
 
+   // pass the profile to any filters we have
+   for (const SessionManager::SessionLaunchProfileFilter f : sessionManager().getSessionLaunchProfileFilters())
+   {
+      f(&profile);
+   }
+
    return profile;
 }
 
