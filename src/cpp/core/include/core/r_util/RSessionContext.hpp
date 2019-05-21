@@ -165,6 +165,8 @@ public:
    bool isJupyterLab() const;
    bool isJupyterNotebook() const;
 
+   std::string workbench() const;
+
    const std::string project() const { return project_.asString(); }
 
    const std::string& id() const { return id_; }
