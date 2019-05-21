@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -54,6 +55,9 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       input_ = input;
       server_ = server;
       mode_ = PopupMode.PopupNone;
+      
+      // Last search executed
+      lastSearch_ = "";
       
       // Current offset when navigating through search results
       offset_ = -1;
@@ -154,7 +158,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
     */
    public void navigatePrefix(final int offset)
    {
-      if (getSearchText() == lastSearch_ && lastResults_ != null)
+      if (StringUtil.equals(getSearchText(), lastSearch_) && lastResults_ != null)
       {
          // Navigation through existing search results
          navigateSearchPrefix(offset);
