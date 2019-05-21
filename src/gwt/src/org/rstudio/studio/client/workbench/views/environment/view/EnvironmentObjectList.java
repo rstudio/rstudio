@@ -248,7 +248,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                // We don't have ready access to the DOM (still under
                // construction at this point), so we use a window method here.
                return "<div class=\"" + style_.colResizer() + "\" " +
-                      "onmousedown=\"rstudio_beginResize(this, " +
+                      "onmousedown=\"rstudio_beginResize(this, event, " +
                       "\'" + style_.nameCol() + "'" +
                       ");\"></div>";
             }
@@ -256,7 +256,13 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    }
    
    private final native void exportResizer() /*-{
-      $wnd.rstudio_beginResize = function(ele, clazz) {
+      $wnd.rstudio_beginResize = function(ele, event, clazz) 
+      {
+         // Ignore non-primary buttons
+         if (event.button !== 0)
+         {
+            return;
+         }
 
          // Locate the element to resize
          var tbody = ele.parentElement.parentElement.parentElement;
@@ -271,7 +277,8 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          var width = resizer.clientWidth;
 
          // Resize method; given a mouse move event, adjust the size accordingly
-         var resize = function(evt) {
+         var resize = function(evt) 
+         {
             if (start === -1)
                start = evt.clientX;
             var newWidth = (width + (evt.clientX - start));
@@ -287,7 +294,8 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
 
          // Wire up event listeners
          $wnd.addEventListener("mousemove", resize);
-         $wnd.addEventListener("mouseup", function(evt) {
+         $wnd.addEventListener("mouseup", function(evt) 
+         {
             $wnd.removeEventListener("mousemove", resize);
          });
       }
