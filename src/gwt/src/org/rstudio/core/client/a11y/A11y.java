@@ -40,4 +40,9 @@ public class A11y
    {
       element.setAttribute("aria-expanded", expanded ? "true" : "false");
    }
+
+   public static void setARIATablistOrientation(Element element, boolean vertical)
+   {
+      element.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
+   }
 }

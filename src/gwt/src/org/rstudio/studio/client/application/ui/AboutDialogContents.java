@@ -64,7 +64,7 @@ public class AboutDialogContents extends Composite
       gplLinkLabel.getElement().setId("gplLinkLabel");
       Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
       DomUtils.visuallyHide(gplLinkLabel.getElement());
-      
+
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
@@ -104,7 +104,7 @@ public class AboutDialogContents extends Composite
    {
       return productInfo.getElement();
    }
-   
+
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
