@@ -15,9 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 import java.util.Iterator;
@@ -45,7 +44,7 @@ abstract class SplitPanel extends Panel {
    * @param elem the element
    */
   static void addAbsolutePositoning(Element elem) {
-    DOM.setStyleAttribute(elem, "position", "absolute");
+    elem.getStyle().setProperty("position", "absolute");
   }
 
   /**
@@ -54,7 +53,7 @@ abstract class SplitPanel extends Panel {
    * @param elem the element
    */
   static final void addClipping(final Element elem) {
-    DOM.setStyleAttribute(elem, "overflow", "hidden");
+    elem.getStyle().setProperty("overflow", "hidden");
   }
 
   /**
@@ -63,7 +62,7 @@ abstract class SplitPanel extends Panel {
    * @param elem the element
    */
   static final void addScrolling(final Element elem) {
-    DOM.setStyleAttribute(elem, "overflow", "auto");
+    elem.getStyle().setProperty("overflow", "auto");
   }
 
   /**
@@ -108,7 +107,7 @@ abstract class SplitPanel extends Panel {
    * @return the offsetHeight property
    */
   static final int getOffsetHeight(Element elem) {
-    return DOM.getElementPropertyInt(elem, "offsetHeight");
+    return elem.getPropertyInt("offsetHeight");
   }
 
   /**
@@ -118,7 +117,7 @@ abstract class SplitPanel extends Panel {
    * @return the offsetWidth property
    */
   static final int getOffsetWidth(Element elem) {
-    return DOM.getElementPropertyInt(elem, "offsetWidth");
+    return elem.getPropertyInt("offsetWidth");
   }
 
   /**
@@ -132,7 +131,7 @@ abstract class SplitPanel extends Panel {
   static final Element preventBoxStyles(final Element elem) {
     DOM.setIntStyleAttribute(elem, "padding", 0);
     DOM.setIntStyleAttribute(elem, "margin", 0);
-    DOM.setStyleAttribute(elem, "border", "none");
+    elem.getStyle().setProperty("border", "none");
     return elem;
   }
 
@@ -143,7 +142,7 @@ abstract class SplitPanel extends Panel {
    * @param size a CSS length value for bottom
    */
   static void setBottom(Element elem, String size) {
-    DOM.setStyleAttribute(elem, "bottom", size);
+    elem.getStyle().setProperty("bottom", size);
   }
 
   /**
@@ -153,7 +152,7 @@ abstract class SplitPanel extends Panel {
    * @param className the class name
    */
   static final void setClassname(final Element elem, final String className) {
-    DOM.setElementProperty(elem, "className", className);
+    elem.setPropertyString("className", className);
   }
 
   /**
@@ -163,7 +162,7 @@ abstract class SplitPanel extends Panel {
    * @param height a CSS length value for the height
    */
   static final void setHeight(Element elem, String height) {
-    DOM.setStyleAttribute(elem, "height", height);
+    elem.getStyle().setProperty("height", height);
   }
 
   /**
@@ -173,7 +172,7 @@ abstract class SplitPanel extends Panel {
    * @param left a CSS length value for left
    */
   static final void setLeft(Element elem, String left) {
-    DOM.setStyleAttribute(elem, "left", left);
+    elem.getStyle().setProperty("left", left);
   }
 
   /**
@@ -183,7 +182,7 @@ abstract class SplitPanel extends Panel {
    * @param right a CSS length value for right
    */
   static final void setRight(Element elem, String right) {
-    DOM.setStyleAttribute(elem, "right", right);
+    elem.getStyle().setProperty("right", right);
   }
 
   /**
@@ -193,7 +192,7 @@ abstract class SplitPanel extends Panel {
    * @param top a CSS length value for top
    */
   static final void setTop(Element elem, String top) {
-    DOM.setStyleAttribute(elem, "top", top);
+    elem.getStyle().setProperty("top", top);
   }
 
   /**
@@ -203,7 +202,7 @@ abstract class SplitPanel extends Panel {
    * @param width a CSS length value for the width
    */
   static final void setWidth(Element elem, String width) {
-    DOM.setStyleAttribute(elem, "width", width);
+    elem.getStyle().setProperty("width", width);
   }
 
   // The enclosed widgets.
@@ -284,11 +283,11 @@ abstract class SplitPanel extends Panel {
 
       case Event.ONMOUSEDOWN: {
         Element target = DOM.eventGetTarget(event);
-        if (DOM.isOrHasChild(splitElem, target)) {
-          startResizingFrom(DOM.eventGetClientX(event) - getAbsoluteLeft(),
-              DOM.eventGetClientY(event) - getAbsoluteTop());
+        if (splitElem.isOrHasChild(target)) {
+          startResizingFrom(event.getClientX() - getAbsoluteLeft(),
+              event.getClientY() - getAbsoluteTop());
           DOM.setCapture(getElement());
-          DOM.eventPreventDefault(event);
+          event.preventDefault();
         }
         break;
       }
@@ -307,9 +306,9 @@ abstract class SplitPanel extends Panel {
       case Event.ONMOUSEMOVE: {
         if (isResizing()) {
           assert DOM.getCaptureElement() != null;
-          onSplitterResize(DOM.eventGetClientX(event) - getAbsoluteLeft(),
-              DOM.eventGetClientY(event) - getAbsoluteTop());
-          DOM.eventPreventDefault(event);
+          onSplitterResize(event.getClientX() - getAbsoluteLeft(),
+              event.getClientY() - getAbsoluteTop());
+          event.preventDefault();
         }
         break;
       }
@@ -415,7 +414,7 @@ abstract class SplitPanel extends Panel {
         orphan(oldWidget);
       } finally {
         // Physical detach old.
-        DOM.removeChild(elements[index], oldWidget.getElement());
+        elements[index].removeChild(oldWidget.getElement());
         widgets[index] = null;
       }
     }
@@ -449,7 +448,6 @@ abstract class SplitPanel extends Panel {
   abstract void onSplitterResizeStarted(int x, int y);
 
   private void startResizingFrom(int x, int y) {
-    fireEvent(new SplitterBeforeResizeEvent());
     isResizing = true;
     onSplitterResizeStarted(x, y);
 
@@ -464,16 +462,5 @@ abstract class SplitPanel extends Panel {
   private void stopResizing() {
     isResizing = false;
     RootPanel.getBodyElement().removeChild(glassElem);
-    fireEvent(new SplitterResizedEvent());
-  }
-
-  public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
-  {
-    return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
-  }
-
-  public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
-  {
-    return addHandler(handler, SplitterResizedEvent.TYPE);
   }
 }

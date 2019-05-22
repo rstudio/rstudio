@@ -15,14 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 
@@ -100,8 +99,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     private final boolean reverse;
     private int minSize;
-
+    private int snapClosedSize = -1;
     private double centerSize, syncedCenterSize;
+
+    private boolean toggleDisplayAllowed = false;
+    private double lastClick = 0;
 
     public Splitter(Widget target, boolean reverse) {
       this.target = target;
@@ -133,9 +135,6 @@ public class SplitLayoutPanel extends DockLayoutPanel {
           offset = getEventPosition(event) - getAbsolutePosition();
           Event.setCapture(getElement());
           event.preventDefault();
-
-          fireEvent(new SplitterBeforeResizeEvent());
-
           break;
 
         case Event.ONMOUSEUP:
@@ -143,22 +142,43 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
           glassElem.removeFromParent();
 
+          // Handle double-clicks.
+          // Fake them since the double-click event aren't fired.
+          if (this.toggleDisplayAllowed) {
+            double now = Duration.currentTimeMillis();
+            if (now - this.lastClick < DOUBLE_CLICK_TIMEOUT) {
+              now = 0;
+              LayoutData layout = (LayoutData) target.getLayoutData();
+              if (layout.size == 0) {
+                // Restore the old size.
+                setAssociatedWidgetSize(layout.oldSize);
+              } else {
+                /*
+                 * Collapse to size 0. We change the size instead of hiding the
+                 * widget because hiding the widget can cause issues if the
+                 * widget contains a flash component.
+                 */
+                layout.oldSize = layout.size;
+                setAssociatedWidgetSize(0);
+              }
+            }
+            this.lastClick = now;
+          }
+
           Event.releaseCapture(getElement());
           event.preventDefault();
-
-          fireEvent(new SplitterResizedEvent());
-
           break;
 
         case Event.ONMOUSEMOVE:
           if (mouseDown) {
             int size;
             if (reverse) {
-              size = getTargetPosition() + getTargetSize()
-                  - getEventPosition(event) - offset;
+              size = getTargetPosition() + getTargetSize() - getSplitterSize()
+                  - getEventPosition(event) + offset;
             } else {
               size = getEventPosition(event) - getTargetPosition() - offset;
             }
+            ((LayoutData) target.getLayoutData()).hidden = false;
             setAssociatedWidgetSize(size);
             event.preventDefault();
           }
@@ -173,6 +193,14 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // Try resetting the associated widget's size, which will enforce the new
       // minSize value.
       setAssociatedWidgetSize((int) layout.size);
+    }
+
+    public void setSnapClosedSize(int snapClosedSize) {
+      this.snapClosedSize = snapClosedSize;
+    }
+
+    public void setToggleDisplayAllowed(boolean allowed) {
+      this.toggleDisplayAllowed = allowed;
     }
 
     protected abstract int getAbsolutePosition();
@@ -205,7 +233,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         size = maxSize;
       }
 
-      if (size < minSize) {
+      if (snapClosedSize > 0 && size < snapClosedSize) {
+        size = 0;
+      } else if (size < minSize) {
         size = minSize;
       }
 
@@ -221,7 +251,8 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // Defer actually updating the layout, so that if we receive many
       // mouse events before layout/paint occurs, we'll only update once.
       if (layoutCommand == null) {
-        layoutCommand = new Command() {
+        layoutCommand = new ScheduledCommand() {
+          @Override
           public void execute() {
             layoutCommand = null;
             forceLayout();
@@ -266,6 +297,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   }
 
   private static final int DEFAULT_SPLITTER_SIZE = 8;
+  private static final int DOUBLE_CLICK_TIMEOUT = 500;
 
   /**
    * The element that masks the screen so we can catch mouse events over
@@ -345,6 +377,16 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     return false;
   }
 
+  @Override
+  public void setWidgetHidden(Widget widget, boolean hidden) {
+    super.setWidgetHidden(widget, hidden);
+    Splitter splitter = getAssociatedSplitter(widget);
+    if (splitter != null) {
+      // The splitter is null for the center element.
+      super.setWidgetHidden(splitter, hidden);
+    }
+  }
+
   /**
    * Sets the minimum allowable size for the given widget.
    *
@@ -363,6 +405,46 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     // The splitter is null for the center element.
     if (splitter != null) {
       splitter.setMinSize(minSize);
+    }
+  }
+
+  /**
+   * Sets a size below which the slider will close completely. This can be used
+   * in conjunction with {@link #setWidgetMinSize} to provide a speed-bump
+   * effect where the slider will stick to a preferred minimum size before
+   * closing completely.
+   *
+   * <p>
+   * This method has no effect for the {@link DockLayoutPanel.Direction#CENTER}
+   * widget.
+   * </p>
+   *
+   * @param child the child whose slider should snap closed
+   * @param snapClosedSize the width below which the widget will close or
+   *        -1 to disable.
+   */
+  public void setWidgetSnapClosedSize(Widget child, int snapClosedSize) {
+    assertIsChild(child);
+    Splitter splitter = getAssociatedSplitter(child);
+    // The splitter is null for the center element.
+    if (splitter != null) {
+      splitter.setSnapClosedSize(snapClosedSize);
+    }
+  }
+
+  /**
+   * Sets whether or not double-clicking on the splitter should toggle the
+   * display of the widget.
+   *
+   * @param child the child whose display toggling will be allowed or not.
+   * @param allowed whether or not display toggling is allowed for this widget
+   */
+  public void setWidgetToggleDisplayAllowed(Widget child, boolean allowed) {
+    assertIsChild(child);
+    Splitter splitter = getAssociatedSplitter(child);
+    // The splitter is null for the center element.
+    if (splitter != null) {
+      splitter.setToggleDisplayAllowed(allowed);
     }
   }
 
@@ -401,29 +483,6 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         assert false : "Unexpected direction";
     }
 
-    splitter.addHandler(new SplitterBeforeResizeHandler() {
-      public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
-      {
-        delegateEvent(SplitLayoutPanel.this, event);
-      }
-    }, SplitterBeforeResizeEvent.TYPE);
-    splitter.addHandler(new SplitterResizedHandler() {
-      public void onSplitterResized(SplitterResizedEvent event)
-      {
-        delegateEvent(SplitLayoutPanel.this, event);
-      }
-    }, SplitterResizedEvent.TYPE);
-
     super.insert(splitter, layout.direction, splitterSize, before);
-  }
-
-  public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
-  {
-    return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
-  }
-
-  public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
-  {
-    return addHandler(handler, SplitterResizedEvent.TYPE);
   }
 }
