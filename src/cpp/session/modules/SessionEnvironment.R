@@ -462,7 +462,7 @@
          else
          {
             val <- paste("Large ", class, " (", len_desc, 
-                         capture.output(print(size, units="auto")), ")", sep="")
+                         format(size, units="auto", standard="SI"), ")", sep="")
          }
          contents_deferred <- TRUE
       }
