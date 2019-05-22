@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -448,6 +449,7 @@ abstract class SplitPanel extends Panel {
   abstract void onSplitterResizeStarted(int x, int y);
 
   private void startResizingFrom(int x, int y) {
+    fireEvent(new SplitterBeforeResizeEvent());
     isResizing = true;
     onSplitterResizeStarted(x, y);
 
@@ -462,5 +464,16 @@ abstract class SplitPanel extends Panel {
   private void stopResizing() {
     isResizing = false;
     RootPanel.getBodyElement().removeChild(glassElem);
+    fireEvent(new SplitterResizedEvent());
+  }
+
+  public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
+  {
+    return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
+  }
+
+  public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
+  {
+    return addHandler(handler, SplitterResizedEvent.TYPE);
   }
 }

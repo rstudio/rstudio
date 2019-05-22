@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 
@@ -135,6 +136,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
           offset = getEventPosition(event) - getAbsolutePosition();
           Event.setCapture(getElement());
           event.preventDefault();
+
+          fireEvent(new SplitterBeforeResizeEvent());
+
           break;
 
         case Event.ONMOUSEUP:
@@ -167,6 +171,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
           Event.releaseCapture(getElement());
           event.preventDefault();
+
+          fireEvent(new SplitterResizedEvent());
+
           break;
 
         case Event.ONMOUSEMOVE:
@@ -483,6 +490,29 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         assert false : "Unexpected direction";
     }
 
+    splitter.addHandler(new SplitterBeforeResizeHandler() {
+      public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
+      {
+        delegateEvent(SplitLayoutPanel.this, event);
+      }
+    }, SplitterBeforeResizeEvent.TYPE);
+    splitter.addHandler(new SplitterResizedHandler() {
+      public void onSplitterResized(SplitterResizedEvent event)
+      {
+        delegateEvent(SplitLayoutPanel.this, event);
+      }
+    }, SplitterResizedEvent.TYPE);
+
     super.insert(splitter, layout.direction, splitterSize, before);
+  }
+
+  public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
+  {
+    return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
+  }
+
+  public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
+  {
+    return addHandler(handler, SplitterResizedEvent.TYPE);
   }
 }
