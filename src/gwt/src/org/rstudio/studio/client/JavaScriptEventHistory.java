@@ -1,7 +1,7 @@
 /*
  * JavaScriptEventHistory.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,12 @@ package org.rstudio.studio.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Singleton;
 
 // This class maintains a simple JavaScript event history, primarily to be used
