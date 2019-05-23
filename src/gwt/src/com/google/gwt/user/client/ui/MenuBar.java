@@ -785,7 +785,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       closeAllParents();
     }
 
-    onHide(!autoClosed && focusOnHover);
+    onHide(!autoClosed);
     CloseEvent.fire(MenuBar.this, sender);
     // When the menu popup closes, remember that no item is
     // currently showing a popup menu.
