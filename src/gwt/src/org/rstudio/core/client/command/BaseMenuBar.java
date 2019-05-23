@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
@@ -23,7 +22,6 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
@@ -65,16 +63,6 @@ public class BaseMenuBar extends MenuBar
       // subclasses are instantiated using generated code--don't feel
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
-
-      // verify layout assumptions in case GWT changes them
-      if (DOM.getChildCount(getElement()) != 2)
-      {
-         Debug.log("Unexpected DOM layout in menubar (child count = " + DOM.getChildCount(getElement()));
-         return;
-      }
-
-      // mark Table created by MenuBar as being for presentation only
-      Roles.getPresentationRole().set(DOM.getChild(getElement(), 1));
    }
    
    private MenuItem getTargetedMenuItem(Event event)
