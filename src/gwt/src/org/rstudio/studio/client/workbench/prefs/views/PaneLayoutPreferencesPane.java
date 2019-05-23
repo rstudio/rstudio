@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -216,7 +216,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       add(grid);
 
       allPanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
-                                                  rightTopPanel_, rightBottomPanel_};
+                                            rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
       tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet1()));

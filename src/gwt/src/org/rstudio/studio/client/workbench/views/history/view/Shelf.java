@@ -119,7 +119,7 @@ public class Shelf extends Composite
    @UiField
    HorizontalPanel right_;
    
-   private boolean large_;
+   private boolean large_ = false;
    
    private static final Resources RES = (Resources)GWT.create(Resources.class);
 }
