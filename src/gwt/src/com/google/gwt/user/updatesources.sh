@@ -6,7 +6,17 @@
 
 cd ../../../../
 pwd
-jar xvf ../lib/gwt/2.3.0-m1/gwt-user.jar \
+
+# extract over previously modified sources
+jar xvf ../lib/gwt/2.8.2/gwt-user.jar \
   com/google/gwt/user/client/ui/MenuBar.java \
   com/google/gwt/user/client/ui/SplitPanel.java \
   com/google/gwt/user/client/ui/SplitLayoutPanel.java
+
+cd com/google/gwt/user/client/ui
+
+# apply previous patches
+patch MenuBar.java < MenuBar.java.diff
+patch SplitPanel.java < SplitPanel.java.diff
+patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
+
