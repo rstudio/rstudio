@@ -73,7 +73,7 @@
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
             <g:HorizontalPanel width="100%"
-                                       styleName="{res.style.controlLabel}">
+                               styleName="{res.style.controlLabel}">
                <g:Label text="Update:">
                </g:Label>
                <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 

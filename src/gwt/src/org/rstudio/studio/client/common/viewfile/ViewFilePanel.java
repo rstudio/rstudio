@@ -16,7 +16,6 @@ package org.rstudio.studio.client.common.viewfile;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -59,6 +58,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;

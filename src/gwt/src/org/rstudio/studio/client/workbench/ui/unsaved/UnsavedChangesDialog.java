@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -45,6 +44,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;

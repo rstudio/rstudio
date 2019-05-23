@@ -1,7 +1,7 @@
 /*
  * ConnectionCodePanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
@@ -34,9 +32,11 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class ConnectionCodePanel extends Composite implements RequiresResize

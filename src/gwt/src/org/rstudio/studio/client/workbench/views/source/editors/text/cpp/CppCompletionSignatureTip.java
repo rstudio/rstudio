@@ -1,7 +1,7 @@
 /*
  * CppCompletionSignatureTip.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -36,6 +35,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 

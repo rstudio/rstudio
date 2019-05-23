@@ -1,7 +1,7 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -40,6 +39,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class VersionControlPage extends NewProjectWizardPage
 {

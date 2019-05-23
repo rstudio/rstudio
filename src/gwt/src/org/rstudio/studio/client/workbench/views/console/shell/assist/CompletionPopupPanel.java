@@ -32,8 +32,8 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-
 import com.google.gwt.user.client.ui.VerticalPanel;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;

@@ -1,7 +1,7 @@
 /*
  * NotebookProgressWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.ColorUtil;
 
 import com.google.gwt.animation.client.AnimationScheduler;
@@ -36,6 +35,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;

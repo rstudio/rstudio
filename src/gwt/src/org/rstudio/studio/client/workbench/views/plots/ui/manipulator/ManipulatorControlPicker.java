@@ -1,7 +1,7 @@
 /*
  * ManipulatorControlPicker.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -23,6 +22,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 

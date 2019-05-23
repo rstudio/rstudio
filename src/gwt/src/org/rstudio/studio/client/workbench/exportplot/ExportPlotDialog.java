@@ -15,12 +15,12 @@
 package org.rstudio.studio.client.workbench.exportplot;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ExportPlotDialog extends ModalDialogBase 

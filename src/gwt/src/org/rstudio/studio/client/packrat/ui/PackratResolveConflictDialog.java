@@ -17,7 +17,6 @@ package org.rstudio.studio.client.packrat.ui;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -39,6 +38,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PackratResolveConflictDialog 

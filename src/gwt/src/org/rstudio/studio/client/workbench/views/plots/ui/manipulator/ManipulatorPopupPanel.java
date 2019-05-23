@@ -1,7 +1,7 @@
 /*
  * ManipulatorPopupPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
@@ -25,6 +24,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ManipulatorPopupPanel extends MiniDialogPopupPanel 

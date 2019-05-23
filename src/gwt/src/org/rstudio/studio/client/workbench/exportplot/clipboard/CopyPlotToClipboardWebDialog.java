@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardWebDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -25,6 +24,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 

@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -55,6 +54,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 

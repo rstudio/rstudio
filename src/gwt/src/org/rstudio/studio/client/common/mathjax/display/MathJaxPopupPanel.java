@@ -1,7 +1,7 @@
 /*
  * MathJaxPopupPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.mathjax.display;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.common.mathjax.MathJax;
@@ -24,6 +23,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class MathJaxPopupPanel extends MiniPopupPanel
 {

@@ -1,7 +1,7 @@
 /*
  * SpellingCustomDictionariesWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -39,7 +37,9 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class SpellingCustomDictionariesWidget extends Composite

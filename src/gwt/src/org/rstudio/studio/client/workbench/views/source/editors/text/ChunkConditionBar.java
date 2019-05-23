@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -26,7 +24,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkConditionBar extends Composite

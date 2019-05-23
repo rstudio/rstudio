@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -32,6 +31,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShowPublicKeyDialog extends ModalDialogBase

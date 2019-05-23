@@ -1,5 +1,5 @@
 /*
- * SnippetType.java
+ * EditableSnippets.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -14,12 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.snippets.ui;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 

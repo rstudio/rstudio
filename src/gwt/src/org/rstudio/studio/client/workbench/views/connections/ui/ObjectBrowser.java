@@ -1,7 +1,7 @@
 /*
  * ObjectBrowser.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -43,6 +42,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ObjectBrowser extends Composite implements RequiresResize
 {

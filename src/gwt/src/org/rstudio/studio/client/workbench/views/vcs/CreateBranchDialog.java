@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
@@ -44,8 +42,10 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.mirrors;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -43,6 +42,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChooseMirrorDialog extends ModalDialog<CRANMirror>

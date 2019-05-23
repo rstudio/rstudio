@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common.rstudioapi;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.StringUtil;
@@ -39,6 +38,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

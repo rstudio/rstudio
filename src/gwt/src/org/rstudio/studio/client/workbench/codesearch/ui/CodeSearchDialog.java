@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -24,6 +23,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
