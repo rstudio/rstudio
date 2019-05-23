@@ -24,13 +24,13 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
@@ -67,9 +67,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       connector_ = connector;
       deps_ = deps;
       
-      VerticalPanelLayout accountPanel = new VerticalPanelLayout();
+      VerticalPanel accountPanel = new VerticalPanel();
       Label accountLabel = headerLabel("Publishing Accounts");
-      HorizontalPanelLayout hpanel = new HorizontalPanelLayout();
+      HorizontalPanel hpanel = new HorizontalPanel();
       
       accountPanel.add(accountLabel);
       
@@ -98,7 +98,7 @@ public class PublishingPreferencesPane extends PreferencesPane
          }
       });
       
-      VerticalPanelLayout vpanel = new VerticalPanelLayout();
+      VerticalPanel vpanel = new VerticalPanel();
       hpanel.add(vpanel);
 
       connectButton_ = new ThemedButton("Connect...");
@@ -152,7 +152,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       // special UI to show when we detect that there are account records but
       // the RSConnect package isn't installed
-      final VerticalPanelLayout missingPkgPanel = new VerticalPanelLayout();
+      final VerticalPanel missingPkgPanel = new VerticalPanel();
       missingPkgPanel.setVisible(false);
       missingPkgPanel.add(new Label(
             "Account records appear to exist, but cannot be viewed because a " +
@@ -189,7 +189,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
             uiPrefs_.enableRStudioConnect());
-      final HorizontalPanelLayout rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
+      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect,
                                                                     "rstudio_connect");
       lessSpaced(rsconnectPanel);
       

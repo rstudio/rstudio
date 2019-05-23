@@ -16,9 +16,9 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -39,18 +39,18 @@ public class LocalRepositoriesWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       panel.add(new LabelWithHelp("Local repositories:",
             "packrat_local_repos"));
       
-      HorizontalPanelLayout hp = new HorizontalPanelLayout();
+      HorizontalPanel hp = new HorizontalPanel();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(true);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       hp.add(listBox_);
       
-      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
+      VerticalPanel buttonPanel = new VerticalPanel();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

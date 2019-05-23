@@ -21,11 +21,11 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
@@ -210,7 +210,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    {
       String textWidth = "250px";
 
-      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
+      HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
       nudgeRight(captionPanel);
       if (captionPanelStyle != null)
@@ -222,7 +222,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
       if (link != null)
       {
-         HorizontalPanelLayout linkPanel = new HorizontalPanelLayout();
+         HorizontalPanel linkPanel = new HorizontalPanel();
          linkPanel.add(link);
          captionPanel.add(linkPanel);
          captionPanel.setCellHorizontalAlignment(linkPanel,

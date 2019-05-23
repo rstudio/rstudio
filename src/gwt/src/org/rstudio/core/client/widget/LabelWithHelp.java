@@ -17,8 +17,8 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class LabelWithHelp extends Composite
 {
@@ -31,7 +31,7 @@ public class LabelWithHelp extends Composite
                         String helpTopic, 
                         boolean includeVersionInfo)
    {
-      HorizontalPanelLayout labelPanel = new HorizontalPanelLayout();
+      HorizontalPanel labelPanel = new HorizontalPanel();
       Label label = new Label(text);
       labelPanel.add(label);
       HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo);

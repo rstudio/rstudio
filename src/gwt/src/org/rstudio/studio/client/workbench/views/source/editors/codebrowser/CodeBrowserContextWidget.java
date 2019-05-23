@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
@@ -43,7 +43,7 @@ public class CodeBrowserContextWidget extends Composite
    public CodeBrowserContextWidget(
                final CodeBrowserEditingTargetWidget.Styles styles)
    {
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       
       captionLabel_ = new Label();
       captionLabel_.addStyleName(styles.captionLabel());

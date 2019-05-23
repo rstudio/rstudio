@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.ColorUtil;
 
 import com.google.gwt.animation.client.AnimationScheduler;
@@ -38,7 +39,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class NotebookProgressWidget extends Composite
                                     implements HasClickHandlers
@@ -213,7 +213,7 @@ public class NotebookProgressWidget extends Composite
    }
    
    @UiField HTMLPanel progressBar_;
-   @UiField HorizontalPanelLayout root_;
+   @UiField HorizontalPanel root_;
    @UiField Label progressLabel_;
    @UiField Image interruptButton_;
 

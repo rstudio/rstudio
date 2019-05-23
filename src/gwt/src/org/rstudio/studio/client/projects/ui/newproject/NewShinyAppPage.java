@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
@@ -31,7 +31,7 @@ public class NewShinyAppPage extends NewDirectoryPage
    }
     
    @Override 
-   protected void onAddTopPanelWidgets(HorizontalPanelLayout panel)
+   protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
       
    }

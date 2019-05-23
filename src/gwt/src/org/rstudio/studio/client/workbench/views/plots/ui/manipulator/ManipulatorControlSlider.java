@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONNumber;
@@ -38,10 +36,10 @@ public class ManipulatorControlSlider extends ManipulatorControl
       ManipulatorStyles styles = ManipulatorResources.INSTANCE.manipulatorStyles();
       
       // containing panel
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       
       // setup caption panel and add it
-      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
+      HorizontalPanel captionPanel = new HorizontalPanel();
   
       Label captionLabel = new Label();
       captionLabel.setStyleName(styles.captionLabel());

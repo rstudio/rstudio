@@ -35,7 +35,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -135,7 +134,7 @@ public class HistoryPane extends WorkbenchPane
 
       mainPanel_.addStyleName("ace_editor_theme");
 
-      VerticalPanelLayout vpanel = new VerticalPanelLayout();
+      VerticalPanel vpanel = new VerticalPanel();
       vpanel.setSize("100%", "100%");
 
       loadMore_ = new Anchor("Load more entries...", "javascript:return false");

@@ -32,7 +32,6 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
@@ -257,11 +256,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    Label labelParent_;
    @UiField
-   VerticalPanelLayout tocPanel_;
+   VerticalPanel tocPanel_;
    @UiField(provided = true)
    ProgressPanel progressPanel_;
    @UiField
-   VerticalPanelLayout detailPanel_;
+   VerticalPanel detailPanel_;
    @UiField(provided = true)
    SizeWarningWidget sizeWarning_;
    @UiField

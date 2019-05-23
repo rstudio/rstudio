@@ -25,6 +25,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -32,7 +33,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -179,7 +179,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    @UiField
    DivElement divTypeSelector_;
    @UiField
-   HorizontalPanelLayout typeLabelPanel_;
+   HorizontalPanel typeLabelPanel_;
    @UiField
    Label lblType_;
    @UiField

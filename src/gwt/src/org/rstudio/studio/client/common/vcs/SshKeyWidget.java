@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -46,7 +46,7 @@ public class SshKeyWidget extends Composite
       FlowPanel panel = new FlowPanel();
            
       // caption panel
-      HorizontalPanelLayout captionPanel = new HorizontalPanelLayout();
+      HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
       Label sshKeyPathLabel = new Label("SSH RSA key:");
@@ -55,7 +55,7 @@ public class SshKeyWidget extends Composite
                                           sshKeyPathLabel,
                                           HasHorizontalAlignment.ALIGN_LEFT);
    
-      HorizontalPanelLayout linkPanel = new HorizontalPanelLayout();
+      HorizontalPanel linkPanel = new HorizontalPanel();
       publicKeyLink_ = new HyperlinkLabel("View public key");
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
       publicKeyLink_.addClickHandler(new ClickHandler() {
@@ -82,7 +82,7 @@ public class SshKeyWidget extends Composite
       
     
       // ssh key path action buttons
-      HorizontalPanelLayout sshButtonPanel = new HorizontalPanelLayout();
+      HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       createKeyButton_ = new SmallButton();
       createKeyButton_.setText("Create RSA Key...");

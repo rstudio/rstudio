@@ -16,13 +16,13 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -1314,10 +1314,10 @@ public class RSConnectDeploy extends Composite
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
-   @UiField VerticalPanelLayout fileListPanel_;
-   @UiField VerticalPanelLayout filePanel_;
-   @UiField VerticalPanelLayout descriptionPanel_;
-   @UiField HorizontalPanelLayout publishFromPanel_;
+   @UiField VerticalPanel fileListPanel_;
+   @UiField VerticalPanel filePanel_;
+   @UiField VerticalPanel descriptionPanel_;
+   @UiField HorizontalPanel publishFromPanel_;
    @UiField RSConnectAccountEntry accountEntry_;
    
    // provided fields

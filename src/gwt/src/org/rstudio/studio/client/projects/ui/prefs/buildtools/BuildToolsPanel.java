@@ -15,8 +15,8 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class BuildToolsPanel extends VerticalPanelLayout
+public abstract class BuildToolsPanel extends VerticalPanel
 {
    public BuildToolsPanel()
    {
@@ -192,7 +192,7 @@ public abstract class BuildToolsPanel extends VerticalPanelLayout
       
       AdditionalArguments(Widget captionWidget)
       {
-         VerticalPanelLayout panel = new VerticalPanelLayout();
+         VerticalPanel panel = new VerticalPanel();
          panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
          
      

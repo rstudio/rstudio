@@ -16,9 +16,9 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
@@ -41,23 +41,23 @@ public class CodeFilesList extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().wizardMainColumn());
       
-      HorizontalPanelLayout labelPanel = new HorizontalPanelLayout();
+      HorizontalPanel labelPanel = new HorizontalPanel();
       Label label = new Label("Create package based on source files:");
       label.addStyleName(RES.styles().wizardTextEntryLabel());
       labelPanel.add(label);
       panel.add(labelPanel);
       
-      HorizontalPanelLayout dictionariesPanel = new HorizontalPanelLayout();
+      HorizontalPanel dictionariesPanel = new HorizontalPanel();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(true);
       listBox_.addStyleName(RES.styles().codeFilesListBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       dictionariesPanel.add(listBox_);
       
-      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
+      VerticalPanel buttonPanel = new VerticalPanel();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

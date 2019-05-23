@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
@@ -47,7 +47,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    @Override
    protected Widget createMainWidget()
    {
-      mainPanel_ = new VerticalPanelLayout();
+      mainPanel_ = new VerticalPanel();
       mainPanel_.setWidth("250px");
       return mainPanel_;
    }
@@ -178,7 +178,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       }
    }
   
-   private VerticalPanelLayout mainPanel_;
+   private VerticalPanel mainPanel_;
    private ManipulatorControl firstControl_;
    private final ManipulatorChangedHandler changedHandler_;
 

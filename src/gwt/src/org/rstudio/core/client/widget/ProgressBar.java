@@ -19,8 +19,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class ProgressBar extends Composite
 {
@@ -62,5 +62,5 @@ public class ProgressBar extends Composite
 
    @UiField HTMLPanel bar_;
    @UiField HTMLPanel progress_;
-   @UiField HorizontalPanelLayout progressHost_;
+   @UiField HorizontalPanel progressHost_;
 }

@@ -16,15 +16,15 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 
 public class HorizontalCenterPanel extends DockPanel
 {
    public HorizontalCenterPanel(Widget widget, int verticalOffset)
    {
       widget_ = widget;
-      VerticalPanelLayout verticalPadWidget = new VerticalPanelLayout();
+      VerticalPanel verticalPadWidget = new VerticalPanel();
       add(verticalPadWidget, DockPanel.NORTH);
       setCellHeight(verticalPadWidget, verticalOffset + "px");
       add(widget_, DockPanel.CENTER);

@@ -1,6 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:rsl='urn:import:org.rstudio.core.client.layout'
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextResources" />
    <ui:style>
@@ -38,7 +37,7 @@
    }
    </ui:style>
    <g:HTMLPanel>
-     <rsl:HorizontalPanelLayout styleName="{style.root}" ui:field="root_">
+     <g:HorizontalPanel styleName="{style.root}" ui:field="root_">
        <g:Label styleName="{style.progressLabel}" ui:field="progressLabel_"
                 width="75px">
        </g:Label>
@@ -48,6 +47,6 @@
        <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk2x}" 
                 ui:field="interruptButton_">
        </g:Image>
-     </rsl:HorizontalPanelLayout>
+     </g:HorizontalPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

@@ -16,8 +16,8 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -70,9 +70,9 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
-      roxygenizePanel_ = new VerticalPanelLayout();
+      roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
-      HorizontalPanelLayout rocletPanel = new HorizontalPanelLayout();
+      HorizontalPanel rocletPanel = new HorizontalPanel();
       chkUseRoxygen_ = checkBox("Generate documentation with Roxygen");
       rocletPanel.add(chkUseRoxygen_);
       btnConfigureRoxygen_ = new ThemedButton("Configure...");
@@ -211,7 +211,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
      
    private BuildToolsRoxygenOptions roxygenOptions_;
    
-   private VerticalPanelLayout roxygenizePanel_;
+   private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
    private CheckBox chkUseDevtools_;
    private ThemedButton btnConfigureRoxygen_;

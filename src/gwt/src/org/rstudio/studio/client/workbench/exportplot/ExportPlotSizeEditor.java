@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.*;
 
 import com.google.gwt.dom.client.Style.Overflow;
@@ -70,13 +70,13 @@ public class ExportPlotSizeEditor extends Composite
       ExportPlotResources resources = ExportPlotResources.INSTANCE;
            
       // main widget
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
            
       // if we have an extra widget then enclose it within a horizontal
       // panel with it on the left and the options on the right
-      HorizontalPanelLayout topPanel = new HorizontalPanelLayout();
+      HorizontalPanel topPanel = new HorizontalPanel();
       CellPanel optionsPanel = null;
-      HorizontalPanelLayout widthAndHeightPanel = null;
+      HorizontalPanel widthAndHeightPanel = null;
       if (extraWidget != null)
       {
          topPanel.setWidth("100%");
@@ -85,7 +85,7 @@ public class ExportPlotSizeEditor extends Composite
          topPanel.setCellHorizontalAlignment(extraWidget, 
                                              HasHorizontalAlignment.ALIGN_LEFT);
          
-         optionsPanel = new VerticalPanelLayout();
+         optionsPanel = new VerticalPanel();
          optionsPanel.setStylePrimaryName(
                                     resources.styles().verticalSizeOptions());
          optionsPanel.setSpacing(0);
@@ -94,7 +94,7 @@ public class ExportPlotSizeEditor extends Composite
                                        optionsPanel,
                                        HasHorizontalAlignment.ALIGN_RIGHT);
          
-         widthAndHeightPanel = new HorizontalPanelLayout();
+         widthAndHeightPanel = new HorizontalPanel();
          widthAndHeightPanel.setStylePrimaryName(
                                     resources.styles().widthAndHeightEntry());
          configureHorizontalOptionsPanel(widthAndHeightPanel);
@@ -484,7 +484,7 @@ public class ExportPlotSizeEditor extends Composite
    }
   
    
-   private void configureHorizontalOptionsPanel(HorizontalPanelLayout panel)
+   private void configureHorizontalOptionsPanel(HorizontalPanel panel)
    {
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);

@@ -15,11 +15,11 @@
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -125,7 +125,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    protected Widget createMainWidget()
    {
       // vertical panel
-      VerticalPanelLayout mainPanel = new VerticalPanelLayout();
+      VerticalPanel mainPanel = new VerticalPanel();
       mainPanel.setSpacing(2);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       

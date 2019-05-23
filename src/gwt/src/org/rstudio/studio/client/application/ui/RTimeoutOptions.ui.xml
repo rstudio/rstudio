@@ -1,7 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui"
-   xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:style>
    .host
    {
@@ -39,13 +38,13 @@
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
       <g:Label styleName="{style.warning}" text="R is taking longer to start than usual."></g:Label>
-      <rsl:VerticalPanelLayout>
-         <rsl:HorizontalPanelLayout>
+      <g:VerticalPanel>
+         <g:HorizontalPanel>
             <g:Button text="Reload" ui:field="reload_"></g:Button>
             <g:Button text="Safe Mode" ui:field="safeMode_"></g:Button>
             <g:Button text="Terminate R" ui:field="terminate_"></g:Button>
-         </rsl:HorizontalPanelLayout>
-      </rsl:VerticalPanelLayout>
+         </g:HorizontalPanel>
+      </g:VerticalPanel>
       <g:Label styleName="{style.status}" ui:field="status_"></g:Label>
    </g:HTMLPanel>
 </ui:UiBinder> 

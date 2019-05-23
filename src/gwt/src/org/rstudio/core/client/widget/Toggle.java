@@ -25,9 +25,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class Toggle
       extends Composite
@@ -159,7 +159,7 @@ public class Toggle
    private State state_ = State.OFF;
    private boolean indeterminateStateEnabled_ = true;
    
-   @UiField HorizontalPanelLayout container_;
+   @UiField HorizontalPanel container_;
    @UiField FlowPanel track_;
    @UiField FlowPanel knob_;
    @UiField Label label_;

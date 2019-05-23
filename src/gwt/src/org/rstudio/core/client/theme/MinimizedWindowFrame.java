@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -61,7 +60,7 @@ public class MinimizedWindowFrame
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);
       layout_.addEast(createDiv(themeStyles.right()), 8);
 
-      HorizontalPanelLayout inner = new HorizontalPanelLayout();
+      HorizontalPanel inner = new HorizontalPanel();
       inner.setWidth("100%");
       inner.setStylePrimaryName(themeStyles.rstheme_center());
 

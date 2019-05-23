@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -91,7 +90,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       ModuleList()
       {
          checkBoxes_ = new ArrayList<CheckBox>();
-         VerticalPanelLayout panel = new VerticalPanelLayout();
+         VerticalPanel panel = new VerticalPanel();
          for (String module : PaneConfig.getAllTabs())
          {
             CheckBox checkBox = new CheckBox(module, false);
@@ -216,7 +215,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                                  res.styles().paneLayoutTable());
       add(grid);
 
-      allPanePanels_ = new VerticalPanelLayout[] {leftTopPanel_, leftBottomPanel_,
+      allPanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
                                                   rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
@@ -264,9 +263,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       updateTabSetLabels();
    }
 
-   private VerticalPanelLayout createPane(ListBox listBox)
+   private VerticalPanel createPane(ListBox listBox)
    {
-      VerticalPanelLayout vp = new VerticalPanelLayout();
+      VerticalPanel vp = new VerticalPanel();
       vp.add(listBox);
       return vp;
    }
@@ -385,11 +384,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ListBox rightTop_;
    private final ListBox rightBottom_;
    private final ListBox[] allPanes_;
-   private final VerticalPanelLayout leftTopPanel_;
-   private final VerticalPanelLayout leftBottomPanel_;
-   private final VerticalPanelLayout rightTopPanel_;
-   private final VerticalPanelLayout rightBottomPanel_;
-   private final VerticalPanelLayout[] allPanePanels_;
+   private final VerticalPanel leftTopPanel_;
+   private final VerticalPanel leftBottomPanel_;
+   private final VerticalPanel rightTopPanel_;
+   private final VerticalPanel rightBottomPanel_;
+   private final VerticalPanel[] allPanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private boolean dirty_ = false;

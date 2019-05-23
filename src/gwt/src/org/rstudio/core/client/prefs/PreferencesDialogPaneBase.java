@@ -14,12 +14,12 @@
  */
 package org.rstudio.core.client.prefs;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class PreferencesDialogPaneBase<T> extends VerticalPanelLayout
+public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
 implements HasEnsureVisibleHandlers
 {
    public abstract ImageResource getIcon();
@@ -140,9 +140,9 @@ implements HasEnsureVisibleHandlers
       return widget;
    }
    
-   protected HorizontalPanelLayout checkBoxWithHelp(CheckBox checkBox, String topic)
+   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic)
    {
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       panel.add(checkBox);
       HelpButton helpButton = new HelpButton(topic, false);
       Style helpStyle = helpButton.getElement().getStyle();

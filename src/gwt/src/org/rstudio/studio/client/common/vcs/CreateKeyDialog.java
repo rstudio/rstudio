@@ -15,9 +15,9 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -186,10 +186,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    {
       Styles styles = RESOURCES.styles();
       
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
       
-      VerticalPanelLayout namePanel = new VerticalPanelLayout();
+      VerticalPanel namePanel = new VerticalPanel();
       namePanel.setWidth("100%");
      
       // path
@@ -210,10 +210,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       
       panel.add(namePanel);
       
-      HorizontalPanelLayout passphrasePanel = new HorizontalPanelLayout();
+      HorizontalPanel passphrasePanel = new HorizontalPanel();
       passphrasePanel.addStyleName(styles.newSection());
       
-      VerticalPanelLayout passphrasePanel1 = new VerticalPanelLayout();
+      VerticalPanel passphrasePanel1 = new VerticalPanel();
       Label passphraseLabel1 = new Label("Passphrase (optional):");
       passphraseLabel1.addStyleName(styles.entryLabel());
       passphrasePanel1.add(passphraseLabel1);
@@ -223,7 +223,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
-      VerticalPanelLayout passphrasePanel2 = new VerticalPanelLayout();
+      VerticalPanel passphrasePanel2 = new VerticalPanel();
       passphrasePanel2.addStyleName(styles.lastSection());
       Label passphraseLabel2 = new Label("Confirm:");
       passphraseLabel2.addStyleName(styles.entryLabel());

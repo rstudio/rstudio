@@ -32,10 +32,10 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -106,7 +106,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       install_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event) {
-            VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+            VerticalPanel verticalPanel = new VerticalPanel();
             verticalPanel.getElement().setAttribute(
                "style",
                "padding-left: 6px; width: 320px;"

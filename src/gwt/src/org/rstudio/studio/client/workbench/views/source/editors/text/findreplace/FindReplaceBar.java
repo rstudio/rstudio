@@ -23,8 +23,6 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -68,11 +66,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.setWidth("100%");
       shelf.addStyleName("rstudio-themes-background"); 
 
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       ElementIds.assignElementId(panel.getElement(), 
                                  ElementIds.FIND_REPLACE_BAR);
       
-      HorizontalPanelLayout findReplacePanel = new HorizontalPanelLayout();
+      HorizontalPanel findReplacePanel = new HorizontalPanel();
       findReplacePanel.addStyleName(RES.styles().findPanel());
       findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
       txtFind_.setIconVisible(true);
@@ -89,7 +87,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       
       panel.add(findReplacePanel);
       
-      HorizontalPanelLayout optionsPanel = new HorizontalPanelLayout();
+      HorizontalPanel optionsPanel = new HorizontalPanel();
       optionsPanel.addStyleName(RES.styles().optionsPanel());
         
       optionsPanel.add(chkInSelection_ = new CheckBox());

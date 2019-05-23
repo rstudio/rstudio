@@ -15,7 +15,7 @@
 package org.rstudio.core.client.widget;
 
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -47,11 +47,11 @@ public class CaptionWithHelp extends Composite
       
       rstudioLinkName_ = rstudioLinkName;
       
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
       captionLabel_ = new Label(caption);
       panel.add(captionLabel_);
-      helpPanel_ = new HorizontalPanelLayout();
+      helpPanel_ = new HorizontalPanel();
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
       helpPanel_.add(helpImage);
@@ -127,7 +127,7 @@ public class CaptionWithHelp extends Composite
    private Label captionLabel_;
    private String rstudioLinkName_;
    private boolean includeVersionInfo_ = true;
-   private HorizontalPanelLayout helpPanel_;
-   private HorizontalPanelLayout outerPanel_;
+   private HorizontalPanel helpPanel_;
+   private HorizontalPanel outerPanel_;
    private GlobalDisplay globalDisplay_;
 }

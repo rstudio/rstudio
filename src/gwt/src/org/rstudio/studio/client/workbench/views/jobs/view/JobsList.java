@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
@@ -141,7 +141,7 @@ public class JobsList extends Composite
       empty_.setVisible(jobCount() == 0);
    }
   
-   @UiField VerticalPanelLayout list_;
+   @UiField VerticalPanel list_;
    @UiField Label empty_;
    @UiField ScrollPanel scroll_;
 

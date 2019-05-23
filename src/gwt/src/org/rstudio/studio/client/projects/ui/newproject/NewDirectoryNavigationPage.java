@@ -16,9 +16,9 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -111,7 +111,7 @@ public class NewDirectoryNavigationPage
          scrollPanel.setSize("100%", "100%");
          scrollPanel.addStyleName(styles.wizardPageSelector());
 
-         VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+         VerticalPanel verticalPanel = new VerticalPanel();
          verticalPanel.setSize("100%", "100%");
 
          for (int i = 0, n = pages.size(); i < n; i++)

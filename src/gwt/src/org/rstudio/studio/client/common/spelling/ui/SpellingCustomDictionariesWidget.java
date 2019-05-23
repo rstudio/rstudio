@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -48,19 +48,19 @@ public class SpellingCustomDictionariesWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       
       panel.add(new LabelWithHelp("Custom dictionaries:", 
                                   "custom_dictionaries"));
       
-      HorizontalPanelLayout dictionariesPanel = new HorizontalPanelLayout();
+      HorizontalPanel dictionariesPanel = new HorizontalPanel();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(4);
       dictionariesPanel.add(listBox_);
       
-      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
+      VerticalPanel buttonPanel = new VerticalPanel();
       SmallButton buttonAdd = createButton("Add...");
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);

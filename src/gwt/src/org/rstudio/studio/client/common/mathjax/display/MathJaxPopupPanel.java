@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.common.mathjax.display;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 
@@ -33,7 +33,7 @@ public class MathJaxPopupPanel extends MiniPopupPanel
       
       mathjax_ = mathjax;
       
-      container_ = new VerticalPanelLayout();
+      container_ = new VerticalPanel();
       contentPanel_ = new FlowPanel();
       
       container_.add(contentPanel_);
@@ -70,7 +70,7 @@ public class MathJaxPopupPanel extends MiniPopupPanel
    }
    
    @SuppressWarnings("unused") private final MathJax mathjax_;
-   private final VerticalPanelLayout container_;
+   private final VerticalPanel container_;
    private final FlowPanel contentPanel_;
    
 }

@@ -22,12 +22,12 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.Operation;
@@ -64,7 +64,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       
-      VerticalPanelLayout leftPanel = new VerticalPanelLayout();
+      VerticalPanel leftPanel = new VerticalPanel();
       
       relaunchRequired_ = false;
 
@@ -247,7 +247,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       removeThemeButton_.setLeftAligned(true);
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
       
-      HorizontalPanelLayout buttonPanel = new HorizontalPanelLayout();
+      HorizontalPanel buttonPanel = new HorizontalPanel();
       buttonPanel.add(addThemeButton_);
       buttonPanel.add(removeThemeButton_);
       
@@ -266,7 +266,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
 
-      HorizontalPanelLayout hpanel = new HorizontalPanelLayout();
+      HorizontalPanel hpanel = new HorizontalPanel();
       hpanel.setWidth("100%");
       hpanel.add(leftPanel);
       hpanel.setCellWidth(leftPanel, "160px");

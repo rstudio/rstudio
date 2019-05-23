@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.snippets.ui;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
@@ -33,7 +33,7 @@ public class EditableSnippets extends Composite
    public EditableSnippets(String name, TextFileType fileType)
    {
       fileType_ = fileType;
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       Image icon = new Image(fileType.getDefaultIcon());
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel.add(icon);

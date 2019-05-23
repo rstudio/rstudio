@@ -30,7 +30,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class FileBrowserWidget extends Composite
                  implements FileSystemContext.Callbacks
@@ -183,7 +182,7 @@ public class FileBrowserWidget extends Composite
       if (nameLabel == null)
          return null;
 
-      HorizontalPanelLayout filenamePanel = new HorizontalPanelLayout();
+      HorizontalPanel filenamePanel = new HorizontalPanel();
       FileDialogStyles styles = FileDialogResources.INSTANCE.styles();
       filenamePanel.setStylePrimaryName(styles.filenamePanel());
       filenamePanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);

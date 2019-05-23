@@ -22,10 +22,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Random;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -114,7 +114,7 @@ public class NewConnectionSnippetHost extends Composite
       if (!StringUtil.isNullOrEmpty(info.getWarning())) {
          maxRows--;
          
-         HorizontalPanelLayout warningPanel = new HorizontalPanelLayout();
+         HorizontalPanel warningPanel = new HorizontalPanel();
          
          warningPanel.addStyleName(RES.styles().warningPanel());
          Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
@@ -181,7 +181,7 @@ public class NewConnectionSnippetHost extends Composite
 
    private void showSuccess()
    {
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
       HTML msg = new HTML("<b>Success!</b> The given parameters " +
             "can be used to connect and disconnect correctly.");
@@ -204,7 +204,7 @@ public class NewConnectionSnippetHost extends Composite
    
    private void showFailure(String error)
    {
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
       
       SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
@@ -334,7 +334,7 @@ public class NewConnectionSnippetHost extends Composite
          }
       }
 
-      HorizontalPanelLayout buttonsPanel = new HorizontalPanelLayout();
+      HorizontalPanel buttonsPanel = new HorizontalPanel();
       buttonsPanel.addStyleName(RES.styles().buttonsPanel());
 
       final ThemedButton testButton = new ThemedButton("Test");
@@ -467,9 +467,9 @@ public class NewConnectionSnippetHost extends Composite
    
    private Widget createWidget()
    {
-      VerticalPanelLayout container = new VerticalPanelLayout();
+      VerticalPanel container = new VerticalPanel();
       
-      parametersPanel_ = new VerticalPanelLayout();
+      parametersPanel_ = new VerticalPanel();
       parametersPanel_.addStyleName(RES.styles().parametersPanel());
       container.add(parametersPanel_);        
       
@@ -642,7 +642,7 @@ public class NewConnectionSnippetHost extends Composite
    }
    
    private ConnectionCodePanel codePanel_;
-   private VerticalPanelLayout parametersPanel_;
+   private VerticalPanel parametersPanel_;
    
    @SuppressWarnings("unused")
    private NewConnectionSnippetHostResources newConnectionSnippetHostResources_;

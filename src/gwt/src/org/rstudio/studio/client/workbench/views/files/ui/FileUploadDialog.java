@@ -24,8 +24,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HtmlFormModalDialog;
@@ -126,11 +124,11 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       panel.setStyleName(ThemeStyles.INSTANCE.fileUploadPanel());
         
       // directory panel
-      HorizontalPanelLayout directoryPanel = new HorizontalPanelLayout();
+      HorizontalPanel directoryPanel = new HorizontalPanel();
       directoryPanel.setWidth("100%");
       directoryPanel.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       
@@ -204,7 +202,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       }   
    }
    
-   private class DirectoryNameWidget extends HorizontalPanelLayout
+   private class DirectoryNameWidget extends HorizontalPanel
    {
       public DirectoryNameWidget()
       {

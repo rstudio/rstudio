@@ -17,11 +17,11 @@ package org.rstudio.studio.client.projects.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
@@ -69,8 +69,8 @@ public class ProjectTemplateWidget extends Composite
          widgets_.add(createWidget(descriptions.get(i)));
       
       // initialize panel
-      VerticalPanelLayout leftPanel = new VerticalPanelLayout();
-      VerticalPanelLayout rightPanel = new VerticalPanelLayout();
+      VerticalPanel leftPanel = new VerticalPanel();
+      VerticalPanel rightPanel = new VerticalPanel();
       for (int i = 0; i < n; i++)
       {
          String position = StringUtil.notNull(descriptions.get(i).getPosition());
@@ -95,7 +95,7 @@ public class ProjectTemplateWidget extends Composite
       else
       {
          // both sides have widgets -- populate appropriately
-         HorizontalPanelLayout panel = new HorizontalPanelLayout();
+         HorizontalPanel panel = new HorizontalPanel();
          panel.add(leftPanel);
          panel.add(rightPanel);
          primaryWidget = panel;

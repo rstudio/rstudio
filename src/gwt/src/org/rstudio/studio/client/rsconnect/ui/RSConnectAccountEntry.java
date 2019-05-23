@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 
@@ -34,7 +34,7 @@ public class RSConnectAccountEntry extends Composite
    
    public RSConnectAccountEntry(RSConnectAccount account)
    {
-      panel_ = new HorizontalPanelLayout();
+      panel_ = new HorizontalPanel();
       initWidget(panel_);
       if (account != null)
          setAccount(account);
@@ -76,6 +76,6 @@ public class RSConnectAccountEntry extends Composite
    }
    
    private RSConnectAccount account_;
-   private final HorizontalPanelLayout panel_;
+   private final HorizontalPanel panel_;
 }
 

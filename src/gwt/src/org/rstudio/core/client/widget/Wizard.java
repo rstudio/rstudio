@@ -19,10 +19,10 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -111,7 +111,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       WizardResources res = WizardResources.INSTANCE;
       WizardResources.Styles styles = res.styles();
       
-      VerticalPanelLayout mainWidget = new VerticalPanelLayout();
+      VerticalPanel mainWidget = new VerticalPanel();
       mainWidget.addStyleName(getMainWidgetStyle());
       
       headerPanel_ = new LayoutPanel();

@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import org.rstudio.core.client.SeparatorManager;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -111,9 +110,9 @@ public class Toolbar extends Composite
 
       Roles.getToolbarRole().set(toolbarWrapper_.getElement());
 
-      horizontalPanel_ = new HorizontalPanelLayout();
+      horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      leftToolbarPanel_ = new HorizontalPanelLayout();
+      leftToolbarPanel_ = new HorizontalPanel();
       leftToolbarPanel_.setVerticalAlignment(
                                           HasVerticalAlignment.ALIGN_MIDDLE);
       horizontalPanel_.add(leftToolbarPanel_);
@@ -121,7 +120,7 @@ public class Toolbar extends Composite
                                           leftToolbarPanel_,
                                           HasHorizontalAlignment.ALIGN_LEFT);
 
-      rightToolbarPanel_ = new HorizontalPanelLayout();
+      rightToolbarPanel_ = new HorizontalPanel();
       rightToolbarPanel_.setVerticalAlignment(
                                           HasVerticalAlignment.ALIGN_MIDDLE);
       horizontalPanel_.add(rightToolbarPanel_);
@@ -302,7 +301,7 @@ public class Toolbar extends Composite
       return toolbarWrapper_;
    }
    
-   private void removeAllWidgets(HorizontalPanelLayout panel)
+   private void removeAllWidgets(HorizontalPanel panel)
    {
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)
          panel.remove(i);
@@ -359,9 +358,9 @@ public class Toolbar extends Composite
       return image;
    }
 
-   private HorizontalPanelLayout horizontalPanel_ ;
-   private HorizontalPanelLayout leftToolbarPanel_ ;
-   private HorizontalPanelLayout rightToolbarPanel_ ;
+   private HorizontalPanel horizontalPanel_ ;
+   private HorizontalPanel leftToolbarPanel_ ;
+   private HorizontalPanel rightToolbarPanel_ ;
    private HTMLPanel toolbarWrapper_;
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;

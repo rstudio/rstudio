@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -55,7 +55,7 @@ public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
       addCancelButton(closeButton);
       
      
-      HorizontalPanelLayout infoPanel = new HorizontalPanelLayout();
+      HorizontalPanel infoPanel = new HorizontalPanel();
       
       Image rightMouseImage = new Image(new ImageResource2x(resources.rightMouse2x()));
       infoPanel.add(rightMouseImage);

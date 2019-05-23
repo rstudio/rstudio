@@ -14,8 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -90,7 +90,7 @@ public class SelectWidget extends Composite
       Panel panel = null;
       if (horizontalLayout)
       {
-         horizontalPanel_ = new HorizontalPanelLayout();
+         horizontalPanel_ = new HorizontalPanel();
          label_ = new Label(label);
          if (listOnLeft)
          {
@@ -222,7 +222,7 @@ public class SelectWidget extends Composite
       listBox_.insertItem(label, value, index);
    }
    
-   private HorizontalPanelLayout horizontalPanel_ = null;
+   private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private Label label_ = null;
    private final ListBox listBox_;

@@ -18,15 +18,15 @@ import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class TextBoxWithPrefix extends Composite
 {
    public TextBoxWithPrefix()
    {
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
 
       prefixLabel_ = new Label();
       panel.add(prefixLabel_);

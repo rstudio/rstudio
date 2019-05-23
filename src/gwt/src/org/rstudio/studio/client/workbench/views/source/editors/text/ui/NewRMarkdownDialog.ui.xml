@@ -3,7 +3,6 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:rc="urn:import:org.rstudio.studio.client.common"
-   xmlns:rsl="urn:import:org.rstudio.core.client.layout"
    xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
 
    <ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
@@ -114,7 +113,7 @@
    
    </ui:style>
    <g:HTMLPanel>
-   <rsl:HorizontalPanelLayout height="375px" styleName="{style.templatePanel}">
+   <g:HorizontalPanel height="375px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
@@ -152,6 +151,6 @@
            </rc:HelpLink>
         </g:HTMLPanel>
      </g:HTMLPanel>
-   </rsl:HorizontalPanelLayout>
+   </g:HorizontalPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.AttachDetachException;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.server.ServerError;
@@ -176,7 +176,7 @@ public class Debug
          return el;
                
       final MiniPopupPanel popupPanel = new MiniPopupPanel(false, false);
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
       FlowPanel contentPanel = new FlowPanel();
       contentPanel.getElement().setId("rstudio_debug_output");
       verticalPanel.add(new HTML("<h3 style='margin: 0;'>RStudio Debug Output</h4><hr />"));

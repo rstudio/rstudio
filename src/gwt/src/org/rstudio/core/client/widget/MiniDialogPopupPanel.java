@@ -14,8 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -51,11 +51,11 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    {
       addStyleName(ThemeStyles.INSTANCE.miniDialogPopupPanel());
       
-      verticalPanel_ = new VerticalPanelLayout();
+      verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStyleName(ThemeStyles.INSTANCE.miniDialogContainer());
       
       // title bar
-      HorizontalPanelLayout titleBar = new HorizontalPanelLayout();
+      HorizontalPanel titleBar = new HorizontalPanel();
       titleBar.setWidth("100%");
       
       captionLabel_ = new Label();
@@ -64,7 +64,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       titleBar.setCellHorizontalAlignment(captionLabel_, 
                                           HasHorizontalAlignment.ALIGN_LEFT);
      
-      HorizontalPanelLayout toolsPanel = new HorizontalPanelLayout();
+      HorizontalPanel toolsPanel = new HorizontalPanel();
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
             ToolbarButton.NoText,
@@ -115,7 +115,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       focusContext_.restore();
    }
    
-   private VerticalPanelLayout verticalPanel_;
+   private VerticalPanel verticalPanel_;
    private Label captionLabel_ ;
    private FocusContext focusContext_ = new FocusContext();
 }

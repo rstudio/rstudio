@@ -16,8 +16,8 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -44,17 +44,17 @@ public class SecondaryReposWidget extends Composite
       
       repos_ = new ArrayList<CRANMirror>();
       
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().panel());
       
-      HorizontalPanelLayout horizontal = new HorizontalPanelLayout();
+      HorizontalPanel horizontal = new HorizontalPanel();
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(6);
       horizontal.add(listBox_);
       
-      VerticalPanelLayout buttonPanel = new VerticalPanelLayout();
+      VerticalPanel buttonPanel = new VerticalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
 
       buttonAdd_ = createButton("Add...");

@@ -1,6 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
    <ui:style type="org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog.CompileNotebookv2Style">
       
@@ -31,9 +30,9 @@
       </p>
  
       <div ui:field="divFormatSelector_" styleName="{style.formatPanel}">
-         <rsl:HorizontalPanelLayout ui:field="formatLabelPanel_">
+         <g:HorizontalPanel ui:field="formatLabelPanel_">
             <g:Label ui:field="lblFormat_" text="Report output format:"/>
-         </rsl:HorizontalPanelLayout>
+         </g:HorizontalPanel>
          <g:ListBox ui:field="listFormat_"
                     styleName="{style.format}">
             <g:item value="html_document">HTML</g:item>

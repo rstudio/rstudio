@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -24,7 +25,6 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -94,7 +94,7 @@ public class RSConnectPublishButton extends Composite
       boundCommand_ = boundCommand;
       
       // create root widget
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       
       // create publish button itself
       publishButton_ = new ToolbarButton(

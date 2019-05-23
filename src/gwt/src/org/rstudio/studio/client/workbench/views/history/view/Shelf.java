@@ -29,11 +29,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 
 public class Shelf extends Composite
 {
-   interface Binder extends UiBinder<HorizontalPanelLayout, Shelf> {}
+   interface Binder extends UiBinder<HorizontalPanel, Shelf> {}
    interface Resources extends ClientBundle
    {
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -67,7 +66,7 @@ public class Shelf extends Composite
    public Shelf(boolean large)
    {
       large_ = large;
-      HorizontalPanelLayout mainPanel = binder.createAndBindUi(this);
+      HorizontalPanel mainPanel = binder.createAndBindUi(this);
       if (large_)
          mainPanel.setStyleName(RES.styles().largeShelf());
   
@@ -115,8 +114,8 @@ public class Shelf extends Composite
 
    private static final Binder binder = GWT.create(Binder.class);
 
-   @UiField HorizontalPanelLayout left_;
-   @UiField HorizontalPanelLayout right_;
+   @UiField HorizontalPanel left_;
+   @UiField HorizontalPanel right_;
    
    private boolean large_;
    

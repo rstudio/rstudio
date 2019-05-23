@@ -20,7 +20,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -33,14 +33,14 @@ public class MinimizedModuleTabLayoutPanel
 {
    public MinimizedModuleTabLayoutPanel()
    {
-      super(null, new HorizontalPanelLayout());
+      super(null, new HorizontalPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().moduleTabPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().minimized());
    }
 
    public void setTabs(String[] tabNames)
    {
-      HorizontalPanelLayout horiz = (HorizontalPanelLayout) getExtraWidget();
+      HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
       horiz.clear();
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();

@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
 import com.google.gwt.aria.client.Roles;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -46,7 +46,7 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {     
-      VerticalPanelLayout mainPanel = new VerticalPanelLayout();
+      VerticalPanel mainPanel = new VerticalPanel();
       mainPanel.addStyleName(
          CodeSearchResources.INSTANCE.styles().codeSearchDialogMainWidget());
       codeSearch_ = pCodeSearch_.get();

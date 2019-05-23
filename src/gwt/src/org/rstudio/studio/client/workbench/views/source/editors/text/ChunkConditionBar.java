@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
@@ -52,8 +52,8 @@ public class ChunkConditionBar extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       for (int i = 0; i < conditions.length(); i++)
       {
-         HorizontalPanelLayout bar;
-         VerticalPanelLayout contents;
+         HorizontalPanel bar;
+         VerticalPanel contents;
          if (conditions.get(i).getInt(0) == CONDITION_MESSAGE) 
          {
             bar = messageBar_;
@@ -94,12 +94,12 @@ public class ChunkConditionBar extends Composite
       panel_.getElement().getStyle().setBackgroundColor(background.asRgb());
    }
 
-   @UiField HorizontalPanelLayout messageBar_;
-   @UiField HorizontalPanelLayout warningBar_;
-   @UiField VerticalPanelLayout messages_;
-   @UiField VerticalPanelLayout warnings_;
+   @UiField HorizontalPanel messageBar_;
+   @UiField HorizontalPanel warningBar_;
+   @UiField VerticalPanel messages_;
+   @UiField VerticalPanel warnings_;
    @UiField ConditionStyle style;
-   @UiField VerticalPanelLayout panel_;
+   @UiField VerticalPanel panel_;
    
    // symmetric with enum on server
    public final static int CONDITION_MESSAGE = 0;

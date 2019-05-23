@@ -24,15 +24,15 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.InfoBar;
@@ -70,8 +70,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       secondaryReposWidget_ = new SecondaryReposWidget();
 
-      VerticalPanelLayout management = new VerticalPanelLayout();
-      VerticalPanelLayout development = new VerticalPanelLayout();
+      VerticalPanel management = new VerticalPanel();
+      VerticalPanel development = new VerticalPanel();
     
       management.add(headerLabel("Package Management"));
 
@@ -164,7 +164,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       useSecurePackageDownload_ = new CheckBox(
             "Use secure download method for HTTP");
-      HorizontalPanelLayout secureDownloadPanel = checkBoxWithHelp(
+      HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
                         useSecurePackageDownload_, "secure_download");
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);

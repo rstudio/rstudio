@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -77,7 +77,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    
    private void addPagingWidget()
    {
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       panel.setStyleName(RES.styles().pagingWidget());
       
       Image upImage = new Image(new ImageResource2x(RES.upArrow2x()));

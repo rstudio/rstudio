@@ -17,9 +17,9 @@ package org.rstudio.studio.client.common.mirrors;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -157,7 +157,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanelLayout root = new VerticalPanelLayout();
+      VerticalPanel root = new VerticalPanel();
 
       Label customLabel = new Label("Custom:");
       root.add(customLabel);

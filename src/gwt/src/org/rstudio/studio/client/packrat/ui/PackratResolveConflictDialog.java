@@ -17,8 +17,8 @@ package org.rstudio.studio.client.packrat.ui;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -53,7 +53,7 @@ public class PackratResolveConflictDialog
       setOkButtonCaption("Resolve");
          
       // main widget
-      mainWidget_ = new VerticalPanelLayout();
+      mainWidget_ = new VerticalPanel();
       
       // layout constants
       final int kTableWidth = 540;
@@ -216,7 +216,7 @@ public class PackratResolveConflictDialog
       RESOURCES.styles().ensureInjected();
    }
    
-   private VerticalPanelLayout mainWidget_;
+   private VerticalPanel mainWidget_;
    private DataGrid<PackratConflictActions> table_;
    private RadioButton snapshotChoice_;
    private RadioButton libraryChoice_;

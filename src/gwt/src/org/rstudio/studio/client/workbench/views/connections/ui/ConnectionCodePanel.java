@@ -16,9 +16,9 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -49,16 +49,16 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    public ConnectionCodePanel(boolean connectViaUI)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      container_ = new VerticalPanelLayout();
+      container_ = new VerticalPanel();
       container_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
-      HorizontalPanelLayout codeHeaderPanel = new HorizontalPanelLayout();
+      HorizontalPanel codeHeaderPanel = new HorizontalPanel();
       codeHeaderPanel.addStyleName(RES.styles().codePanelHeader());
       codeHeaderPanel.setWidth("100%");
       Label codeLabel = new Label("Connection:");
       codeHeaderPanel.add(codeLabel);
       codeHeaderPanel.setCellHorizontalAlignment(
                codeLabel, HasHorizontalAlignment.ALIGN_LEFT);
-      HorizontalPanelLayout connectPanel = new HorizontalPanelLayout();
+      HorizontalPanel connectPanel = new HorizontalPanel();
       Label connectLabel = new Label("Connect from:");
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
@@ -200,7 +200,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    }
    
    
-   private VerticalPanelLayout container_;
+   private VerticalPanel container_;
    private ListBox connectVia_;
    private AceEditorWidget codeViewer_;
    private boolean settingCode_ = false;

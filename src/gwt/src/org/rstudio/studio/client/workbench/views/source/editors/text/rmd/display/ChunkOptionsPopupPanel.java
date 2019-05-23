@@ -26,8 +26,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -106,7 +104,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
       
-      panel_ = new VerticalPanelLayout();
+      panel_ = new VerticalPanel();
       add(panel_);
       
       header_ = new Label();
@@ -348,7 +346,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(enginePanel_);
       
-      HorizontalPanelLayout footerPanel = new HorizontalPanelLayout();
+      HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
@@ -356,7 +354,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       HelpLink helpLink = new HelpLink("Chunk options", "chunk-options", false);
       linkPanel.add(helpLink);
       
-      HorizontalPanelLayout buttonPanel = new HorizontalPanelLayout();
+      HorizontalPanel buttonPanel = new HorizontalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
@@ -660,7 +658,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return sortedMap;
    }
    
-   protected final VerticalPanelLayout panel_;
+   protected final VerticalPanel panel_;
    protected final Label header_;
    protected final Label chunkLabel_;
    protected final TextBoxWithCue tbChunkLabel_;

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -25,7 +26,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
@@ -689,7 +689,7 @@ public class RSConnect implements SessionInitHandler,
                   closeDialog();
                }
             }));
-            HorizontalPanelLayout panel = new HorizontalPanelLayout();
+            HorizontalPanel panel = new HorizontalPanel();
             Image errorImage = 
                   new Image(new ImageResource2x(MessageDialogImages.INSTANCE.dialog_error2x()));
             errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);

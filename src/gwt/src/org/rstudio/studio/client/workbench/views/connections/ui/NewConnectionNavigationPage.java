@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
@@ -109,10 +109,10 @@ public class NewConnectionNavigationPage
       {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
          
-         VerticalPanelLayout rootPanel = new VerticalPanelLayout();
+         VerticalPanel rootPanel = new VerticalPanel();
 
          if (!StringUtil.isNullOrEmpty(warning)) {
-            HorizontalPanelLayout warningPanel = new HorizontalPanelLayout();
+            HorizontalPanel warningPanel = new HorizontalPanel();
             
             warningPanel.addStyleName(RES.styles().wizardPageWarningPanel());
             Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
@@ -134,7 +134,7 @@ public class NewConnectionNavigationPage
          scrollPanel.addStyleName(RES.styles().wizardPageSelector());
          scrollPanel.addStyleName(styles.wizardPageSelector());
 
-         VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+         VerticalPanel verticalPanel = new VerticalPanel();
          verticalPanel.setSize("100%", "100%");
 
          for (int i = 0, n = pages.size(); i < n; i++)

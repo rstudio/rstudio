@@ -1,5 +1,4 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:rsl='urn:import:org.rstudio.core.client.layout'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:sb='urn:import:org.rstudio.studio.client.workbench.views.source.editors.text.status'>
 
@@ -91,7 +90,7 @@
       }
    </ui:style>
 
-   <rsl:HorizontalPanelLayout styleName="{style.statusBar}">
+   <g:HorizontalPanel styleName="{style.statusBar}">
       <sb:StatusBarElementWidget ui:field="position_"
                                  styleName="{style.element} {style.pos}"
                                  showArrows="false"/>
@@ -114,5 +113,5 @@
                                  styleName="{style.element} {style.last}"
                                  showArrows="true"
                                  popupAlignment="right"/>
-   </rsl:HorizontalPanelLayout>
+   </g:HorizontalPanel>
 </ui:UiBinder>

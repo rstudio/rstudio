@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -64,7 +64,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          NewProjectResources.Styles styles = 
                                  NewProjectResources.INSTANCE.styles();   
          
-         VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+         VerticalPanel verticalPanel = new VerticalPanel();
          verticalPanel.addStyleName(styles.vcsNotInstalledWidget());
          
          if (Desktop.isDesktop())
@@ -123,7 +123,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    { 
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();   
       
-      VerticalPanelLayout urlPanel = new VerticalPanelLayout();
+      VerticalPanel urlPanel = new VerticalPanel();
       urlPanel.addStyleName(styles.wizardMainColumn());
       Label urlLabel = new Label("Repository URL:");
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
@@ -148,7 +148,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       
       if (includeCredentials())
       {  
-         VerticalPanelLayout usernamePanel = new VerticalPanelLayout();
+         VerticalPanel usernamePanel = new VerticalPanel();
          usernamePanel.addStyleName(styles.wizardMainColumn());
          Label usernameLabel = new Label("Username (if required for this repository URL):");
          usernameLabel.addStyleName(styles.wizardTextEntryLabel());

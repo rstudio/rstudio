@@ -15,9 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionText;
@@ -49,10 +49,10 @@ public class CppCompletionToolTip extends PopupPanel
       CppCompletionResources.Styles styles = 
                               CppCompletionResources.INSTANCE.styles();
       
-      panel_ = new HorizontalPanelLayout();
+      panel_ = new HorizontalPanel();
       panel_.addStyleName(styles.toolTip());
       
-      VerticalPanelLayout textPanel = new VerticalPanelLayout();
+      VerticalPanel textPanel = new VerticalPanel();
       textPanel.add(label_ = new Label()); 
       label_.addStyleName(styles.toolTipText());
       commentLabel_ = new Label();
@@ -131,5 +131,5 @@ public class CppCompletionToolTip extends PopupPanel
    
    private Label label_;
    private Label commentLabel_;
-   private HorizontalPanelLayout panel_;
+   private HorizontalPanel panel_;
 }

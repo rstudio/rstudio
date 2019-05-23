@@ -15,11 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -191,7 +191,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       loadAndPersistClientState();
         
-      controls_ = new VerticalPanelLayout();
+      controls_ = new VerticalPanel();
       
       // Create individual widgets
       appNameLabel_ = new Label("Application name:");
@@ -208,7 +208,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
       
-      VerticalPanelLayout radioPanel = new VerticalPanelLayout();
+      VerticalPanel radioPanel = new VerticalPanel();
       appTypeSingleFileButton_ = new RadioButton("shiny", "Single File (app.R)");
       appTypeMultipleFileButton_ = new RadioButton("shiny", "Multiple File (ui.R/server.R)");
       radioPanel.add(appTypeSingleFileButton_);
@@ -245,7 +245,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       controls_.add(new VerticalSpacer("20px"));
       
-      container_ = new HorizontalPanelLayout();
+      container_ = new HorizontalPanel();
       Image image = new Image(NewProjectResources.INSTANCE.shinyAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
@@ -324,8 +324,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    public static final String TYPE_SINGLE_FILE = "type_single_file";
    public static final String TYPE_MULTI_FILE  = "type_multi_file";
    
-   private HorizontalPanelLayout container_;
-   private VerticalPanelLayout controls_;
+   private HorizontalPanel container_;
+   private VerticalPanel controls_;
    
    private Label   appNameLabel_;
    private TextBox appNameTextBox_;

@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -64,7 +64,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    {
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       panel.addStyleName(styles.wizardMainColumn());
       
       // create the dir name label
@@ -75,7 +75,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       onAddTopPanelWidgets(panel);
       
       // dir name
-      VerticalPanelLayout namePanel = new VerticalPanelLayout();
+      VerticalPanel namePanel = new VerticalPanel();
       namePanel.addStyleName(styles.newProjectDirectoryName());
       namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
@@ -99,9 +99,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
-      HorizontalPanelLayout optionsPanel = null;
+      HorizontalPanel optionsPanel = null;
       if (getOptionsSideBySide())
-         optionsPanel = new HorizontalPanelLayout();
+         optionsPanel = new HorizontalPanel();
       
       chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
@@ -151,7 +151,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
    
-   protected void onAddTopPanelWidgets(HorizontalPanelLayout panel)
+   protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
    }
    

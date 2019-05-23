@@ -16,10 +16,10 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -148,7 +148,7 @@ public class NewConnectionShinyHost extends Composite
    
    private Widget createWidget()
    {
-      VerticalPanelLayout container = new VerticalPanelLayout();
+      VerticalPanel container = new VerticalPanel();
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();

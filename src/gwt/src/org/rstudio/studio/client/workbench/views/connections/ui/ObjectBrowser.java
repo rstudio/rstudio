@@ -18,9 +18,9 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -152,7 +152,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objects_.setWidth("100%");
       
       // wrap in vertical panel to get correct scrollbar behavior
-      objectsWrapper_ = new VerticalPanelLayout();
+      objectsWrapper_ = new VerticalPanel();
       objectsWrapper_.setWidth("100%");
       objectsWrapper_.add(objects_);
       
@@ -303,7 +303,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private final SimplePanelWithProgress hostPanel_;
    private final ScrollPanel scrollPanel_;
    private CellTree objects_;
-   private VerticalPanelLayout objectsWrapper_;
+   private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
    private Connection connection_;
    private HandlerRegistration registration_;

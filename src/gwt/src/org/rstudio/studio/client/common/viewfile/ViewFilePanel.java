@@ -16,10 +16,10 @@ package org.rstudio.studio.client.common.viewfile;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
@@ -245,7 +245,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       // header widget has icon + label
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
      
       Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
       imgFile.addStyleName(styles.fullscreenCaptionIcon());

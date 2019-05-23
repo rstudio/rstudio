@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,7 +32,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -193,7 +193,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public void zoom(String title, String url, final Command onClosed)
    {
       // create the titlebar (no title for now)
-      HorizontalPanelLayout titlePanel = new HorizontalPanelLayout();
+      HorizontalPanel titlePanel = new HorizontalPanel();
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       Label titleLabel = new Label(title);
       titleLabel.addStyleName(styles.fullscreenCaptionLabel());

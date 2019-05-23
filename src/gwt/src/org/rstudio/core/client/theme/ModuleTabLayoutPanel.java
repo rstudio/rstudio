@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -43,7 +42,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    {
       public ModuleTab(String title, ThemeStyles styles, boolean canClose)
       {
-         layoutPanel_ = new HorizontalPanelLayout();
+         layoutPanel_ = new HorizontalPanel();
          layoutPanel_.setStylePrimaryName(styles.tabLayout());
          
          // Assign a unique element ID based on the tab's title
@@ -54,7 +53,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          left.setStylePrimaryName(styles.tabLayoutLeft());
          layoutPanel_.add(left);
 
-         HorizontalPanelLayout center = new HorizontalPanelLayout();
+         HorizontalPanel center = new HorizontalPanel();
          center.setStylePrimaryName(styles.rstheme_tabLayoutCenter());
          Label label = new Label(title, false);
          center.add(label);
@@ -110,7 +109,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          {
             if (busySpinner_ == null)
             {
-               HorizontalPanelLayout center = (HorizontalPanelLayout)closeButton_.getParent();
+               HorizontalPanel center = (HorizontalPanel)closeButton_.getParent();
                
                busySpinner_ = new ProgressSpinner(center.getElement());
                
@@ -135,7 +134,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          }
       }
 
-      private HorizontalPanelLayout layoutPanel_;
+      private HorizontalPanel layoutPanel_;
       private Image closeButton_;
       private ProgressSpinner busySpinner_;
    }

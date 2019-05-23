@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -76,7 +76,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       quit_ = quit;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
-      VerticalPanelLayout basic = new VerticalPanelLayout();
+      VerticalPanel basic = new VerticalPanel();
       
       basic.add(headerLabel("R Sessions"));
       if (BrowseCap.isWindowsDesktop())
@@ -197,7 +197,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(enableCrashReporting_);
       }
 
-      VerticalPanelLayout advanced = new VerticalPanelLayout();
+      VerticalPanel advanced = new VerticalPanel();
 
       showServerHomePage_ = new SelectWidget(
             "Show server home page:",

@@ -2,8 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
-    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-    xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
+    xmlns:rw="urn:import:org.rstudio.core.client.widget">
     <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
     <ui:with field="coreRes" type="org.rstudio.core.client.resources.CoreResources" />
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources" />
@@ -12,7 +11,7 @@
     <g:Grid ui:field="mainGrid_"><g:row>
     <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
-         <rsl:VerticalPanelLayout ui:field="filePanel_">
+         <g:VerticalPanel ui:field="filePanel_">
            <g:HTMLPanel>
              <g:InlineLabel text="Publish Files From:"></g:InlineLabel>
              <g:InlineLabel styleName="{res.style.deployLabel}" 
@@ -20,18 +19,18 @@
              </g:InlineLabel>
            </g:HTMLPanel>
            <g:ScrollPanel styleName="{res.style.fileList}">
-             <rsl:VerticalPanelLayout ui:field="fileListPanel_">
-             </rsl:VerticalPanelLayout>
+             <g:VerticalPanel ui:field="fileListPanel_">
+             </g:VerticalPanel>
            </g:ScrollPanel>
-           <rsl:HorizontalPanelLayout>
+           <g:HorizontalPanel>
               <rw:ThemedButton ui:field="checkUncheckAllButton_" 
                                text="Uncheck All"></rw:ThemedButton>
               <rw:ThemedButton ui:field="addFileButton_" 
                                text="Add More..."
                                visible="false"></rw:ThemedButton>
-           </rsl:HorizontalPanelLayout>
-         </rsl:VerticalPanelLayout>
-         <rsl:VerticalPanelLayout ui:field="descriptionPanel_" 
+           </g:HorizontalPanel>
+         </g:VerticalPanel>
+         <g:VerticalPanel ui:field="descriptionPanel_"
                           visible="false">
             <g:Label text="Publish: "></g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
@@ -40,19 +39,19 @@
             <rw:ThemedButton ui:field="previewButton_"
                              text="Preview...">
             </rw:ThemedButton>
-         </rsl:VerticalPanelLayout>
+         </g:VerticalPanel>
        </g:HTMLPanel>
      </g:customCell>
      <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
-         <rsl:HorizontalPanelLayout width="100%" ui:field="publishFromPanel_">
+         <g:HorizontalPanel width="100%" ui:field="publishFromPanel_">
             <g:Label styleName="{res.style.firstControlLabel}" 
                      text="Publish From Account:">
             </g:Label>
             <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
                        ui:field="addAccountAnchor_" text="Add New Account">
             </g:Anchor>
-         </rsl:HorizontalPanelLayout>
+         </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">
          </rsc:RSConnectAccountList>
@@ -73,14 +72,14 @@
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <rsl:HorizontalPanelLayout width="100%" 
+            <g:HorizontalPanel width="100%"
                                        styleName="{res.style.controlLabel}">
                <g:Label text="Update:">
                </g:Label>
                <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
                           ui:field="createNewAnchor_" text="Create New">
                </g:Anchor>
-            </rsl:HorizontalPanelLayout>
+            </g:HorizontalPanel>
             <g:HTMLPanel ui:field="appDetailsPanel_" 
                          styleName="{res.style.appDetailsPanel}" 
                          visible="false">
@@ -100,12 +99,12 @@
             <g:HTMLPanel ui:field="appErrorPanel_" 
                          styleName="{res.style.appErrorPanel}" 
                          visible="false">
-               <rsl:HorizontalPanelLayout>
+               <g:HorizontalPanel>
                    <g:Image resource="{themeRes.warningSmall2x}"
                             styleName="{res.style.appWarningIcon}"></g:Image>
                    <g:Label styleName="{res.style.appErrorMessage}"
                         ui:field="appErrorMessage_"></g:Label>
-               </rsl:HorizontalPanelLayout>
+               </g:HorizontalPanel>
             </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>

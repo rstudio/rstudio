@@ -15,11 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -184,7 +184,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       
       loadAndPersistClientState();
         
-      controls_ = new VerticalPanelLayout();
+      controls_ = new VerticalPanel();
       
       // Create individual widgets
       apiNameLabel_ = new Label("API name:");
@@ -206,7 +206,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       
       controls_.add(new VerticalSpacer("20px"));
       
-      container_ = new HorizontalPanelLayout();
+      container_ = new HorizontalPanel();
       Image image = new Image(NewProjectResources.INSTANCE.plumberAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
@@ -276,8 +276,8 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       session_.persistClientState();
    }
    
-   private HorizontalPanelLayout container_;
-   private VerticalPanelLayout controls_;
+   private HorizontalPanel container_;
+   private VerticalPanel controls_;
    
    private Label   apiNameLabel_;
    private TextBox apiNameTextBox_;

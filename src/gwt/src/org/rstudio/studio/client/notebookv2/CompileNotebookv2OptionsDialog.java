@@ -20,11 +20,11 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -104,7 +104,7 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
    @UiField
    DivElement divFormatSelector_;
    @UiField
-   HorizontalPanelLayout formatLabelPanel_;
+   HorizontalPanel formatLabelPanel_;
    @UiField
    Label lblFormat_;
    @UiField

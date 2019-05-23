@@ -21,8 +21,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -52,9 +50,9 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       
-      HorizontalPanelLayout horizontalPanel = new HorizontalPanelLayout();
+      HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
       // add image
@@ -63,7 +61,7 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
       horizontalPanel.add(image);
 
       // add message widget
-      VerticalPanelLayout messagePanel = new VerticalPanelLayout();
+      VerticalPanel messagePanel = new VerticalPanel();
       Label label = new MultiLineLabel(
             "There are no parameters defined for the current " +
             "R Markdown document.");

@@ -21,7 +21,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 
 public class TextEntryModalDialog extends ModalDialog<String>
 {
@@ -91,7 +90,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.setSpacing(6);
       verticalPanel.setWidth(width_ + "px");
       verticalPanel.add(captionLabel_);

@@ -16,9 +16,9 @@
 package org.rstudio.studio.client.common.rpubs.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
@@ -119,9 +119,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       SimplePanel mainPanel = new SimplePanel();
       mainPanel.addStyleName(styles.mainWidget());
       
-      VerticalPanelLayout verticalPanel = new VerticalPanelLayout();
+      VerticalPanel verticalPanel = new VerticalPanel();
   
-      HorizontalPanelLayout headerPanel = new HorizontalPanelLayout();
+      HorizontalPanel headerPanel = new HorizontalPanel();
       headerPanel.addStyleName(styles.headerPanel());
       headerPanel.add(new Image(new ImageResource2x(RESOURCES.publishLarge2x())));
       
@@ -343,7 +343,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       enableOkButton(false);
       
       // add progress
-      HorizontalPanelLayout progressPanel = new HorizontalPanelLayout();
+      HorizontalPanel progressPanel = new HorizontalPanel();
       ProgressImage progressImage =  new ProgressImage(
                                        CoreResources.INSTANCE.progress_gray());
       progressImage.addStyleName(RESOURCES.styles().progressImage());

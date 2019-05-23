@@ -39,8 +39,6 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -75,12 +73,12 @@ public abstract class ModalDialogBase extends DialogBox
       DomUtils.visuallyHide(lastControl_.getElement());
 
       // main panel used to host UI
-      mainPanel_ = new VerticalPanelLayout();
-      bottomPanel_ = new HorizontalPanelLayout();
+      mainPanel_ = new VerticalPanel();
+      bottomPanel_ = new HorizontalPanel();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
       bottomPanel_.setWidth("100%");
-      buttonPanel_ = new HorizontalPanelLayout();
-      leftButtonPanel_ = new HorizontalPanelLayout();
+      buttonPanel_ = new HorizontalPanel();
+      leftButtonPanel_ = new HorizontalPanel();
       bottomPanel_.add(leftButtonPanel_);
       bottomPanel_.add(buttonPanel_);
       bottomPanel_.add(lastControl_);
@@ -638,10 +636,10 @@ public abstract class ModalDialogBase extends DialogBox
    private boolean escapeDisabled_ = false;
    private boolean enterDisabled_ = false;
    private SimplePanel containerPanel_;
-   private VerticalPanelLayout mainPanel_;
-   private HorizontalPanelLayout bottomPanel_;
-   private HorizontalPanelLayout buttonPanel_;
-   private HorizontalPanelLayout leftButtonPanel_;
+   private VerticalPanel mainPanel_;
+   private HorizontalPanel bottomPanel_;
+   private HorizontalPanel buttonPanel_;
+   private HorizontalPanel leftButtonPanel_;
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;

@@ -39,7 +39,6 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -123,7 +122,7 @@ public class WebApplicationHeader extends Composite
       logoAnchor_.setStylePrimaryName(themeResources.themeStyles().logoAnchor());
 
       // header container
-      headerBarPanel_ = new HorizontalPanelLayout();
+      headerBarPanel_ = new HorizontalPanel();
       headerBarPanel_.setStylePrimaryName(themeResources.themeStyles().header());
       headerBarPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarPanel_.setWidth("100%");
@@ -154,7 +153,7 @@ public class WebApplicationHeader extends Composite
       headerBarPanel_.add(mainMenu_);
 
       // commands panel (no widgets added until after session init)
-      headerBarCommandsPanel_ = new HorizontalPanelLayout();
+      headerBarCommandsPanel_ = new HorizontalPanel();
       headerBarCommandsPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarCommandsPanel_.setWidth("100%");
       headerBarPanel_.add(headerBarCommandsPanel_);
@@ -218,7 +217,7 @@ public class WebApplicationHeader extends Composite
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
       
       // create host for project commands
-      projectBarCommandsPanel_ = new HorizontalPanelLayout();
+      projectBarCommandsPanel_ = new HorizontalPanel();
       toolbar_.addRightWidget(projectBarCommandsPanel_);
       
       // initialize widget
@@ -412,7 +411,7 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setText(userIdentity);
          headerBarCommandsPanel_.add(usernameLabel);
          
-         overlayUserCommandsPanel_ = new HorizontalPanelLayout();
+         overlayUserCommandsPanel_ = new HorizontalPanel();
          headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
         
          ToolbarButton signOutButton = new ToolbarButton(
@@ -569,10 +568,10 @@ public class WebApplicationHeader extends Composite
    private Image logoLarge_;
    private Image logoSmall_;
    private String logoTargetUrl_ = null;
-   private HorizontalPanelLayout headerBarPanel_;
-   private HorizontalPanelLayout headerBarCommandsPanel_;
-   private HorizontalPanelLayout projectBarCommandsPanel_;
-   private HorizontalPanelLayout overlayUserCommandsPanel_;
+   private HorizontalPanel headerBarPanel_;
+   private HorizontalPanel headerBarCommandsPanel_;
+   private HorizontalPanel projectBarCommandsPanel_;
+   private HorizontalPanel overlayUserCommandsPanel_;
    private Widget signOutSeparator_;
    private Widget projectMenuSeparator_;
    private ToolbarButton projectMenuButton_;

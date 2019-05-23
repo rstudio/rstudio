@@ -18,9 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
@@ -131,7 +131,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         spaced(chkUseCache_);
         add(chkUseCache_);
         
-        panelExternalPackages_ = new VerticalPanelLayout();
+        panelExternalPackages_ = new VerticalPanel();
         panelExternalPackages_.add(new LabelWithHelp(
               "External packages (comma separated):",
               "packrat_external_packages",
@@ -328,7 +328,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
    
-   private VerticalPanelLayout panelExternalPackages_;
+   private VerticalPanel panelExternalPackages_;
    private TextArea taExternalPackages_;
    
    private LocalRepositoriesWidget widgetLocalRepos_;

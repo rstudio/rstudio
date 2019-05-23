@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -165,7 +165,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       chkAlwaysSave_ = new CheckBox(alwaysSaveOption_);
       
       // main widget
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
                            "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());

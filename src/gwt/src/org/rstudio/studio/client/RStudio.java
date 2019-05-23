@@ -39,7 +39,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -148,7 +147,7 @@ public class RStudio implements EntryPoint
       div.getStyle().setProperty("textAlign", "center");
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
    
-      final VerticalPanelLayout statusPanel = new VerticalPanelLayout();
+      final VerticalPanel statusPanel = new VerticalPanel();
       final Element statusDiv = statusPanel.getElement();
       statusDiv.getStyle().setWidth(100, Style.Unit.PCT);
       statusDiv.getStyle().setMarginTop(200, Style.Unit.PX);

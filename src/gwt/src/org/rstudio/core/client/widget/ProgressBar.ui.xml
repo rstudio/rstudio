@@ -1,6 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:rsl='urn:import:org.rstudio.core.client.layout'
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:style>
    .progressHost
@@ -31,9 +30,9 @@
    }
    
    </ui:style>
-   <rsl:HorizontalPanelLayout styleName="{style.progressHost}" ui:field="progressHost_">
+   <g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
       <g:HTMLPanel styleName="{style.progress}" ui:field="progress_" height="1.5em">
          <g:HTMLPanel styleName="{style.bar}" ui:field="bar_" height="1.5em"></g:HTMLPanel>
       </g:HTMLPanel>
-   </rsl:HorizontalPanelLayout>
+   </g:HorizontalPanel>
 </ui:UiBinder> 

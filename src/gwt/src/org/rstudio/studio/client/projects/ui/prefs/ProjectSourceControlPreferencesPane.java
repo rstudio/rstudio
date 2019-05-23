@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -281,7 +281,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    {
       public OriginLabel()
       {
-         HorizontalPanelLayout panel = new HorizontalPanelLayout();
+         HorizontalPanel panel = new HorizontalPanel();
          lblCaption_ = new Label();
          panel.add(lblCaption_);
          

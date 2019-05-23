@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -42,7 +42,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       
       // code/connection panel
       int codePanelHeight = 80;
-      disconnectedUI_ = new VerticalPanelLayout();
+      disconnectedUI_ = new VerticalPanel();
       disconnectedUI_.setWidth("100%");
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       codePanel_ = new ConnectionCodePanel(false);
@@ -159,7 +159,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    private final ConnectionCodePanel codePanel_;
    
-   private final VerticalPanelLayout disconnectedUI_;
+   private final VerticalPanel disconnectedUI_;
    private final ObjectBrowser objectBrowser_;
   
    private Widget activePanel_;

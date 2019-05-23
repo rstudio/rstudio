@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -127,7 +127,7 @@ public class NewConnectionInstallPackagePage
    @Override
    protected Widget createWidget()
    {
-      Widget widget = new VerticalPanelLayout(); 
+      Widget widget = new VerticalPanel();
       return widget;
    }
 

@@ -1,6 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rsl='urn:import:org.rstudio.core.client.layout'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
    <ui:style>
       .dialog input {
@@ -30,9 +29,9 @@
       </p>
  
       <div ui:field="divTypeSelector_">
-         <rsl:HorizontalPanelLayout ui:field="typeLabelPanel_">
+         <g:HorizontalPanel ui:field="typeLabelPanel_">
             <g:Label ui:field="lblType_" text="Report type:"/>
-         </rsl:HorizontalPanelLayout>
+         </g:HorizontalPanel>
          <g:ListBox ui:field="listType_"
                     styleName="{style.type}">
             <g:item value="default">(Default)</g:item>

@@ -22,7 +22,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
@@ -66,7 +65,7 @@ public class TextBoxWithButton extends Composite
 
       themedButton_ = new ThemedButton(action, handler);
 
-      inner_ = new HorizontalPanelLayout();
+      inner_ = new HorizontalPanel();
       inner_.add(textBox_);
       inner_.add(themedButton_);
       inner_.setCellWidth(textBox_, "100%");
@@ -78,7 +77,7 @@ public class TextBoxWithButton extends Composite
          Label lblCaption = new Label(label, true);
          if (helpButton != null)
          {
-            HorizontalPanelLayout panel = new HorizontalPanelLayout();
+            HorizontalPanel panel = new HorizontalPanel();
             panel.add(lblCaption);
             helpButton.getElement().getStyle().setMarginLeft(5, Unit.PX);
             panel.add(helpButton);
@@ -179,7 +178,7 @@ public class TextBoxWithButton extends Composite
       textBox_.setFocus(true);
    }
 
-   private HorizontalPanelLayout inner_;
+   private HorizontalPanel inner_;
    private TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;

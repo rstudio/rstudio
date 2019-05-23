@@ -32,8 +32,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CenterPanel;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -125,7 +123,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       setGlassStyleName(RESOURCES.styles().glass());
       
       // main panel
-      HorizontalPanelLayout horizontalPanel = new HorizontalPanelLayout(); 
+      HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setSpacing(10);
       
       // create widgets and make mode dependent customizations
@@ -181,7 +179,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       horizontalPanel.add(image);
  
       // captions and button
-      VerticalPanelLayout contentPanel = new VerticalPanelLayout();
+      VerticalPanel contentPanel = new VerticalPanel();
       contentPanel.setStylePrimaryName(RESOURCES.styles().contentPanel());
       contentPanel.add(captionLabel);
       HTML descriptionLabel = new HTML(description);

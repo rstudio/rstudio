@@ -20,9 +20,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.images.ProgressImages;
 
@@ -63,7 +63,7 @@ public class ProgressPanel extends Composite
       progressLabel_ = new Label();
       progressLabel_.getElement().getStyle().setOpacity(0.5);
 
-      VerticalPanelLayout panel = new VerticalPanelLayout();
+      VerticalPanel panel = new VerticalPanel();
       Widget spinner = progressSpinner_.isSupported() ? progressSpinner_ : progressImage_;
       panel.add(spinner);
       panel.setCellHorizontalAlignment(spinner, DockPanel.ALIGN_CENTER);

@@ -17,10 +17,10 @@ package org.rstudio.studio.client.common.repos;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
-import org.rstudio.core.client.layout.VerticalPanelLayout;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -179,13 +179,13 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanelLayout root = new VerticalPanelLayout();
+      VerticalPanel root = new VerticalPanel();
 
-      HorizontalPanelLayout customPanel = new HorizontalPanelLayout();
+      HorizontalPanel customPanel = new HorizontalPanel();
       customPanel.setStylePrimaryName(RESOURCES.styles().customPanel());
       root.add(customPanel);
 
-      VerticalPanelLayout namePanel = new VerticalPanelLayout();
+      VerticalPanel namePanel = new VerticalPanel();
       namePanel.setStylePrimaryName(RESOURCES.styles().namePanel());
       Label nameLabel = new Label("Name:");
       namePanel.add(nameLabel);
@@ -194,7 +194,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       namePanel.add(nameTextBox_);
       customPanel.add(namePanel);
 
-      VerticalPanelLayout urlPanel = new VerticalPanelLayout();
+      VerticalPanel urlPanel = new VerticalPanel();
       Label urlLabel = new Label("Url:");
       urlPanel.add(urlLabel);
       urlTextBox_ = new TextBox();

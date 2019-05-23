@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -86,7 +86,7 @@ public class NewPackagePage extends NewDirectoryPage
    }
     
    @Override 
-   protected void onAddTopPanelWidgets(HorizontalPanelLayout panel)
+   protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
       dirNameLabel_.setText("Package name:");
       

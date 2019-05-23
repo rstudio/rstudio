@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -41,7 +41,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
       ManipulatorStyles styles = ManipulatorResources.INSTANCE.manipulatorStyles();
    
       // main control
-      HorizontalPanelLayout panel = new HorizontalPanelLayout();
+      HorizontalPanel panel = new HorizontalPanel();
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
   

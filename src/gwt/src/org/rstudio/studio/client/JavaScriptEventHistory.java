@@ -17,7 +17,7 @@ package org.rstudio.studio.client;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import org.rstudio.core.client.layout.VerticalPanelLayout;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -121,7 +121,7 @@ public class JavaScriptEventHistory
       if (historyPanel_ == null)
          historyPanel_ = new MiniPopupPanel(false, false);
       
-      VerticalPanelLayout contentPanel = new VerticalPanelLayout();
+      VerticalPanel contentPanel = new VerticalPanel();
       contentPanel.add(new HTML("<h4 style='margin: 0;'>JavaScript Event History</h2><hr />"));
       
       int i = 0, n = Math.min(10, queue_.size());

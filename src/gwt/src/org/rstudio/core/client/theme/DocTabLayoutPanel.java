@@ -15,6 +15,7 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -34,7 +35,6 @@ import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -1046,7 +1046,7 @@ public class DocTabLayoutPanel
       {
          docId_ = docId;
          
-         final HorizontalPanelLayout layoutPanel = new HorizontalPanelLayout();
+         final HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
          layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
          layoutPanel.getElement().setDraggable("true");
@@ -1083,7 +1083,7 @@ public class DocTabLayoutPanel
          left.setStylePrimaryName(styles_.tabLayoutLeft());
          layoutPanel.add(left);
 
-         contentPanel_ = new HorizontalPanelLayout();
+         contentPanel_ = new HorizontalPanel();
          contentPanel_.setTitle(tooltip);
          contentPanel_.setStylePrimaryName(styles_.rstheme_tabLayoutCenter());
          contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -1194,7 +1194,7 @@ public class DocTabLayoutPanel
       private final Label label_;
       private final String docId_;
 
-      private final HorizontalPanelLayout contentPanel_;
+      private final HorizontalPanel contentPanel_;
    }
 
    public void replaceDocName(int index,

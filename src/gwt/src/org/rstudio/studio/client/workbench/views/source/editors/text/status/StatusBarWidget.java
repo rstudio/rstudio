@@ -29,7 +29,6 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.layout.HorizontalPanelLayout;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -39,7 +38,7 @@ public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
 {
    
-   interface Binder extends UiBinder<HorizontalPanelLayout, StatusBarWidget>
+   interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
    {
    }
 
@@ -296,7 +295,7 @@ public class StatusBarWidget extends Composite
    }
    
    public static Resources RES = GWT.create(Resources.class);
-   private final HorizontalPanelLayout panel_;
+   private final HorizontalPanel panel_;
    private final Timer hideTimer_;
    private final Timer hideProgressTimer_;
    
