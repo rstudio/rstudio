@@ -313,7 +313,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
          <cmd refid="activateJobs"/>
-         <cmd refid="activateLauncherJobs"/>
 
          <separator/>
          <cmd refid="synctexSearch"/>
