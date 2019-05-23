@@ -7,6 +7,7 @@ mkdir tmp
 cd tmp
 
 jar xvf ../../../lib/gwt/2.8.2/gwt-user.jar \
+  com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/VerticalPanel.java \
   com/google/gwt/user/client/ui/HorizontalPanel.java \
   com/google/gwt/user/client/ui/MenuBar.java \
@@ -15,6 +16,7 @@ jar xvf ../../../lib/gwt/2.8.2/gwt-user.jar \
 
 cd ../google/gwt/user/client/ui
 
+diff ../../../../../tmp/com/google/gwt/user/client/ui/DecoratorPanel.java DecoratorPanel.java > DecoratorPanel.java.diff
 diff ../../../../../tmp/com/google/gwt/user/client/ui/VerticalPanel.java VerticalPanel.java > VerticalPanel.java.diff
 diff ../../../../../tmp/com/google/gwt/user/client/ui/HorizontalPanel.java HorizontalPanel.java > HorizontalPanel.java.diff
 diff ../../../../../tmp/com/google/gwt/user/client/ui/MenuBar.java MenuBar.java > MenuBar.java.diff

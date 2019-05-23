@@ -108,20 +108,6 @@ public abstract class ModalDialogBase extends DialogBox
          }
       }, KeyDownEvent.getType());
 
-      // Set ARIA role of the underlying DecoratorPanel's <table>, which is child
-      // of the SimplePanel's <div>.
-      if (DOM.getChildCount(getElement()) != 1)
-      {
-         Debug.log("ARIA: Unexpected DOM layout in modal dialog (top element child count != 1");
-         return;
-      }
-      if (DOM.getChildCount(DOM.getChild(getElement(), 0)) != 1)
-      {
-         Debug.log("Unexpected DOM layout in modal dialog (first child's child count != 1");
-         return;
-      }
-      Roles.getPresentationRole().set(DOM.getFirstChild(DOM.getFirstChild(getElement())));
-
       firstControl_.addFocusHandler(event -> {
          // hidden first control in dialog got focus, wrap around to last control
          focusLastControl();
