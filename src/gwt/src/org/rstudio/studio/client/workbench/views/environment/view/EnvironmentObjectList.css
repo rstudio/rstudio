@@ -92,6 +92,7 @@ td.valueCol
 
 .widthSettingRow td.expandCol,
 .widthSettingRow td.nameCol,
+.widthSettingRow td.resizeCol,
 .widthSettingRow td.valueCol
 {
    margin: 0px;
