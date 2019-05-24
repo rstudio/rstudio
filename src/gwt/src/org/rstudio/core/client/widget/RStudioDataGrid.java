@@ -15,7 +15,6 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Element;
@@ -73,10 +72,7 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       {
          Element el = children.getItem(i);
          com.google.gwt.dom.client.Style style = el.getStyle();
-         String overflow = style.getOverflow();
-         String visibility = style.getVisibility();
-         if (StringUtil.equals(visibility, "hidden") && !StringUtil.isNullOrEmpty(overflow))
-            style.setOverflowX(Overflow.HIDDEN);
+         style.setOverflowX(Overflow.HIDDEN);
       }
       
    }
