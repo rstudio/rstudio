@@ -38,7 +38,5 @@
             <g:item value="spin">knitr::spin</g:item>
          </g:ListBox>
       </div>
- 
    </g:HTMLPanel>
-
 </ui:UiBinder>

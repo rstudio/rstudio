@@ -1,7 +1,7 @@
 /*
  * MiniDialogPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,8 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       HorizontalPanel toolsPanel = new HorizontalPanel();
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Close",
             new ImageResource2x(ThemeResources.INSTANCE.closeChevron2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
@@ -74,7 +76,6 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
                   MiniDialogPopupPanel.this.hideMiniDialog();
                }
             });
-      hideButton.setTitle("Close");
       toolsPanel.add(hideButton);
       titleBar.add(toolsPanel);
       titleBar.setCellHorizontalAlignment(toolsPanel,

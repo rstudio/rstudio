@@ -1,7 +1,7 @@
 /*
  * ChunkConditionBar.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,8 +52,8 @@ public class ChunkConditionBar extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       for (int i = 0; i < conditions.length(); i++)
       {
-         HorizontalPanel bar = null;
-         VerticalPanel contents = null;
+         HorizontalPanel bar;
+         VerticalPanel contents;
          if (conditions.get(i).getInt(0) == CONDITION_MESSAGE) 
          {
             bar = messageBar_;

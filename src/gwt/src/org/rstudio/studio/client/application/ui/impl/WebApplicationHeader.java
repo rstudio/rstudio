@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -123,7 +122,7 @@ public class WebApplicationHeader extends Composite
       logoAnchor_.setStylePrimaryName(themeResources.themeStyles().logoAnchor());
 
       // header container
-      headerBarPanel_ = new HorizontalPanel() ;
+      headerBarPanel_ = new HorizontalPanel();
       headerBarPanel_.setStylePrimaryName(themeResources.themeStyles().header());
       headerBarPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarPanel_.setWidth("100%");
@@ -213,9 +212,7 @@ public class WebApplicationHeader extends Composite
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, 
-                                   eventBus,
-                                   pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
       
@@ -417,14 +414,11 @@ public class WebApplicationHeader extends Composite
          overlayUserCommandsPanel_ = new HorizontalPanel();
          headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
         
-         ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
-              new ClickHandler() {
-            public void onClick(ClickEvent event)
-            {
-               eventBus_.fireEvent(new LogoutRequestedEvent());
-            }
-         });
-         signOutButton.setTitle("Sign out");
+         ToolbarButton signOutButton = new ToolbarButton(
+               ToolbarButton.NoText,
+               "Sign out",
+               new ImageResource2x(RESOURCES.signOut2x()),
+               event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
          headerBarCommandsPanel_.add(signOutButton);
          headerBarCommandsPanel_.add(
                   signOutSeparator_ = createCommandSeparator());

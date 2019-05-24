@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -180,9 +180,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       });
       
-      toolbar_ = new GlobalToolbar(commands, 
-                                   events, 
-                                   pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
       toolbar_.addStyleName(styles.desktopGlobalToolbar());

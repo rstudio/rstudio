@@ -1,7 +1,7 @@
 /*
  * FindOutputPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,12 +61,12 @@ public class FindOutputPane extends WorkbenchPane
       toolbar.addLeftWidget(searchLabel_);
 
       stopSearch_ = new ToolbarButton(
-            commands_.interruptR().getImageResource(),
-            (ClickHandler) null);
+            ToolbarButton.NoText,
+            "Stop find in files",
+            commands_.interruptR().getImageResource());
       stopSearch_.setVisible(false);
 
       toolbar.addRightWidget(stopSearch_);
-
 
       return toolbar;
    }

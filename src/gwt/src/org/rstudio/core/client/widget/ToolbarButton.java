@@ -1,7 +1,7 @@
 /*
  * ToolbarButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -32,6 +34,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -41,6 +44,12 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class ToolbarButton extends FocusWidget
 {
+   // button with no visible text
+   public static String NoText = null;
+   
+   // button with no tooltip/accessibility text
+   public static String NoTitle = null;
+   
    private class SimpleHasHandlers extends HandlerManager implements HasHandlers
    {
       private SimpleHasHandlers()
@@ -50,12 +59,13 @@ public class ToolbarButton extends FocusWidget
    }
    
    public <T extends EventHandler> ToolbarButton(
-                                      String text, 
-                                      ImageResource leftImg, 
+                                      String text,
+                                      String title,
+                                      ImageResource leftImg,
                                       final HandlerManager eventBus,
                                       final GwtEvent<? extends T> targetEvent)
    {
-      this(text, leftImg, new ClickHandler() {
+      this(text, title, leftImg, new ClickHandler() {
          public void onClick(ClickEvent event)
          {
            eventBus.fireEvent(targetEvent);
@@ -63,38 +73,34 @@ public class ToolbarButton extends FocusWidget
       });
    }
    
-   public <T extends EventHandler> ToolbarButton(
-                                       ImageResource img, 
-                                       final HandlerManager eventBus,
-                                       final GwtEvent<? extends T> targetEvent)
-   {
-      this(null, img, eventBus, targetEvent);
-   }
-   
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
                         ImageResourceProvider leftImageProvider,
                         ClickHandler clickHandler)
    {
-      this(text, leftImageProvider, null, clickHandler);
+      this(text, title, leftImageProvider, null, clickHandler);
    }
    
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
+                        ImageResource leftImage)
+   {
+      this(text, title, new SimpleImageResourceProvider(leftImage), (ClickHandler)null);
+   }
+   
+   public ToolbarButton(String text,
+                        String title,
                         ImageResource leftImage,
                         ClickHandler clickHandler)
    {
-      this(text, new SimpleImageResourceProvider(leftImage), clickHandler);
+      this(text, title, new SimpleImageResourceProvider(leftImage), clickHandler);
    }
    
-   public ToolbarButton(ImageResource image,
-                        ClickHandler clickHandler)
+   public ToolbarButton(String text, String title, ToolbarPopupMenu menu, boolean rightAlignMenu)
    {
-      this(null, image, clickHandler);
-   }
-   
-   public ToolbarButton(ToolbarPopupMenu menu, boolean rightAlignMenu)
-   {
-      this((String)null, 
-           new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), 
+      this(text,
+           title,
+           new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()),
            (ImageResource) null,
            (ClickHandler) null);
       
@@ -106,37 +112,42 @@ public class ToolbarButton extends FocusWidget
       addStyleName(styles_.toolbarButtonMenuOnly());
    }
       
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
                         ImageResource leftImage,
                         ToolbarPopupMenu menu)
    {
-      this(text, leftImage, menu, false);
+      this(text, title, leftImage, menu, false);
    }
    
    public ToolbarButton(String text,
+                        String title,
                         ImageResourceProvider leftImage,
                         ToolbarPopupMenu menu)
    {
-      this(text, leftImage, menu, false);
+      this(text, title, leftImage, menu, false);
    }
     
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
                         ImageResource leftImage,
                         ToolbarPopupMenu menu,
                         boolean rightAlignMenu)
    {
       this(text,
+           title,
            new SimpleImageResourceProvider(leftImage),
            menu, 
            rightAlignMenu);
    }
 
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
                         ImageResourceProvider leftImage,
                         ToolbarPopupMenu menu,
                         boolean rightAlignMenu)
    {
-      this(text, leftImage, new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), null);
+      this(text, title, leftImage, new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), null);
       
       rightImageWidget_.addStyleName("rstudio-themes-inverts");
 
@@ -145,10 +156,11 @@ public class ToolbarButton extends FocusWidget
       addStyleName(styles_.toolbarButtonMenu());
    }
    
-   
-   private void addMenuHandlers(final ToolbarPopupMenu popupMenu, 
+   private void addMenuHandlers(final ToolbarPopupMenu popupMenu,
                                 final boolean rightAlignMenu)
    {
+      Roles.getButtonRole().setAriaHaspopupProperty(getElement(), true);
+      
       menu_ = popupMenu;
       rightAlignMenu_ = rightAlignMenu;
       
@@ -183,6 +195,7 @@ public class ToolbarButton extends FocusWidget
                   {
                      removeStyleName(styles_.toolbarButtonPushed());
                      menu.hide();
+                     Roles.getButtonRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
                   }
                   else
                   {
@@ -209,6 +222,7 @@ public class ToolbarButton extends FocusWidget
                         menu.showRelativeTo(ToolbarButton.this);
                      }
                      menuShowing[0] = true;
+                     Roles.getButtonRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
                   }
                }
             });
@@ -223,7 +237,7 @@ public class ToolbarButton extends FocusWidget
             {
                public void execute()
                {
-                  menuShowing[0] = false;               
+                  menuShowing[0] = false;
                }
             });
          }
@@ -231,17 +245,20 @@ public class ToolbarButton extends FocusWidget
    }
 
    private ToolbarButton(String text,
+                         String title,
                          ImageResource leftImage,
                          ImageResource rightImage,
                          ClickHandler clickHandler)
    {
       this(text,
+           title,
            new SimpleImageResourceProvider(leftImage),
            rightImage,
            clickHandler);
    }
    
-   public ToolbarButton(String text,
+   public ToolbarButton(String text, // visible text
+                        String title, // a11y / tooltip text
                         Image leftImage,
                         ImageResource rightImage,
                         ClickHandler clickHandler)
@@ -254,27 +271,34 @@ public class ToolbarButton extends FocusWidget
       this.addStyleName(styles_.handCursor());
 
       setText(text);
+      setTitle(title);
       setInfoText(null);
       leftImageWidget_ = leftImage == null ? new Image() : leftImage;
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());
+      A11y.setDecorativeImage(leftImageWidget_.getElement());
       leftImageCell_.appendChild(leftImageWidget_.getElement());
       if (rightImage != null)
       {
          rightImageWidget_ = new Image(rightImage);
          rightImageWidget_.setStylePrimaryName(styles_.toolbarButtonRightImage());
+         A11y.setDecorativeImage(rightImageWidget_.getElement());
          rightImageCell_.appendChild(rightImageWidget_.getElement());
       }
 
       if (clickHandler != null)
          addClickHandler(clickHandler);
+
+      Roles.getPresentationRole().set(wrapper_);
    }
    
-   public ToolbarButton(String text, 
+   public ToolbarButton(String text,
+                        String title,
                         ImageResourceProvider leftImage,
                         ImageResource rightImage,
                         ClickHandler clickHandler)
    {
-      this(text, 
+      this(text,
+           title,
            // extract the supplied left image 
            leftImage != null && leftImage.getImageResource() != null ?
                new Image(leftImage.getImageResource()) :
@@ -435,6 +459,13 @@ public class ToolbarButton extends FocusWidget
    {
       rightAlignMenu_ = rightAlignMenu;
    }
+   
+   public void setTitle(String title)
+   {
+      super.setTitle(title);
+      if (!StringUtil.isNullOrEmpty(title))
+         Roles.getButtonRole().setAriaLabelProperty(getElement(), title);
+   }
 
    private boolean down_;
    
@@ -456,6 +487,8 @@ public class ToolbarButton extends FocusWidget
    DivElement label_;
    @UiField
    DivElement infoLabel_;
+   @UiField
+   TableElement wrapper_;
    private Image leftImageWidget_;
    private Image rightImageWidget_;
 }

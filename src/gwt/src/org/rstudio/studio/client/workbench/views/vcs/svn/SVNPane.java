@@ -1,7 +1,7 @@
 /*
  * SVNPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,6 +86,7 @@ public class SVNPane extends WorkbenchPane implements Display
 
       toolbar.addLeftWidget(new ToolbarButton(
           "More",
+          ToolbarButton.NoTitle,
           new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
           moreMenu));
 

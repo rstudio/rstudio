@@ -43,6 +43,8 @@ public class JobsPaneWidgets implements JobsPaneOperations
       toolbar_ = new Toolbar();
       
       allJobs_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "View all jobs",
             commands_.helpBack().getImageResource(), evt ->
       {
          // deselect current job
@@ -50,7 +52,6 @@ public class JobsPaneWidgets implements JobsPaneOperations
                JobConstants.JOB_TYPE_SESSION, false, true));
       });
       
-      allJobs_.setTitle("View all jobs");
       installMainToolbar();
    }
    

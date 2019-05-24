@@ -36,7 +36,7 @@ public class ExportPlotDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel mainPanel = new VerticalPanel();    
+      VerticalPanel mainPanel = new VerticalPanel();
    
       // enforce maximum initial dimensions based on screen size
       Size maxSize = new Size(Window.getClientWidth() - 100,

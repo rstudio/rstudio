@@ -1,7 +1,7 @@
 /*
  * CreateBranchToolbarButton.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                                     GitServerOperations gitServer)
    {
       super("New Branch",
+            ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.mermaid2x()),
             (ClickHandler) null);
       

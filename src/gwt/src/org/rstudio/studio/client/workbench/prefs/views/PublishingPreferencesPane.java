@@ -189,8 +189,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
             uiPrefs_.enableRStudioConnect());
-      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
-                                                        "rstudio_connect");
+      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect,
+                                                              "rstudio_connect");
       lessSpaced(rsconnectPanel);
       
       add(headerLabel("Settings"));

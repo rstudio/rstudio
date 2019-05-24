@@ -1,7 +1,7 @@
 /*
  * FileCommandToolbar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,8 +59,9 @@ public class FileCommandToolbar extends Toolbar
             prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
       ToolbarButton moreButton = new ToolbarButton("More",
-                                                  new ImageResource2x(icons.more_actions2x()),
-                                                  moreMenu);
+                                                   "More file commands",
+                                                   new ImageResource2x(icons.more_actions2x()),
+                                                   moreMenu);
       addLeftWidget(moreButton);
       
 

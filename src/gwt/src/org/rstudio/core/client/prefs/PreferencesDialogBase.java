@@ -16,6 +16,7 @@ package org.rstudio.core.client.prefs;
 
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -162,7 +163,24 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       return panel_;
    }
-   
+
+   @Override
+   protected void onDialogShown()
+   {
+      focusOkButton();
+   }
+
+   @Override
+   protected void focusFirstControl()
+   {
+      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+         public void execute()
+         {
+            sectionChooser_.focus();
+         }
+      });
+   }
+
    protected void hidePane(int index)
    {
       sectionChooser_.hideSection(index);

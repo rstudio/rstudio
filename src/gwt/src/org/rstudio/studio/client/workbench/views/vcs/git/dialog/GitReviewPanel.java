@@ -1,7 +1,7 @@
 /*
  * GitReviewPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -240,7 +240,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftSeparator();
       
       topToolbar_.addLeftWidget(new ToolbarButton(
-            null, commands.vcsRefresh().getImageResource(),
+            ToolbarButton.NoText,
+            commands.vcsRefresh().getTooltip(),
+            commands.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -254,6 +256,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage",
+            ToolbarButton.NoTitle,
             new ImageResource2x(RES.stage2x()),
             (ClickHandler) null));
 
@@ -261,11 +264,12 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       revertFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Revert",
+            ToolbarButton.NoTitle,
             commands.vcsRevert().getImageResource(),
             (ClickHandler) null));
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Ignore", new ImageResource2x(RES.ignore2x()), (ClickHandler) null));
+            "Ignore", ToolbarButton.NoTitle, new ImageResource2x(RES.ignore2x())));
 
       
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
@@ -281,13 +285,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
       toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
 
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage All", new ImageResource2x(RES.stage2x()), (ClickHandler) null));
+            "Stage All", ToolbarButton.NoTitle, new ImageResource2x(RES.stage2x())));
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
+            "Discard All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
 
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Unstage All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
+            "Unstage All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
       unstageAllButton_.setVisible(false);
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()

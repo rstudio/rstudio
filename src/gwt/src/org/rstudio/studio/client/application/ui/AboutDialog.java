@@ -45,6 +45,7 @@ public class AboutDialog extends ModalDialogBase
          addLeftButton(licenseButton);
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
+      setARIADescribedBy(contents_.getDescriptionElement());
       setWidth("600px");
    }
 
@@ -58,6 +59,12 @@ public class AboutDialog extends ModalDialogBase
    protected void onDialogShown()
    {
       focusOkButton();
+   }
+
+   @Override
+   protected void focusFirstControl()
+   {
+      contents_.focusFirstControl();
    }
 
    @Inject

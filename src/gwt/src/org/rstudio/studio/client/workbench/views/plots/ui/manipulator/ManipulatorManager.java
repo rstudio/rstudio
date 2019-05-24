@@ -1,7 +1,7 @@
 /*
  * ManipulatorManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,8 @@ public class ManipulatorManager
       
       // create manipulator button
       manipulatorButton_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Show plot manipulator",
             new ImageResource2x(resources.manipulateButton2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)

@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishButton.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,8 +98,9 @@ public class RSConnectPublishButton extends Composite
       
       // create publish button itself
       publishButton_ = new ToolbarButton(
-            RStudioGinjector.INSTANCE.getCommands()
-                            .rsconnectDeploy().getImageResource(), 
+            ToolbarButton.NoText,
+            RStudioGinjector.INSTANCE.getCommands().rsconnectDeploy().getTooltip(),
+            RStudioGinjector.INSTANCE.getCommands().rsconnectDeploy().getImageResource(),
             new ClickHandler()
             {
                @Override
@@ -115,7 +116,7 @@ public class RSConnectPublishButton extends Composite
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
-      publishMenuButton_ = new ToolbarButton(publishMenu_, true);
+      publishMenuButton_ = new ToolbarButton(ToolbarButton.NoText, "Publish options", publishMenu_, true);
       publishMenuButton_.getElement().setId(ElementIds.ID_PREFIX + 
             ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host);
       panel.add(publishMenuButton_);

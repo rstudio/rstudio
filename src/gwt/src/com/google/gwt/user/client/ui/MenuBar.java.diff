@@ -10,3 +10,5 @@
 <     if (submenu == null) {
 ---
 >     if (submenu == null || !item.isVisible()) {
+1197a1198
+>     Roles.getPresentationRole().set(table);
