@@ -3567,7 +3567,7 @@ public class TextEditingTarget implements
             // We want to strip out the leading comment prefix,
             // but preserve the indent.
             int startIdx = commentStartIdx + commentStart.length();
-            if (Character.isSpace(line.charAt(startIdx)))
+            if (Character.isSpace(StringUtil.charAt(line, startIdx)))
                startIdx++;
             
             int endIdx = commentEndIdx;
