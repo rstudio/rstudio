@@ -26,6 +26,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
@@ -92,11 +93,23 @@ std::string localURL(const std::string& address, const std::string& port)
    return "http://" + address + ":" + port + "/";
 }
 
-std::string replaceRPort(const std::string& url, const std::string& rPort)
+std::string replaceRPort(const std::string& url,
+                         const std::string& rPort,
+                         const std::string& scope)
 {
-   std::string newUrl = url;
-   boost::algorithm::replace_last(newUrl, rPort, session::options().wwwPort());
-   return newUrl;
+
+   // avoid replacing port in query params in R help, as R uses this
+   // for state management in its help server from R 3.6.0 and onwards
+   if (scope.empty())
+   {
+      std::vector<std::string> splat = core::algorithm::split(url, "?");
+      boost::algorithm::replace_last(splat[0], rPort, session::options().wwwPort());
+      return core::algorithm::join(splat, "?");
+   }
+   else
+   {
+      return boost::algorithm::replace_last_copy(url, rPort, session::options().wwwPort());
+   }
 }
 
 bool isLocalURL(const std::string& url,
@@ -111,7 +124,7 @@ bool isLocalURL(const std::string& url,
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
       if (pLocalURLPath)
-         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort, scope);
       return true;
    }
 
@@ -122,7 +135,7 @@ bool isLocalURL(const std::string& url,
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
       if (pLocalURLPath)
-         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort, scope);
       return true;
    }
 
