@@ -83,7 +83,7 @@ var MarkdownHighlightRules = function() {
         ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
             .split("|")
     );
-    
+
     // regexp must not have capturing parentheses
     // regexps are ordered -> the first match is used
 
@@ -165,8 +165,36 @@ var MarkdownHighlightRules = function() {
             emphasisStars,
             emphasisUnderscore
         ],
-       
+
+        "criticmarkup" : [{ // CriticMarkup syntax (http://criticmarkup.com/spec.php)
+            token : "criticmarkup_insertion",
+            regex : "\\{\\+\\+",
+            next  : "cm-insertion"
+        },
+        {
+            token : "criticmarkup_deletion",
+            regex : "\\{--",
+            next  : "cm-deletion"
+        },
+        {
+            token : "criticmarkup_highlight",
+            regex : "\\{==",
+            next  : "cm-highlight"
+        },
+        {
+            token : "criticmarkup_substitution",
+            regex : "\\{~~",
+            next  : "cm-substitution-start"
+        },
+        {
+            token : "criticmarkup_comment",
+            regex : "\\{>>",
+            next  : "cm-comment"
+        }],
+
         "start": [{
+            include : "criticmarkup"
+        },{
            token : "empty_line",
            regex : '^\\s*$',
            next: "allowBlock"
@@ -196,7 +224,7 @@ var MarkdownHighlightRules = function() {
             regex : /^#{1,6}(?=\s*[^ #]|\s+#.)/,
             next : "header"
         },
-                                     
+
         github_embed("(?:javascript|js)", "jscode-"),
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
@@ -210,7 +238,7 @@ var MarkdownHighlightRules = function() {
         github_embed("stan", "stancode-"),
         github_embed("sql", "sqlcode-"),
         github_embed("d3", "jscode-"),
-        
+
         { // Github style block
             token : "support.function",
             regex : "^\\s*```\\s*\\S*(?:{.*?\\})?\\s*$",
@@ -295,8 +323,63 @@ var MarkdownHighlightRules = function() {
             token : "comment",
             regex : "<\\!--",
             next  : "html-comment"
-        }, {
+        },{
             include : "basic"
+        }],
+
+        "cm-insertion" : [{
+           token: "criticmarkup_insertion",
+           regex: "\\+\\+\\}",
+           next: "start"
+        },{
+           defaultToken: "criticmarkup_insertion.text"
+        }],
+
+
+        "cm-deletion" : [{
+           token: "criticmarkup_deletion",
+           regex: "--\\}",
+           next: "start"
+        },{
+           defaultToken: "criticmarkup_deletion.text"
+        }],
+
+        "cm-highlight" : [{
+           token: "criticmarkup_highlight",
+           regex: "==\\}",
+           next: "start"
+        },{
+           defaultToken: "criticmarkup_highlight.text"
+        }],
+
+        "cm-substitution-start" : [{
+           token: "criticmarkup_substitution",
+           regex: "~~\\}",
+           next: "start"
+        },
+        {
+           token: "criticmarkup_substitution",
+           regex: "~>",
+           next: "cm-substitution-end"
+        },
+        {
+           defaultToken: "criticmarkup_substitution.text.old"
+        }],
+
+        "cm-substitution-end" : [{
+            token: "criticmarkup_substitution",
+            regex: "~~\\}",
+            next: "start"
+        },{
+            defaultToken: "criticmarkup_substitution.text.new"
+        }],
+
+        "cm-comment" : [{
+           token: "criticmarkup_comment",
+           regex: "<<\\}",
+           next: "start"
+        },{
+           defaultToken: "criticmarkup_comment.text"
         }],
 
         "html-comment" : [{
@@ -306,7 +389,7 @@ var MarkdownHighlightRules = function() {
         }, {
            defaultToken: "comment.text"
         }],
-       
+
         // code block
         "allowBlock": [{
            token : "support.function",
@@ -424,7 +507,7 @@ var MarkdownHighlightRules = function() {
             token : "latex.support.function",
             regex : "[^\\$]+"
         }],
-        
+
         "mathjaxnativedisplay" : [{
             token : "latex.markup.list.string.end",
             regex : "\\\\\\]",
@@ -433,7 +516,7 @@ var MarkdownHighlightRules = function() {
             token : "latex.support.function",
             regex : "[\\s\\S]+?"
         }],
-        
+
         "mathjaxnativeinline" : [{
             token : "latex.markup.list.string.end",
             regex : "\\\\\\)",
@@ -468,25 +551,25 @@ var MarkdownHighlightRules = function() {
         regex : "^\\s*```",
         next  : "pop"
     }]);
-    
+
     this.embedRules(PerlHighlightRules, "perlcode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
     }]);
-    
+
     this.embedRules(PythonHighlightRules, "pythoncode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
     }]);
-    
+
     this.embedRules(RubyHighlightRules, "rubycode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
     }]);
-    
+
     this.embedRules(ScalaHighlightRules, "scalacode-", [{
         token : "support.function",
         regex : "^\\s*```",
