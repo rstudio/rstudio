@@ -169,27 +169,27 @@ var MarkdownHighlightRules = function() {
         "criticmarkup" : [{ // CriticMarkup syntax (http://criticmarkup.com/spec.php)
             token : "criticmarkup_insertion",
             regex : "\\{\\+\\+",
-            next  : "cm-insertion"
+            push  : "cm-insertion"
         },
         {
             token : "criticmarkup_deletion",
             regex : "\\{--",
-            next  : "cm-deletion"
+            push  : "cm-deletion"
         },
         {
             token : "criticmarkup_highlight",
             regex : "\\{==",
-            next  : "cm-highlight"
+            push  : "cm-highlight"
         },
         {
             token : "criticmarkup_substitution",
             regex : "\\{~~",
-            next  : "cm-substitution-start"
+            push  : "cm-substitution-start"
         },
         {
             token : "criticmarkup_comment",
             regex : "\\{>>",
-            next  : "cm-comment"
+            push  : "cm-comment"
         }],
 
         "start": [{
@@ -330,7 +330,7 @@ var MarkdownHighlightRules = function() {
         "cm-insertion" : [{
            token: "criticmarkup_insertion",
            regex: "\\+\\+\\}",
-           next: "start"
+           next: "pop"
         },{
            defaultToken: "criticmarkup_insertion.text"
         }],
@@ -339,7 +339,7 @@ var MarkdownHighlightRules = function() {
         "cm-deletion" : [{
            token: "criticmarkup_deletion",
            regex: "--\\}",
-           next: "start"
+           next: "pop"
         },{
            defaultToken: "criticmarkup_deletion.text"
         }],
@@ -347,7 +347,7 @@ var MarkdownHighlightRules = function() {
         "cm-highlight" : [{
            token: "criticmarkup_highlight",
            regex: "==\\}",
-           next: "start"
+           next: "pop"
         },{
            defaultToken: "criticmarkup_highlight.text"
         }],
@@ -355,7 +355,7 @@ var MarkdownHighlightRules = function() {
         "cm-substitution-start" : [{
            token: "criticmarkup_substitution",
            regex: "~~\\}",
-           next: "start"
+           next: "pop"
         },
         {
            token: "criticmarkup_substitution",
@@ -369,7 +369,7 @@ var MarkdownHighlightRules = function() {
         "cm-substitution-end" : [{
             token: "criticmarkup_substitution",
             regex: "~~\\}",
-            next: "start"
+            next: "pop"
         },{
             defaultToken: "criticmarkup_substitution.text.new"
         }],
@@ -377,7 +377,7 @@ var MarkdownHighlightRules = function() {
         "cm-comment" : [{
            token: "criticmarkup_comment",
            regex: "<<\\}",
-           next: "start"
+           next: "pop"
         },{
            defaultToken: "criticmarkup_comment.text"
         }],
