@@ -859,6 +859,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           Element td = DOM.getChild(tr, 1);
           setStyleName(td, "subMenuIcon-selected", true);
         }
+
+        if (shownChildMenu != null
+            && shownChildMenu == selectedItem.getSubMenu())
+        {
+          shownChildMenu.onHide(false);
+          popup.hide();
+          shownChildMenu = null;
+        }
       }
 
       Roles.getMenubarRole().setAriaActivedescendantProperty(getElement(),
@@ -1116,7 +1124,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
       td.setPropertyString("vAlign", "middle");
-      td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
+      String indicatorHtml = subMenuIcon.getSafeHtml().asString();
+      // add null alt attribute for a11y
+      if (indicatorHtml.startsWith("<img") && indicatorHtml.endsWith(">"))
+        indicatorHtml = indicatorHtml.substring(0, indicatorHtml.length() - 1) + " alt>";
+      td.setInnerHTML(indicatorHtml);
+
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
     }
@@ -1332,7 +1345,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
       for (MenuItem nextItem : items) {
-        if (nextItem.isEnabled()) {
+        if (nextItem.isVisible()) {
           selectItem(nextItem);
           break;
         }
@@ -1367,7 +1380,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1404,7 +1417,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isVisible()) {
           break;
         }
       }

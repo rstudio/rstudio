@@ -2619,13 +2619,13 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showShellDialog"
         label="Open Shell"
         menuLabel="_Shell..."
-        desc="Execute shell commands(s)"
+        desc="Execute shell commands"
         windowMode="main"/>
         
    <cmd id="newTerminal"
         label="New Terminal"
         menuLabel="_New Terminal"
-        desc="Execute shell commands(s)"
+        desc="Create a new terminal"
         windowMode="main"/>
 
    <cmd id="activateTerminal"

@@ -1,0 +1,2 @@
+228a229
+>     Roles.getMenuitemRole().setAriaDisabledState(getElement(), !enabled);

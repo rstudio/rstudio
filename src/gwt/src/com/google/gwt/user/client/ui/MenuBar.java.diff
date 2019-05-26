@@ -2,13 +2,43 @@
 <     onHide(!autoClosed && focusOnHover);
 ---
 >     onHide(!autoClosed);
-1092c1092
+861a862,869
+> 
+>         if (shownChildMenu != null
+>             && shownChildMenu == selectedItem.getSubMenu())
+>         {
+>           shownChildMenu.onHide(false);
+>           popup.hide();
+>           shownChildMenu = null;
+>         }
+1092c1100
 <   void updateSubmenuIcon(MenuItem item) {
 ---
 >   protected void updateSubmenuIcon(MenuItem item) {
-1108c1108
+1108c1116
 <     if (submenu == null) {
 ---
 >     if (submenu == null || !item.isVisible()) {
-1197a1198
+1119c1127,1132
+<       td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
+---
+>       String indicatorHtml = subMenuIcon.getSafeHtml().asString();
+>       // add null alt attribute for a11y
+>       if (indicatorHtml.startsWith("<img") && indicatorHtml.endsWith(">"))
+>         indicatorHtml = indicatorHtml.substring(0, indicatorHtml.length() - 1) + " alt>";
+>       td.setInnerHTML(indicatorHtml);
+> 
+1197a1211
 >     Roles.getPresentationRole().set(table);
+1334c1348
+<         if (nextItem.isEnabled()) {
+---
+>         if (nextItem.isVisible()) {
+1369c1383
+<         if (itemToBeSelected.isEnabled()) {
+---
+>         if (itemToBeSelected.isVisible()) {
+1406c1420
+<         if (itemToBeSelected.isEnabled()) {
+---
+>         if (itemToBeSelected.isVisible()) {
