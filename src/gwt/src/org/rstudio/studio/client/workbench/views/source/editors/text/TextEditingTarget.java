@@ -185,6 +185,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class TextEditingTarget implements 
@@ -2987,41 +2988,26 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDoc(onsaved);
    }
 
-
-   // sadly due to Java's memory model we can't modify local variables
-   // inside of a lambda but class variables are protected and
-   // are one of the recommended workarounds
-   private int totalWords = 0;
-   private int selectionWords = 0;
-
    @Handler
    void onWordCount()
    {
-      totalWords = 0;
-      selectionWords = 0;
-
-      Position pos = docDisplay_.getCursorPosition();
-      TextFileType fileType = docDisplay_.getFileType();
-      Iterable<Range> wordSource = docDisplay_.getWords(
-         fileType.getTokenPredicate(),
-         docDisplay_.getFileType().getCharPredicate(),
-         pos,
-         null);
-
-      totalWords = 0;
-      wordSource.forEach((r) -> totalWords++);
+      int totalWords = 0;
+      int selectionWords = 0;
 
       Range selectionRange = docDisplay_.getSelectionRange();
-      if (selectionRange.getStart().compareTo(selectionRange.getEnd()) != 0)
-      {
-         wordSource = docDisplay_.getWords(
-            fileType.getTokenPredicate(),
-            docDisplay_.getFileType().getCharPredicate(),
-            docDisplay_.getSelectionStart(),
-            docDisplay_.getSelectionEnd());
+      TextFileType fileType = docDisplay_.getFileType();
+      Iterator<Range> wordIter = docDisplay_.getWords(
+         fileType.getTokenPredicate(),
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(0, 0),
+         null).iterator();
 
-         selectionWords = 0;
-         wordSource.forEach((r) -> selectionWords++);
+      while (wordIter.hasNext())
+      {
+         Range r = wordIter.next();
+         totalWords++;
+         if (selectionRange.intersects(r))
+            selectionWords++;
       }
 
       String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
