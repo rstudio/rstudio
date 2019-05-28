@@ -40,14 +40,14 @@ case "$1" in
 
     stop)
         daemonCmd "stop"
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     restart)
         testConfig || return $?
         daemonCmd "restart"
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
@@ -79,7 +79,7 @@ case "$1" in
         ;;
 
     suspend-all)
-        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces 2>/dev/null
         ;;
 
@@ -94,7 +94,7 @@ case "$1" in
         ;;
 
     force-suspend-all)
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
@@ -109,7 +109,7 @@ case "$1" in
         ;;
 
     kill-all)
-        killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
@@ -117,7 +117,7 @@ case "$1" in
         mkdir -p /var/lib/rstudio-server
         touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
