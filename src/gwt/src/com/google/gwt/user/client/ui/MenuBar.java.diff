@@ -33,12 +33,22 @@
 1334c1348
 <         if (nextItem.isEnabled()) {
 ---
+>         if (nextItem.isEnabled() && nextItem.isVisible()) {
+1336c1350,1356
+<           break;
+---
+>           return true;
+>         }
+>       }
+>       for (MenuItem nextItem : items) {
 >         if (nextItem.isVisible()) {
-1369c1383
+>           selectItem(nextItem);
+>           return true;
+1369c1389
 <         if (itemToBeSelected.isEnabled()) {
 ---
->         if (itemToBeSelected.isVisible()) {
-1406c1420
+>         if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
+1406c1426
 <         if (itemToBeSelected.isEnabled()) {
 ---
->         if (itemToBeSelected.isVisible()) {
+>         if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {

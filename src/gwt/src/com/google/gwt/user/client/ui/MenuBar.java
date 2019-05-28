@@ -1345,9 +1345,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
       for (MenuItem nextItem : items) {
+        if (nextItem.isEnabled() && nextItem.isVisible()) {
+          selectItem(nextItem);
+          return true;
+        }
+      }
+      for (MenuItem nextItem : items) {
         if (nextItem.isVisible()) {
           selectItem(nextItem);
-          break;
+          return true;
         }
       }
       return true;
@@ -1380,7 +1386,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isVisible()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1417,7 +1423,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isVisible()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
