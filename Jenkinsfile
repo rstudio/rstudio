@@ -47,14 +47,14 @@ def run_tests(type, flavor, variant) {
     currentBuild.result = "UNSTABLE"
   }
 
-  /*
+  
   try {
     // attempt to run cpp unit tests
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
+    // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
+    sh "RSTUDIO_CORETEST_ARGS=\"exclude:File Locking\" cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
   }
-  */
 }
 
 def s3_upload(type, flavor, os, arch) {
