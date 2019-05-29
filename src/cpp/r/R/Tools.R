@@ -543,7 +543,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    # check whether the user has already set a CRAN repository
    # in their .Rprofile
    repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
 
    if (!cranMirrorConfigured)
       .rs.setCRANRepos(cran, secondary)
