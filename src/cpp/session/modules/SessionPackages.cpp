@@ -461,13 +461,15 @@ SEXP rs_canInstallPackages()
                           &rProtect);
 }
 
-void rs_packageLibraryMutated()
+SEXP rs_packageLibraryMutated()
 {
    // broadcast event to server
    module_context::events().onPackageLibraryMutated();
 
    // broadcast event to client
    enquePackageStateChanged();
+
+   return R_NilValue;
 }
 
 void detectLibPathsChanges()

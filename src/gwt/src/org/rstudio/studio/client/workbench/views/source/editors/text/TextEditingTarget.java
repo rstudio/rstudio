@@ -185,6 +185,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class TextEditingTarget implements 
@@ -2986,7 +2987,35 @@ public class TextEditingTarget implements
    {
       docUpdateSentinel_.withSavedDoc(onsaved);
    }
-   
+
+   @Handler
+   void onWordCount()
+   {
+      int totalWords = 0;
+      int selectionWords = 0;
+
+      Range selectionRange = docDisplay_.getSelectionRange();
+      TextFileType fileType = docDisplay_.getFileType();
+      Iterator<Range> wordIter = docDisplay_.getWords(
+         fileType.getTokenPredicate(),
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(0, 0),
+         null).iterator();
+
+      while (wordIter.hasNext())
+      {
+         Range r = wordIter.next();
+         totalWords++;
+         if (selectionRange.intersects(r))
+            selectionWords++;
+      }
+
+      String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
+      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+         "Word Count",
+         "Total words: " + totalWords + " " + selectedWordsText);
+   }
+
    @Handler
    void onCheckSpelling()
    {
