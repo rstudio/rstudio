@@ -985,7 +985,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * <code>true</code> if the item's command should be fired, <code>false</code>
    * otherwise.
    */
-  void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
+  protected void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
     // Should not perform any action if the item is disabled
     if (!item.isEnabled()) {
       return;

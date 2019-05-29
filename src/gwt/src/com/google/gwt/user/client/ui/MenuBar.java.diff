@@ -11,6 +11,10 @@
 >           popup.hide();
 >           shownChildMenu = null;
 >         }
+980c988
+<   void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
+---
+>   protected void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
 1092c1100
 <   void updateSubmenuIcon(MenuItem item) {
 ---

@@ -318,22 +318,6 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          selectItem(getItemCount());
       }
-      
-      private void selectItem(int index)
-      {
-         int count = getItemCount();
-         
-         if (count == 0) return;
-         
-         if (index < 0)
-            index = 0;
-         
-         if (index >= count - 1)
-            index = count - 1;
-         
-         List<MenuItem> items = getItems();
-         selectItem(items.get(index));
-      }
 
       private HandlerRegistration nativePreviewReg_;
    }

@@ -33,7 +33,9 @@ well as menu structures (for main menu and popup menus).
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
-
+      <!-- 
+         Keep ShowMainMenuEvent.Menu enum in sync with top-level main-menu entries (File, Edit...)
+      -->
       <separator/>
 
       <menu label="_File">
@@ -806,6 +808,20 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
       </shortcutgroup>
+
+      <shortcutgroup name="Main Menu (Server)">
+         <shortcut refid="showFileMenu" value="Ctrl+Alt+F"/>
+         <shortcut refid="showEditMenu" value="Ctrl+Alt+I"/>
+         <shortcut refid="showCodeMenu" value="Ctrl+Alt+C"/>
+         <shortcut refid="showViewMenu" value="Ctrl+Alt+V"/>
+         <shortcut refid="showPlotsMenu" value="Ctrl+Alt+P"/>
+         <shortcut refid="showSessionMenu" value="Ctrl+Alt+S"/>
+         <shortcut refid="showBuildMenu" value="Ctrl+Alt+B"/>
+         <shortcut refid="showDebugMenu" value="Ctrl+Alt+U"/>
+         <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
+         <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
+         <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
+      </shortcutgroup>s
 
       <!-- 
       Shortcuts in this group won't be shown in the quick reference card. 
@@ -3364,5 +3380,49 @@ well as menu structures (for main menu and popup menus).
          rebindable="false"
          checkable="true"
          windowMode="any"/>
+
+   <cmd id="showFileMenu"
+         menuLabel="Show File Menu"
+         windowMode="main"/>
+
+   <cmd id="showEditMenu"
+         menuLabel="Show Edit Menu"
+         windowMode="main"/>
+
+   <cmd id="showCodeMenu"
+        menuLabel="Show Code Menu"
+        windowMode="main"/>
+
+   <cmd id="showViewMenu"
+        menuLabel="Show View Menu"
+        windowMode="main"/>
+
+   <cmd id="showPlotsMenu"
+        menuLabel="Show Plots Menu"
+        windowMode="main"/>
+
+   <cmd id="showSessionMenu"
+        menuLabel="Show Session Menu"
+        windowMode="main"/>
+
+   <cmd id="showBuildMenu"
+        menuLabel="Show Build Menu"
+        windowMode="main"/>
+
+   <cmd id="showDebugMenu"
+        menuLabel="Show Debug Menu"
+        windowMode="main"/>
+
+   <cmd id="showProfileMenu"
+        menuLabel="Show Profile Menu"
+        windowMode="main"/>
+
+   <cmd id="showToolsMenu"
+        menuLabel="Show Tools Menu"
+        windowMode="main"/>
+
+   <cmd id="showHelpMenu"
+        menuLabel="Show Help Menu"
+        windowMode="main"/>
 
 </commands>
