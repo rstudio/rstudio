@@ -79,7 +79,7 @@ case "$1" in
         ;;
 
     suspend-all)
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
+        if (pidof rsession >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces 2>/dev/null
         ;;
 
@@ -109,7 +109,7 @@ case "$1" in
         ;;
 
     kill-all)
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
+        if (pidof rsession >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
