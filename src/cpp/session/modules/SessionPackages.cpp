@@ -1,7 +1,7 @@
 /*
  * SessionPackages.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -568,38 +568,12 @@ Error initialize()
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
 
    // register routines
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_enqueLoadedPackageUpdates" ;
-   methodDef.fun = (DL_FUNC) rs_enqueLoadedPackageUpdates ;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);
-
-   R_CallMethodDef methodDef2 ;
-   methodDef2.name = "rs_canInstallPackages" ;
-   methodDef2.fun = (DL_FUNC) rs_canInstallPackages ;
-   methodDef2.numArgs = 0;
-   r::routines::addCallMethod(methodDef2);
-
-   R_CallMethodDef methodDef3 ;
-   methodDef3.name = "rs_packageLibraryMutated" ;
-   methodDef3.fun = (DL_FUNC) rs_packageLibraryMutated ;
-   methodDef3.numArgs = 0;
-   r::routines::addCallMethod(methodDef3);
-   
-   r::routines::registerCallMethod(
-            "rs_getCachedAvailablePackages",
-            (DL_FUNC) rs_getCachedAvailablePackages,
-            1);
-   
-   r::routines::registerCallMethod(
-            "rs_downloadAvailablePackages",
-            (DL_FUNC) rs_downloadAvailablePackages,
-            1);
-
-   r::routines::registerCallMethod(
-            "rs_getCranReposUrl",
-            (DL_FUNC) rs_getCranReposUrl,
-            0);
+   RS_REGISTER_CALL_METHOD(rs_enqueLoadedPackageUpdates);
+   RS_REGISTER_CALL_METHOD(rs_canInstallPackages);
+   RS_REGISTER_CALL_METHOD(rs_packageLibraryMutated);
+   RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
+   RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
+   RS_REGISTER_CALL_METHOD(rs_getCranReposUrl);
    
    using boost::bind;
    using namespace module_context;
