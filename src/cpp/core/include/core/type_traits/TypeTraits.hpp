@@ -23,6 +23,15 @@ namespace rstudio {
 namespace core {
 namespace type_traits {
 
+template <typename T>
+struct return_type;
+
+template <typename R, typename... Args>
+struct return_type<R(Args...)>
+{
+   typedef R type;
+};
+
 #define RS_GENERATE_HAS_TYPE_TRAIT(__NAME__)                                   \
    template <typename T> struct has_##__NAME__##_impl                          \
    {                                                                           \
