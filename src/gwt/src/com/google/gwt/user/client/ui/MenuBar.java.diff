@@ -1,29 +1,56 @@
-788c788
+304a305
+>   private MenuItem expandedMenuItem;
+515a517,521
+>       if (expandedMenuItem != null)
+>       {
+>         expandedMenuItem.setAriaExpanded(false);
+>         expandedMenuItem = null;
+>       }
+788c794
 <     onHide(!autoClosed && focusOnHover);
 ---
 >     onHide(!autoClosed);
-861a862,869
+861a868,874
 > 
 >         if (shownChildMenu != null
 >             && shownChildMenu == selectedItem.getSubMenu())
 >         {
->           shownChildMenu.onHide(false);
->           popup.hide();
+>           hideChildMenu(false);
 >           shownChildMenu = null;
 >         }
-980c988
+980c993
 <   void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
 ---
 >   protected void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
-1092c1100
+1009,1010c1022
+<         shownChildMenu.onHide(focus);
+<         popup.hide();
+---
+>         hideChildMenu(focus);
+1020,1021c1032
+<         shownChildMenu.onHide(focus);
+<         popup.hide();
+---
+>         hideChildMenu(focus);
+1025,1026c1036
+<         shownChildMenu.onHide(focus);
+<         popup.hide();
+---
+>         hideChildMenu(focus);
+1032,1033c1042
+<       shownChildMenu.onHide(focus);
+<       popup.hide();
+---
+>       hideChildMenu(focus);
+1092c1101
 <   void updateSubmenuIcon(MenuItem item) {
 ---
 >   protected void updateSubmenuIcon(MenuItem item) {
-1108c1116
+1108c1117
 <     if (submenu == null) {
 ---
 >     if (submenu == null || !item.isVisible()) {
-1119c1127,1132
+1119c1128,1133
 <       td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
 ---
 >       String indicatorHtml = subMenuIcon.getSafeHtml().asString();
@@ -32,13 +59,21 @@
 >         indicatorHtml = indicatorHtml.substring(0, indicatorHtml.length() - 1) + " alt>";
 >       td.setInnerHTML(indicatorHtml);
 > 
-1197a1211
+1197a1212
 >     Roles.getPresentationRole().set(table);
-1334c1348
+1273,1274c1288
+<       shownChildMenu.onHide(focus);
+<       popup.hide();
+---
+>       hideChildMenu(focus);
+1289a1304,1305
+>     expandedMenuItem = item;
+>     item.setAriaExpanded(true);
+1334c1350
 <         if (nextItem.isEnabled()) {
 ---
 >         if (nextItem.isEnabled() && nextItem.isVisible()) {
-1336c1350,1356
+1336c1352,1358
 <           break;
 ---
 >           return true;
@@ -48,11 +83,27 @@
 >         if (nextItem.isVisible()) {
 >           selectItem(nextItem);
 >           return true;
-1369c1389
+1369c1391
 <         if (itemToBeSelected.isEnabled()) {
 ---
 >         if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
-1406c1426
+1406c1428
 <         if (itemToBeSelected.isEnabled()) {
 ---
 >         if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
+1426a1449,1463
+> 
+>   /**
+>    * Hide currently displayed child menu and mark the associate menu item as closed.
+>    * @param focus
+>    */
+>   private void hideChildMenu(boolean focus)
+>   {
+>     if (expandedMenuItem != null)
+>     {
+>       expandedMenuItem.setAriaExpanded(false);
+>       expandedMenuItem = null;
+>     }
+>     shownChildMenu.onHide(focus);
+>     popup.hide();
+>   }

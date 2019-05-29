@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.client.HasSafeHtml;
@@ -266,10 +267,18 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
       // Update a11y role "haspopup"
       Roles.getMenuitemRole().setAriaHaspopupProperty(getElement(), true);
+      setAriaExpanded(false);
     } else {
       // Update a11y role "haspopup"
       Roles.getMenuitemRole().setAriaHaspopupProperty(getElement(), false);
     }
+  }
+
+  public void setAriaExpanded(boolean expanded)
+  {
+    Roles.getMenubarRole().setAriaExpandedState(
+          getElement(), 
+          expanded ? ExpandedValue.TRUE : ExpandedValue.FALSE);
   }
 
   @Override

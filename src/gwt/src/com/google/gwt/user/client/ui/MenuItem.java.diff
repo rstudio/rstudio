@@ -1,2 +1,14 @@
-228a229
+17a18
+> import com.google.gwt.aria.client.ExpandedValue;
+228a230
 >     Roles.getMenuitemRole().setAriaDisabledState(getElement(), !enabled);
+267a270
+>       setAriaExpanded(false);
+273a277,283
+>   public void setAriaExpanded(boolean expanded)
+>   {
+>     Roles.getMenubarRole().setAriaExpandedState(
+>           getElement(), 
+>           expanded ? ExpandedValue.TRUE : ExpandedValue.FALSE);
+>   }
+> 

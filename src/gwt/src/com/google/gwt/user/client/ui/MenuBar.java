@@ -302,6 +302,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private MenuPopup popup;
   private MenuItem selectedItem;
   private MenuBar shownChildMenu;
+  private MenuItem expandedMenuItem;
   private boolean vertical, autoOpen;
   private boolean focusOnHover = true;
 
@@ -513,6 +514,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   public void closeAllChildren(boolean focus) {
     if (shownChildMenu != null) {
       // Hide any open submenus of this item
+      if (expandedMenuItem != null)
+      {
+        expandedMenuItem.setAriaExpanded(false);
+        expandedMenuItem = null;
+      }
       shownChildMenu.onHide(focus);
       shownChildMenu = null;
       selectItem(null);
@@ -863,8 +869,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         if (shownChildMenu != null
             && shownChildMenu == selectedItem.getSubMenu())
         {
-          shownChildMenu.onHide(false);
-          popup.hide();
+          hideChildMenu(false);
           shownChildMenu = null;
         }
       }
@@ -1014,8 +1019,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       // hide any open submenus of this item
       if (shownChildMenu != null) {
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         shownChildMenu = null;
         selectItem(null);
       }
@@ -1025,20 +1029,17 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         openPopup(item);
       } else if (item.getSubMenu() != shownChildMenu) {
         // close the other submenu and open this one
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         openPopup(item);
       } else if (fireCommand && !autoOpen) {
         // close this submenu
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         shownChildMenu = null;
         selectItem(item);
       }
     } else if (autoOpen && shownChildMenu != null) {
       // close submenu
-      shownChildMenu.onHide(focus);
-      popup.hide();
+      hideChildMenu(focus);
       shownChildMenu = null;
     }
   }
@@ -1284,8 +1285,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private void onHide(boolean focus) {
     if (shownChildMenu != null) {
-      shownChildMenu.onHide(focus);
-      popup.hide();
+      hideChildMenu(focus);
       if (focus) {
         focus();
       }
@@ -1301,6 +1301,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     shownChildMenu = item.getSubMenu();
     shownChildMenu.selectItem(null);
     shownChildMenu.parentMenu = this;
+    expandedMenuItem = item;
+    item.setAriaExpanded(true);
 
     popup = new MenuPopup();
     popup.setWidget(shownChildMenu);
@@ -1443,5 +1445,20 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private void setItemColSpan(UIObject item, int colspan) {
     item.getElement().setPropertyInt("colSpan", colspan);
+  }
+
+  /**
+   * Hide currently displayed child menu and mark the associate menu item as closed.
+   * @param focus
+   */
+  private void hideChildMenu(boolean focus)
+  {
+    if (expandedMenuItem != null)
+    {
+      expandedMenuItem.setAriaExpanded(false);
+      expandedMenuItem = null;
+    }
+    shownChildMenu.onHide(focus);
+    popup.hide();
   }
 }
