@@ -41,14 +41,14 @@ case "$1" in
     stop)
         daemonCmd "stop"
         if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     restart)
         testConfig || return $?
         daemonCmd "restart"
         if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     test-config)
@@ -80,7 +80,7 @@ case "$1" in
 
     suspend-all)
         if (pidof rsession >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     force-suspend-session)
@@ -95,7 +95,7 @@ case "$1" in
 
     force-suspend-all)
         if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     kill-session)
@@ -110,7 +110,7 @@ case "$1" in
 
     kill-all)
         if (pidof rsession >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     offline)
@@ -118,7 +118,7 @@ case "$1" in
         touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
         if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     online)
