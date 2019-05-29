@@ -54,8 +54,8 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# enable testing on debug builds
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT RSTUDIO_UNIT_TESTS_DISABLED)
+# enable testing on all builds unless explicitly disabled
+if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
