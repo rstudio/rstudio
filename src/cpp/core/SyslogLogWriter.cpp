@@ -68,7 +68,8 @@ SyslogLogWriter::~SyslogLogWriter()
 SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
                                  int logLevel)
    : programIdentity_(programIdentity),
-     logToStderr_(core::system::stderrIsTerminal())
+     logToStderr_(core::system::stderrIsTerminal()),
+     logLevel_(logLevel)
 {
    // copy program identity into new string whose buffer will stay
    // around long enough to successfully register with openlog

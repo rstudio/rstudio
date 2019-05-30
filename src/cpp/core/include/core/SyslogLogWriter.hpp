@@ -37,9 +37,12 @@ public:
        logToStderr_ = logToStderr;
     }
 
+    virtual int logLevel() { return logLevel_; }
+
 private:
     std::string programIdentity_;
     bool logToStderr_;
+    int logLevel_;
 };
 
 } // namespace core
