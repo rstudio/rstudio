@@ -1630,9 +1630,7 @@ public:
       if (error)
          LOG_ERROR(error);
 
-      if (Rf_isFunction(wrapperSEXP))
-         put(primitiveSEXP, wrapperSEXP);
-
+      put(primitiveSEXP, wrapperSEXP);
       return wrapperSEXP;
    }
    
@@ -1649,7 +1647,8 @@ private:
    
    void put(SEXP primitiveSEXP, SEXP wrapperSEXP)
    {
-      R_PreserveObject(wrapperSEXP);
+      if (wrapperSEXP != R_NilValue)
+         R_PreserveObject(wrapperSEXP);
       database_[primitiveSEXP] = wrapperSEXP;
    }
    
