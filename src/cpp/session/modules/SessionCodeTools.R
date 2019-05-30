@@ -1735,8 +1735,10 @@
    object
 })
 
-.rs.addFunction("makePrimitiveWrapper", function(x) {
-   eval(parse(text = capture.output(x)), envir = parent.frame(1))
+.rs.addFunction("makePrimitiveWrapper", function(x)
+{
+   code <- paste(format(args(x))[[1]], format(x), sep = "")
+   eval(parse(text = code), envir = baseenv())
 })
 
 .rs.addFunction("extractNativeSymbols", function(DLL, collapse = TRUE)
