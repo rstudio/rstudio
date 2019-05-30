@@ -51,7 +51,7 @@ def run_tests(type, flavor, variant) {
   try {
     // attempt to run cpp unit tests
     // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests --scope core"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
   }
