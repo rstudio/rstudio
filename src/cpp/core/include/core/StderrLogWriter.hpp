@@ -34,6 +34,8 @@ public:
                      core::system::LogLevel level,
                      const std::string& message);
 
+    virtual int logLevel() { return logLevel_; }
+
 private:
     std::string programIdentity_;
     int logLevel_;

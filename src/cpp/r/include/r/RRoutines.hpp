@@ -1,7 +1,7 @@
 /*
  * RRoutines.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,11 @@
 
 #include <vector>
 
+#include <r/RSexp.hpp>
+
 #include <R_ext/Rdynload.h>
+
+#include <core/type_traits/TypeTraits.hpp>
 
 namespace rstudio {
 namespace r {
@@ -29,6 +33,32 @@ namespace internal {
 template <typename ReturnType, typename... ArgumentTypes>
 int n_arguments(ReturnType(ArgumentTypes...)) {
     return sizeof...(ArgumentTypes);
+}
+
+template <typename... ArgumentTypes>
+struct validate_args
+{
+   typedef std::true_type type;
+};
+
+template <typename T, typename... ArgumentTypes>
+struct validate_args<T, ArgumentTypes...>
+{
+   static_assert(
+         std::is_same<T, SEXP>::value,
+         "Registered .Call methods should only accept SEXP parameters");
+
+   typedef typename validate_args<ArgumentTypes...>::type type;
+};
+
+template <typename ReturnType, typename... ArgumentTypes>
+void validate(ReturnType(ArgumentTypes...))
+{
+   static_assert(
+            std::is_same<ReturnType, SEXP>::value,
+            "Registered .Call methods should have SEXP return type");
+
+   typedef typename validate_args<ArgumentTypes...>::type type;
 }
 
 } // end namespace internal
@@ -45,13 +75,16 @@ void registerAll();
 #define RS_REGISTER_CALL_METHOD(__NAME__, ...)                         \
    do                                                                  \
    {                                                                   \
+      using namespace core::type_traits;                               \
+      ::rstudio::r::routines::internal::validate(__NAME__);            \
       int n = ::rstudio::r::routines::internal::n_arguments(__NAME__); \
       R_CallMethodDef callMethodDef;                                   \
       callMethodDef.name = #__NAME__;                                  \
       callMethodDef.fun = reinterpret_cast<DL_FUNC>(__NAME__);         \
       callMethodDef.numArgs = n;                                       \
       ::rstudio::r::routines::addCallMethod(callMethodDef);            \
-   } while (false)
+   }                                                                   \
+   while (false)
 
 } // namespace routines   
 } // namespace r
