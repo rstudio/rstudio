@@ -1737,8 +1737,17 @@
 
 .rs.addFunction("makePrimitiveWrapper", function(x)
 {
-   code <- paste(format(args(x))[[1]], format(x), sep = "")
-   eval(parse(text = code), envir = baseenv())
+   # from the R documentation, args returns:
+   #
+   #   For a closure, a closure with identical formal argument list but an empty
+   #   (NULL) body.
+   #
+   #   For a primitive, a closure with the documented usage and NULL body. Note
+   #   that some primitives do not make use of named arguments and match by
+   #   position rather than name.
+   #
+   # we just need an R closure with the right formals, so args fits nicely
+   args(x)
 })
 
 .rs.addFunction("extractNativeSymbols", function(DLL, collapse = TRUE)
