@@ -201,9 +201,6 @@ try {
             }
         }
 
-        // launch jenkins agents to support the container scale!
-        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
-
         // build each variant in parallel
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
@@ -211,6 +208,7 @@ try {
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
                 node('ide') {
+                    def container
                     stage('prepare ws/container'){
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
