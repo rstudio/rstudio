@@ -1758,38 +1758,12 @@
    if (package %in% names(loadedDLLs))
       return(.rs.extractNativeSymbols(loadedDLLs[[package]]))
    
-   reExtension <- paste("\\", .Platform$dynlib.ext, "$", sep = "")
-   
-   # Try loading the DLL temporarily so we can extract the symbols.
-   # Note that the shared object name does not necessarily match that
-   # of the package; e.g. `data.table` munges the object name.
-   libPath <- system.file("libs", package = package)
-   dllNames <- sub(
-      reExtension,
-      "",
-      list.files(libPath, pattern = reExtension)
-   )
-   
-   as.character(unlist(lapply(dllNames, function(name) {
-      
-      # TODO: Are there side-effects of this call that we want to avoid? If so
-      # we might want to execute this in a separate R process.
-      DLL <- try(
-         library.dynam(name, package = package, lib.loc = .libPaths()),
-         silent = TRUE
-      )
-      
-      if (inherits(DLL, "try-error"))
-         return(character())
-      
-      dllPath <- DLL[["path"]]
-      on.exit({
-         library.dynam.unload(name, libpath = system.file(package = package))
-      }, add = TRUE)
-      
-      return(.rs.extractNativeSymbols(DLL))
-   })))
-   
+   # we used to try to load and unload the package library to
+   # extract symbol information, but this is not safe to do now
+   # loading the DLL also implies running its R_init_* hook, and
+   # this can imply loading the package (+ its dependencies) --
+   # something we normally want to avoid
+   character()
 })
 
 .rs.addJsonRpcHandler("extract_chunk_options", function(chunkText)
