@@ -11,6 +11,7 @@
 * Add "Safe Mode" for opening sessions without profile scripts or workspace restoration (#4338)
 * PowerShell Core option in terminal (Windows-only)
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
+* Keyboard shortcuts for main menu items on RStudio Server (e.g. Ctrl+Alt+F for File menu)
 
 ### Bugfixes
 
