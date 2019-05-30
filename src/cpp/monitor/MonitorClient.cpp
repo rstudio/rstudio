@@ -44,6 +44,8 @@ public:
       client().logMessage(programIdentity, level, message);
    }
 
+   virtual int logLevel() { return core::system::kLogLevelDebug; }
+
 private:
    std::string programIdentity_;
 };

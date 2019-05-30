@@ -40,6 +40,8 @@ public:
                      core::system::LogLevel level,
                      const std::string& message);
 
+    virtual int logLevel() { return logLevel_; }
+
 
 private:
     void createFile();
