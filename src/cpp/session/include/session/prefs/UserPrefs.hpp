@@ -50,6 +50,8 @@ UserPrefValuesNative& userPrefs();
 
 core::json::Array allPrefLayers();
 
+core::Error initializePrefs();
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

@@ -184,7 +184,7 @@ private:
 
 void revertCRANMirrorToHTTP()
 {
-   prefs::CRANMirror mirror = modules::prefs::userPrefs().CRANMirror();
+   prefs::CRANMirror mirror = prefs::userPrefs().CRANMirror();
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
    prefs::userPrefs().setCRANMirror(mirror, true);
 }
@@ -194,7 +194,7 @@ void revertCRANMirrorToHTTP()
 void reconcileSecureDownloadConfiguration()
 {
    // secure downloads enabled
-   if (prefs::userPrefs().securePackageDownload())
+   if (prefs::userPrefs().useSecureDownload())
    {
       // ensure we have a secure download method
       Error error = r::exec::RFunction(".rs.initSecureDownload").call();

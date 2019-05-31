@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULE_USER_PREFS_HPP
-#define SESSION_MODULE_USER_PREFS_HPP
+#ifndef SESSION_PREFS_USER_PREFS_HPP
+#define SESSION_PREFS_USER_PREFS_HPP
 
 #include <core/json/Json.hpp>
 

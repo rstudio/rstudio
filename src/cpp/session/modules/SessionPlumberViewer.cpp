@@ -215,8 +215,7 @@ Error initialize()
    r::routines::addCallMethod(methodDefViewer);
 
    prefs::userPrefs().onChanged.connect(bind(
-            _1,
-            onUserSettingsChanged, pPlumberViewerType));
+            onUserSettingsChanged, _1, pPlumberViewerType));
 
    ExecBlock initBlock;
    initBlock.addFunctions()

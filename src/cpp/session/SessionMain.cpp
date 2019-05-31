@@ -512,8 +512,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (r_utils::initialize)
 
       // modules with c++ implementations
-      (prefs::initializePrefs)
-      (prefs::initializeState)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
@@ -1840,7 +1838,10 @@ int main (int argc, char * const argv[])
       }
 
       // initialize user settings
-      error = userSettings().initialize();
+      error = prefs::initializePrefs();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION) ;
+      error = prefs::initializePrefs();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
@@ -1951,7 +1952,7 @@ int main (int argc, char * const argv[])
 
       if (!prefs::userState().cranMirrorChanged()) 
       {
-         CRANMirror defaultMirror;
+         prefs::CRANMirror defaultMirror;
          defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
          defaultMirror.host = customRepo ? "Custom" : "RStudio";
          defaultMirror.secondary = rOptions.rCRANSecondary;

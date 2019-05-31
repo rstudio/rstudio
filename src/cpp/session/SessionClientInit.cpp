@@ -67,6 +67,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 

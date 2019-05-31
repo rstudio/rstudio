@@ -37,6 +37,8 @@ UserStateValues& userState();
 
 core::json::Array allStateLayers();
 
+core::Error initializeState();
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

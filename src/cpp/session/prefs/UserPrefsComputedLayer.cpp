@@ -24,9 +24,9 @@
 #include <core/json/Json.hpp>
 #include <core/CrashHandler.hpp>
 
-#include "../SessionVCS.hpp"
-#include "../SessionSVN.hpp"
-#include "../SessionSpelling.hpp"
+#include "../modules/SessionVCS.hpp"
+#include "../modules/SessionSVN.hpp"
+#include "../modules/SessionSpelling.hpp"
 
 using namespace rstudio::core;
 
@@ -39,8 +39,8 @@ Error UserPrefsComputedLayer::readPrefs()
    json::Object layer;
 
    // VCS executable paths ---------------------------------------------------
-   layer[kGitExePath] = git::detectedGitExePath().absolutePath();
-   layer[kSvnExePath] = svn::detectedSvnExePath().absolutePath();
+   layer[kGitExePath] = modules::git::detectedGitExePath().absolutePath();
+   layer[kSvnExePath] = modules::svn::detectedSvnExePath().absolutePath();
 
    // System terminal path (Linux) -------------------------------------------
    layer[kTerminalPath] = detectedTerminalPath().absolutePath();

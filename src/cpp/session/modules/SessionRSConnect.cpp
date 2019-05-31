@@ -545,7 +545,7 @@ Error initializeOptions()
       bool check = r::sexp::asLogical(checkSEXP);
       if (prefs::userPrefs().publishCheckCertificates() != check)
       {
-         prefs::userPrefs().setPublishCheckSslCerts(check);
+         prefs::userPrefs().setPublishCheckCertificates(check);
       }
    }
 

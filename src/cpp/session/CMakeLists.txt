@@ -235,6 +235,7 @@ set (SESSION_SOURCE_FILES
    prefs/PrefLayer.cpp
    prefs/Preferences.cpp
    prefs/UserPrefValues.cpp
+   prefs/UserPrefValuesNative.cpp
    prefs/UserPrefs.cpp
    prefs/UserPrefsComputedLayer.cpp
    prefs/UserPrefsDefaultLayer.cpp

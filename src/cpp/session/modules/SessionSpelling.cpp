@@ -80,7 +80,7 @@ FilePath userDictionariesDir()
 
 void syncSpellingEngineDictionaries()
 {
-   s_pSpellingEngine->useDictionary(prefs::userPrefs().spellingLanguage());
+   s_pSpellingEngine->useDictionary(prefs::userPrefs().spellingDictionaryLanguage());
 }
 
 
