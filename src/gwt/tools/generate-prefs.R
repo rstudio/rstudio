@@ -3,6 +3,10 @@
 require(jsonlite)
 require(stringi)
 
+capitalize <- function(s) {
+   paste0(toupper(substring(s, 1, 1)), substring(s, 2))
+}
+
 javaenum <- function(def, pref, type, indent) {
    java <- ""
    # Emit convenient enum constants if supplied
@@ -27,15 +31,11 @@ cppenum <- function(def, pref, type, indent) {
    if (!is.null(def[["enum"]])) {
       for (enumval in def[["enum"]]) {
          # Create syntactically valid variable name
-         varname <- paste0("k", 
-                           toupper(substring(pref, 1, 1)),
-                           substring(pref, 2))
+         varname <- paste0("k", capitalize(pref))
          valname <- gsub("[^A-Za-z0-9_]", "_", enumval)
          valname <- gsub("_(.)", "\\U\\1\\E", valname, perl = TRUE)
          cpp <- paste0(cpp, indent,
-            "#define ", varname,  
-            toupper(substring(valname, 1, 1)),
-            substring(valname, 2), " \"", enumval, "\"\n")
+            "#define ", varname, capitalize(valname), " \"", enumval, "\"\n")
       }
    }
    cpp
@@ -49,9 +49,7 @@ generate <- function (schemaPath, className) {
    cpp <- ""
    hpp <- ""
    
-   cppprefenum <- paste0("enum ", toupper(substring(className, 1, 1)), 
-                      substring(className, 2),
-                     "\n{\n")
+   cppprefenum <- paste0("enum ", capitalize(className), "\n{\n")
    cppstrings <- ""
    
    for (pref in names(prefs)) {
@@ -63,8 +61,7 @@ generate <- function (schemaPath, className) {
       type <- def[["type"]]
       if (type == "object") {
          # Rich objects are converted to JavaScript native types
-         type <- paste0(toupper(substring(camel, 1, 1)), 
-                        substring(camel, 2))
+         type <- capitalize(camel) 
       } else if (type == "numeric" || type == "number") {
          # Numerics (not integers) become Double objects
          type <- "Double"
@@ -74,8 +71,7 @@ generate <- function (schemaPath, className) {
          type <- "JsArrayString"
       } else {
          # For all other types, we uppercase the type name to get a class name
-         type <- paste0(toupper(substring(type, 1, 1)), 
-                        substring(type, 2))
+         type <- capitalize(type)
       }
       
       preftype <- def[["type"]]
@@ -87,13 +83,16 @@ generate <- function (schemaPath, className) {
          cpptype <- "double"
       } else if (identical(preftype, "array")) {
          preftype <- "object"
-         cpptype <- "core::json::Object"
+         cpptype <- "core::json::Array"
       } else if (identical(preftype, "integer")) {
          preftype <- "integer"
          cpptype <- "int"
       } else if (identical(preftype, "string")) {
          preftype <- "string"
          cpptype <- "std::string"
+      } else if (identical(preftype, "object")) {
+         preftype <- "object"
+         cpptype <- "core::json::Object"
       }
       
       defaultval <- as.character(def[["default"]])
@@ -121,8 +120,7 @@ generate <- function (schemaPath, className) {
       }
       
       cppstrings <- paste0(cppstrings,
-                           "#define k", toupper(substring(camel, 1, 1)), 
-                           substring(camel, 2), " \"", pref, "\"\n")
+                           "#define k", capitalize(camel), " \"", pref, "\"\n")
       cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
       comment <- paste0(
          "   /**\n",
@@ -137,7 +135,9 @@ generate <- function (schemaPath, className) {
          "   }\n\n")
       
       hpp <- paste0(hpp, comment,
-                    "   ", cpptype, " ", camel, "();\n\n")
+                    "   ", cpptype, " ", camel, "();\n")
+      hpp <- paste0(hpp, 
+                    "   core::Error set", capitalize(camel), "(", cpptype, " val);\n\n")
       cpp <- paste0(cpp, 
          "/**\n",
          " * ", def[["description"]], "\n",
@@ -145,6 +145,10 @@ generate <- function (schemaPath, className) {
          cpptype, " ", className, "::", camel, "()\n",
          "{\n",
          "   return readPref<", cpptype, ">(\"", pref, "\");\n",
+         "}\n\n",
+         "core::Error ", className, "::set", capitalize(camel), "(", cpptype, " val)\n",
+         "{\n",
+         "   return writePref(\"", pref, "\", val);\n",
          "}\n\n")
       
       # Emit JSNI for object types
@@ -161,9 +165,7 @@ generate <- function (schemaPath, className) {
             if (identical(proptype, "array")) {
                proptype <- "JsArrayString"
                if (!is.null(propdef[["items"]])) {
-                  enumtype <- propdef[["items"]][["type"]]
-                  enumtype <- paste0(toupper(substring(enumtype, 1, 1)), 
-                                     substring(enumtype, 2))
+                  enumtype <- capitalize(propdef[["items"]][["type"]])
                   java <- paste0(java, javaenum(propdef[["items"]], propname, 
                                                 enumtype, "      "))
                }
@@ -176,6 +178,8 @@ generate <- function (schemaPath, className) {
               "      public final native ", proptype, " get",  propname, "() /*-{\n",
               "         return this.", prop, ";\n",
               "      }-*/;\n\n")
+            cppstrings <- paste0(cppstrings,
+                                 "#define k", capitalize(camel), propname, " \"", prop, "\"\n")
          }
          java <- paste0(java, "   }\n\n")
       }

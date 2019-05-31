@@ -75,6 +75,9 @@
 #include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
@@ -348,7 +351,7 @@ SEXP rs_rstudioCitation()
 SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
 {
    bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
-   userSettings().setUsingMingwGcc49(usingMingwGcc49);
+   modules::prefs::userState().setUsingMingwGcc49(usingMingwGcc49);
    return R_NilValue;
 }
 
@@ -877,11 +880,11 @@ Error registerIdleOnlyAsyncRpcMethod(
 core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
 {
    // potential special case for Makevars
-   if (userSettings().useNewlineInMakefiles() && isPackagePosixMakefile(srcFile))
+   if (modules::prefs::userPrefs().useNewlinesInMakefiles() && isPackagePosixMakefile(srcFile))
       return string_utils::LineEndingPosix;
 
    // get the global default behavior
-   string_utils::LineEnding lineEndings = userSettings().lineEndings();
+   string_utils::LineEnding lineEndings = modules::prefs::userPrefs().lineEndings();
 
    // use project-level override if available
    using namespace session::projects;
@@ -1811,7 +1814,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
-   else if (userSettings().hideObjectFiles() &&
+   else if (modules::prefs::userPrefs().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")
    {
@@ -2163,13 +2166,13 @@ std::string CRANReposURL()
    std::string url;
    r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
    if (url.empty())
-      url = userSettings().cranMirror().url;
+      url = modules::prefs::userPrefs().CRANMirror().url;
    return url;
 }
 
 std::string rstudioCRANReposURL()
 {
-   std::string protocol = userSettings().securePackageDownload() ?
+   std::string protocol = modules::prefs::userPrefs().useSecureDownload() ?
                                                            "https" : "http";
    return protocol + "://cran.rstudio.com/";
 }
@@ -2419,7 +2422,7 @@ bool isLoadBalanced()
 bool usingMingwGcc49()
 {
    // return true if the setting is true
-   bool gcc49 = userSettings().usingMingwGcc49();
+   bool gcc49 = prefs::userState().usingMingwGcc49();
    if (gcc49)
       return true;
 

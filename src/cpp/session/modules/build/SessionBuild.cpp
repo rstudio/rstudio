@@ -51,6 +51,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
@@ -941,14 +942,14 @@ private:
       successMessage_ = "R CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(
                   &Build::viewDirAfterFailedCheck,
@@ -1024,7 +1025,7 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!userSettings().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
@@ -1066,14 +1067,14 @@ private:
       successMessage_ = "\nR CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
                                         Build::shared_from_this(),

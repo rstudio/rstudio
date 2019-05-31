@@ -34,6 +34,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -471,7 +473,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
    std::string encoding = projects::projectContext().hasProject() ?
                           projects::projectContext().defaultEncoding() :
-                          userSettings().defaultEncoding();
+                          prefs::userPrefs().defaultEncoding();
    std::string encodedString;
    error = r::util::iconvstr(searchString,
                              "UTF-8",

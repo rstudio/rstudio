@@ -1,5 +1,5 @@
 /*
- * SessionUserState.hpp
+ * UserPrefsComputedLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,39 +13,22 @@
  *
  */
 
-#ifndef SESSION_USER_STATE_HPP
-#define SESSION_USER_STATE_HPP
+#ifndef SESSION_USER_STATE_COMPUTED_LAYER_HPP
+#define SESSION_USER_STATE_COMPUTED_LAYER_HPP
 
-#include <core/json/Json.hpp>
-
-#define kUserStateFile "rstudio-state.json"
-#define kUserStateSchemaFile "user-state-schema.json"
-
-enum StateLayer
-{
-   STATE_LAYER_MIN      = 0,
-
-   STATE_LAYER_DEFAULT  = STATE_LAYER_MIN,
-   STATE_LAYER_COMPUTED = 1,
-   STATE_LAYER_USER     = 2,
-
-   STATE_LAYER_MAX      = STATE_LAYER_USER
-};
-
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+#include <session/prefs/UserStateValues.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace prefs {
 
-core::json::Array allStateLayers();
-
-core::Error initializeState();
+class UserStateComputedLayer: public PrefLayer
+{
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+};
 
 } // namespace prefs
 } // namespace modules
@@ -53,4 +36,3 @@ core::Error initializeState();
 } // namespace rstudio
 
 #endif
-

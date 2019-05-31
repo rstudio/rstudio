@@ -32,12 +32,22 @@ bool UserPrefValues::runRprofileOnResume()
    return readPref<bool>("run_rprofile_on_resume");
 }
 
+core::Error UserPrefValues::setRunRprofileOnResume(bool val)
+{
+   return writePref("run_rprofile_on_resume", val);
+}
+
 /**
  * Whether to save the workspace after the R session ends.
  */
 std::string UserPrefValues::saveWorkspace()
 {
    return readPref<std::string>("save_workspace");
+}
+
+core::Error UserPrefValues::setSaveWorkspace(std::string val)
+{
+   return writePref("save_workspace", val);
 }
 
 /**
@@ -48,6 +58,11 @@ bool UserPrefValues::loadWorkspace()
    return readPref<bool>("load_workspace");
 }
 
+core::Error UserPrefValues::setLoadWorkspace(bool val)
+{
+   return writePref("load_workspace", val);
+}
+
 /**
  * The initial working directory for new R sessions.
  */
@@ -56,12 +71,22 @@ std::string UserPrefValues::initialWorkingDirectory()
    return readPref<std::string>("initial_working_directory");
 }
 
+core::Error UserPrefValues::setInitialWorkingDirectory(std::string val)
+{
+   return writePref("initial_working_directory", val);
+}
+
 /**
  * The CRAN mirror to use.
  */
-std::string UserPrefValues::cranMirror()
+core::json::Object UserPrefValues::cranMirror()
 {
-   return readPref<std::string>("cran_mirror");
+   return readPref<core::json::Object>("cran_mirror");
+}
+
+core::Error UserPrefValues::setCranMirror(core::json::Object val)
+{
+   return writePref("cran_mirror", val);
 }
 
 /**
@@ -72,12 +97,22 @@ std::string UserPrefValues::bioconductorMirrorName()
    return readPref<std::string>("bioconductor_mirror_name");
 }
 
+core::Error UserPrefValues::setBioconductorMirrorName(std::string val)
+{
+   return writePref("bioconductor_mirror_name", val);
+}
+
 /**
  * The URL of the default Bioconductor mirror.
  */
 std::string UserPrefValues::bioconductorMirrorUrl()
 {
    return readPref<std::string>("bioconductor_mirror_url");
+}
+
+core::Error UserPrefValues::setBioconductorMirrorUrl(std::string val)
+{
+   return writePref("bioconductor_mirror_url", val);
 }
 
 /**
@@ -88,12 +123,22 @@ bool UserPrefValues::alwaysSaveHistory()
    return readPref<bool>("always_save_history");
 }
 
+core::Error UserPrefValues::setAlwaysSaveHistory(bool val)
+{
+   return writePref("always_save_history", val);
+}
+
 /**
  * Whether to remove duplicate entries from the R console history.
  */
 bool UserPrefValues::removeHistoryDuplicates()
 {
    return readPref<bool>("remove_history_duplicates");
+}
+
+core::Error UserPrefValues::setRemoveHistoryDuplicates(bool val)
+{
+   return writePref("remove_history_duplicates", val);
 }
 
 /**
@@ -104,12 +149,22 @@ bool UserPrefValues::showLastDotValue()
    return readPref<bool>("show_last_dot_value");
 }
 
+core::Error UserPrefValues::setShowLastDotValue(bool val)
+{
+   return writePref("show_last_dot_value", val);
+}
+
 /**
  * The line ending format to use when saving files.
  */
 std::string UserPrefValues::lineEndingConversion()
 {
    return readPref<std::string>("line_ending_conversion");
+}
+
+core::Error UserPrefValues::setLineEndingConversion(std::string val)
+{
+   return writePref("line_ending_conversion", val);
 }
 
 /**
@@ -120,12 +175,22 @@ bool UserPrefValues::useNewlinesInMakefiles()
    return readPref<bool>("use_newlines_in_makefiles");
 }
 
+core::Error UserPrefValues::setUseNewlinesInMakefiles(bool val)
+{
+   return writePref("use_newlines_in_makefiles", val);
+}
+
 /**
  * The terminal shell to use on Windows.
  */
 std::string UserPrefValues::windowsTerminalShell()
 {
    return readPref<std::string>("windows_terminal_shell");
+}
+
+core::Error UserPrefValues::setWindowsTerminalShell(std::string val)
+{
+   return writePref("windows_terminal_shell", val);
 }
 
 /**
@@ -136,12 +201,22 @@ std::string UserPrefValues::posixTerminalShell()
    return readPref<std::string>("posix_terminal_shell");
 }
 
+core::Error UserPrefValues::setPosixTerminalShell(std::string val)
+{
+   return writePref("posix_terminal_shell", val);
+}
+
 /**
  * The fully qualified path to the custom shell command to use in the Terminal tab.
  */
 std::string UserPrefValues::customShellCommand()
 {
    return readPref<std::string>("custom_shell_command");
+}
+
+core::Error UserPrefValues::setCustomShellCommand(std::string val)
+{
+   return writePref("custom_shell_command", val);
 }
 
 /**
@@ -152,12 +227,22 @@ std::string UserPrefValues::customShellOptions()
    return readPref<std::string>("custom_shell_options");
 }
 
+core::Error UserPrefValues::setCustomShellOptions(std::string val)
+{
+   return writePref("custom_shell_options", val);
+}
+
 /**
  * Show line numbers in RStudio's code editor.
  */
 bool UserPrefValues::showLineNumbers()
 {
    return readPref<bool>("show_line_numbers");
+}
+
+core::Error UserPrefValues::setShowLineNumbers(bool val)
+{
+   return writePref("show_line_numbers", val);
 }
 
 /**
@@ -168,6 +253,11 @@ bool UserPrefValues::highlightSelectedWord()
    return readPref<bool>("highlight_selected_word");
 }
 
+core::Error UserPrefValues::setHighlightSelectedWord(bool val)
+{
+   return writePref("highlight_selected_word", val);
+}
+
 /**
  * Highlight the selected line in RStudio's code editor.
  */
@@ -176,12 +266,22 @@ bool UserPrefValues::highlightSelectedLine()
    return readPref<bool>("highlight_selected_line");
 }
 
+core::Error UserPrefValues::setHighlightSelectedLine(bool val)
+{
+   return writePref("highlight_selected_line", val);
+}
+
 /**
  * Layout of panes in the RStudio workbench.
  */
-bool UserPrefValues::panes()
+core::json::Object UserPrefValues::panes()
 {
-   return readPref<bool>("panes");
+   return readPref<core::json::Object>("panes");
+}
+
+core::Error UserPrefValues::setPanes(core::json::Object val)
+{
+   return writePref("panes", val);
 }
 
 /**
@@ -192,12 +292,22 @@ bool UserPrefValues::useSpacesForTab()
    return readPref<bool>("use_spaces_for_tab");
 }
 
+core::Error UserPrefValues::setUseSpacesForTab(bool val)
+{
+   return writePref("use_spaces_for_tab", val);
+}
+
 /**
  * The number of spaces to insert when pressing the Tab key.
  */
 int UserPrefValues::numSpacesForTab()
 {
    return readPref<int>("num_spaces_for_tab");
+}
+
+core::Error UserPrefValues::setNumSpacesForTab(int val)
+{
+   return writePref("num_spaces_for_tab", val);
 }
 
 /**
@@ -208,12 +318,22 @@ bool UserPrefValues::autoDetectIndentation()
    return readPref<bool>("auto_detect_indentation");
 }
 
+core::Error UserPrefValues::setAutoDetectIndentation(bool val)
+{
+   return writePref("auto_detect_indentation", val);
+}
+
 /**
  * Whether to show the margin guide in the RStudio code editor.
  */
 bool UserPrefValues::showMargin()
 {
    return readPref<bool>("show_margin");
+}
+
+core::Error UserPrefValues::setShowMargin(bool val)
+{
+   return writePref("show_margin", val);
 }
 
 /**
@@ -224,12 +344,22 @@ bool UserPrefValues::blinkingCursor()
    return readPref<bool>("blinking_cursor");
 }
 
+core::Error UserPrefValues::setBlinkingCursor(bool val)
+{
+   return writePref("blinking_cursor", val);
+}
+
 /**
  * The number of columns of text after which the margin is shown.
  */
 int UserPrefValues::marginColumn()
 {
    return readPref<int>("margin_column");
+}
+
+core::Error UserPrefValues::setMarginColumn(int val)
+{
+   return writePref("margin_column", val);
 }
 
 /**
@@ -240,12 +370,22 @@ bool UserPrefValues::showInvisibles()
    return readPref<bool>("show_invisibles");
 }
 
+core::Error UserPrefValues::setShowInvisibles(bool val)
+{
+   return writePref("show_invisibles", val);
+}
+
 /**
  * Whether to show indentation guides in the RStudio code editor.
  */
 bool UserPrefValues::showIndentGuides()
 {
    return readPref<bool>("show_indent_guides");
+}
+
+core::Error UserPrefValues::setShowIndentGuides(bool val)
+{
+   return writePref("show_indent_guides", val);
 }
 
 /**
@@ -256,12 +396,22 @@ bool UserPrefValues::continueCommentsOnNewline()
    return readPref<bool>("continue_comments_on_newline");
 }
 
+core::Error UserPrefValues::setContinueCommentsOnNewline(bool val)
+{
+   return writePref("continue_comments_on_newline", val);
+}
+
 /**
  * The keybindings to use in the RStudio code editor.
  */
 std::string UserPrefValues::editorKeybindings()
 {
    return readPref<std::string>("editor_keybindings");
+}
+
+core::Error UserPrefValues::setEditorKeybindings(std::string val)
+{
+   return writePref("editor_keybindings", val);
 }
 
 /**
@@ -272,12 +422,22 @@ bool UserPrefValues::insertMatching()
    return readPref<bool>("insert_matching");
 }
 
+core::Error UserPrefValues::setInsertMatching(bool val)
+{
+   return writePref("insert_matching", val);
+}
+
 /**
  * Whether to insert spaces around the equals sign in R code.
  */
 bool UserPrefValues::insertSpacesAroundEquals()
 {
    return readPref<bool>("insert_spaces_around_equals");
+}
+
+core::Error UserPrefValues::setInsertSpacesAroundEquals(bool val)
+{
+   return writePref("insert_spaces_around_equals", val);
 }
 
 /**
@@ -288,12 +448,22 @@ bool UserPrefValues::insertParensAfterFunctionCompletion()
    return readPref<bool>("insert_parens_after_function_completion");
 }
 
+core::Error UserPrefValues::setInsertParensAfterFunctionCompletion(bool val)
+{
+   return writePref("insert_parens_after_function_completion", val);
+}
+
 /**
  * Whether to attempt completion of multiple-line statements when pressing Tab.
  */
 bool UserPrefValues::tabMultilineCompletion()
 {
    return readPref<bool>("tab_multiline_completion");
+}
+
+core::Error UserPrefValues::setTabMultilineCompletion(bool val)
+{
+   return writePref("tab_multiline_completion", val);
 }
 
 /**
@@ -304,12 +474,22 @@ bool UserPrefValues::showHelpTooltipOnIdle()
    return readPref<bool>("show_help_tooltip_on_idle");
 }
 
+core::Error UserPrefValues::setShowHelpTooltipOnIdle(bool val)
+{
+   return writePref("show_help_tooltip_on_idle", val);
+}
+
 /**
  * Which kinds of delimiters can be used to surround the current selection.
  */
 std::string UserPrefValues::surroundSelection()
 {
    return readPref<std::string>("surround_selection");
+}
+
+core::Error UserPrefValues::setSurroundSelection(std::string val)
+{
+   return writePref("surround_selection", val);
 }
 
 /**
@@ -320,12 +500,22 @@ bool UserPrefValues::enableSnippets()
    return readPref<bool>("enable_snippets");
 }
 
+core::Error UserPrefValues::setEnableSnippets(bool val)
+{
+   return writePref("enable_snippets", val);
+}
+
 /**
  * When to use auto-completion for R code in the RStudio code editor.
  */
 std::string UserPrefValues::codeCompletion()
 {
    return readPref<std::string>("code_completion");
+}
+
+core::Error UserPrefValues::setCodeCompletion(std::string val)
+{
+   return writePref("code_completion", val);
 }
 
 /**
@@ -336,12 +526,22 @@ std::string UserPrefValues::codeCompletionOther()
    return readPref<std::string>("code_completion_other");
 }
 
+core::Error UserPrefValues::setCodeCompletionOther(std::string val)
+{
+   return writePref("code_completion_other", val);
+}
+
 /**
  * Whether to always use code completion in the R console.
  */
 bool UserPrefValues::consoleCodeCompletion()
 {
    return readPref<bool>("console_code_completion");
+}
+
+core::Error UserPrefValues::setConsoleCodeCompletion(bool val)
+{
+   return writePref("console_code_completion", val);
 }
 
 /**
@@ -352,12 +552,22 @@ int UserPrefValues::codeCompletionDelay()
    return readPref<int>("code_completion_delay");
 }
 
+core::Error UserPrefValues::setCodeCompletionDelay(int val)
+{
+   return writePref("code_completion_delay", val);
+}
+
 /**
  * The number of characters in a symbol that can be entered before completions are offered.
  */
 int UserPrefValues::codeCompletionCharacters()
 {
    return readPref<int>("code_completion_characters");
+}
+
+core::Error UserPrefValues::setCodeCompletionCharacters(int val)
+{
+   return writePref("code_completion_characters", val);
 }
 
 /**
@@ -368,12 +578,22 @@ bool UserPrefValues::showFunctionSignatureTooltips()
    return readPref<bool>("show_function_signature_tooltips");
 }
 
+core::Error UserPrefValues::setShowFunctionSignatureTooltips(bool val)
+{
+   return writePref("show_function_signature_tooltips", val);
+}
+
 /**
  * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
  */
 bool UserPrefValues::showDiagnosticsR()
 {
    return readPref<bool>("show_diagnostics_r");
+}
+
+core::Error UserPrefValues::setShowDiagnosticsR(bool val)
+{
+   return writePref("show_diagnostics_r", val);
 }
 
 /**
@@ -384,12 +604,22 @@ bool UserPrefValues::showDiagnosticsCpp()
    return readPref<bool>("show_diagnostics_cpp");
 }
 
+core::Error UserPrefValues::setShowDiagnosticsCpp(bool val)
+{
+   return writePref("show_diagnostics_cpp", val);
+}
+
 /**
  * Whether to show diagnostic messages for other types of code (not R or C++).
  */
 bool UserPrefValues::showDiagnosticsOther()
 {
    return readPref<bool>("show_diagnostics_other");
+}
+
+core::Error UserPrefValues::setShowDiagnosticsOther(bool val)
+{
+   return writePref("show_diagnostics_other", val);
 }
 
 /**
@@ -400,12 +630,22 @@ bool UserPrefValues::styleDiagnostics()
    return readPref<bool>("style_diagnostics");
 }
 
+core::Error UserPrefValues::setStyleDiagnostics(bool val)
+{
+   return writePref("style_diagnostics", val);
+}
+
 /**
  * Whether to check code for problems after saving it.
  */
 bool UserPrefValues::diagnosticsOnSave()
 {
    return readPref<bool>("diagnostics_on_save");
+}
+
+core::Error UserPrefValues::setDiagnosticsOnSave(bool val)
+{
+   return writePref("diagnostics_on_save", val);
 }
 
 /**
@@ -416,12 +656,22 @@ bool UserPrefValues::backgroundDiagnostics()
    return readPref<bool>("background_diagnostics");
 }
 
+core::Error UserPrefValues::setBackgroundDiagnostics(bool val)
+{
+   return writePref("background_diagnostics", val);
+}
+
 /**
  * The number of milliseconds to delay before running code diagnostics in the background.
  */
 int UserPrefValues::backgroundDiagnosticsDelayMs()
 {
    return readPref<int>("background_diagnostics_delay_ms");
+}
+
+core::Error UserPrefValues::setBackgroundDiagnosticsDelayMs(int val)
+{
+   return writePref("background_diagnostics_delay_ms", val);
 }
 
 /**
@@ -432,12 +682,22 @@ bool UserPrefValues::diagnosticsInRFunctionCalls()
    return readPref<bool>("diagnostics_in_r_function_calls");
 }
 
+core::Error UserPrefValues::setDiagnosticsInRFunctionCalls(bool val)
+{
+   return writePref("diagnostics_in_r_function_calls", val);
+}
+
 /**
  * Whether to check arguments to R function calls.
  */
 bool UserPrefValues::checkArgumentsToRFunctionCalls()
 {
    return readPref<bool>("check_arguments_to_r_function_calls");
+}
+
+core::Error UserPrefValues::setCheckArgumentsToRFunctionCalls(bool val)
+{
+   return writePref("check_arguments_to_r_function_calls", val);
 }
 
 /**
@@ -448,12 +708,22 @@ bool UserPrefValues::checkUnexpectedAssignmentInFunctionCall()
    return readPref<bool>("check_unexpected_assignment_in_function_call");
 }
 
+core::Error UserPrefValues::setCheckUnexpectedAssignmentInFunctionCall(bool val)
+{
+   return writePref("check_unexpected_assignment_in_function_call", val);
+}
+
 /**
  * Whether to generate a warning if a variable is used without being defined in the current scope.
  */
 bool UserPrefValues::warnIfNoSuchVariableInScope()
 {
    return readPref<bool>("warn_if_no_such_variable_in_scope");
+}
+
+core::Error UserPrefValues::setWarnIfNoSuchVariableInScope(bool val)
+{
+   return writePref("warn_if_no_such_variable_in_scope", val);
 }
 
 /**
@@ -464,12 +734,22 @@ bool UserPrefValues::warnVariableDefinedButNotUsed()
    return readPref<bool>("warn_variable_defined_but_not_used");
 }
 
+core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
+{
+   return writePref("warn_variable_defined_but_not_used", val);
+}
+
 /**
  * Whether to automatically discover and offer to install missing R package dependenices.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
 {
    return readPref<bool>("auto_discover_package_dependencies");
+}
+
+core::Error UserPrefValues::setAutoDiscoverPackageDependencies(bool val)
+{
+   return writePref("auto_discover_package_dependencies", val);
 }
 
 /**
@@ -480,12 +760,22 @@ bool UserPrefValues::autoAppendNewline()
    return readPref<bool>("auto_append_newline");
 }
 
+core::Error UserPrefValues::setAutoAppendNewline(bool val)
+{
+   return writePref("auto_append_newline", val);
+}
+
 /**
  * Whether to strip trailing whitespace from each line when saving.
  */
 bool UserPrefValues::stripTrailingWhitespace()
 {
    return readPref<bool>("strip_trailing_whitespace");
+}
+
+core::Error UserPrefValues::setStripTrailingWhitespace(bool val)
+{
+   return writePref("strip_trailing_whitespace", val);
 }
 
 /**
@@ -496,12 +786,22 @@ bool UserPrefValues::restoreSourceDocumentCursorPosition()
    return readPref<bool>("restore_source_document_cursor_position");
 }
 
+core::Error UserPrefValues::setRestoreSourceDocumentCursorPosition(bool val)
+{
+   return writePref("restore_source_document_cursor_position", val);
+}
+
 /**
  * Whether to automatically re-indent code when it's pasted into RStudio.
  */
 bool UserPrefValues::reindentOnPaste()
 {
    return readPref<bool>("reindent_on_paste");
+}
+
+core::Error UserPrefValues::setReindentOnPaste(bool val)
+{
+   return writePref("reindent_on_paste", val);
 }
 
 /**
@@ -512,12 +812,22 @@ bool UserPrefValues::verticallyAlignArgumentsIndent()
    return readPref<bool>("vertically_align_arguments_indent");
 }
 
+core::Error UserPrefValues::setVerticallyAlignArgumentsIndent(bool val)
+{
+   return writePref("vertically_align_arguments_indent", val);
+}
+
 /**
  * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
  */
 bool UserPrefValues::softWrapRFiles()
 {
    return readPref<bool>("soft_wrap_r_files");
+}
+
+core::Error UserPrefValues::setSoftWrapRFiles(bool val)
+{
+   return writePref("soft_wrap_r_files", val);
 }
 
 /**
@@ -528,12 +838,22 @@ bool UserPrefValues::focusConsoleAfterExec()
    return readPref<bool>("focus_console_after_exec");
 }
 
+core::Error UserPrefValues::setFocusConsoleAfterExec(bool val)
+{
+   return writePref("focus_console_after_exec", val);
+}
+
 /**
  * The style of folding to use.
  */
 std::string UserPrefValues::foldStyle()
 {
    return readPref<std::string>("fold_style");
+}
+
+core::Error UserPrefValues::setFoldStyle(std::string val)
+{
+   return writePref("fold_style", val);
 }
 
 /**
@@ -544,12 +864,22 @@ bool UserPrefValues::saveBeforeSourcing()
    return readPref<bool>("save_before_sourcing");
 }
 
+core::Error UserPrefValues::setSaveBeforeSourcing(bool val)
+{
+   return writePref("save_before_sourcing", val);
+}
+
 /**
  * Whether to use syntax highlighting in the R console.
  */
 bool UserPrefValues::syntaxColorConsole()
 {
    return readPref<bool>("syntax_color_console");
+}
+
+core::Error UserPrefValues::setSyntaxColorConsole(bool val)
+{
+   return writePref("syntax_color_console", val);
 }
 
 /**
@@ -560,12 +890,22 @@ bool UserPrefValues::scrollPastEndOfDocument()
    return readPref<bool>("scroll_past_end_of_document");
 }
 
+core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
+{
+   return writePref("scroll_past_end_of_document", val);
+}
+
 /**
  * Whether to highlight R function calls in the code editor.
  */
 bool UserPrefValues::highlightRFunctionCalls()
 {
    return readPref<bool>("highlight_r_function_calls");
+}
+
+core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
+{
+   return writePref("highlight_r_function_calls", val);
 }
 
 /**
@@ -576,12 +916,22 @@ int UserPrefValues::consoleLineLengthLimit()
    return readPref<int>("console_line_length_limit");
 }
 
+core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
+{
+   return writePref("console_line_length_limit", val);
+}
+
 /**
  * How to treat ANSI escape codes in the console.
  */
 std::string UserPrefValues::ansiConsoleMode()
 {
    return readPref<std::string>("ansi_console_mode");
+}
+
+core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
+{
+   return writePref("ansi_console_mode", val);
 }
 
 /**
@@ -592,12 +942,22 @@ bool UserPrefValues::showInlineToolbarForRCodeChunks()
    return readPref<bool>("show_inline_toolbar_for_r_code_chunks");
 }
 
+core::Error UserPrefValues::setShowInlineToolbarForRCodeChunks(bool val)
+{
+   return writePref("show_inline_toolbar_for_r_code_chunks", val);
+}
+
 /**
  * Whether to highlight code chunks in R Markdown documents with a different background color.
  */
 bool UserPrefValues::highlightCodeChunks()
 {
    return readPref<bool>("highlight_code_chunks");
+}
+
+core::Error UserPrefValues::setHighlightCodeChunks(bool val)
+{
+   return writePref("highlight_code_chunks", val);
 }
 
 /**
@@ -608,12 +968,22 @@ bool UserPrefValues::saveFilesBeforeBuild()
    return readPref<bool>("save_files_before_build");
 }
 
+core::Error UserPrefValues::setSaveFilesBeforeBuild(bool val)
+{
+   return writePref("save_files_before_build", val);
+}
+
 /**
  * The default editor font size, in points.
  */
 double UserPrefValues::fontSizePoints()
 {
    return readPref<double>("font_size_points");
+}
+
+core::Error UserPrefValues::setFontSizePoints(double val)
+{
+   return writePref("font_size_points", val);
 }
 
 /**
@@ -624,12 +994,22 @@ std::string UserPrefValues::editorTheme()
    return readPref<std::string>("editor_theme");
 }
 
+core::Error UserPrefValues::setEditorTheme(std::string val)
+{
+   return writePref("editor_theme", val);
+}
+
 /**
  * The default character encoding to use when saving files.
  */
 std::string UserPrefValues::defaultEncoding()
 {
    return readPref<std::string>("default_encoding");
+}
+
+core::Error UserPrefValues::setDefaultEncoding(std::string val)
+{
+   return writePref("default_encoding", val);
 }
 
 /**
@@ -640,12 +1020,22 @@ bool UserPrefValues::toolbarVisible()
    return readPref<bool>("toolbar_visible");
 }
 
+core::Error UserPrefValues::setToolbarVisible(bool val)
+{
+   return writePref("toolbar_visible", val);
+}
+
 /**
  * The directory path under which to place new projects by default.
  */
 std::string UserPrefValues::defaultProjectLocation()
 {
    return readPref<std::string>("default_project_location");
+}
+
+core::Error UserPrefValues::setDefaultProjectLocation(std::string val)
+{
+   return writePref("default_project_location", val);
 }
 
 /**
@@ -656,12 +1046,22 @@ bool UserPrefValues::sourceWithEcho()
    return readPref<bool>("source_with_echo");
 }
 
+core::Error UserPrefValues::setSourceWithEcho(bool val)
+{
+   return writePref("source_with_echo", val);
+}
+
 /**
  * Whether to initialize new projects with a Git repo by default.
  */
 bool UserPrefValues::newProjectGitInit()
 {
    return readPref<bool>("new_project_git_init");
+}
+
+core::Error UserPrefValues::setNewProjectGitInit(bool val)
+{
+   return writePref("new_project_git_init", val);
 }
 
 /**
@@ -672,12 +1072,22 @@ std::string UserPrefValues::defaultSweaveEngine()
    return readPref<std::string>("default_sweave_engine");
 }
 
+core::Error UserPrefValues::setDefaultSweaveEngine(std::string val)
+{
+   return writePref("default_sweave_engine", val);
+}
+
 /**
  * The default program to use when processing LaTeX documents.
  */
 std::string UserPrefValues::defaultLatexProgram()
 {
    return readPref<std::string>("default_latex_program");
+}
+
+core::Error UserPrefValues::setDefaultLatexProgram(std::string val)
+{
+   return writePref("default_latex_program", val);
 }
 
 /**
@@ -688,12 +1098,22 @@ bool UserPrefValues::useRoxygen()
    return readPref<bool>("use_roxygen");
 }
 
+core::Error UserPrefValues::setUseRoxygen(bool val)
+{
+   return writePref("use_roxygen", val);
+}
+
 /**
  * Whether to use RStudio's data import feature.
  */
 bool UserPrefValues::useDataimport()
 {
    return readPref<bool>("use_dataimport");
+}
+
+core::Error UserPrefValues::setUseDataimport(bool val)
+{
+   return writePref("use_dataimport", val);
 }
 
 /**
@@ -704,12 +1124,22 @@ std::string UserPrefValues::pdfPreviewer()
    return readPref<std::string>("pdf_previewer");
 }
 
+core::Error UserPrefValues::setPdfPreviewer(std::string val)
+{
+   return writePref("pdf_previewer", val);
+}
+
 /**
  * Whether to always enable the concordance for RNW files.
  */
 bool UserPrefValues::alwaysEnableRnwConcordance()
 {
    return readPref<bool>("always_enable_rnw_concordance");
+}
+
+core::Error UserPrefValues::setAlwaysEnableRnwConcordance(bool val)
+{
+   return writePref("always_enable_rnw_concordance", val);
 }
 
 /**
@@ -720,6 +1150,11 @@ bool UserPrefValues::insertNumberedLatexSections()
    return readPref<bool>("insert_numbered_latex_sections");
 }
 
+core::Error UserPrefValues::setInsertNumberedLatexSections(bool val)
+{
+   return writePref("insert_numbered_latex_sections", val);
+}
+
 /**
  * The language of the spelling dictionary to use for spell checking.
  */
@@ -728,12 +1163,22 @@ std::string UserPrefValues::spellingDictionaryLanguage()
    return readPref<std::string>("spelling_dictionary_language");
 }
 
+core::Error UserPrefValues::setSpellingDictionaryLanguage(std::string val)
+{
+   return writePref("spelling_dictionary_language", val);
+}
+
 /**
  * The list of custom dictionaries to use when spell checking.
  */
-core::json::Object UserPrefValues::spellingCustomDictionaries()
+core::json::Array UserPrefValues::spellingCustomDictionaries()
 {
-   return readPref<core::json::Object>("spelling_custom_dictionaries");
+   return readPref<core::json::Array>("spelling_custom_dictionaries");
+}
+
+core::Error UserPrefValues::setSpellingCustomDictionaries(core::json::Array val)
+{
+   return writePref("spelling_custom_dictionaries", val);
 }
 
 /**
@@ -744,12 +1189,22 @@ int UserPrefValues::documentLoadLintDelay()
    return readPref<int>("document_load_lint_delay");
 }
 
+core::Error UserPrefValues::setDocumentLoadLintDelay(int val)
+{
+   return writePref("document_load_lint_delay", val);
+}
+
 /**
  * Whether to ignore words in uppercase when spell checking.
  */
 bool UserPrefValues::ignoreUppercaseWords()
 {
    return readPref<bool>("ignore_uppercase_words");
+}
+
+core::Error UserPrefValues::setIgnoreUppercaseWords(bool val)
+{
+   return writePref("ignore_uppercase_words", val);
 }
 
 /**
@@ -760,12 +1215,22 @@ bool UserPrefValues::ignoreWordsWithNumbers()
    return readPref<bool>("ignore_words_with_numbers");
 }
 
+core::Error UserPrefValues::setIgnoreWordsWithNumbers(bool val)
+{
+   return writePref("ignore_words_with_numbers", val);
+}
+
 /**
  * Whether to enable real-time spellchecking by default.
  */
 bool UserPrefValues::realTimeSpellchecking()
 {
    return readPref<bool>("real_time_spellchecking");
+}
+
+core::Error UserPrefValues::setRealTimeSpellchecking(bool val)
+{
+   return writePref("real_time_spellchecking", val);
 }
 
 /**
@@ -776,12 +1241,22 @@ bool UserPrefValues::navigateToBuildError()
    return readPref<bool>("navigate_to_build_error");
 }
 
+core::Error UserPrefValues::setNavigateToBuildError(bool val)
+{
+   return writePref("navigate_to_build_error", val);
+}
+
 /**
  * Whether to enable RStudio's Packages pane.
  */
 bool UserPrefValues::packagesPaneEnabled()
 {
    return readPref<bool>("packages_pane_enabled");
+}
+
+core::Error UserPrefValues::setPackagesPaneEnabled(bool val)
+{
+   return writePref("packages_pane_enabled", val);
 }
 
 /**
@@ -792,12 +1267,22 @@ bool UserPrefValues::useRcppTemplate()
    return readPref<bool>("use_rcpp_template");
 }
 
+core::Error UserPrefValues::setUseRcppTemplate(bool val)
+{
+   return writePref("use_rcpp_template", val);
+}
+
 /**
  * Whether to restore the last opened source documents when RStudio starts up.
  */
 bool UserPrefValues::restoreSourceDocuments()
 {
    return readPref<bool>("restore_source_documents");
+}
+
+core::Error UserPrefValues::setRestoreSourceDocuments(bool val)
+{
+   return writePref("restore_source_documents", val);
 }
 
 /**
@@ -808,12 +1293,22 @@ bool UserPrefValues::handleErrorsInUserCodeOnly()
    return readPref<bool>("handle_errors_in_user_code_only");
 }
 
+core::Error UserPrefValues::setHandleErrorsInUserCodeOnly(bool val)
+{
+   return writePref("handle_errors_in_user_code_only", val);
+}
+
 /**
  * Whether to automatically expand tracebacks when an error occurs.
  */
 bool UserPrefValues::autoExpandErrorTracebacks()
 {
    return readPref<bool>("auto_expand_error_tracebacks");
+}
+
+core::Error UserPrefValues::setAutoExpandErrorTracebacks(bool val)
+{
+   return writePref("auto_expand_error_tracebacks", val);
 }
 
 /**
@@ -824,12 +1319,22 @@ bool UserPrefValues::checkForUpdates()
    return readPref<bool>("check_for_updates");
 }
 
+core::Error UserPrefValues::setCheckForUpdates(bool val)
+{
+   return writePref("check_for_updates", val);
+}
+
 /**
  * Whether to show functions without source references in the Traceback pane while debugging.
  */
 bool UserPrefValues::showInternalFunctions()
 {
    return readPref<bool>("show_internal_functions");
+}
+
+core::Error UserPrefValues::setShowInternalFunctions(bool val)
+{
+   return writePref("show_internal_functions", val);
 }
 
 /**
@@ -840,12 +1345,22 @@ std::string UserPrefValues::shinyViewerType()
    return readPref<std::string>("shiny_viewer_type");
 }
 
+core::Error UserPrefValues::setShinyViewerType(std::string val)
+{
+   return writePref("shiny_viewer_type", val);
+}
+
 /**
  * Where to display Shiny applications when they are run.
  */
 std::string UserPrefValues::plumberViewerType()
 {
    return readPref<std::string>("plumber_viewer_type");
+}
+
+core::Error UserPrefValues::setPlumberViewerType(std::string val)
+{
+   return writePref("plumber_viewer_type", val);
 }
 
 /**
@@ -856,12 +1371,22 @@ std::string UserPrefValues::documentAuthor()
    return readPref<std::string>("document_author");
 }
 
+core::Error UserPrefValues::setDocumentAuthor(std::string val)
+{
+   return writePref("document_author", val);
+}
+
 /**
  * The path to the preferred R Markdown template.
  */
 std::string UserPrefValues::rmdPreferredTemplatePath()
 {
    return readPref<std::string>("rmd_preferred_template_path");
+}
+
+core::Error UserPrefValues::setRmdPreferredTemplatePath(std::string val)
+{
+   return writePref("rmd_preferred_template_path", val);
 }
 
 /**
@@ -872,12 +1397,22 @@ std::string UserPrefValues::rmdViewerType()
    return readPref<std::string>("rmd_viewer_type");
 }
 
+core::Error UserPrefValues::setRmdViewerType(std::string val)
+{
+   return writePref("rmd_viewer_type", val);
+}
+
 /**
  * Whether to show verbose diagnostic information when publishing content.
  */
 bool UserPrefValues::showPublishDiagnostics()
 {
    return readPref<bool>("show_publish_diagnostics");
+}
+
+core::Error UserPrefValues::setShowPublishDiagnostics(bool val)
+{
+   return writePref("show_publish_diagnostics", val);
 }
 
 /**
@@ -888,12 +1423,22 @@ bool UserPrefValues::publishCheckCertificates()
    return readPref<bool>("publish_check_certificates");
 }
 
+core::Error UserPrefValues::setPublishCheckCertificates(bool val)
+{
+   return writePref("publish_check_certificates", val);
+}
+
 /**
  * Whether to use a custom certificate authority (CA) bundle when publishing content.
  */
 bool UserPrefValues::usePublishCaBundle()
 {
    return readPref<bool>("use_publish_ca_bundle");
+}
+
+core::Error UserPrefValues::setUsePublishCaBundle(bool val)
+{
+   return writePref("use_publish_ca_bundle", val);
 }
 
 /**
@@ -904,12 +1449,22 @@ std::string UserPrefValues::publishCaBundle()
    return readPref<std::string>("publish_ca_bundle");
 }
 
+core::Error UserPrefValues::setPublishCaBundle(std::string val)
+{
+   return writePref("publish_ca_bundle", val);
+}
+
 /**
  * Whether to show chunk output inline for ordinary R Markdown documents.
  */
 bool UserPrefValues::rmdChunkOutputInline()
 {
    return readPref<bool>("rmd_chunk_output_inline");
+}
+
+core::Error UserPrefValues::setRmdChunkOutputInline(bool val)
+{
+   return writePref("rmd_chunk_output_inline", val);
 }
 
 /**
@@ -920,12 +1475,22 @@ bool UserPrefValues::showDocOutlineRmd()
    return readPref<bool>("show_doc_outline_rmd");
 }
 
+core::Error UserPrefValues::setShowDocOutlineRmd(bool val)
+{
+   return writePref("show_doc_outline_rmd", val);
+}
+
 /**
  * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
  */
 bool UserPrefValues::autoRunSetupChunk()
 {
    return readPref<bool>("auto_run_setup_chunk");
+}
+
+core::Error UserPrefValues::setAutoRunSetupChunk(bool val)
+{
+   return writePref("auto_run_setup_chunk", val);
 }
 
 /**
@@ -936,12 +1501,22 @@ bool UserPrefValues::hideConsoleOnChunkExecute()
    return readPref<bool>("hide_console_on_chunk_execute");
 }
 
+core::Error UserPrefValues::setHideConsoleOnChunkExecute(bool val)
+{
+   return writePref("hide_console_on_chunk_execute", val);
+}
+
 /**
  * The unit of R code to execute when the Execute command is invoked.
  */
 std::string UserPrefValues::executionBehavior()
 {
    return readPref<std::string>("execution_behavior");
+}
+
+core::Error UserPrefValues::setExecutionBehavior(std::string val)
+{
+   return writePref("execution_behavior", val);
 }
 
 /**
@@ -952,12 +1527,22 @@ bool UserPrefValues::showTerminalTab()
    return readPref<bool>("show_terminal_tab");
 }
 
+core::Error UserPrefValues::setShowTerminalTab(bool val)
+{
+   return writePref("show_terminal_tab", val);
+}
+
 /**
  * Whether to use local echo in the Terminal.
  */
 bool UserPrefValues::terminalLocalEcho()
 {
    return readPref<bool>("terminal_local_echo");
+}
+
+core::Error UserPrefValues::setTerminalLocalEcho(bool val)
+{
+   return writePref("terminal_local_echo", val);
 }
 
 /**
@@ -968,12 +1553,22 @@ bool UserPrefValues::terminalWebsockets()
    return readPref<bool>("terminal_websockets");
 }
 
+core::Error UserPrefValues::setTerminalWebsockets(bool val)
+{
+   return writePref("terminal_websockets", val);
+}
+
 /**
  * Whether to automatically close the Terminal tab.
  */
 bool UserPrefValues::terminalAutoClose()
 {
    return readPref<bool>("terminal_auto_close");
+}
+
+core::Error UserPrefValues::setTerminalAutoClose(bool val)
+{
+   return writePref("terminal_auto_close", val);
 }
 
 /**
@@ -984,12 +1579,22 @@ bool UserPrefValues::terminalTrackEnvironment()
    return readPref<bool>("terminal_track_environment");
 }
 
+core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
+{
+   return writePref("terminal_track_environment", val);
+}
+
 /**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
 {
    return readPref<bool>("show_rmd_render_command");
+}
+
+core::Error UserPrefValues::setShowRmdRenderCommand(bool val)
+{
+   return writePref("show_rmd_render_command", val);
 }
 
 /**
@@ -1000,12 +1605,22 @@ bool UserPrefValues::enableTextDrag()
    return readPref<bool>("enable_text_drag");
 }
 
+core::Error UserPrefValues::setEnableTextDrag(bool val)
+{
+   return writePref("enable_text_drag", val);
+}
+
 /**
  * Whether to show hidden files in the Files pane.
  */
 bool UserPrefValues::showHiddenFiles()
 {
    return readPref<bool>("show_hidden_files");
+}
+
+core::Error UserPrefValues::setShowHiddenFiles(bool val)
+{
+   return writePref("show_hidden_files", val);
 }
 
 /**
@@ -1016,12 +1631,22 @@ std::string UserPrefValues::jobsTabVisibility()
    return readPref<std::string>("jobs_tab_visibility");
 }
 
+core::Error UserPrefValues::setJobsTabVisibility(std::string val)
+{
+   return writePref("jobs_tab_visibility", val);
+}
+
 /**
  * Whether to show the Launcher jobs tab in RStudio Pro.
  */
 bool UserPrefValues::showLauncherJobsTab()
 {
    return readPref<bool>("show_launcher_jobs_tab");
+}
+
+core::Error UserPrefValues::setShowLauncherJobsTab(bool val)
+{
+   return writePref("show_launcher_jobs_tab", val);
 }
 
 /**
@@ -1032,6 +1657,11 @@ std::string UserPrefValues::launcherJobsSort()
    return readPref<std::string>("launcher_jobs_sort");
 }
 
+core::Error UserPrefValues::setLauncherJobsSort(std::string val)
+{
+   return writePref("launcher_jobs_sort", val);
+}
+
 /**
  * How to detect busy status in the Terminal.
  */
@@ -1040,12 +1670,22 @@ std::string UserPrefValues::busyDetection()
    return readPref<std::string>("busy_detection");
 }
 
+core::Error UserPrefValues::setBusyDetection(std::string val)
+{
+   return writePref("busy_detection", val);
+}
+
 /**
  * A whitelist of apps that should not be considered busy in the Terminal.
  */
-core::json::Object UserPrefValues::busyWhitelist()
+core::json::Array UserPrefValues::busyWhitelist()
 {
-   return readPref<core::json::Object>("busy_whitelist");
+   return readPref<core::json::Array>("busy_whitelist");
+}
+
+core::Error UserPrefValues::setBusyWhitelist(core::json::Array val)
+{
+   return writePref("busy_whitelist", val);
 }
 
 /**
@@ -1056,12 +1696,22 @@ std::string UserPrefValues::knitWorkingDir()
    return readPref<std::string>("knit_working_dir");
 }
 
+core::Error UserPrefValues::setKnitWorkingDir(std::string val)
+{
+   return writePref("knit_working_dir", val);
+}
+
 /**
  * Which objects to show in the document outline pane.
  */
 std::string UserPrefValues::docOutlineShow()
 {
    return readPref<std::string>("doc_outline_show");
+}
+
+core::Error UserPrefValues::setDocOutlineShow(std::string val)
+{
+   return writePref("doc_outline_show", val);
 }
 
 /**
@@ -1072,12 +1722,22 @@ std::string UserPrefValues::latexPreviewOnCursorIdle()
    return readPref<std::string>("latex_preview_on_cursor_idle");
 }
 
+core::Error UserPrefValues::setLatexPreviewOnCursorIdle(std::string val)
+{
+   return writePref("latex_preview_on_cursor_idle", val);
+}
+
 /**
  * Whether to wrap around when going to the previous or next editor tab.
  */
 bool UserPrefValues::wrapTabNavigation()
 {
    return readPref<bool>("wrap_tab_navigation");
+}
+
+core::Error UserPrefValues::setWrapTabNavigation(bool val)
+{
+   return writePref("wrap_tab_navigation", val);
 }
 
 /**
@@ -1088,12 +1748,22 @@ std::string UserPrefValues::globalTheme()
    return readPref<std::string>("global_theme");
 }
 
+core::Error UserPrefValues::setGlobalTheme(std::string val)
+{
+   return writePref("global_theme", val);
+}
+
 /**
  * Whether to ignore whitespace when generating diffs of version controlled files.
  */
 bool UserPrefValues::gitDiffIgnoreWhitespace()
 {
    return readPref<bool>("git_diff_ignore_whitespace");
+}
+
+core::Error UserPrefValues::setGitDiffIgnoreWhitespace(bool val)
+{
+   return writePref("git_diff_ignore_whitespace", val);
 }
 
 /**
@@ -1104,12 +1774,22 @@ bool UserPrefValues::consoleDoubleClickSelect()
    return readPref<bool>("console_double_click_select");
 }
 
+core::Error UserPrefValues::setConsoleDoubleClickSelect(bool val)
+{
+   return writePref("console_double_click_select", val);
+}
+
 /**
  * Whether a git repo should be initialized inside new projects by default.
  */
 bool UserPrefValues::newProjGitInit()
 {
    return readPref<bool>("new_proj_git_init");
+}
+
+core::Error UserPrefValues::setNewProjGitInit(bool val)
+{
+   return writePref("new_proj_git_init", val);
 }
 
 /**
@@ -1120,12 +1800,22 @@ std::string UserPrefValues::rootDocument()
    return readPref<std::string>("root_document");
 }
 
+core::Error UserPrefValues::setRootDocument(std::string val)
+{
+   return writePref("root_document", val);
+}
+
 /**
  * When to show the server home page in RStudio Server Pro.
  */
 std::string UserPrefValues::showUserHomePage()
 {
    return readPref<std::string>("show_user_home_page");
+}
+
+core::Error UserPrefValues::setShowUserHomePage(std::string val)
+{
+   return writePref("show_user_home_page", val);
 }
 
 /**
@@ -1136,12 +1826,22 @@ bool UserPrefValues::reuseSessionsForProjectLinks()
    return readPref<bool>("reuse_sessions_for_project_links");
 }
 
+core::Error UserPrefValues::setReuseSessionsForProjectLinks(bool val)
+{
+   return writePref("reuse_sessions_for_project_links", val);
+}
+
 /**
  * Whether to enable RStudio's version control system interface.
  */
 bool UserPrefValues::vcsEnabled()
 {
    return readPref<bool>("vcs_enabled");
+}
+
+core::Error UserPrefValues::setVcsEnabled(bool val)
+{
+   return writePref("vcs_enabled", val);
 }
 
 /**
@@ -1152,12 +1852,22 @@ std::string UserPrefValues::gitExePath()
    return readPref<std::string>("git_exe_path");
 }
 
+core::Error UserPrefValues::setGitExePath(std::string val)
+{
+   return writePref("git_exe_path", val);
+}
+
 /**
  * The path to the Subversion executable to use.
  */
 std::string UserPrefValues::svnExePath()
 {
    return readPref<std::string>("svn_exe_path");
+}
+
+core::Error UserPrefValues::setSvnExePath(std::string val)
+{
+   return writePref("svn_exe_path", val);
 }
 
 /**
@@ -1168,12 +1878,22 @@ std::string UserPrefValues::terminalPath()
    return readPref<std::string>("terminal_path");
 }
 
+core::Error UserPrefValues::setTerminalPath(std::string val)
+{
+   return writePref("terminal_path", val);
+}
+
 /**
  * The path to the RSA key file to use.
  */
 std::string UserPrefValues::rsaKeyPath()
 {
    return readPref<std::string>("rsa_key_path");
+}
+
+core::Error UserPrefValues::setRsaKeyPath(std::string val)
+{
+   return writePref("rsa_key_path", val);
 }
 
 /**
@@ -1184,12 +1904,22 @@ bool UserPrefValues::useDevtools()
    return readPref<bool>("use_devtools");
 }
 
+core::Error UserPrefValues::setUseDevtools(bool val)
+{
+   return writePref("use_devtools", val);
+}
+
 /**
  * Whether to use Internet2 for networking on R for Windows.
  */
 bool UserPrefValues::useInternet2()
 {
    return readPref<bool>("use_internet2");
+}
+
+core::Error UserPrefValues::setUseInternet2(bool val)
+{
+   return writePref("use_internet2", val);
 }
 
 /**
@@ -1200,12 +1930,22 @@ bool UserPrefValues::useSecureDownload()
    return readPref<bool>("use_secure_download");
 }
 
+core::Error UserPrefValues::setUseSecureDownload(bool val)
+{
+   return writePref("use_secure_download", val);
+}
+
 /**
  * Whether to clean up temporary files after running R CMD CHECK.
  */
 bool UserPrefValues::cleanupAfterRCmdCheck()
 {
    return readPref<bool>("cleanup_after_r_cmd_check");
+}
+
+core::Error UserPrefValues::setCleanupAfterRCmdCheck(bool val)
+{
+   return writePref("cleanup_after_r_cmd_check", val);
 }
 
 /**
@@ -1216,12 +1956,22 @@ bool UserPrefValues::viewDirAfterRCmdCheck()
    return readPref<bool>("view_dir_after_r_cmd_check");
 }
 
+core::Error UserPrefValues::setViewDirAfterRCmdCheck(bool val)
+{
+   return writePref("view_dir_after_r_cmd_check", val);
+}
+
 /**
  * Whether to hide object files in the Files pane.
  */
 bool UserPrefValues::hideObjectFiles()
 {
    return readPref<bool>("hide_object_files");
+}
+
+core::Error UserPrefValues::setHideObjectFiles(bool val)
+{
+   return writePref("hide_object_files", val);
 }
 
 /**
@@ -1232,12 +1982,22 @@ bool UserPrefValues::restoreLastProject()
    return readPref<bool>("restore_last_project");
 }
 
+core::Error UserPrefValues::setRestoreLastProject(bool val)
+{
+   return writePref("restore_last_project", val);
+}
+
 /**
  * Whether to clean output after running Texi2Dvi.
  */
 bool UserPrefValues::cleanTexi2dviOutput()
 {
    return readPref<bool>("clean_texi2dvi_output");
+}
+
+core::Error UserPrefValues::setCleanTexi2dviOutput(bool val)
+{
+   return writePref("clean_texi2dvi_output", val);
 }
 
 /**
@@ -1248,12 +2008,22 @@ bool UserPrefValues::latexShellEscape()
    return readPref<bool>("latex_shell_escape");
 }
 
+core::Error UserPrefValues::setLatexShellEscape(bool val)
+{
+   return writePref("latex_shell_escape", val);
+}
+
 /**
  * Whether to restore the last version of R used by the project in RStudio Pro.
  */
 bool UserPrefValues::restoreProjectRVersion()
 {
    return readPref<bool>("restore_project_r_version");
+}
+
+core::Error UserPrefValues::setRestoreProjectRVersion(bool val)
+{
+   return writePref("restore_project_r_version", val);
 }
 
    

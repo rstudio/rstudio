@@ -72,7 +72,13 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    if (layer >= layers_.size())
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-   return layers_[layer]->writePrefs(prefs);
+   Error result =  layers_[layer]->writePrefs(prefs);
+   if (result)
+      return result;
+
+   // Empty value indicates that we changed multiple prefs
+   onChanged("");
+   return Success();
 }
 
 } // namespace prefs

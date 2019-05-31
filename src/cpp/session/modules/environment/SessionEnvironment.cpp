@@ -396,7 +396,7 @@ json::Array environmentListAsJson()
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
        listEnvironment(env,
                        false,
-                       userSettings().showLastDotValue(),
+                       prefs::userPrefs().showLastDotValue(),
                        &rProtect,
                        &vars);
 

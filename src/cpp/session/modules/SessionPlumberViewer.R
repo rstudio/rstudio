@@ -14,25 +14,25 @@
 #
 
 .rs.addFunction("invokePlumberPaneViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 2))
-}, attrs = list(plumberViewerType = 2))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "pane"))
+}, attrs = list(plumberViewerType = "pane"))
 
 .rs.addFunction("invokePlumberWindowViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 3))
-}, attrs = list(plumberViewerType = 3))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "window"))
+}, attrs = list(plumberViewerType = "window"))
 
 .rs.addFunction("invokePlumberWindowExternal", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 4))
-}, attrs = list(plumberViewerType = 4))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "browser"))
+}, attrs = list(plumberViewerType = "browser"))
 
 .rs.addFunction("setPlumberViewerType", function(type) {
-   if (type == 1)
+   if (identical(type, "none"))
       options(plumber.swagger.url = NULL)
-   else if (type == 2)
+   else if (identical(type, "pane"))
       options(plumber.swagger.url = .rs.invokePlumberPaneViewer)
-   else if (type == 3)
+   else if (identical(type, "window"))
       options(plumber.swagger.url = .rs.invokePlumberWindowViewer)
-   else if (type == 4)
+   else if (identical(type, "browser"))
       options(plumber.swagger.url = .rs.invokePlumberWindowExternal)
 })
 

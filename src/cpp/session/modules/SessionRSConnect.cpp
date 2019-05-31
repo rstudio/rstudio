@@ -32,6 +32,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #define kFinishedMarker "Deployment completed: "
 #define kRSConnectFolder "rsconnect/"
@@ -103,13 +104,13 @@ public:
       // lead command with download options and certificate check state
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; " 
                       "options(rsconnect.check.certificate = " +
-                      (userSettings().publishCheckSslCerts() ? "TRUE" : "FALSE") + "); ");
+                      (prefs::userPrefs().publishCheckCertificates() ? "TRUE" : "FALSE") + "); ");
 
-      if (userSettings().usePublishCABundle() && 
-          !userSettings().publishCABundlePath().empty())
+      if (prefs::userPrefs().usePublishCaBundle() && 
+          !prefs::userPrefs().publishCaBundle().empty())
       {
          FilePath caBundleFile = module_context::resolveAliasedPath(
-               userSettings().publishCABundlePath());
+               prefs::userPrefs().publishCaBundle());
          if (caBundleFile.exists())
          {
             // if a valid bundle path was specified, use it
@@ -203,7 +204,7 @@ public:
                  (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
                     ignoredFiles + "'") + 
              ")" + 
-             (userSettings().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
+             (prefs::userPrefs().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
              ")}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
@@ -520,9 +521,9 @@ void applyPreferences()
 {
    // push preference changes into rsconnect package options immediately, so that it's possible to
    // use them without restarting R
-   r::options::setOption("rsconnect.check.certificate", userSettings().publishCheckSslCerts());
-   if (userSettings().usePublishCABundle())
-      r::options::setOption("rsconnect.ca.bundle", userSettings().publishCABundlePath());
+   r::options::setOption("rsconnect.check.certificate", prefs::userPrefs().publishCheckCertificates());
+   if (prefs::userPrefs().usePublishCaBundle())
+      r::options::setOption("rsconnect.ca.bundle", prefs::userPrefs().publishCaBundle());
    else
       r::options::setOption("rsconnect.ca.bundle", R_NilValue);
 }
@@ -533,7 +534,7 @@ Error initializeOptions()
    if (checkSEXP == R_NilValue)
    {
       // no user defined setting for certificate checks; disable if requested for the session
-      if (!userSettings().publishCheckSslCerts())
+      if (!prefs::userPrefs().publishCheckCertificates())
          r::options::setOption("rsconnect.check.certificate", false);
    }
    else
@@ -542,25 +543,23 @@ Error initializeOptions()
       // the current value of the option in our preferences, but also means that if you've set the
       // option in e.g. .Rprofile then it wins over RStudio's setting in the end.
       bool check = r::sexp::asLogical(checkSEXP);
-      if (userSettings().publishCheckSslCerts() != check)
+      if (prefs::userPrefs().publishCheckCertificates() != check)
       {
-         userSettings().setPublishCheckSslCerts(check);
+         prefs::userPrefs().setPublishCheckSslCerts(check);
       }
    }
 
    std::string caBundle = r::sexp::safeAsString(r::options::getOption("rsconnect.ca.bundle"));
-   if (caBundle.empty() && userSettings().usePublishCABundle())
+   if (caBundle.empty() && prefs::userPrefs().usePublishCaBundle())
    {
       // no user defined setting for CA bundle; inject a bundle if the user asked for one
-      r::options::setOption("rsconnect.ca.bundle", userSettings().publishCABundlePath());
+      r::options::setOption("rsconnect.ca.bundle", prefs::userPrefs().publishCaBundle());
    }
    else if (!caBundle.empty())
    {
       // promote user setting as above
-      userSettings().beginUpdate();
-      userSettings().setUsePublishCABundle(true);
-      userSettings().setPublishCABundlePath(caBundle);
-      userSettings().endUpdate();
+      prefs::userPrefs().setUsePublishCaBundle(true);
+      prefs::userPrefs().setPublishCaBundle(caBundle);
    }
    
    return Success();

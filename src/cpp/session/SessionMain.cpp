@@ -184,8 +184,6 @@
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
-#include "modules/prefs/UserPrefs.hpp"
-#include "modules/prefs/UserState.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -199,6 +197,7 @@
 #include "projects/SessionProjectsInternal.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include "workers/SessionWebRequestWorker.hpp"
 
@@ -1230,15 +1229,15 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
-   // check if we need to create the proifle (bail if we don't)
+   // check if we need to create the profile (bail if we don't)
    Options& options = rsession::options();
    if (!options.createProfile())
       return;
 
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
-   if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
+   if (!rProfilePath.exists() && !modules::prefs::userState().autoCreatedProfile())
    {
-      userSettings().setAutoCreatedProfile(true);
+      modules::prefs::userState().setAutoCreatedProfile(true);
       
       std::string p;
       p = "# .Rprofile -- commands to execute at the beginning of each R session\n"
@@ -1504,7 +1503,15 @@ int saveWorkspaceAction()
    }
 
    // no project override, read from settings
-   return userSettings().saveAction();
+   std::string action = modules::prefs::userPrefs().saveWorkspace();
+   if (action == kSaveWorkspaceAlways)
+      return rstudio::r::session::kSaveActionSave;
+   else if (action == kSaveWorkspaceNever)
+      return rstudio::r::session::kSaveActionNoSave;
+   else if (action == kSaveWorkspaceAsk)
+      return rstudio::r::session::kSaveActionAsk;
+   
+   return rstudio::r::session::kSaveActionAsk;
 }
 
 void syncRSaveAction()
@@ -1915,17 +1922,10 @@ int main (int argc, char * const argv[])
 
       bool customRepo = true;
 
-      // When edit disabled, clear CRAN user setting preferences
-      if (!options.allowCRANReposEdit()) {
-        CRANMirror userMirror = userSettings().cranMirror();
-        userMirror.changed = false;
-        userSettings().setCRANMirror(userMirror, false);
-      }
-
       // CRAN repos precedence: user setting then repos file then global server option
-      if (userSettings().cranMirror().changed) {
-         rOptions.rCRANUrl = userSettings().cranMirror().url;
-         rOptions.rCRANSecondary = userSettings().cranMirror().secondary;
+      if (modules::prefs::userState().cranMirrorChanged()) {
+         rOptions.rCRANUrl = modules::prefs::userPrefs().CRANMirror().url;
+         rOptions.rCRANSecondary = modules::prefs::userPrefs().CRANMirror().secondary;
       }
       else if (!options.rCRANMultipleRepos().empty()) {
          std::vector<std::string> parts;
@@ -1949,17 +1949,18 @@ int main (int argc, char * const argv[])
          customRepo = false;
       }
 
-      if (!userSettings().cranMirror().changed) {
+      if (!modules::prefs::userState().cranMirrorChanged()) 
+      {
          CRANMirror defaultMirror;
          defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
          defaultMirror.host = customRepo ? "Custom" : "RStudio";
          defaultMirror.secondary = rOptions.rCRANSecondary;
          defaultMirror.url = rOptions.rCRANUrl;
 
-         userSettings().setCRANMirror(defaultMirror, false);
+         modules::prefs::userPrefs().setCRANMirror(defaultMirror, false);
       }
 
-      rOptions.useInternet2 = userSettings().useInternet2();
+      rOptions.useInternet2 = modules::prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();
       rOptions.serverMode = serverMode;
@@ -1976,7 +1977,7 @@ int main (int argc, char * const argv[])
       }
       rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
-                                  userSettings().rProfileOnResume();
+                                  modules::prefs::userPrefs().runRprofileOnResume();
       rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();

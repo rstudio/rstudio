@@ -41,6 +41,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionPasswordManager.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
 
@@ -392,7 +393,7 @@ void initSvnBin()
 {
    // get the svn exe from user settings if it is there
    if (session::options().allowVcsExecutableEdit())
-      s_svnExePath = userSettings().svnExePath().absolutePath();
+      s_svnExePath = prefs::userPrefs().svnExePath().absolutePath();
 
    // if it wasn't provided in settings try to detect it
    if (s_svnExePath.empty())
@@ -565,7 +566,7 @@ std::string nonPathSvnBinDir()
       return std::string();
 }
 
-void onUserSettingsChanged()
+void onUserSettingsChanged(const std::string& pref)
 {
    initSvnBin();
 }
@@ -1902,7 +1903,7 @@ Error initializeSvn(const core::FilePath& workingDir)
    std::string repoURL = repositoryRoot(s_workingDir);
    s_isSvnSshRepository = boost::algorithm::starts_with(repoURL, "svn+ssh");
 
-   userSettings().onChanged.connect(onUserSettingsChanged);
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
    return Success();
 }

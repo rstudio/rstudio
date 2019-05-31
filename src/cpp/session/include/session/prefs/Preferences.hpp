@@ -20,6 +20,8 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 
+#include <core/BoostSignals.hpp>
+
 #include "PrefLayer.hpp"
 
 namespace rstudio {
@@ -62,7 +64,18 @@ public:
       return T();
    }
 
+   template <typename T> core::Error writePref(const std::string& name, T value)
+   {
+      auto layer = layers_[userLayer()];
+      onChanged(name);
+      return layer->writePref(name, value);
+   }
+
    virtual core::Error createLayers() = 0;
+   virtual int userLayer() = 0;
+
+   // Signal emitted when preferences change; can include the pref name when only one pref chagnes.
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)> onChanged;
 
 protected:
    core::Error readLayers();

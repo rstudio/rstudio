@@ -69,6 +69,12 @@ public:
       return boost::none;
    };
 
+   template <typename T> core::Error writePref(const std::string& name, T value)
+   {
+      (*cache_)[name] = value;
+      return writePrefs(*cache_);
+   }
+
    core::json::Object allPrefs();
    core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 

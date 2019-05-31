@@ -61,6 +61,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionAskPass.hpp"
 
@@ -3084,7 +3085,7 @@ FilePath whichGitExe()
 
 bool isGitInstalled()
 {
-   if (!userSettings().vcsEnabled())
+   if (!prefs::userPrefs().vcsEnabled())
       return false;
 
    // special handling for mavericks for case where there is /usr/bin/git
@@ -3154,9 +3155,9 @@ std::string nonPathGitBinDir()
       return std::string();
 }
 
-void onUserSettingsChanged()
+void onUserSettingsChanged(const std::string& pref)
 {
-   FilePath gitExePath = userSettings().gitExePath();
+   FilePath gitExePath(prefs::userPrefs().gitExePath());
    if (session::options().allowVcsExecutableEdit() && !gitExePath.empty())
    {
       // if there is an explicit value then set it
@@ -3205,7 +3206,7 @@ bool initGitBin()
 
    // get the git bin dir from settings if it is there
    if (session::options().allowVcsExecutableEdit())
-      s_gitExePath = userSettings().gitExePath().absolutePath();
+      s_gitExePath = prefs::userPrefs().gitExePath();
 
    // if it wasn't provided in settings then make sure we can detect it
    if (s_gitExePath.empty())
@@ -3363,7 +3364,7 @@ core::Error initialize()
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    // add settings changed handler
-   userSettings().onChanged.connect(onUserSettingsChanged);
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
    // install rpc methods
    using boost::bind;

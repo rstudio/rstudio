@@ -19,7 +19,7 @@
 #define kUserPrefsFile "rstudio-prefs.json"
 #define kUserPrefsSchemaFile "user-prefs-schema.json"
 
-#include "UserPrefValues.hpp"
+#include "UserPrefValuesNative.hpp"
 
 #include <core/json/Json.hpp>
 
@@ -47,7 +47,7 @@ enum PrefLayers
    PREF_LAYER_MAX      = PREF_LAYER_PROJECT
 };
 
-UserPrefValues& userPrefs();
+UserPrefValuesNative& userPrefs();
 
 core::json::Array allPrefLayers();
 

@@ -1,7 +1,7 @@
 /*
  * SessionPackages.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionPackrat.hpp"
 
@@ -113,7 +114,8 @@ public:
    static void attemptUpgrade()
    {
       // get the URL currently in settings. if it's https already then bail
-      CRANMirror mirror = userSettings().cranMirror();
+      modules::prefs::CRANMirror mirror = 
+         modules::prefs::userPrefs().CRANMirror();
       if (isSecure(mirror.url))
          return;
 
@@ -145,11 +147,11 @@ public:
    {
       if ((exitStatus == EXIT_SUCCESS) && checkOutputForSuccess())
       {
-         userSettings().setCRANMirror(secureMirror_);
+         modules::prefs::userPrefs().setCRANMirror(secureMirror_, true);
       }
       else
       {
-         std::string url = userSettings().cranMirror().url;
+         std::string url = modules::prefs::userPrefs().CRANMirror().url;
          if (isKnownSecureMirror(url))
             unableToSecureConnectionWarning(secureMirror_.url);
          else
@@ -171,20 +173,20 @@ private:
    }
 
 private:
-   explicit CRANMirrorHttpsUpgrade(const CRANMirror& secureMirror)
+   explicit CRANMirrorHttpsUpgrade(const modules::prefs::CRANMirror& secureMirror)
       : secureMirror_(secureMirror)
    {
    }
    std::string output_;
-   CRANMirror secureMirror_;
+   modules::prefs::CRANMirror secureMirror_;
 };
 
 
 void revertCRANMirrorToHTTP()
 {
-   CRANMirror mirror = userSettings().cranMirror();
+   modules::prefs::CRANMirror mirror = modules::prefs::userPrefs().CRANMirror();
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
-   userSettings().setCRANMirror(mirror);
+   modules::prefs::userPrefs().setCRANMirror(mirror, true);
 }
 
 } // anonymous namespace
@@ -192,7 +194,7 @@ void revertCRANMirrorToHTTP()
 void reconcileSecureDownloadConfiguration()
 {
    // secure downloads enabled
-   if (userSettings().securePackageDownload())
+   if (prefs::userPrefs().securePackageDownload())
    {
       // ensure we have a secure download method
       Error error = r::exec::RFunction(".rs.initSecureDownload").call();

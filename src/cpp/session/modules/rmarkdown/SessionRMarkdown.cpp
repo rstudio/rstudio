@@ -551,7 +551,7 @@ private:
             working = module_context::resolveAliasedPath(workingDir);
 
          // tell the user the command we're using to render the doc if requested
-         if (userSettings().showRmdRenderCommand())
+         if (prefs::userPrefs().showRmdRenderCommand())
          {
             onRenderOutput(module_context::kCompileOutputNormal, "==> " + cmd + "\n");
          }

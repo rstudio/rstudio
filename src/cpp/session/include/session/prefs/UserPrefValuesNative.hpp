@@ -1,5 +1,4 @@
-/*
- * SessionUserState.hpp
+/* UserPrefValuesNative.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -12,45 +11,45 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+ 
+#ifndef SESSION_USER_PREF_VALUES_NATIVE_HPP
+#define SESSION_USER_PREF_VALUES_NATIVE_HPP
 
-#ifndef SESSION_USER_STATE_HPP
-#define SESSION_USER_STATE_HPP
+#include <core/StringUtils.hpp>
 
-#include <core/json/Json.hpp>
-
-#define kUserStateFile "rstudio-state.json"
-#define kUserStateSchemaFile "user-state-schema.json"
-
-enum StateLayer
-{
-   STATE_LAYER_MIN      = 0,
-
-   STATE_LAYER_DEFAULT  = STATE_LAYER_MIN,
-   STATE_LAYER_COMPUTED = 1,
-   STATE_LAYER_USER     = 2,
-
-   STATE_LAYER_MAX      = STATE_LAYER_USER
-};
-
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+#include "UserPrefValues.hpp"
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace prefs {
 
-core::json::Array allStateLayers();
+struct CRANMirror
+{
+   std::string name;
+   std::string host;
+   std::string url;
+   std::string country;
+   std::string secondary;
+};
 
-core::Error initializeState();
+struct BioconductorMirror
+{
+   std::string name;
+   std::string url;
+};
 
-} // namespace prefs
-} // namespace modules
-} // namespace session
-} // namespace rstudio
+class UserPrefValuesNative: public UserPrefValues
+{
+public:
+   core::string_utils::LineEnding lineEndings();
+   CRANMirror CRANMirror();
+   core::Error setCRANMirror(const struct CRANMirror& mirror, bool update);
+};
+
+}
+}
+}
+}
 
 #endif
-

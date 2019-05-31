@@ -35,6 +35,12 @@ namespace prefs {
 #define kLoadWorkspace "load_workspace"
 #define kInitialWorkingDirectory "initial_working_directory"
 #define kCranMirror "cran_mirror"
+#define kCranMirrorName "name"
+#define kCranMirrorHost "host"
+#define kCranMirrorUrl "url"
+#define kCranMirrorRepos "repos"
+#define kCranMirrorCountry "country"
+#define kCranMirrorSecondary "secondary"
 #define kBioconductorMirrorName "bioconductor_mirror_name"
 #define kBioconductorMirrorUrl "bioconductor_mirror_url"
 #define kAlwaysSaveHistory "always_save_history"
@@ -67,6 +73,11 @@ namespace prefs {
 #define kHighlightSelectedWord "highlight_selected_word"
 #define kHighlightSelectedLine "highlight_selected_line"
 #define kPanes "panes"
+#define kPanesQuadrants "quadrants"
+#define kPanesTabSet1 "tabSet1"
+#define kPanesTabSet2 "tabSet2"
+#define kPanesConsoleLeftOnTop "console_left_on_top"
+#define kPanesConsoleRightOnTop "console_right_on_top"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
@@ -272,771 +283,925 @@ public:
     * Whether to run .Rprofile again after resuming a suspended R session.
     */
    bool runRprofileOnResume();
+   core::Error setRunRprofileOnResume(bool val);
 
    /**
     * Whether to save the workspace after the R session ends.
     */
    std::string saveWorkspace();
+   core::Error setSaveWorkspace(std::string val);
 
    /**
     * Whether to load the workspace when the R session begins.
     */
    bool loadWorkspace();
+   core::Error setLoadWorkspace(bool val);
 
    /**
     * The initial working directory for new R sessions.
     */
    std::string initialWorkingDirectory();
+   core::Error setInitialWorkingDirectory(std::string val);
 
    /**
     * The CRAN mirror to use.
     */
-   std::string cranMirror();
+   core::json::Object cranMirror();
+   core::Error setCranMirror(core::json::Object val);
 
    /**
     * The name of the default Bioconductor mirror.
     */
    std::string bioconductorMirrorName();
+   core::Error setBioconductorMirrorName(std::string val);
 
    /**
     * The URL of the default Bioconductor mirror.
     */
    std::string bioconductorMirrorUrl();
+   core::Error setBioconductorMirrorUrl(std::string val);
 
    /**
     * Whether to always save the R console history.
     */
    bool alwaysSaveHistory();
+   core::Error setAlwaysSaveHistory(bool val);
 
    /**
     * Whether to remove duplicate entries from the R console history.
     */
    bool removeHistoryDuplicates();
+   core::Error setRemoveHistoryDuplicates(bool val);
 
    /**
     * Show the result of the last expression (.Last.value) in the Environment pane.
     */
    bool showLastDotValue();
+   core::Error setShowLastDotValue(bool val);
 
    /**
     * The line ending format to use when saving files.
     */
    std::string lineEndingConversion();
+   core::Error setLineEndingConversion(std::string val);
 
    /**
     * Whether to use newlines when saving Makefiles.
     */
    bool useNewlinesInMakefiles();
+   core::Error setUseNewlinesInMakefiles(bool val);
 
    /**
     * The terminal shell to use on Windows.
     */
    std::string windowsTerminalShell();
+   core::Error setWindowsTerminalShell(std::string val);
 
    /**
     * The terminal shell to use on POSIX operating systems (MacOS and Linux).
     */
    std::string posixTerminalShell();
+   core::Error setPosixTerminalShell(std::string val);
 
    /**
     * The fully qualified path to the custom shell command to use in the Terminal tab.
     */
    std::string customShellCommand();
+   core::Error setCustomShellCommand(std::string val);
 
    /**
     * The command-line options to pass to the custom shell command.
     */
    std::string customShellOptions();
+   core::Error setCustomShellOptions(std::string val);
 
    /**
     * Show line numbers in RStudio's code editor.
     */
    bool showLineNumbers();
+   core::Error setShowLineNumbers(bool val);
 
    /**
     * Highlight the selected word in RStudio's code editor.
     */
    bool highlightSelectedWord();
+   core::Error setHighlightSelectedWord(bool val);
 
    /**
     * Highlight the selected line in RStudio's code editor.
     */
    bool highlightSelectedLine();
+   core::Error setHighlightSelectedLine(bool val);
 
    /**
     * Layout of panes in the RStudio workbench.
     */
-   bool panes();
+   core::json::Object panes();
+   core::Error setPanes(core::json::Object val);
 
    /**
     * Whether to insert spaces when pressing the Tab key.
     */
    bool useSpacesForTab();
+   core::Error setUseSpacesForTab(bool val);
 
    /**
     * The number of spaces to insert when pressing the Tab key.
     */
    int numSpacesForTab();
+   core::Error setNumSpacesForTab(int val);
 
    /**
     * Whether to automatically detect indentation settings from file contents.
     */
    bool autoDetectIndentation();
+   core::Error setAutoDetectIndentation(bool val);
 
    /**
     * Whether to show the margin guide in the RStudio code editor.
     */
    bool showMargin();
+   core::Error setShowMargin(bool val);
 
    /**
     * Whether to flash the cursor off and on.
     */
    bool blinkingCursor();
+   core::Error setBlinkingCursor(bool val);
 
    /**
     * The number of columns of text after which the margin is shown.
     */
    int marginColumn();
+   core::Error setMarginColumn(int val);
 
    /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
     */
    bool showInvisibles();
+   core::Error setShowInvisibles(bool val);
 
    /**
     * Whether to show indentation guides in the RStudio code editor.
     */
    bool showIndentGuides();
+   core::Error setShowIndentGuides(bool val);
 
    /**
     * Whether continue comments (by inserting the comment character) after adding a new line.
     */
    bool continueCommentsOnNewline();
+   core::Error setContinueCommentsOnNewline(bool val);
 
    /**
     * The keybindings to use in the RStudio code editor.
     */
    std::string editorKeybindings();
+   core::Error setEditorKeybindings(std::string val);
 
    /**
     * Whether to insert matching pairs, such as () and [], when the first is typed.
     */
    bool insertMatching();
+   core::Error setInsertMatching(bool val);
 
    /**
     * Whether to insert spaces around the equals sign in R code.
     */
    bool insertSpacesAroundEquals();
+   core::Error setInsertSpacesAroundEquals(bool val);
 
    /**
     * Whether to insert parentheses after function completions.
     */
    bool insertParensAfterFunctionCompletion();
+   core::Error setInsertParensAfterFunctionCompletion(bool val);
 
    /**
     * Whether to attempt completion of multiple-line statements when pressing Tab.
     */
    bool tabMultilineCompletion();
+   core::Error setTabMultilineCompletion(bool val);
 
    /**
     * Whether to show help tooltips for functions when the cursor has not been recently moved.
     */
    bool showHelpTooltipOnIdle();
+   core::Error setShowHelpTooltipOnIdle(bool val);
 
    /**
     * Which kinds of delimiters can be used to surround the current selection.
     */
    std::string surroundSelection();
+   core::Error setSurroundSelection(std::string val);
 
    /**
     * Whether to enable code snippets in the RStudio code editor.
     */
    bool enableSnippets();
+   core::Error setEnableSnippets(bool val);
 
    /**
     * When to use auto-completion for R code in the RStudio code editor.
     */
    std::string codeCompletion();
+   core::Error setCodeCompletion(std::string val);
 
    /**
     * When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.
     */
    std::string codeCompletionOther();
+   core::Error setCodeCompletionOther(std::string val);
 
    /**
     * Whether to always use code completion in the R console.
     */
    bool consoleCodeCompletion();
+   core::Error setConsoleCodeCompletion(bool val);
 
    /**
     * The number of milliseconds to wait before offering code suggestions.
     */
    int codeCompletionDelay();
+   core::Error setCodeCompletionDelay(int val);
 
    /**
     * The number of characters in a symbol that can be entered before completions are offered.
     */
    int codeCompletionCharacters();
+   core::Error setCodeCompletionCharacters(int val);
 
    /**
     * Whether to show function signature tooltips during autocompletion.
     */
    bool showFunctionSignatureTooltips();
+   core::Error setShowFunctionSignatureTooltips(bool val);
 
    /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    bool showDiagnosticsR();
+   core::Error setShowDiagnosticsR(bool val);
 
    /**
     * Whether to show diagnostic messages for C++ code as you type.
     */
    bool showDiagnosticsCpp();
+   core::Error setShowDiagnosticsCpp(bool val);
 
    /**
     * Whether to show diagnostic messages for other types of code (not R or C++).
     */
    bool showDiagnosticsOther();
+   core::Error setShowDiagnosticsOther(bool val);
 
    /**
     * Whether to show style diagnostics (suggestions for improving R code style)
     */
    bool styleDiagnostics();
+   core::Error setStyleDiagnostics(bool val);
 
    /**
     * Whether to check code for problems after saving it.
     */
    bool diagnosticsOnSave();
+   core::Error setDiagnosticsOnSave(bool val);
 
    /**
     * Whether to run code diagnostics in the background, as you type.
     */
    bool backgroundDiagnostics();
+   core::Error setBackgroundDiagnostics(bool val);
 
    /**
     * The number of milliseconds to delay before running code diagnostics in the background.
     */
    int backgroundDiagnosticsDelayMs();
+   core::Error setBackgroundDiagnosticsDelayMs(int val);
 
    /**
     * Whether to run diagnostics in R function calls.
     */
    bool diagnosticsInRFunctionCalls();
+   core::Error setDiagnosticsInRFunctionCalls(bool val);
 
    /**
     * Whether to check arguments to R function calls.
     */
    bool checkArgumentsToRFunctionCalls();
+   core::Error setCheckArgumentsToRFunctionCalls(bool val);
 
    /**
     * Whether to check for unexpected variable assignments inside R function calls.
     */
    bool checkUnexpectedAssignmentInFunctionCall();
+   core::Error setCheckUnexpectedAssignmentInFunctionCall(bool val);
 
    /**
     * Whether to generate a warning if a variable is used without being defined in the current scope.
     */
    bool warnIfNoSuchVariableInScope();
+   core::Error setWarnIfNoSuchVariableInScope(bool val);
 
    /**
     * Whether to generate a warning if a variable is defined without being used in the current scope
     */
    bool warnVariableDefinedButNotUsed();
+   core::Error setWarnVariableDefinedButNotUsed(bool val);
 
    /**
     * Whether to automatically discover and offer to install missing R package dependenices.
     */
    bool autoDiscoverPackageDependencies();
+   core::Error setAutoDiscoverPackageDependencies(bool val);
 
    /**
     * Whether to ensure that source files end with a newline character.
     */
    bool autoAppendNewline();
+   core::Error setAutoAppendNewline(bool val);
 
    /**
     * Whether to strip trailing whitespace from each line when saving.
     */
    bool stripTrailingWhitespace();
+   core::Error setStripTrailingWhitespace(bool val);
 
    /**
     * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
     */
    bool restoreSourceDocumentCursorPosition();
+   core::Error setRestoreSourceDocumentCursorPosition(bool val);
 
    /**
     * Whether to automatically re-indent code when it's pasted into RStudio.
     */
    bool reindentOnPaste();
+   core::Error setReindentOnPaste(bool val);
 
    /**
     * Whether to vertically align arguments to R function calls during automatic indentation.
     */
    bool verticallyAlignArgumentsIndent();
+   core::Error setVerticallyAlignArgumentsIndent(bool val);
 
    /**
     * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
     */
    bool softWrapRFiles();
+   core::Error setSoftWrapRFiles(bool val);
 
    /**
     * Whether to focus the R console after executing an R command from a script.
     */
    bool focusConsoleAfterExec();
+   core::Error setFocusConsoleAfterExec(bool val);
 
    /**
     * The style of folding to use.
     */
    std::string foldStyle();
+   core::Error setFoldStyle(std::string val);
 
    /**
     * Whether to automatically save scripts before executing them.
     */
    bool saveBeforeSourcing();
+   core::Error setSaveBeforeSourcing(bool val);
 
    /**
     * Whether to use syntax highlighting in the R console.
     */
    bool syntaxColorConsole();
+   core::Error setSyntaxColorConsole(bool val);
 
    /**
     * Whether to allow scrolling past the end of a file.
     */
    bool scrollPastEndOfDocument();
+   core::Error setScrollPastEndOfDocument(bool val);
 
    /**
     * Whether to highlight R function calls in the code editor.
     */
    bool highlightRFunctionCalls();
+   core::Error setHighlightRFunctionCalls(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.
     */
    int consoleLineLengthLimit();
+   core::Error setConsoleLineLengthLimit(int val);
 
    /**
     * How to treat ANSI escape codes in the console.
     */
    std::string ansiConsoleMode();
+   core::Error setAnsiConsoleMode(std::string val);
 
    /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
    bool showInlineToolbarForRCodeChunks();
+   core::Error setShowInlineToolbarForRCodeChunks(bool val);
 
    /**
     * Whether to highlight code chunks in R Markdown documents with a different background color.
     */
    bool highlightCodeChunks();
+   core::Error setHighlightCodeChunks(bool val);
 
    /**
     * Whether to save all open, unsaved files before building the project.
     */
    bool saveFilesBeforeBuild();
+   core::Error setSaveFilesBeforeBuild(bool val);
 
    /**
     * The default editor font size, in points.
     */
    double fontSizePoints();
+   core::Error setFontSizePoints(double val);
 
    /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
    std::string editorTheme();
+   core::Error setEditorTheme(std::string val);
 
    /**
     * The default character encoding to use when saving files.
     */
    std::string defaultEncoding();
+   core::Error setDefaultEncoding(std::string val);
 
    /**
     * Whether to show the toolbar at the top of the RStudio workbench.
     */
    bool toolbarVisible();
+   core::Error setToolbarVisible(bool val);
 
    /**
     * The directory path under which to place new projects by default.
     */
    std::string defaultProjectLocation();
+   core::Error setDefaultProjectLocation(std::string val);
 
    /**
     * Whether to echo R code when sourcing it.
     */
    bool sourceWithEcho();
+   core::Error setSourceWithEcho(bool val);
 
    /**
     * Whether to initialize new projects with a Git repo by default.
     */
    bool newProjectGitInit();
+   core::Error setNewProjectGitInit(bool val);
 
    /**
     * The default engine to use when processing Sweave documents.
     */
    std::string defaultSweaveEngine();
+   core::Error setDefaultSweaveEngine(std::string val);
 
    /**
     * The default program to use when processing LaTeX documents.
     */
    std::string defaultLatexProgram();
+   core::Error setDefaultLatexProgram(std::string val);
 
    /**
     * Whether to use Roxygen for documentation.
     */
    bool useRoxygen();
+   core::Error setUseRoxygen(bool val);
 
    /**
     * Whether to use RStudio's data import feature.
     */
    bool useDataimport();
+   core::Error setUseDataimport(bool val);
 
    /**
     * The program to use to preview PDF files after generation.
     */
    std::string pdfPreviewer();
+   core::Error setPdfPreviewer(std::string val);
 
    /**
     * Whether to always enable the concordance for RNW files.
     */
    bool alwaysEnableRnwConcordance();
+   core::Error setAlwaysEnableRnwConcordance(bool val);
 
    /**
     * Whether to insert numbered sections in LaTeX.
     */
    bool insertNumberedLatexSections();
+   core::Error setInsertNumberedLatexSections(bool val);
 
    /**
     * The language of the spelling dictionary to use for spell checking.
     */
    std::string spellingDictionaryLanguage();
+   core::Error setSpellingDictionaryLanguage(std::string val);
 
    /**
     * The list of custom dictionaries to use when spell checking.
     */
-   core::json::Object spellingCustomDictionaries();
+   core::json::Array spellingCustomDictionaries();
+   core::Error setSpellingCustomDictionaries(core::json::Array val);
 
    /**
     * The number of milliseconds to wait before linting a document after it is loaded.
     */
    int documentLoadLintDelay();
+   core::Error setDocumentLoadLintDelay(int val);
 
    /**
     * Whether to ignore words in uppercase when spell checking.
     */
    bool ignoreUppercaseWords();
+   core::Error setIgnoreUppercaseWords(bool val);
 
    /**
     * Whether to ignore words with numbers in them when spell checking.
     */
    bool ignoreWordsWithNumbers();
+   core::Error setIgnoreWordsWithNumbers(bool val);
 
    /**
     * Whether to enable real-time spellchecking by default.
     */
    bool realTimeSpellchecking();
+   core::Error setRealTimeSpellchecking(bool val);
 
    /**
     * Whether to navigate to build errors.
     */
    bool navigateToBuildError();
+   core::Error setNavigateToBuildError(bool val);
 
    /**
     * Whether to enable RStudio's Packages pane.
     */
    bool packagesPaneEnabled();
+   core::Error setPackagesPaneEnabled(bool val);
 
    /**
     * Whether to use RCPP templates.
     */
    bool useRcppTemplate();
+   core::Error setUseRcppTemplate(bool val);
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
     */
    bool restoreSourceDocuments();
+   core::Error setRestoreSourceDocuments(bool val);
 
    /**
     * Whether to handle errors only when user code is on the stack.
     */
    bool handleErrorsInUserCodeOnly();
+   core::Error setHandleErrorsInUserCodeOnly(bool val);
 
    /**
     * Whether to automatically expand tracebacks when an error occurs.
     */
    bool autoExpandErrorTracebacks();
+   core::Error setAutoExpandErrorTracebacks(bool val);
 
    /**
     * Whether to check for new versions of RStudio when RStudio starts.
     */
    bool checkForUpdates();
+   core::Error setCheckForUpdates(bool val);
 
    /**
     * Whether to show functions without source references in the Traceback pane while debugging.
     */
    bool showInternalFunctions();
+   core::Error setShowInternalFunctions(bool val);
 
    /**
     * Where to display Shiny applications when they are run.
     */
    std::string shinyViewerType();
+   core::Error setShinyViewerType(std::string val);
 
    /**
     * Where to display Shiny applications when they are run.
     */
    std::string plumberViewerType();
+   core::Error setPlumberViewerType(std::string val);
 
    /**
     * The default name to use as the document author when creating new documents.
     */
    std::string documentAuthor();
+   core::Error setDocumentAuthor(std::string val);
 
    /**
     * The path to the preferred R Markdown template.
     */
    std::string rmdPreferredTemplatePath();
+   core::Error setRmdPreferredTemplatePath(std::string val);
 
    /**
     * Where to display R Markdown documents when they have completed rendering.
     */
    std::string rmdViewerType();
+   core::Error setRmdViewerType(std::string val);
 
    /**
     * Whether to show verbose diagnostic information when publishing content.
     */
    bool showPublishDiagnostics();
+   core::Error setShowPublishDiagnostics(bool val);
 
    /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    bool publishCheckCertificates();
+   core::Error setPublishCheckCertificates(bool val);
 
    /**
     * Whether to use a custom certificate authority (CA) bundle when publishing content.
     */
    bool usePublishCaBundle();
+   core::Error setUsePublishCaBundle(bool val);
 
    /**
     * The path to the custom certificate authority (CA) bundle to use when publishing content.
     */
    std::string publishCaBundle();
+   core::Error setPublishCaBundle(std::string val);
 
    /**
     * Whether to show chunk output inline for ordinary R Markdown documents.
     */
    bool rmdChunkOutputInline();
+   core::Error setRmdChunkOutputInline(bool val);
 
    /**
     * Whether to show the document outline by default when opening R Markdown documents.
     */
    bool showDocOutlineRmd();
+   core::Error setShowDocOutlineRmd(bool val);
 
    /**
     * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
     */
    bool autoRunSetupChunk();
+   core::Error setAutoRunSetupChunk(bool val);
 
    /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    bool hideConsoleOnChunkExecute();
+   core::Error setHideConsoleOnChunkExecute(bool val);
 
    /**
     * The unit of R code to execute when the Execute command is invoked.
     */
    std::string executionBehavior();
+   core::Error setExecutionBehavior(std::string val);
 
    /**
     * Whether to show the Terminal tab.
     */
    bool showTerminalTab();
+   core::Error setShowTerminalTab(bool val);
 
    /**
     * Whether to use local echo in the Terminal.
     */
    bool terminalLocalEcho();
+   core::Error setTerminalLocalEcho(bool val);
 
    /**
     * Whether to use websockets to communicate with the shell in the Terminal tab.
     */
    bool terminalWebsockets();
+   core::Error setTerminalWebsockets(bool val);
 
    /**
     * Whether to automatically close the Terminal tab.
     */
    bool terminalAutoClose();
+   core::Error setTerminalAutoClose(bool val);
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.
     */
    bool terminalTrackEnvironment();
+   core::Error setTerminalTrackEnvironment(bool val);
 
    /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    bool showRmdRenderCommand();
+   core::Error setShowRmdRenderCommand(bool val);
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    bool enableTextDrag();
+   core::Error setEnableTextDrag(bool val);
 
    /**
     * Whether to show hidden files in the Files pane.
     */
    bool showHiddenFiles();
+   core::Error setShowHiddenFiles(bool val);
 
    /**
     * The visibility of the Jobs tab.
     */
    std::string jobsTabVisibility();
+   core::Error setJobsTabVisibility(std::string val);
 
    /**
     * Whether to show the Launcher jobs tab in RStudio Pro.
     */
    bool showLauncherJobsTab();
+   core::Error setShowLauncherJobsTab(bool val);
 
    /**
     * How to sort jobs in the Launcher tab in RStudio Pro.
     */
    std::string launcherJobsSort();
+   core::Error setLauncherJobsSort(std::string val);
 
    /**
     * How to detect busy status in the Terminal.
     */
    std::string busyDetection();
+   core::Error setBusyDetection(std::string val);
 
    /**
     * A whitelist of apps that should not be considered busy in the Terminal.
     */
-   core::json::Object busyWhitelist();
+   core::json::Array busyWhitelist();
+   core::Error setBusyWhitelist(core::json::Array val);
 
    /**
     * The working directory to use when knitting R Markdown documents.
     */
    std::string knitWorkingDir();
+   core::Error setKnitWorkingDir(std::string val);
 
    /**
     * Which objects to show in the document outline pane.
     */
    std::string docOutlineShow();
+   core::Error setDocOutlineShow(std::string val);
 
    /**
     * When to preview LaTeX mathematical equations when cursor has not moved recently.
     */
    std::string latexPreviewOnCursorIdle();
+   core::Error setLatexPreviewOnCursorIdle(std::string val);
 
    /**
     * Whether to wrap around when going to the previous or next editor tab.
     */
    bool wrapTabNavigation();
+   core::Error setWrapTabNavigation(bool val);
 
    /**
     * The theme to use for the main RStudio user interface.
     */
    std::string globalTheme();
+   core::Error setGlobalTheme(std::string val);
 
    /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    bool gitDiffIgnoreWhitespace();
+   core::Error setGitDiffIgnoreWhitespace(bool val);
 
    /**
     * Whether double-clicking should select a word in the Console pane.
     */
    bool consoleDoubleClickSelect();
+   core::Error setConsoleDoubleClickSelect(bool val);
 
    /**
     * Whether a git repo should be initialized inside new projects by default.
     */
    bool newProjGitInit();
+   core::Error setNewProjGitInit(bool val);
 
    /**
     * The root document to use when compiling PDF documents.
     */
    std::string rootDocument();
+   core::Error setRootDocument(std::string val);
 
    /**
     * When to show the server home page in RStudio Server Pro.
     */
    std::string showUserHomePage();
+   core::Error setShowUserHomePage(std::string val);
 
    /**
     * Whether to reuse sessions when opening projects in RStudio Server Pro.
     */
    bool reuseSessionsForProjectLinks();
+   core::Error setReuseSessionsForProjectLinks(bool val);
 
    /**
     * Whether to enable RStudio's version control system interface.
     */
    bool vcsEnabled();
+   core::Error setVcsEnabled(bool val);
 
    /**
     * The path to the Git executable to use.
     */
    std::string gitExePath();
+   core::Error setGitExePath(std::string val);
 
    /**
     * The path to the Subversion executable to use.
     */
    std::string svnExePath();
+   core::Error setSvnExePath(std::string val);
 
    /**
     * The path to the terminal executable to use.
     */
    std::string terminalPath();
+   core::Error setTerminalPath(std::string val);
 
    /**
     * The path to the RSA key file to use.
     */
    std::string rsaKeyPath();
+   core::Error setRsaKeyPath(std::string val);
 
    /**
     * Whether to use the devtools R package.
     */
    bool useDevtools();
+   core::Error setUseDevtools(bool val);
 
    /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    bool useInternet2();
+   core::Error setUseInternet2(bool val);
 
    /**
     * Whether to use secure downloads when fetching R packages.
     */
    bool useSecureDownload();
+   core::Error setUseSecureDownload(bool val);
 
    /**
     * Whether to clean up temporary files after running R CMD CHECK.
     */
    bool cleanupAfterRCmdCheck();
+   core::Error setCleanupAfterRCmdCheck(bool val);
 
    /**
     * Whether to view the directory after running R CMD CHECK.
     */
    bool viewDirAfterRCmdCheck();
+   core::Error setViewDirAfterRCmdCheck(bool val);
 
    /**
     * Whether to hide object files in the Files pane.
     */
    bool hideObjectFiles();
+   core::Error setHideObjectFiles(bool val);
 
    /**
     * Whether to restore the last project when starting RStudio.
     */
    bool restoreLastProject();
+   core::Error setRestoreLastProject(bool val);
 
    /**
     * Whether to clean output after running Texi2Dvi.
     */
    bool cleanTexi2dviOutput();
+   core::Error setCleanTexi2dviOutput(bool val);
 
    /**
     * Whether to enable shell escaping with LaTeX documents.
     */
    bool latexShellEscape();
+   core::Error setLatexShellEscape(bool val);
 
    /**
     * Whether to restore the last version of R used by the project in RStudio Pro.
     */
    bool restoreProjectRVersion();
+   core::Error setRestoreProjectRVersion(bool val);
 
 };
 

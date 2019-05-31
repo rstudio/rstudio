@@ -80,7 +80,7 @@ void beginUpdateCheck(bool manual,
    args.push_back("--slave");
    args.push_back("--vanilla");
 #if defined(_WIN32)
-   if (userSettings().useInternet2())
+   if (prefs::userPrefs().useInternet2())
    {
       args.push_back("--internet2");
    }

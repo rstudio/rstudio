@@ -275,7 +275,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    sessionInfo["user_prefs"] = modules::prefs::allPrefLayers();
-   sessionInfo["user_state"] = modules::prefs::userState();
+   sessionInfo["user_state"] = modules::prefs::allStateLayers();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();

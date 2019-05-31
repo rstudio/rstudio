@@ -32,12 +32,22 @@ std::string UserStateValues::contextId()
    return readPref<std::string>("context_id");
 }
 
+core::Error UserStateValues::setContextId(std::string val)
+{
+   return writePref("context_id", val);
+}
+
 /**
  * Hash of the agreement that the user has accepted.
  */
 std::string UserStateValues::agreementHash()
 {
    return readPref<std::string>("agreement_hash");
+}
+
+core::Error UserStateValues::setAgreementHash(std::string val)
+{
+   return writePref("agreement_hash", val);
 }
 
 /**
@@ -48,12 +58,22 @@ bool UserStateValues::autoCreatedProfile()
    return readPref<bool>("auto_created_profile");
 }
 
+core::Error UserStateValues::setAutoCreatedProfile(bool val)
+{
+   return writePref("auto_created_profile", val);
+}
+
 /**
  * The color theme to apply.
  */
-bool UserStateValues::theme()
+core::json::Object UserStateValues::theme()
 {
-   return readPref<bool>("theme");
+   return readPref<core::json::Object>("theme");
+}
+
+core::Error UserStateValues::setTheme(core::json::Object val)
+{
+   return writePref("theme", val);
 }
 
 /**
@@ -64,6 +84,11 @@ std::string UserStateValues::defaultProjectLocation()
    return readPref<std::string>("default_project_location");
 }
 
+core::Error UserStateValues::setDefaultProjectLocation(std::string val)
+{
+   return writePref("default_project_location", val);
+}
+
 /**
  * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
  */
@@ -72,44 +97,74 @@ bool UserStateValues::clearHidden()
    return readPref<bool>("clear_hidden");
 }
 
+core::Error UserStateValues::setClearHidden(bool val)
+{
+   return writePref("clear_hidden", val);
+}
+
 /**
  * The most recently used plot export options.
  */
-bool UserStateValues::exportPlotOptions()
+core::json::Object UserStateValues::exportPlotOptions()
 {
-   return readPref<bool>("export_plot_options");
+   return readPref<core::json::Object>("export_plot_options");
+}
+
+core::Error UserStateValues::setExportPlotOptions(core::json::Object val)
+{
+   return writePref("export_plot_options", val);
 }
 
 /**
  * The most recently used viewer export options.
  */
-bool UserStateValues::exportViewerOptions()
+core::json::Object UserStateValues::exportViewerOptions()
 {
-   return readPref<bool>("export_viewer_options");
+   return readPref<core::json::Object>("export_viewer_options");
+}
+
+core::Error UserStateValues::setExportViewerOptions(core::json::Object val)
+{
+   return writePref("export_viewer_options", val);
 }
 
 /**
  * The most recently used options for saving a plot as a PDF.
  */
-bool UserStateValues::savePlotAsPdfOptions()
+core::json::Object UserStateValues::savePlotAsPdfOptions()
 {
-   return readPref<bool>("save_plot_as_pdf_options");
+   return readPref<core::json::Object>("save_plot_as_pdf_options");
+}
+
+core::Error UserStateValues::setSavePlotAsPdfOptions(core::json::Object val)
+{
+   return writePref("save_plot_as_pdf_options", val);
 }
 
 /**
  * Most recently used settings for compiling a notebook from an R script.
  */
-bool UserStateValues::compileRNotebookPrefs()
+core::json::Object UserStateValues::compileRNotebookPrefs()
 {
-   return readPref<bool>("compile_r_notebook_prefs");
+   return readPref<core::json::Object>("compile_r_notebook_prefs");
+}
+
+core::Error UserStateValues::setCompileRNotebookPrefs(core::json::Object val)
+{
+   return writePref("compile_r_notebook_prefs", val);
 }
 
 /**
  * Most recently used settings for compiling a notebook using R Markdown.
  */
-bool UserStateValues::compileRMarkdownNotebookPrefs()
+core::json::Object UserStateValues::compileRMarkdownNotebookPrefs()
 {
-   return readPref<bool>("compile_r_markdown_notebook_prefs");
+   return readPref<core::json::Object>("compile_r_markdown_notebook_prefs");
+}
+
+core::Error UserStateValues::setCompileRMarkdownNotebookPrefs(core::json::Object val)
+{
+   return writePref("compile_r_markdown_notebook_prefs", val);
 }
 
 /**
@@ -120,6 +175,11 @@ bool UserStateValues::showPublishUi()
    return readPref<bool>("show_publish_ui");
 }
 
+core::Error UserStateValues::setShowPublishUi(bool val)
+{
+   return writePref("show_publish_ui", val);
+}
+
 /**
  * Whether to show UI for publishing content to RStudio Connect.
  */
@@ -128,12 +188,22 @@ bool UserStateValues::enableRsconnectPublishUi()
    return readPref<bool>("enable_rsconnect_publish_ui");
 }
 
+core::Error UserStateValues::setEnableRsconnectPublishUi(bool val)
+{
+   return writePref("enable_rsconnect_publish_ui", val);
+}
+
 /**
  * The default (last) account used for publishing
  */
-bool UserStateValues::publishAccount()
+core::json::Object UserStateValues::publishAccount()
 {
-   return readPref<bool>("publish_account");
+   return readPref<core::json::Object>("publish_account");
+}
+
+core::Error UserStateValues::setPublishAccount(core::json::Object val)
+{
+   return writePref("publish_account", val);
 }
 
 /**
@@ -144,6 +214,11 @@ int UserStateValues::documentOutlineWidth()
    return readPref<int>("document_outline_width");
 }
 
+core::Error UserStateValues::setDocumentOutlineWidth(int val)
+{
+   return writePref("document_outline_width", val);
+}
+
 /**
  * How to create new connections to data sources.
  */
@@ -152,12 +227,48 @@ std::string UserStateValues::connectVia()
    return readPref<std::string>("connect_via");
 }
 
+core::Error UserStateValues::setConnectVia(std::string val)
+{
+   return writePref("connect_via", val);
+}
+
 /**
  * Whether the CRAN mirror has been changed from its default.
  */
 bool UserStateValues::cranMirrorChanged()
 {
    return readPref<bool>("cran_mirror_changed");
+}
+
+core::Error UserStateValues::setCranMirrorChanged(bool val)
+{
+   return writePref("cran_mirror_changed", val);
+}
+
+/**
+ * The kind of handler to invoke when errors occur.
+ */
+std::string UserStateValues::errorHandlerType()
+{
+   return readPref<std::string>("error_handler_type");
+}
+
+core::Error UserStateValues::setErrorHandlerType(std::string val)
+{
+   return writePref("error_handler_type", val);
+}
+
+/**
+ * Whether or not the MinGW compiler with GCC 4.9 is used.
+ */
+bool UserStateValues::usingMingwGcc49()
+{
+   return readPref<bool>("using_mingw_gcc49");
+}
+
+core::Error UserStateValues::setUsingMingwGcc49(bool val)
+{
+   return writePref("using_mingw_gcc49", val);
 }
 
    

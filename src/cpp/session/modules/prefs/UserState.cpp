@@ -24,6 +24,7 @@
 #include <session/prefs/Preferences.hpp>
 
 #include "UserStateDefaultLayer.hpp"
+#include "UserStateComputedLayer.hpp"
 #include "UserStateLayer.hpp"
 #include "UserState.hpp"
 
@@ -39,9 +40,15 @@ class UserState: public UserStateValues
 {
    Error createLayers()
    {
-      layers_.push_back(boost::make_shared<UserStateDefaultLayer>());  // STATE_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserStateLayer>());         // STATE_LAYER_USER
+      layers_.push_back(boost::make_shared<UserStateDefaultLayer>()) ;  // STATE_LAYER_DEFAULT
+      layers_.push_back(boost::make_shared<UserStateComputedLayer>());  // STATE_LAYER_COMPUTED
+      layers_.push_back(boost::make_shared<UserStateLayer>());          // STATE_LAYER_USER
       return Success();
+   }
+
+   int userLayer()
+   {
+      return STATE_LAYER_USER;
    }
 } s_state;
 
@@ -59,7 +66,7 @@ Error setState(const json::JsonRpcRequest& request,
 }
 } // anonymous namespace
 
-json::Array userState()
+json::Array allStateLayers()
 {
    return s_state.allLayers();
 }

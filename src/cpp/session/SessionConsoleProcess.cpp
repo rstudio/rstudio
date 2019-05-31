@@ -84,8 +84,12 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (session::userSettings().terminalBusyMode() == core::system::busy_detection::Whitelist)
-      options.subprocWhitelist = session::userSettings().terminalBusyWhitelist();
+   if (modules::prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   {
+      std::vector<std::string> whitelist;
+      core::json::fillVectorString(modules::prefs::userPrefs().busyWhitelist(), &whitelist);
+      options.subprocWhitelist = whitelist;
+   }
 
    // set path to shell
    AvailableTerminalShells shells;

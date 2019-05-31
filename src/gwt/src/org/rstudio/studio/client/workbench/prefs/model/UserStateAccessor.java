@@ -322,6 +322,28 @@ public class UserStateAccessor extends Prefs
       return bool("cran_mirror_changed", false);
    }
 
+   /**
+    * The kind of handler to invoke when errors occur.
+    */
+   public PrefValue<String> errorHandlerType()
+   {
+      return string("error_handler_type", "");
+   }
+
+   public final static String ERROR_HANDLER_TYPE_MESSAGE = "message";
+   public final static String ERROR_HANDLER_TYPE_TRACEBACK = "traceback";
+   public final static String ERROR_HANDLER_TYPE_BREAK = "break";
+   public final static String ERROR_HANDLER_TYPE_NOTEBOOK = "notebook";
+   public final static String ERROR_HANDLER_TYPE_CUSTOM = "custom";
+
+   /**
+    * Whether or not the MinGW compiler with GCC 4.9 is used.
+    */
+   public PrefValue<Boolean> usingMingwGcc49()
+   {
+      return bool("using_mingw_gcc49", false);
+   }
+
    
 
    public int userLayer()

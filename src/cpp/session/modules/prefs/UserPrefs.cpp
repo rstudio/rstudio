@@ -38,7 +38,7 @@ namespace modules {
 namespace prefs {
 namespace {
 
-class UserPrefs: public UserPrefValues
+class UserPrefs: public UserPrefValuesNative
 {
    Error createLayers()
    {
@@ -48,6 +48,11 @@ class UserPrefs: public UserPrefValues
       layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
       layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
       return Success();
+   }
+
+   int userLayer()
+   {
+      return PREF_LAYER_USER;
    }
 } s_prefs;
 
@@ -69,7 +74,7 @@ json::Array allPrefLayers()
    return s_prefs.allLayers();
 }
 
-UserPrefValues& userPrefs()
+UserPrefValuesNative& userPrefs()
 {
    return s_prefs;
 }
