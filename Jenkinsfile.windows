@@ -34,7 +34,7 @@ pipeline {
           try {
             bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
           }
-          catch {
+          catch(err){
             currentBuild.result = "UNSTABLE"
           }
         }
