@@ -2339,11 +2339,6 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="presentation"/>
 
-   <cmd id="tutorialFeedback"
-        desc="Provide feedback on this tutorial"
-        rebindable="false"
-        context="presentation"/>
-        
    <cmd id="clearPresentationCache"
         menuLabel="Clear Knitr Cache..."
         desc="Clear knitr cache for this presentation"

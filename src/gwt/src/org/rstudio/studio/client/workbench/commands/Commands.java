@@ -289,7 +289,6 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
-   public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
    // View

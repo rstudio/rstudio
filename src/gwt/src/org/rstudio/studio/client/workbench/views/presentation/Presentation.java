@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 import java.util.Iterator;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
@@ -28,8 +27,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.MessageDisplay;
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -61,7 +58,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -182,7 +178,7 @@ public class Presentation extends BasePresenter
    
    public void initialize(PresentationState state)
    {
-      if ((state.getSlideIndex() == 0) || state.isTutorial())
+      if ((state.getSlideIndex() == 0))
          view_.bringToFront();
       
       init(state);
@@ -380,39 +376,6 @@ public class Presentation extends BasePresenter
       view_.load(buildPresentationUrl(), currentState_.getFilePath());
    }
    
-   @Handler
-   void onTutorialFeedback()
-   {
-      EditDialog editDialog = new EditDialog("Provide Feedback",
-                                             "Submit",
-                                             "",
-                                             Roles.getDialogRole(),
-                                             false,
-                                             true,
-                                             new Size(450,300),
-                     new ProgressOperationWithInput<String>() {
-         @Override
-         public void execute(String input, ProgressIndicator indicator)
-         {
-            if (input == null)
-            {
-               indicator.onCompleted();
-               return;
-            }
-            
-            indicator.onProgress("Saving feedback...");
-            
-            server_.tutorialFeedback(input, 
-                                     new VoidServerRequestCallback(indicator));
-            
-         }
-      });
-      
-      editDialog.showModal();
-      
-   }
-   
-   
    @Override
    public void onSelected()
    {
@@ -432,16 +395,6 @@ public class Presentation extends BasePresenter
    
    public void confirmClose(Command onConfirmed)
    {
-      // don't allow close if this is a tutorial
-      if (currentState_.isTutorial())
-      {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_WARNING,
-               "Unable to Close",
-               "Tutorials cannot be closed");
-         return;
-      }
-      
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             0,
