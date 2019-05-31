@@ -566,7 +566,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table ");
+      text.append("<table role=\"presentation\"");
       if (label != null)
       {
          text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
@@ -656,10 +656,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "aria-label", StringUtil.notNull(desc),
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
 
@@ -669,8 +671,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
    

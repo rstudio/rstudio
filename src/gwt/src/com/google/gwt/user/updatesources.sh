@@ -9,6 +9,7 @@ pwd
 
 # extract over previously modified sources
 jar xvf ../lib/gwt/2.8.2/gwt-user.jar \
+  com/google/gwt/user/client/ui/MenuItem.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/VerticalPanel.java \
   com/google/gwt/user/client/ui/HorizontalPanel.java \
@@ -19,6 +20,7 @@ jar xvf ../lib/gwt/2.8.2/gwt-user.jar \
 cd com/google/gwt/user/client/ui
 
 # apply previous patches
+patch MenuItem.java < MenuItem.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff
 patch VerticalPanel.java < VerticalPanel.java.diff
 patch HorizontalPanel.java < HorizontalPanel.java.diff

@@ -986,6 +986,22 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
+      // remove main menu commands in desktop mode
+      if (Desktop.isDesktop())
+      {
+         commands_.showFileMenu().remove();
+         commands_.showEditMenu().remove();
+         commands_.showCodeMenu().remove();
+         commands_.showViewMenu().remove();
+         commands_.showPlotsMenu().remove();
+         commands_.showSessionMenu().remove();
+         commands_.showBuildMenu().remove();
+         commands_.showDebugMenu().remove();
+         commands_.showProfileMenu().remove();
+         commands_.showToolsMenu().remove();
+         commands_.showHelpMenu().remove();
+      }
+      
       // show new session when appropriate
       if (!Desktop.isDesktop())
       {

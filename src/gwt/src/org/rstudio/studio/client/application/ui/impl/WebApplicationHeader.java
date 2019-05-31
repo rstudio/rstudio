@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -209,6 +210,10 @@ public class WebApplicationHeader extends Composite
             overlay_.setGlobalToolbarVisible(WebApplicationHeader.this, 
                                              toolbar_.isVisible());
          }
+      });
+      
+      eventBus.addHandler(ShowMainMenuEvent.TYPE, event -> {
+         mainMenu_.keyboardActivateItem(event.getMenu().ordinal());
       });
       
       // create toolbar
