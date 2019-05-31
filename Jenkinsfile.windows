@@ -31,7 +31,7 @@ pipeline {
     stage('tests'){
       steps {
         script {
-          bat 'cd package/win32/build/src/cpp && ./rstudio-tests.bat --scope core' 
+          bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core' 
         }
       }
       post {
