@@ -275,6 +275,7 @@ namespace prefs {
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
+#define kClangVerbose "clang_verbose"
 
 class UserPrefValues: public Preferences
 {
@@ -1202,6 +1203,12 @@ public:
     */
    bool restoreProjectRVersion();
    core::Error setRestoreProjectRVersion(bool val);
+
+   /**
+    * The verbosity level to use with Clang (0 - 2)
+    */
+   int clangVerbose();
+   core::Error setClangVerbose(int val);
 
 };
 

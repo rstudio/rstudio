@@ -1437,6 +1437,14 @@ public class UserPrefsAccessor extends Prefs
       return bool("restore_project_r_version", true);
    }
 
+   /**
+    * The verbosity level to use with Clang (0 - 2)
+    */
+   public PrefValue<Integer> clangVerbose()
+   {
+      return integer("clang_verbose", 0);
+   }
+
    
 
    public int userLayer()

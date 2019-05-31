@@ -871,6 +871,11 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to restore the last version of R used by the project in RStudio Pro."
+        },
+        "clang_verbose": {
+            "type": "integer",
+            "default": 0,
+            "description": "The verbosity level to use with Clang (0 - 2)"
         }
     }
 }

@@ -17,6 +17,8 @@
 
 #include <core/StringUtils.hpp>
 
+#include <session/SessionTerminalShell.hpp>
+
 #include "UserPrefValues.hpp"
 
 namespace rstudio {
@@ -45,6 +47,7 @@ public:
    core::string_utils::LineEnding lineEndings();
    CRANMirror CRANMirror();
    core::Error setCRANMirror(const struct CRANMirror& mirror, bool update);
+   console_process::TerminalShell::ShellType defaultTerminalShellValue();
 };
 
 }

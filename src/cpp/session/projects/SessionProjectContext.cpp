@@ -40,6 +40,9 @@
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
 #include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
@@ -105,7 +108,7 @@ Error computeScratchPaths(const FilePath& projectFile,
    // now add context id to form scratch path
    if (pScratchPath)
    {
-      FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
+      FilePath scratchPath = projectUserDir.complete(modules::prefs::userState().contextId());
       Error error = scratchPath.ensureDirectory();
       if (error)
          return error;
@@ -146,13 +149,7 @@ FilePath ProjectContext::oldScratchPath() const
    if (!projectUserDir.exists())
       return FilePath();
 
-   // see if an old scratch path using the old contextId is present
-   // and if so return it
-   FilePath oldPath = projectUserDir.complete(userSettings().oldContextId());
-   if (oldPath.exists())
-      return oldPath;
-   else
-      return FilePath();
+   return FilePath();
 }
 
 FilePath ProjectContext::websitePath() const
@@ -179,7 +176,7 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.
-// specifically, it can rely on userSettings() being available, but can
+// specifically, it can rely on userPrefs() being available, but can
 // definitely NOT rely on calling into R. For initialization related tasks
 // that need to run after R is available use the implementation of the
 // initialize method (below)
@@ -207,7 +204,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    FilePath projectUserPath = projectFile.parent().complete(".Rproj.user");
    if (projectUserPath.exists())
    {
-      FilePath contextPath = projectUserPath.complete(userSettings().contextId());
+      FilePath contextPath = projectUserPath.complete(modules::prefs::userState().contextId());
       *pIsNewProject = !contextPath.exists();
    }
    else
@@ -679,7 +676,7 @@ json::Array ProjectContext::openDocs() const
 r_util::RProjectBuildDefaults ProjectContext::buildDefaults()
 {
    r_util::RProjectBuildDefaults buildDefaults;
-   buildDefaults.useDevtools = userSettings().useDevtools();
+   buildDefaults.useDevtools = modules::prefs::userPrefs().useDevtools();
    return buildDefaults;
 }
 

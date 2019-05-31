@@ -133,9 +133,9 @@ console_process::TerminalShell::ShellType UserPrefValuesNative::defaultTerminalS
 {
    using ShellType = console_process::TerminalShell::ShellType;
 #ifdef WIN32
-   ShellType type = TerminalShell::shellTypeFromString(windowsTerminalShell());
+   ShellType type = console_process::TerminalShell::shellTypeFromString(windowsTerminalShell());
 #else
-   ShellType type = TerminalShell::shellTypeFromString(posixTerminalShell());
+   ShellType type = console_process::TerminalShell::shellTypeFromString(posixTerminalShell());
 #endif
 
    // map obsolete 32-bit shell types to their 64-bit equivalents

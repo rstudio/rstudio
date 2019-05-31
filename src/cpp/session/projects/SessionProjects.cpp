@@ -25,6 +25,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -830,7 +831,7 @@ void startup(const std::string& firstProjectPath)
    }
 
    // check for restore last project
-   else if (userSettings().alwaysRestoreLastProject() &&
+   else if (modules::prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.empty())
    {
 

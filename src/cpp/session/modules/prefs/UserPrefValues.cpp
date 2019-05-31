@@ -2026,6 +2026,19 @@ core::Error UserPrefValues::setRestoreProjectRVersion(bool val)
    return writePref("restore_project_r_version", val);
 }
 
+/**
+ * The verbosity level to use with Clang (0 - 2)
+ */
+int UserPrefValues::clangVerbose()
+{
+   return readPref<int>("clang_verbose");
+}
+
+core::Error UserPrefValues::setClangVerbose(int val)
+{
+   return writePref("clang_verbose", val);
+}
+
    
 
 }
