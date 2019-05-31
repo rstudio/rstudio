@@ -1,5 +1,5 @@
 /*
- * SessionUserPrefs.hpp
+ * UserStateLayer.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,30 +13,32 @@
  *
  */
 
-#ifndef SESSION_MODULE_USER_PREFS_HPP
-#define SESSION_MODULE_USER_PREFS_HPP
+#include "UserStateLayer.hpp"
+#include "UserState.hpp"
 
-#include <core/json/Json.hpp>
+#include <core/system/Xdg.hpp>
 
-#include <session/prefs/UserPrefs.hpp>
+#include <session/SessionOptions.hpp>
 
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::Error initializePrefs();
+core::Error UserStateLayer::readPrefs()
+{
+   return loadPrefsFromFile(
+         core::system::xdg::userDataDir().complete(kUserStateFile));
+}
+
+core::Error UserStateLayer::validatePrefs()
+{
+   return validatePrefsFromSchema(
+      options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+}
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
-
-#endif
 

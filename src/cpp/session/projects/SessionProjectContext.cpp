@@ -108,7 +108,7 @@ Error computeScratchPaths(const FilePath& projectFile,
    // now add context id to form scratch path
    if (pScratchPath)
    {
-      FilePath scratchPath = projectUserDir.complete(modules::prefs::userState().contextId());
+      FilePath scratchPath = projectUserDir.complete(prefs::userState().contextId());
       Error error = scratchPath.ensureDirectory();
       if (error)
          return error;
@@ -204,7 +204,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    FilePath projectUserPath = projectFile.parent().complete(".Rproj.user");
    if (projectUserPath.exists())
    {
-      FilePath contextPath = projectUserPath.complete(modules::prefs::userState().contextId());
+      FilePath contextPath = projectUserPath.complete(prefs::userState().contextId());
       *pIsNewProject = !contextPath.exists();
    }
    else
@@ -676,7 +676,7 @@ json::Array ProjectContext::openDocs() const
 r_util::RProjectBuildDefaults ProjectContext::buildDefaults()
 {
    r_util::RProjectBuildDefaults buildDefaults;
-   buildDefaults.useDevtools = modules::prefs::userPrefs().useDevtools();
+   buildDefaults.useDevtools = prefs::userPrefs().useDevtools();
    return buildDefaults;
 }
 

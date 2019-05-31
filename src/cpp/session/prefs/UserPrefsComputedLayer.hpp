@@ -1,5 +1,5 @@
 /*
- * UserStateDefaultLayer.hpp
+ * UserPrefsComputedLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,25 +13,27 @@
  *
  */
 
-#ifndef SESSION_USER_STATE_DEFAULT_LAYER_HPP
-#define SESSION_USER_STATE_DEFAULT_LAYER_HPP
+#ifndef SESSION_USER_PREF_COMPUTED_LAYER_HPP
+#define SESSION_USER_PREF_COMPUTED_LAYER_HPP
 
-#include <session/prefs/PrefLayer.hpp>
+#include <session/prefs/UserPrefValues.hpp>
+
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-class UserStateDefaultLayer: public PrefLayer
+class UserPrefsComputedLayer: public PrefLayer
 {
 public:
    core::Error readPrefs();
    core::Error validatePrefs();
+private:
+   core::FilePath detectedTerminalPath();
 };
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

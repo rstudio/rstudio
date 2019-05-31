@@ -30,7 +30,7 @@ namespace dirs {
 FilePath getDefaultWorkingDirectory()
 {
    // calculate using user settings
-   FilePath defaultWorkingDir = FilePath(modules::prefs::userPrefs().initialWorkingDirectory());
+   FilePath defaultWorkingDir = FilePath(prefs::userPrefs().initialWorkingDirectory());
    FilePath sessionDefaultWorkingDir = FilePath(session::options().defaultWorkingDir());
 
    // return it if it exists, otherwise use the

@@ -194,19 +194,6 @@ set (SESSION_SOURCE_FILES
    modules/presentation/Tutorial.cpp
    modules/presentation/TutorialInstaller.cpp
    modules/preview/SessionPreview.cpp
-   modules/prefs/PrefLayer.cpp
-   modules/prefs/Preferences.cpp
-   modules/prefs/UserPrefValues.cpp
-   modules/prefs/UserPrefs.cpp
-   modules/prefs/UserPrefsComputedLayer.cpp
-   modules/prefs/UserPrefsDefaultLayer.cpp
-   modules/prefs/UserPrefsLayer.cpp
-   modules/prefs/UserPrefsProjectLayer.cpp
-   modules/prefs/UserPrefsSystemLayer.cpp
-   modules/prefs/UserState.cpp
-   modules/prefs/UserStateDefaultLayer.cpp
-   modules/prefs/UserStateLayer.cpp
-   modules/prefs/UserStateValues.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
@@ -245,6 +232,20 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
    modules/viewer/ViewerHistory.cpp
+   prefs/PrefLayer.cpp
+   prefs/Preferences.cpp
+   prefs/UserPrefValues.cpp
+   prefs/UserPrefs.cpp
+   prefs/UserPrefsComputedLayer.cpp
+   prefs/UserPrefsDefaultLayer.cpp
+   prefs/UserPrefsLayer.cpp
+   prefs/UserPrefsProjectLayer.cpp
+   prefs/UserPrefsSystemLayer.cpp
+   prefs/UserState.cpp
+   prefs/UserStateComputedLayer.cpp
+   prefs/UserStateDefaultLayer.cpp
+   prefs/UserStateLayer.cpp
+   prefs/UserStateValues.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp

@@ -21,7 +21,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 PrefLayer::~PrefLayer()
@@ -124,7 +123,6 @@ core::Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
 
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

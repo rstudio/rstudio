@@ -1,5 +1,5 @@
 /*
- * SessionUserState.hpp
+ * UserPrefsDefaultLayer.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,44 +13,32 @@
  *
  */
 
-#ifndef SESSION_USER_STATE_HPP
-#define SESSION_USER_STATE_HPP
+#include "UserPrefsDefaultLayer.hpp"
+#include "UserPrefs.hpp"
 
-#include <core/json/Json.hpp>
+#include <core/system/Xdg.hpp>
 
-#define kUserStateFile "rstudio-state.json"
-#define kUserStateSchemaFile "user-state-schema.json"
+#include <session/SessionOptions.hpp>
 
-enum StateLayer
-{
-   STATE_LAYER_MIN      = 0,
-
-   STATE_LAYER_DEFAULT  = STATE_LAYER_MIN,
-   STATE_LAYER_COMPUTED = 1,
-   STATE_LAYER_USER     = 2,
-
-   STATE_LAYER_MAX      = STATE_LAYER_USER
-};
-
-namespace rstudio {
-   namespace core {
-      class Error;
-   }
-}
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::json::Array allStateLayers();
+core::Error UserPrefsDefaultLayer::readPrefs()
+{
+   return loadPrefsFromSchema(
+      options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
+}
 
-core::Error initializeState();
+core::Error UserPrefsDefaultLayer::validatePrefs()
+{
+   // No need to validate defaults; they ship in the box and are validated at build time.
+   return Success();
+}
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
-
-#endif
 

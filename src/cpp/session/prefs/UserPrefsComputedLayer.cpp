@@ -32,7 +32,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 Error UserPrefsComputedLayer::readPrefs()
@@ -107,7 +106,6 @@ FilePath UserPrefsComputedLayer::detectedTerminalPath()
 }
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

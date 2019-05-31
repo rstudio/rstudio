@@ -13,10 +13,12 @@
  *
  */
 
-#include "UserPrefsLayer.hpp"
+#include "UserPrefsProjectLayer.hpp"
 #include "UserPrefs.hpp"
 
 #include <core/system/Xdg.hpp>
+
+#include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionOptions.hpp>
 
@@ -24,29 +26,28 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::Error UserPrefsLayer::readPrefs()
+core::Error UserPrefsProjectLayer::readPrefs()
 {
-   return loadPrefsFromFile(
-         core::system::xdg::userConfigDir().complete(kUserPrefsFile));
+   if (projects::projectContext().hasProject())
+   {
+      cache_ = boost::make_shared<json::Object>(projects::projectContext().uiPrefs());
+   }
+   else
+   {
+      cache_ = boost::make_shared<json::Object>();
+   }
+   return Success();
 }
 
-core::Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
+core::Error UserPrefsProjectLayer::validatePrefs()
 {
-   return writePrefsToFile(prefs,
-         core::system::xdg::userConfigDir().complete(kUserPrefsFile));
-}
-
-core::Error UserPrefsLayer::validatePrefs()
-{
-   return validatePrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
+   // Project level prefs can't be invalid.
+   return Success();
 }
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

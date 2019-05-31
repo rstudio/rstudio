@@ -31,7 +31,6 @@ namespace rstudio {
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 UserStateValues& userState();
@@ -39,7 +38,6 @@ UserStateValues& userState();
 core::json::Array allStateLayers();
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

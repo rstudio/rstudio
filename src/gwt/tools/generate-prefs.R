@@ -214,7 +214,7 @@ writeLines(gsub("%PREFS%", result$hpp, template),
            con = "../../cpp/session/include/session/prefs/UserPrefValues.hpp")
 template <- readLines("prefs/UserPrefValues.cpp")
 writeLines(gsub("%PREFS%", result$cpp, template), 
-           con = "../../cpp/session/modules/prefs/UserPrefValues.cpp")
+           con = "../../cpp/session/prefs/UserPrefValues.cpp")
 
 # Generate state
 result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
@@ -227,4 +227,4 @@ writeLines(gsub("%STATE%", result$hpp, template),
            con = "../../cpp/session/include/session/prefs/UserStateValues.hpp")
 template <- readLines("prefs/UserStateValues.cpp")
 writeLines(gsub("%STATE%", result$cpp, template), 
-           con = "../../cpp/session/modules/prefs/UserStateValues.cpp")
+           con = "../../cpp/session/prefs/UserStateValues.cpp")

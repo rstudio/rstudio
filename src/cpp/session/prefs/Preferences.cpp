@@ -20,7 +20,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 core::json::Array Preferences::allLayers()
@@ -82,6 +81,5 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
 }
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio

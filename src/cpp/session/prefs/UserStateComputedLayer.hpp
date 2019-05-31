@@ -1,5 +1,5 @@
 /*
- * UserPrefsDefaultLayer.cpp
+ * UserPrefsComputedLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,34 +13,24 @@
  *
  */
 
-#include "UserPrefsDefaultLayer.hpp"
-#include "UserPrefs.hpp"
+#ifndef SESSION_USER_STATE_COMPUTED_LAYER_HPP
+#define SESSION_USER_STATE_COMPUTED_LAYER_HPP
 
-#include <core/system/Xdg.hpp>
-
-#include <session/SessionOptions.hpp>
-
-using namespace rstudio::core;
+#include <session/prefs/UserStateValues.hpp>
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::Error UserPrefsDefaultLayer::readPrefs()
+class UserStateComputedLayer: public PrefLayer
 {
-   return loadPrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
-}
-
-core::Error UserPrefsDefaultLayer::validatePrefs()
-{
-   // No need to validate defaults; they ship in the box and are validated at build time.
-   return Success();
-}
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+};
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
+#endif

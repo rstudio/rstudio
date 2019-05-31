@@ -1,5 +1,5 @@
 /*
- * UserPrefsSystemLayer.cpp
+ * UserPrefsLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,34 +13,24 @@
  *
  */
 
-#include "UserPrefsSystemLayer.hpp"
-#include "UserPrefs.hpp"
+#ifndef SESSION_USER_PREF_SYSTEM_LAYER_HPP
+#define SESSION_USER_PREF_SYSTEM_LAYER_HPP
 
-#include <core/system/Xdg.hpp>
-
-#include <session/SessionOptions.hpp>
-
-using namespace rstudio::core;
+#include <session/prefs/PrefLayer.hpp>
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::Error UserPrefsSystemLayer::readPrefs()
+class UserPrefsSystemLayer: public PrefLayer
 {
-   return loadPrefsFromFile(
-         core::system::xdg::systemConfigDir().complete(kUserPrefsFile));
-}
-
-core::Error UserPrefsSystemLayer::validatePrefs()
-{
-   return validatePrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
-}
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+};
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
+#endif

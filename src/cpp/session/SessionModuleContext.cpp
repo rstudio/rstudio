@@ -351,7 +351,7 @@ SEXP rs_rstudioCitation()
 SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
 {
    bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
-   modules::prefs::userState().setUsingMingwGcc49(usingMingwGcc49);
+   prefs::userState().setUsingMingwGcc49(usingMingwGcc49);
    return R_NilValue;
 }
 
@@ -880,11 +880,11 @@ Error registerIdleOnlyAsyncRpcMethod(
 core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
 {
    // potential special case for Makevars
-   if (modules::prefs::userPrefs().useNewlinesInMakefiles() && isPackagePosixMakefile(srcFile))
+   if (prefs::userPrefs().useNewlinesInMakefiles() && isPackagePosixMakefile(srcFile))
       return string_utils::LineEndingPosix;
 
    // get the global default behavior
-   string_utils::LineEnding lineEndings = modules::prefs::userPrefs().lineEndings();
+   string_utils::LineEnding lineEndings = prefs::userPrefs().lineEndings();
 
    // use project-level override if available
    using namespace session::projects;
@@ -1814,7 +1814,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
-   else if (modules::prefs::userPrefs().hideObjectFiles() &&
+   else if (prefs::userPrefs().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")
    {
@@ -2166,13 +2166,13 @@ std::string CRANReposURL()
    std::string url;
    r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
    if (url.empty())
-      url = modules::prefs::userPrefs().CRANMirror().url;
+      url = prefs::userPrefs().CRANMirror().url;
    return url;
 }
 
 std::string rstudioCRANReposURL()
 {
-   std::string protocol = modules::prefs::userPrefs().useSecureDownload() ?
+   std::string protocol = prefs::userPrefs().useSecureDownload() ?
                                                            "https" : "http";
    return protocol + "://cran.rstudio.com/";
 }

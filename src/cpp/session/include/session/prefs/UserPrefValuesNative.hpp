@@ -23,7 +23,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 struct CRANMirror
@@ -50,7 +49,6 @@ public:
    console_process::TerminalShell::ShellType defaultTerminalShellValue();
 };
 
-}
 }
 }
 }

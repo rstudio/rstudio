@@ -24,7 +24,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 #define kRunRprofileOnResume "run_rprofile_on_resume"
@@ -1213,7 +1212,6 @@ public:
 };
 
         
-}
 }
 }
 }

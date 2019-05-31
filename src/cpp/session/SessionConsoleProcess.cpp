@@ -84,10 +84,10 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (modules::prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
    {
       std::vector<std::string> whitelist;
-      core::json::fillVectorString(modules::prefs::userPrefs().busyWhitelist(), &whitelist);
+      core::json::fillVectorString(prefs::userPrefs().busyWhitelist(), &whitelist);
       options.subprocWhitelist = whitelist;
    }
 
@@ -650,7 +650,7 @@ void ConsoleProcess::onExit(int exitCode)
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
       procInfo_->setAutoClose(
-            modules::prefs::userPrefs().terminalAutoClose() ? AlwaysAutoClose :  NeverAutoClose);
+            prefs::userPrefs().terminalAutoClose() ? AlwaysAutoClose :  NeverAutoClose);
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)
@@ -990,7 +990,7 @@ std::string ConsoleProcess::getShellName() const
 bool ConsoleProcess::useWebsockets()
 {
    return session::options().allowTerminalWebsockets() &&
-                     modules::prefs::userPrefs().terminalWebsockets();
+                     prefs::userPrefs().terminalWebsockets();
 }
 
 core::json::Array processesAsJson(SerializationMode serialMode)

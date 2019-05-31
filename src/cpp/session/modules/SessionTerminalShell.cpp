@@ -254,13 +254,13 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
    pShellInfo->path = module_context::resolveAliasedPath(
-         modules::prefs::userPrefs().customShellCommand());
+         prefs::userPrefs().customShellCommand());
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
-   if (!modules::prefs::userPrefs().customShellOptions().empty())
+   if (!prefs::userPrefs().customShellOptions().empty())
    {
-      args = core::algorithm::split(modules::prefs::userPrefs().customShellOptions(), " ");
+      args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
    pShellInfo->args = args;
    return true;

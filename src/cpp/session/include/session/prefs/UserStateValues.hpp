@@ -24,7 +24,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 #define kContextId "context_id"
@@ -201,7 +200,6 @@ public:
 };
 
    
-}
 }
 }
 }

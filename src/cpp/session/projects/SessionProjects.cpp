@@ -831,7 +831,7 @@ void startup(const std::string& firstProjectPath)
    }
 
    // check for restore last project
-   else if (modules::prefs::userPrefs().restoreLastProject() &&
+   else if (prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.empty())
    {
 

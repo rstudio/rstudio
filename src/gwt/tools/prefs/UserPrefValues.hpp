@@ -24,12 +24,10 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 %PREFS%
         
-}
 }
 }
 }

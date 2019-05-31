@@ -31,7 +31,6 @@ namespace rstudio {
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 enum PrefLayers
@@ -52,7 +51,6 @@ UserPrefValuesNative& userPrefs();
 core::json::Array allPrefLayers();
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

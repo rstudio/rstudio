@@ -1,5 +1,5 @@
 /*
- * UserPrefsLayer.cpp
+ * UserPrefsDefaultLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,43 +13,24 @@
  *
  */
 
-#include "UserPrefsProjectLayer.hpp"
-#include "UserPrefs.hpp"
+#ifndef SESSION_USER_PREF_DEFAULT_LAYER_HPP
+#define SESSION_USER_PREF_DEFAULT_LAYER_HPP
 
-#include <core/system/Xdg.hpp>
-
-#include <session/projects/SessionProjects.hpp>
-
-#include <session/SessionOptions.hpp>
-
-using namespace rstudio::core;
+#include <session/prefs/PrefLayer.hpp>
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-core::Error UserPrefsProjectLayer::readPrefs()
+class UserPrefsDefaultLayer: public PrefLayer
 {
-   if (projects::projectContext().hasProject())
-   {
-      cache_ = boost::make_shared<json::Object>(projects::projectContext().uiPrefs());
-   }
-   else
-   {
-      cache_ = boost::make_shared<json::Object>();
-   }
-   return Success();
-}
-
-core::Error UserPrefsProjectLayer::validatePrefs()
-{
-   // Project level prefs can't be invalid.
-   return Success();
-}
+public:
+   core::Error readPrefs();
+   core::Error validatePrefs();
+};
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
+#endif

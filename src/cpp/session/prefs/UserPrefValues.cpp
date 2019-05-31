@@ -21,7 +21,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 /**
@@ -2041,7 +2040,6 @@ core::Error UserPrefValues::setClangVerbose(int val)
 
    
 
-}
 }
 }
 }

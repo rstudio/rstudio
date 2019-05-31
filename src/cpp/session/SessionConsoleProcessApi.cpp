@@ -143,7 +143,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
                core::FilePath() /*cwd*/,
                core::system::kDefaultCols, core::system::kDefaultRows,
                false /*zombie*/,
-               modules::prefs::userPrefs().terminalTrackEnvironment()));
+               prefs::userPrefs().terminalTrackEnvironment()));
 
    pCpi->setHasChildProcs(false);
 

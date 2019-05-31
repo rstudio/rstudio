@@ -1,5 +1,5 @@
 /*
- * UserState.cpp
+ * UserPrefs.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,83 +13,89 @@
  *
  */
 
+#include <core/system/Xdg.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/json/rapidjson/schema.h>
 
 #include <core/Exec.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include <session/prefs/UserStateValues.hpp>
-#include <session/prefs/Preferences.hpp>
-
-#include "UserStateDefaultLayer.hpp"
-#include "UserStateComputedLayer.hpp"
-#include "UserStateLayer.hpp"
-#include "UserState.hpp"
+#include "UserPrefs.hpp"
+#include "UserPrefsDefaultLayer.hpp"
+#include "UserPrefsComputedLayer.hpp"
+#include "UserPrefsLayer.hpp"
+#include "UserPrefsSystemLayer.hpp"
+#include "UserPrefsProjectLayer.hpp"
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 namespace {
 
-class UserState: public UserStateValues
+class UserPrefs: public UserPrefValuesNative
 {
    Error createLayers()
    {
-      layers_.push_back(boost::make_shared<UserStateDefaultLayer>()) ;  // STATE_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserStateComputedLayer>());  // STATE_LAYER_COMPUTED
-      layers_.push_back(boost::make_shared<UserStateLayer>());          // STATE_LAYER_USER
+      layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
+      layers_.push_back(boost::make_shared<UserPrefsComputedLayer>()); // PREF_LAYER_COMPUTED
+      layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
+      layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
+      layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
       return Success();
    }
 
    int userLayer()
    {
-      return STATE_LAYER_USER;
+      return PREF_LAYER_USER;
    }
-} s_state;
+} s_prefs;
 
-Error setState(const json::JsonRpcRequest& request,
-               json::JsonRpcResponse* pResponse)
+Error setPreferences(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
 {
    json::Value val;
    Error error = json::readParams(request.params, &val);
    if (error)
       return error;
 
-   s_state.writeLayer(STATE_LAYER_USER, val.get_obj()); 
-
-   return Success();
+   return s_prefs.writeLayer(PREF_LAYER_USER, val.get_obj()); 
 }
+
 } // anonymous namespace
 
-json::Array allStateLayers()
+json::Array allPrefLayers()
 {
-   return s_state.allLayers();
+   return s_prefs.allLayers();
 }
 
-Error initializeState()
+UserPrefValuesNative& userPrefs()
+{
+   return s_prefs;
+}
+
+Error initializePrefs()
 {
    using namespace module_context;
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_state", setState));
+      (bind(registerRpcMethod, "set_user_prefs", setPreferences));
    Error error = initBlock.execute();
    if (error)
       return error;
 
-   error = s_state.initialize();
+   error = s_prefs.initialize();
    if (error)
       return error;
 
    return Success();
 }
 
-} // namespace state
-} // namespace modules
+} // namespace prefs
 } // namespace session
 } // namespace rstudio

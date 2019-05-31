@@ -35,7 +35,6 @@
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
-#include "modules/prefs/UserState.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
@@ -274,8 +273,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                         "experience unexpected issues as a result.\n\n");
    }
 
-   sessionInfo["user_prefs"] = modules::prefs::allPrefLayers();
-   sessionInfo["user_state"] = modules::prefs::allStateLayers();
+   sessionInfo["user_prefs"] = prefs::allPrefLayers();
+   sessionInfo["user_state"] = prefs::allStateLayers();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();

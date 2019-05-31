@@ -1,5 +1,5 @@
 /*
- * UserStateLayer.hpp
+ * UserPrefsComputedLayer.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,26 +13,39 @@
  *
  */
 
-#ifndef SESSION_USER_STATE_LAYER_HPP
-#define SESSION_USER_STATE_LAYER_HPP
+#include "UserStateComputedLayer.hpp"
 
-#include <session/prefs/PrefLayer.hpp>
+#include <session/prefs/UserStateValues.hpp>
+
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <core/json/Json.hpp>
+#include <core/system/Environment.hpp>
+#include <core/CrashHandler.hpp>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-class UserStateLayer: public PrefLayer
+Error UserStateComputedLayer::readPrefs()
 {
-public:
-   core::Error readPrefs();
-   core::Error validatePrefs();
-};
+   json::Object layer;
+
+   layer[kUsingMingwGcc49] = boost::algorithm::contains(
+         core::system::getenv("R_COMPILED_BY"), "4.9.3");
+
+   cache_ = boost::make_shared<core::json::Object>(layer);
+   return Success();
+}
+
+core::Error UserStateComputedLayer::validatePrefs()
+{
+   return Success();
+}
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif

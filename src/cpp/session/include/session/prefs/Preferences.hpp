@@ -32,7 +32,6 @@ namespace rstudio {
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 class Preferences
@@ -83,7 +82,6 @@ protected:
 };
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

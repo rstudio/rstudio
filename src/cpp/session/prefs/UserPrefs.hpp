@@ -1,5 +1,5 @@
 /*
- * UserPrefsProjectLayer.hpp
+ * SessionUserPrefs.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,26 +13,28 @@
  *
  */
 
-#ifndef SESSION_USER_PREF_PROJECT_LAYER_HPP
-#define SESSION_USER_PREF_PROJECT_LAYER_HPP
+#ifndef SESSION_MODULE_USER_PREFS_HPP
+#define SESSION_MODULE_USER_PREFS_HPP
 
-#include <session/prefs/PrefLayer.hpp>
+#include <core/json/Json.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
+
+namespace rstudio {
+   namespace core {
+      class Error;
+   }
+}
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-class UserPrefsProjectLayer: public PrefLayer
-{
-public:
-   core::Error readPrefs();
-   core::Error validatePrefs();
-};
+core::Error initializePrefs();
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
 #endif
+

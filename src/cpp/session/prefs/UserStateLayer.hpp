@@ -1,5 +1,5 @@
 /*
- * UserPrefsLayer.hpp
+ * UserStateLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,17 +13,16 @@
  *
  */
 
-#ifndef SESSION_USER_PREF_SYSTEM_LAYER_HPP
-#define SESSION_USER_PREF_SYSTEM_LAYER_HPP
+#ifndef SESSION_USER_STATE_LAYER_HPP
+#define SESSION_USER_STATE_LAYER_HPP
 
 #include <session/prefs/PrefLayer.hpp>
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
-class UserPrefsSystemLayer: public PrefLayer
+class UserStateLayer: public PrefLayer
 {
 public:
    core::Error readPrefs();
@@ -31,7 +30,6 @@ public:
 };
 
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

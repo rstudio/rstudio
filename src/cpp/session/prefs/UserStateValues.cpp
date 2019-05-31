@@ -21,7 +21,6 @@
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 
 /**
@@ -273,7 +272,6 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
 
    
 
-}
 }
 }
 }

@@ -114,8 +114,8 @@ public:
    static void attemptUpgrade()
    {
       // get the URL currently in settings. if it's https already then bail
-      modules::prefs::CRANMirror mirror = 
-         modules::prefs::userPrefs().CRANMirror();
+      prefs::CRANMirror mirror = 
+         prefs::userPrefs().CRANMirror();
       if (isSecure(mirror.url))
          return;
 
@@ -147,11 +147,11 @@ public:
    {
       if ((exitStatus == EXIT_SUCCESS) && checkOutputForSuccess())
       {
-         modules::prefs::userPrefs().setCRANMirror(secureMirror_, true);
+         prefs::userPrefs().setCRANMirror(secureMirror_, true);
       }
       else
       {
-         std::string url = modules::prefs::userPrefs().CRANMirror().url;
+         std::string url = prefs::userPrefs().CRANMirror().url;
          if (isKnownSecureMirror(url))
             unableToSecureConnectionWarning(secureMirror_.url);
          else
@@ -173,20 +173,20 @@ private:
    }
 
 private:
-   explicit CRANMirrorHttpsUpgrade(const modules::prefs::CRANMirror& secureMirror)
+   explicit CRANMirrorHttpsUpgrade(const prefs::CRANMirror& secureMirror)
       : secureMirror_(secureMirror)
    {
    }
    std::string output_;
-   modules::prefs::CRANMirror secureMirror_;
+   prefs::CRANMirror secureMirror_;
 };
 
 
 void revertCRANMirrorToHTTP()
 {
-   modules::prefs::CRANMirror mirror = modules::prefs::userPrefs().CRANMirror();
+   prefs::CRANMirror mirror = modules::prefs::userPrefs().CRANMirror();
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
-   modules::prefs::userPrefs().setCRANMirror(mirror, true);
+   prefs::userPrefs().setCRANMirror(mirror, true);
 }
 
 } // anonymous namespace

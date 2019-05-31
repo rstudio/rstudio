@@ -28,7 +28,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace prefs {
 namespace tests {
 
@@ -112,7 +111,6 @@ test_context("default validation")
 
 } // namespace tests
 } // namespace prefs
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 
