@@ -36,7 +36,11 @@ pipeline {
       }
       post {
         failure {
-          currentBuild.result = "UNSTABLE"
+          steps {
+            script {
+              currentBuild.result = "UNSTABLE"
+            }
+          }
         }
       }
     }
