@@ -1073,17 +1073,8 @@ Error initialize()
    boost::shared_ptr<bool> pCapturingDebugOutput =
          boost::make_shared<bool>(false);
 
-   r::routines::registerCallMethod(
-            "rs_isBrowserActive",
-            (DL_FUNC) rs_isBrowserActive,
-            0);
-
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_jumpToFunction" ;
-   methodDef.fun = (DL_FUNC) rs_jumpToFunction ;
-   methodDef.numArgs = 3;
-   r::routines::addCallMethod(methodDef);
-
+   RS_REGISTER_CALL_METHOD(rs_isBrowserActive);
+   RS_REGISTER_CALL_METHOD(rs_jumpToFunction);
    RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);

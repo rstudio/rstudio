@@ -206,11 +206,7 @@ Error initialize()
 
    boost::shared_ptr<int> pPlumberViewerType = boost::make_shared<int>(PLUMBER_VIEWER_NONE);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_plumberviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_plumberviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_plumberviewer);
 
    userSettings().onChanged.connect(bind(onUserSettingsChanged, pPlumberViewerType));
 
