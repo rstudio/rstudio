@@ -7,7 +7,7 @@
 
 .ace_print-margin {
   width: 1px;
-  background: #263238
+  background: #3D5059
 }
 
 .ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
