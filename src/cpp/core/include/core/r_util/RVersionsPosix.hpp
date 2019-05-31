@@ -99,7 +99,8 @@ public:
    bool operator==(const RVersion& other) const
    {
       return number() == other.number() &&
-            homeDir().absolutePath() == other.homeDir().absolutePath();
+             homeDir().absolutePath() == other.homeDir().absolutePath() &&
+             (label() == other.label() || (label().empty() || other.label().empty()));
    }
 
 private:
@@ -121,6 +122,7 @@ std::vector<RVersion> enumerateRVersions(
 
 RVersion selectVersion(const std::string& number,
                        const std::string& rHomeDir,
+                       const std::string& label,
                        std::vector<RVersion> versions);
 
 json::Object rVersionToJson(const r_util::RVersion& version);
