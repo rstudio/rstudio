@@ -31,15 +31,11 @@ pipeline {
     stage('tests'){
       steps {
         script {
-          bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core' 
-        }
-      }
-      post {
-        failure {
-          steps {
-            script {
-              currentBuild.result = "UNSTABLE"
-            }
+          try {
+            bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+          }
+          catch {
+            currentBuild.result = "UNSTABLE"
           }
         }
       }
