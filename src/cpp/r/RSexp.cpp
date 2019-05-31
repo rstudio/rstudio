@@ -1623,13 +1623,13 @@ public:
          return get(primitiveSEXP);
       
       r::sexp::Protect protect;
-      SEXP wrapperSEXP;
+      SEXP wrapperSEXP = R_NilValue;
       r::exec::RFunction makePrimitiveWrapper(".rs.makePrimitiveWrapper");
       makePrimitiveWrapper.addParam(primitiveSEXP);
       Error error = makePrimitiveWrapper.call(&wrapperSEXP, &protect);
       if (error)
          LOG_ERROR(error);
-      
+
       put(primitiveSEXP, wrapperSEXP);
       return wrapperSEXP;
    }
@@ -1647,7 +1647,8 @@ private:
    
    void put(SEXP primitiveSEXP, SEXP wrapperSEXP)
    {
-      R_PreserveObject(wrapperSEXP);
+      if (wrapperSEXP != R_NilValue)
+         R_PreserveObject(wrapperSEXP);
       database_[primitiveSEXP] = wrapperSEXP;
    }
    
@@ -1684,7 +1685,11 @@ core::Error extractFunctionInfo(
    bool isPrimitive = Rf_isPrimitive(functionSEXP);
    pInfo->setIsPrimitive(isPrimitive);
    if (isPrimitive)
+   {
       functionSEXP = primitiveWrapper(functionSEXP);
+      if (functionSEXP == R_NilValue)
+         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
    
    // TODO: Some primitives (e.g. language constructs like `if`, `return`)
    // still do not have formals; these functions only take arguments

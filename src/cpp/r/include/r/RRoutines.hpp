@@ -58,7 +58,7 @@ void validate(ReturnType(ArgumentTypes...))
             std::is_same<ReturnType, SEXP>::value,
             "Registered .Call methods should have SEXP return type");
 
-   typedef typename validate_args<ArgumentTypes...>::type type;
+   (void) typename validate_args<ArgumentTypes...>::type{};
 }
 
 } // end namespace internal

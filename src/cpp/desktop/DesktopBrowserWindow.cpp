@@ -161,6 +161,28 @@ void BrowserWindow::finishLoading(bool succeeded)
 
    if (succeeded)
    {
+      // If the screen that the Window is being shown on has changed,
+      // then force a quick re-size of the window so that the contents
+      // can be re-rendered. This helps fix issues where the window is
+      // moved between displays with different DPIs, where the text
+      // can occasionally be briefly 'fuzzy'.
+      QObject::connect(
+               this->window()->windowHandle(),
+               &QWindow::screenChanged,
+               [&]()
+      {
+         // We use a timer here as it's been observed messing with the
+         // window size while the screenChanged signal is being handled
+         // can cause the screenChanged signal to be repeatedly fired
+         // during the window move.
+         QTimer::singleShot(0, [&]() {
+            QSize originalSize = size();
+            resize(originalSize.width(), originalSize.height() + 1);
+            resize(originalSize.width(), originalSize.height() + 0);
+         });
+
+      });
+
       QString cmd = QString::fromUtf8("if (window.opener && "
          "window.opener.registerDesktopChildWindow)"
          "   window.opener.registerDesktopChildWindow('");

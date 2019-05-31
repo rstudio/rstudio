@@ -302,6 +302,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private MenuPopup popup;
   private MenuItem selectedItem;
   private MenuBar shownChildMenu;
+  private MenuItem expandedMenuItem;
   private boolean vertical, autoOpen;
   private boolean focusOnHover = true;
 
@@ -513,6 +514,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   public void closeAllChildren(boolean focus) {
     if (shownChildMenu != null) {
       // Hide any open submenus of this item
+      if (expandedMenuItem != null)
+      {
+        expandedMenuItem.setAriaExpanded(false);
+        expandedMenuItem = null;
+      }
       shownChildMenu.onHide(focus);
       shownChildMenu = null;
       selectItem(null);
@@ -859,6 +865,13 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           Element td = DOM.getChild(tr, 1);
           setStyleName(td, "subMenuIcon-selected", true);
         }
+
+        if (shownChildMenu != null
+            && shownChildMenu == selectedItem.getSubMenu())
+        {
+          hideChildMenu(false);
+          shownChildMenu = null;
+        }
       }
 
       Roles.getMenubarRole().setAriaActivedescendantProperty(getElement(),
@@ -977,7 +990,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * <code>true</code> if the item's command should be fired, <code>false</code>
    * otherwise.
    */
-  void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
+  protected void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
     // Should not perform any action if the item is disabled
     if (!item.isEnabled()) {
       return;
@@ -1006,8 +1019,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       // hide any open submenus of this item
       if (shownChildMenu != null) {
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         shownChildMenu = null;
         selectItem(null);
       }
@@ -1017,20 +1029,17 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         openPopup(item);
       } else if (item.getSubMenu() != shownChildMenu) {
         // close the other submenu and open this one
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         openPopup(item);
       } else if (fireCommand && !autoOpen) {
         // close this submenu
-        shownChildMenu.onHide(focus);
-        popup.hide();
+        hideChildMenu(focus);
         shownChildMenu = null;
         selectItem(item);
       }
     } else if (autoOpen && shownChildMenu != null) {
       // close submenu
-      shownChildMenu.onHide(focus);
-      popup.hide();
+      hideChildMenu(focus);
       shownChildMenu = null;
     }
   }
@@ -1116,7 +1125,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
       td.setPropertyString("vAlign", "middle");
-      td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
+      String indicatorHtml = subMenuIcon.getSafeHtml().asString();
+      // add null alt attribute for a11y
+      if (indicatorHtml.startsWith("<img") && indicatorHtml.endsWith(">"))
+        indicatorHtml = indicatorHtml.substring(0, indicatorHtml.length() - 1) + " alt>";
+      td.setInnerHTML(indicatorHtml);
+
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
     }
@@ -1271,8 +1285,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private void onHide(boolean focus) {
     if (shownChildMenu != null) {
-      shownChildMenu.onHide(focus);
-      popup.hide();
+      hideChildMenu(focus);
       if (focus) {
         focus();
       }
@@ -1288,6 +1301,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     shownChildMenu = item.getSubMenu();
     shownChildMenu.selectItem(null);
     shownChildMenu.parentMenu = this;
+    expandedMenuItem = item;
+    item.setAriaExpanded(true);
 
     popup = new MenuPopup();
     popup.setWidget(shownChildMenu);
@@ -1332,9 +1347,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
       for (MenuItem nextItem : items) {
-        if (nextItem.isEnabled()) {
+        if (nextItem.isEnabled() && nextItem.isVisible()) {
           selectItem(nextItem);
-          break;
+          return true;
+        }
+      }
+      for (MenuItem nextItem : items) {
+        if (nextItem.isVisible()) {
+          selectItem(nextItem);
+          return true;
         }
       }
       return true;
@@ -1367,7 +1388,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1404,7 +1425,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1424,5 +1445,20 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private void setItemColSpan(UIObject item, int colspan) {
     item.getElement().setPropertyInt("colSpan", colspan);
+  }
+
+  /**
+   * Hide currently displayed child menu and mark the associate menu item as closed.
+   * @param focus
+   */
+  private void hideChildMenu(boolean focus)
+  {
+    if (expandedMenuItem != null)
+    {
+      expandedMenuItem.setAriaExpanded(false);
+      expandedMenuItem = null;
+    }
+    shownChildMenu.onHide(focus);
+    popup.hide();
   }
 }
