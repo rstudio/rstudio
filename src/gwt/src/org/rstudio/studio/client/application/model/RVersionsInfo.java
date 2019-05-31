@@ -42,6 +42,10 @@ public class RVersionsInfo extends JavaScriptObject
    public final native String getDefaultRVersionHome() /*-{
       return this.default_r_version_home;
    }-*/;
+
+   public final native String getDefaultRVersionLabel() /*-{
+      return this.default_r_version_label;
+   }-*/;
    
    public final native boolean getRestoreProjectRVersion() /*-{
       return this.restore_project_r_version;

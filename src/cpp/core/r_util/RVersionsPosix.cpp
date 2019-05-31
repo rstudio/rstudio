@@ -315,6 +315,15 @@ bool isVersion(const RVersionNumber& number,
           rHomeDir == item.homeDir().absolutePath();
 }
 
+bool isLabelVersion(const RVersionNumber& number,
+                    const std::string& rHomeDir,
+                    const std::string& label,
+                    const RVersion& item)
+{
+   return isVersion(number, rHomeDir, item) &&
+          label == item.label();
+}
+
 bool isMajorMinorVersion(const RVersionNumber& test, const RVersion& item)
 {
    RVersionNumber itemNumber = RVersionNumber::parse(item.number());
@@ -353,6 +362,7 @@ RVersion findClosest(const RVersionNumber& versionNumber,
 
 RVersion selectVersion(const std::string& number,
                        const std::string& rHomeDir,
+                       const std::string& label,
                        std::vector<RVersion> versions)
 {
    // check for empty
@@ -367,6 +377,14 @@ RVersion selectVersion(const std::string& number,
 
    // first seek an exact match
    std::vector<RVersion>::const_iterator it;
+   it = std::find_if(versions.begin(),
+                     versions.end(),
+                     boost::bind(isLabelVersion, matchNumber, rHomeDir, label, _1));
+   if (it != versions.end())
+      return *it;
+
+   // no exact match (including label)
+   // relax the search to find a matching version with a different label
    it = std::find_if(versions.begin(),
                      versions.end(),
                      boost::bind(isVersion, matchNumber, rHomeDir, _1));
