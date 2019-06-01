@@ -94,10 +94,15 @@ std::vector<std::string> systemClangVersions()
    std::vector<std::string> clangVersions;
    
 #if defined(__APPLE__)
+   // NOTE: the version of libclang.dylib bundled with Xcode
+   // doesn't seem to work well when loaded as a library
+   // (there seems to be extra orchestration required to get
+   // include paths set up; easier to just depend on command
+   // line tools since we request their installation in other
+   // contexts)
    clangVersions = {
-      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib",
       "/Library/Developer/CommandLineTools/usr/lib/libclang.dylib",
-      "/usr/local/opt/llvm/lib/libclang.dylib"
+      "/usr/local/opt/llvm/lib/libclang.dylib",
    };
 #elif defined(__unix__)
    // default set of versions

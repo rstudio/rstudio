@@ -119,18 +119,39 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
+   // (we implement a poor man's shell arguments parser here:
+   // consider a true solution using e.g. a tokenizer)
    try
    {
-      boost::regex re("[ \\t]-(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
-      boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
-      boost::sregex_token_iterator end;
+      boost::regex re(
+               "([ \\t])"                           // look for preceding space
+               "(-isysroot|-isystem|-I|-D|-i|-f)"   // find flags we care about
+               "([ \\t]+)?"                         // allow for optional whitespace
+               "(\\\"[^\\\"]+\\\"|[^ ]+)");         // parse the argument passed
+
+      boost::sregex_iterator it(line.begin(), line.end(), re);
+      boost::sregex_iterator end;
       for ( ; it != end; ++it)
       {
-         // remove quotes and add it to the compile args
-         std::string arg = *it;
-         boost::algorithm::trim_all(arg);
-         boost::algorithm::replace_all(arg, "\"", "");
-         compileArgs.push_back(arg);
+         boost::smatch match = *it;
+
+         std::string whitespace = match[3];
+         if (whitespace.empty())
+         {
+            std::string argument = match[2] + match[4];
+            boost::algorithm::replace_all(argument, "\"", "");
+            compileArgs.push_back(argument);
+         }
+         else
+         {
+            std::string first = match[2];
+            boost::algorithm::replace_all(first, "\"", "");
+            compileArgs.push_back(first);
+
+            std::string second = match[4];
+            boost::algorithm::replace_all(second, "\"", "");
+            compileArgs.push_back(second);
+         }
       }
    }
    CATCH_UNEXPECTED_EXCEPTION;
