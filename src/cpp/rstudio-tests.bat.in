@@ -2,7 +2,7 @@
 set "PATH=@LIBR_BIN_DIR@;%PATH%"
 
 IF "@RSTUDIO_PACKAGE_BUILD@"=="1" (
-set SUBPATH="@CMAKE_BUILD_TYPE@/"
+set "SUBPATH=@CMAKE_BUILD_TYPE@/"
 )
 
 echo Running 'core' tests...
