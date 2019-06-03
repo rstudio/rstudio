@@ -550,6 +550,16 @@
             "default": true,
             "description": "Whether to ignore words with numbers in them when spell checking."
         },
+        "max_spellcheck_words": {
+            "type": "integer",
+            "default": 500,
+            "description": "The maximum number of spelling words to check at once."
+        },
+        "max_spellcheck_prefetch": {
+            "type": "integer",
+            "default": 20,
+            "description": "The maximum number of spelling correction suggestions to prefetch."
+        },
         "real_time_spellchecking": {
             "type": "boolean",
             "default": false,

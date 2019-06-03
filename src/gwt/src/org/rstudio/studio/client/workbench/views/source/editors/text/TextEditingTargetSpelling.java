@@ -35,7 +35,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -59,7 +59,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    public TextEditingTargetSpelling(DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
                                     LintManager lintManager,
-                                    UIPrefs prefs)
+                                    UserPrefs prefs)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -94,7 +94,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          words.add(docDisplay_.getTextForRange(r));
 
          // only check a certain number of words at once to not overwhelm the system
-         if (wordRanges.size() > prefs_.maxCheckWords().getValue())
+         if (wordRanges.size() > prefs_.maxSpellcheckWords().getValue())
             break;
       }
 
@@ -105,7 +105,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          for (int i = 0; i < words.size(); i++) {
             String word = words.get(i);
             if (!typoSpellChecker_.checkSpelling(word)) {
-               if (prefetchWords.size() < prefs_.maxPrefetchWords().getValue())
+               if (prefetchWords.size() < prefs_.maxSpellcheckPrefetch().getValue())
                   prefetchWords.add(word);
                Range range = wordRanges.get(i);
                lint.push(LintItem.create(
@@ -340,7 +340,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final LintManager lintManager_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final TypoSpellChecker typoSpellChecker_;
  
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = 

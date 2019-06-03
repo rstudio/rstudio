@@ -1220,6 +1220,32 @@ core::Error UserPrefValues::setIgnoreWordsWithNumbers(bool val)
 }
 
 /**
+ * The maximum number of spelling words to check at once.
+ */
+int UserPrefValues::maxSpellcheckWords()
+{
+   return readPref<int>("max_spellcheck_words");
+}
+
+core::Error UserPrefValues::setMaxSpellcheckWords(int val)
+{
+   return writePref("max_spellcheck_words", val);
+}
+
+/**
+ * The maximum number of spelling correction suggestions to prefetch.
+ */
+int UserPrefValues::maxSpellcheckPrefetch()
+{
+   return readPref<int>("max_spellcheck_prefetch");
+}
+
+core::Error UserPrefValues::setMaxSpellcheckPrefetch(int val)
+{
+   return writePref("max_spellcheck_prefetch", val);
+}
+
+/**
  * Whether to enable real-time spellchecking by default.
  */
 bool UserPrefValues::realTimeSpellchecking()

@@ -891,6 +891,22 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The maximum number of spelling words to check at once.
+    */
+   public PrefValue<Integer> maxSpellcheckWords()
+   {
+      return integer("max_spellcheck_words", 500);
+   }
+
+   /**
+    * The maximum number of spelling correction suggestions to prefetch.
+    */
+   public PrefValue<Integer> maxSpellcheckPrefetch()
+   {
+      return integer("max_spellcheck_prefetch", 20);
+   }
+
+   /**
     * Whether to enable real-time spellchecking by default.
     */
    public PrefValue<Boolean> realTimeSpellchecking()
