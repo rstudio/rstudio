@@ -1,7 +1,7 @@
 /*
  * ModalDialogTracker.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.PopupPanel;
+import org.rstudio.core.client.command.impl.DesktopMenuCallback;
+import org.rstudio.studio.client.application.Desktop;
 
 import java.util.ArrayList;
 
@@ -23,6 +25,8 @@ public class ModalDialogTracker
    public static void onShow(PopupPanel panel)
    {
       dialogStack_.add(panel);
+      if (Desktop.isDesktop())
+         DesktopMenuCallback.setMainMenuEnabled(false);
    }
 
    public static boolean isTopMost(PopupPanel panel)
@@ -33,8 +37,9 @@ public class ModalDialogTracker
 
    public static void onHide(PopupPanel panel)
    {
-      while (dialogStack_.remove(panel))
-      {}
+      dialogStack_.removeIf(panel::equals);
+      if (Desktop.isDesktop() && numModalsShowing() == 0)
+         DesktopMenuCallback.setMainMenuEnabled(true);
    }
    
    public static int numModalsShowing()
@@ -42,6 +47,5 @@ public class ModalDialogTracker
       return dialogStack_.size();
    }
 
-   private static ArrayList<PopupPanel> dialogStack_ =
-         new ArrayList<PopupPanel>();
+   private static final ArrayList<PopupPanel> dialogStack_ = new ArrayList<>();
 }

@@ -13,7 +13,7 @@
             <g:ScrollPanel styleName="{environmentStyle.fillHeight}">
                 <g:HTMLPanel>
                   <g:Image resource="{executionArrow}" styleName="{style.executionArrow}"></g:Image>
-	               <g:HTMLPanel styleName="{style.frameList} {style.framePanel}" ui:field="callFramePanel"></g:HTMLPanel>
+                  <g:HTMLPanel styleName="{style.frameList} {style.framePanel}" ui:field="callFramePanel"></g:HTMLPanel>
                 </g:HTMLPanel>
             </g:ScrollPanel>
         </g:ResizeLayoutPanel>

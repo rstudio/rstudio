@@ -1,7 +1,7 @@
 /*
  * ModifyKeyboardShortcutsWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.cell.client.EditTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -225,6 +226,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public ModifyKeyboardShortcutsWidget(String filterText)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initialFilterText_ = filterText;

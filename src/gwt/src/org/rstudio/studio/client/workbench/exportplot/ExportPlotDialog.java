@@ -1,7 +1,7 @@
 /*
  * ExportPlotDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -26,7 +27,8 @@ public class ExportPlotDialog extends ModalDialogBase
 {
    public ExportPlotDialog(ExportPlotOptions options,
                            ExportPlotPreviewer previewer)
-   { 
+   {
+      super(Roles.getDialogRole());
       options_ = options;
       previewer_ = previewer;
    }
@@ -34,7 +36,7 @@ public class ExportPlotDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel mainPanel = new VerticalPanel();    
+      VerticalPanel mainPanel = new VerticalPanel();
    
       // enforce maximum initial dimensions based on screen size
       Size maxSize = new Size(Window.getClientWidth() - 100,

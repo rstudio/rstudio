@@ -22,16 +22,16 @@
             margin-right: 5px;
             margin-left: 5px;
         }
-		.codePreviewImportLabel {
-			margin-top: 14px;
+      .codePreviewImportLabel {
+         margin-top: 14px;
             margin-right: 5px;
             margin-left: 5px;
-		}
+      }
         .topImportLabel {    
             margin-top: 0px;
             margin-right: 5px;
             margin-left: 5px;
-			margin-bottom: 4px;
+         margin-bottom: 4px;
         }
         .gridViewerFrame {
             margin-top: 3px;

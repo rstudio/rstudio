@@ -63,21 +63,21 @@ public class LintManager
          this.explicit = explicit;
          this.excludeCurrentStatement = excludeCurrentStatement;
       }
-      
+
       public final Invalidation.Token token;
       public final Position cursorPosition;
       public final boolean showMarkers;
       public final boolean explicit;
       public final boolean excludeCurrentStatement;
    }
-   
+
    private void reset()
    {
       showMarkers_ = false;
       explicit_ = false;
       excludeCurrentStatement_ = true;
    }
-   
+
    // NOTE: by 'lintable' we mean 'uses RStudio-internal' linter
    // rather than Ace worker
    private boolean isLintableDocument()
@@ -86,8 +86,8 @@ public class LintManager
       return (((type.isC() || type.isCpp()) && userPrefs_.showDiagnosticsCpp().getValue()) ||
               ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && userPrefs_.showDiagnosticsR().getValue()));
    }
-   
-   public LintManager(TextEditingTarget target, 
+
+   public LintManager(TextEditingTarget target,
                       CppCompletionContext cppCompletionContext)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -99,7 +99,7 @@ public class LintManager
       invalidation_ = new Invalidation();
       timer_ = new Timer()
       {
-         
+
          @Override
          public void run()
          {
@@ -108,7 +108,7 @@ public class LintManager
                getAceWorkerDiagnostics(docDisplay_);
                return;
             }
-            
+
             invalidation_.invalidate();
             LintContext context = new LintContext(
                   invalidation_.getInvalidationToken(),
@@ -120,7 +120,7 @@ public class LintManager
             lintActiveDocument(context);
          }
       };
-      
+
       // Background linting
       docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -129,19 +129,20 @@ public class LintManager
          {
             if (!userPrefs_.backgroundDiagnostics().getValue())
                return;
-            
+
             if (!docDisplay_.isFocused())
                return;
-            
+
             if (docDisplay_.isPopupVisible())
                return;
-            
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  docDisplay_.removeMarkersOnCursorLine();
+                  // only remove spelling markers at cursor position
+                  docDisplay_.removeMarkersAtCursorPosition();
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;

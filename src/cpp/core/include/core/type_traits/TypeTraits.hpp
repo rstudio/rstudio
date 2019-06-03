@@ -1,7 +1,7 @@
 /*
  * TypeTraits.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,15 @@
 namespace rstudio {
 namespace core {
 namespace type_traits {
+
+template <typename T>
+struct return_type;
+
+template <typename R, typename... Args>
+struct return_type<R(Args...)>
+{
+   typedef R type;
+};
 
 #define RS_GENERATE_HAS_TYPE_TRAIT(__NAME__)                                   \
    template <typename T> struct has_##__NAME__##_impl                          \

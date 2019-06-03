@@ -1,7 +1,7 @@
 /*
  * SVNReviewPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -227,7 +227,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftSeparator();
       
       topToolbar_.addLeftWidget(new ToolbarButton(
-            "Refresh", commands.vcsRefresh().getImageResource(),
+            "Refresh", ToolbarButton.NoTitle, commands.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -260,7 +260,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
+            "Discard All", ToolbarButton.NoTitle,  new ImageResource2x(RES.discard2x())));
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 

@@ -50,10 +50,10 @@ public:
    void setPath(const std::string& path) { path_ = path; }
    const std::string& path() const { return path_; }
 
-   void setExpires(const boost::gregorian::date& expires) { expires_ = expires; }
-   void setExpires(const boost::gregorian::days& expiresDays) ;
+   void setExpires(const boost::posix_time::time_duration& expiresFromNow);
+   void setExpires(const boost::gregorian::days& days);
    void setExpiresDelete() ;
-   const boost::gregorian::date& expires() const { return expires_; }
+   const boost::posix_time::ptime& expires() const { return expires_; }
    
    void setHttpOnly();
    void setSecure();
@@ -65,7 +65,7 @@ private:
    std::string value_ ;
    std::string domain_ ;
    std::string path_ ;
-   boost::gregorian::date expires_ ;
+   boost::posix_time::ptime expires_ ;
    bool httpOnly_;
    bool secure_;
 };

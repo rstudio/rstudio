@@ -20,6 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/SessionConsoleProcessSocket.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"

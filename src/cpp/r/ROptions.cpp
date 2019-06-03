@@ -87,6 +87,18 @@ SEXP setErrorOption(SEXP value)
    SEXP option = SYMVALUE(Rf_install(".Options"));
    while (option != R_NilValue)
    {
+      // are we removing the option?
+      if (value == R_NilValue)
+      {
+         // remove the error option from the list
+         if (TAG(CDR(option)) == errorTag)
+         {
+            SEXP previous = CAR(CDR(option));
+            SETCDR(option, CDDR(option));
+            return previous;
+         }
+      }
+
       // is this the error option?
       if (TAG(option) == errorTag)
       {
@@ -94,6 +106,15 @@ SEXP setErrorOption(SEXP value)
          SEXP previous = CAR(option);
          SETCAR(option, value);
          return previous;
+      }
+
+      if (CDR(option) == R_NilValue && value != R_NilValue)
+      {
+         // no error option exists at all; add it so we can set the value
+         SETCDR(option, Rf_allocList(1));
+         SETCAR(CDR(option), value);
+         SET_TAG(CDR(option), errorTag);
+         break;
       }
 
       // next option

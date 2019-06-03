@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectList.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,12 +51,14 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       String widthSettingRow();
       String expandCol();
       String nameCol();
+      String resizeCol();
       String valueCol();
       String categoryHeaderText();
       String clickableCol();
       String decoratedValueCol();
       String detailRow();
       String objectList();
+      String colResizer();
    }
 
    public interface Resources extends ClientBundle
@@ -82,12 +84,15 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       createColumns();
       addColumn(objectExpandColumn_);
       addColumn(objectNameColumn_);
+      addColumn(objectResizeColumn_);
       addColumn(objectDescriptionColumn_);
       setSkipRowHoverCheck(true);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
       addStyleName(style_.objectList());
       addStyleName("ace_editor_theme");
+      
+      exportResizer();
    }
 
    @Override
@@ -122,6 +127,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    {
       createExpandColumn();
       createNameColumn(filterRenderer_);
+      createResizeColumn();
       createDescriptionColumn(filterRenderer_);
    }
 
@@ -220,6 +226,81 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
               });
    }
    
+   private void createResizeColumn()
+   {
+      SafeHtmlRenderer<String> resizerRenderer =
+         new AbstractSafeHtmlRenderer<String>()
+         {
+            @Override
+            public SafeHtml render(String object)
+            {
+               SafeHtmlBuilder sb = new SafeHtmlBuilder();
+               sb.appendHtmlConstant(object);
+               return sb.toSafeHtml();
+            }
+         };
+      objectResizeColumn_ = new Column<RObjectEntry, String>(
+         new ClickableTextCell(resizerRenderer))
+         {
+            @Override
+            public String getValue(RObjectEntry object)
+            {
+               // We don't have ready access to the DOM (still under
+               // construction at this point), so we use a window method here.
+               return "<div class=\"" + style_.colResizer() + "\" " +
+                      "onmousedown=\"rstudio_beginResize(this, event, " +
+                      "\'" + style_.nameCol() + "'" +
+                      ");\"></div>";
+            }
+         };
+   }
+   
+   private final native void exportResizer() /*-{
+      $wnd.rstudio_beginResize = function(ele, event, clazz) 
+      {
+         // Ignore non-primary buttons
+         if (event.button !== 0)
+         {
+            return;
+         }
+
+         // Locate the element to resize
+         var tbody = ele.parentElement.parentElement.parentElement;
+         var matches = tbody.firstElementChild.getElementsByClassName(clazz);
+         if (!matches)
+            return;
+         var resizer = matches[0];
+
+         // Initial position of cursor when resizing and initial width of the
+         // element
+         var start = -1;
+         var width = resizer.clientWidth;
+
+         // Resize method; given a mouse move event, adjust the size accordingly
+         var resize = function(evt) 
+         {
+            if (start === -1)
+               start = evt.clientX;
+            var newWidth = (width + (evt.clientX - start));
+            
+            // Enforce minimum/maximum width
+            if (newWidth < 40)
+               newWidth = 40;
+            else if (newWidth > 500)
+               newWidth = 500;
+               
+            resizer.style.width = newWidth + "px";
+         };
+
+         // Wire up event listeners
+         $wnd.addEventListener("mousemove", resize);
+         $wnd.addEventListener("mouseup", function(evt) 
+         {
+            $wnd.removeEventListener("mousemove", resize);
+         });
+      }
+   }-*/;
+   
    private void expandObject(final int index, final RObjectEntry object)
    {
       if (!object.expanded && 
@@ -272,6 +353,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          // build the columns
          buildExpandColumn(rowValue, row);
          buildNameColumn(rowValue, row);
+         buildResizeColumn(rowValue, row);
          buildDescriptionColumn(rowValue, row);
 
          row.endTR();
@@ -289,6 +371,14 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          expandCol.className(style_.expandCol() + " " + ThemeStyles.INSTANCE.handCursor());
          renderCell(expandCol, createContext(0), objectExpandColumn_, rowValue);
          expandCol.endTD();
+      }
+      
+      private void buildResizeColumn(RObjectEntry rowValue, TableRowBuilder row)
+      {
+         TableCellBuilder resizeCol = row.startTD();
+         resizeCol.className(style_.resizeCol());
+         renderCell(resizeCol, createContext(0), objectResizeColumn_, rowValue);
+         resizeCol.endTD();
       }
 
       private void buildNameColumn(RObjectEntry rowValue, TableRowBuilder row)
@@ -382,6 +472,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                     style_.widthSettingRow());
             widthSettingRow.startTD().className(style_.expandCol()).endTD();
             widthSettingRow.startTD().className(style_.nameCol()).endTD();
+            widthSettingRow.startTD().className(style_.resizeCol()).endTD();
             widthSettingRow.startTD().className(style_.valueCol()).endTD();
             widthSettingRow.endTR();
          }
@@ -405,7 +496,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             TableRowBuilder leaderRow = startRow().className(
                     style_.categoryHeaderRow());
             TableCellBuilder objectHeader = leaderRow.startTD();
-            objectHeader.colSpan(3)
+            objectHeader.colSpan(4)
                     .className(style_.categoryHeaderText() + " rstudio-themes-background")
                     .text(categoryTitle)
                     .endTD();
@@ -428,7 +519,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             if (content.startsWith(" $") || content.startsWith("  ")) 
                content = content.substring(2, content.length());
             content = content.trim();
-            objectDetail.colSpan(2)
+            objectDetail.colSpan(3)
                     .title(content)
                     .text(content)
                     .endTD();
@@ -441,5 +532,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;
+   private Column<RObjectEntry, String> objectResizeColumn_;
    private Column<RObjectEntry, String> objectDescriptionColumn_;
 }

@@ -33,7 +33,9 @@ well as menu structures (for main menu and popup menus).
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
-
+      <!-- 
+         Keep ShowMainMenuEvent.Menu enum in sync with top-level main-menu entries (File, Edit...)
+      -->
       <separator/>
 
       <menu label="_File">
@@ -189,6 +191,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
+         <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
          <separator/>
@@ -805,6 +808,20 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
          <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
+      </shortcutgroup>
+
+      <shortcutgroup name="Main Menu (Server)">
+         <shortcut refid="showFileMenu" value="Ctrl+Alt+F"/>
+         <shortcut refid="showEditMenu" value="Ctrl+Alt+I"/>
+         <shortcut refid="showCodeMenu" value="Ctrl+Alt+C"/>
+         <shortcut refid="showViewMenu" value="Ctrl+Alt+V"/>
+         <shortcut refid="showPlotsMenu" value="Ctrl+Alt+P"/>
+         <shortcut refid="showSessionMenu" value="Ctrl+Alt+S"/>
+         <shortcut refid="showBuildMenu" value="Ctrl+Alt+B"/>
+         <shortcut refid="showDebugMenu" value="Ctrl+Alt+U"/>
+         <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
+         <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
+         <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
       </shortcutgroup>
 
       <!-- 
@@ -1576,7 +1593,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="executeCurrentSection"
         label="Execute Current Code Section"
-	    buttonLabel="Run Section"
+        buttonLabel="Run Section"
         menuLabel="Run Code _Section"
         desc="Run the code section that contains the cursor"
         context="r"/>
@@ -2028,8 +2045,12 @@ well as menu structures (for main menu and popup menus).
         desc="Sync PDF view to editor location (Ctrl+Click)"/>
 
    <cmd id="checkSpelling"
-	    menuLabel="Check _Spelling..."
-	    desc="Check spelling in document"/>
+        menuLabel="Check _Spelling..."
+        desc="Check spelling in document"/>
+
+   <cmd id="wordCount"
+        menuLabel="_Word Count"
+        desc="Count words in selection or document"/>
 
    <cmd id="newFolder"
         label="Create a New Folder..."
@@ -2211,13 +2232,14 @@ well as menu structures (for main menu and popup menus).
         label="Clear Console"
         menuLabel="Cle_ar Console"
         windowMode="main"
-        desc="Clear Console"/>
+        desc="Clear console"/>
         
    <cmd id="interruptR"
         label="Interrupt R Session"
         buttonLabel=""
         menuLabel="_Interrupt R"
-        windowMode="main"/>
+        windowMode="main"
+        desc="Interrupt R"/>
         
    <cmd id="restartR"
         label="Restart R Session"
@@ -2317,11 +2339,6 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="presentation"/>
 
-   <cmd id="tutorialFeedback"
-        desc="Provide feedback on this tutorial"
-        rebindable="false"
-        context="presentation"/>
-        
    <cmd id="clearPresentationCache"
         menuLabel="Clear Knitr Cache..."
         desc="Clear knitr cache for this presentation"
@@ -2446,11 +2463,13 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."
-        windowMode="main"/>
+        windowMode="main"
+        desc="Load workspace"/>
         
    <cmd id="saveWorkspace"
         menuLabel="_Save Workspace As..."
-        windowMode="main"/>
+        windowMode="main"
+        desc="Save workspace as"/>
         
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
@@ -2552,16 +2571,16 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh Package listing"/>
 
    <cmd id="packratBootstrap"
-   		buttonLabel="Packrat"
-   		menuLabel="_Initialize Packrat..."
-   		desc="Use packrat with this project"
-   		rebindable="false"
-   		context="packrat"/>
+        buttonLabel="Packrat"
+        menuLabel="_Initialize Packrat..."
+        desc="Use packrat with this project"
+        rebindable="false"
+        context="packrat"/>
 
    <cmd id="packratClean"
          menuLabel="_Clean Unused Packages..."
          desc="Remove unused packages from your packrat library"
-   		 rebindable="false"
+         rebindable="false"
          context="packrat"/>
 
    <cmd id="packratHelp"
@@ -2578,11 +2597,11 @@ well as menu structures (for main menu and popup menus).
          context="packrat"/>
          
    <cmd id="packratBundle"
-   		buttonLabel="Bundle"
-   		menuLabel="Export Project _Bundle..."
-   		desc="Bundle a Packrat Project"
-   		rebindable="false"
-   		context="packrat"/>
+        buttonLabel="Bundle"
+        menuLabel="Export Project _Bundle..."
+        desc="Bundle a Packrat Project"
+        rebindable="false"
+        context="packrat"/>
 
    <cmd id="packratCheckStatus"
          menuLabel="Check Library _Status..."
@@ -2616,13 +2635,13 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showShellDialog"
         label="Open Shell"
         menuLabel="_Shell..."
-        desc="Execute shell commands(s)"
+        desc="Execute shell commands"
         windowMode="main"/>
         
    <cmd id="newTerminal"
         label="New Terminal"
         menuLabel="_New Terminal"
-        desc="Execute shell commands(s)"
+        desc="Create a new terminal"
         windowMode="main"/>
 
    <cmd id="activateTerminal"
@@ -2636,7 +2655,7 @@ well as menu structures (for main menu and popup menus).
         desc="Change terminal session name"/>
 
    <cmd id="closeTerminal"
-   	    buttonLabel=""
+        buttonLabel=""
         label="Close Terminal"
         menuLabel="Cl_ose Terminal"
         desc="Close current terminal session"/>
@@ -3361,5 +3380,49 @@ well as menu structures (for main menu and popup menus).
          rebindable="false"
          checkable="true"
          windowMode="any"/>
+
+   <cmd id="showFileMenu"
+         menuLabel="Show File Menu"
+         windowMode="main"/>
+
+   <cmd id="showEditMenu"
+         menuLabel="Show Edit Menu"
+         windowMode="main"/>
+
+   <cmd id="showCodeMenu"
+        menuLabel="Show Code Menu"
+        windowMode="main"/>
+
+   <cmd id="showViewMenu"
+        menuLabel="Show View Menu"
+        windowMode="main"/>
+
+   <cmd id="showPlotsMenu"
+        menuLabel="Show Plots Menu"
+        windowMode="main"/>
+
+   <cmd id="showSessionMenu"
+        menuLabel="Show Session Menu"
+        windowMode="main"/>
+
+   <cmd id="showBuildMenu"
+        menuLabel="Show Build Menu"
+        windowMode="main"/>
+
+   <cmd id="showDebugMenu"
+        menuLabel="Show Debug Menu"
+        windowMode="main"/>
+
+   <cmd id="showProfileMenu"
+        menuLabel="Show Profile Menu"
+        windowMode="main"/>
+
+   <cmd id="showToolsMenu"
+        menuLabel="Show Tools Menu"
+        windowMode="main"/>
+
+   <cmd id="showHelpMenu"
+        menuLabel="Show Help Menu"
+        windowMode="main"/>
 
 </commands>

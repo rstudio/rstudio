@@ -1,28 +1,28 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rs="urn:import:org.rstudio.studio.client.common">
-	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
-	<ui:style>
-	  .warning
-	  {
-	    margin-bottom: 15px;
-	  }
-	  .shinyLogo
-	  {
-	    float: left;
-	    margin-right: 5px;
-	  }
-	</ui:style>
-	<g:HTMLPanel>
-	<g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon2x}"></g:Image>
-	<g:HTML styleName="{style.warning}">
-	  This R Markdown document contains Shiny content, but was rendered to 
-	  a static file. Shiny content in the document may not appear, and will not
-	  be interactive.<br/>
-	  <br/>
-	  Render and view this document using Shiny instead?
-	</g:HTML>
-	<rs:HelpLink caption="Shiny Documents" link="shiny_documents"></rs:HelpLink>
-	</g:HTMLPanel>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rs="urn:import:org.rstudio.studio.client.common">
+   <ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
+   <ui:style>
+     .warning
+     {
+       margin-bottom: 15px;
+     }
+     .shinyLogo
+     {
+       float: left;
+       margin-right: 5px;
+     }
+   </ui:style>
+   <g:HTMLPanel>
+   <g:Image styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon2x}"></g:Image>
+   <g:HTML styleName="{style.warning}">
+     This R Markdown document contains Shiny content, but was rendered to 
+     a static file. Shiny content in the document may not appear, and will not
+     be interactive.<br/>
+     <br/>
+     Render and view this document using Shiny instead?
+   </g:HTML>
+   <rs:HelpLink caption="Shiny Documents" link="shiny_documents"></rs:HelpLink>
+   </g:HTMLPanel>
 </ui:UiBinder> 

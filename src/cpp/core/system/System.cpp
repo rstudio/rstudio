@@ -184,7 +184,13 @@ LogLevel lowestLogLevel()
       if (!s_logOptions)
          return kLogLevelWarning;
 
-      return static_cast<LogLevel>(s_logOptions->lowestLogLevel());
+      int lowestLevel = s_logOptions->lowestLogLevel();
+      for (const boost::shared_ptr<LogWriter>& logWriter : s_additionalLogWriters)
+      {
+         if (logWriter->logLevel() < lowestLevel)
+            lowestLevel = logWriter->logLevel();
+      }
+      return static_cast<LogLevel>(lowestLevel);
    }
    END_LOCK_MUTEX
 

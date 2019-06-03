@@ -1,7 +1,7 @@
 /*
  * NewConnectionShinyHost.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,15 +148,15 @@ public class NewConnectionShinyHost extends Composite
    
    private Widget createWidget()
    {
-      VerticalPanel container = new VerticalPanel();    
+      VerticalPanel container = new VerticalPanel();
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
       frame_.setSize("100%", "140px");
 
-      container.add(frame_);      
+      container.add(frame_);
       
-      // add the code panel     
+      // add the code panel
       codePanel_ = new ConnectionCodePanel();
       codePanel_.addStyleName(RES.styles().dialogCodePanel());
       

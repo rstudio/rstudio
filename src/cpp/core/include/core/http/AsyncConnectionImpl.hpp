@@ -214,9 +214,11 @@ public:
       }
    }
 
-   virtual void writeResponse(const http::Response& response, bool close = true)
+   virtual void writeResponse(const http::Response& response,
+                              bool close = true,
+                              const Headers& additionalHeaders = Headers())
    {
-      response_.assign(response);
+      response_.assign(response, additionalHeaders);
       writeResponse(close);
    }
 

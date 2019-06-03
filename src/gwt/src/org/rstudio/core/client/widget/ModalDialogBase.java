@@ -1,7 +1,7 @@
 /*
  * ModalDialogBase.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,9 @@ package org.rstudio.core.client.widget;
 
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -29,6 +32,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -39,15 +43,14 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import java.util.ArrayList;
 
-
 public abstract class ModalDialogBase extends DialogBox
 {
-   protected ModalDialogBase()
+   protected ModalDialogBase(DialogRole role)
    {
-      this(null);
+      this(null, role);
    }
 
-   protected ModalDialogBase(SimplePanel containerPanel)
+   protected ModalDialogBase(SimplePanel containerPanel, DialogRole role)
    {
       // core initialization. passing false for modal works around
       // modal PopupPanel supressing global keyboard accelerators (like
@@ -55,6 +58,17 @@ public abstract class ModalDialogBase extends DialogBox
       super(false, false);
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
+
+      // a11y
+      role_ = role;
+      role_.set(getElement());
+      A11y.setARIADialogModal(getElement());
+      firstControl_ = new Button("First");
+      lastControl_ = new Button("Last");
+      Roles.getButtonRole().setAriaHiddenState(firstControl_.getElement(), true);
+      Roles.getButtonRole().setAriaHiddenState(lastControl_.getElement(), true);
+      DomUtils.visuallyHide(firstControl_.getElement());
+      DomUtils.visuallyHide(lastControl_.getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -65,7 +79,9 @@ public abstract class ModalDialogBase extends DialogBox
       leftButtonPanel_ = new HorizontalPanel();
       bottomPanel_.add(leftButtonPanel_);
       bottomPanel_.add(buttonPanel_);
+      bottomPanel_.add(lastControl_);
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+      mainPanel_.add(firstControl_);
       mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
@@ -89,6 +105,16 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      firstControl_.addFocusHandler(event -> {
+         // hidden first control in dialog got focus, wrap around to last control
+         focusLastControl();
+      });
+      
+      lastControl_.addFocusHandler(event -> {
+         // hidden last control in dialog got focus, wrap around to first control
+         focusFirstControl();
+      });
    }
 
    @Override
@@ -163,7 +189,8 @@ public abstract class ModalDialogBase extends DialogBox
          // get the main widget to line up with the right edge of the buttons.
          mainWidget_.getElement().getStyle().setMarginRight(2, Unit.PX);
 
-         mainPanel_.insert(mainWidget_, 0);
+         // insert after hidden control used to wrap focus when tabbing through dialog
+         mainPanel_.insert(mainWidget_, 1);
       }
 
       originallyActiveElement_ = DomUtils.getActiveElement();
@@ -308,6 +335,7 @@ public abstract class ModalDialogBase extends DialogBox
       button.addStyleDependentName("DialogAction");
       buttonPanel_.add(button);
       allButtons_.add(button);
+      lastVisibleButton_ = button;
    }
 
    // inserts an action button--in the same panel as OK/cancel, but preceding
@@ -460,9 +488,9 @@ public abstract class ModalDialogBase extends DialogBox
             if (enterDisabled_)
                break;
 
-            // allow Enter on textareas
+            // allow Enter on textareas or anchors
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA"))
+            if (e.hasTagName("TEXTAREA") || e.hasTagName("A"))
                return;
 
             ThemedButton defaultButton = defaultOverrideButton_ == null
@@ -550,6 +578,43 @@ public abstract class ModalDialogBase extends DialogBox
       currentAnimation_.run(200);
    }
 
+   @Override
+   public void setText(String text)
+   {
+      super.setText(text);
+      role_.setAriaLabelProperty(getElement(), text);
+   }
+
+   /**
+    * Optional description of dialog for accessibility tools 
+    * @param element element containing the description
+    */
+   protected void setARIADescribedBy(Element element)
+   {
+      role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
+   }
+
+   /**
+    * Optional description of dialog for accessibility tools; use for multiple elements
+    * @param value one or more ids
+    */
+   protected void setARIADescribedBy(Id... value)
+   {
+      role_.setAriaDescribedbyProperty(getElement(), value);
+   }
+
+   // invoked when user hits Tab key with focus on last control in dialog
+   protected void focusFirstControl()
+   {
+   }
+   
+   // invoked when user hits Shift+Tab key with focus on first control in dialog
+   protected void focusLastControl()
+   {
+      if (lastVisibleButton_ != null)
+         FocusHelper.setFocusDeferred(lastVisibleButton_);
+   }
+
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
@@ -566,4 +631,8 @@ public abstract class ModalDialogBase extends DialogBox
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
+   private DialogRole role_;
+   private Button firstControl_;
+   private Button lastControl_;
+   private ThemedButton lastVisibleButton_;
 }

@@ -60,7 +60,8 @@ public:
 
    // simple wrappers for writing an existing response or error
    virtual void writeResponse(const http::Response& response,
-                              bool close = true) = 0;
+                              bool close = true,
+                              const http::Headers& extraHeaders = http::Headers()) = 0;
 
    // writes only the headers and not any body data
    // useful for chunked encoding (streaming)

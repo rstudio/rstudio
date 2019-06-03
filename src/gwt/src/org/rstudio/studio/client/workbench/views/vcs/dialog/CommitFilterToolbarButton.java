@@ -1,7 +1,7 @@
 /*
  * CommitFilterToolbarButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,7 @@ public class CommitFilterToolbarButton extends ToolbarButton
                                     Session session)
    {
       super(ALL_COMMITS,
+            ALL_COMMITS_TITLE,
             StandardIcons.INSTANCE.empty_command(),
             new ToolbarPopupMenu());
       
@@ -50,8 +51,6 @@ public class CommitFilterToolbarButton extends ToolbarButton
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       session_ = session;
-      
-      setTitle(ALL_COMMITS_TITLE);
       
       ToolbarPopupMenu menu = getMenu();
       

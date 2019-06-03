@@ -1,7 +1,7 @@
 /*
  * AskSecretDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rstudioapi.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -55,7 +56,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
-      super(title, okOperation, cancelOperation);
+      super(title, Roles.getDialogRole(), okOperation, cancelOperation);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      

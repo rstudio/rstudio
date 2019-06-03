@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -722,7 +721,7 @@ public class EnvironmentObjects extends ResizeComposite
    public static final int OBJECT_GRID_VIEW = 1;
 
    @UiField EnvironmentStyle style;
-   @UiField AutoHidingSplitLayoutPanel splitPanel;
+   @UiField SplitLayoutPanel splitPanel;
 
    EnvironmentObjectDisplay objectDisplay_;
    CallFramePanel callFramePanel_;

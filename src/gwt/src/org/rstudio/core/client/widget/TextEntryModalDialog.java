@@ -1,7 +1,7 @@
 /*
  * TextEntryModalDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
 
@@ -35,7 +36,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                ProgressOperationWithInput<String> okOperation,
                                Operation cancelOperation)
    {
-      super(title, okOperation, cancelOperation);
+      super(title, Roles.getDialogRole(), okOperation, cancelOperation);
       type_ = type;
       selectionIndex_ = selectionIndex;
       selectionLength_ = selectionLength;

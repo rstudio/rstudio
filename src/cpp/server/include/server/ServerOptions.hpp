@@ -154,6 +154,11 @@ public:
       return authStaySignedInDays_;
    }
 
+   int authTimeoutMinutes()
+   {
+      return authTimeoutMinutes_;
+   }
+
    bool authEncryptPassword()
    {
       return authEncryptPassword_;
@@ -174,9 +179,19 @@ public:
       return authMinimumUserId_;
    }
 
+   int authSignInThrottleSeconds()
+   {
+      return authSignInThrottleSeconds_;
+   }
+
    std::string authPamHelperPath() const
    {
       return std::string(authPamHelperPath_.c_str());
+   }
+
+   std::string authRevocationListDir() const
+   {
+      return authRevocationListDir_;
    }
 
    // rsession
@@ -286,11 +301,14 @@ private:
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
+   int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
+   int authSignInThrottleSeconds_;
+   std::string authRevocationListDir_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

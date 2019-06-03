@@ -720,7 +720,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                         verSettings.setProjectLastRVersion(projDir,
                                                            module_context::sharedProjectScratchPath(),
                                                            version,
-                                                           rHome);
+                                                           rHome,
+                                                           label);
                      }
                  }
                  else

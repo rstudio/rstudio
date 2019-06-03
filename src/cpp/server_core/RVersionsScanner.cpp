@@ -189,6 +189,7 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
    {
       r_util::RVersion overrideVersion = r_util::selectVersion(sysVersion.number(),
                                                                sysVersion.homeDir().absolutePath(),
+                                                               "",
                                                                versions);
       systemVersion_ = overrideVersion;
    }

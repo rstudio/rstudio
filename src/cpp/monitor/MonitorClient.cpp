@@ -1,7 +1,7 @@
 /*
  * MonitorClient.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,13 +44,15 @@ public:
       client().logMessage(programIdentity, level, message);
    }
 
+   virtual int logLevel() { return core::system::kLogLevelDebug; }
+
 private:
    std::string programIdentity_;
 };
 
 // single global instance of the monitor client (allocate it on the heap
 // and never free it so that there are no order of destruction surprises)
-Client* s_pClient = nullptr;
+Client* s_pClient = NULL;
 
 } // anonymous namespace
 
@@ -63,23 +65,48 @@ boost::shared_ptr<core::LogWriter> Client::createLogWriter(
 
 
 void initializeMonitorClient(const std::string& metricsSocket,
-                             const std::string& sharedSecret)
+                             const std::string& auth,
+                             bool useSharedSecret)
 {
-   BOOST_ASSERT(s_pClient == nullptr);
-   s_pClient = new SyncClient(metricsSocket, sharedSecret);
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new SyncClient(metricsSocket, auth, useSharedSecret);
 }
 
 void initializeMonitorClient(const std::string& metricsSocket,
-                             const std::string& sharedSecret,
-                             boost::asio::io_service& ioService)
+                             const std::string& auth,
+                             boost::asio::io_service& ioService,
+                             bool useSharedSecret)
 {
-   BOOST_ASSERT(s_pClient == nullptr);
-   s_pClient = new AsyncClient(metricsSocket, sharedSecret, ioService);
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new AsyncClient(metricsSocket, auth, ioService, useSharedSecret);
+}
+
+void initializeMonitorClient(const std::string& tcpAddress,
+                             const std::string& tcpPort,
+                             bool useSsl,
+                             const std::string& prefixUri,
+                             const std::string& auth,
+                             bool useSharedSecret)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new SyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, useSharedSecret);
+}
+
+void initializeMonitorClient(const std::string& tcpAddress,
+                             const std::string& tcpPort,
+                             bool useSsl,
+                             const std::string& prefixUri,
+                             const std::string& auth,
+                             boost::asio::io_service& ioService,
+                             bool useSharedSecret)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, ioService, useSharedSecret);
 }
 
 Client& client()
 {
-   BOOST_ASSERT(s_pClient != nullptr);
+   BOOST_ASSERT(s_pClient != NULL);
    return *s_pClient;
 }
 

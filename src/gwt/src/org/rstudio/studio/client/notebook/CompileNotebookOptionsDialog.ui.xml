@@ -6,7 +6,7 @@
          width: 300px;
       }
       .dialog  {
-	      width: 305px;
+         width: 305px;
       }
       
       .type {
@@ -38,7 +38,5 @@
             <g:item value="spin">knitr::spin</g:item>
          </g:ListBox>
       </div>
- 
    </g:HTMLPanel>
-
 </ui:UiBinder>

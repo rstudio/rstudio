@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -719,7 +719,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (isBrowsePrompt())
          browseHistoryManager_.navigateHistory(offset);
       else
-         historyManager_.navigateHistory(offset);
+      {
+         if (input_.isCursorAtEnd())
+            historyManager_.navigateHistory(offset);
+         else
+            historyCompletion_.navigatePrefix(offset);
+      }
       
       view_.ensureInputVisible();
    }
@@ -741,7 +746,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onBeforeUnselected()
    {
       view_.onBeforeUnselected();
-
    }
 
    public void onBeforeSelected()

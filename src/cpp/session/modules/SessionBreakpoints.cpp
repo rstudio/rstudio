@@ -401,7 +401,7 @@ void unregisterShinyFunction(SEXP ptr)
 //
 // Sets up a data structure and attaches it to the function as an EXTPTRSXP
 // attribute; unregistration is performed when R garbage-collects this pointer.
-void rs_registerShinyFunction(SEXP params)
+SEXP rs_registerShinyFunction(SEXP params)
 {
    Protect protect;
    SEXP expr = r::sexp::findVar("expr", params);
@@ -413,7 +413,7 @@ void rs_registerShinyFunction(SEXP params)
    std::string objName;
    Error error = r::sexp::extract(name, &objName);
    if (error)
-      return;
+      return R_NilValue;
 
    boost::shared_ptr<ShinyFunction> psf =
             boost::make_shared<ShinyFunction>(expr, objName, where);
@@ -450,6 +450,8 @@ void rs_registerShinyFunction(SEXP params)
       // Copy the function into the Shiny object first
       r::exec::RFunction(".rs.setShinyBreakpoints", name, where, lines).call();
    }
+
+   return R_NilValue;
 }
 
 // Executes the contents of the given file under the debugger
@@ -648,5 +650,3 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
-
-

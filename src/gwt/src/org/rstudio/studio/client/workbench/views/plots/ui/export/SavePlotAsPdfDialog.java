@@ -1,7 +1,7 @@
 /*
  * SavePlotAsPdfDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -68,6 +69,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                               double plotHeight,
                               final OperationWithInput<SavePlotAsPdfOptions> onClose)
    {
+      super(Roles.getDialogRole());
       setText("Save Plot as PDF");
       
       globalDisplay_ = globalDisplay;

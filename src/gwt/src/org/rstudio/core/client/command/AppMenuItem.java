@@ -49,11 +49,12 @@ public class AppMenuItem extends MenuItem
          getElement().addClassName("disabled");
 
       setVisible(cmd_.isVisible());
+      setEnabled(cmd_.isEnabled());
 
       setHTML(cmd_.getMenuHTML(mainMenu_));
       setTitle(cmd_.getDesc());
    }
-   
+
    public boolean cmdVisible()
    {
       return cmd_.isVisible();

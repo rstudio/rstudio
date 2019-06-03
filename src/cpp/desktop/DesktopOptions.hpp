@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,6 +81,9 @@ public:
    // If "", then use automatic detection
    QString rBinDir() const;
    void setRBinDir(QString path);
+
+   bool preferR64() const;
+   void setPreferR64(bool preferR64);
 #endif
 
    // Resolves to 'desktop' sub-directory in development builds.

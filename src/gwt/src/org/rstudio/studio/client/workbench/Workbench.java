@@ -68,6 +68,7 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
@@ -444,7 +445,73 @@ public class Workbench implements BusyHandler,
       if (Desktop.isDesktop())
          Desktop.getFrame().toggleFullscreenMode();
    }
-   
+
+   @Handler
+   public void onShowFileMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.File));
+   }
+
+   @Handler
+   public void onShowEditMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Edit));
+   }
+
+   @Handler
+   public void onShowCodeMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Code));
+   }
+
+   @Handler
+   public void onShowViewMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.View));
+   }
+
+   @Handler
+   public void onShowPlotsMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Plots));
+   }
+
+   @Handler
+   public void onShowSessionMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Session));
+   }
+
+   @Handler
+   public void onShowBuildMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Build));
+   }
+
+   @Handler
+   public void onShowDebugMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Debug));
+   }
+
+   @Handler
+   public void onShowProfileMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Profile));
+   }
+
+   @Handler
+   public void onShowToolsMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Tools));
+   }
+
+   @Handler
+   public void onShowHelpMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Help));
+   }
+
    private void checkForInitMessages()
    {
       if (!Desktop.isDesktop())

@@ -1,7 +1,7 @@
 /*
  * PresentationState.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,11 +29,7 @@ public class PresentationState extends JavaScriptObject
    public final native String getPaneCaption() /*-{
       return this.pane_caption;
    }-*/;
- 
-   public final native boolean isTutorial() /*-{
-      return this.is_tutorial;
-   }-*/;
-   
+
    public final native String getFilePath() /*-{
       return this.file_path;
    }-*/;

@@ -1,7 +1,7 @@
 /*
  * HeaderPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.application.ui.impl.header;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -58,6 +60,7 @@ public class HeaderPanel extends Composite
       topLineWidget_ = topLineWidget;
       toolbarWidget_ = toolbarWidget;
       initWidget(((MyUiBinder)GWT.create(MyUiBinder.class)).createAndBindUi(this));
+      Roles.getPresentationRole().set(wrapper_);
    }
 
    @UiField(provided = true)
@@ -65,4 +68,7 @@ public class HeaderPanel extends Composite
    
    @UiField(provided = true)
    final Widget toolbarWidget_;
+
+   @UiField
+   TableElement wrapper_;
 }

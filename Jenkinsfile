@@ -47,14 +47,14 @@ def run_tests(type, flavor, variant) {
     currentBuild.result = "UNSTABLE"
   }
 
-  /*
+  
   try {
     // attempt to run cpp unit tests
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
+    // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests --scope core"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
   }
-  */
 }
 
 def s3_upload(type, flavor, os, arch) {
@@ -64,6 +64,15 @@ def s3_upload(type, flavor, os, arch) {
     script: "basename `ls ${buildFolder}/rstudio-*.${type.toLowerCase()}`",
     returnStdout: true
   ).trim()
+
+  // rename package to not include the build type
+  def renamedFile = sh (
+    script: "echo ${packageFile} | sed 's/-relwithdebinfo//'",
+    returnStdout: true
+  ).trim()
+
+  sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
+  packageFile = renamedFile
 
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
@@ -78,6 +87,12 @@ def s3_upload(type, flavor, os, arch) {
   // withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
   //   sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
   // }
+}
+
+def sentry_upload(type, flavor) {
+  withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && /usr/local/bin/sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf ."
+  }
 }
 
 def jenkins_user_build_args() {
@@ -186,9 +201,6 @@ try {
             }
         }
 
-        // launch jenkins agents to support the container scale!
-        spotScaleSwarm layer_name: 'swarm-ide', instance_count: containers.size(), duration_seconds: 7000
-
         // build each variant in parallel
         def parallel_containers = [:]
         for (int i = 0; i < containers.size(); i++) {
@@ -196,6 +208,7 @@ try {
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
                 node('ide') {
+                    def container
                     stage('prepare ws/container'){
                       prepareWorkspace()
                       def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
@@ -211,6 +224,9 @@ try {
                         stage('run tests') {
                             run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
+                        stage('sentry upload') {
+                            sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                        }
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
@@ -223,7 +239,7 @@ try {
           trigger_external_build('IDE/macos-v1.3')
           trigger_external_build('IDE/windows-v1.3')
         }
-        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2') {
+        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2-patch') {
           trigger_external_build('IDE/macos-v1.2')
           trigger_external_build('IDE/windows-v1.2')
         }

@@ -1,7 +1,7 @@
 /*
  * SectionChooser.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.prefs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.a11y.A11y;
 
 class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
@@ -49,12 +51,15 @@ class SectionChooser extends SimplePanel implements
       setStyleName(res_.styles().sectionChooser());
       inner_.setStyleName(res_.styles().sectionChooserInner());
       setWidget(inner_);
+      Roles.getTablistRole().set(getElement());
+      A11y.setARIATablistOrientation(getElement(), true /*vertical*/);
    }
 
    public void addSection(ImageResource icon, String name)
    {
       Image img = new Image(icon.getSafeUri());
       nudgeDown(img);
+      A11y.setDecorativeImage(img.getElement());
       img.setSize("29px", "20px");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
@@ -77,18 +82,27 @@ class SectionChooser extends SimplePanel implements
          }
       });
 
+      Roles.getTabRole().set(panel.getElement());
       inner_.add(panel);
    }
 
    public void select(Integer index)
    {
       if (selectedIndex_ != null)
-         inner_.getWidget(selectedIndex_).removeStyleName(res_.styles().activeSection());
+      {
+         Widget prevItem = inner_.getWidget(selectedIndex_);
+         prevItem.removeStyleName(res_.styles().activeSection());
+         prevItem.getElement().setTabIndex(-1);
+      }
 
       selectedIndex_ = index;
 
       if (index != null)
-         inner_.getWidget(index).addStyleName(res_.styles().activeSection());
+      {
+         Widget newItem = inner_.getWidget(index);
+         newItem.addStyleName(res_.styles().activeSection());
+         newItem.getElement().setTabIndex(0);
+      }
 
       SelectionEvent.fire(this, index);
    }
@@ -107,6 +121,15 @@ class SectionChooser extends SimplePanel implements
    public int getDesiredWidth()
    {
       return 122;
+   }
+
+   public void focus()
+   {
+      if (selectedIndex_ != null)
+      {
+         Widget currentItem = inner_.getWidget(selectedIndex_);
+         currentItem.getElement().focus();
+      }
    }
 
    private Widget nudgeRightPlus(Widget widget)

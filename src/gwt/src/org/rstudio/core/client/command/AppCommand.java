@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,11 +46,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
    { 
-      public CommandToolbarButton(String buttonLabel,
+      public CommandToolbarButton(String buttonLabel, String buttonTitle,
             ImageResourceProvider imageResourceProvider, AppCommand command,
             boolean synced)
       {
-         super(buttonLabel, imageResourceProvider, command);
+         super(buttonLabel, buttonTitle, imageResourceProvider, command);
          command_ = command;
          synced_ = synced;
       }
@@ -457,6 +457,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public ToolbarButton createToolbarButton(boolean synced)
    {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
+                                                             getDesc(),
                                                              this, 
                                                              this, 
                                                              synced);
@@ -565,7 +566,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table ");
+      text.append("<table role=\"presentation\"");
       if (label != null)
       {
          text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
@@ -655,10 +656,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "aria-label", StringUtil.notNull(desc),
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
 
@@ -668,8 +671,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
    

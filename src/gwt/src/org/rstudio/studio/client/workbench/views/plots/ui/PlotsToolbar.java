@@ -1,7 +1,7 @@
 /*
  * PlotsToolbar.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,8 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
       ToolbarButton exportButton = new ToolbarButton(
-            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+            "Export", ToolbarButton.NoTitle, 
+            new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       addLeftWidget(exportButton);
       addLeftSeparator();

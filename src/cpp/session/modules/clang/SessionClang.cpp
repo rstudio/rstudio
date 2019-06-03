@@ -1,7 +1,7 @@
 /*
  * SessionClang.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,8 +51,10 @@ namespace {
 
 std::string embeddedLibClangPath()
 {
-#if defined(_WIN32)
+#if defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
 #elif defined(__APPLE__)
    std::string libclang = "libclang.dylib";
 #else

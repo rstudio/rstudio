@@ -1,7 +1,7 @@
 /*
  * ToolbarPopupMenu.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,7 +49,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    // required.
    public interface DynamicPopupMenuCallback
    {
-      public void onPopupMenu(ToolbarPopupMenu menu);
+      void onPopupMenu(ToolbarPopupMenu menu);
    }
 
    public ToolbarPopupMenu()
@@ -317,22 +317,6 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private void selectLast()
       {
          selectItem(getItemCount());
-      }
-      
-      private void selectItem(int index)
-      {
-         int count = getItemCount();
-         
-         if (count == 0) return;
-         
-         if (index < 0)
-            index = 0;
-         
-         if (index >= count - 1)
-            index = count - 1;
-         
-         List<MenuItem> items = getItems();
-         selectItem(items.get(index));
       }
 
       private HandlerRegistration nativePreviewReg_;

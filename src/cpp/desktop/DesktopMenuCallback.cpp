@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -337,6 +337,12 @@ void MenuCallback::setCommandChecked(QString commandId, bool checked)
        return;
 
    it.value()->setChecked(checked);
+}
+
+void MenuCallback::setMainMenuEnabled(bool enabled)
+{
+   if (pMainMenu_)
+      pMainMenu_->setEnabled(enabled);
 }
 
 MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)

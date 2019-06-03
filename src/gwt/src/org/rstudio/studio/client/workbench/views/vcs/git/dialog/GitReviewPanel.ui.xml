@@ -62,10 +62,10 @@
                         <g:item value="50">50 line</g:item>
                         <g:item value="-1">All lines</g:item>
                      </g:ListBox>
-                  	 <g:CheckBox ui:field="ignoreWhitespaceCheckbox_"
-                  	             text="Ignore Whitespace"
-                  	             checked="false"
-                  	             styleName="{res.styles.ignoreWhitespace}"/>
+                      <g:CheckBox ui:field="ignoreWhitespaceCheckbox_"
+                                  text="Ignore Whitespace"
+                                  checked="false"
+                                  styleName="{res.styles.ignoreWhitespace}"/>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:HorizontalPanel>

@@ -533,7 +533,7 @@ public class Projects implements OpenProjectFileHandler,
                         newProject.getNewPackageOptions(),
                         newProject.getNewShinyAppOptions(),
                         newProject.getProjectTemplateOptions(),
-                        new SimpleRequestCallback<String>()
+                        new ServerRequestCallback<String>()
                         {
                            @Override
                            public void onResponseReceived(String foundProjectFile)
@@ -546,6 +546,14 @@ public class Projects implements OpenProjectFileHandler,
                                  newProject.setProjectFile(foundProjectFile);
                               }
                               continuation.execute();
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              indicator.onError(error.getUserMessage());
+                              notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
                            }
                         });
                };

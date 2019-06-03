@@ -289,7 +289,6 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
-   public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
    // View
@@ -581,6 +580,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();
+   public abstract AppCommand wordCount();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
    public abstract AppCommand layoutConsoleOnLeft();
@@ -591,4 +591,17 @@ public abstract class
    
    public static final String KEYBINDINGS_PATH =
          "~/.R/keybindings/rstudio_commands.json";
+
+   // Main menu (server)
+   public abstract AppCommand showFileMenu();
+   public abstract AppCommand showEditMenu();
+   public abstract AppCommand showCodeMenu();
+   public abstract AppCommand showViewMenu();
+   public abstract AppCommand showPlotsMenu();
+   public abstract AppCommand showSessionMenu();
+   public abstract AppCommand showBuildMenu();
+   public abstract AppCommand showDebugMenu();
+   public abstract AppCommand showProfileMenu();
+   public abstract AppCommand showToolsMenu();
+   public abstract AppCommand showHelpMenu();
 }

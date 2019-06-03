@@ -93,7 +93,7 @@ public class JobItem extends Composite implements JobItemView
    public JobItem(@Assisted Job job, FireEvents eventBus)
    {
       eventBus_ = eventBus;
-      stop_ = new ToolbarButton(new ImageResource2x(RESOURCES.jobCancel()), evt ->
+      stop_ = new ToolbarButton(ToolbarButton.NoText, "Stop job", new ImageResource2x(RESOURCES.jobCancel()), evt ->
       {
          eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
       });

@@ -285,28 +285,20 @@ public class Application implements ApplicationEventHandlers
    @Handler
    void onShowAboutDialog()
    {
-      if (aboutDialog_ == null)
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
       {
-         server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+         @Override
+         public void onResponseReceived(ProductInfo info)
          {
-            @Override
-            public void onResponseReceived(ProductInfo info)
-            {
-               aboutDialog_ = new AboutDialog(info);
-               aboutDialog_.showModal();
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-      else
-      {
-         aboutDialog_.center();
-         aboutDialog_.showModal();
-      }
+            AboutDialog about = new AboutDialog(info);
+            about.showModal();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Handler
@@ -997,6 +989,22 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
+      // remove main menu commands in desktop mode
+      if (Desktop.isDesktop())
+      {
+         commands_.showFileMenu().remove();
+         commands_.showEditMenu().remove();
+         commands_.showCodeMenu().remove();
+         commands_.showViewMenu().remove();
+         commands_.showPlotsMenu().remove();
+         commands_.showSessionMenu().remove();
+         commands_.showBuildMenu().remove();
+         commands_.showDebugMenu().remove();
+         commands_.showProfileMenu().remove();
+         commands_.showToolsMenu().remove();
+         commands_.showHelpMenu().remove();
+      }
+      
       // show new session when appropriate
       if (!Desktop.isDesktop())
       {
@@ -1209,8 +1217,6 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
-   
-   private AboutDialog aboutDialog_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 

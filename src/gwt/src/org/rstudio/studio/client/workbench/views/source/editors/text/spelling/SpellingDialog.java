@@ -1,7 +1,7 @@
 /*
  * SpellingDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -37,6 +38,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
    public SpellingDialog()
    {
+      super(Roles.getDialogRole());
       setText("Check Spelling");
 
       btnAdd_ = new ThemedButton("Add");

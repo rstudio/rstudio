@@ -484,10 +484,10 @@ public class RemoteServer implements Server
    public void setWorkbenchMetrics(WorkbenchMetrics metrics,
                                    ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  SET_WORKBENCH_METRICS, 
-                  metrics, 
-                  requestCallback);
+      sendRequestNoCredRefresh(RPC_SCOPE,
+                               SET_WORKBENCH_METRICS,
+                               metrics,
+                               requestCallback);
    }
 
    public void setPrefs(RPrefs rPrefs,
@@ -536,10 +536,10 @@ public class RemoteServer implements Server
       params.set(0, new JSONObject(temporary));
       params.set(1, new JSONObject(persistent));
       params.set(2, new JSONObject(projectPersistent));
-      sendRequest(RPC_SCOPE,
-                  SET_CLIENT_STATE,
-                  params,
-                  requestCallback);
+      sendRequestNoCredRefresh(RPC_SCOPE,
+                               SET_CLIENT_STATE,
+                               params,
+                               requestCallback);
    }
    
    public void userPromptCompleted(int response, 
@@ -2966,6 +2966,7 @@ public class RemoteServer implements Server
                          params,
                          null, // kwParams
                          false, // redactLog
+                         false, // refreshCreds
                          null, // resultFieldName
                          requestCallback,
                          retryHandler);
@@ -3056,12 +3057,34 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, null, requestCallback);
    }
 
+   protected <T> void sendRequestNoCredRefresh(String scope,
+                                               String method,
+                                               JavaScriptObject param,
+                                               ServerRequestCallback<T> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+
+      // pass JSONNull if the object is null
+      params.set(0, param != null ? new JSONObject(param) :
+            JSONNull.getInstance());
+
+      sendRequest(scope, method, params, null, false, false, null, requestCallback);
+   }
+
    protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
       sendRequest(scope, method, params, null, false, requestCallback);
+   }
+
+   protected <T> void sendRequestNoCredRefresh(final String scope,
+                                               final String method,
+                                               final JSONArray params,
+                                               final ServerRequestCallback<T> requestCallback)
+   {
+      sendRequest(scope, method, params, null, false, false, null, requestCallback);
    }
 
    protected <T> void sendRequest(final String scope,
@@ -3080,7 +3103,7 @@ public class RemoteServer implements Server
                                 final String resultFieldName,
                                 final ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, params, kwparams, false, resultFieldName, requestCallback);
+      sendRequest(scope, method, params, kwparams, false, true, resultFieldName, requestCallback);
    }
 
    protected <T> void sendRequest(final String scope,
@@ -3100,14 +3123,17 @@ public class RemoteServer implements Server
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> cb)
    {
-      sendRequest(scope, method, params, kwparams, redactLog, null, cb);
+      sendRequest(scope, method, params, kwparams, redactLog, true, null, cb);
    }
+
+
    
    protected <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final JSONObject kwparams,
                                 final boolean redactLog,
+                                final boolean refreshCreds,
                                 final String resultFieldName,
                                 final ServerRequestCallback<T> cb)
    {
@@ -3115,13 +3141,13 @@ public class RemoteServer implements Server
       // back through the main workbench window
       if (Satellite.isCurrentWindowSatellite())
       {
-         sendRequestViaMainWorkbench(scope, method, params, kwparams, redactLog, resultFieldName, cb);
+         sendRequestViaMainWorkbench(scope, method, params, kwparams, redactLog, refreshCreds, resultFieldName, cb);
 
       }
       // otherwise just a standard request with single retry
       else
       {
-         sendRequestWithRetry(scope, method, params, kwparams, redactLog, resultFieldName, cb);
+         sendRequestWithRetry(scope, method, params, kwparams, redactLog, refreshCreds, resultFieldName, cb);
       }
       
    }
@@ -3132,6 +3158,7 @@ public class RemoteServer implements Server
                                  final JSONArray params,
                                  final JSONObject kwparams,
                                  final boolean redactLog,
+                                 final boolean refreshCreds,
                                  final String resultFieldName,
                                  final ServerRequestCallback<T> requestCallback)
    {
@@ -3148,6 +3175,7 @@ public class RemoteServer implements Server
                         params,
                         kwparams,
                         redactLog,
+                        refreshCreds,
                         resultFieldName,
                         requestCallback, 
                         null);
@@ -3161,6 +3189,7 @@ public class RemoteServer implements Server
                         modifiedRequest.getParams(),
                         modifiedRequest.getKwparams(),
                         modifiedRequest.getRedactLog(),
+                        modifiedRequest.getRefreshCreds(),
                         modifiedRequest.getResultFieldName(),
                         requestCallback,
                         null);
@@ -3179,6 +3208,7 @@ public class RemoteServer implements Server
                   params,
                   kwparams,
                   redactLog,
+                  refreshCreds,
                   resultFieldName,
                   requestCallback, 
                   retryHandler);
@@ -3192,6 +3222,7 @@ public class RemoteServer implements Server
                               JSONArray params,
                               JSONObject kwparams,
                               boolean redactLog,
+                              boolean refreshCreds,
                               String resultFieldName,
                               final ServerRequestCallback<T> requestCallback,
                               RetryHandler retryHandler)
@@ -3203,6 +3234,7 @@ public class RemoteServer implements Server
             params,
             kwparams,
             redactLog,
+            refreshCreds,
             resultFieldName,
             new RpcResponseHandler() 
             {
@@ -3251,6 +3283,7 @@ public class RemoteServer implements Server
                                   JSONArray params,
                                   JSONObject kwparams,
                                   boolean redactLog,
+                                  boolean refreshCreds,
                                   String resultFieldName,
                                   final RpcResponseHandler responseHandler,
                                   final RetryHandler retryHandler)
@@ -3271,7 +3304,8 @@ public class RemoteServer implements Server
                                              resultFieldName,
                                              sourceWindow,
                                              clientId_,
-                                             clientVersion_);
+                                             clientVersion_,
+                                             refreshCreds);
       
       if (isDisconnected(scope))
          return rpcRequest;
@@ -3448,7 +3482,8 @@ public class RemoteServer implements Server
                                                      request.getResultFieldName(),
                                                      request.getSourceWindow(),
                                                      request.getClientId(),
-                                                     request.getClientVersion());
+                                                     request.getClientVersion(),
+                                                     request.getRefreshCreds());
 
          setSessionRelaunchPending();
 
@@ -3556,8 +3591,8 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, resultFieldName, responseCallback);
+         function(sourceWindow, scope, method, params, redactLog, refreshCreds, resultFieldName, responseCallback) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(*)(sourceWindow, scope, method, params, redactLog, refreshCreds, resultFieldName, responseCallback);
          }
       ); 
    }-*/;
@@ -3569,6 +3604,7 @@ public class RemoteServer implements Server
                                         final String method,
                                         final JavaScriptObject params,
                                         final boolean redactLog,
+                                        final boolean refreshCreds,
                                         final String resultFieldName,
                                         final JavaScriptObject responseCallback)
    {  
@@ -3617,6 +3653,7 @@ public class RemoteServer implements Server
                         jsonParams,
                         null,
                         redactLog,
+                        refreshCreds,
                         resultFieldName,
                         responseHandler, 
                         null);
@@ -3631,6 +3668,7 @@ public class RemoteServer implements Server
                         modifiedRequest.getParams(),
                         modifiedRequest.getKwparams(),
                         modifiedRequest.getRedactLog(),
+                        modifiedRequest.getRefreshCreds(),
                         modifiedRequest.getResultFieldName(),
                         responseHandler,
                         null);
@@ -3650,6 +3688,7 @@ public class RemoteServer implements Server
                   jsonParams,
                   null,
                   redactLog,
+                  refreshCreds,
                   resultFieldName,
                   responseHandler, 
                   retryHandler);
@@ -3667,6 +3706,7 @@ public class RemoteServer implements Server
                                JSONArray params,
                                JSONObject kwparams,
                                boolean redactLog,
+                               boolean refreshCreds,
                                String resultFieldName,
                                final ServerRequestCallback<T> requestCallback)
    {
@@ -3688,6 +3728,7 @@ public class RemoteServer implements Server
             params.getJavaScriptObject(),
             kwparams == null ? JavaScriptObject.createObject() : kwparams.getJavaScriptObject(),
             redactLog,
+            refreshCreds,
             resultFieldName,
             new RpcResponseHandler() {
                @Override
@@ -3722,6 +3763,7 @@ public class RemoteServer implements Server
                                     JavaScriptObject params,
                                     JavaScriptObject kwparams,
                                     boolean redactLog,
+                                    boolean refreshCreds,
                                     String resultFieldName,
                                     RpcResponseHandler handler) /*-{
       
@@ -3735,6 +3777,7 @@ public class RemoteServer implements Server
                                           method, 
                                           params,
                                           redactLog,
+                                          refreshCreds,
                                           resultFieldName,
                                           responseCallback);
    }-*/;
@@ -4125,13 +4168,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void tutorialFeedback(String feedback, 
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, TUTORIAL_FEEDBACK, feedback, requestCallback);
-   }
-   
-   @Override
    public void tutorialQuizResponse(
                            int slideIndex, int answer, boolean correct,
                            ServerRequestCallback<Void> requestCallback)
@@ -4142,7 +4178,6 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(correct));
       sendRequest(RPC_SCOPE, TUTORIAL_QUIZ_RESPONSE, params, requestCallback);
    }
-   
    
    @Override
    public void getSlideNavigationForFile(
@@ -6197,7 +6232,6 @@ public class RemoteServer implements Server
    private static final String SHOW_PRESENTATION_PANE = "show_presentation_pane";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    
-   private static final String TUTORIAL_FEEDBACK = "tutorial_feedback";
    private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";

@@ -83,6 +83,9 @@ public:
                                                   SessionLaunchProfileFilter;
    void addSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
 
+   // get current session launch profile filters
+   const std::vector<SessionLaunchProfileFilter>& getSessionLaunchProfileFilters() { return sessionLaunchProfileFilters_; }
+
    // notification that a SIGCHLD was received
    void notifySIGCHLD();
 

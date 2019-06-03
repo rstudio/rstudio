@@ -139,7 +139,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
          // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
          // set when using proxied authentication. generate and apply a new token.
          csrfToken = core::system::generateUuid();
-         core::http::setCSRFTokenCookie(request, boost::none, csrfToken, pResponse);
+         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, pResponse);
       }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 

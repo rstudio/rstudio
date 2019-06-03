@@ -1,7 +1,7 @@
 /*
  * NewShinyWebApplication.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
@@ -183,7 +184,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    public NewShinyWebApplication(String caption, 
                                  OperationWithInput<Result> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Create");

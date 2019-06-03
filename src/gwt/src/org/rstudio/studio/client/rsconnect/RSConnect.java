@@ -1,7 +1,7 @@
 /*
  * RSConnect.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -677,7 +678,7 @@ public class RSConnect implements SessionInitHandler,
       }
       final String serverUrl = failedPath;
       
-      new ModalDialogBase()
+      new ModalDialogBase(Roles.getAlertdialogRole())
       {
          @Override
          protected Widget createMainWidget()

@@ -1,7 +1,7 @@
 /*
  * HtmlFormModalDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -30,12 +31,13 @@ import org.rstudio.core.client.StringUtil;
 
 public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
 {
-   public HtmlFormModalDialog(String title, 
+   public HtmlFormModalDialog(String title,
+                              DialogRole role,
                               final String progressMessage, 
                               String actionURL,
                               final OperationWithInput<T> operation)
    {
-      super(new FormPanel());
+      super(new FormPanel(), role);
       setText(title);
       
       final FormPanel formPanel = (FormPanel)getContainerPanel();

@@ -1,0 +1,62 @@
+{
+        "logs": {
+                "logs_collected": {
+                        "files": {
+                                "collect_list": [
+                                        {
+                                                "file_path": "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Log\\UserdataExecution.log",
+                                                "log_group_name": "UserdataExecution.log",
+                                                "log_stream_name": "{instance_id}"
+                                        }
+                                ]
+                        },
+                        "windows_events": {
+                                "collect_list": [
+                                        {
+                                                "event_format": "text",
+                                                "event_levels": [
+                                                        "VERBOSE",
+                                                        "INFORMATION",
+                                                        "WARNING",
+                                                        "ERROR",
+                                                        "CRITICAL"
+                                                ],
+                                                "event_name": "System",
+                                                "log_group_name": "System",
+                                                "log_stream_name": "{instance_id}"
+                                        }
+                                ]
+                        }
+                }
+        },
+        "metrics": {
+                "append_dimensions": {
+                        "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+                        "ImageId": "${aws:ImageId}",
+                        "InstanceId": "${aws:InstanceId}",
+                        "InstanceType": "${aws:InstanceType}"
+                },
+                "metrics_collected": {
+                        "Memory": {
+                                "measurement": [
+                                        "% Committed Bytes In Use"
+                                ],
+                                "metrics_collection_interval": 60
+                        },
+                        "Paging File": {
+                                "measurement": [
+                                        "% Usage"
+                                ],
+                                "metrics_collection_interval": 60,
+                                "resources": [
+                                        "*"
+                                ]
+                        },
+                        "statsd": {
+                                "metrics_aggregation_interval": 60,
+                                "metrics_collection_interval": 10,
+                                "service_address": ":8125"
+                        }
+                }
+        }
+}

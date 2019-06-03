@@ -1,0 +1,16 @@
+17a18
+> import com.google.gwt.event.shared.HandlerRegistration;
+450a452
+>     fireEvent(new SplitterBeforeResizeEvent());
+464a467,477
+>     fireEvent(new SplitterResizedEvent());
+>   }
+> 
+>   public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
+>   {
+>     return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
+>   }
+> 
+>   public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
+>   {
+>     return addHandler(handler, SplitterResizedEvent.TYPE);

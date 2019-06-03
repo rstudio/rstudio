@@ -102,9 +102,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       resourcePath_ = resourcePath_.complete("Resources");
 #endif
 
-   // detect running in x64 directory and tweak resource path
+   // detect running in x86 directory and tweak resource path
 #ifdef _WIN32
-   if (resourcePath_.complete("x64").exists())
+   if (resourcePath_.complete("x86").exists())
    {
       resourcePath_ = resourcePath_.parent();
    }
@@ -593,16 +593,24 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &winptyPath_);
 
    // winpty.dll lives next to rsession.exe on a full install; otherwise
-   // it lives in a directory named 64
+   // it lives in a directory named 32 or 64
    core::FilePath pty(winptyPath_);
    std::string completion;
    if (pty.isWithin(resourcePath_))
    {
+#ifdef _WIN64
       completion = "winpty.dll";
+#else
+      completion = "x86/winpty.dll";
+#endif
    }
    else
    {
+#ifdef _WIN64
       completion = "64/bin/winpty.dll";
+#else
+      completion = "32/bin/winpty.dll";
+#endif
    }
    winptyPath_ = pty.complete(completion).absolutePath();
 #endif // _WIN32

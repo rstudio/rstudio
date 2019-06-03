@@ -288,6 +288,9 @@ ProgramStatus Options::read(int argc,
       ("auth-stay-signed-in-days",
         value<int>(&authStaySignedInDays_)->default_value(30),
        "number of days for stay signed in option")
+      ("auth-timeout-minutes",
+        value<int>(&authTimeoutMinutes_)->default_value(30),
+        "number of minutes users will stay logged in while idle before required to sign in again")
       ("auth-encrypt-password",
         value<bool>(&authEncryptPassword_)->default_value(true),
         "encrypt password sent from login form")
@@ -306,7 +309,13 @@ ProgramStatus Options::read(int argc,
       ("auth-pam-requires-priv",
         value<bool>(&dep.authPamRequiresPriv)->default_value(
                                                    dep.authPamRequiresPriv),
-        "deprecated: will always be true");
+        "deprecated: will always be true")
+      ("auth-sign-in-throttle-seconds",
+        value<int>(&authSignInThrottleSeconds_)->default_value(5),
+        "minimum amount of time a user must wait before attempting to sign in again")
+      ("auth-revocation-list-dir",
+        value<std::string>(&authRevocationListDir_)->default_value("/var/run/rstudio-server"),
+        "path to the directory which contains the revocation list to be used for storing expired auth tokens");
 
    options_description monitor("monitor");
    monitor.add_options()

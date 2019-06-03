@@ -28,12 +28,40 @@ pipeline {
         }
       }
     }
+    stage('tests'){
+      steps {
+        script {
+          try {
+            bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+          }
+          catch(err){
+            currentBuild.result = "UNSTABLE"
+          }
+        }
+      }
+    }
     stage('sign') {
       steps {
         script {
           withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
             bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n "RStudio, Inc." /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
             bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool" verify /v /kp package\\win32\\build\\RStudio-%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%-RelWithDebInfo.exe'
+          }
+        }
+      }
+    }
+    stage('upload debug symbols') {
+      steps {
+        script {
+          // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+          bat '''
+            cd package\\win32\\build
+            FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+          '''
+		  
+          // upload the breakpad symbols
+          withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+            bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
           }
         }
       }

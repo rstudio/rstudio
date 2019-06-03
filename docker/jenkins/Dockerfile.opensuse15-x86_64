@@ -9,6 +9,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     ant \
     boost-devel \
     clang \
+    curl \
     expect \
     fakeroot \
     gcc \

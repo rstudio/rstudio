@@ -26,6 +26,8 @@ class LogWriter
 public:
    virtual ~LogWriter() {}
 
+   virtual int logLevel() = 0;
+
    virtual void log(core::system::LogLevel level,
                     const std::string& message) = 0;
 

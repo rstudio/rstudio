@@ -186,6 +186,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class TextEditingTarget implements 
@@ -1573,7 +1574,7 @@ public class TextEditingTarget implements
          }
       }));
       
-      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_);
+      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
 
       // show/hide the debug toolbar when the dirty state changes. (note:
@@ -2990,7 +2991,35 @@ public class TextEditingTarget implements
    {
       docUpdateSentinel_.withSavedDoc(onsaved);
    }
-   
+
+   @Handler
+   void onWordCount()
+   {
+      int totalWords = 0;
+      int selectionWords = 0;
+
+      Range selectionRange = docDisplay_.getSelectionRange();
+      TextFileType fileType = docDisplay_.getFileType();
+      Iterator<Range> wordIter = docDisplay_.getWords(
+         fileType.getTokenPredicate(),
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(0, 0),
+         null).iterator();
+
+      while (wordIter.hasNext())
+      {
+         Range r = wordIter.next();
+         totalWords++;
+         if (selectionRange.intersects(r))
+            selectionWords++;
+      }
+
+      String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
+      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+         "Word Count",
+         "Total words: " + totalWords + " " + selectedWordsText);
+   }
+
    @Handler
    void onCheckSpelling()
    {
@@ -3571,7 +3600,7 @@ public class TextEditingTarget implements
             // We want to strip out the leading comment prefix,
             // but preserve the indent.
             int startIdx = commentStartIdx + commentStart.length();
-            if (Character.isSpace(line.charAt(startIdx)))
+            if (Character.isSpace(StringUtil.charAt(line, startIdx)))
                startIdx++;
             
             int endIdx = commentEndIdx;
@@ -5403,17 +5432,6 @@ public class TextEditingTarget implements
       } 
       
       PresentationState state = sessionInfo.getPresentationState();
-      
-      // if we are showing a tutorial then don't allow preview
-      if (state.isTutorial())
-      {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_WARNING,
-               "Unable to Preview",
-               "R Presentations cannot be previewed when a Tutorial " +
-               "is active");
-         return;
-      }
       
       // if this presentation is already showing then just activate 
       if (state.isActive() && 

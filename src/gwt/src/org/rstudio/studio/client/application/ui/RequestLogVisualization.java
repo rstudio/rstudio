@@ -1,7 +1,7 @@
 /*
  * RequestLogVisualization.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -54,7 +55,7 @@ public class RequestLogVisualization extends Composite
                             String initialValue,
                             OperationWithInput<String> operation)
       {
-         super(caption, operation);
+         super(caption, Roles.getDialogRole(), operation);
          textArea_ = new TextArea();
          textArea_.setSize("400px", "300px");
          textArea_.setText(initialValue);

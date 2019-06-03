@@ -410,7 +410,8 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.toggleDocumentOutline());
       }
-      
+
+      results.add(commands.wordCount());
       results.add(commands.goToNextSection());
       results.add(commands.goToPrevSection());
       results.add(commands.goToNextChunk());

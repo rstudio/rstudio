@@ -1,7 +1,7 @@
 /*
  * ConsoleProgressDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -69,7 +70,7 @@ public class ConsoleProgressDialog extends ProgressDialog
                                 Integer exitCode,
                                 CryptoServerOperations server)
    {
-      super(title);
+      super(title, Roles.getDialogRole());
       
       if (consoleProcess == null && exitCode == null)
       {

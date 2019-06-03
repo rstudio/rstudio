@@ -66,10 +66,10 @@ refreshenv
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
 choco install -y jdk8
-choco install -y ant --version 1.10.5
-choco install -y 7zip --version 18.5.0.20180730
-choco install -y git --version 2.18.0
-choco install -y ninja --version 1.7.2
+choco install -y -i ant
+choco install -y 7zip
+choco install -y git
+choco install -y ninja
 choco install -y windows-sdk-10.1 --version 10.1.17134.12
 choco install -y visualstudio2017buildtools --version 15.8.2.0
 choco install -y visualstudio2017-workload-vctools --version 1.3.0

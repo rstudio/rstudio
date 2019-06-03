@@ -4,8 +4,8 @@
    <ui:style type="org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog.CompileNotebookv2Style">
       
       .dialog {
-	      width: 350px;
-	   }
+         width: 350px;
+      }
       
       .format {
          width: 100%;
@@ -13,8 +13,8 @@
       }
       
       .formatPanel {
-	      margin-top: 10px;
-	   }
+         margin-top: 10px;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">

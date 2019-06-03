@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTargetWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,8 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       cbAttributes_ = new CheckBox();
       
       refreshButton_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Refresh",
             RES.refresh2x(),
             new ClickHandler()
             {

@@ -347,17 +347,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    module_context::syncRSaveAction();
 
    // versions prefs
-   std::string defaultRVersion, defaultRVersionHome;
+   std::string defaultRVersion, defaultRVersionHome, defaultRVersionLabel;
    error = json::readObject(defaultRVersionJson,
                             "version", &defaultRVersion,
-                            "r_home", &defaultRVersionHome);
+                            "r_home", &defaultRVersionHome,
+                            "label", &defaultRVersionLabel);
    if (error)
       return error;
 
    RVersionSettings versionSettings(module_context::userScratchPath(),
                                     FilePath(options().getOverlayOption(
                                                 kSessionSharedStoragePath)));
-   versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
+   versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome, defaultRVersionLabel);
    versionSettings.setRestoreProjectRVersion(restoreProjectRVersion);
 
    // read and set history prefs
@@ -556,6 +557,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object defaultRVersionJson;
    defaultRVersionJson["version"] = versionSettings.defaultRVersion();
    defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
+   defaultRVersionJson["label"] = versionSettings.defaultRVersionLabel();
 
    // get general prefs
    json::Object generalPrefs;

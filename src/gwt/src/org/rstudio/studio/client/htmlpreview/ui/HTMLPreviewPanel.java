@@ -109,7 +109,8 @@ public class HTMLPreviewPanel extends ResizeComposite
          menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
       
          saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarButton(
-               "Save As", 
+               "Save As",
+               ToolbarButton.NoTitle,
                commands.saveSourceDoc().getImageResource(),
                menu));
          
