@@ -59,8 +59,12 @@ public:
    {
       // The computed layer is created later since computations may involve evaluating R code (which
       // we can't do in early init)
-      layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, 
-            boost::make_shared<UserPrefsComputedLayer>());
+      auto layer = boost::make_shared<UserPrefsComputedLayer>();
+      Error error = layer->readPrefs();
+      if (error)
+         return error;
+
+      layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, layer);
       return Success();
    }
 
