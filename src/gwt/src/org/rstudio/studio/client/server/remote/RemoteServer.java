@@ -4157,13 +4157,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void tutorialFeedback(String feedback, 
-                                ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, TUTORIAL_FEEDBACK, feedback, requestCallback);
-   }
-   
-   @Override
    public void tutorialQuizResponse(
                            int slideIndex, int answer, boolean correct,
                            ServerRequestCallback<Void> requestCallback)
@@ -4174,7 +4167,6 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(correct));
       sendRequest(RPC_SCOPE, TUTORIAL_QUIZ_RESPONSE, params, requestCallback);
    }
-   
    
    @Override
    public void getSlideNavigationForFile(
@@ -6228,7 +6220,6 @@ public class RemoteServer implements Server
    private static final String SHOW_PRESENTATION_PANE = "show_presentation_pane";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    
-   private static final String TUTORIAL_FEEDBACK = "tutorial_feedback";
    private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";

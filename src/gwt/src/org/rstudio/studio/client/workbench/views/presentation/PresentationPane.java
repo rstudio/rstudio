@@ -76,77 +76,67 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
-      boolean isTutorial =
-                 session_.getSessionInfo().getPresentationState().isTutorial();
-      
       Toolbar toolbar = new Toolbar();
       
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar); 
-      slideNavigationMenu_.setEditButtonVisible(!isTutorial);
+      slideNavigationMenu_.setEditButtonVisible(true);
       
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      
       // More
-      if (!isTutorial)
-      { 
-         ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-         moreMenu.addItem(commands_.clearPresentationCache().createMenuItem(false));
-         moreMenu.addSeparator();
-         moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
-         moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
-         
-         ToolbarButton moreButton = new ToolbarButton("More",
-                                                      "More presentation commands",
-                                                      new ImageResource2x(
-                                                         StandardIcons.INSTANCE.more_actions2x()),
-                                                      moreMenu);
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.clearPresentationCache().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
+      moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
+      
+      ToolbarButton moreButton = new ToolbarButton("More",
+                                                   "More presentation commands",
+                                                   new ImageResource2x(
+                                                      StandardIcons.INSTANCE.more_actions2x()),
+                                                   moreMenu);
 
-         toolbar.addRightWidget(moreButton);
+      toolbar.addRightWidget(moreButton);
 
-         // Create the publish button and wire it to our HTML generator
-         publishButton_ = new RSConnectPublishButton(
-               RSConnectPublishButton.HOST_PRESENTATION,
-               RSConnect.CONTENT_TYPE_PRES, false, null);
-         publishButton_.setPublishHtmlSource(new PublishHtmlSource()
-         {
-            @Override
-            public void generatePublishHtml(
-                  final CommandWithArg<String> onCompleted)
-            {
-               server_.createPresentationRPubsSource(
-                  new SimpleRequestCallback<PresentationRPubsSource>() {
-                     
-                     @Override
-                     public void onResponseReceived(
-                           PresentationRPubsSource source)
-                     {
-                        onCompleted.execute(source.getSourceFilePath());
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        display_.showErrorMessage("Error Saving Presentation",
-                          Presentation.getErrorMessage(error));
-                     }
-               });
-            }
-
-            @Override
-            public String getTitle()
-            {
-               return "Presentation:\n" + getPresentationTitle();
-            }
-         });
-         toolbar.addRightSeparator();
-         toolbar.addRightWidget(publishButton_);
-      }
-      else
+      // Create the publish button and wire it to our HTML generator
+      publishButton_ = new RSConnectPublishButton(
+            RSConnectPublishButton.HOST_PRESENTATION,
+            RSConnect.CONTENT_TYPE_PRES, false, null);
+      publishButton_.setPublishHtmlSource(new PublishHtmlSource()
       {
-         toolbar.addRightWidget(commands_.tutorialFeedback().createToolbarButton());
-      }
+         @Override
+         public void generatePublishHtml(
+               final CommandWithArg<String> onCompleted)
+         {
+            server_.createPresentationRPubsSource(
+               new SimpleRequestCallback<PresentationRPubsSource>() {
+                  
+                  @Override
+                  public void onResponseReceived(
+                        PresentationRPubsSource source)
+                  {
+                     onCompleted.execute(source.getSourceFilePath());
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Error Saving Presentation",
+                       Presentation.getErrorMessage(error));
+                  }
+            });
+         }
+
+         @Override
+         public String getTitle()
+         {
+            return "Presentation:\n" + getPresentationTitle();
+         }
+      });
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(publishButton_);
       
       toolbar.addRightSeparator();
 

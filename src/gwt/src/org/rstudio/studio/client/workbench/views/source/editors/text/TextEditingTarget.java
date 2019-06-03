@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -5428,17 +5428,6 @@ public class TextEditingTarget implements
       } 
       
       PresentationState state = sessionInfo.getPresentationState();
-      
-      // if we are showing a tutorial then don't allow preview
-      if (state.isTutorial())
-      {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_WARNING,
-               "Unable to Preview",
-               "R Presentations cannot be previewed when a Tutorial " +
-               "is active");
-         return;
-      }
       
       // if this presentation is already showing then just activate 
       if (state.isActive() && 

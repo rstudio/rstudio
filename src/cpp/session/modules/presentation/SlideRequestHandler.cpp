@@ -50,8 +50,6 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
-void onSlideDeckChangedOverlay(const SlideDeck& slideDeck);
-
 namespace {
 
 const char * const kDefaultRevealFont = "\"Lato\"";
@@ -856,7 +854,6 @@ void handlePresentationRootRequest(const std::string& path,
 
    // notify slide deck changed
    log().onSlideDeckChanged(slideDeck);
-   onSlideDeckChangedOverlay(slideDeck);
 
    // set preload to none for media
    vars["slides"] = boost::algorithm::replace_all_copy(
