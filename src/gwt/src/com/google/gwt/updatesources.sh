@@ -1,14 +1,14 @@
 #!/bin/sh
 
-# Overwrites customized files with originals from gwt-user.jar. This should
-# be done with each new release of GWT to make sure we're not pounding over
-# changes made by the GWT team.
+# Overwrites customized files with originals from gwt-user.jar, then reapplies
+# previous patches.
 
-cd ../../../../
-pwd
+GWTVER=2.8.2
+cd ../../../
+SRCBASE=`pwd`
 
 # extract over previously modified sources
-jar xvf ../lib/gwt/2.8.2/gwt-user.jar \
+jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/client/ui/MenuItem.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/VerticalPanel.java \
@@ -16,10 +16,13 @@ jar xvf ../lib/gwt/2.8.2/gwt-user.jar \
   com/google/gwt/user/client/ui/MenuBar.java \
   com/google/gwt/user/client/ui/SplitPanel.java \
   com/google/gwt/user/client/ui/SplitLayoutPanel.java
-
-cd com/google/gwt/user/client/ui
+  
+jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
+  com/google/gwt/core/linker/CrossSiteIframeLinker.java \
+  com/google/gwt/core/ext/linker/impl/installLocationIframe.js
 
 # apply previous patches
+cd ${SRCBASE}/com/google/gwt/user/client/ui
 patch MenuItem.java < MenuItem.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff
 patch VerticalPanel.java < VerticalPanel.java.diff
@@ -28,3 +31,8 @@ patch MenuBar.java < MenuBar.java.diff
 patch SplitPanel.java < SplitPanel.java.diff
 patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
 
+cd ${SRCBASE}/com/google/gwt/core/ext/linker/impl
+patch XinstallLocationIframe.js < installLocationIframe.js.diff
+
+cd ${SRCBASE}/com/google/gwt/core/linker
+patch XCrossSiteIframeLinker.java < CrossSiteIframeLinker.java.diff

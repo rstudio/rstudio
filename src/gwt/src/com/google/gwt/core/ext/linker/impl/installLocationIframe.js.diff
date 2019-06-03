@@ -1,0 +1,3 @@
+37a38,39
+>   scriptFrame.setAttribute('aria-hidden', 'true');
+>   scriptFrame.title = 'Intentionally blank';
