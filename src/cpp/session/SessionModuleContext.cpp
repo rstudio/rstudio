@@ -327,6 +327,11 @@ SEXP rs_rstudioCitation()
    FilePath resPath = session::options().rResourcesPath();
    FilePath citationPath = resPath.childPath("CITATION");
 
+   // the citation file may not exist when working in e.g.
+   // development configurations so just ignore if it's missing
+   if (!citationPath.exists())
+      return R_NilValue;
+
    SEXP citationSEXP;
    r::sexp::Protect rProtect;
    Error error = r::exec::RFunction("utils:::readCitationFile",
