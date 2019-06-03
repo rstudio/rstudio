@@ -84,19 +84,11 @@
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
-  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation",
-                                             PACKAGE=""))
-
-  info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode",
-                                         PACKAGE=""))
-
-  info$edition <- .Call(getNativeSymbolInfo("rs_rstudioEdition",
-                                            PACKAGE=""))
-
-  info$version <- package_version(
-    .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
-  )
-
+  info$citation <- .Call("rs_rstudioCitation", PACKAGE = "(embedding)")
+  info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
+  info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
+  info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
+  info$version <- package_version(info$version)
   info
 })
 

@@ -143,3 +143,5 @@ options(profvis.keep_output = TRUE)
 # indicate that we're not in a notebook by default
 options(rstudio.notebook.executing = FALSE)
 
+# provide a custom HTTP user agent
+.rs.initHttpUserAgent()
