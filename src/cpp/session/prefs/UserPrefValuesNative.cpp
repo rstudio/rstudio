@@ -13,6 +13,7 @@
  */
  
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <boost/algorithm/string.hpp>
 

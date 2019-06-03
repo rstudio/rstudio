@@ -26,7 +26,7 @@
 #define kDefaultRVersion               "defaultRVersion"
 #define kDefaultRVersionHome           "defaultRVersionHome"
 #define kDefaultRVersionLabel          "defaultRVersionLabel"
-#define kRestoreProjectRVersion        "restoreProjectRVersion"
+#define kRestoreProjectRVersionFlag    "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
 #define kRVersionLabelSuffix           "-RVersionLabel"

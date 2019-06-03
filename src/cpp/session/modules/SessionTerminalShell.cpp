@@ -196,7 +196,7 @@ bool AvailableTerminalShells::getInfo(TerminalShell::ShellType type,
 {
    if (type == TerminalShell::ShellType::Default)
    {
-      type = userSettings().defaultTerminalShellValue();
+      type = prefs::userPrefs().defaultTerminalShellValue();
       if (type == TerminalShell::ShellType::Default)
       {
          // Preference never set; pick first one available

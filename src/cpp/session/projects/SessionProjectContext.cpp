@@ -685,21 +685,21 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    // setup defaults for project file
    r_util::RProjectConfig defaultConfig;
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
-   defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
-   defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
-   defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
+   defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
+   defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
+   defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
-                              userSettings().stripTrailingWhitespace();
+                              prefs::userPrefs().stripTrailingWhitespace();
    if (!userSettings().defaultEncoding().empty())
-      defaultConfig.encoding = userSettings().defaultEncoding();
+      defaultConfig.encoding = prefs::userPrefs().defaultEncoding();
    else
       defaultConfig.encoding = "UTF-8";
-   defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
-   defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
+   defaultConfig.defaultSweaveEngine = prefs::userPrefs().defaultSweaveEngine();
+   defaultConfig.defaultLatexProgram = prefs::userPrefs().defaultLatexProgram();
    defaultConfig.rootDocument = std::string();
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
-   defaultConfig.packageUseDevtools = userSettings().useDevtools();
+   defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
    return defaultConfig;
 }
 

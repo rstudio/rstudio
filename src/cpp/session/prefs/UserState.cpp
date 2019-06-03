@@ -70,6 +70,11 @@ json::Array allStateLayers()
    return s_state.allLayers();
 }
 
+UserStateValues& userState()
+{
+   return s_state;
+}
+
 Error initializeState()
 {
    using namespace module_context;
