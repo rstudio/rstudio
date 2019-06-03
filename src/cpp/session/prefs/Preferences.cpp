@@ -68,15 +68,46 @@ core::Error Preferences::initialize()
 
 core::Error Preferences::writeLayer(size_t layer, const core::json::Object& prefs)
 {
-   if (layer >= layers_.size())
+   // We cannot write the base layer or a non-existent layer.
+   if (layer >= layers_.size() || layer < 1)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-   Error result =  layers_[layer]->writePrefs(prefs);
+   // Write only the unique values in this layer.
+   json::Object unique;
+   for (const auto pref: prefs)
+   {
+      // Check to see whether the value for this preference (a) exists in some other lower layer,
+      // and if so (b) whether it differs from the value in that layer.
+      bool found = false;
+      bool differs = false;
+      for (size_t i = layer - 1; i >= 0; --i)
+      {
+         auto val = layers_[i]->readValue(pref.name());
+         if (val)
+         {
+            found = true;
+            if (!(*val == pref.value()))
+            {
+               differs = true;
+            }
+            break;
+         }
+      }
+
+      if (!found || differs)
+      {
+         // If the preference doesn't exist in any other layer, or the value doesn't match the them,
+         // record the unique value in this layer.
+         unique[pref.name()] = pref.value();
+      }
+   }
+
+   Error result =  layers_[layer]->writePrefs(unique);
    if (result)
       return result;
 
    // Empty value indicates that we changed multiple prefs
-   onChanged("");
+   // onChanged("");
    return Success();
 }
 

@@ -15,8 +15,8 @@
 
 #include "UserStateDefaultLayer.hpp"
 #include "UserPrefsDefaultLayer.hpp"
-#include "UserState.hpp"
-#include "UserPrefs.hpp"
+#include <session/prefs/UserState.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <session/SessionOptions.hpp>
 

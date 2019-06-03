@@ -1,5 +1,5 @@
 /*
- * SessionUserPrefs.hpp
+ * UserPrefs.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -51,6 +51,8 @@ UserPrefValuesNative& userPrefs();
 core::json::Array allPrefLayers();
 
 core::Error initializePrefs();
+
+core::Error initializeSessionPrefs();
 
 } // namespace prefs
 } // namespace session

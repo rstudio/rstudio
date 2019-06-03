@@ -22,8 +22,8 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
-#include "UserPrefs.hpp"
 #include "UserPrefsDefaultLayer.hpp"
 #include "UserPrefsComputedLayer.hpp"
 #include "UserPrefsLayer.hpp"
@@ -42,7 +42,6 @@ class UserPrefs: public UserPrefValuesNative
    Error createLayers()
    {
       layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserPrefsComputedLayer>()); // PREF_LAYER_COMPUTED
       layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
       layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
       layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
@@ -53,18 +52,19 @@ class UserPrefs: public UserPrefValuesNative
    {
       return PREF_LAYER_USER;
    }
+
+public:
+
+   Error createComputedLayer()
+   {
+      // The computed layer is created later since computations may involve evaluating R code (which
+      // we can't do in early init)
+      layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, 
+            boost::make_shared<UserPrefsComputedLayer>());
+      return Success();
+   }
+
 } s_prefs;
-
-Error setPreferences(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
-{
-   json::Value val;
-   Error error = json::readParams(request.params, &val);
-   if (error)
-      return error;
-
-   return s_prefs.writeLayer(PREF_LAYER_USER, val.get_obj()); 
-}
 
 } // anonymous namespace
 
@@ -80,20 +80,12 @@ UserPrefValuesNative& userPrefs()
 
 Error initializePrefs()
 {
-   using namespace module_context;
+   return s_prefs.initialize();
+}
 
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_user_prefs", setPreferences));
-   Error error = initBlock.execute();
-   if (error)
-      return error;
-
-   error = s_prefs.initialize();
-   if (error)
-      return error;
-
-   return Success();
+Error initializeSessionPrefs()
+{
+   return s_prefs.createComputedLayer();
 }
 
 } // namespace prefs

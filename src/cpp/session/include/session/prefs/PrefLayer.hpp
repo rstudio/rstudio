@@ -70,11 +70,19 @@ public:
 
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
+      // Ensure we have a cache to use as a baseline for writing
+      if (!cache_)
+      {
+         core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
+         error.addProperty("description", "cannot write property '" + name + "' before reading it");
+         return error;
+      }
       (*cache_)[name] = value;
       return writePrefs(*cache_);
    }
 
    core::json::Object allPrefs();
+   boost::optional<core::json::Value> readValue(const std::string& name);
    core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
 protected:

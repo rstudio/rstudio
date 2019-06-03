@@ -22,11 +22,11 @@
 
 #include <session/prefs/UserStateValues.hpp>
 #include <session/prefs/Preferences.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include "UserStateDefaultLayer.hpp"
 #include "UserStateComputedLayer.hpp"
 #include "UserStateLayer.hpp"
-#include "UserState.hpp"
 
 using namespace rstudio::core;
 
@@ -51,18 +51,6 @@ class UserState: public UserStateValues
    }
 } s_state;
 
-Error setState(const json::JsonRpcRequest& request,
-               json::JsonRpcResponse* pResponse)
-{
-   json::Value val;
-   Error error = json::readParams(request.params, &val);
-   if (error)
-      return error;
-
-   s_state.writeLayer(STATE_LAYER_USER, val.get_obj()); 
-
-   return Success();
-}
 } // anonymous namespace
 
 json::Array allStateLayers()
@@ -77,20 +65,7 @@ UserStateValues& userState()
 
 Error initializeState()
 {
-   using namespace module_context;
-
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_state", setState));
-   Error error = initBlock.execute();
-   if (error)
-      return error;
-
-   error = s_state.initialize();
-   if (error)
-      return error;
-
-   return Success();
+   return s_state.initialize();
 }
 
 } // namespace state

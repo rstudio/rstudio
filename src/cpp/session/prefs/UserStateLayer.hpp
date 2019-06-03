@@ -26,6 +26,7 @@ class UserStateLayer: public PrefLayer
 {
 public:
    core::Error readPrefs();
+   core::Error writePrefs(const core::json::Object &prefs);
    core::Error validatePrefs();
 };
 

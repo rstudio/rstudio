@@ -13,12 +13,8 @@
  *
  */
 
-#ifndef SESSION_PREFS_USER_PREFS_HPP
-#define SESSION_PREFS_USER_PREFS_HPP
-
-#include <core/json/Json.hpp>
-
-#include <session/prefs/UserPrefs.hpp>
+#ifndef SESSION_MODULE_USER_PREFS_HPP
+#define SESSION_MODULE_USER_PREFS_HPP
 
 namespace rstudio {
    namespace core {
@@ -28,13 +24,14 @@ namespace rstudio {
 
 namespace rstudio {
 namespace session {
+namespace modules {
 namespace prefs {
 
-core::Error initializePrefs();
+core::Error initialize();
 
 } // namespace prefs
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 
 #endif
-

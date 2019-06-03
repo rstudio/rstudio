@@ -14,11 +14,11 @@
  */
 
 #include "UserStateLayer.hpp"
-#include "UserState.hpp"
 
 #include <core/system/Xdg.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserState.hpp>
 
 using namespace rstudio::core;
 
@@ -29,6 +29,12 @@ namespace prefs {
 core::Error UserStateLayer::readPrefs()
 {
    return loadPrefsFromFile(
+         core::system::xdg::userDataDir().complete(kUserStateFile));
+}
+
+core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
+{
+   return writePrefsToFile(prefs,
          core::system::xdg::userDataDir().complete(kUserStateFile));
 }
 

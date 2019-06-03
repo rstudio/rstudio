@@ -121,6 +121,14 @@ core::Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
    return writeStringToFile(prefsFile, oss.str());
 }
 
+boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
+{
+   auto it = cache_->find(name);
+   if (it == cache_->end())
+      return boost::none;
+   return (*it).value();
+}
+
 
 } // namespace prefs
 } // namespace session

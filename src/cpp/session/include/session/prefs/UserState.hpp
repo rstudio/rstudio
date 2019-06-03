@@ -16,12 +16,23 @@
 #ifndef SESSION_USER_STATE_HPP
 #define SESSION_USER_STATE_HPP
 
-#define kUserPrefsFile "rstudio-prefs.json"
-#define kUserPrefsSchemaFile "user-prefs-schema.json"
+#define kUserStateFile "rstudio-state.json"
+#define kUserStateSchemaFile "user-state-schema.json"
 
 #include "UserStateValues.hpp"
 
 #include <core/json/Json.hpp>
+
+enum StateLayer
+{
+   STATE_LAYER_MIN      = 0,
+
+   STATE_LAYER_DEFAULT  = STATE_LAYER_MIN,
+   STATE_LAYER_COMPUTED = 1,
+   STATE_LAYER_USER     = 2,
+
+   STATE_LAYER_MAX      = STATE_LAYER_USER
+};
 
 namespace rstudio {
    namespace core {

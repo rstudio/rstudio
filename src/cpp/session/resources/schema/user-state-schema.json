@@ -196,6 +196,7 @@
         "error_handler_type": {
             "type": "string",
             "enum": ["message", "traceback", "break", "notebook", "custom"],
+            "default": "traceback",
             "description": "The kind of handler to invoke when errors occur."
         },
         "using_mingw_gcc49": {

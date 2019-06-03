@@ -1,5 +1,5 @@
 /*
- * UserPrefsDefaultLayer.cpp
+ * UserStateDefaultLayer.cpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -14,11 +14,11 @@
  */
 
 #include "UserStateDefaultLayer.hpp"
-#include "UserState.hpp"
 
 #include <core/system/Xdg.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserState.hpp>
 
 using namespace rstudio::core;
 

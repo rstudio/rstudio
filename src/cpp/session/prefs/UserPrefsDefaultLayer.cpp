@@ -14,7 +14,7 @@
  */
 
 #include "UserPrefsDefaultLayer.hpp"
-#include "UserPrefs.hpp"
+#include <session/prefs/UserPrefs.hpp>
 
 #include <core/system/Xdg.hpp>
 

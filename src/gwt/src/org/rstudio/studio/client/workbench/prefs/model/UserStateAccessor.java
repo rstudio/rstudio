@@ -327,7 +327,7 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> errorHandlerType()
    {
-      return string("error_handler_type", "");
+      return string("error_handler_type", "traceback");
    }
 
    public final static String ERROR_HANDLER_TYPE_MESSAGE = "message";

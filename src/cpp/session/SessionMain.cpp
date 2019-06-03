@@ -157,6 +157,7 @@
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
+#include "modules/SessionUserPrefs.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -512,6 +513,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (r_utils::initialize)
 
       // modules with c++ implementations
+      (modules::prefs::initialize)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
@@ -1848,13 +1850,13 @@ int main (int argc, char * const argv[])
          }
       }
 
-      // initialize user settings
+      // initialize user preferences and state
       error = prefs::initializePrefs();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
-      error = prefs::initializePrefs();
+         return sessionExitFailure(error, ERROR_LOCATION);
+      error = prefs::initializeState();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // startup projects -- must be after userSettings is initialized
       // but before persistentState and setting working directory

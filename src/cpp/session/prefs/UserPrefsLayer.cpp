@@ -14,11 +14,11 @@
  */
 
 #include "UserPrefsLayer.hpp"
-#include "UserPrefs.hpp"
 
 #include <core/system/Xdg.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
