@@ -384,11 +384,7 @@ void onClientInit()
 
 Error initialize()
 {
-   R_CallMethodDef methodDefViewer ;
-   methodDefViewer.name = "rs_viewer" ;
-   methodDefViewer.fun = (DL_FUNC) rs_viewer ;
-   methodDefViewer.numArgs = 2;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_viewer);
 
    // install event handlers
    using namespace module_context;

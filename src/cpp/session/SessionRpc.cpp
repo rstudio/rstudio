@@ -316,10 +316,7 @@ Error initialize()
    // the OS to clean up memory itself after the process is gone)
    s_pJsonRpcMethods = new core::json::JsonRpcAsyncMethods;
 
-   r::routines::registerCallMethod(
-            "rs_invokeRpc",
-            (DL_FUNC) rs_invokeRpc,
-            2);
+   RS_REGISTER_CALL_METHOD(rs_invokeRpc);
 
    return Success();
 }

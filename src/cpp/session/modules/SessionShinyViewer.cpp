@@ -285,11 +285,7 @@ Error initialize()
    json::JsonRpcFunction setShinyViewerTypeRpc =
          boost::bind(setShinyViewer, pShinyViewerType, _1, _2);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_shinyviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_shinyviewer);
 
    events().onConsoleInput.connect(onConsoleInput);
    userSettings().onChanged.connect(bind(onUserSettingsChanged,

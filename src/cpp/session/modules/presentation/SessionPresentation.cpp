@@ -439,18 +439,8 @@ json::Value presentationStateAsJson()
 Error initialize()
 {
    // register rs_showPresentation
-   R_CallMethodDef methodDefShowPresentation;
-   methodDefShowPresentation.name = "rs_showPresentation" ;
-   methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
-   methodDefShowPresentation.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowPresentation);
-
-   // register rs_showPresentationHelpDoc
-   R_CallMethodDef methodDefShowHelpDoc;
-   methodDefShowHelpDoc.name = "rs_showPresentationHelpDoc" ;
-   methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
-   methodDefShowHelpDoc.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowHelpDoc);
+   RS_REGISTER_CALL_METHOD(rs_showPresentation);
+   RS_REGISTER_CALL_METHOD(rs_showPresentationHelpDoc);
 
    // initialize presentation log
    Error error = log().initialize();

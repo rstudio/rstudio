@@ -163,12 +163,7 @@ Error initialize()
    }
 
    // register routines
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_getPendingInput" ;
-   methodDef.fun = (DL_FUNC) rs_getPendingInput ;
-   methodDef.numArgs = 0;
-   r::routines::addCallMethod(methodDef);
-
+   RS_REGISTER_CALL_METHOD(rs_getPendingInput);
    
    // subscribe to events
    using boost::bind;

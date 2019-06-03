@@ -205,12 +205,8 @@ Error initialize()
    s_waitForAskPass = module_context::registerWaitForMethod(
                                                 "asksecret_completed");
 
-   // register rs_askForSecret with R
-   R_CallMethodDef methodDefAskPass ;
-   methodDefAskPass.name = "rs_askForSecret" ;
-   methodDefAskPass.fun = (DL_FUNC) rs_askForSecret ;
-   methodDefAskPass.numArgs = 5;
-   r::routines::addCallMethod(methodDefAskPass);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_askForSecret);
 
    // complete initialization
    ExecBlock initBlock ;

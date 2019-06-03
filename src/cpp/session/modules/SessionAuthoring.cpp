@@ -208,11 +208,7 @@ json::Object compilePdfStateAsJson()
 Error initialize()
 {
    // register tanble function
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_rnwTangle" ;
-   methodDef.fun = (DL_FUNC) rs_rnwTangle ;
-   methodDef.numArgs = 3;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_rnwTangle);
 
    // install rpc methods
    using boost::bind;

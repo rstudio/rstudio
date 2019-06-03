@@ -2140,35 +2140,12 @@ void onDeferredInit(bool newSession)
 
 Error initialize()
 {
-   R_CallMethodDef canBuildMethodDef ;
-   canBuildMethodDef.name = "rs_canBuildCpp" ;
-   canBuildMethodDef.fun = (DL_FUNC) rs_canBuildCpp ;
-   canBuildMethodDef.numArgs = 0;
-   r::routines::addCallMethod(canBuildMethodDef);
-
-   R_CallMethodDef addRToolsToPathMethodDef ;
-   addRToolsToPathMethodDef.name = "rs_addRToolsToPath" ;
-   addRToolsToPathMethodDef.fun = (DL_FUNC) rs_addRToolsToPath ;
-   addRToolsToPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(addRToolsToPathMethodDef);
-
-   R_CallMethodDef restorePreviousPathMethodDef ;
-   restorePreviousPathMethodDef.name = "rs_restorePreviousPath" ;
-   restorePreviousPathMethodDef.fun = (DL_FUNC) rs_restorePreviousPath ;
-   restorePreviousPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(restorePreviousPathMethodDef);
-
-   R_CallMethodDef installPackageMethodDef ;
-   installPackageMethodDef.name = "rs_installPackage" ;
-   installPackageMethodDef.fun = (DL_FUNC) rs_installPackage;
-   installPackageMethodDef.numArgs = 2;
-   r::routines::addCallMethod(installPackageMethodDef);
-
-   R_CallMethodDef installBuildToolsMethodDef;
-   installBuildToolsMethodDef.name = "rs_installBuildTools" ;
-   installBuildToolsMethodDef.fun = (DL_FUNC) rs_installBuildTools;
-   installBuildToolsMethodDef.numArgs = 0;
-   r::routines::addCallMethod(installBuildToolsMethodDef);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_canBuildCpp);
+   RS_REGISTER_CALL_METHOD(rs_addRToolsToPath);
+   RS_REGISTER_CALL_METHOD(rs_restorePreviousPath);
+   RS_REGISTER_CALL_METHOD(rs_installPackage);
+   RS_REGISTER_CALL_METHOD(rs_installBuildTools);
 
    // subscribe to deferredInit for build tools fixup
    module_context::events().onDeferredInit.connect(onDeferredInit);

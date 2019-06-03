@@ -972,11 +972,7 @@ Error initialize()
    module_context::events().afterSessionInitHook.connect(afterSessionInitHook);
 
    // register packrat action hook
-   R_CallMethodDef onPackratActionMethodDef ;
-   onPackratActionMethodDef.name = "rs_onPackratAction" ;
-   onPackratActionMethodDef.fun = (DL_FUNC) rs_onPackratAction ;
-   onPackratActionMethodDef.numArgs = 3;
-   r::routines::addCallMethod(onPackratActionMethodDef);
+   RS_REGISTER_CALL_METHOD(rs_onPackratAction);
 
    using boost::bind;
    using namespace module_context;

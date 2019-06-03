@@ -404,15 +404,8 @@ Error ProjectContext::initialize()
 {
    using namespace module_context;
 
-   r::routines::registerCallMethod(
-            "rs_getProjectDirectory",
-            (DL_FUNC) rs_getProjectDirectory,
-            0);
-   
-   r::routines::registerCallMethod(
-            "rs_hasFileMonitor",
-            (DL_FUNC) rs_hasFileMonitor,
-            0);
+   RS_REGISTER_CALL_METHOD(rs_getProjectDirectory);
+   RS_REGISTER_CALL_METHOD(rs_hasFileMonitor);
 
    std::string projectId(kProjectNone);
 
