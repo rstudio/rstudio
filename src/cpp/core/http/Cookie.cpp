@@ -95,8 +95,8 @@ std::string Cookie::cookieHeaderValue() const
       greg_weekday wd = expires_.date().day_of_week() ;
 
       headerValue << "; expires=" ;
-      headerValue << wd.as_short_string() << ", " 
-                  << ymd.day << "-" << ymd.month.as_short_string() << "-" 
+      headerValue << wd.as_short_string() << ", "
+                  << ymd.day << " " << ymd.month.as_short_string() << " "
                   << ymd.year << expires_.time_of_day().hours() << ":"
                   << expires_.time_of_day().minutes() << ":"
                   << expires_.time_of_day().seconds() << " GMT" ;

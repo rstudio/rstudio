@@ -53,6 +53,7 @@ public:
 
    // request
    virtual const http::Request& request() const = 0;
+   virtual const std::string& originalUri() const = 0;
 
    // populate or set response then call writeResponse when done
    virtual http::Response& response() = 0;

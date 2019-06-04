@@ -163,6 +163,11 @@ public:
       return request_;
    }
 
+   virtual const std::string& originalUri() const
+   {
+      return originalUri_;
+   }
+
    virtual http::Response& response()
    {
       return response_;
