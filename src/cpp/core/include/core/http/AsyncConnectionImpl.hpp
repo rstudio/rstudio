@@ -63,6 +63,10 @@ public:
    {
    }
 
+   virtual ~SocketOperations()
+   {
+   }
+
    virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
    {
       stream_->async_read_some(buffers, handler);
@@ -159,6 +163,11 @@ public:
       return request_;
    }
 
+   virtual const std::string& originalUri() const
+   {
+      return originalUri_;
+   }
+
    virtual http::Response& response()
    {
       return response_;
@@ -210,9 +219,11 @@ public:
       }
    }
 
-   virtual void writeResponse(const http::Response& response, bool close = true)
+   virtual void writeResponse(const http::Response& response,
+                              bool close = true,
+                              const Headers& additionalHeaders = Headers())
    {
-      response_.assign(response);
+      response_.assign(response, additionalHeaders);
       writeResponse(close);
    }
 
