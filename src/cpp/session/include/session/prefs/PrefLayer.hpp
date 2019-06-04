@@ -56,7 +56,7 @@ public:
          {  
             core::Error error(core::json::errc::ParamTypeMismatch, ERROR_LOCATION);
             error.addProperty("description", "unexpected type "
-                  "'" + core::json::typeAsString((*it).value().type()) + "'"
+                  "'" + core::json::typeAsString((*it).value()) + "'"
                   " for preference '" + name + "'");
             LOG_ERROR(error);
             return boost::none;

@@ -32,10 +32,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.TerminalPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -326,8 +323,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private String selectedShellType()
    {
-      int idx = terminalShell_.getListBox().getSelectedIndex();
-      return terminalShell_.getListBox().getValue(idx);
+      return terminalShell_.getListBox().getSelectedValue();
    }
 
    private void manageCustomShellControlVisibility()

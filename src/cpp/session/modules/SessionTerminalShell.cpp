@@ -109,7 +109,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 core::json::Object TerminalShell::toJson() const
 {
    core::json::Object resultJson;
-   resultJson["type"] = static_cast<int>(type);
+   resultJson["type"] = getShellId(type);
    resultJson["name"] = name;
    return resultJson;
 }
@@ -178,6 +178,33 @@ TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& s
    }
 }
 
+std::string TerminalShell::getShellId(ShellType type)
+{
+   switch(type)
+   {
+      case TerminalShell::ShellType::Default:
+         return kWindowsTerminalShellDefault;
+      case TerminalShell::ShellType::Cmd32:
+      case TerminalShell::ShellType::Cmd64:
+         return kWindowsTerminalShellWinCmd;
+      case TerminalShell::ShellType::PS32:
+      case TerminalShell::ShellType::PS64:
+         return kWindowsTerminalShellWinPs;
+      case TerminalShell::ShellType::PSCore:
+         return kWindowsTerminalShellPsCore;
+      case TerminalShell::ShellType::GitBash:
+         return kWindowsTerminalShellWinGitBash;
+      case TerminalShell::ShellType::WSLBash:
+         return kWindowsTerminalShellWinWslBash;
+      case TerminalShell::ShellType::CustomShell:
+         return kWindowsTerminalShellCustom;
+      case TerminalShell::ShellType::PosixBash:
+         return kPosixTerminalShellBash;
+      case TerminalShell::ShellType::NoShell:
+         return kPosixTerminalShellNone;
+   }
+   return kWindowsTerminalShellDefault;
+}
 AvailableTerminalShells::AvailableTerminalShells()
 {
    scanAvailableShells(&shells_);

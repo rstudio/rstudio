@@ -73,6 +73,9 @@ struct TerminalShell
 
    // get a user-friendly name for the given shell type
    static std::string getShellName(ShellType type);
+
+   // get an internal ID for the given shell type
+   static std::string getShellId(ShellType type);
    
    // map an rstudioapi terminalCreate shell type string to enum type
    static ShellType shellTypeFromString(const std::string& str);
