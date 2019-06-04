@@ -215,8 +215,8 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Start and End"
             },
             new String[] {
-                  FoldStyle.FOLD_MARK_BEGIN_ONLY,
-                  FoldStyle.FOLD_MARK_BEGIN_AND_END
+                  UserPrefs.FOLD_STYLE_BEGIN_ONLY,
+                  UserPrefs.FOLD_STYLE_BEGIN_AND_END
             },
             false,
             true,
@@ -238,9 +238,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Ignore ANSI codes (1.0 behavior)"
             },
             new String[] {
-                  Integer.toString(VirtualConsole.ANSI_COLOR_ON), 
-                  Integer.toString(VirtualConsole.ANSI_COLOR_STRIP),
-                  Integer.toString(VirtualConsole.ANSI_COLOR_OFF)
+                  UserPrefs.ANSI_CONSOLE_MODE_ON, 
+                  UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+                  UserPrefs.ANSI_CONSOLE_MODE_OFF
             },
             false,
             true,
