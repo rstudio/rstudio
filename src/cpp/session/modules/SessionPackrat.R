@@ -159,4 +159,3 @@
 .rs.addJsonRpcHandler("get_pending_actions", function(action, dir) {
    .rs.pendingActions(action, dir)
 })
-

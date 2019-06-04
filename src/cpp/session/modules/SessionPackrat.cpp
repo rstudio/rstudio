@@ -219,7 +219,7 @@ std::string updateHash(PackratHashType hashType, PackratHashState hashState,
 
 // adds content from the given file to the given file if it's a 
 // DESCRIPTION file (used to summarize library content for hashing)
-bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
+void addDescContent(const FilePath& path, std::string* pDescContent)
 {
    std::string newDescContent;
    if (path.filename() == "DESCRIPTION") 
@@ -230,21 +230,34 @@ bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
       pDescContent->append(path.absolutePath());
       pDescContent->append(newDescContent);
    }
-   return true;
 }
 
 // computes a hash of the content of all DESCRIPTION files in the Packrat
 // private library
 std::string computeLibraryHash()
 {
-   FilePath libraryPath = 
-      projects::projectContext().directory().complete(kPackratLibPath);
+   // figure out what library paths are being used by Packrat
+   std::vector<std::string> libraryPaths;
+   Error error = r::exec::RFunction("base:::.libPaths").call(&libraryPaths);
+   if (error)
+      LOG_ERROR(error);
 
-   // find all DESCRIPTION files in the library and concatenate them to form
-   // a hashable state
+   // find DESCRIPTION files for the packages in these libraries
    std::string descFileContent;
-   libraryPath.childrenRecursive(
-         boost::bind(addDescContent, _1, _2, &descFileContent));
+   for (auto& libraryPath : libraryPaths)
+   {
+      std::vector<FilePath> pkgPaths;
+      Error error = FilePath(libraryPath).children(&pkgPaths);
+      if (error)
+         LOG_ERROR(error);
+
+      for (auto& pkgPath : pkgPaths)
+      {
+         FilePath descPath = pkgPath.childPath("DESCRIPTION");
+         if (descPath.exists())
+            addDescContent(descPath, &descFileContent);
+      }
+   }
 
    if (descFileContent.empty())
       return "";
