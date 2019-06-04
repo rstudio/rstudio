@@ -214,11 +214,12 @@ http::AsyncUriHandlerFunction secureAsyncHttpHandler(
 
 http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
-                                    http::AsyncUriHandlerFunction unauthorizedResponseFunction)
+                                    http::AsyncUriHandlerFunction unauthorizedResponseFunction,
+                                    bool refreshAuthCookies)
 {
    return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
                           unauthorizedResponseFunction,
-                          true);
+                          refreshAuthCookies);
 }
 
 http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(

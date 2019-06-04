@@ -77,7 +77,8 @@ core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
 
 core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
-                                    core::http::AsyncUriHandlerFunction unauthorizedResponseFunction);
+                                    core::http::AsyncUriHandlerFunction unauthorizedResponseFunction,
+                                    bool refreshAuthCookies);
 
 core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler);
