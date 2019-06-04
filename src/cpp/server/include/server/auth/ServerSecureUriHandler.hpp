@@ -59,6 +59,10 @@ core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
                                     bool authenticate = false);
 
+core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
+                                    SecureAsyncUriHandlerFunction handler,
+                                    core::http::AsyncUriHandlerFunction unauthorizedResponseFunction);
+
 core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler);
 

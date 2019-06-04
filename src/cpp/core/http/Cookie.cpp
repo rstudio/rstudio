@@ -55,21 +55,14 @@ Cookie::~Cookie()
 {
 }
 
-void Cookie::setExpires(const boost::posix_time::time_duration& expiresFromNow)
-{
-   expires_ = boost::posix_time::ptime(boost::posix_time::second_clock::universal_time() + expiresFromNow);
-}
-
 void Cookie::setExpires(const days& expiresDays) 
 {
-   expires_ = boost::posix_time::ptime(date(day_clock::universal_day() + expiresDays),
-                                       boost::posix_time::time_duration(23, 59, 59)) ;
+   expires_ = date(day_clock::universal_day() + expiresDays) ; 
 }
 
 void Cookie::setExpiresDelete() 
 {
-   expires_ = boost::posix_time::ptime(date(day_clock::universal_day() - days(2)),
-                                       boost::posix_time::time_duration(23, 59, 59)) ;
+   expires_ = date(day_clock::universal_day() - days(2)) ;
 }
 
 void Cookie::setHttpOnly()   
@@ -89,17 +82,15 @@ std::string Cookie::cookieHeaderValue() const
    headerValue << name() << "=" << value() ;
 
    // expiries if specified
-   if ( !expires().is_not_a_date_time() )
+   if ( !expires().is_not_a_date() )
    {
-      date::ymd_type ymd = expires_.date().year_month_day() ;
-      greg_weekday wd = expires_.date().day_of_week() ;
+      date::ymd_type ymd = expires_.year_month_day() ;
+      greg_weekday wd = expires_.day_of_week() ;
 
       headerValue << "; expires=" ;
       headerValue << wd.as_short_string() << ", " 
                   << ymd.day << " " << ymd.month.as_short_string() << " "
-                  << ymd.year << " " << expires_.time_of_day().hours() << ":"
-                  << expires_.time_of_day().minutes() << ":"
-                  << expires_.time_of_day().seconds() << " GMT" ;
+                  << ymd.year << " 23:59:59 GMT" ;
    }
 
    // path if specified

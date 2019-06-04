@@ -175,6 +175,14 @@ http::AsyncUriHandlerFunction secureAsyncHttpHandler(
    }
 }
 
+http::AsyncUriHandlerFunction secureAsyncHttpHandler(
+                                    SecureAsyncUriHandlerFunction handler,
+                                    http::AsyncUriHandlerFunction unauthorizedResponseFunction)
+{
+   return AsyncUriHandler(handler,
+                          unauthorizedResponseFunction);
+}
+
 http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler)
 {
