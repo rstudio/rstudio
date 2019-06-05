@@ -74,6 +74,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
    // https://github.com/rstudio/rstudio/issues/3498
    // https://github.com/rstudio/rstudio/issues/3159
    //
+   
    QSize size = QSize(1200, 900).boundedTo(
             QApplication::desktop()->availableGeometry().size());
    if (size.width() > 800 && size.height() > 500)
@@ -81,9 +82,40 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
       // Only use default size if it seems sane; otherwise let Qt set it
       win->resize(size);
    }
-   
+
    if (settings_.contains(kMainWindowGeometry))
+   {
+      // try to restore the geometry
       win->restoreGeometry(settings_.value(kMainWindowGeometry).toByteArray());
+
+      // double-check that we haven't accidentally restored a geometry that
+      // places the Window off-screen (can happen if the screen configuration
+      // changes between the time geometry was saved and loaded)
+      QRect desktopRect = QApplication::desktop()->availableGeometry();
+      QRect winRect = win->geometry();
+      
+      // shrink the window rectangle a bit just to capture cases like RStudio
+      // too close to edge of window and hardly showing at all
+      QRect checkRect(
+               winRect.topLeft() + QPoint(5, 5),
+               winRect.bottomRight() - QPoint(5, 5));
+      
+      // check for intersection
+      if (!desktopRect.intersects(checkRect))
+      {
+         // restore size and center the window
+         win->resize(size);
+         win->move(
+                  desktopRect.width() / 2 - size.width() / 2,
+                  desktopRect.height() / 2 - size.height() / 2);
+      }
+   }
+   
+   // ensure a minimum width, height for the window on restore
+   win->resize(
+            std::max(300, win->width()),
+            std::max(200, win->height()));
+      
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
