@@ -132,15 +132,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
             if (input_.isPopupVisible())
                return;
             
-            // If the user hits Page-Up from inside the console input, we need
-            // to simulate pageup because focus is not contained in the scroll
-            // panel (it's in the hidden textarea that Ace uses under the
-            // covers).
+            // If the user hits PageUp or PageDown from inside the console
+            // input, we need to simulate its action because focus is not contained
+            // in the scroll panel (it's in the hidden textarea that Ace uses
+            // under the covers).
 
             int keyCode = event.getNativeKeyCode();
             switch (keyCode)
             {
                case KeyCodes.KEY_PAGEUP:
+               {
                   event.stopPropagation();
                   event.preventDefault();
 
@@ -148,11 +149,33 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   if (scrollPanel_.getVerticalScrollPosition() == 0)
                      return;
 
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() -
+                        scrollPanel_.getOffsetHeight() +
+                        40;
+                  
                   scrollPanel_.focus();
-                  int newScrollTop = scrollPanel_.getVerticalScrollPosition() -
-                                     scrollPanel_.getOffsetHeight() + 40;
                   scrollPanel_.setVerticalScrollPosition(Math.max(0, newScrollTop));
                   break;
+               }
+                  
+               case KeyCodes.KEY_PAGEDOWN:
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  
+                  if (scrollPanel_.isScrolledToBottom())
+                     return;
+                  
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() +
+                        scrollPanel_.getOffsetHeight() -
+                        40;
+                  
+                  scrollPanel_.focus();
+                  scrollPanel_.setVerticalScrollPosition(newScrollTop);
+                  break;
+               }
             }
          }
       });
