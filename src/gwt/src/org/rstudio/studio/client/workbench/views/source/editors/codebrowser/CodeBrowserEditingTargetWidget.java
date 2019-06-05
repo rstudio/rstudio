@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -406,7 +407,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));
       menu.addItem(commands_.goToDefinition().createMenuItem(false));
-      ToolbarButton codeTools = new ToolbarButton(ToolbarButton.NoText, "Code Tools", icon, menu);
+      ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());

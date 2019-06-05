@@ -61,6 +61,7 @@ import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -388,7 +389,7 @@ public class ConnectionsPane extends WorkbenchPane
                "Copy to Clipboard",
                ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
       }
-      connectMenuButton_ = new ToolbarButton(
+      connectMenuButton_ = new ToolbarMenuButton(
             "Connect",
             ToolbarButton.NoTitle,
             commands_.newConnection().getImageResource(), 
@@ -591,7 +592,7 @@ public class ConnectionsPane extends WorkbenchPane
    private SearchWidget searchWidget_;
    private SearchWidget objectSearchWidget_;
    private ToolbarButton backToConnectionsButton_;
-   private ToolbarButton connectMenuButton_;
+   private ToolbarMenuButton connectMenuButton_;
    
    private SecondaryToolbar secondaryToolbar_;
    private ToolbarLabel connectionName_;

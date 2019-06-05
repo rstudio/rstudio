@@ -26,6 +26,7 @@ import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -116,7 +117,7 @@ public class RSConnectPublishButton extends Composite
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
-      publishMenuButton_ = new ToolbarButton(ToolbarButton.NoText, "Publish options", publishMenu_, true);
+      publishMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Publish options", publishMenu_, true);
       publishMenuButton_.getElement().setId(ElementIds.ID_PREFIX + 
             ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host);
       panel.add(publishMenuButton_);
@@ -948,7 +949,7 @@ public class RSConnectPublishButton extends Composite
    
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
-   private ToolbarButton publishMenuButton_;
+   private ToolbarMenuButton publishMenuButton_;
 
    private RSConnectServerOperations server_;
    private RMarkdownServerOperations rmdServer_;

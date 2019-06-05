@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.output.markers;
 
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 
@@ -28,10 +29,9 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class MarkerSetsToolbarButton extends ToolbarButton
+public class MarkerSetsToolbarButton extends ToolbarMenuButton
                                      implements HasValueChangeHandlers<String>
 {
-
    public MarkerSetsToolbarButton()
    {
       super(ToolbarButton.NoText,
@@ -75,13 +75,9 @@ public class MarkerSetsToolbarButton extends ToolbarButton
       }
    }
    
-   
    @Override
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
-
-   
- 
 }

@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -51,7 +52,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
-public class AddinsToolbarButton extends ToolbarButton
+public class AddinsToolbarButton extends ToolbarMenuButton
 {
    public AddinsToolbarButton()
    {

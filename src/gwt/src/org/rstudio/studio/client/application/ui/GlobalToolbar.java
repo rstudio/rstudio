@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -73,10 +74,10 @@ public class GlobalToolbar extends Toolbar
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
-      ToolbarButton newButton = new ToolbarButton(ToolbarButton.NoText,
-                                                  "New File",
-                                                  new ImageResource2x(icons.stock_new2x()),
-                                                  newMenu_);
+      ToolbarMenuButton newButton = new ToolbarMenuButton(ToolbarButton.NoText,
+                                                          "New File",
+                                                          new ImageResource2x(icons.stock_new2x()),
+                                                          newMenu_);
       addLeftWidget(newButton);
       addLeftSeparator();
       
@@ -105,10 +106,10 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
       
-      ToolbarButton mruButton = new ToolbarButton(ToolbarButton.NoText, 
-                                                  "Open recent files", 
-                                                  mruMenu, 
-                                                  false);
+      ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText, 
+                                                          "Open recent files", 
+                                                          mruMenu, 
+                                                          false);
       addLeftWidget(mruButton);
       addLeftSeparator();
       
@@ -121,7 +122,7 @@ public class GlobalToolbar extends Toolbar
       
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
-      codeSearch.setObserver(new CodeSearch.Observer() {     
+      codeSearch.setObserver(new CodeSearch.Observer() {
          @Override
          public void onCancel()
          {
@@ -192,7 +193,7 @@ public class GlobalToolbar extends Toolbar
          else if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             vcsIcon = new ImageResource2x(icons.svn2x());
          
-         ToolbarButton vcsButton = new ToolbarButton(
+         ToolbarMenuButton vcsButton = new ToolbarMenuButton(
                ToolbarButton.NoText,
                "Version control",
                vcsIcon, 
@@ -227,7 +228,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
       
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
-      ToolbarButton paneLayoutButton = new ToolbarButton(
+      ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(
             ToolbarButton.NoText,
             "Workspace Panes",
             paneLayoutIcon,
