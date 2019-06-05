@@ -126,7 +126,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    {
       boost::regex re(
                "([ \\t])"                           // look for preceding space
-               "(-isysroot|-isystem|-I|-D|-i|-f)"   // find flags we care about
+               "(-(?:isysroot|isystem|std|[IDif]))" // find flags we care about
                "([ \\t]+)?"                         // allow for optional whitespace
                "(\\\"[^\\\"]+\\\"|[^ ]+)");         // parse the argument passed
 
@@ -860,6 +860,7 @@ RCompilationDatabase::CompilationConfig
    // parse the compilation results
    std::vector<std::string> compileArgs = parseCompilationResults(
                                                            result.stdOut);
+
    std::copy(compileArgs.begin(),
              compileArgs.end(),
              std::back_inserter(args));
