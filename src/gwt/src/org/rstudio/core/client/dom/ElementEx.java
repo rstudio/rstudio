@@ -64,6 +64,19 @@ public class ElementEx extends Element
       return top;
    }
    
+   // NOTE: these static methods are provided only because
+   // GWT seems unable to find the instance methods of the
+   // same name in some contexts in devmode
+   public static final int getClientLeft(Element el)
+   {
+      return ((ElementEx) el).getClientLeft();
+   }
+   
+   public static final int getClientTop(Element el)
+   {
+      return ((ElementEx) el).getClientTop();
+   }
+   
    public final native DOMRect getBoundingClientRect() /*-{
       return this.getBoundingClientRect();
    }-*/;
