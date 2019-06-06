@@ -88,7 +88,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    if (false)
    {
    }
-
+   
    // on macOS, these bindings are hooked up on the GWT side (mainly to ensure
    // that zoom requests targetted to a GWT window work as expected)
 #ifndef Q_OS_MAC
@@ -120,7 +120,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                QKeySequence::ZoomOut);
    }
 #endif
-
+   
 #ifdef Q_OS_MAC
    // NOTE: even though we seem to be using Meta as a modifier key here, Qt
    // will translate that to CTRL (but only for Ctrl+Tab and Ctrl+Shift+Tab)
@@ -221,7 +221,7 @@ void MenuCallback::addCommand(QString commandId,
    // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
    // Qt automatically maps that to the Command key
    shortcut.replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
-
+   
    QKeySequence keySequence(shortcut);
 
    // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
@@ -277,7 +277,7 @@ void MenuCallback::addCommand(QString commandId,
    }
 
    // remember action for later
-   actions_[commandId].push_back(pAction);
+   actions_[commandId] = pAction;
 }
 
 void MenuCallback::actionInvoked()
@@ -309,8 +309,7 @@ void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
    if (it == actions_.end())
        return;
 
-   for (QAction* pAction : it.value())
-      pAction->setEnabled(enabled);
+   it.value()->setEnabled(enabled);
 }
 
 void MenuCallback::setCommandVisible(QString commandId, bool visible)
@@ -319,8 +318,7 @@ void MenuCallback::setCommandVisible(QString commandId, bool visible)
    if (it == actions_.end())
        return;
 
-   for (QAction* pAction : it.value())
-      pAction->setVisible(visible);
+   it.value()->setVisible(visible);
 }
 
 void MenuCallback::setCommandLabel(QString commandId, QString label)
@@ -329,8 +327,7 @@ void MenuCallback::setCommandLabel(QString commandId, QString label)
    if (it == actions_.end())
        return;
 
-   for (QAction* pAction : it.value())
-      pAction->setText(label);
+   it.value()->setText(label);
 }
 
 void MenuCallback::setCommandChecked(QString commandId, bool checked)
@@ -339,8 +336,7 @@ void MenuCallback::setCommandChecked(QString commandId, bool checked)
    if (it == actions_.end())
        return;
 
-   for (QAction* pAction : it.value())
-      pAction->setChecked(checked);
+   it.value()->setChecked(checked);
 }
 
 void MenuCallback::setMainMenuEnabled(bool enabled)
