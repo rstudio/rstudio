@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEven
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
@@ -595,7 +594,7 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ErrorHandlerChanged)
          {
-            ErrorHandlerType handlerType = event.getData();
+            String handlerType = event.getData();
             eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(handlerType));
          }
          else if (type == ClientEvent.ViewerNavigate)

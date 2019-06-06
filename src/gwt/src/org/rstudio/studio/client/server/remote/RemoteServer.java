@@ -4585,11 +4585,11 @@ public class RemoteServer implements Server
    }
    
    public void setErrorManagementType(
-         int type,
+         String type,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(type));
+      params.set(0, new JSONString(type));
       
       sendRequest(RPC_SCOPE, 
             SET_ERROR_MANAGEMENT_TYPE, 

@@ -48,7 +48,7 @@ public interface DebuggingServerOperations
          ServerRequestCallback<FunctionState> requestCallback);
    
    public void setErrorManagementType(
-         int type,
+         String type,
          ServerRequestCallback<Void> requestCallback);
    
    public void updateBreakpoints(

@@ -38,7 +38,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -54,6 +53,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -489,7 +489,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
       errorManager_.setDebugSessionHandlerType(
-            ErrorHandlerType.ERRORS_BREAK,
+            UserState.ERROR_HANDLER_TYPE_BREAK,
             new ServerRequestCallback<Void>()
             {
                @Override
