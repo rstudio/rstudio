@@ -216,6 +216,16 @@ public class ToolbarButton extends FocusWidget
          }
       });
 
+      final HandlerRegistration keyPress = addKeyPressHandler(event -> {
+         char charCode = event.getCharCode();
+         if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
+         {
+            event.preventDefault();
+            event.stopPropagation();
+            click();
+         }
+      });
+
       return new HandlerRegistration()
       {
          public void removeHandler()
@@ -223,6 +233,7 @@ public class ToolbarButton extends FocusWidget
             mouseDown.removeHandler();
             mouseOut.removeHandler();
             mouseUp.removeHandler();
+            keyPress.removeHandler();
          }
       }; 
    }

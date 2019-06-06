@@ -259,10 +259,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                         selectLast();
                         break;
                      case KeyCodes.KEY_ENTER:
-                        e.cancel();
+                     case KeyCodes.KEY_SPACE:
                         final MenuItem menuItem = getSelectedItem();
                         if (menuItem != null)
                         {
+                           e.cancel();
                            NativeEvent evt = Document.get().createClickEvent(
                                  0,
                                  0,
