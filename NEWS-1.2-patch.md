@@ -27,6 +27,7 @@
 - Fixed an issue where RStudio would always use the discrete GPU on macOS (#4672)
 - Fix startup failure when using multiple CRAN repos (#4751)
 - Fix console display issue with certain mixed color output patterns (#4777)
+- Fix issue where PageDown failed to scroll down in console history (#4894)
 
 ### Miscellaneous
 
