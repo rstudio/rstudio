@@ -635,14 +635,14 @@ SEXP callHandler(const std::string& path,
    SEXP argsSEXP;
    if (s_provideHeaders)
    {
-      argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
+      argsSEXP = Rf_list4(Rf_mkString(decodedPath.c_str()),
                           queryStringSEXP,
                           requestBodySEXP,
                           headersSEXP);
    }
    else
    {
-      argsSEXP = Rf_list3(Rf_mkString(path.c_str()),
+      argsSEXP = Rf_list3(Rf_mkString(decodedPath.c_str()),
                           queryStringSEXP,
                           requestBodySEXP);
    }
@@ -652,7 +652,7 @@ SEXP callHandler(const std::string& path,
    SEXP innerCallSEXP;
    pProtect->add(innerCallSEXP = Rf_lang3(
          Rf_install("try"),
-         Rf_lcons( (handlerSource(path)), argsSEXP),
+         Rf_lcons( (handlerSource(decodedPath)), argsSEXP),
          trueSEXP));
    SET_TAG(CDR(CDR(innerCallSEXP)), Rf_install("silent"));
    
