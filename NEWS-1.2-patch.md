@@ -18,6 +18,7 @@
 - Fix "Reload App" button for Shiny applications in Firefox on RStudio Server (#4552)
 - Fix issue where themes without names would not use the file name as a name instead (#4553)
 - Fix NULL in code preview on first attempt to import data (#4563)
+- Fix issue where attempts to print code could overflow page margins (#4815)
 - Prompt for permissions on macOS Mojave when R packages require them (#4579)
 - Add explicit dependency on required `libxkbcommon` package on Linux (#4610)
 - Fixed inability to execute editor commands from menu in RStudio Server (#4622)
