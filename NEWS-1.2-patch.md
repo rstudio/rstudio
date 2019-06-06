@@ -14,6 +14,7 @@
 - Fix issue where RStudio window could display off-screen if display configuration had changed (#4856)
 - Fix parsing multi-line expressions with single brackets inside strings (#4452)
 - Improve detection of remote sessions on Windows (#4466)
+- Fix issue where resize gripper would remain visible when attempting to copy plot to clipboard (#4864)
 - Fix issue where text in prompts would fail to display on macOS Mojave (#4497)
 - Fix "Reload App" button for Shiny applications in Firefox on RStudio Server (#4552)
 - Fix issue where themes without names would not use the file name as a name instead (#4553)
