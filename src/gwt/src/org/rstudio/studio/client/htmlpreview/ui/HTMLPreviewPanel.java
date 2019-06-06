@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -75,7 +76,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       toolbar_.setVisible(visible);
       int frameTop = visible ? tbHeight_+1 : 0;
-      layoutPanel_.setWidgetTopBottom(previewFrame_, frameTop, Unit.PX, 0, Unit.PX);    
+      layoutPanel_.setWidgetTopBottom(previewFrame_, frameTop, Unit.PX, 0, Unit.PX);
    }
    
    private Toolbar createToolbar(Commands commands)
@@ -108,7 +109,7 @@ public class HTMLPreviewPanel extends ResizeComposite
          menu.addItem(commands.saveHtmlPreviewAs().createMenuItem(false));
          menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
       
-         saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarButton(
+         saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarMenuButton(
                "Save As",
                ToolbarButton.NoTitle,
                commands.saveSourceDoc().getImageResource(),

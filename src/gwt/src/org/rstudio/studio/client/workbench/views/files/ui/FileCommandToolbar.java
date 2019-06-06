@@ -20,6 +20,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UIPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -58,12 +59,12 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(new UIPrefMenuItem<Boolean>(
             prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
-      ToolbarButton moreButton = new ToolbarButton("More",
-                                                   "More file commands",
-                                                   new ImageResource2x(icons.more_actions2x()),
-                                                   moreMenu);
+      ToolbarMenuButton moreButton = new ToolbarMenuButton(
+            "More",
+            "More file commands",
+            new ImageResource2x(icons.more_actions2x()),
+            moreMenu);
       addLeftWidget(moreButton);
-      
 
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();

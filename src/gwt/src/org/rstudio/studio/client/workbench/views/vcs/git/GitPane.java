@@ -30,6 +30,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -56,7 +57,7 @@ public class GitPane extends WorkbenchPane implements Display
       
       commands_ = commands;
       switchBranchToolbarButton_ = switchBranchToolbarButton;
-      createBranchToolbarButton_ = createBranchToolbarButton;     
+      createBranchToolbarButton_ = createBranchToolbarButton;
       
       table_ = changelistTablePresenter.getView();
       table_.addStyleName("ace_editor_theme");
@@ -92,13 +93,13 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
-      toolbar.addLeftWidget(new ToolbarButton(ToolbarButton.NoText, "Pull options", pullMoreMenu, true));
+      toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "Pull options", pullMoreMenu, true));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(historyButton_ = commands_.vcsShowHistory().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(moreButton_ = new ToolbarButton(
+      toolbar.addLeftWidget(moreButton_ = new ToolbarMenuButton(
             "More",
             ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
@@ -229,13 +230,13 @@ public class GitPane extends WorkbenchPane implements Display
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
          {
-            menu.setPopupPosition(clientX, clientY);     
+            menu.setPopupPosition(clientX, clientY);
          }
       });
    }
 
    private ToolbarButton historyButton_;
-   private ToolbarButton moreButton_;
+   private ToolbarMenuButton moreButton_;
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    

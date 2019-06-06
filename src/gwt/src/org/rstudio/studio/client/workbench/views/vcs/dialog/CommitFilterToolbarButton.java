@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
-public class CommitFilterToolbarButton extends ToolbarButton
+public class CommitFilterToolbarButton extends ToolbarMenuButton
                                        implements HasValue<FileSystemItem>
 {
    @Inject

@@ -19,6 +19,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -80,7 +81,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                   mruList_.getQualifiedLabel(activeProjectFile_) :
                   "Project: (None)";
           
-         toolbarButton_ = new ToolbarButton(
+         toolbarButton_ = new ToolbarMenuButton(
                 buttonText,
                 ToolbarButton.NoTitle,
                 new ImageResource2x(RESOURCES.projectMenu2x()),
@@ -281,7 +282,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final int MAX_SHARED_PROJECTS = 5;
    private static final int MAX_MRU_ENTRIES = 10;
    private final String activeProjectFile_;
-   private ToolbarButton toolbarButton_ = null;
+   private ToolbarMenuButton toolbarButton_ = null;
 
    private ProjectMRUList mruList_;
    private Commands commands_;

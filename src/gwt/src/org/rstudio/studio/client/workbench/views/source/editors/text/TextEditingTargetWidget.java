@@ -340,7 +340,7 @@ public class TextEditingTargetWidget
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
       if (fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(
+         shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
                "Shiny test options",
                shinyTestMenu, true);
@@ -365,7 +365,7 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
       
-      rmdOptionsButton_ = new ToolbarButton(
+      rmdOptionsButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
             commands_.editRmdFormatOptions().getTooltip(),
             new ImageResource2x(StandardIcons.INSTANCE.options2x()),
@@ -389,7 +389,7 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
 
-      insertChunkMenu_ = new ToolbarButton(
+      insertChunkMenu_ = new ToolbarMenuButton(
                        "Insert",
                        commands_.insertChunk().getTooltip(),
                        commands_.insertChunk().getImageResource(),
@@ -454,7 +454,7 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceAsLauncherJob().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceAsJob().createMenuItem(false));
          
-      sourceMenuButton_ = new ToolbarButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
+      sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
 
       //toolbar.addRightSeparator();
@@ -482,7 +482,7 @@ public class TextEditingTargetWidget
       }
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
-      chunksButton_ = new ToolbarButton(
+      chunksButton_ = new ToolbarMenuButton(
                        "Run",
                        ToolbarButton.NoTitle,
                        commands_.executeCode().getImageResource(),
@@ -492,7 +492,7 @@ public class TextEditingTargetWidget
       
       ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
       if (!fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(
+         shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
                "Run app options",
                shinyLaunchMenu, 
@@ -501,7 +501,7 @@ public class TextEditingTargetWidget
       }
       shinyLaunchButton_.setVisible(false);
 
-      plumberLaunchButton_ = new ToolbarButton(
+      plumberLaunchButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
             "Run API options",
             plumberViewerMenu_, 
@@ -621,7 +621,7 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(editor_,
                                                                       uiPrefs_);
     
-      ToolbarButton texButton = new ToolbarButton(
+      ToolbarMenuButton texButton = new ToolbarMenuButton(
                            "Format", 
                            ToolbarButton.NoTitle,
                            fileTypeRegistry_.getIconForFilename("foo.tex"), 
@@ -658,7 +658,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.showDiagnosticsProject().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.profileCode().createMenuItem(false));
-         codeTransform_ = new ToolbarButton(ToolbarButton.NoText, "Code Tools", icon, menu);
+         codeTransform_ = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       }
       
       return codeTransform_;
@@ -1555,11 +1555,11 @@ public class TextEditingTargetWidget
    private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
-   private ToolbarButton codeTransform_;
+   private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
-   private ToolbarButton insertChunkMenu_;
+   private ToolbarMenuButton insertChunkMenu_;
    private ToolbarButton insertChunkButton_;
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
@@ -1571,12 +1571,12 @@ public class TextEditingTargetWidget
    private ToolbarButton testThatButton_;
    private ToolbarButton testShinyButton_;
    private ToolbarButton compareTestButton_;
-   private ToolbarButton sourceMenuButton_;
+   private ToolbarMenuButton sourceMenuButton_;
    private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
-   private ToolbarButton chunksButton_;
-   private ToolbarButton shinyLaunchButton_;
-   private ToolbarButton plumberLaunchButton_;
-   private ToolbarButton rmdOptionsButton_;
+   private ToolbarMenuButton chunksButton_;
+   private ToolbarMenuButton shinyLaunchButton_;
+   private ToolbarMenuButton plumberLaunchButton_;
+   private ToolbarMenuButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
