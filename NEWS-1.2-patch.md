@@ -33,6 +33,7 @@
 
 ### Miscellaneous
 
+- RStudio now prepends its own version information to the default R user agent (#4826)
 - Improve detection of current working directory for terminals on macOS (#4570)
 - Update to Pandoc 2.7.2 on Windows to address occasional segfaults (#4618)
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
