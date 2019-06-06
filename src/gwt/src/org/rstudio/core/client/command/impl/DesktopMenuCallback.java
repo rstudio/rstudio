@@ -94,7 +94,8 @@ public class DesktopMenuCallback implements MenuCallback
 
    public native static final void setMainMenuEnabled(boolean enabled)
    /*-{
-       $wnd.desktopMenuCallback.setMainMenuEnabled(enabled);
+       if ($wnd.desktopMenuCallback)
+          $wnd.desktopMenuCallback.setMainMenuEnabled(enabled);
    }-*/;
 
    public static final void setCommandLabel(String commandId, String label)
