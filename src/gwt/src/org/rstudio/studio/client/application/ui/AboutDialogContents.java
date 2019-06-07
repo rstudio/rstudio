@@ -16,7 +16,7 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
