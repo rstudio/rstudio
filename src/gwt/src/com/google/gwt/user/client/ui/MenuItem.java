@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.client.HasSafeHtml;
@@ -24,6 +23,7 @@ import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import org.rstudio.core.client.a11y.A11y;
 
 /**
  * An entry in a
@@ -276,9 +276,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   public void setAriaExpanded(boolean expanded)
   {
-    Roles.getMenubarRole().setAriaExpandedState(
-          getElement(), 
-          expanded ? ExpandedValue.TRUE : ExpandedValue.FALSE);
+    A11y.setARIAMenuItemExpanded(getElement(), expanded);
   }
 
   @Override

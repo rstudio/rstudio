@@ -1,14 +1,12 @@
-17a18
-> import com.google.gwt.aria.client.ExpandedValue;
+25a26
+> import org.rstudio.core.client.a11y.A11y;
 228a230
 >     Roles.getMenuitemRole().setAriaDisabledState(getElement(), !enabled);
 267a270
 >       setAriaExpanded(false);
-273a277,283
+273a277,281
 >   public void setAriaExpanded(boolean expanded)
 >   {
->     Roles.getMenubarRole().setAriaExpandedState(
->           getElement(), 
->           expanded ? ExpandedValue.TRUE : ExpandedValue.FALSE);
+>     A11y.setARIAMenuItemExpanded(getElement(), expanded);
 >   }
 > 

@@ -38,7 +38,11 @@ public class A11y
 
    public static void setARIAMenuItemExpanded(Element element, boolean expanded)
    {
-      element.setAttribute("aria-expanded", expanded ? "true" : "false");
+      // W3C recommends having no aria-expanded state when value is false
+      if (expanded)
+         element.setAttribute("aria-expanded", "true");
+      else
+         element.removeAttribute("aria-expanded");
    }
 
    public static void setARIATablistOrientation(Element element, boolean vertical)
