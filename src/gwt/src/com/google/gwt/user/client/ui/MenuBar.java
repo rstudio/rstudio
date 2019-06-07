@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -393,7 +394,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(SafeHtml html, ScheduledCommand cmd) {
-    return addItem(new MenuItem(html, cmd));
+    return addItem(new MenuItem(html, Roles.getMenuitemRole(), false, cmd));
   }
 
   /**
@@ -406,7 +407,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, ScheduledCommand cmd) {
-    return addItem(new MenuItem(text, asHTML, cmd));
+    return addItem(new MenuItem(text, asHTML, Roles.getMenuitemRole(), false, cmd));
   }
 
   /**
@@ -443,7 +444,50 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(String text, ScheduledCommand cmd) {
-    return addItem(new MenuItem(text, cmd));
+    return addItem(new MenuItem(text, Roles.getMenuitemRole(), false, cmd));
+  }
+
+  /**
+   * Adds a menu item to the bar, that will fire the given command when it is
+   * selected.
+   *
+   * @param text the item's text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(String text, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, role, checked, cmd));
+  }
+
+  /**
+   * Adds a menu item to the bar, that will fire the given command when it is
+   * selected.
+   *
+   * @param text the item's text
+   * @param asHTML <code>true</code> to treat the specified text as html
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, asHTML, role, checked, cmd));
+  }
+
+ /**
+   * Adds a menu item to the bar containing SafeHtml, that will fire the given
+   * command when it is selected.
+   *
+   * @param html the item's html text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(SafeHtml html, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(html, role, checked, cmd));
   }
 
   /**

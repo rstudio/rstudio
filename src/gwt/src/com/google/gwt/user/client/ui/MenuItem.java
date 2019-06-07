@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.CheckedValue;
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.aria.client.MenuitemcheckboxRole;
+import com.google.gwt.aria.client.MenuitemradioRole;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.client.HasSafeHtml;
@@ -42,6 +46,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
   private ScheduledCommand command;
   private MenuBar parentMenu, subMenu;
   private boolean enabled = true;
+  private final MenuitemRole menurole;
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
@@ -49,7 +54,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param html the item's html text
    */
   public MenuItem(SafeHtml html) {
-    this(html.asString(), true);
+    this(html.asString(), true, Roles.getMenuitemRole(), false);
   }
 
   /**
@@ -80,7 +85,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param cmd the command to be fired when it is selected
    */
   public MenuItem(@IsSafeHtml String text, boolean asHTML, ScheduledCommand cmd) {
-    this(text, asHTML);
+    this(text, asHTML, Roles.getMenuitemRole(), false);
     setScheduledCommand(cmd);
   }
 
@@ -92,7 +97,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    * @param subMenu the sub-menu to be displayed when it is selected
    */
   public MenuItem(@IsSafeHtml String text, boolean asHTML, MenuBar subMenu) {
-    this(text, asHTML);
+    this(text, asHTML, Roles.getMenuitemRole(), false);
     setSubMenu(subMenu);
   }
 
@@ -104,7 +109,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    */
   @SuppressIsSafeHtmlCastCheck
   public MenuItem(String text, ScheduledCommand cmd) {
-    this(text, false);
+    this(text, false, Roles.getMenuitemRole(), false);
     setScheduledCommand(cmd);
   }
 
@@ -116,13 +121,78 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
    */
   @SuppressIsSafeHtmlCastCheck
   public MenuItem(String text, MenuBar subMenu) {
-    this(text, false);
+    this(text, false, Roles.getMenuitemRole(), false);
     setSubMenu(subMenu);
   }
 
   MenuItem(@IsSafeHtml String text, boolean asHTML) {
+    this(text, asHTML, Roles.getMenuitemRole(), false);
+  }
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   *
+   * @param text the item's text
+   * @param asHTML <code>true</code> to treat the specified text as html
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired when it is selected
+   */
+  public MenuItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    this(text, asHTML, role, checked);
+    setScheduledCommand(cmd);
+  }
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   *
+   * @param html the item's text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired when it is selected
+   */
+  public MenuItem(SafeHtml html, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    this(html.asString(), true, role, checked, cmd);
+  }
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   *
+   * @param text the item's text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired when it is selected
+   */
+  @SuppressIsSafeHtmlCastCheck
+  public MenuItem(String text, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    this(text, false, role, checked);
+    setScheduledCommand(cmd);
+  }
+
+   /**
+   * Constructs a new menu item that fires a command when it is selected.
+   *
+   * @param html the item's html text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   */
+  public MenuItem(SafeHtml html, MenuitemRole role, boolean checked) {
+    this(html.asString(), true, role, checked);
+  }
+
+  public void setChecked(boolean checked)
+  {
+    CheckedValue value = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
+    if (menurole instanceof MenuitemcheckboxRole)
+      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), value);
+    else if (menurole instanceof MenuitemradioRole)
+      Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), value);
+  }
+
+  MenuItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked) {
     setElement(DOM.createTD());
     setSelectionStyle(false);
+    menurole = role;
 
     if (asHTML) {
       setHTML(text);
@@ -132,8 +202,21 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
     setStyleName("gwt-MenuItem");
 
     getElement().setAttribute("id", DOM.createUniqueId());
-    // Add a11y role "menuitem"
-    Roles.getMenuitemRole().set(getElement());
+    CheckedValue checkedValue = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
+    if (role instanceof MenuitemcheckboxRole)
+    {
+      Roles.getMenuitemcheckboxRole().set(getElement());
+      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), checkedValue);
+    }
+    else if (role instanceof MenuitemradioRole)
+    {
+      Roles.getMenuitemradioRole().set(getElement());
+      Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), checkedValue);
+    }
+    else
+    {
+      Roles.getMenuitemRole().set(getElement());
+    }
   }
 
   /**

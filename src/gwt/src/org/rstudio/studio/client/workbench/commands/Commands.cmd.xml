@@ -22,9 +22,12 @@ well as menu structures (for main menu and popup menus).
    @checkable: Indicates whether the command has a stateful checked state,
       which is shown by the command when rendered in a menu (both GWT and
       native menus)
-  @preventShortcutWhenDisabled: Whether the command's shortcut should be
+   @radio: Same as @checkable but indicates that the command is part of a
+      group of mutually exclusive checkable commands; management of the mutually
+      exclusive behavior is not automatic and must be managed in code
+   @preventShortcutWhenDisabled: Whether the command's shortcut should be
       suppressed when the command is disabled
-  @windowMode: Which window the command wants to operate on; possible values:
+   @windowMode: Which window the command wants to operate on; possible values:
       "any": operates on current window (the default),
       "main": always operates on main window, and raises main window
       "background": always operates on main window, but in the background
