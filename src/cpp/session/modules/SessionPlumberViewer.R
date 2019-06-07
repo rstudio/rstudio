@@ -1,7 +1,7 @@
 #
 # SessionPlumberViewer.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -39,15 +39,15 @@
 .rs.addFunction("getPlumberViewerType", function() {
    viewer <- getOption("plumber.swagger.url")
    if (identical(viewer, FALSE))
-      return(1)
+      return("none")
    else if (identical(viewer, TRUE))
-      return(4)
+      return("browser")
    else if (is.function(viewer) && is.numeric(attr(viewer, "plumberViewerType")))
       return(attr(viewer, "plumberViewerType"))
    return(0)
 })
 
 .rs.addJsonRpcHandler("get_plumber_viewer_type", function() {
-   list(viewerType = .rs.scalar(.rs.getPlumberViewerType()))
+   .rs.scalar(.rs.getPlumberViewerType())
 })
 

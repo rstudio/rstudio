@@ -1,7 +1,7 @@
 /*
  * ShinyViewerTypePopupMenu.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.inject.Inject;
 
@@ -48,20 +49,19 @@ public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
    {
       final ToolbarPopupMenu menu = this;
       server_.getShinyViewerType(
-            new ServerRequestCallback<ShinyViewerType>()
+            new ServerRequestCallback<String>()
             {
                @Override
-               public void onResponseReceived(ShinyViewerType response)
+               public void onResponseReceived(String viewerType)
                {
-                  int viewerType = response.getViewerType();
                   commands_.shinyRunInPane().setChecked(false);
                   commands_.shinyRunInViewer().setChecked(false);
                   commands_.shinyRunInBrowser().setChecked(false);
-                  if (ShinyViewerType.SHINY_VIEWER_PANE == viewerType)
+                  if (StringUtil.equals(viewerType, UserPrefs.SHINY_VIEWER_TYPE_PANE))
                      commands_.shinyRunInPane().setChecked(true);
-                  if (ShinyViewerType.SHINY_VIEWER_WINDOW == viewerType)
+                  if (StringUtil.equals(viewerType, UserPrefs.SHINY_VIEWER_TYPE_WINDOW))
                      commands_.shinyRunInViewer().setChecked(true);
-                  if (ShinyViewerType.SHINY_VIEWER_BROWSER == viewerType)
+                  if (StringUtil.equals(viewerType, UserPrefs.SHINY_VIEWER_TYPE_BROWSER))
                      commands_.shinyRunInBrowser().setChecked(true);
                   callback.onPopupMenu(menu);
                }

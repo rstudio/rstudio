@@ -85,7 +85,6 @@ import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
@@ -132,7 +131,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
@@ -4668,7 +4666,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getShinyViewerType(ServerRequestCallback<ShinyViewerType> requestCallback)
+   public void getShinyViewerType(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_SHINY_VIEWER_TYPE,
@@ -4676,11 +4674,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setShinyViewerType(int viewerType,
+   public void setShinyViewerType(String viewerType,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(viewerType));
+      params.set(0, new JSONString(viewerType));
       sendRequest(RPC_SCOPE,
             SET_SHINY_VIEWER_TYPE,
             params,
@@ -4702,7 +4700,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback)
+   public void getPlumberViewerType(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_PLUMBER_VIEWER_TYPE,

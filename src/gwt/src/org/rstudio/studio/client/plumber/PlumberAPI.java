@@ -35,7 +35,6 @@ import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;

@@ -1,7 +1,7 @@
 /*
  * PlumberServerOperations.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,11 @@
 package org.rstudio.studio.client.common.plumber.model;
 
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface PlumberServerOperations
 {
-   void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback);
+   void getPlumberViewerType(ServerRequestCallback<String> requestCallback);
    
    void getPlumberRunCmd(
                String plumberFile,

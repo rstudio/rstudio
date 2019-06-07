@@ -37,7 +37,6 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerOptions;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;

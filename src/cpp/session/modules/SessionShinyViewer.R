@@ -48,7 +48,7 @@
 })
 
 .rs.addJsonRpcHandler("get_shiny_viewer_type", function() {
-   list(viewerType = .rs.scalar(.rs.getShinyViewerType()))
+   .rs.scalar(.rs.getShinyViewerType())
 })
 
 .rs.addJsonRpcHandler("stop_shiny_app", function()
