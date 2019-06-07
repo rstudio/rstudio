@@ -29,6 +29,7 @@ class UserPrefsComputedLayer: public PrefLayer
 public:
    core::Error readPrefs();
    core::Error validatePrefs();
+   core::Error writePrefs(const core::json::Object &prefs);
 private:
    core::FilePath detectedTerminalPath();
 };

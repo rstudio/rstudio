@@ -145,7 +145,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -488,16 +487,6 @@ public class RemoteServer implements Server
                                requestCallback);
    }
 
-   public void setPrefs(RPrefs rPrefs,
-                        JavaScriptObject uiPrefs,
-                        ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONObject(rPrefs));
-      params.set(1, new JSONObject(uiPrefs));
-      sendRequest(RPC_SCOPE, SET_PREFS, params, requestCallback);
-}
-   
    public void setUserPrefs(JavaScriptObject userPrefs,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -515,13 +504,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   SET_USER_STATE,
                   userState,
-                  requestCallback);
-   }
-
-   public void getRPrefs(ServerRequestCallback<RPrefs> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  GET_R_PREFS,
                   requestCallback);
    }
 

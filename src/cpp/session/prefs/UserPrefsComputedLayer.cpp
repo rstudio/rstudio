@@ -45,6 +45,9 @@ Error UserPrefsComputedLayer::readPrefs()
    // System terminal path (Linux) -------------------------------------------
    layer[kTerminalPath] = detectedTerminalPath().absolutePath();
 
+   // Initial working directory ----------------------------------------------
+   layer[kInitialWorkingDirectory] = session::options().defaultWorkingDir();
+
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
    FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
@@ -73,6 +76,28 @@ Error UserPrefsComputedLayer::readPrefs()
 
 core::Error UserPrefsComputedLayer::validatePrefs()
 {
+   return Success();
+}
+
+core::Error UserPrefsComputedLayer::writePrefs(const core::json::Object &prefs)
+{
+   Error error;
+
+   // enable or disable crash reporting - we only do this in
+   // desktop mode (as it should not be overrideable in server mode)
+   // and only if we are currently configured to use the user setting
+   // (meaning no admin settings exist)
+   if (crash_handler::configSource() == crash_handler::ConfigSource::User &&
+       session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      auto it = prefs.find("enable_crash_reporting");
+      if (it != prefs.end())
+      {
+         error = crash_handler::setUserHandlerEnabled((*it).value().get_bool());
+         if (error)
+            return error;
+      }
+   }
    return Success();
 }
 

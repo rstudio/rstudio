@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;

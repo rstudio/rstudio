@@ -50,6 +50,8 @@ Error setState(const json::JsonRpcRequest& request,
 
    userState().writeLayer(STATE_LAYER_USER, val.get_obj()); 
 
+   module_context::events().onPreferencesSaved();
+
    return Success();
 }
 

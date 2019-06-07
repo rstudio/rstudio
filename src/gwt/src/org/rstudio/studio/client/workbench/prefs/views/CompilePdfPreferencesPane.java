@@ -27,10 +27,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
