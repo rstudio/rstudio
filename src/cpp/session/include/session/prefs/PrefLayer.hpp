@@ -83,6 +83,7 @@ public:
 
    core::json::Object allPrefs();
    boost::optional<core::json::Value> readValue(const std::string& name);
+   core::Error clearValue(const std::string& name);
    core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
 protected:

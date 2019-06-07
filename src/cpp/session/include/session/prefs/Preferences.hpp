@@ -39,6 +39,7 @@ class Preferences
 public:
    core::Error initialize();
    core::json::Array allLayers();
+   core::json::Object userPrefLayer();
    core::Error writeLayer(size_t layer, const core::json::Object& prefs);
 
    template <typename T> T readPref(const std::string& name)
@@ -63,12 +64,18 @@ public:
       return T();
    }
 
+
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
       auto layer = layers_[userLayer()];
       onChanged(name);
       return layer->writePref(name, value);
    }
+
+   // Read/write accessors for the underlying JSON property values
+   boost::optional<core::json::Value> readValue(const std::string& name);
+   core::Error writeValue(const std::string& name, const core::json::Value value);
+   core::Error clearValue(const std::string& name);
 
    virtual core::Error createLayers() = 0;
    virtual int userLayer() = 0;

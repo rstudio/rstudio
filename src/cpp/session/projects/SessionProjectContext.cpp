@@ -690,7 +690,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
                               prefs::userPrefs().stripTrailingWhitespace();
-   if (!userSettings().defaultEncoding().empty())
+   if (!prefs::userPrefs().defaultEncoding().empty())
       defaultConfig.encoding = prefs::userPrefs().defaultEncoding();
    else
       defaultConfig.encoding = "UTF-8";

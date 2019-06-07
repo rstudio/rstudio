@@ -296,7 +296,7 @@
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readUiPref", prefName, PACKAGE = "(embedding)")
+  .Call("rs_readPref", prefName, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
@@ -304,13 +304,13 @@
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+  invisible(.Call("rs_writePref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("removeUiPref", function(prefName) {
+.rs.addFunction("removePref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  invisible(.Call("rs_removeUiPref", prefName, PACKAGE = "(embedding)"))
+  invisible(.Call("rs_removePref", prefName, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {

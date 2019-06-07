@@ -116,108 +116,6 @@ void setBioconductorReposOption(const std::string& mirror)
    }
 }
 
-
-SEXP rs_readUiPref(SEXP prefName)
-{
-   r::sexp::Protect protect;
-
-   // extract name of preference to read
-   std::string pref = r::sexp::safeAsString(prefName, "");
-   if (pref.empty())
-      return R_NilValue;
-
-   json::Value prefValue = json::Value();
-
-   // try project overrides first
-   if (projects::projectContext().hasProject())
-   {
-      json::Object uiPrefs = projects::projectContext().uiPrefs();
-      json::Object::iterator it = uiPrefs.find(pref);
-      if (it != uiPrefs.end())
-         prefValue = (*it).value();
-   }
-
-   // then try global UI prefs
-   if (prefValue.is_null())
-   {
-      json::Object uiPrefs = userSettings().uiPrefs();
-      json::Object::iterator it = uiPrefs.find(pref);
-      if (it != uiPrefs.end())
-         prefValue = (*it).value();
-   }
-
-   // convert to SEXP and return
-   return r::sexp::create(prefValue, &protect);
-}
-
-SEXP rs_writeUiPref(SEXP prefName, SEXP value)
-{
-   json::Value prefValue = json::Value();
-
-   // extract name of preference to write
-   std::string pref = r::sexp::safeAsString(prefName, "");
-   if (pref.empty())
-      return R_NilValue;
-
-   // extract value to write
-   Error error = r::json::jsonValueFromObject(value, &prefValue);
-   if (error)
-   {
-      r::exec::error("Unexpected value: " + error.summary());
-      return R_NilValue;
-   }
-
-   // if this corresponds to an existing preference, ensure that we're not 
-   // changing its data type
-   json::Object uiPrefs = userSettings().uiPrefs();
-   json::Object::iterator it = uiPrefs.find(pref);
-   if (it != uiPrefs.end())
-   {
-      if ((*it).value().type() != prefValue.type())
-      {
-         r::exec::error("Type mismatch: expected " + 
-                  json::typeAsString((*it).value().type()) + "; got " +
-                  json::typeAsString(prefValue.type()));
-         return R_NilValue;
-      }
-   }
-   
-   // write new pref value
-   uiPrefs[pref] = prefValue;
-   userSettings().setUiPrefs(uiPrefs);
-
-   // fire an event notifying the client that uiPrefs has changed
-   json::Object dataJson;
-   dataJson["type"] = "global";
-   dataJson["prefs"] = userSettings().uiPrefs();
-   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
-   
-   // let other modules know we've updated the prefs
-   module_context::events().onPreferencesSaved();
-   
-   return R_NilValue;
-}
-
-SEXP rs_removeUiPref(SEXP prefName)
-{
-   // extract name of preference to write
-   std::string pref = r::sexp::safeAsString(prefName, "");
-   if (pref.empty())
-      return R_NilValue;
-   
-   json::Object uiPrefs = userSettings().uiPrefs();
-   json::Object::iterator it = uiPrefs.find(pref);
-   if (it != uiPrefs.end())
-   {
-      uiPrefs.erase(it);
-   }
-
-   userSettings().setUiPrefs(uiPrefs);
-
-   return R_NilValue;
-}
-
 } // anonymous namespace
    
 UserSettings& userSettings()
@@ -247,11 +145,6 @@ Error UserSettings::initialize()
    Error error = settings_.initialize(settingsFilePath_);
    if (error)
       return error;
-
-   // register routines for reading/writing UI prefs from R code
-   RS_REGISTER_CALL_METHOD(rs_readUiPref, 1);
-   RS_REGISTER_CALL_METHOD(rs_writeUiPref, 2);
-   RS_REGISTER_CALL_METHOD(rs_removeUiPref, 1);
 
    // make sure we have a context id
    if (contextId().empty())

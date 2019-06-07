@@ -111,6 +111,39 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    return Success();
 }
 
+boost::optional<core::json::Value> Preferences::readValue(const std::string& name)
+{
+   // Work backwards through the layers, starting with the most specific (project or user-level
+   // settings) and working towards the most general (basic defaults)
+   for (auto layer: boost::adaptors::reverse(layers_))
+   {
+      boost::optional<core::json::Value> val = layer->readValue(name);
+      if (val)
+      {
+         return val;
+      }
+   }
+      
+   return boost::none;
+}
+
+core::Error Preferences::writeValue(const std::string& name, const core::json::Value value)
+{
+   auto layer = layers_[userLayer()];
+   onChanged(name);
+   return layer->writePref(name, value);
+}
+
+core::json::Object Preferences::userPrefLayer()
+{
+   return layers_[userLayer()]->allPrefs();
+}
+
+core::Error Preferences::clearValue(const std::string &name)
+{
+   return layers_[userLayer()]->clearValue(name);
+}
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

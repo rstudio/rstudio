@@ -125,10 +125,26 @@ boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
 {
    auto it = cache_->find(name);
    if (it == cache_->end())
+   {
+      // The value doesn't exist in this layer.
       return boost::none;
+   }
    return (*it).value();
 }
 
+
+core::Error PrefLayer::clearValue(const std::string& name)
+{
+   auto it = cache_->find(name);
+   if (it == cache_->end())
+   {
+      // No value to clear!
+      return Success();
+   }
+
+   cache_->erase(it);
+   return writePrefs(*cache_);
+}
 
 } // namespace prefs
 } // namespace session

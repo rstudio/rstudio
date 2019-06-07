@@ -42,6 +42,9 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -296,7 +299,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    console_process::AvailableTerminalShells shells;
    console_process::TerminalShell shell;
 
-   if (shells.getInfo(userSettings().defaultTerminalShellValue(), &shell))
+   if (shells.getInfo(prefs::userPrefs().defaultTerminalShellValue(), &shell))
    {
       shellType = shell.type;
       terminalPath = shell.path;
@@ -320,7 +323,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 #else
 
    // auto-detection (+ overridable by a setting)
-   terminalPath = userSettings().vcsTerminalPath();
+   terminalPath = prefs::userPrefs().terminalPath();
    if (terminalPath.empty())
       terminalPath = detectedTerminalPath();
 
@@ -592,12 +595,9 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &cranMirrorJson);
    if (error)
       return error;
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
-   cranMirror.changed = true;
 
-   userSettings().beginUpdate();
-   userSettings().setCRANMirror(cranMirror);
-   userSettings().endUpdate();
+   prefs::userPrefs().setCranMirror(cranMirrorJson);
+   prefs::userState().setCranMirrorChanged(true);
 
    // verify cran mirror security (will either update to https or
    // will print a warning)
@@ -631,17 +631,10 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    pResponse->setCacheableFile(filePath, request);
 }
 
-void onUserSettingsChanged()
+void onUserSettingsChanged(const std::string& pref)
 {
    // sync underlying R save action
    module_context::syncRSaveAction();
-
-   // fire event notifying the client that uiPrefs changed
-   json::Object dataJson;
-   dataJson["type"] = "global";
-   dataJson["prefs"] = userSettings().uiPrefs();
-   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
 }
 
 } // anonymous namespace
@@ -655,7 +648,7 @@ std::string editFileCommand()
 Error initialize()
 {
    // register for change notifications on user settings
-   userSettings().onChanged.connect(onUserSettingsChanged);
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
    // register postback handler for viewPDF (server-only)
    if (session::options().programMode() == kSessionProgramModeServer)
