@@ -80,7 +80,7 @@ private:
 private:
     QMenuBar* pMainMenu_;
     QStack<SubMenu*> menuStack_;
-    QMap<QString, QVector<QAction*>> actions_;
+    QMap<QString, QAction*> actions_;
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,
