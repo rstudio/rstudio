@@ -1920,17 +1920,23 @@
    # drop NULL entries
    options <- Filter(Negate(is.null), options)
    
-   # deparse to generate an R string
-   deparsed <- sub("^list", "options", .rs.deparse(options))
+   # deparse values individually (avoid relying on the format
+   # of the deparsed output of the whole expression; see e.g.
+   # https://github.com/rstudio/rstudio/issues/4916)
+   vals <- lapply(options, .rs.deparse)
+   
+   # join keys and values
+   keyvals <- paste(names(options), vals, sep = " = ")
+   
+   # create final options command
+   opts <- sprintf("options(%s)", paste(keyvals, collapse = ", "))
    
    # NOTE: we need to quote arguments with single quotes as the command will be
    # submitted using double quotes, and embedded quotes in the command are not
    # properly escaped.
    #
    # TODO: handle embedded quotes properly
-   deparsed <- gsub("\"", "'", deparsed, fixed = TRUE)
-   
-   deparsed
+   gsub("\"", "'", opts, fixed = TRUE)
    
 })
 
