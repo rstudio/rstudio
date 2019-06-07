@@ -28,14 +28,17 @@ namespace prefs {
 
 core::Error UserPrefsLayer::readPrefs()
 {
-   return loadPrefsFromFile(
-         core::system::xdg::userConfigDir().complete(kUserPrefsFile));
+   prefsFile_ = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+   return loadPrefsFromFile(prefsFile_);
 }
 
 core::Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
 {
-   return writePrefsToFile(prefs,
-         core::system::xdg::userConfigDir().complete(kUserPrefsFile));
+   if (prefsFile_.empty())
+   {
+      return fileNotFoundError(ERROR_LOCATION);
+   }
+   return writePrefsToFile(prefs, prefsFile_);
 }
 
 core::Error UserPrefsLayer::validatePrefs()
