@@ -53,6 +53,7 @@ public class AppMenuItem extends MenuItem
 
       setHTML(cmd_.getMenuHTML(mainMenu_));
       setTitle(cmd_.getDesc());
+      setChecked(cmd_.isChecked());
    }
 
    public boolean cmdVisible()

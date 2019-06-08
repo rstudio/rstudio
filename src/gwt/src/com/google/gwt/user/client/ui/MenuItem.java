@@ -183,10 +183,10 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
   public void setChecked(boolean checked)
   {
     CheckedValue value = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
-    if (menurole instanceof MenuitemcheckboxRole)
-      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), value);
-    else if (menurole instanceof MenuitemradioRole)
+    if (menurole instanceof MenuitemradioRole)
       Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), value);
+    else if (menurole instanceof MenuitemcheckboxRole)
+      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), value);
   }
 
   MenuItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked) {
@@ -203,15 +203,15 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
     getElement().setAttribute("id", DOM.createUniqueId());
     CheckedValue checkedValue = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
-    if (role instanceof MenuitemcheckboxRole)
-    {
-      Roles.getMenuitemcheckboxRole().set(getElement());
-      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), checkedValue);
-    }
-    else if (role instanceof MenuitemradioRole)
+    if (role instanceof MenuitemradioRole)
     {
       Roles.getMenuitemradioRole().set(getElement());
       Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), checkedValue);
+    }
+    else if (role instanceof MenuitemcheckboxRole)
+    {
+      Roles.getMenuitemcheckboxRole().set(getElement());
+      Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), checkedValue);
     }
     else
     {

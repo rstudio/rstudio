@@ -1379,13 +1379,13 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="layoutConsoleOnLeft"
-        checkable="true"
+        radio="true"
         label="Console on Left"
         menuLabel="Console on _Left"
         windowMode="main"/>
         
    <cmd id="layoutConsoleOnRight"
-        checkable="true"
+        radio="true"
         label="Console on Right"
         menuLabel="Console on _Right"
         windowMode="main"/>
@@ -3130,19 +3130,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="errorsMessage"
         menuLabel="_Message Only"
         desc="Print the error message when an unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="errorsTraceback"
         menuLabel="_Error Inspector"
         desc="Show the error inspector when an unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="startProfiler"
