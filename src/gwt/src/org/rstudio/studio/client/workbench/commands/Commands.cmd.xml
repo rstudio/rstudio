@@ -22,9 +22,12 @@ well as menu structures (for main menu and popup menus).
    @checkable: Indicates whether the command has a stateful checked state,
       which is shown by the command when rendered in a menu (both GWT and
       native menus)
-  @preventShortcutWhenDisabled: Whether the command's shortcut should be
+   @radio: Same as @checkable but indicates that the command is part of a
+      group of mutually exclusive checkable commands; management of the mutually
+      exclusive behavior is not automatic and must be managed in code
+   @preventShortcutWhenDisabled: Whether the command's shortcut should be
       suppressed when the command is disabled
-  @windowMode: Which window the command wants to operate on; possible values:
+   @windowMode: Which window the command wants to operate on; possible values:
       "any": operates on current window (the default),
       "main": always operates on main window, and raises main window
       "background": always operates on main window, but in the background
@@ -1376,13 +1379,13 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="layoutConsoleOnLeft"
-        checkable="true"
+        radio="true"
         label="Console on Left"
         menuLabel="Console on _Left"
         windowMode="main"/>
         
    <cmd id="layoutConsoleOnRight"
-        checkable="true"
+        radio="true"
         label="Console on Right"
         menuLabel="Console on _Right"
         windowMode="main"/>
@@ -3127,19 +3130,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="errorsMessage"
         menuLabel="_Message Only"
         desc="Print the error message when an unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="errorsTraceback"
         menuLabel="_Error Inspector"
         desc="Show the error inspector when an unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
-        checkable="true"
+        radio="true"
         rebindable="false"/>
         
    <cmd id="startProfiler"

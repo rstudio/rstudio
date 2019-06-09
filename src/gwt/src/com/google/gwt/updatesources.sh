@@ -32,7 +32,7 @@ patch SplitPanel.java < SplitPanel.java.diff
 patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
 
 cd ${SRCBASE}/com/google/gwt/core/ext/linker/impl
-patch XinstallLocationIframe.js < installLocationIframe.js.diff
+patch installLocationIframe.js < installLocationIframe.js.diff
 
 cd ${SRCBASE}/com/google/gwt/core/linker
-patch XCrossSiteIframeLinker.java < CrossSiteIframeLinker.java.diff
+patch CrossSiteIframeLinker.java < CrossSiteIframeLinker.java.diff
