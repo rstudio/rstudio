@@ -27,7 +27,6 @@
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>

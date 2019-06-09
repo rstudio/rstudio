@@ -22,8 +22,6 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
-#include <session/SessionUserSettings.hpp>
-
 #include "vcs/SessionVCSCore.hpp"
 
 #include "SessionGit.hpp"

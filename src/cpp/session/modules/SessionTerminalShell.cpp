@@ -19,7 +19,6 @@
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
 #include <session/prefs/UserPrefs.hpp>

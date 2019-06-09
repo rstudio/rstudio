@@ -57,7 +57,6 @@
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionConsoleProcess.hpp>

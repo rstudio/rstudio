@@ -36,7 +36,6 @@
 #include <r/RJson.hpp>
 #include <r/RInterface.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>

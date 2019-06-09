@@ -37,7 +37,6 @@
 #include <r/RInternal.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;

@@ -21,7 +21,6 @@
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include <core/libclang/LibClang.hpp>

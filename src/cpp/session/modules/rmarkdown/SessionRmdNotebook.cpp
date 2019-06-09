@@ -43,7 +43,6 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include <session/prefs/UserState.hpp>
 

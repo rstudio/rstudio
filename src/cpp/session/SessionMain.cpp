@@ -92,7 +92,6 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>

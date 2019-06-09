@@ -49,7 +49,6 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
 

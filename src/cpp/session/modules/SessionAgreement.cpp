@@ -30,7 +30,6 @@
 #include <core/http/Response.hpp>
 
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserState.hpp>
 

@@ -46,7 +46,6 @@
 #include <session/prefs/UserState.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/RVersionSettings.hpp>
 #include <session/SessionTerminalShell.hpp>
@@ -207,16 +206,15 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    return Success();
 }
 
-CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
+prefs::CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
 {
-   CRANMirror cranMirror;
+   prefs::CRANMirror cranMirror;
    json::readObject(cranMirrorJson,
                     "name", &cranMirror.name,
                     "host", &cranMirror.host,
                     "url", &cranMirror.url,
                     "secondary", &cranMirror.secondary,
-                    "country", &cranMirror.country,
-                    "changed", &cranMirror.changed);
+                    "country", &cranMirror.country);
    return cranMirror;
 }
 
@@ -260,7 +258,7 @@ FilePath detectedTerminalPath()
 #endif
 }
 
-json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
+json::Object toCRANMirrorJson(const prefs::CRANMirror& cranMirror)
 {
    json::Object cranMirrorJson;
    cranMirrorJson["name"] = cranMirror.name;
@@ -268,12 +266,11 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    cranMirrorJson["url"] = cranMirror.url;
    cranMirrorJson["secondary"] = cranMirror.secondary;
    cranMirrorJson["country"] = cranMirror.country;
-   cranMirrorJson["changed"] = cranMirror.changed;
    return cranMirrorJson;
 }
 
 json::Object toBioconductorMirrorJson(
-                           const BioconductorMirror& bioconductorMirror)
+                           const prefs::BioconductorMirror& bioconductorMirror)
 {
    json::Object bioconductorMirrorJson;
    bioconductorMirrorJson["name"] = bioconductorMirror.name;

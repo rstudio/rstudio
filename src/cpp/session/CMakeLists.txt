@@ -91,7 +91,6 @@ set (SESSION_SOURCE_FILES
    SessionSuspend.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
-   SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp

@@ -31,7 +31,6 @@
 #include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/prefs/UserPrefs.hpp>

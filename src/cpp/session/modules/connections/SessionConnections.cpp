@@ -33,7 +33,6 @@
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionUrlPorts.hpp>
 

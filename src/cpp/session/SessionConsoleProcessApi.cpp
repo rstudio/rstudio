@@ -21,6 +21,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>

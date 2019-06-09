@@ -48,7 +48,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionUrlPorts.hpp>
 
 #include <session/projects/SessionProjects.hpp>
