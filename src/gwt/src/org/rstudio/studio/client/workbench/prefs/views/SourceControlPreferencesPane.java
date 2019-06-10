@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SourceControlPreferencesPane extends PreferencesPane

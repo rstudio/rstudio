@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class LineEndingsSelectWidget extends SelectWidget
