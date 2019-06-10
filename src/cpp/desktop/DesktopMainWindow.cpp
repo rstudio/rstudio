@@ -105,6 +105,9 @@ MainWindow::MainWindow(QUrl url) :
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
 
+   connect(webPage(), &QWebEnginePage::loadFinished,
+           &menuCallback_, &MenuCallback::cleanUpActions);
+
    connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
       QString js = QStringLiteral(
          "if (typeof window.onFontListReady === 'function') window.onFontListReady()");
