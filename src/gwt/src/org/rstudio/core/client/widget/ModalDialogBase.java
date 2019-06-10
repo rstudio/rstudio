@@ -63,8 +63,8 @@ public abstract class ModalDialogBase extends DialogBox
       role_ = role;
       role_.set(getElement());
       A11y.setARIADialogModal(getElement());
-      firstControl_ = new Button("First");
-      lastControl_ = new Button("Last");
+      firstControl_ = new Button("");
+      lastControl_ = new Button("");
       Roles.getButtonRole().setAriaHiddenState(firstControl_.getElement(), true);
       Roles.getButtonRole().setAriaHiddenState(lastControl_.getElement(), true);
       DomUtils.visuallyHide(firstControl_.getElement());
@@ -225,6 +225,7 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected void onDialogShown()
    {
+      focusInitialControl();
    }
 
    protected void addOkButton(ThemedButton okButton)
@@ -260,10 +261,21 @@ public abstract class ModalDialogBase extends DialogBox
       okButton_.setVisible(visible);
    }
 
-   protected void focusOkButton()
+   protected boolean focusOkButton()
    {
-      if (okButton_ != null)
-         FocusHelper.setFocusDeferred(okButton_);
+      if (okButton_ == null || !okButton_.isEnabled())
+         return false;
+
+      FocusHelper.setFocusDeferred(okButton_);
+      return true;
+   }
+
+   protected boolean focusCancelButton()
+   {
+      if (cancelButton_ == null || !cancelButton_.isEnabled())
+         return false;
+      FocusHelper.setFocusDeferred(cancelButton_);
+      return true;
    }
 
    protected void enableCancelButton(boolean enabled)
@@ -335,7 +347,6 @@ public abstract class ModalDialogBase extends DialogBox
       button.addStyleDependentName("DialogAction");
       buttonPanel_.add(button);
       allButtons_.add(button);
-      lastVisibleButton_ = button;
    }
 
    // inserts an action button--in the same panel as OK/cancel, but preceding
@@ -603,16 +614,28 @@ public abstract class ModalDialogBase extends DialogBox
       role_.setAriaDescribedbyProperty(getElement(), value);
    }
 
-   // invoked when user hits Tab key with focus on last control in dialog
-   protected void focusFirstControl()
+   /**
+    * Invoked when user hits Tab with focus on last control in dialog. Implement to
+    * set focus to the appropriate control.
+    */
+   public /*abstract*/ void focusFirstControl()
+   {
+   }
+
+   /**
+    * Invoked when user hits Shift+Tab with focus on first control in dialog. Implement to
+    * set focus to the appropriate control.
+    */
+   public /*abstract*/ void focusLastControl()
    {
    }
    
-   // invoked when user hits Shift+Tab key with focus on first control in dialog
-   protected void focusLastControl()
+   /**
+    * Invoked when dialog first loads. Implement to set focus to the appropriate control.
+    * set focus to the appropriate control.
+    */
+   public /*abstract*/ void focusInitialControl()
    {
-      if (lastVisibleButton_ != null)
-         FocusHelper.setFocusDeferred(lastVisibleButton_);
    }
 
    private Handle shortcutDisableHandle_;
@@ -634,5 +657,4 @@ public abstract class ModalDialogBase extends DialogBox
    private DialogRole role_;
    private Button firstControl_;
    private Button lastControl_;
-   private ThemedButton lastVisibleButton_;
 }

@@ -49,4 +49,9 @@ public class A11y
    {
       element.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
    }
+
+   public static void setARIARequired(Element element)
+   {
+      element.setAttribute("aria-required", "true");
+   }
 }

@@ -1,0 +1,13 @@
+155a156,167
+>    * Creates a label with the specified text, which is associated with
+>    * the specified form control.
+>    *
+>    * @param text the new label's text
+>    */
+>   public Label(String text, String forId) {
+>     super(true, forId);
+>     setStyleName("gwt-Label");
+>     setText(text);
+>   }
+> 
+>   /**

@@ -16,7 +16,10 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
@@ -26,7 +29,6 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -63,12 +65,17 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    {
       super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
+
+      final String nameLabel = "Remote Name:";
+      final String urlLabel = "Remote URL:";
+      final String NAME_ID = ElementIds.idFromLabel(nameLabel);
+      final String URL_ID = ElementIds.idFromLabel(urlLabel);
       
       container_ = new VerticalPanel();
-      lblName_ = label("Remote Name:");
-      lblUrl_ = label("Remote URL:");
-      tbName_ = textBox();
-      tbUrl_ = textBox();
+      lblName_ = label(nameLabel, NAME_ID);
+      lblUrl_ = label(urlLabel, URL_ID);
+      tbName_ = textBox(NAME_ID);
+      tbUrl_ = textBox(URL_ID);
       
       tbName_.addKeyDownHandler(this);
       tbUrl_.addKeyDownHandler(this);
@@ -92,13 +99,6 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    }
    
    @Override
-   public void showModal()
-   {
-      super.showModal();
-      tbName_.setFocus(true);
-   }
-   
-   @Override
    public void onKeyDown(KeyDownEvent event)
    {
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -110,6 +110,26 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
          }
       });
    }
+
+   @Override
+   public void focusFirstControl()
+   {
+      tbName_.setFocus(true);
+      tbName_.selectAll();
+   }
+
+   @Override
+   public void focusLastControl()
+   {
+      if (!focusCancelButton())
+         if (!focusOkButton())
+            tbUrl_.setFocus(true);
+   }
+
+   public void focusInitialControl()
+   {
+      tbName_.setFocus(true);
+   }
    
    private void synchronize()
    {
@@ -120,24 +140,26 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       enableOkButton(isValidState);
    }
    
-   private TextBox textBox()
+   private TextBox textBox(String id)
    {
       TextBox textBox = new TextBox();
       textBox.setWidth("260px");
       textBox.getElement().getStyle().setMarginBottom(6, Unit.PX);
       textBox.getElement().setAttribute("spellcheck", "false");
+      textBox.getElement().setId(id);
+      A11y.setARIARequired(textBox.getElement());
       return textBox;
    }
    
-   private Label label(String text)
+   private FormLabel label(String text, String forId)
    {
-      Label label = new Label(text);
+      FormLabel label = new FormLabel(text, forId);
       label.getElement().getStyle().setMarginBottom(4, Unit.PX);
       return label;
    }
    
-   private final Label lblName_;
-   private final Label lblUrl_;
+   private final FormLabel lblName_;
+   private final FormLabel lblUrl_;
    private final TextBox tbName_;
    private final TextBox tbUrl_;
    private final VerticalPanel container_;
