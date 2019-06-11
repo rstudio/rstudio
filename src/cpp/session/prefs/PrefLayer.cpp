@@ -28,7 +28,7 @@ PrefLayer::~PrefLayer()
    // No-op virtual destructor
 }
 
-core::json::Object PrefLayer::allPrefs()
+core::json::Object PrefLayer::allPrefs() const
 {
    return *cache_;
 }
@@ -121,9 +121,9 @@ core::Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
    return writeStringToFile(prefsFile, oss.str());
 }
 
-boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
+boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name) const
 {
-   auto it = cache_->find(name);
+   const auto it = cache_->find(name);
    if (it == cache_->end())
    {
       // The value doesn't exist in this layer.

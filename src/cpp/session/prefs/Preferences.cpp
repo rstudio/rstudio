@@ -82,7 +82,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
       bool differs = false;
       for (size_t i = layer - 1; i >= 0; --i)
       {
-         auto val = layers_[i]->readValue(pref.name());
+         const auto val = layers_[i]->readValue(pref.name());
          if (val)
          {
             found = true;
@@ -111,14 +111,14 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    return Success();
 }
 
-boost::optional<core::json::Value> Preferences::readValue(const std::string& name)
+boost::optional<core::json::Value> Preferences::readValue(const std::string& name) const
 {
    // Work backwards through the layers, starting with the most specific (project or user-level
    // settings) and working towards the most general (basic defaults)
-   for (auto layer: boost::adaptors::reverse(layers_))
+   for (const auto layer: boost::adaptors::reverse(layers_))
    {
       boost::optional<core::json::Value> val = layer->readValue(name);
-      if (val)
+      if (val && val->type() != json::NullType && val->type() != json::UnknownType)
       {
          return val;
       }
@@ -127,7 +127,7 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
    return boost::none;
 }
 
-core::Error Preferences::writeValue(const std::string& name, const core::json::Value value)
+core::Error Preferences::writeValue(const std::string& name, const core::json::Value& value)
 {
    auto layer = layers_[userLayer()];
    onChanged(name);

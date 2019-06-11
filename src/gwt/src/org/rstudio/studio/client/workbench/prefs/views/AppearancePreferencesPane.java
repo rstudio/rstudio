@@ -542,12 +542,18 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       boolean restartRequired = super.onApply(rPrefs);
 
+      String themeName = flatTheme_.getValue();
+      if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
+      {
+         userPrefs_.globalTheme().setGlobalValue(themeName, false);
+      }
+      
       double fontSize = Double.parseDouble(fontSize_.getValue());
       userPrefs_.fontSizePoints().setGlobalValue(fontSize);
       if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
-         userPrefs_.editorTheme().setGlobalValue(theme_.getValue());
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+         userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
       }
       
       if (Desktop.isDesktop())
@@ -568,13 +574,6 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
-      String themeName = flatTheme_.getValue();
-
-      if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
-      {
-         userPrefs_.globalTheme().setGlobalValue(themeName);
-      }
-      
       return restartRequired || relaunchRequired_;
    }
 

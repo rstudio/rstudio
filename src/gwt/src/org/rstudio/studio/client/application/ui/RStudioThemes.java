@@ -54,15 +54,18 @@ public class RStudioThemes
       document.getBody().removeClassName("rstudio-themes-dark-menus");
       document.getBody().removeClassName("rstudio-themes-dark-menus-disabled");
       
-      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
+      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate")
+      {
          document.getBody().addClassName("rstudio-themes-flat");
          
-         if (themeName.contains("dark")) {
+         if (themeName.contains("dark"))
+         {
             document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
          }
 
-         if (usesScrollbars()) {
+         if (usesScrollbars())
+         {
             element.addClassName("rstudio-themes-scrollbars");
          }
             
@@ -71,33 +74,39 @@ public class RStudioThemes
       }
    }
 
-   public static boolean isFlat(UserPrefs prefs) {
+   public static boolean isFlat(UserPrefs prefs)
+   {
       return prefs.globalTheme().getValue() != UserPrefs.GLOBAL_THEME_CLASSIC;
    }
    
-   public static boolean isFlat() {
+   public static boolean isFlat()
+   {
       return Document.get().getBody().hasClassName("rstudio-themes-flat");
    }
    
-   public static boolean isEditorDark() {
+   public static boolean isEditorDark()
+   {
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme) {
+   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme)
+   {
       if (StringUtil.equals(rstudioTheme, "classic") || (aceTheme == null))
          return rstudioTheme;
       
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUserPrefs(UserPrefs prefs, UserState state) {
+   public static String getThemeFromUserPrefs(UserPrefs prefs, UserState state)
+   {
       return suggestThemeFromAceTheme(
         state.theme().getGlobalValue().cast(),
         prefs.globalTheme().getGlobalValue()
       );
    }
    
-   public static boolean usesScrollbars() {
+   public static boolean usesScrollbars()
+   {
       if (usesScrollbars_ != null) return usesScrollbars_;
       
       if (!BrowseCap.isMacintosh()) {

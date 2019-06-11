@@ -37,7 +37,7 @@ public:
    virtual core::Error validatePrefs() = 0;
    virtual ~PrefLayer();
 
-   template<typename T> boost::optional<T> readPref(const std::string& name)
+   template<typename T> boost::optional<T> readPref(const std::string& name) const
    {
       // Ensure we have a cache from which to read preferences
       if (!cache_)
@@ -48,7 +48,7 @@ public:
       }
 
       // Locate the preference in the cache
-      auto it = cache_->find(name);
+      const auto it = cache_->find(name);
       if (it != cache_->end())
       {
          // Ensure the preference we found is of the correct type. 
@@ -81,8 +81,8 @@ public:
       return writePrefs(*cache_);
    }
 
-   core::json::Object allPrefs();
-   boost::optional<core::json::Value> readValue(const std::string& name);
+   core::json::Object allPrefs() const;
+   boost::optional<core::json::Value> readValue(const std::string& name) const;
    core::Error clearValue(const std::string& name);
    core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
