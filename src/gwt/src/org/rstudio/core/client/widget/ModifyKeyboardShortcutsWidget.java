@@ -936,6 +936,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      }
                   }
 
+                  // If Help link has focus, Enter shouldn't close the widget
+                  if (keyCode == KeyCodes.KEY_ENTER && helpLink_.hasFocus())
+                  {
+                     return;
+                  }
+
                   // Otherwise, handle Enter / Escape 'modally' as we might normally do.
                   preview.cancel();
                   preview.getNativeEvent().stopPropagation();
@@ -985,11 +991,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       filterWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
       headerPanel.add(filterWidget_);
       
-      HelpLink link = new HelpLink(
+      helpLink_ = new HelpLink(
             "Customizing Keyboard Shortcuts",
             "custom_keyboard_shortcuts");
-      link.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      headerPanel.add(link);
+      helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      headerPanel.add(helpLink_);
       
       container.add(headerPanel);
       
@@ -1431,8 +1437,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private final RadioButton radioAll_;
    private final RadioButton radioCustomized_;
-   private static final String RADIO_BUTTON_GROUP =
-         "radioCustomizeKeyboardShortcuts";
+   private static final String RADIO_BUTTON_GROUP = "radioCustomizeKeyboardShortcuts";
+   private HelpLink helpLink_;
    
    private HandlerRegistration previewHandler_;
    private List<KeyboardShortcutEntry> originalBindings_;
