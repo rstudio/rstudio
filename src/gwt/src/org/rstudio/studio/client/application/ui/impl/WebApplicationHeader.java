@@ -24,11 +24,11 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -444,7 +444,7 @@ public class WebApplicationHeader extends Composite
       return sep;
    }
    
-   private Widget createCommandLink(String caption, ClickHandler clickHandler)
+   private Widget createCommandLink(String caption, Command clickHandler)
    {
       HyperlinkLabel link = new HyperlinkLabel(caption, clickHandler);
       return link;

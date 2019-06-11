@@ -1,7 +1,7 @@
 /*
  * HyperlinkLabel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,26 +14,39 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class HyperlinkLabel extends Label 
+public class HyperlinkLabel extends Label
 {
    public HyperlinkLabel()
    {
       super();
       this.setStyleName("rstudio-HyperlinkLabel");
+      Roles.getLinkRole().set(getElement());
+      getElement().setTabIndex(0);
    }
    
-   public HyperlinkLabel(String caption, ClickHandler clickHandler)
+   public HyperlinkLabel(String caption, Command clickHandler)
    {
       super(caption); 
-      clickHandler_ = clickHandler ;
+      clickHandler_ = clickHandler;
       this.setStyleName("rstudio-HyperlinkLabel");
       this.addStyleName(ThemeStyles.INSTANCE.handCursor());
+      Roles.getLinkRole().set(getElement());
+      getElement().setTabIndex(0);
    }
    
    public HyperlinkLabel(String caption)
@@ -42,9 +55,9 @@ public class HyperlinkLabel extends Label
    }
    
    // must call this before the element is loaded
-   public void setClickHandler(ClickHandler clickHandler)
+   public void setClickHandler(Command clickHandler)
    {
-      clickHandler_ = clickHandler; 
+      clickHandler_ = clickHandler;
    }
 
    private class MouseHandlers implements MouseOverHandler,
@@ -76,31 +89,46 @@ public class HyperlinkLabel extends Label
    {
       clearUnderlineOnClick_ = clearOnClick;
    }
-  
-   
+
+   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
+      return addDomHandler(handler, KeyPressEvent.getType());
+   }
+
    @Override 
    protected void onLoad()
    {
       releaseOnUnload_.add(addMouseOverHandler(mouseHandlers_));
       releaseOnUnload_.add(addMouseOutHandler(mouseHandlers_));
       if (clickHandler_ != null)
-         releaseOnUnload_.add(addClickHandler(new ClickHandler() {
+      {
+         releaseOnUnload_.add(addClickHandler(event -> click()));
 
-            public void onClick(ClickEvent event)
+         releaseOnUnload_.add(addKeyPressHandler(event -> {
+            char charCode = event.getCharCode();
+            if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
             {
-               if (clearUnderlineOnClick_)
-                  removeStyleDependentName("Link");
-               clickHandler_.onClick(event);        
+               event.preventDefault();
+               event.stopPropagation();
+               click();
             }
-            
          }));
+      }
    }
-  
+
+   private void click()
+   {
+      if (clickHandler_ == null)
+         return;
+      
+      if (clearUnderlineOnClick_)
+         removeStyleDependentName("Link");
+      clickHandler_.execute();
+   }
+
    private MouseHandlers mouseHandlers_ = new MouseHandlers();
-   private ClickHandler clickHandler_ ;
+   private Command clickHandler_ ;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
-  
-   
+
    private boolean alwaysUnderline_ = false;
    private boolean clearUnderlineOnClick_ = false;
 }

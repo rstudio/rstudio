@@ -14,6 +14,9 @@
  */
 
 #include "DesktopMenuCallback.hpp"
+
+#include <core/Algorithm.hpp>
+
 #include <QDebug>
 #include <QApplication>
 #include <QWindow>
@@ -256,7 +259,8 @@ void MenuCallback::addCommand(QString commandId,
 #endif
 
    // allow custom action handlers first shot
-   QAction* pAction = addCustomAction(commandId, label, tooltip, keySequence, checkable);
+   QPointer<QAction> pAction =
+         addCustomAction(commandId, label, tooltip, keySequence, checkable);
 
    // if there was no custom handler then do stock command-id processing
    if (pAction == nullptr)
@@ -277,7 +281,7 @@ void MenuCallback::addCommand(QString commandId,
    }
 
    // remember action for later
-   actions_[commandId] = pAction;
+   actions_[commandId].push_back(pAction);
 }
 
 void MenuCallback::actionInvoked()
@@ -303,46 +307,68 @@ void MenuCallback::endMainMenu()
    menuBarCompleted(pMainMenu_);
 }
 
-void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
+namespace {
+
+template <typename T, typename F>
+void setCommandProperty(T& actions, QString commandId, F&& setter)
 {
-   auto it = actions_.find(commandId);
-   if (it == actions_.end())
+   auto it = actions.find(commandId);
+   if (it == actions.end())
        return;
 
-   it.value()->setEnabled(enabled);
+   // NOTE: in some cases actions from a previous RStudio session
+   // can leak into the map; we normally prune those each time a
+   // new page is loaded but just to be careful we validate that
+   // we have non-null pointers before operating on them
+   for (auto& pAction : it.value())
+      if (pAction)
+         setter(pAction);
+}
+
+} // end anonymous namespace
+
+void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
+{
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+      pAction->setEnabled(enabled);
+   });
 }
 
 void MenuCallback::setCommandVisible(QString commandId, bool visible)
 {
-   auto it = actions_.find(commandId);
-   if (it == actions_.end())
-       return;
-
-   it.value()->setVisible(visible);
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+      pAction->setVisible(visible);
+   });
 }
 
 void MenuCallback::setCommandLabel(QString commandId, QString label)
 {
-   auto it = actions_.find(commandId);
-   if (it == actions_.end())
-       return;
-
-   it.value()->setText(label);
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+      pAction->setText(label);
+   });
 }
 
 void MenuCallback::setCommandChecked(QString commandId, bool checked)
 {
-   auto it = actions_.find(commandId);
-   if (it == actions_.end())
-       return;
-
-   it.value()->setChecked(checked);
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+      pAction->setChecked(checked);
+   });
 }
 
 void MenuCallback::setMainMenuEnabled(bool enabled)
 {
    if (pMainMenu_)
       pMainMenu_->setEnabled(enabled);
+}
+
+void MenuCallback::cleanUpActions()
+{
+   for (auto& actions : actions_.values())
+   {
+      core::algorithm::expel_if(actions, [](QPointer<QAction> pAction) {
+         return pAction.isNull();
+      });
+   }
 }
 
 MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)
