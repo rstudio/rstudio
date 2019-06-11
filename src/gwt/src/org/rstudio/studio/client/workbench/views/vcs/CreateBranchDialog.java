@@ -18,10 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -41,9 +45,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -99,9 +101,12 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       enableOkButton(false);
       
       container_ = new VerticalPanel();
-      
+
+      String label = "Branch Name:";
       tbBranch_ = textBox();
-      tbBranch_.getElement().setAttribute("placeholder", "Branch name");
+      String textBoxId = ElementIds.idFromLabel(label);
+      tbBranch_.getElement().setId(textBoxId);
+      A11y.setARIARequired(tbBranch_.getElement());
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -170,9 +175,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       setRemotes(remotesInfo);
       
-      Grid ctrBranch = new Grid(1, 2);
+      LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      ctrBranch.setWidget(0, 0, new Label("Branch:"));
+      ctrBranch.setWidget(0, 0, new FormLabel(label, textBoxId));
       ctrBranch.setWidget(0, 1, tbBranch_);
       
       HorizontalPanel ctrRemote = new HorizontalPanel();

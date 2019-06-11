@@ -39,6 +39,16 @@ public class FormLabel extends Label
       super(text, "placeholder");
    }
 
+  /**
+   * Creates a label to associate with a form control via <code>setFor</code>
+   * @param text the new label's text
+   * @param wordWrap <code>false</code> to disable word wrapping
+   */
+   public FormLabel(String text, boolean wordWrap)
+   {
+      super(text, wordWrap);
+   }
+
    /**
     * Create a label to associate with an existing form control
     * @param text label text
@@ -62,6 +72,16 @@ public class FormLabel extends Label
 
       String controlId = ElementIds.idFromLabel(getText());
       widget.getElement().setId(controlId);
+      getElement().setAttribute("for", controlId);
+   }
+
+   /**
+    * Associate this label with the given element id.
+    * element as part of this.
+    * @param controlId target element of this label
+    */
+   public void setFor(String controlId)
+   {
       getElement().setAttribute("for", controlId);
    }
 }
