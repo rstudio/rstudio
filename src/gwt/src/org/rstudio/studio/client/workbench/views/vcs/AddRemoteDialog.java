@@ -121,9 +121,8 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    @Override
    public void focusLastControl()
    {
-      if (!focusCancelButton())
-         if (!focusOkButton())
-            tbUrl_.setFocus(true);
+      if (!focusLastButton())
+         tbUrl_.setFocus(true);
    }
 
    public void focusInitialControl()

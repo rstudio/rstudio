@@ -337,7 +337,25 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       label.getElement().getStyle().setColor("#888");
       return label;
    }
-   
+
+   @Override
+   public void focusFirstControl()
+   {
+      filterWidget_.focus();
+   }
+
+   @Override
+   public void focusLastControl()
+   {
+      focusCancelButton();
+   }
+
+   @Override
+   public void focusInitialControl()
+   {
+      filterWidget_.focus();
+   }
+
    // Private members ----
    private final VerticalPanel container_;
    private final FilterWidget filterWidget_;

@@ -15,8 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
@@ -44,6 +43,11 @@ public class MessageDialog extends ModalDialogBase
       setText(caption);
       messageWidget_ = message;
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+      
+      // read the message when dialog is shown
+      String messageId = DOM.createUniqueId();
+      messageWidget_.getElement().setId(messageId);
+      setARIADescribedBy(messageWidget_.getElement());
    }
 
    public ThemedButton addButton(String label,
@@ -51,14 +55,10 @@ public class MessageDialog extends ModalDialogBase
                                  boolean isDefault,
                                  boolean isCancel)
    {
-      ThemedButton button = new ThemedButton(label, new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            if (operation != null)
-               operation.execute();
-            closeDialog();
-         }
+      ThemedButton button = new ThemedButton(label, event -> {
+         if (operation != null)
+            operation.execute();
+         closeDialog();
       });
 
       addButton(button, isDefault, isCancel);
@@ -74,15 +74,11 @@ public class MessageDialog extends ModalDialogBase
       if (operation != null && progress_ == null)
          progress_ = addProgressIndicator();
 
-      ThemedButton button = new ThemedButton(label, new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            if (operation != null)
-               operation.execute(progress_);
-            else
-               closeDialog();
-         }
+      ThemedButton button = new ThemedButton(label, event -> {
+         if (operation != null)
+            operation.execute(progress_);
+         else
+            closeDialog();
       });
 
       addButton(button, isDefault, isCancel);
@@ -111,25 +107,33 @@ public class MessageDialog extends ModalDialogBase
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
       Image image = null;
+      String imageText = null;
       switch(type_)
       {
       case INFO:
          image = new Image(new ImageResource2x(images.dialog_info2x()));
+         imageText = "Info";
          break;
       case WARNING:
          image = new Image(new ImageResource2x(images.dialog_warning2x()));
+         imageText = "Warning";
          break;
       case ERROR:
          image = new Image(new ImageResource2x(images.dialog_error2x()));
+         imageText = "Error";
          break;
       case QUESTION:
          image = new Image(new ImageResource2x(images.dialog_question2x()));
+         imageText = "Question";
          break;
       case POPUP_BLOCKED:
          image = new Image(new ImageResource2x(images.dialog_popup_blocked2x()));
+         imageText = "Popup Blocked";
          break;
       }
       horizontalPanel.add(image);
+      if (image != null)
+         image.setAltText(imageText);
 
       // add message widget
       horizontalPanel.add(messageWidget_);
@@ -144,13 +148,25 @@ public class MessageDialog extends ModalDialogBase
                      ThemeResources.INSTANCE.themeStyles().dialogMessage());
       return label;
    }
-    
+
+     @Override
+   public void focusFirstControl()
+   {
+      focusFirstButton();
+   }
+
    @Override
-   protected void onDialogShown()
+   public void focusLastControl()
+   {
+      focusLastButton();
+   }
+
+   @Override
+   public void focusInitialControl()
    {
       focusOkButton();
    }
-   
+
    private int type_ ;
    private Widget messageWidget_ ;
    private ProgressIndicator progress_ ;

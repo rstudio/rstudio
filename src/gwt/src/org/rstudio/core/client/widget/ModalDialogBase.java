@@ -278,6 +278,56 @@ public abstract class ModalDialogBase extends DialogBox
       return true;
    }
 
+   /**
+    * Focus the final enabled button in the dialog
+    * @return false if no buttons available to take focus
+    */
+   protected boolean focusLastButton()
+   {
+      for (int i = allRightButtons_.size() - 1; i >= 0; i--)
+      {
+         if (allRightButtons_.get(i).isEnabled())
+         {
+            FocusHelper.setFocusDeferred(allRightButtons_.get(i));
+            return true;
+         }
+      }
+      for (int i = allLeftButtons_.size() - 1; i >= 0; i--)
+      {
+         if (allLeftButtons_.get(i).isEnabled())
+         {
+            FocusHelper.setFocusDeferred(allLeftButtons_.get(i));
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Focus the first enabled button in the dialog
+    * @return false if no buttons available to take focus
+    */
+   protected boolean focusFirstButton()
+   {
+      for (int i = 0; i < allLeftButtons_.size(); i++)
+      {
+         if (allLeftButtons_.get(i).isEnabled())
+         {
+            FocusHelper.setFocusDeferred(allLeftButtons_.get(i));
+            return true;
+         }
+      }
+      for (int i = 0; i < allRightButtons_.size(); i++)
+      {
+         if (allRightButtons_.get(i).isEnabled())
+         {
+            FocusHelper.setFocusDeferred(allRightButtons_.get(i));
+            return true;
+         }
+      }
+      return false;
+   }
+
    protected void enableCancelButton(boolean enabled)
    {
       cancelButton_.setEnabled(enabled);
@@ -329,7 +379,7 @@ public abstract class ModalDialogBase extends DialogBox
       button.addStyleDependentName("DialogAction");
       button.addStyleDependentName("DialogActionLeft");
       leftButtonPanel_.add(button);
-      allButtons_.add(button);
+      allLeftButtons_.add(button);
    }
 
    protected void addLeftWidget(Widget widget)
@@ -346,7 +396,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       button.addStyleDependentName("DialogAction");
       buttonPanel_.add(button);
-      allButtons_.add(button);
+      allRightButtons_.add(button);
    }
 
    // inserts an action button--in the same panel as OK/cancel, but preceding
@@ -355,7 +405,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       button.addStyleDependentName("DialogAction");
       buttonPanel_.insert(button, 0);
-      allButtons_.add(button);
+      allRightButtons_.add(0, button);
    }
 
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
@@ -549,8 +599,10 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void enableButtons(boolean enabled)
    {
-      for (int i = 0; i < allButtons_.size(); i++)
-         allButtons_.get(i).setEnabled(enabled);
+      for (int i = 0; i < allLeftButtons_.size(); i++)
+         allLeftButtons_.get(i).setEnabled(enabled);
+      for (int i = 0; i < allRightButtons_.size(); i++)
+         allRightButtons_.get(i).setEnabled(enabled);
    }
 
    public void move(Point p, boolean allowAnimation)
@@ -651,7 +703,8 @@ public abstract class ModalDialogBase extends DialogBox
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
-   private ArrayList<ThemedButton> allButtons_ = new ArrayList<ThemedButton>();
+   private ArrayList<ThemedButton> allLeftButtons_ = new ArrayList<>();
+   private ArrayList<ThemedButton> allRightButtons_ = new ArrayList<>();
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
