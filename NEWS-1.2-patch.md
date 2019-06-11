@@ -31,6 +31,7 @@
 - Fix console display issue with certain mixed color output patterns (#4777)
 - Fix issue where PageDown failed to scroll down in console history (#4894)
 - Fix issue where BH package could not be installed in Packrat projects (#1864)
+- Fix issue where Cmd+W would not close tabs in popped-out source windows (#4727)
 
 ### Miscellaneous
 
