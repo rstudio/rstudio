@@ -146,7 +146,26 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       options.setName("_rstudio_package_news");
       globalDisplay_.openWindow(url, options);
    }
-   
+
+   @Override
+   public void focusFirstControl()
+   {
+      focusFirstButton();
+   }
+
+   @Override
+   public void focusLastControl()
+   {
+      focusLastButton();
+   }
+
+   @Override
+   public void focusInitialControl()
+   {
+      // nothing to focus when dialog first loads; we focus the cancel button after the
+      // data is loaded in PackageActionConfirmationDialog
+   }
+
    private final ProgressIndicator indicator_;
 
    // Injected ----

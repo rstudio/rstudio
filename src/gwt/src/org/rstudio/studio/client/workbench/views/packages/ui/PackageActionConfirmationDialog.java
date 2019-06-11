@@ -118,7 +118,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       actionsTable_ = new CellTable<PendingAction>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
-      actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+      actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
       actionsTable_.setSelectionModel(new NoSelectionModel<PendingAction>());
       actionsTable_.setWidth("100%", true);
       
@@ -153,6 +153,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
                enableCancelButton(true);
                selectAllButton_.setEnabled(true);
                selectNoneButton_.setEnabled(true);
+               focusCancelButton();
             }
             else
             {
@@ -165,7 +166,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          public void onError(ServerError error)
          {
             closeDialog();
-            super.onError(error);            
+            super.onError(error);
          }  
       });
  
@@ -241,17 +242,18 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       enableOkButton(collectInput().size() > 0);
    }
    
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String mainWidget();
       String explanatoryText();
    }
 
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("PackageActionConfirmationDialog.css")
       Styles styles();
    }
+
 
    static Resources RESOURCES = (Resources) GWT.create(Resources.class);
 
