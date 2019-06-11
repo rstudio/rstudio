@@ -15,10 +15,9 @@
 package org.rstudio.studio.client.application.ui.support;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -71,8 +70,8 @@ public class SupportPopupMenu extends ThemedPopupPanel
       final PopupPanel popupPanel = this;
       
       // create a hyperlink label for this URL
-      HyperlinkLabel link = new HyperlinkLabel(caption, new ClickHandler() {
-         public void onClick(ClickEvent event)
+      HyperlinkLabel link = new HyperlinkLabel(caption, new Command() {
+         public void execute()
          {
             globalDisplay.openEmailComposeWindow(email, null);
             popupPanel.hide();

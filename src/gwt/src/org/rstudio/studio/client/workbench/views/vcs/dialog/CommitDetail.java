@@ -1,7 +1,7 @@
 /*
  * CommitDetail.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
@@ -142,9 +143,9 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
                            null, 
                            commit_.getId(), 
                            view,
-                           new ClickHandler() {
+                           new Command() {
                               @Override
-                              public void onClick(ClickEvent event)
+                              public void execute()
                               { 
                                  fireEvent(new ViewFileRevisionEvent(
                                           commit_.getId(), 
