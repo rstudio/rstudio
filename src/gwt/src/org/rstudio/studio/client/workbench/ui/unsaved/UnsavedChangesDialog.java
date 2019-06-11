@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.DOM;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -95,13 +96,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       super(title,
             Roles.getAlertdialogRole(),
             saveOperation, 
-            onCancelled != null ? new Operation() {
-                                    @Override
-                                    public void execute()
-                                    {
-                                       onCancelled.execute();
-                                    }} :
-                                  null);
+            onCancelled != null ? (Operation) () -> onCancelled.execute() : null);
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
       
@@ -117,12 +112,6 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                                        false));
          } 
       }));
-   }
-   
-   @Override
-   protected void onDialogShown()
-   {
-      focusOkButton();
    }
 
    @Override
@@ -170,7 +159,13 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                            "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
-      panel.add(scrollPanel);      
+
+      // read message when dialog shows
+      String messageId = DOM.createUniqueId();
+      captionLabel.getElement().setId(messageId);
+      setARIADescribedBy(captionLabel.getElement());
+      
+      panel.add(scrollPanel);
       if (!StringUtil.isNullOrEmpty(alwaysSaveOption_))
       { 
          panel.add(chkAlwaysSave_);
@@ -181,7 +176,25 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       
       return panel;
    }
-   
+
+    @Override
+   public void focusFirstControl()
+   {
+      targetsCellTable_.setFocus(true);
+   }
+
+   @Override
+   public void focusLastControl()
+   {
+      focusCancelButton();
+   }
+
+   @Override
+   public void focusInitialControl()
+   {
+      focusOkButton();
+   }
+
    private Column<UnsavedChangesTarget, Boolean> addSelectionColumn()
    {
       Column<UnsavedChangesTarget, Boolean> checkColumn = 
@@ -272,7 +285,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       return true;
    }
    
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String targetScrollPanel();
       String captionLabel();
@@ -281,7 +294,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       String targetUntitled();
    }
 
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("UnsavedChangesDialog.css")
       Styles styles();
