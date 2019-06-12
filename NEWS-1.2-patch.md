@@ -33,6 +33,7 @@
 - Fix issue where BH package could not be installed in Packrat projects (#1864)
 - Fix issue where Cmd+W would not close tabs in popped-out source windows (#4727)
 - Fix issue where deployments could fail with R 3.4.4 when using custom repositories (#4916)
+- Fix issue where Tablet clicks would be interpreted as double-clicks. (#4935)
 
 ### Miscellaneous
 
