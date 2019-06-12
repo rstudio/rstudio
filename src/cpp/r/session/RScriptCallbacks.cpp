@@ -99,6 +99,11 @@ void RWriteStdout (const char *buf, int buflen, int otype)
    std::cout << buf;
 }
 
+void RScriptCleanUp(SA_TYPE saveact, int status, int runLast)
+{
+   // override save action for script runs
+   stdInternalCallbacks()->cleanUp(SA_NOSAVE, status, runLast);
+}
    
 } // namespace session
 } // namespace r

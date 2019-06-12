@@ -389,6 +389,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       // normal session: read/write from browser
       cb.readConsole = RReadConsole;
       cb.writeConsoleEx = RWriteConsoleEx;
+      cb.cleanUp = RCleanUp;
    }
    else
    {
@@ -396,6 +397,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       setRunScript(options.runScript);
       cb.readConsole = RReadScript;
       cb.writeConsoleEx = RWriteStdout;
+      cb.cleanUp = RScriptCleanUp;
    }
 
    cb.showMessage = RShowMessage;
@@ -407,7 +409,6 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    cb.savehistory = Rsavehistory;
    cb.addhistory = Raddhistory;
    cb.suicide = RSuicide;
-   cb.cleanUp = RCleanUp;
    r::session::runEmbeddedR(FilePath(rLocations.homePath),
                             options.userHomePath,
                             quiet,
