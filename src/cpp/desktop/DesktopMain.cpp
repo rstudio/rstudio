@@ -483,6 +483,13 @@ int main(int argc, char* argv[])
 
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+      // don't synthesize mouse events for unhandled tablet events,
+      // as this causes tablet clicks to be duplicated (effectively
+      // leading to single clicks registering as double clicks)
+      //
+      // https://bugreports.qt.io/browse/QTBUG-76347
+      QCoreApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTabletEvents, false);
       
       // enable viewport meta (allows us to control / restrict
       // certain touch gestures)
