@@ -256,14 +256,26 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       return container_;
    }
-   
+
    @Override
-   public void showModal()
+   public void focusFirstControl()
    {
-      super.showModal();
+      tbBranch_.setFocus(true);
+      tbBranch_.selectAll();
+   }
+
+   @Override
+   public void focusLastControl()
+   {
+      focusCancelButton();
+   }
+
+   @Override
+   public void focusInitialControl()
+   {
       tbBranch_.setFocus(true);
    }
-   
+
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();
