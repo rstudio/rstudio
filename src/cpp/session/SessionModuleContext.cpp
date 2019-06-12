@@ -1804,7 +1804,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".httr-oauth" ||
        ext == ".github" ||
        ext == ".gitignore" ||
-       ext == ".gitattributes")
+       ext == ".gitattributes" ||
+       ext == ".circleci")
    {
       return true;
    }
