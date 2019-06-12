@@ -1059,10 +1059,6 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // start with base args
       std::vector<std::string> args = baseCompilationArgs(true);
 
-      // -std argument
-      if (!stdArg.empty())
-         args.push_back(stdArg);
-
       // run R CMD SHLIB
       core::system::Options env = compilationEnvironment();
       FilePath tempSrcFile = module_context::tempFile("clang", "cpp");
@@ -1072,6 +1068,15 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // add this package's path to the args
       std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
       std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));
+
+      // enforce compilation with requested standard
+      core::algorithm::expel_if(args, [](const std::string& arg) {
+         return arg.find("-std=") == 0;
+      });
+
+      // add in '-std' argument (if any)
+      if (!stdArg.empty())
+         args.push_back(stdArg);
 
       // create args array
       core::system::ProcessArgs argsArray(args);
