@@ -54,17 +54,11 @@ public class AboutDialog extends ModalDialogBase
    {
       return contents_;
    }
-   
-   @Override
-   protected void onDialogShown()
-   {
-      focusOkButton();
-   }
 
    @Override
-   protected void focusFirstControl()
+   protected void focusInitialControl()
    {
-      contents_.focusFirstControl();
+      focusOkButton();
    }
 
    @Inject

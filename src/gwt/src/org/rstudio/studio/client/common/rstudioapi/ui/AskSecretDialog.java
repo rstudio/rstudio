@@ -191,7 +191,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       textbox_.setFocus(true);
       textbox_.setSelectionRange(0, textbox_.getText().length());

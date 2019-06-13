@@ -94,11 +94,6 @@ public class AboutDialogContents extends Composite
          }
       }
    }
-   
-   public void focusFirstControl()
-   {
-      gplLink.setFocus(true);
-   }
 
    public Element getDescriptionElement()
    {
