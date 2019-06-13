@@ -720,6 +720,10 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
    return units;
 }
 
+void RCompilationDatabase::rebuildPackageCompilationDatabase()
+{
+   packageBuildFileHash_.clear();
+}
 
 bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 {
@@ -1131,6 +1135,7 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    static RCompilationDatabase instance;
 
    CompilationDatabase compilationDatabase;
+
    compilationDatabase.hasTranslationUnit =
       boost::bind(&RCompilationDatabase::isProjectTranslationUnit,
                   &instance, _1);
@@ -1140,6 +1145,10 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1, _2);
+   compilationDatabase.rebuildPackageCompilationDatabase =
+         boost::bind(&RCompilationDatabase::rebuildPackageCompilationDatabase,
+                     &instance);
+
    return compilationDatabase;
 }
 

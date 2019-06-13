@@ -37,6 +37,7 @@
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
+#include "RCompilationDatabase.hpp"
 
 using namespace rstudio::core ;
 using namespace rstudio::core::libclang;
@@ -153,6 +154,11 @@ void onAllSourceDocsRemoved()
    rSourceIndex().removeAllTranslationUnits();
 }
 
+void onPackageLibraryMutated()
+{
+   rCompilationDatabase().rebuildPackageCompilationDatabase();
+}
+
 bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
@@ -243,6 +249,10 @@ Error initialize()
    source_database::events().onDocUpdated.connect(onSourceDocUpdated);
    source_database::events().onDocRemoved.connect(onSourceDocRemoved);
    source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+
+   // listen for package install / remove events (required in case we
+   // need to rebuild package compilation db)
+   module_context::events().onPackageLibraryMutated.connect(onPackageLibraryMutated);
 
    return Success();
 }
