@@ -113,9 +113,12 @@ public class DataEditingTargetWidget extends Composite
                      "[[" + col + "]]" + 
                      "[[" + row + "]])", true));
          };
+         
+         table_.addKeyDownHandler();
          table_.setDataViewerCallback(view);
          table_.setListViewerCallback(view);
          table_.setColumnFrameCallback();
+         
       });
 
       Widget mainWidget;
