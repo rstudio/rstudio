@@ -617,7 +617,7 @@ public abstract class ModalDialogBase extends DialogBox
     * Set focus on first keyboard focusable element in dialog, as set by 
     * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
     */
-   protected void focusFirstControl()
+   private void focusFirstControl()
    {
       Element first = getByClass(firstFocusClass);
       if (first != null)
@@ -628,7 +628,7 @@ public abstract class ModalDialogBase extends DialogBox
     * Set focus on last keyboard focusable element in dialog, as set by 
     * <code>refreshFocusableElements</code> or <code>setLastFocusableElement</code>.
     */
-   protected void focusLastControl()
+   private void focusLastControl()
    {
       Element last = getByClass(lastFocusClass);
       if (last != null)
