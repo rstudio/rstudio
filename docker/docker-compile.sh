@@ -84,6 +84,9 @@ docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" $BUI
 if [ "${IMAGE:0:6}" = "centos" ]; then
     PACKAGE=RPM
     INSTALLER=yum
+elif [ "${IMAGE:0:6}" = "fedora" ]; then
+    PACKAGE=RPM
+    INSTALLER=yum
 elif [ "${IMAGE:0:8}" = "opensuse" ]; then
     PACKAGE=RPM
     INSTALLER=zypper
