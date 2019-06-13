@@ -7,6 +7,7 @@
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
+- Fix issue where C++ diagnostics failed to work on macOS in some system configurations
 - Fix issues on MacOS with command line tool headers when `/usr/include` is missing (#4405)
 - Fix failure to start on R 3.6.0 when the `error` option is set in `.Rprofile` (#4441)
 - Fix issue where attempts to run R debugger in `.Rprofile` could hang RStudio (#4443)

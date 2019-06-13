@@ -172,6 +172,11 @@ public class Application implements ApplicationEventHandlers
       Widget w = view_.getWidget();
       rootPanel.add(w);
 
+      // a11y landmarks, we are a role=application, but wrapping that in a role=main helps
+      // placate various automated accessibility checks
+      rootPanel.getElement().setAttribute("role", "main");
+      w.getElement().setAttribute("role", "application");
+
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
 

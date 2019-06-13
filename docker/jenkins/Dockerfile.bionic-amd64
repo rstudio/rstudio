@@ -51,6 +51,7 @@ RUN apt-get update && \
     sudo \
     unzip \
     uuid-dev \
+    valgrind \
     wget \
     zlib1g-dev
 

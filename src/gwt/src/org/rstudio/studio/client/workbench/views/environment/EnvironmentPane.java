@@ -30,6 +30,7 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -129,7 +130,7 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
-      viewButton_ = new ToolbarButton(
+      viewButton_ = new ToolbarMenuButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             ToolbarButton.NoTitle,
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
@@ -152,7 +153,8 @@ public class EnvironmentPane extends WorkbenchPane
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(new ToolbarButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
+      toolbar.addRightWidget(
+            new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
 
       return toolbar;
    }
@@ -163,7 +165,7 @@ public class EnvironmentPane extends WorkbenchPane
       SecondaryToolbar toolbar = new SecondaryToolbar();
       
       environmentMenu_ = new EnvironmentPopupMenu();
-      environmentButton_ = new ToolbarButton(
+      environmentButton_ = new ToolbarMenuButton(
             friendlyEnvironmentName(),
             ToolbarButton.NoTitle,
             imageOfEnvironment(environmentName_, environmentIsLocal_),
@@ -491,7 +493,7 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addSeparator();
       menu.addItem(commands_.importDatasetFromMongo().createMenuItem(false));
       
-      dataImportButton_ = new ToolbarButton(
+      dataImportButton_ = new ToolbarMenuButton(
               "Import Dataset",
               ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
@@ -719,10 +721,10 @@ public class EnvironmentPane extends WorkbenchPane
    private final UserPrefs prefs_;
    private final Value<Boolean> environmentMonitoring_;
 
-   private ToolbarButton dataImportButton_;
+   private ToolbarMenuButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
-   private ToolbarButton environmentButton_;
-   private ToolbarButton viewButton_;
+   private ToolbarMenuButton environmentButton_;
+   private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
 

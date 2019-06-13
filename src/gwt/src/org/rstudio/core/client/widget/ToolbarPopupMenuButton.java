@@ -26,7 +26,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class ToolbarPopupMenuButton extends ToolbarButton
+public class ToolbarPopupMenuButton extends ToolbarMenuButton
                                     implements HasValueChangeHandlers<String>
 {
    public ToolbarPopupMenuButton()

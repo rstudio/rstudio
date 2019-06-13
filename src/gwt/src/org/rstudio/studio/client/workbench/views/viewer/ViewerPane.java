@@ -26,6 +26,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -82,10 +83,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
       
-      exportButton_ = new ToolbarButton(
+      exportButton_ = new ToolbarMenuButton(
             "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
-      toolbar_.addLeftWidget(exportButton_);  
+      toolbar_.addLeftWidget(exportButton_);
       exportButton_.setVisible(false);
       exportButtonSeparator_.setVisible(false);
       
@@ -346,13 +347,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private RSConnectPublishButton publishButton_;
    
-   private ToolbarButton exportButton_;
+   private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
 
-   private static boolean initializedMessageListeners_;
-   private static ViewerPane activeViewerPane_;
-   
    private HtmlMessageListener htmlMessageListener_;
 }

@@ -306,56 +306,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    restartContext().initialize(s_options.scopedScratchPath,
                                s_options.sessionPort);
 
-   // register browseURL method
-   R_CallMethodDef browseURLMethod ;
-   browseURLMethod.name = "rs_browseURL";
-   browseURLMethod.fun = (DL_FUNC)rs_browseURL;
-   browseURLMethod.numArgs = 1;
-   r::routines::addCallMethod(browseURLMethod);
-
-   // register editFile method
-   R_CallMethodDef editFileMethod;
-   editFileMethod.name = "rs_editFile";
-   editFileMethod.fun = (DL_FUNC)rs_editFile;
-   editFileMethod.numArgs = 1;
-   r::routines::addCallMethod(editFileMethod);
-
-   // register showFile method
-   R_CallMethodDef showFileMethod;
-   showFileMethod.name = "rs_showFile";
-   showFileMethod.fun = (DL_FUNC)rs_showFile;
-   showFileMethod.numArgs = 3;
-   r::routines::addCallMethod(showFileMethod);
-
-   // register createUUID method
-   R_CallMethodDef createUUIDMethodDef ;
-   createUUIDMethodDef.name = "rs_createUUID" ;
-   createUUIDMethodDef.fun = (DL_FUNC) rs_createUUID ;
-   createUUIDMethodDef.numArgs = 0;
-   r::routines::addCallMethod(createUUIDMethodDef);
-
-   // register loadHistory method
-   R_CallMethodDef loadHistoryMethodDef ;
-   loadHistoryMethodDef.name = "rs_loadHistory" ;
-   loadHistoryMethodDef.fun = (DL_FUNC) rs_loadHistory ;
-   loadHistoryMethodDef.numArgs = 1;
-   r::routines::addCallMethod(loadHistoryMethodDef);
-
-   // register saveHistory method
-   R_CallMethodDef saveHistoryMethodDef ;
-   saveHistoryMethodDef.name = "rs_saveHistory" ;
-   saveHistoryMethodDef.fun = (DL_FUNC) rs_saveHistory ;
-   saveHistoryMethodDef.numArgs = 1;
-   r::routines::addCallMethod(saveHistoryMethodDef);
-
-   // complete url
-   R_CallMethodDef completeUrlDef ;
-   completeUrlDef.name = "rs_completeUrl" ;
-   completeUrlDef.fun = (DL_FUNC) rs_completeUrl ;
-   completeUrlDef.numArgs = 2;
-   r::routines::addCallMethod(completeUrlDef);
-
-   // register graphics methods
+   // register methods
+   RS_REGISTER_CALL_METHOD(rs_browseURL);
+   RS_REGISTER_CALL_METHOD(rs_editFile);
+   RS_REGISTER_CALL_METHOD(rs_showFile);
+   RS_REGISTER_CALL_METHOD(rs_createUUID);
+   RS_REGISTER_CALL_METHOD(rs_loadHistory);
+   RS_REGISTER_CALL_METHOD(rs_saveHistory);
+   RS_REGISTER_CALL_METHOD(rs_completeUrl);
    RS_REGISTER_CALL_METHOD(rs_GEcopyDisplayList, 1);
    RS_REGISTER_CALL_METHOD(rs_GEplayDisplayList, 0);
 

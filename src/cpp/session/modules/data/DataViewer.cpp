@@ -1011,11 +1011,7 @@ Error initialize()
    using namespace module_context;
 
    // register viewData method
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_viewData" ;
-   methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 7;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_viewData);
 
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 

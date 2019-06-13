@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -212,7 +213,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packratMenu.addItem(commands_.packratBundle().createMenuItem(false));
       packratMenu.addSeparator();
       packratMenu.addItem(commands_.packratOptions().createMenuItem(false));
-      packratMenuButton_ = new ToolbarButton(
+      packratMenuButton_ = new ToolbarMenuButton(
             "Packrat", 
             ToolbarButton.NoTitle,
             commands_.packratBootstrap().getImageResource(),
@@ -670,7 +671,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private PackagesDisplayObserver observer_ ;
    
    private ToolbarButton packratBootstrapButton_;
-   private ToolbarButton packratMenuButton_;
+   private ToolbarMenuButton packratMenuButton_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;

@@ -15,13 +15,13 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -62,7 +62,7 @@ public class DiffFrame extends Composite
                     String filename2,
                     String commitId,
                     LineTableView diff,
-                    ClickHandler viewFileClickHandler,
+                    Command viewFileClickHandler,
                     boolean suppressViewLink)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));

@@ -330,6 +330,7 @@ class CommandBundleGeneratorHelper
       setPropertyBool(writer, name, props.get(name), "checkable");
       setPropertyBool(writer, name, props.get(name), "checked");
       setPropertyBool(writer, name, props.get(name), "rebindable");
+      setPropertyBool(writer, name, props.get(name), "radio");
       
       if (images.hasImage(name))
       {

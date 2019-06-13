@@ -152,33 +152,11 @@ Error PlotManipulatorManager::initialize(
    // save reference to device conversion function
    convert_ = convert;
 
-   // register R entry points for this class
-   R_CallMethodDef execManipulatorMethodDef ;
-   execManipulatorMethodDef.name = "rs_executeAndAttachManipulator" ;
-   execManipulatorMethodDef.fun = (DL_FUNC) rs_executeAndAttachManipulator;
-   execManipulatorMethodDef.numArgs = 1;
-   r::routines::addCallMethod(execManipulatorMethodDef);
-
-   // register has active manipulator routine
-   R_CallMethodDef hasActiveManipulatorMethodDef ;
-   hasActiveManipulatorMethodDef.name = "rs_hasActiveManipulator" ;
-   hasActiveManipulatorMethodDef.fun = (DL_FUNC) rs_hasActiveManipulator;
-   hasActiveManipulatorMethodDef.numArgs = 0;
-   r::routines::addCallMethod(hasActiveManipulatorMethodDef);
-
-   // register active manipulator routine
-   R_CallMethodDef activeManipulatorMethodDef ;
-   activeManipulatorMethodDef.name = "rs_activeManipulator" ;
-   activeManipulatorMethodDef.fun = (DL_FUNC) rs_activeManipulator;
-   activeManipulatorMethodDef.numArgs = 0;
-   r::routines::addCallMethod(activeManipulatorMethodDef);
-
-   // register ensure manipulator saved routine
-   R_CallMethodDef ensureManipulatorSavedMethodDef ;
-   ensureManipulatorSavedMethodDef.name = "rs_ensureManipulatorSaved" ;
-   ensureManipulatorSavedMethodDef.fun = (DL_FUNC) rs_ensureManipulatorSaved;
-   ensureManipulatorSavedMethodDef.numArgs = 0;
-   r::routines::addCallMethod(ensureManipulatorSavedMethodDef);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_executeAndAttachManipulator);
+   RS_REGISTER_CALL_METHOD(rs_hasActiveManipulator);
+   RS_REGISTER_CALL_METHOD(rs_activeManipulator);
+   RS_REGISTER_CALL_METHOD(rs_ensureManipulatorSaved);
 
    return Success();
 }

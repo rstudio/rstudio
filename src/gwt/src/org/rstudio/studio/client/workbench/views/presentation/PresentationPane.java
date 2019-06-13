@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -91,12 +92,11 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
       moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
-      
-      ToolbarButton moreButton = new ToolbarButton("More",
-                                                   "More presentation commands",
-                                                   new ImageResource2x(
-                                                      StandardIcons.INSTANCE.more_actions2x()),
-                                                   moreMenu);
+
+      ToolbarMenuButton moreButton = new ToolbarMenuButton("More",
+            "More presentation commands",
+            new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
+            moreMenu);
 
       toolbar.addRightWidget(moreButton);
 

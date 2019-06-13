@@ -17,7 +17,6 @@
 #define SERVER_CONSTANTS_HPP
 
 #define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
-#define kRStudioRpcRefreshAuthCreds   "X-RStudio-Refresh-Auth-Creds"
 #define kRStudioServerLocalStream     "/tmp/rstudio-rserver/rserver.socket"
 #define kServerTmpDir                 "/tmp/rstudio-rserver"
 #define kUserIdCookie                 "user-id"

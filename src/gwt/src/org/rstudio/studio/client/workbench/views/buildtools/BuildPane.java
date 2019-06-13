@@ -31,6 +31,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -92,7 +93,7 @@ public class BuildPane extends WorkbenchPane
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
          BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
-         ToolbarButton buildMenuButton = new ToolbarButton(ToolbarButton.NoText,
+         ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
                "Build book options", buildPopupMenu, true);
          toolbar.addLeftWidget(buildMenuButton);
       }
@@ -137,11 +138,11 @@ public class BuildPane extends WorkbenchPane
          moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
          
          // add more menu
-         ToolbarButton moreButton = new ToolbarButton(
-                                      "More",
-                                      ToolbarButton.NoTitle,
-                                      new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
-                                      moreMenu);
+         ToolbarMenuButton moreButton = new ToolbarMenuButton(
+               "More",
+               ToolbarButton.NoTitle,
+               new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
+               moreMenu);
          toolbar.addLeftWidget(moreButton);
       }
       

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
@@ -96,6 +97,18 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
    private void copyAsMetafile(final Operation onCompleted)
    {
       ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      sizeEditor.setGripperVisible(false);
+      
+      // NOTE: we use a timer here just to be absolutely sure the
+      // browser has re-rendered and hidden the gripper before attempting
+      // to get a screenshot. note that the usual tools, e.g. scheduleDeferred(),
+      // don't work as expected here
+      Timers.singleShot(200, () -> doCopyAsMetafile(onCompleted));
+   }
+   
+   private void doCopyAsMetafile(final Operation onCompleted)
+   {
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
       clipboard_.copyPlotToClipboardMetafile(
             sizeEditor.getImageWidth(),
             sizeEditor.getImageHeight(),
@@ -104,6 +117,7 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
                @Override
                public void execute()
                {
+                  sizeEditor.setGripperVisible(true);
                   onCompleted.execute();
                }
             });

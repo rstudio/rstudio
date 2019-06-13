@@ -123,7 +123,10 @@ Synctex& GwtCallback::synctex()
 
 void GwtCallback::printText(QString text)
 {
-   QPrintPreviewDialog dialog;
+   QPrinter printer;
+   printer.setPageMargins(1.0, 1.0, 1.0, 1.0, QPrinter::Inch);
+
+   QPrintPreviewDialog dialog(&printer);
    dialog.setWindowModality(Qt::WindowModal);
 
    // QPrintPreviewDialog will call us back to paint the contents
@@ -148,23 +151,44 @@ void GwtCallback::paintPrintText(QPrinter* printer)
     fixedFont.setPointSize(10);
     painter.setFont(fixedFont);
 
-    // break up the text into pages and draw each page
-    QStringList lines = printText_.split(QString::fromUtf8("\n"));
-    int i = 0;
-    while (i < lines.size())
+    // flags used for drawing text
+    int textFlags = Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap;
+
+    // y coordinate for new line of text to be drawn
+    int y = 0;
+
+    // compute page boundaries (used as bounds when painting on page)
+    int pageWidth = printer->pageRect().width();
+    int pageHeight = printer->pageRect().height();
+    QRect pageRect(0, 0, pageWidth, pageHeight);
+
+    // start drawing line-by-line
+    QStringList lines = printText_.split(QStringLiteral("\n"));
+    for (auto line : lines)
     {
-       // split off next chunk of lines and draw them
-       int end = std::min(i + 60, lines.size());
-       QStringList pageLines(lines.mid(i, 60));
-       painter.drawText(50, 50, 650, 900, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
-                        pageLines.join(QString::fromUtf8("\n")));
+       // figure out what rectangle is needed to fit
+       // (use dummy text for blank lines when computing bounds)
+       QRect paintRect = painter.boundingRect(
+                pageRect,
+                textFlags,
+                line.isEmpty() ? QStringLiteral("Z") : line);
 
-       // start a new page if there are more lines
-       if (end < lines.size())
+       // move the bounding rectangle down
+       paintRect.moveTo(0, y);
+
+       // check for page overflow and start a new page if so
+       if (paintRect.bottom() > pageHeight)
+       {
           printer->newPage();
+          paintRect.moveTo(0, 0);
+          y = 0;
+       }
 
-       // move to next line group
-       i += 60;
+       // draw the text
+       painter.drawText(paintRect, textFlags, line);
+
+       // update y
+       y += paintRect.height();
     }
 
     painter.end();

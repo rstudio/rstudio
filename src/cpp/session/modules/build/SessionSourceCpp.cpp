@@ -274,21 +274,8 @@ SEXP rs_sourceCppOnBuildComplete(SEXP sSucceeded, SEXP sOutput)
 
 Error initialize()
 {
-
-   // onBuild hook
-   R_CallMethodDef sourceCppOnBuildMethodDef ;
-   sourceCppOnBuildMethodDef.name = "rs_sourceCppOnBuild" ;
-   sourceCppOnBuildMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuild ;
-   sourceCppOnBuildMethodDef.numArgs = 3;
-   r::routines::addCallMethod(sourceCppOnBuildMethodDef);
-
-   // onBuildCompleted hook
-   R_CallMethodDef sourceCppOnBuildCompleteMethodDef ;
-   sourceCppOnBuildCompleteMethodDef.name = "rs_sourceCppOnBuildComplete";
-   sourceCppOnBuildCompleteMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuildComplete;
-   sourceCppOnBuildCompleteMethodDef.numArgs = 2;
-   r::routines::addCallMethod(sourceCppOnBuildCompleteMethodDef);
-
+   RS_REGISTER_CALL_METHOD(rs_sourceCppOnBuild);
+   RS_REGISTER_CALL_METHOD(rs_sourceCppOnBuildComplete);
    return Success();
 }
 

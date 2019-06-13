@@ -208,11 +208,7 @@ Error initialize()
    boost::shared_ptr<std::string> pPlumberViewerType = boost::make_shared<std::string>(
          kPlumberViewerTypeNone);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_plumberviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_plumberviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_plumberviewer);
 
    prefs::userPrefs().onChanged.connect(bind(
             onUserSettingsChanged, _1, pPlumberViewerType));

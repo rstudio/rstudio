@@ -57,7 +57,7 @@ Cookie::~Cookie()
 
 void Cookie::setExpires(const boost::posix_time::time_duration& expiresFromNow)
 {
-   expires_ = boost::posix_time::ptime(date(day_clock::universal_day()), expiresFromNow);
+   expires_ = boost::posix_time::ptime(boost::posix_time::second_clock::universal_time() + expiresFromNow);
 }
 
 void Cookie::setExpires(const days& expiresDays) 
@@ -96,8 +96,8 @@ std::string Cookie::cookieHeaderValue() const
 
       headerValue << "; expires=" ;
       headerValue << wd.as_short_string() << ", " 
-                  << ymd.day << "-" << ymd.month.as_short_string() << "-" 
-                  << ymd.year << expires_.time_of_day().hours() << ":"
+                  << ymd.day << " " << ymd.month.as_short_string() << " "
+                  << ymd.year << " " << expires_.time_of_day().hours() << ":"
                   << expires_.time_of_day().minutes() << ":"
                   << expires_.time_of_day().seconds() << " GMT" ;
    }

@@ -2464,35 +2464,14 @@ Error initialize()
    cb.onMonitoringDisabled = onFileMonitorDisabled;
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
-   
-   // register viewFunction method
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_viewFunction" ;
-   methodDef.fun = (DL_FUNC) rs_viewFunction ;
-   methodDef.numArgs = 3;
-   r::routines::addCallMethod(methodDef);
 
-   // register call methods
-   r::routines::registerCallMethod(
-            "rs_scoreMatches",
-            (DL_FUNC) rs_scoreMatches,
-            2);
-   
-   r::routines::registerCallMethod(
-            "rs_listIndexedFiles",
-            (DL_FUNC) rs_listIndexedFiles,
-            3);
-   
-   r::routines::registerCallMethod(
-            "rs_listIndexedFolders",
-            (DL_FUNC) rs_listIndexedFolders,
-            3);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_viewFunction);
+   RS_REGISTER_CALL_METHOD(rs_scoreMatches);
+   RS_REGISTER_CALL_METHOD(rs_listIndexedFiles);
+   RS_REGISTER_CALL_METHOD(rs_listIndexedFolders);
+   RS_REGISTER_CALL_METHOD(rs_listIndexedFilesAndFolders);
 
-   r::routines::registerCallMethod(
-            "rs_listIndexedFilesAndFolders",
-            (DL_FUNC) rs_listIndexedFilesAndFolders,
-            3);
-   
    // initialize r source indexes
    rSourceIndex().initialize();
    

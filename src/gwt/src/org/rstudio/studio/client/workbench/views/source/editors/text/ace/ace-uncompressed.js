@@ -48258,7 +48258,7 @@ module.exports = { lineMode: false };
 
 });
 
-define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/modeon","ace/modeoniq","ace/modep","ace/modex","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
+define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
 "use strict";
 
 require("./lib/fixoldbrowsers");
@@ -48287,7 +48287,6 @@ require("./mode/django");
 require("./mode/dockerfile");
 require("./mode/dot");
 require("./mode/eiffel");
-require("./mode/");
 require("./mode/elixir");
 require("./mode/elm");
 require("./mode/erlang");
@@ -48310,10 +48309,6 @@ require("./mode/jack");
 require("./mode/jade");
 require("./mode/java");
 require("./mode/javascript");
-require("./modeon");
-require("./modeoniq");
-require("./modep");
-require("./modex");
 require("./mode/julia");
 require("./mode/latex");
 require("./mode/less");
@@ -50249,6 +50244,7 @@ Editor.$uid = 0;
         if (!cursorLayer)
             return;
         cursorLayer.setSmoothBlinking(/smooth/.test(style));
+        cursorLayer.cursorStyle = style;
         cursorLayer.isBlinking = !this.$readOnly && style != "wide";
         dom.setCssClass(cursorLayer.element, "ace_slim-cursors", /slim/.test(style));
     };
@@ -61590,6 +61586,7 @@ var Cursor = function(parentEl) {
     this.isBlinking = true;
     this.blinkInterval = 1000;
     this.smoothBlinking = false;
+    this.cursorStyle = "ace";
 
     this.cursors = [];
     this.cursor = this.addCursor();
@@ -61629,6 +61626,11 @@ var Cursor = function(parentEl) {
     };
 
     this.setBlinking = function(blinking) {
+
+        if (this.cursorStyle === "wide") {
+            blinking = false;
+        }
+
         if (blinking != this.isBlinking) {
             this.isBlinking = blinking;
             this.restartTimer();

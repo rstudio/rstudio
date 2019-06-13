@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -215,7 +217,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setCheckable(boolean isCheckable)
    {
-      checkable_ = isCheckable;
+      if (isRadio())
+         checkable_ = true;
+      else
+         checkable_ = isCheckable;
    }
 
    public boolean isChecked()
@@ -231,6 +236,28 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       checked_ = checked;
       if (Desktop.isDesktop())
          DesktopMenuCallback.setCommandChecked(id_, checked_);
+   }
+
+   public void setRadio(boolean isRadio)
+   {
+      radio_ = isRadio;
+      if (radio_)
+         setCheckable(true);
+   }
+
+   public boolean isRadio()
+   {
+      return radio_;
+   }
+
+   public MenuitemRole getMenuRole()
+   {
+      if (isRadio())
+         return Roles.getMenuitemradioRole();
+      else if (isCheckable())
+         return Roles.getMenuitemcheckboxRole();
+      else
+         return Roles.getMenuitemRole();
    }
 
    public String getWindowMode()
@@ -681,6 +708,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean visible_ = true;
    private boolean removed_ = false;
    private boolean checkable_ = false;
+   private boolean radio_ = false;
    private boolean checked_ = false;
    private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);

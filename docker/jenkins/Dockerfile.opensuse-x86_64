@@ -33,6 +33,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     sudo \
     tar \
     unzip \
+    valgrind \
     wget \
     xml-commons-apis \
     zlib-devel \

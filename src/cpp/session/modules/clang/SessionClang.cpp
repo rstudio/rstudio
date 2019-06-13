@@ -206,17 +206,8 @@ bool isAvailable()
 Error initialize()
 {
    // register diagnostics functions
-   R_CallMethodDef methodDef1 ;
-   methodDef1.name = "rs_isLibClangAvailable" ;
-   methodDef1.fun = (DL_FUNC)rs_isLibClangAvailable;
-   methodDef1.numArgs = 0;
-   r::routines::addCallMethod(methodDef1);
-
-   R_CallMethodDef methodDef2 ;
-   methodDef2.name = "rs_setClangDiagnostics" ;
-   methodDef2.fun = (DL_FUNC)rs_setClangDiagnostics;
-   methodDef2.numArgs = 1;
-   r::routines::addCallMethod(methodDef2);
+   RS_REGISTER_CALL_METHOD(rs_isLibClangAvailable);
+   RS_REGISTER_CALL_METHOD(rs_setClangDiagnostics);
 
    ExecBlock initBlock ;
    using boost::bind;
