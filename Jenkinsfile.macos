@@ -80,8 +80,8 @@ pipeline {
           withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
             // construct release version
             def RSTUDIO_RELEASE = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}"
-            if (params.RSTUDIO_VERSION_SUFFIX != 0) {
-              RSTUDIO_RELEASE = "${RSTUDIO_RELEASE}.${params.RSTUDIO_VERSION_SUFFIX}" 
+            if (params.RSTUDIO_VERSION_SUFFIX != "0") {
+              RSTUDIO_RELEASE = "${RSTUDIO_RELEASE}-${params.RSTUDIO_VERSION_SUFFIX}" 
             }
  
             // create new release on Sentry
@@ -89,6 +89,9 @@ pipeline {
 
             // upload Javascript source maps
             sh "cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite ."
+
+            // associate commits
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_RELEASE}"
 
             // finalize release
             sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_RELEASE}"
