@@ -3,7 +3,6 @@
 
 ### Bug Fixes
 
-- Restore capability to use 32-bit R on Windows (#3150)
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
@@ -37,8 +36,11 @@
 
 ### Miscellaneous
 
+- Restore capability to use 32-bit R on Windows (#3150)
+- Add new builds for RHEL8 and Fedora 28+ (#4612)
 - RStudio now prepends its own version information to the default R user agent (#4826)
 - Improve detection of current working directory for terminals on macOS (#4570)
 - Update to Pandoc 2.7.2 on Windows to address occasional segfaults (#4618)
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
 - Set secure flag when clearing cookies for consistency (Pro #964)
+- Server Pro: Update to nginx 1.17 
