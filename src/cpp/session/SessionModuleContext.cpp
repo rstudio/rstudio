@@ -89,6 +89,12 @@ namespace module_context {
       
 namespace {
 
+// cached user preference for hiding object files
+// (threads need access to this preference but
+// UserSettings class is not thread-safe; we can
+// just use a one-time initialized value here)
+std::atomic_bool s_hideObjectFiles(false);
+
 // simple service for handling console_input rpc requests
 class ConsoleInputService : boost::noncopyable
 {
@@ -1817,7 +1823,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
-   else if (userSettings().hideObjectFiles() &&
+   else if (s_hideObjectFiles &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")
    {
@@ -2446,6 +2452,12 @@ bool usingMingwGcc49()
 
 Error initialize()
 {
+   // initialize pref
+   s_hideObjectFiles = userSettings().hideObjectFiles();
+   userSettings().onChanged.connect([]() {
+      s_hideObjectFiles = userSettings().hideObjectFiles();
+   });
+
    // register .Call methods
    RS_REGISTER_CALL_METHOD(rs_activatePane);
    RS_REGISTER_CALL_METHOD(rs_base64decode);
