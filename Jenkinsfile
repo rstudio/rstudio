@@ -88,7 +88,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos') || os.contains('suse')) {
+  if (os.contains('centos') || os.contains('suse') || os.contains('fedora')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -149,7 +149,9 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '']
+          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: ''],
+          [os: 'fedora28',   arch: 'x86_64', flavor: 'server',  variant: ''],
+          [os: 'fedora28',   arch: 'x86_64', flavor: 'desktop', variant: '']
         ]
         containers = limit_builds(containers)
         // create the version we're about to build
