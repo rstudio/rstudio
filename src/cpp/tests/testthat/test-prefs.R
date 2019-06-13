@@ -29,3 +29,22 @@ test_that("preference values can be set", {
    expect_equal(.rs.readUiPref("code_completion_delay"), oldVal)
 })
 
+test_that("default values for preferences are respected", {
+   oldVal <- .rs.readUiPref("num_spaces_for_tab")
+
+   # set it to a new value and ensure that it sticks
+   newVal <- oldVal + 2L
+   .rs.writeUiPref("num_spaces_for_tab", newVal)
+   expect_equal(.rs.readUiPref("num_spaces_for_tab"), newVal)
+
+   # remove the value entirely and ensure it falls back to the default (this presumes the default is
+   # 2, but we are unlikely to change the historical default of this pref!)
+   .rs.removePref("num_spaces_for_tab")
+   expect_equal(.rs.readUiPref("num_spaces_for_tab"), 2)
+
+   # restore the old value if it wasn't the default
+   if (oldVal != 2) {
+      .rs.writeUiPref("num_spaces_for_tab", oldVal)
+   }
+})
+
