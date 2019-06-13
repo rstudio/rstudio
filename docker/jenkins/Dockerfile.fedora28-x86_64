@@ -4,6 +4,7 @@ RUN yum install -y \
     ant \
     boost-devel \
     bzip2-devel \
+    clang-devel \
     curl \
     expect \
     fakeroot \
@@ -23,6 +24,7 @@ RUN yum install -y \
     libXcursor-devel \
     libXrandr-devel \
     libXScrnSaver-devel \
+    llbm-devel \
     lsof \
     make \
     mesa-libGL-devel \
@@ -52,6 +54,10 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
