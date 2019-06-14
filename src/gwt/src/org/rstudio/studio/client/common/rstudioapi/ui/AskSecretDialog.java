@@ -194,6 +194,13 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    }
 
    @Override
+   protected void focusInitialControl()
+   {
+      textbox_.setFocus(true);
+      textbox_.setSelectionRange(0, textbox_.getText().length());
+   }
+
+   @Override
    protected boolean validate(AskSecretDialogResult input)
    {
       if (StringUtil.isNullOrEmpty(input.getSecret()))
@@ -229,24 +236,6 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
      });
    }
 
-   @Override
-   public void focusFirstControl()
-   {
-      textbox_.setFocus(true);
-      textbox_.setSelectionRange(0, textbox_.getText().length());
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      focusCancelButton();
-   }
-
-   public void focusInitialControl()
-   {
-      focusFirstControl();
-   }
- 
    private Widget mainWidget_;
 
    @UiField FormLabel label_;

@@ -196,10 +196,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
-
       txtSearchPattern_.setFocus(true);
       txtSearchPattern_.selectAll();
       updateOkButtonEnabled();

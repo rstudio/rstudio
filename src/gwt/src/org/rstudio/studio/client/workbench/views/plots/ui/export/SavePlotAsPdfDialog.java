@@ -131,7 +131,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    }
    
    @Override 
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       fileNameTextBox_.setFocus(true);
       fileNameTextBox_.selectAll();

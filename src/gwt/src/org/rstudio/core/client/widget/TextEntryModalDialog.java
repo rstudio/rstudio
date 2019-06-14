@@ -69,7 +69,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       textBox_.setFocus(true);
       

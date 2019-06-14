@@ -47,11 +47,11 @@ def run_tests(type, flavor, variant) {
     currentBuild.result = "UNSTABLE"
   }
 
+  
   try {
     // attempt to run cpp unit tests
-    // skip known broken rsession tests for now (hanging for unknown reason)
+    // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests --scope core"
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests --scope r"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
   }
@@ -105,7 +105,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos') || os.contains('suse')) {
+  if (os.contains('centos') || os.contains('suse') || os.contains('fedora')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -165,7 +165,9 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: ''],
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '']
+          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: ''],
+          [os: 'fedora28',   arch: 'x86_64', flavor: 'server',  variant: ''],
+          [os: 'fedora28',   arch: 'x86_64', flavor: 'desktop', variant: '']
         ]
         containers = limit_builds(containers)
         // create the version we're about to build

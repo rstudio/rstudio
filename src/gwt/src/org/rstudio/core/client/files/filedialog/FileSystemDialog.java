@@ -235,11 +235,6 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    @Override
-   protected void onDialogShown()
-   {
-   }
-
-   @Override
    public void onPreviewNativeEvent(Event.NativePreviewEvent event)
    {
       if (event.getTypeInt() == Event.ONKEYDOWN

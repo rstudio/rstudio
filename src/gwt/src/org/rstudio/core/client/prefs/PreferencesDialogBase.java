@@ -164,24 +164,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       return panel_;
    }
 
-   @Override
-   public void focusFirstControl()
-   {
-      sectionChooser_.focus();
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      sectionChooser_.focus();
-   }
-
-   @Override
-   public void focusInitialControl()
-   {
-      focusOkButton();
-   }
-
    protected void hidePane(int index)
    {
       sectionChooser_.hideSection(index);

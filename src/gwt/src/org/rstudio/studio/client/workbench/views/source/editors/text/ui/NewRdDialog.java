@@ -62,7 +62,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       txtName_.setFocus(true);
    }

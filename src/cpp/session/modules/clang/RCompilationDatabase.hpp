@@ -50,6 +50,8 @@ public:
 
    std::vector<std::string> projectTranslationUnits() const;
 
+   void rebuildPackageCompilationDatabase();
+
 private:
 
    core::Error executeSourceCpp(core::system::Options env,

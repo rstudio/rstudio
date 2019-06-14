@@ -113,6 +113,12 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          } 
       }));
    }
+   
+   @Override
+   protected void focusInitialControl()
+   {
+      focusOkButton();
+   }
 
    @Override
    protected Widget createMainWidget()
@@ -176,25 +182,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       
       return panel;
    }
-
-    @Override
-   public void focusFirstControl()
-   {
-      targetsCellTable_.setFocus(true);
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      focusCancelButton();
-   }
-
-   @Override
-   public void focusInitialControl()
-   {
-      focusOkButton();
-   }
-
+   
    private Column<UnsavedChangesTarget, Boolean> addSelectionColumn()
    {
       Column<UnsavedChangesTarget, Boolean> checkColumn = 

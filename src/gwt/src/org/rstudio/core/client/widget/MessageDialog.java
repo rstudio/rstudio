@@ -149,20 +149,8 @@ public class MessageDialog extends ModalDialogBase
       return label;
    }
 
-     @Override
-   public void focusFirstControl()
-   {
-      focusFirstButton();
-   }
-
    @Override
-   public void focusLastControl()
-   {
-      focusLastButton();
-   }
-
-   @Override
-   public void focusInitialControl()
+   protected void focusInitialControl()
    {
       focusOkButton();
    }

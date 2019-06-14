@@ -18,10 +18,10 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -45,6 +46,9 @@ import java.util.ArrayList;
 
 public abstract class ModalDialogBase extends DialogBox
 {
+   private static final String firstFocusClass = "__rstudio_modal_first_focus";
+   private static final String lastFocusClass = "__rstudio_modal_last_focus";
+
    protected ModalDialogBase(DialogRole role)
    {
       this(null, role);
@@ -63,12 +67,6 @@ public abstract class ModalDialogBase extends DialogBox
       role_ = role;
       role_.set(getElement());
       A11y.setARIADialogModal(getElement());
-      firstControl_ = new Button("");
-      lastControl_ = new Button("");
-      Roles.getButtonRole().setAriaHiddenState(firstControl_.getElement(), true);
-      Roles.getButtonRole().setAriaHiddenState(lastControl_.getElement(), true);
-      DomUtils.visuallyHide(firstControl_.getElement());
-      DomUtils.visuallyHide(lastControl_.getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -79,9 +77,7 @@ public abstract class ModalDialogBase extends DialogBox
       leftButtonPanel_ = new HorizontalPanel();
       bottomPanel_.add(leftButtonPanel_);
       bottomPanel_.add(buttonPanel_);
-      bottomPanel_.add(lastControl_);
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      mainPanel_.add(firstControl_);
       mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
@@ -105,16 +101,6 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
-
-      firstControl_.addFocusHandler(event -> {
-         // hidden first control in dialog got focus, wrap around to last control
-         focusLastControl();
-      });
-      
-      lastControl_.addFocusHandler(event -> {
-         // hidden last control in dialog got focus, wrap around to first control
-         focusFirstControl();
-      });
    }
 
    @Override
@@ -188,9 +174,7 @@ public abstract class ModalDialogBase extends DialogBox
 
          // get the main widget to line up with the right edge of the buttons.
          mainWidget_.getElement().getStyle().setMarginRight(2, Unit.PX);
-
-         // insert after hidden control used to wrap focus when tabbing through dialog
-         mainPanel_.insert(mainWidget_, 1);
+         mainPanel_.insert(mainWidget_, 0);
       }
 
       originallyActiveElement_ = DomUtils.getActiveElement();
@@ -203,7 +187,7 @@ public abstract class ModalDialogBase extends DialogBox
          public void execute()
          {
             // defer shown notification to allow all elements to render
-            // before attempting to interact w/ them programatically (e.g. setFocus)
+            // before attempting to interact w/ them programmatically (e.g. setFocus)
             Timer timer = new Timer() {
                public void run() {
                   onDialogShown();
@@ -225,7 +209,15 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected void onDialogShown()
    {
+      refreshFocusableElements();
       focusInitialControl();
+      
+      // try hard to make sure focus ends up in dialog
+      Element focused = DomUtils.getActiveElement();
+      if (focused == null || !DomUtils.contains(getElement(), focused))
+      {
+        focusFirstControl();
+      }
    }
 
    protected void addOkButton(ThemedButton okButton)
@@ -261,71 +253,10 @@ public abstract class ModalDialogBase extends DialogBox
       okButton_.setVisible(visible);
    }
 
-   protected boolean focusOkButton()
+   protected void focusOkButton()
    {
-      if (okButton_ == null || !okButton_.isEnabled())
-         return false;
-
-      FocusHelper.setFocusDeferred(okButton_);
-      return true;
-   }
-
-   protected boolean focusCancelButton()
-   {
-      if (cancelButton_ == null || !cancelButton_.isEnabled())
-         return false;
-      FocusHelper.setFocusDeferred(cancelButton_);
-      return true;
-   }
-
-   /**
-    * Focus the final enabled button in the dialog
-    * @return false if no buttons available to take focus
-    */
-   protected boolean focusLastButton()
-   {
-      for (int i = allRightButtons_.size() - 1; i >= 0; i--)
-      {
-         if (allRightButtons_.get(i).isEnabled())
-         {
-            FocusHelper.setFocusDeferred(allRightButtons_.get(i));
-            return true;
-         }
-      }
-      for (int i = allLeftButtons_.size() - 1; i >= 0; i--)
-      {
-         if (allLeftButtons_.get(i).isEnabled())
-         {
-            FocusHelper.setFocusDeferred(allLeftButtons_.get(i));
-            return true;
-         }
-      }
-      return false;
-   }
-
-   /**
-    * Focus the first enabled button in the dialog
-    * @return false if no buttons available to take focus
-    */
-   protected boolean focusFirstButton()
-   {
-      for (int i = 0; i < allLeftButtons_.size(); i++)
-      {
-         if (allLeftButtons_.get(i).isEnabled())
-         {
-            FocusHelper.setFocusDeferred(allLeftButtons_.get(i));
-            return true;
-         }
-      }
-      for (int i = 0; i < allRightButtons_.size(); i++)
-      {
-         if (allRightButtons_.get(i).isEnabled())
-         {
-            FocusHelper.setFocusDeferred(allRightButtons_.get(i));
-            return true;
-         }
-      }
-      return false;
+      if (okButton_ != null)
+         FocusHelper.setFocusDeferred(okButton_);
    }
 
    protected void enableCancelButton(boolean enabled)
@@ -379,7 +310,7 @@ public abstract class ModalDialogBase extends DialogBox
       button.addStyleDependentName("DialogAction");
       button.addStyleDependentName("DialogActionLeft");
       leftButtonPanel_.add(button);
-      allLeftButtons_.add(button);
+      allButtons_.add(button);
    }
 
    protected void addLeftWidget(Widget widget)
@@ -396,7 +327,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       button.addStyleDependentName("DialogAction");
       buttonPanel_.add(button);
-      allRightButtons_.add(button);
+      allButtons_.add(button);
    }
 
    // inserts an action button--in the same panel as OK/cancel, but preceding
@@ -405,7 +336,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       button.addStyleDependentName("DialogAction");
       buttonPanel_.insert(button, 0);
-      allRightButtons_.add(0, button);
+      allButtons_.add(button);
    }
 
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
@@ -571,6 +502,23 @@ public abstract class ModalDialogBase extends DialogBox
                break;
             onEscapeKeyDown(event);
             break;
+            
+         case KeyCodes.KEY_TAB:
+            if (nativeEvent.getShiftKey() && DomUtils.getActiveElement().hasClassName(firstFocusClass))
+            {
+               nativeEvent.preventDefault();
+               nativeEvent.stopPropagation();
+               event.cancel();
+               focusLastControl();
+            }
+            else if (!nativeEvent.getShiftKey() && DomUtils.getActiveElement().hasClassName(lastFocusClass))
+            {
+               nativeEvent.preventDefault();
+               nativeEvent.stopPropagation();
+               event.cancel();
+               focusFirstControl();
+            }
+            break;
          }
       }
    }
@@ -599,10 +547,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void enableButtons(boolean enabled)
    {
-      for (int i = 0; i < allLeftButtons_.size(); i++)
-         allLeftButtons_.get(i).setEnabled(enabled);
-      for (int i = 0; i < allRightButtons_.size(); i++)
-         allRightButtons_.get(i).setEnabled(enabled);
+      for (int i = 0; i < allButtons_.size(); i++)
+         allButtons_.get(i).setEnabled(enabled);
    }
 
    public void move(Point p, boolean allowAnimation)
@@ -668,27 +614,104 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * Invoked when user hits Tab with focus on last control in dialog. Implement to
-    * set focus to the appropriate control.
+    * Set focus on first keyboard focusable element in dialog, as set by 
+    * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
     */
-   public /*abstract*/ void focusFirstControl()
+   private void focusFirstControl()
    {
+      Element first = getByClass(firstFocusClass);
+      if (first != null)
+         first.focus();
+   }
+
+    /**
+    * Set focus on last keyboard focusable element in dialog, as set by 
+    * <code>refreshFocusableElements</code> or <code>setLastFocusableElement</code>.
+    */
+   private void focusLastControl()
+   {
+      Element last = getByClass(lastFocusClass);
+      if (last != null)
+         last.focus();
    }
 
    /**
-    * Invoked when user hits Shift+Tab with focus on first control in dialog. Implement to
-    * set focus to the appropriate control.
+    * Invoked when dialog first loads to set initial focus. By default sets focus on the 
+    * first control in the dialog; override to set initial focus elsewhere.
     */
-   public /*abstract*/ void focusLastControl()
+   protected void focusInitialControl()
    {
+      focusFirstControl();
+   }
+
+   /**
+    * @param element first keyboard focusable element in the dialog
+    */
+   private void setFirstFocusableElement(Element element)
+   {
+      removeExisting(firstFocusClass);
+      element.addClassName(firstFocusClass);
+   }
+
+   /**
+    * @param element last keyboard focusable element in the dialog
+    */
+   private void setLastFocusableElement(Element element)
+   {
+      removeExisting(lastFocusClass);
+      element.addClassName(lastFocusClass);
+   }
+
+   /**
+    * Gets a list of keyboard focusable elements in the dialog, and tracks which ones are
+    * first and last. This is used to keep keyboard focus in the dialog when Tabbing and
+    * Shift+Tabbing off end or beginning of dialog.
+    * 
+    * If the dialog is dynamic, and the first and/or last focusable elements change over time,
+    * call this function again to update the information; or, if the auto-detection
+    * is not suitable, call setFirstFocusableElement and/or setLastFocusableElement to directly
+    * control first/last.
+    */
+   public void refreshFocusableElements()
+   {
+      // css selector from https://github.com/scottaohara/accessible_modal_window
+      String focusableElements = 
+            "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
+            "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
+            "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
+            "[tabindex=\"0\"]:not([hidden]):not([disabled]), summary:not([hidden]), " +
+            "[contenteditable]:not([hidden]), audio[controls]:not([hidden]), " +
+            "video[controls]:not([hidden])";
+      NodeList<Element> focusable = DomUtils.querySelectorAll(getElement(), focusableElements);
+      if (focusable.getLength() == 0)
+      {
+         Debug.logWarning("No focusable controls found in modal dialog");
+         return;
+      }
+      setFirstFocusableElement(focusable.getItem(0));
+      setLastFocusableElement(focusable.getItem(focusable.getLength() - 1));
    }
    
-   /**
-    * Invoked when dialog first loads. Implement to set focus to the appropriate control.
-    * set focus to the appropriate control.
-    */
-   public /*abstract*/ void focusInitialControl()
+   private void removeExisting(String classname)
    {
+      Element current = getByClass(classname);
+      if (current != null)
+         current.removeClassName(classname);
+   }
+
+   private Element getByClass(String classname)
+   {
+      NodeList<Element> current = DomUtils.querySelectorAll(getElement(), "." + classname);
+      if (current.getLength() > 1)
+      {
+         Debug.logWarning("Multiple controls found with class: " + classname);
+         return null;
+      }
+      if (current.getLength() == 1)
+      {
+         return current.getItem(0);
+      }
+      return null;
    }
 
    private Handle shortcutDisableHandle_;
@@ -703,12 +726,9 @@ public abstract class ModalDialogBase extends DialogBox
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
-   private ArrayList<ThemedButton> allLeftButtons_ = new ArrayList<>();
-   private ArrayList<ThemedButton> allRightButtons_ = new ArrayList<>();
+   private ArrayList<ThemedButton> allButtons_ = new ArrayList<ThemedButton>();
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
    private DialogRole role_;
-   private Button firstControl_;
-   private Button lastControl_;
 }

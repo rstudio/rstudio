@@ -222,9 +222,8 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       apiNameTextBox_.setFocus(true);
    }
    

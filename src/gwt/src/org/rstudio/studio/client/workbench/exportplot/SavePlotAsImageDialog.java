@@ -82,9 +82,8 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       saveAsTarget_.focus();
    }
    

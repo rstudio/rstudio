@@ -257,12 +257,12 @@ public class RPubsUploadDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
-      
       if (hasTitle())
          titleTextBox_.setFocus(true);
+      else
+         super.focusInitialControl();
    }
    
    protected void onUnload()
