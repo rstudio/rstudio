@@ -72,7 +72,7 @@ public class CodeSearchDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    { 
       ((CanFocus)codeSearch_.getSearchWidget()).focus();
    }

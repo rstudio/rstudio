@@ -164,7 +164,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    }
    
    @Override
-   public void onDialogShown()
+   public void focusInitialControl()
    {
       docDisplay_.focus();
    }

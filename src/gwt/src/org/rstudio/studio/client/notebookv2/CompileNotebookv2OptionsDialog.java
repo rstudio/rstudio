@@ -55,9 +55,8 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       listFormat_.setFocus(true);
    }
    

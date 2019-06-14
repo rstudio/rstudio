@@ -121,7 +121,7 @@ public class EditDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       editor_.focus();
    }

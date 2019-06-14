@@ -98,9 +98,8 @@ public class ExportPlotDialog extends ModalDialogBase
     
   
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       sizeEditor_.onSizerShown();
    }
       

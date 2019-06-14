@@ -144,13 +144,13 @@ public class MessageDialog extends ModalDialogBase
                      ThemeResources.INSTANCE.themeStyles().dialogMessage());
       return label;
    }
-    
+
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       focusOkButton();
    }
-   
+
    private int type_ ;
    private Widget messageWidget_ ;
    private ProgressIndicator progress_ ;

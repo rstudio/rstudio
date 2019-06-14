@@ -268,11 +268,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       // when dialog is finished booting, focus the title so it's ready to
       // accept input
-      super.onDialogShown();
       txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
       txtTitle_.setFocus(true);
    }

@@ -166,7 +166,7 @@ public class IgnoreDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       editor_.focus();
    }
