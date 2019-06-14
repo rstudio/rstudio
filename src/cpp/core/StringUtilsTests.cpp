@@ -146,6 +146,13 @@ context("Comment extraction")
                "% but not at the start of the document.\n");
       expect_false(extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted));
    }
+
+   test_that("JavaScript literals are escaped")
+   {
+      expect_true(jsLiteralEscape("\"hello\"") == "\\\"hello\\\"");
+      expect_true(jsLiteralEscape("'goodbye'") == "\\'goodbye\\'");
+      expect_true(jsLiteralEscape("</script>") == "\\074/script>");
+   }
 }
 
 } // end namespace string_utils

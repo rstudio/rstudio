@@ -422,7 +422,7 @@ std::string jsLiteralEscape(const std::string& str)
    subs['"'] = "\\\"";
    subs['\r'] = "\\r";
    subs['\n'] = "\\n";
-   subs['<'] = "\074";
+   subs['<'] = "\\074";
 
    return escape(escapes, subs, str);
 }
