@@ -79,24 +79,6 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
       return true;
    }
 
-   @Override
-   public void focusFirstControl()
-   {
-      chkRocletRd_.setFocus(true);
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      focusLastButton();
-   }
-
-   @Override
-   public void focusInitialControl()
-   {
-      focusOkButton();
-   }
-
    @UiField
    CheckBox chkRocletRd_;
    @UiField

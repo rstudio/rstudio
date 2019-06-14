@@ -253,15 +253,34 @@ public abstract class ModalDialogBase extends DialogBox
       okButton_.setVisible(visible);
    }
 
-   protected void focusOkButton()
+   /**
+    * Set focus on the OK button
+    * @return true if button can receive focus, false if button doesn't exist or was disabled
+    */
+   protected boolean focusOkButton()
    {
-      if (okButton_ != null)
-         FocusHelper.setFocusDeferred(okButton_);
+      if (okButton_ == null || !okButton_.isEnabled() || !okButton_.isVisible())
+         return false;
+
+      FocusHelper.setFocusDeferred(okButton_);
+      return true;
    }
 
    protected void enableCancelButton(boolean enabled)
    {
       cancelButton_.setEnabled(enabled);
+   }
+
+    /**
+    * Set focus on the cancel button
+    * @return true if button received focus, false if button doesn't exist or was disabled
+    */
+    protected boolean focusCancelButton()
+   {
+      if (cancelButton_ == null || !cancelButton_.isEnabled() || !cancelButton_.isVisible())
+         return false;
+      FocusHelper.setFocusDeferred(cancelButton_);
+      return true;
    }
 
    protected void setDefaultOverrideButton(ThemedButton button)
@@ -617,7 +636,7 @@ public abstract class ModalDialogBase extends DialogBox
     * Set focus on first keyboard focusable element in dialog, as set by 
     * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
     */
-   private void focusFirstControl()
+   protected void focusFirstControl()
    {
       Element first = getByClass(firstFocusClass);
       if (first != null)
@@ -628,7 +647,7 @@ public abstract class ModalDialogBase extends DialogBox
     * Set focus on last keyboard focusable element in dialog, as set by 
     * <code>refreshFocusableElements</code> or <code>setLastFocusableElement</code>.
     */
-   private void focusLastControl()
+   protected void focusLastControl()
    {
       Element last = getByClass(lastFocusClass);
       if (last != null)
@@ -669,8 +688,7 @@ public abstract class ModalDialogBase extends DialogBox
     * 
     * If the dialog is dynamic, and the first and/or last focusable elements change over time,
     * call this function again to update the information; or, if the auto-detection
-    * is not suitable, call setFirstFocusableElement and/or setLastFocusableElement to directly
-    * control first/last.
+    * is not suitable, override focusFirstControl and/or focusLastControl.
     */
    public void refreshFocusableElements()
    {

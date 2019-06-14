@@ -118,18 +118,6 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       tbName_.selectAll();
    }
 
-   @Override
-   public void focusLastControl()
-   {
-      if (!focusLastButton())
-         tbUrl_.setFocus(true);
-   }
-
-   public void focusInitialControl()
-   {
-      tbName_.setFocus(true);
-   }
-   
    private void synchronize()
    {
       boolean isValidState =

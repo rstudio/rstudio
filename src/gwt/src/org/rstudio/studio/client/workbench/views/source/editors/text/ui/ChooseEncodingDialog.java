@@ -192,24 +192,6 @@ public class ChooseEncodingDialog extends ModalDialog<String>
       return StringUtil.notNull(encoding).replaceAll("[- ]", "").toLowerCase();
    }
 
-   @Override
-   public void focusFirstControl()
-   {
-      listBox_.setFocus(true);
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      focusCancelButton();
-   }
-
-   @Override
-   public void focusInitialControl()
-   {
-      listBox_.setFocus(true);
-   }
-
    private ListBox listBox_;
    private final JsArrayString commonEncodings_;
    private final JsArrayString allEncodings_;

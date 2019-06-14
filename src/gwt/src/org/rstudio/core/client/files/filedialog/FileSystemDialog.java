@@ -301,24 +301,6 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    @Override
-   public void focusFirstControl()
-   {
-      focusFirstButton();
-   }
-
-   @Override
-   public void focusLastControl()
-   {
-      focusCancelButton();
-   }
-
-   @Override
-   public void focusInitialControl()
-   {
-      focusFirstButton();
-   }
-
-   @Override
    public FileSystemItem[] ls()
    {
       return listFilesWithExtensions(context_, filterExtensions_);

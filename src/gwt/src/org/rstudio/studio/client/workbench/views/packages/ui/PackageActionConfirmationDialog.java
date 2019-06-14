@@ -153,7 +153,6 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
                enableCancelButton(true);
                selectAllButton_.setEnabled(true);
                selectNoneButton_.setEnabled(true);
-               focusCancelButton();
             }
             else
             {
