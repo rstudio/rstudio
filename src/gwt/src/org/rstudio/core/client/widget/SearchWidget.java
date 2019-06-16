@@ -1,7 +1,7 @@
 /*
  * SearchWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,12 +33,13 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class SearchWidget extends Composite implements SearchDisplay                                   
+public class SearchWidget extends Composite implements SearchDisplay
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
@@ -61,8 +62,6 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          super(oracle, textBox, suggestDisplay);
       }
-      
-    
 
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
@@ -111,19 +110,20 @@ public class SearchWidget extends Composite implements SearchDisplay
                        boolean continuousSearch)
    {
       textBox.getElement().setAttribute("spellcheck", "false");
-      
+
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
-      else 
+      else
          suggestBox_ = new FocusSuggestBox(oracle, textBox);
       
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
+      A11y.setDecorativeImage(icon_.getElement());
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       suggestBox_.setStylePrimaryName(styles.searchBox());
-      suggestBox_.setAutoSelectEnabled(false) ;
+      suggestBox_.setAutoSelectEnabled(false);
       addKeyDownHandler(new KeyDownHandler() {
          public void onKeyDown(KeyDownEvent event)
          {
@@ -134,10 +134,10 @@ public class SearchWidget extends Composite implements SearchDisplay
                   public void execute()
                   {
                      SelectionCommitEvent.fire(SearchWidget.this, 
-                                               suggestBox_.getText()) ;
+                                               suggestBox_.getText());
                   }
-               }) ;
-               break ;
+               });
+               break;
             case KeyCodes.KEY_ESCAPE:
                
                event.preventDefault();
@@ -163,10 +163,10 @@ public class SearchWidget extends Composite implements SearchDisplay
                   }   
                });
                    
-               break ;
+               break;
             }
          }
-      }) ;
+      });
 
       if (continuousSearch)
       {
@@ -229,7 +229,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public HandlerRegistration addSelectionCommitHandler(
                                        SelectionCommitHandler<String> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType()) ;
+      return addHandler(handler, SelectionCommitEvent.getType());
    }
 
    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler)
@@ -264,12 +264,12 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public String getText()
    {
-      return suggestBox_.getText() ;
+      return suggestBox_.getText();
    }
 
    public void setText(String text)
    {
-      suggestBox_.setText(text) ;
+      suggestBox_.setText(text);
    }
 
    public void setText(String text, boolean fireEvents)
@@ -298,6 +298,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void setIcon(ImageResource image)
    {
       icon_.setResource(image);
+      A11y.setDecorativeImage(icon_.getElement());
    }
    
    public void focus()
