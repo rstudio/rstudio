@@ -1338,7 +1338,11 @@ void detectParentTermination()
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-      core::system::abort();
+
+      // we no longer exit with ::abort because it generated unwanted exceptions
+      // ::_Exit should perform the same functionality (not running destructors and exiting process)
+      // without generating an exception
+      std::_Exit(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
