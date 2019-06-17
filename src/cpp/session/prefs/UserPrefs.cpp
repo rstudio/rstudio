@@ -68,28 +68,30 @@ public:
       return Success();
    }
 
-} s_prefs;
+};
 
 } // anonymous namespace
 
 json::Array allPrefLayers()
 {
-   return s_prefs.allLayers();
+   return userPrefs().allLayers();
 }
 
 UserPrefValuesNative& userPrefs()
 {
-   return s_prefs;
+   static UserPrefs instance;
+   return instance;
 }
 
 Error initializePrefs()
 {
-   return s_prefs.initialize();
+   return userPrefs().initialize();
 }
 
 Error initializeSessionPrefs()
 {
-   return s_prefs.createComputedLayer();
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.createComputedLayer();
 }
 
 } // namespace prefs

@@ -107,6 +107,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
       return result;
 
    // Empty value indicates that we changed multiple prefs
+   // TODO: fire event
    // onChanged("");
    return Success();
 }
@@ -123,7 +124,6 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
          return val;
       }
    }
-      
    return boost::none;
 }
 

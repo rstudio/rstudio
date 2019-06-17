@@ -129,7 +129,7 @@ boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
       // The value doesn't exist in this layer.
       return boost::none;
    }
-   return (*it).value();
+   return (*it).value().clone();
 }
 
 

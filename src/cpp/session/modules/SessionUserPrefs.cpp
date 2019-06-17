@@ -114,7 +114,7 @@ SEXP rs_writePref(SEXP prefName, SEXP value)
 
 SEXP rs_removePref(SEXP prefName)
 {
-   // extract name of preference to write
+   // extract name of preference to remove
    std::string pref = r::sexp::safeAsString(prefName, "");
    if (pref.empty())
       return R_NilValue;
