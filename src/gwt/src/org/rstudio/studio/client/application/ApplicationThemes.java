@@ -62,8 +62,7 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
       // set the initial theme.
-      userPrefs_.get().globalTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      userPrefs_.get().editorTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      userState_.get().theme().bind(theme ->events_.fireEvent(new ThemeChangedEvent()));
       events_.fireEvent(new ThemeChangedEvent());
       
       // Ensure creation of the Ace themes instance
