@@ -1,7 +1,7 @@
 /*
  * RVersionSelectWidget.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ public class RVersionSelectWidget extends SelectWidget
             false,
             fillContainer);
       if (includeHelpButton)
-         HelpButton.addHelpButton(this, "multiple_r_versions");
+         HelpButton.addHelpButton(this, "multiple_r_versions", "Help on R versions");
    }
    
    public void setRVersion(RVersionSpec version)

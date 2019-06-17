@@ -139,12 +139,12 @@ implements HasEnsureVisibleHandlers
       widget.addStyleName(res_.styles().textBoxWithChooser());
       return widget;
    }
-   
-   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic)
+
+   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)
    {
       HorizontalPanel panel = new HorizontalPanel();
       panel.add(checkBox);
-      HelpButton helpButton = new HelpButton(topic, false);
+      HelpButton helpButton = new HelpButton(topic, false, title);
       Style helpStyle = helpButton.getElement().getStyle();
       helpStyle.setMarginTop(1, Unit.PX);
       helpStyle.setMarginLeft(6, Unit.PX);

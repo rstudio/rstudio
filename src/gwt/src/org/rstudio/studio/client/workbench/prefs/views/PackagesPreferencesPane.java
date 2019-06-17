@@ -1,7 +1,7 @@
 /*
  * PackagesPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,8 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -165,7 +163,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       useSecurePackageDownload_ = new CheckBox(
             "Use secure download method for HTTP");
       HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
-                        useSecurePackageDownload_, "secure_download");
+                        useSecurePackageDownload_, "secure_download", "Help on secure package downloads for R");
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
       

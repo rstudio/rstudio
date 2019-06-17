@@ -1,7 +1,7 @@
 /*
  * SpellingCustomDictionariesWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,8 @@ public class SpellingCustomDictionariesWidget extends Composite
       VerticalPanel panel = new VerticalPanel();
       
       panel.add(new LabelWithHelp("Custom dictionaries:", 
-                                  "custom_dictionaries"));
+                                  "custom_dictionaries",
+                                  "Help on custom spelling dictionaries"));
       
       HorizontalPanel dictionariesPanel = new HorizontalPanel();
       listBox_ = new ListBox();
@@ -193,21 +194,21 @@ public class SpellingCustomDictionariesWidget extends Composite
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;
-   
-   static interface Styles extends CssResource
+
+   interface Styles extends CssResource
    {
       String helpButton();
       String listBox();
       String button();
    }
   
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("SpellingCustomDictionariesWidget.css")
       Styles styles();
    }
    
-   static Resources RES = (Resources)GWT.create(Resources.class) ;
+   static Resources RES = GWT.create(Resources.class) ;
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();

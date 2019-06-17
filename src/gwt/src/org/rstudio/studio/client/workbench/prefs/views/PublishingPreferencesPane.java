@@ -1,7 +1,7 @@
 /*
  * PublishingPreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -190,7 +190,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
             uiPrefs_.enableRStudioConnect());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect,
-                                                              "rstudio_connect");
+                                                              "rstudio_connect",
+                                                              "Information about RStudio Connect");
       lessSpaced(rsconnectPanel);
       
       add(headerLabel("Settings"));

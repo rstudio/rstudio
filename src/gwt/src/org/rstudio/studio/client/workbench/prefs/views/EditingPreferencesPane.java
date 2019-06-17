@@ -1,7 +1,7 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -183,7 +183,7 @@ public class EditingPreferencesPane extends PreferencesPane
       });
       panel.add(editSnippets);
       
-      HelpButton snippetHelp = new HelpButton("code_snippets");
+      HelpButton snippetHelp = new HelpButton("code_snippets", "Help on code snippets");
       snippetHelp.getElement().getStyle().setMarginTop(2, Unit.PX);
       snippetHelp.getElement().getStyle().setMarginLeft(6, Unit.PX);
       panel.add(snippetHelp);
