@@ -46,7 +46,7 @@ public class FormLabel extends Label
    */
    public FormLabel(String text, boolean wordWrap)
    {
-      super(text, wordWrap);
+      super(text, "placeholder", wordWrap);
    }
 
    /**

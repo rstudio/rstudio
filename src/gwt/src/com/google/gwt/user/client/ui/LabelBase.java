@@ -60,8 +60,8 @@ public class LabelBase<T> extends Widget implements HasWordWrap,
    */
   protected LabelBase(boolean inline, String forId) {
     setElement(Document.get().createLabelElement());
-    if (inline)
-      getElement().setAttribute("display", "block");
+    if (!inline)
+      getElement().getStyle().setProperty("display", "block");
     getElement().setAttribute("for", forId);
     directionalTextHelper = new DirectionalTextHelper(getElement(), inline);
   }
