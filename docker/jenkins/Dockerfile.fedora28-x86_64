@@ -24,7 +24,7 @@ RUN yum install -y \
     libXcursor-devel \
     libXrandr-devel \
     libXScrnSaver-devel \
-    llbm-devel \
+    llvm-devel \
     lsof \
     make \
     mesa-libGL-devel \
