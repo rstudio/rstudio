@@ -39,9 +39,13 @@ class UserState: public UserStateValues
 {
    Error createLayers()
    {
-      layers_.push_back(boost::make_shared<UserStateDefaultLayer>()) ;  // STATE_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserStateComputedLayer>());  // STATE_LAYER_COMPUTED
-      layers_.push_back(boost::make_shared<UserStateLayer>());          // STATE_LAYER_USER
+      LOCK_MUTEX(mutex_)
+      {
+         layers_.push_back(boost::make_shared<UserStateDefaultLayer>()) ;  // STATE_LAYER_DEFAULT
+         layers_.push_back(boost::make_shared<UserStateComputedLayer>());  // STATE_LAYER_COMPUTED
+         layers_.push_back(boost::make_shared<UserStateLayer>());          // STATE_LAYER_USER
+      }
+      END_LOCK_MUTEX
       return Success();
    }
 

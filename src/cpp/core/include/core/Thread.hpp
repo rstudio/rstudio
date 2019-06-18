@@ -40,8 +40,8 @@
    }                                                                           \
    catch (const boost::thread_resource_error& e)                               \
    {                                                                           \
-      Error threadError(boost::thread_error::ec_from_exception(e),             \
-                        ERROR_LOCATION);                                       \
+      core::Error threadError(boost::thread_error::ec_from_exception(e),       \
+                              ERROR_LOCATION);                                 \
       LOG_ERROR(threadError);                                                  \
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION

@@ -41,10 +41,15 @@ class UserPrefs: public UserPrefValuesNative
 {
    Error createLayers()
    {
-      layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
-      layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
-      layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
-      layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
+      LOCK_MUTEX(mutex_)
+      {
+         layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
+         layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
+         layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
+         layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
+      }
+      END_LOCK_MUTEX
+
       return Success();
    }
 

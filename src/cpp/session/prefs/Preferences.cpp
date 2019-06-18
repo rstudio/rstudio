@@ -25,24 +25,32 @@ namespace prefs {
 core::json::Array Preferences::allLayers()
 {
    json::Array layers;
-   for (auto layer: layers_)
+   LOCK_MUTEX(mutex_)
    {
-      layers.push_back(layer->allPrefs());
+      for (auto layer: layers_)
+      {
+         layers.push_back(layer->allPrefs());
+      }
    }
+   END_LOCK_MUTEX
    return layers;
 }
 
 core::Error Preferences::readLayers()
 {
    Error error;
-   for (auto layer: layers_)
+   LOCK_MUTEX(mutex_)
    {
-      error = layer->readPrefs();
-      if (error)
+      for (auto layer: layers_)
       {
-         LOG_ERROR(error);
+         error = layer->readPrefs();
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
       }
    }
+   END_LOCK_MUTEX
    return Success();
 }
 
@@ -56,53 +64,63 @@ core::Error Preferences::initialize()
    if (error)
       return error;
 
-   for (auto layer: layers_)
+   LOCK_MUTEX(mutex_)
    {
-      error = layer->validatePrefs();
-      if (error)
-         LOG_ERROR(error);
+      for (auto layer: layers_)
+      {
+         error = layer->validatePrefs();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
+   END_LOCK_MUTEX
 
    return Success();
 }
 
 core::Error Preferences::writeLayer(size_t layer, const core::json::Object& prefs)
 {
-   // We cannot write the base layer or a non-existent layer.
-   if (layer >= layers_.size() || layer < 1)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   // Write only the unique values in this layer.
-   json::Object unique;
-   for (const auto pref: prefs)
+   Error result;
+   LOCK_MUTEX(mutex_)
    {
-      // Check to see whether the value for this preference (a) exists in some other lower layer,
-      // and if so (b) whether it differs from the value in that layer.
-      bool found = false;
-      bool differs = false;
-      for (size_t i = layer - 1; i >= 0; --i)
+      // We cannot write the base layer or a non-existent layer.
+      if (layer >= layers_.size() || layer < 1)
+         return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+      // Write only the unique values in this layer.
+      json::Object unique;
+      for (const auto pref: prefs)
       {
-         const auto val = layers_[i]->readValue(pref.name());
-         if (val)
+         // Check to see whether the value for this preference (a) exists in some other lower layer,
+         // and if so (b) whether it differs from the value in that layer.
+         bool found = false;
+         bool differs = false;
+         for (size_t i = layer - 1; i >= 0; --i)
          {
-            found = true;
-            if (!(*val == pref.value()))
+            const auto val = layers_[i]->readValue(pref.name());
+            if (val)
             {
-               differs = true;
+               found = true;
+               if (!(*val == pref.value()))
+               {
+                  differs = true;
+               }
+               break;
             }
-            break;
+         }
+
+         if (!found || differs)
+         {
+            // If the preference doesn't exist in any other layer, or the value doesn't match the them,
+            // record the unique value in this layer.
+            unique[pref.name()] = pref.value();
          }
       }
 
-      if (!found || differs)
-      {
-         // If the preference doesn't exist in any other layer, or the value doesn't match the them,
-         // record the unique value in this layer.
-         unique[pref.name()] = pref.value();
-      }
+      result = layers_[layer]->writePrefs(unique);
    }
+   END_LOCK_MUTEX;
 
-   Error result =  layers_[layer]->writePrefs(unique);
    if (result)
       return result;
 
@@ -112,36 +130,63 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    return Success();
 }
 
-boost::optional<core::json::Value> Preferences::readValue(const std::string& name) const
+boost::optional<core::json::Value> Preferences::readValue(const std::string& name)
 {
    // Work backwards through the layers, starting with the most specific (project or user-level
    // settings) and working towards the most general (basic defaults)
-   for (const auto layer: boost::adaptors::reverse(layers_))
+   LOCK_MUTEX(mutex_)
    {
-      boost::optional<core::json::Value> val = layer->readValue(name);
-      if (val && val->type() != json::NullType && val->type() != json::UnknownType)
+      for (const auto layer: boost::adaptors::reverse(layers_))
       {
-         return val;
+         boost::optional<core::json::Value> val = layer->readValue(name);
+         if (val && val->type() != json::NullType && val->type() != json::UnknownType)
+         {
+            return val;
+         }
       }
    }
+   END_LOCK_MUTEX
+
    return boost::none;
 }
 
 core::Error Preferences::writeValue(const std::string& name, const core::json::Value& value)
 {
-   auto layer = layers_[userLayer()];
+   Error result;
+   LOCK_MUTEX(mutex_)
+   {
+      auto layer = layers_[userLayer()];
+      result = layer->writePref(name, value);
+   }
+   END_LOCK_MUTEX
+
+   // Make sure to keep this outside the mutex lock since prefs are typically read after being
+   // changed.
    onChanged(name);
-   return layer->writePref(name, value);
+
+   return result;
 }
 
 core::json::Object Preferences::userPrefLayer()
 {
-   return layers_[userLayer()]->allPrefs();
+   core::json::Object layer;
+   LOCK_MUTEX(mutex_)
+   {
+      layer = layers_[userLayer()]->allPrefs();
+   }
+   END_LOCK_MUTEX
+   return layer;
 }
 
-core::Error Preferences::clearValue(const std::string &name)
+Error Preferences::clearValue(const std::string &name)
 {
-   return layers_[userLayer()]->clearValue(name);
+   Error result;
+   LOCK_MUTEX(mutex_)
+   {
+      result =layers_[userLayer()]->clearValue(name);
+   }
+   END_LOCK_MUTEX
+   return result;
 }
 
 } // namespace prefs

@@ -21,6 +21,7 @@
 #include <boost/range/adaptor/reversed.hpp>
 
 #include <core/BoostSignals.hpp>
+#include <core/Thread.hpp>
 
 #include "PrefLayer.hpp"
 
@@ -46,14 +47,18 @@ public:
    {
       // Work backwards through the layers, starting with the most specific (project or user-level
       // settings) and working towards the most general (basic defaults)
-      for (auto layer: boost::adaptors::reverse(layers_))
+      LOCK_MUTEX(mutex_)
       {
-         boost::optional<T> val = layer->readPref<T>(name);
-         if (val)
+         for (auto layer: boost::adaptors::reverse(layers_))
          {
-            return *val;
+            boost::optional<T> val = layer->readPref<T>(name);
+            if (val)
+            {
+               return *val;
+            }
          }
       }
+      END_LOCK_MUTEX
       
       // Every value must have a default (and we enforce this with tests), so it's an error to reach
       // this code. Return zero-initialized value in this case.
@@ -67,13 +72,20 @@ public:
 
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
-      auto layer = layers_[userLayer()];
-      onChanged(name);
-      return layer->writePref(name, value);
+      core::Error err;
+      LOCK_MUTEX(mutex_)
+      {
+         auto layer = layers_[userLayer()];
+         onChanged(name);
+         err = layer->writePref(name, value);
+      }
+      END_LOCK_MUTEX
+
+      return err;
    }
 
    // Read/write accessors for the underlying JSON property values
-   boost::optional<core::json::Value> readValue(const std::string& name) const;
+   boost::optional<core::json::Value> readValue(const std::string& name);
    core::Error writeValue(const std::string& name, const core::json::Value& value);
    core::Error clearValue(const std::string& name);
 
@@ -86,6 +98,7 @@ public:
 protected:
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
+   boost::mutex mutex_;
 };
 
 } // namespace prefs
