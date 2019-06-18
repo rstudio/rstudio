@@ -39,6 +39,7 @@ RUN yum install -y \
     rpmdevtools \
     rpm-sign \
     sudo \
+    valgrind \
     wget \
     xml-commons-apis \
     zlib-devel \
