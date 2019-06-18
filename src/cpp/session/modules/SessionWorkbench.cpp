@@ -1019,6 +1019,21 @@ void onUserSettingsChanged()
    module_context::enqueClientEvent(event);
 }
 
+Error setUserCrashHandlerPrompted(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* /*pResponse*/)
+{
+   bool crashHandlingEnabled;
+   Error error = json::readParam(request.params, 0, &crashHandlingEnabled);
+   if (error)
+      return error;
+
+   error = crash_handler::setUserHasBeenPromptedForPermission();
+   if (error)
+      return error;
+
+   return crash_handler::setUserHandlerEnabled(crashHandlingEnabled);
+}
+
 } // anonymous namespace
    
 std::string editFileCommand()
@@ -1081,7 +1096,8 @@ Error initialize()
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))
-      (bind(registerRpcMethod, "execute_code", executeCode));
+      (bind(registerRpcMethod, "execute_code", executeCode))
+      (bind(registerRpcMethod, "set_user_crash_handler_prompted", setUserCrashHandlerPrompted));
    return initBlock.execute();
 }
 

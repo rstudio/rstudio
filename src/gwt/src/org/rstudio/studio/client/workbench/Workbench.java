@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -92,7 +93,8 @@ public class Workbench implements BusyHandler,
                                   ExecuteUserCommandEvent.Handler,
                                   AdminNotificationHandler,
                                   OpenFileDialogEvent.Handler,
-                                  ShowPageViewerHandler
+                                  ShowPageViewerHandler,
+                                  DeferredInitCompletedEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -160,6 +162,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
       eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
       eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
+      eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(500)
@@ -206,7 +209,11 @@ public class Workbench implements BusyHandler,
             }
          });
       }
-      
+   }
+
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent ev)
+   {
+      checkForCrashHandlerPermission();
    }
    
    public void onBusy(BusyEvent event)
@@ -549,6 +556,38 @@ public class Workbench implements BusyHandler,
       if (!StringUtil.isNullOrEmpty(licenseMessage))
       {
          globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+      }
+   }
+
+   private void checkForCrashHandlerPermission()
+   {
+      boolean shouldPrompt = session_.getSessionInfo().getPromptForCrashHandlerPermission();
+      if (shouldPrompt)
+      {
+         String message =
+               "Would you like to enable automated crash reporting?\n\nIf RStudio crashes unexpectedly, the " +
+               "stack trace of the crash will be collected and sent to RStudio for analysis and troubleshooting " +
+               "purposes. No personal data is ever collected other than your IP address which will be used " +
+               "to determine the total number of users experiencing a particular crash.\n\nCrash reporting can be " +
+               "disabled at any time under the Global Options.";
+
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+               "Enable Automated Crash Reporting",
+               message,
+               false,
+               new Operation() {
+                  @Override
+                  public void execute() {
+                     server_.setUserCrashHandlerPrompted(true, new SimpleRequestCallback<Void>());
+                  }
+               },
+               new Operation() {
+                  @Override
+                  public void execute() {
+                     server_.setUserCrashHandlerPrompted(false, new SimpleRequestCallback<Void>());
+                  }
+               },
+               true);
       }
    }
     
