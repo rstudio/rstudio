@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewPanel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,7 +62,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       layoutPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
       layoutPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, tbHeight_, Unit.PX);
       
-      previewFrame_ = new AnchorableFrame();
+      previewFrame_ = new AnchorableFrame("HTML Preview Panel");
       previewFrame_.setSize("100%", "100%");
       layoutPanel_.add(previewFrame_);
       layoutPanel_.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);

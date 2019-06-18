@@ -1,7 +1,7 @@
 /*
  * SearchWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -119,6 +120,8 @@ public class SearchWidget extends Composite implements SearchDisplay
       
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
+      close_.setAltText("Clear text");
+      A11y.setDecorativeImage(icon_.getElement());
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
@@ -298,6 +301,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void setIcon(ImageResource image)
    {
       icon_.setResource(image);
+      A11y.setDecorativeImage(icon_.getElement());
    }
    
    public void focus()

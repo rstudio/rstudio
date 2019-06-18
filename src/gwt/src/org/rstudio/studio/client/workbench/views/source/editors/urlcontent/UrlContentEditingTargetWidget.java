@@ -1,7 +1,7 @@
 /*
  * UrlContentEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,11 +26,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToo
 public class UrlContentEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display
 {
-   public UrlContentEditingTargetWidget(Commands commands, String url)
+   public UrlContentEditingTargetWidget(String title, Commands commands, String url)
    {
       commands_ = commands;
 
-      frame_ = new RStudioThemedFrame(url, true, "allow-same-origin", null, null, false, true);
+      frame_ = new RStudioThemedFrame(title, url, true, "allow-same-origin", null, null, false, true);
       frame_.setSize("100%", "100%");
 
       PanelWithToolbars panel = new PanelWithToolbars(createToolbar(),

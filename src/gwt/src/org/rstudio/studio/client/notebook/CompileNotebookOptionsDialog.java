@@ -19,6 +19,7 @@ import java.util.Date;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -26,13 +27,14 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -57,7 +59,9 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
 
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       txtTitle_.setText(defaultTitle);
+      A11y.associateLabelWithField(titleLabel_, txtTitle_.getElement());
       txtAuthor_.setText(defaultAuthor);
+      A11y.associateLabelWithField(authorLabel_, txtAuthor_.getElement());
       
       if (showTypes_)
       {
@@ -67,7 +71,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
                                        lblType_, 
                                        HasVerticalAlignment.ALIGN_MIDDLE);
          
-         HelpButton helpButton = HelpButton.createHelpButton("notebook_types");
+         HelpButton helpButton = HelpButton.createHelpButton("notebook_types", "Help on report types");
          typeLabelPanel_.add(helpButton);
          typeLabelPanel_.setCellVerticalAlignment(
                                        helpButton, 
@@ -75,6 +79,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
 
          
          divTypeSelector_.getStyle().setPaddingBottom(10, Unit.PX);
+         lblType_.setFor(listType_); 
       }
       else
       {
@@ -83,6 +88,9 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       }
       
       setOkButtonCaption("Compile");
+
+      // read the message when dialog is shown
+      setARIADescribedBy(dialogInfo_);
    }
    
    @Inject
@@ -173,7 +181,13 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    private final String docId_;
 
    @UiField
+   Element dialogInfo_;
+   @UiField
+   Element titleLabel_;
+   @UiField
    TextBox txtTitle_;
+   @UiField
+   Element authorLabel_;
    @UiField
    TextBox txtAuthor_;
    @UiField
@@ -181,7 +195,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    @UiField
    HorizontalPanel typeLabelPanel_;
    @UiField
-   Label lblType_;
+   FormLabel lblType_;
    @UiField
    ListBox listType_;
    

@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -101,7 +102,8 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       });
 
       label_.setText(prompt);
-      textbox_.setFocus(true);
+      label_.setFor(textbox_);
+      Roles.getTextboxRole().setAriaRequiredProperty(textbox_.getElement(), true);
 
       install_.addClickHandler(new ClickHandler() {
          @Override
@@ -235,7 +237,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
    private Widget mainWidget_;
 
-   @UiField Label label_;
+   @UiField FormLabel label_;
    @UiField PasswordTextBox textbox_;
    @UiField CheckBox remember_;
    @UiField Label install_;

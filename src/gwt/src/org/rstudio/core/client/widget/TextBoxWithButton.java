@@ -1,7 +1,7 @@
 /*
  * TextBoxWithButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,11 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
 
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
@@ -47,7 +50,7 @@ public class TextBoxWithButton extends Composite
                             HelpButton helpButton,
                             ClickHandler handler)
    {
-      this(label, emptyLabel, action, null, handler, true);
+      this(label, emptyLabel, action, helpButton, handler, true);
    }
    
    public TextBoxWithButton(String label, 
@@ -74,7 +77,7 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         Label lblCaption = new Label(label, true);
+         FormLabel lblCaption = new FormLabel(label, true);
          if (helpButton != null)
          {
             HorizontalPanel panel = new HorizontalPanel();
@@ -87,6 +90,7 @@ public class TextBoxWithButton extends Composite
          {
             outer.add(lblCaption);
          }
+         lblCaption.setFor(textBox_);
       }
       outer.add(inner_);
       initWidget(outer);

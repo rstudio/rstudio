@@ -17,14 +17,15 @@ package org.rstudio.studio.client.notebookv2;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -50,8 +51,11 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
       style.ensureInjected();
       
       setFormat(defaultFormat);
-
+      lblFormat_.setFor(listFormat_);
       setOkButtonCaption("Compile");
+      
+      // read the message when dialog is shown
+      setARIADescribedBy(dialogLabel_);
    }
 
    @Override
@@ -98,6 +102,8 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
       listFormat_.setSelectedIndex(formatIndex);
    }
    
+   @UiField
+   Element dialogLabel_;
    @UiField 
    CompileNotebookv2Style style;
    @UiField
@@ -105,7 +111,7 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
    @UiField
    HorizontalPanel formatLabelPanel_;
    @UiField
-   Label lblFormat_;
+   FormLabel lblFormat_;
    @UiField
    ListBox listFormat_;
 

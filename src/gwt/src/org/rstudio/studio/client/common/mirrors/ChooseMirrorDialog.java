@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -39,7 +40,6 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -159,14 +159,15 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    {
       VerticalPanel root = new VerticalPanel();
 
-      Label customLabel = new Label("Custom:");
+      FormLabel customLabel = new FormLabel("Custom:");
       root.add(customLabel);
 
       customTextBox_ = new TextBox();
       customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
       root.add(customTextBox_);
+      customLabel.setFor(customTextBox_);
 
-      Label mirrorsLabel = new Label("CRAN Mirrors:");
+      FormLabel mirrorsLabel = new FormLabel("CRAN Mirrors:");
       mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(mirrorsLabel);
 
@@ -210,6 +211,8 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                
                listBox_.setSelectedIndex(0);
             }
+
+            mirrorsLabel.setFor(listBox_);
             
             // set it into the panel
             panel.setWidget(listBox_);

@@ -1,7 +1,7 @@
 /*
  * AnchorableFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,13 +20,14 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
 public class AnchorableFrame extends RStudioFrame
 {
-   public AnchorableFrame()
+   public AnchorableFrame(String title)
    {
-      this(true);
+      this(title, true);
    }
    
-   public AnchorableFrame(boolean autoFocus)
+   public AnchorableFrame(String title, boolean autoFocus)
    {
+      super(title);
       autoFocus_ = autoFocus;
       setStylePrimaryName("rstudio-HelpFrame");
       getElement().getStyle().setBackgroundColor("white");

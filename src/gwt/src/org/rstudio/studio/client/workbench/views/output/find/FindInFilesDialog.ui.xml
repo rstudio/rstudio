@@ -26,7 +26,7 @@
 
    <g:HTMLPanel styleName="{style.panel}">
       <p>
-         <g:Label text="Find:"/>
+         <widget:FormLabel ui:field="labelSearchPattern_" text="Find:"/>
          <g:TextBox ui:field="txtSearchPattern_" styleName="{style.pattern}"/>
          <br/>
          <g:CheckBox ui:field="checkboxCaseSensitive_" text="Case sensitive"/>
@@ -38,7 +38,7 @@
          <widget:DirectoryChooserTextBox ui:field="dirChooser_"/>
       </p>
 
-      <p><g:Label text="Search these files:"/>
+      <p><widget:FormLabel ui:field="labelFilePatterns_" text="Search these files:"/>
          <g:ListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">All Files</g:item>

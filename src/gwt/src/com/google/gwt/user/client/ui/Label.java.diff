@@ -1,0 +1,27 @@
+155a156,181
+>    * Creates a label with the specified text, which is associated with
+>    * the specified form control.
+>    *
+>    * @param text the new label's text
+>    * @param forId id of element associated with this label
+>    */
+>   public Label(String text, String forId) {
+>     super(false, forId);
+>     setStyleName("gwt-Label");
+>     setText(text);
+>   }
+> 
+>   /**
+>    * Creates a label with the specified text, which is associated with
+>    * the specified form control.
+>    *
+>    * @param text the new label's text
+>    * @param forId id of element associated with this label
+>    * @param wordWrap <code>false</code> to disable word wrapping
+>    */
+>   public Label(String text, String forId, boolean wordWrap) {
+>     this(text, forId);
+>     setWordWrap(wordWrap);
+>   }
+> 
+>   /**

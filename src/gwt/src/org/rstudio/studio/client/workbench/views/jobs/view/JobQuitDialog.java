@@ -1,5 +1,5 @@
 /*
- * JobQuitControls.java
+ * JobQuitDialog.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *

@@ -121,7 +121,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    protected RStudioFrame createFrame(String url)
    {
-      return new RStudioFrame(url);
+      return new RStudioFrame("Shiny Application", url);
    }
 
    private Label urlBox_;

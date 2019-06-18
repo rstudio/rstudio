@@ -1,7 +1,7 @@
 /*
  * ProjectPackratPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -135,7 +135,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         panelExternalPackages_.add(new LabelWithHelp(
               "External packages (comma separated):",
               "packrat_external_packages",
-              false));
+              false, "Help on external packages"));
         taExternalPackages_ = new FixedTextArea(3);
         taExternalPackages_.addStyleName(styles.externalPackages());
         taExternalPackages_.setText(

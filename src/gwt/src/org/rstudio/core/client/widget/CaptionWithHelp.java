@@ -1,7 +1,7 @@
 /*
  * CaptionWithHelp.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
-
+import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -29,7 +30,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class CaptionWithHelp extends Composite
@@ -49,11 +49,12 @@ public class CaptionWithHelp extends Composite
       
       HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
-      captionLabel_ = new Label(caption);
+      captionLabel_ = new FormLabel(caption);
       panel.add(captionLabel_);
       helpPanel_ = new HorizontalPanel();
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
+      A11y.setDecorativeImage(helpImage.getElement());
       helpPanel_.add(helpImage);
       HyperlinkLabel link = new HyperlinkLabel(helpCaption);
       link.addStyleName(styles.helpLink());
@@ -77,6 +78,15 @@ public class CaptionWithHelp extends Composite
    public void setCaption(String caption)
    {
       captionLabel_.setText(caption);
+   }
+
+   /**
+    * Associate caption with a widget for a11y
+    * @param widget
+    */
+   public void setFor(Widget widget)
+   {
+      captionLabel_.setFor(widget);
    }
    
    public void setRStudioLinkName(String linkName)
@@ -124,7 +134,7 @@ public class CaptionWithHelp extends Composite
       styles.ensureInjected();
    }
    
-   private Label captionLabel_;
+   private FormLabel captionLabel_;
    private String rstudioLinkName_;
    private boolean includeVersionInfo_ = true;
    private HorizontalPanel helpPanel_;

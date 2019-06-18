@@ -1,7 +1,7 @@
 /*
  * UrlContentEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -408,8 +408,9 @@ public class UrlContentEditingTarget implements EditingTarget
 
    protected Display createDisplay()
    {
-      return new UrlContentEditingTargetWidget(commands_,
-                                                getContentUrl());
+      return new UrlContentEditingTargetWidget("Url Content Editing",
+            commands_,
+            getContentUrl());
    }
 
    public long getFileSizeLimit()
