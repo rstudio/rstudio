@@ -64,12 +64,17 @@ public:
    {
       // The computed layer is created later since computations may involve evaluating R code (which
       // we can't do in early init)
-      auto layer = boost::make_shared<UserPrefsComputedLayer>();
-      Error error = layer->readPrefs();
-      if (error)
-         return error;
+      LOCK_MUTEX(mutex_)
+      {
+         auto layer = boost::make_shared<UserPrefsComputedLayer>();
+         Error error = layer->readPrefs();
+         if (error)
+            return error;
 
-      layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, layer);
+         layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, layer);
+      }
+      END_LOCK_MUTEX
+
       return Success();
    }
 

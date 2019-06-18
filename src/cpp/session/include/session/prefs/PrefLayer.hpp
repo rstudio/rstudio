@@ -19,6 +19,13 @@
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#include <core/system/FileMonitor.hpp>
+#include <core/system/FileChangeEvent.hpp>
+
+#include <core/BoostSignals.hpp>
+#include <core/FileInfo.hpp>
+#include <core/Thread.hpp>
+
 namespace rstudio {
    namespace core {
       class Error;
@@ -37,61 +44,91 @@ public:
    virtual core::Error validatePrefs() = 0;
    virtual ~PrefLayer();
 
-   template<typename T> boost::optional<T> readPref(const std::string& name) const
+   template<typename T> boost::optional<T> readPref(const std::string& name)
    {
       // Ensure we have a cache from which to read preferences
-      if (!cache_)
+      LOCK_MUTEX(mutex_)
       {
-         LOG_WARNING_MESSAGE("Attempt to look up preference '" + name + "' before preferences "
-               "were read");
-         return boost::none;
-      }
-
-      // Locate the preference in the cache
-      const auto it = cache_->find(name);
-      if (it != cache_->end())
-      {
-         // Ensure the preference we found is of the correct type. 
-         if (!core::json::isType<T>((*it).value()))
-         {  
-            core::Error error(core::json::errc::ParamTypeMismatch, ERROR_LOCATION);
-            error.addProperty("description", "unexpected type "
-                  "'" + core::json::typeAsString((*it).value()) + "'"
-                  " for preference '" + name + "'");
-            LOG_ERROR(error);
+         if (!cache_)
+         {
+            LOG_WARNING_MESSAGE("Attempt to look up preference '" + name + "' before preferences "
+                  "were read");
             return boost::none;
          }
 
-         // Return the preference
-         return (*it).value().get_value<T>();
+         // Locate the preference in the cache
+         const auto it = cache_->find(name);
+         if (it != cache_->end())
+         {
+            // Ensure the preference we found is of the correct type. 
+            if (!core::json::isType<T>((*it).value()))
+            {  
+               core::Error error(core::json::errc::ParamTypeMismatch, ERROR_LOCATION);
+               error.addProperty("description", "unexpected type "
+                     "'" + core::json::typeAsString((*it).value()) + "'"
+                     " for preference '" + name + "'");
+               LOG_ERROR(error);
+               return boost::none;
+            }
+
+            // Return the preference
+            return (*it).value().get_value<T>();
+         }
       }
+      END_LOCK_MUTEX;
+
       return boost::none;
    };
 
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
       // Ensure we have a cache to use as a baseline for writing
-      if (!cache_)
+      core::Error error;
+      LOCK_MUTEX(mutex_)
       {
-         core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
-         error.addProperty("description", "cannot write property '" + name + "' before reading it");
-         return error;
+         if (!cache_)
+         {
+            core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
+            error.addProperty("description", "cannot write property '" + name + "' before reading it");
+            return error;
+         }
+         (*cache_)[name] = value;
+         error = writePrefs(*cache_);
       }
-      (*cache_)[name] = value;
-      return writePrefs(*cache_);
+      END_LOCK_MUTEX;
+      return error;
    }
 
-   core::json::Object allPrefs() const;
-   boost::optional<core::json::Value> readValue(const std::string& name) const;
+   RSTUDIO_BOOST_SIGNAL<void()> onChanged;
+
+   core::json::Object allPrefs();
+   boost::optional<core::json::Value> readValue(const std::string& name);
    core::Error clearValue(const std::string& name);
    core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
 
 protected:
+   // I/O methods
    core::Error loadPrefsFromFile(const core::FilePath& prefsFile);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
    core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
 
+   // File registration for automatic update
+   void monitorPrefsFile(const core::FilePath& prefsFile);
+   virtual void onPrefsFileChanged();
+
+   // The actual cache of preference values, and a mutex that guards access
    boost::shared_ptr<core::json::Object> cache_;
+   boost::mutex mutex_;
+
+private:
+   // File monitor event handlers
+   boost::optional<core::system::file_monitor::Handle> handle_;
+   void fileMonitorRegistered(core::system::file_monitor::Handle handle,
+                              const tree<core::FileInfo>& files);
+   void fileMonitorFilesChanged(
+                   const std::vector<core::system::FileChangeEvent>& events);
+   void fileMonitorTermination(const core::Error& error);
+
 };
 
 } // namespace prefs

@@ -26,10 +26,15 @@ namespace prefs {
 class UserPrefsLayer: public PrefLayer
 {
 public:
-   core::Error readPrefs();
-   core::Error writePrefs(const core::json::Object &prefs);
-   core::Error validatePrefs();
+   core::Error readPrefs() override;
+   core::Error writePrefs(const core::json::Object &prefs) override;
+   core::Error validatePrefs() override;
+
+protected:
+   void onPrefsFileChanged() override;
+
 private:
+   // The path we're reading the preference file from
    core::FilePath prefsFile_;
 };
 

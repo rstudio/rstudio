@@ -18,6 +18,7 @@
 #include <core/system/Xdg.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
@@ -26,22 +27,49 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
-core::Error UserPrefsLayer::readPrefs()
+Error UserPrefsLayer::readPrefs()
 {
+   Error err;
    prefsFile_ = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+
+   // After deferred init, start monitoring the prefs file for changes
+   module_context::events().onDeferredInit.connect([&](bool) {
+      monitorPrefsFile(prefsFile_);
+   });
+
    return loadPrefsFromFile(prefsFile_);
 }
 
-core::Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
+void UserPrefsLayer::onPrefsFileChanged()
+{
+   // Reload the prefs from the file
+   Error error = loadPrefsFromFile(prefsFile_);
+   if (error)
+      LOG_ERROR(error);
+   else
+      onChanged();
+}
+
+Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
 {
    if (prefsFile_.empty())
    {
       return fileNotFoundError(ERROR_LOCATION);
    }
-   return writePrefsToFile(prefs, prefsFile_);
+   Error error;
+
+   LOCK_MUTEX(mutex_)
+   {
+      *cache_ = prefs;
+   }
+   END_LOCK_MUTEX
+
+   error = writePrefsToFile(*cache_, prefsFile_);
+
+   return error;
 }
 
-core::Error UserPrefsLayer::validatePrefs()
+Error UserPrefsLayer::validatePrefs()
 {
    return validatePrefsFromSchema(
       options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));

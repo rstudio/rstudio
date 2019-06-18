@@ -68,9 +68,13 @@ core::Error Preferences::initialize()
    {
       for (auto layer: layers_)
       {
+         // Validate the layer and log errors for violations
          error = layer->validatePrefs();
          if (error)
             LOG_ERROR(error);
+
+         // Subscribe for layer change notifications
+         layer->onChanged.connect(boost::bind(&Preferences::onPrefLayerChanged, this));
       }
    }
    END_LOCK_MUTEX
@@ -187,6 +191,10 @@ Error Preferences::clearValue(const std::string &name)
    }
    END_LOCK_MUTEX
    return result;
+}
+
+void Preferences::onPrefLayerChanged()
+{
 }
 
 } // namespace prefs

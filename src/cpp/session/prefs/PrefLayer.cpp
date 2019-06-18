@@ -22,24 +22,43 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace prefs {
+namespace {
+
+bool prefsFileFilter(const core::FilePath& prefsFile, const core::FileInfo& fileInfo)
+{
+   return prefsFile.absolutePath() == fileInfo.absolutePath();
+}
+
+} // anonymous namespace
 
 PrefLayer::~PrefLayer()
 {
-   // No-op virtual destructor
+   // End file monitoring if not already terminated
+   if (handle_)
+   {
+      core::system::file_monitor::unregisterMonitor(*handle_);
+      handle_ = boost::none;
+   }
 }
 
-core::json::Object PrefLayer::allPrefs() const
+core::json::Object PrefLayer::allPrefs()
 {
-   return *cache_;
+   LOCK_MUTEX(mutex_)
+   {
+      return *cache_;
+   }
+   END_LOCK_MUTEX;
+
+   return json::Object();
 }
 
-core::Error PrefLayer::writePrefs(const core::json::Object &prefs)
+Error PrefLayer::writePrefs(const core::json::Object &prefs)
 {
    // Most preference layers aren't writable, so the default implementation throws an error.
    return systemError(boost::system::errc::function_not_supported, ERROR_LOCATION);
 }
 
-core::Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
+Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
 {
    json::Value val;
    std::string contents;
@@ -80,7 +99,7 @@ core::Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    return Success();
 }
 
-core::Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
+Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
 {
    std::string contents;
    Error error = readStringFromFile(schemaFile, &contents);
@@ -91,7 +110,7 @@ core::Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
    return json::getSchemaDefaults(contents, cache_.get());
 }
 
-core::Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
+Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
 {
    json::Value val;
    std::string contents;
@@ -102,49 +121,116 @@ core::Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
   return json::validate(*cache_, contents, ERROR_LOCATION);
 }
 
-core::Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
-      const core::FilePath& prefsFile)
+Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile)
 {
-   *cache_ = prefs;
-
-   std::ostringstream oss;
-   json::writeFormatted(prefs, oss);
+   Error error;
 
    // If the preferences file doesn't exist, ensure its directory does.
    if (!prefsFile.exists())
    {
-      Error error = prefsFile.parent().ensureDirectory();
+      error = prefsFile.parent().ensureDirectory();
       if (error)
          return error;
    }
 
-   return writeStringToFile(prefsFile, oss.str());
+   // Save the new preferences to file
+   std::ostringstream oss;
+   json::writeFormatted(prefs, oss);
+   error = writeStringToFile(prefsFile, oss.str());
+
+   return error;
 }
 
-boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name) const
+boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
 {
-   const auto it = cache_->find(name);
-   if (it == cache_->end())
+   LOCK_MUTEX(mutex_)
    {
-      // The value doesn't exist in this layer.
-      return boost::none;
+      const auto it = cache_->find(name);
+      if (it == cache_->end())
+      {
+         // The value doesn't exist in this layer.
+         return boost::none;
+      }
+      return (*it).value().clone();
    }
-   return (*it).value().clone();
+   END_LOCK_MUTEX
+
+   return boost::none;
 }
 
-
-core::Error PrefLayer::clearValue(const std::string& name)
+Error PrefLayer::clearValue(const std::string& name)
 {
-   auto it = cache_->find(name);
-   if (it == cache_->end())
+   LOCK_MUTEX(mutex_)
    {
-      // No value to clear!
-      return Success();
+      auto it = cache_->find(name);
+      if (it == cache_->end())
+      {
+         // No value to clear!
+         return Success();
+      }
+
+      cache_->erase(it);
+      return writePrefs(*cache_);
+   }
+   END_LOCK_MUTEX
+
+   return Success();
+}
+
+void PrefLayer::onPrefsFileChanged()
+{
+   // No-op for override
+}
+
+void PrefLayer::fileMonitorRegistered(core::system::file_monitor::Handle handle,
+                                      const tree<core::FileInfo>& files)
+{
+   // Save handle to unregister later
+   handle_ = handle;
+}
+
+void PrefLayer::fileMonitorFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (events.size() > 0)
+   {
+      // No need to introspect the event since we discard all events not associated with the
+      // preference file.
+      onPrefsFileChanged();
+   }
+}
+
+void PrefLayer::fileMonitorTermination(const Error& error)
+{
+   if (error)
+      LOG_ERROR(error);
+
+   // Clear file monitoring handle
+   handle_ = boost::none; 
+}
+
+void PrefLayer::monitorPrefsFile(const core::FilePath& prefsFile)
+{
+   // Sanity check: end any existing monitoring before initiating another
+   if (handle_)
+   {
+      core::system::file_monitor::unregisterMonitor(*handle_);
+      handle_ = boost::none;
    }
 
-   cache_->erase(it);
-   return writePrefs(*cache_);
+   // Kickoff file monitoring for the directory containing the file
+   using boost::bind;
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = bind(&PrefLayer::fileMonitorRegistered, this, _1, _2);
+   cb.onRegistrationError = bind(&PrefLayer::fileMonitorTermination, this, _1);
+   cb.onMonitoringError = bind(&PrefLayer::fileMonitorTermination, this, _1);
+   cb.onFilesChanged = bind(&PrefLayer::fileMonitorFilesChanged, this, _1);
+   cb.onUnregistered = bind(&PrefLayer::fileMonitorTermination, this, Success());
+   core::system::file_monitor::registerMonitor(prefsFile.parent(), 
+         false /* recursive */, 
+         bind(prefsFileFilter, prefsFile, _1),
+         cb);
 }
+
 
 } // namespace prefs
 } // namespace session

@@ -73,13 +73,13 @@ public:
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
       core::Error err;
-      LOCK_MUTEX(mutex_)
+      auto layer = layers_[userLayer()];
+      if (layer->readPref<T>(name) != value)
       {
-         auto layer = layers_[userLayer()];
-         onChanged(name);
+         // Write a new value when changing the value
          err = layer->writePref(name, value);
+         onChanged(name);
       }
-      END_LOCK_MUTEX
 
       return err;
    }
@@ -92,13 +92,16 @@ public:
    virtual core::Error createLayers() = 0;
    virtual int userLayer() = 0;
 
-   // Signal emitted when preferences change; can include the pref name when only one pref chagnes.
+   // Signal emitted when preferences change; can include the pref name when only one pref changes.
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)> onChanged;
 
 protected:
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
    boost::mutex mutex_;
+
+private:
+   void onPrefLayerChanged();
 };
 
 } // namespace prefs

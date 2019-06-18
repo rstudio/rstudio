@@ -35,7 +35,7 @@ namespace system {
 class FileChangeEvent
 {
 public:
-   // NOTE: skip 2 for compatabilty with old clients (used to be FileRenamed)
+   // NOTE: skip 2 for compatibility with old clients (used to be FileRenamed)
    enum Type 
    { 
       None = 0,
