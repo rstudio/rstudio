@@ -437,6 +437,7 @@ Error getPackageStateJson(json::Object* pJson)
       r::json::jsonValueFromObject(packageList, &packageListJson);
       (*pJson)["package_list"] = packageListJson;
       (*pJson)["packrat_context"] = packrat::contextAsJson(context);
+      (*pJson)["renv_context"] = module_context::renvContextAsJson();
    }
 
    return error;

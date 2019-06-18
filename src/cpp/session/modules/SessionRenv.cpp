@@ -18,9 +18,54 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <r/RExec.hpp>
+#include <r/RJson.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
+
 using namespace rstudio::core;
+
+namespace rstudio {
+namespace session {
+namespace module_context {
+
+core::json::Object renvContextAsJson()
+{
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+
+   Error error =
+         r::exec::RFunction(".rs.renv.context")
+         .call(&resultSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Object();
+   }
+
+   json::Value resultJson;
+   error = r::json::jsonValueFromObject(resultSEXP, &resultJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Object();
+   }
+
+   if (resultJson.type() != json::ObjectType)
+   {
+      error = systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      LOG_ERROR(error);
+      return json::Object();
+   }
+
+   return resultJson.get_obj();
+}
+
+} // end namespace module_context
+} // end namespace session
+} // end namespace rstudio
 
 namespace rstudio {
 namespace session {
