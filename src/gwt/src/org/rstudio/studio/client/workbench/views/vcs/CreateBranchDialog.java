@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
@@ -101,10 +100,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       container_ = new VerticalPanel();
       
-      String label = "Branch Name:";
       tbBranch_ = textBox();
-      String textBoxId = ElementIds.idFromLabel(label);
-      tbBranch_.getElement().setId(textBoxId);
       Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -176,7 +172,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      ctrBranch.setWidget(0, 0, new FormLabel(label, textBoxId));
+      FormLabel branchLabel = new FormLabel("Branch Name:");
+      branchLabel.setFor(tbBranch_);
+      ctrBranch.setWidget(0, 0, branchLabel);
       ctrBranch.setWidget(0, 1, tbBranch_);
       
       HorizontalPanel ctrRemote = new HorizontalPanel();

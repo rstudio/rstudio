@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -64,17 +63,14 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    {
       super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
-
-      final String nameLabel = "Remote Name:";
-      final String urlLabel = "Remote URL:";
-      final String NAME_ID = ElementIds.idFromLabel(nameLabel);
-      final String URL_ID = ElementIds.idFromLabel(urlLabel);
       
       container_ = new VerticalPanel();
-      lblName_ = label(nameLabel, NAME_ID);
-      lblUrl_ = label(urlLabel, URL_ID);
-      tbName_ = textBox(NAME_ID);
-      tbUrl_ = textBox(URL_ID);
+      lblName_ = label("Remote Name:");
+      lblUrl_ = label("Remote URL:");
+      tbName_ = textBox();
+      tbUrl_ = textBox();
+      lblName_.setFor(tbName_);
+      lblUrl_.setFor(tbUrl_);
       
       tbName_.addKeyDownHandler(this);
       tbUrl_.addKeyDownHandler(this);
@@ -126,20 +122,19 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       enableOkButton(isValidState);
    }
    
-   private TextBox textBox(String id)
+   private TextBox textBox()
    {
       TextBox textBox = new TextBox();
       textBox.setWidth("260px");
       textBox.getElement().getStyle().setMarginBottom(6, Unit.PX);
       textBox.getElement().setAttribute("spellcheck", "false");
-      textBox.getElement().setId(id);
       Roles.getTextboxRole().setAriaRequiredProperty(textBox.getElement(), true);
       return textBox;
    }
    
-   private FormLabel label(String text, String forId)
+   private FormLabel label(String text)
    {
-      FormLabel label = new FormLabel(text, forId);
+      FormLabel label = new FormLabel(text);
       label.getElement().getStyle().setMarginBottom(4, Unit.PX);
       return label;
    }
