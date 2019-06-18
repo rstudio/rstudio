@@ -29,3 +29,42 @@
    lapply(context, .rs.scalar)
    
 })
+
+.rs.addFunction("renv.readLockfilePackages", function(project)
+{
+   lockpath <- file.path(project, "renv.lock")
+   lockfile <- renv:::renv_lockfile_read(lockpath)
+   packages <- lockfile$R$Package
+   filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
+   df <- .rs.rbindList(filtered)
+   rownames(df) <- NULL
+   df
+})
+
+.rs.addFunction("renv.listPackages", function(project) {
+   
+   # get list of packages
+   installedPackages <- .rs.listInstalledPackages()
+   
+   # try to read the lockfile (return plain library list if this fails)
+   lockfilePackages <- .rs.tryCatch(.rs.renv.readLockfilePackages(project))
+   if (inherits(lockfilePackages, "error"))
+      return(installedPackages)
+   
+   # rename columns for conformity of Packrat stuff
+   names(lockfilePackages) <- c("name", "packrat.version", "packrat.source")
+
+   # note which packages are in project library
+   installedPackages[["in.project.library"]] <-
+      installedPackages$library_absolute == renv:::renv_paths_library(project = project)
+
+   # merge together
+   merge.data.frame(
+      x = installedPackages,
+      y = lockfilePackages,
+      by = "name",
+      all.x = TRUE,
+      all.y = TRUE
+   )
+   
+})
