@@ -261,9 +261,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       appNameTextBox_.setFocus(true);
    }
    

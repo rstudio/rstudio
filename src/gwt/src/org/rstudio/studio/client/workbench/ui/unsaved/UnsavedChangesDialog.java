@@ -120,7 +120,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       focusOkButton();
    }

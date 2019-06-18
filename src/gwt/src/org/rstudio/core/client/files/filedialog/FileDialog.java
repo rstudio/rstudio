@@ -196,7 +196,7 @@ public abstract class FileDialog extends FileSystemDialog
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       browser_.setFilenameFocus(true);
       browser_.selectFilename();

@@ -92,7 +92,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       txtTitle_.setFocus(true);
       txtTitle_.selectAll();

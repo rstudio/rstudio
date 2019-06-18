@@ -1123,15 +1123,18 @@ void searchSourceDatabase(const std::string& term,
    }
 }
 
-// global source file index
-SourceFileIndex s_projectIndex;
+SourceFileIndex& projectIndex()
+{
+   static SourceFileIndex instance;
+   return instance;
+}
 
 } // end anonymous namespace
 
 boost::shared_ptr<r_util::RSourceIndex> getIndexedProjectFile(
       const FilePath& filePath)
 {
-   return s_projectIndex.get(filePath);
+   return projectIndex().get(filePath);
 }
 
 void searchSource(const std::string& term,
@@ -1160,7 +1163,7 @@ void searchSource(const std::string& term,
 
    // now search the project (excluding contexts already searched in the source db)
    std::vector<r_util::RSourceItem> projItems;
-   s_projectIndex.searchSource(term,
+   projectIndex().searchSource(term,
                                maxProjResults,
                                prefixOnly,
                                srcDBContexts,
@@ -1259,7 +1262,7 @@ void searchFiles(const std::string& term,
    // if we have a file monitor then search the project index
    if (session::projects::projectContext().hasFileMonitor())
    {
-      s_projectIndex.searchFiles(term,
+      projectIndex().searchFiles(term,
                                  maxResults,
                                  false,
                                  sourceFilesOnly,
@@ -2165,7 +2168,7 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
       r_util::RSourceItem sourceItem;
       bool found =
          findGlobalFunctionInSourceDatabase(token.name, &sourceItem, &contexts) ||
-         s_projectIndex.findGlobalFunction(token.name, contexts, &sourceItem);
+         projectIndex().findGlobalFunction(token.name, contexts, &sourceItem);
 
       // found the file
       if (found)
@@ -2311,7 +2314,7 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
 
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
-   s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
+   projectIndex().enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -2319,13 +2322,13 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    std::for_each(
          events.begin(),
          events.end(),
-         boost::bind(&SourceFileIndex::enqueFileChange, &s_projectIndex, _1));
+         boost::bind(&SourceFileIndex::enqueFileChange, &projectIndex(), _1));
 }
 
 void onFileMonitorDisabled()
 {
    // clear the index so we don't ever get stale results
-   s_projectIndex.clear();
+   projectIndex().clear();
 }
 
 SEXP rs_scoreMatches(SEXP suggestionsSEXP,
@@ -2377,7 +2380,7 @@ SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxResultsSE
    if (!projects::projectContext().isMonitoringDirectory(filePath))
       return R_NilValue;
    
-   s_projectIndex.searchFiles(term,
+   projectIndex().searchFiles(term,
                               maxResults,
                               false,
                               false,
@@ -2406,7 +2409,7 @@ SEXP rs_listIndexedFolders(SEXP termSEXP,
    
    std::vector<std::string> paths;
    bool moreAvailable = false;
-   s_projectIndex.searchFolders(term,
+   projectIndex().searchFolders(term,
                                 filePath,
                                 maxResults,
                                 &paths,
@@ -2432,7 +2435,7 @@ SEXP rs_listIndexedFilesAndFolders(SEXP termSEXP,
 
    std::vector<std::string> paths;
    bool moreAvailable = false;
-   s_projectIndex.searchFilesAndFolders(term,
+   projectIndex().searchFilesAndFolders(term,
                                         filePath,
                                         maxResults,
                                         &paths,
@@ -2510,7 +2513,7 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
    FilePath buildTarget = projects::projectContext().buildTargetPath();
    
    if (!buildTarget.empty())
-      s_projectIndex.walkFiles(
+      projectIndex().walkFiles(
                buildTarget,
                boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));
    

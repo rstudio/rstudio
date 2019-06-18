@@ -17,6 +17,7 @@
 
 #include <gsl/gsl>
 
+#include <core/Debug.hpp>
 #include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
 
@@ -233,6 +234,13 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    // add verbose output if requested
    if (verbose_ >= 2)
      args.push_back("-v");
+
+   // report to user if requested
+   if (verbose_ > 1)
+   {
+      std::cerr << "COMPILATION ARGUMENTS:" << std::endl;
+      core::debug::print(args);
+   }
 
    // get the args in the fashion libclang expects (char**)
    core::system::ProcessArgs argsArray(args);

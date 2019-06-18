@@ -159,8 +159,11 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
       // kill child processes before going down
       terminateAllChildProcesses();
 
-      // abort
-      ::abort();
+      // abort the process
+      // we no longer do this with ::abort because it generated unwanted exceptions
+      // ::_Exit should perform the same functionality (not running destructors and exiting process)
+      // without generating an exception
+      std::_Exit(EXIT_SUCCESS);
       return true;
    }
    else

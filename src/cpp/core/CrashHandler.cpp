@@ -293,6 +293,7 @@ Error initialize(ProgramMode programMode)
    // initialize and start crashpad client
    s_crashpadClient.reset(new crashpad::CrashpadClient());
    std::map<std::string, std::string> annotations;
+   annotations["sentry[release]"] = RSTUDIO_VERSION;
    std::vector<std::string> args {"--no-rate-limit"};
 
 #ifdef __linux__

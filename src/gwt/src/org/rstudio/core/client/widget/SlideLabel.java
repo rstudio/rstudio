@@ -155,7 +155,7 @@ public class SlideLabel extends Composite
          progress_.getStyle().setDisplay(Style.Display.NONE);
       curtain_.setHeight("0px");
 
-      cancel_.setVisible(false);
+      setCancelVisible(false);
       Roles.getPresentationRole().set(border_);
       Roles.getProgressbarRole().set(innerTable_);
       progress_.setAlt("Spinner");
@@ -295,7 +295,7 @@ public class SlideLabel extends Composite
    public void onCancel(final Operation onCancel)
    {
       onCancel_ = onCancel;
-      cancel_.setVisible(onCancel != null);
+      setCancelVisible(onCancel != null);
    }
 
    private void setHeight(double height)
@@ -316,6 +316,17 @@ public class SlideLabel extends Composite
          currentAutoHideTimer_.cancel();
          currentAutoHideTimer_ = null;
       }
+   }
+
+   private void setCancelVisible(boolean visible)
+   {
+      cancel_.setVisible(visible);
+      
+      // also disable so it isn't picked up as potentially focusable via Tab key
+      if (!visible)
+         cancel_.getElement().setAttribute("disabled", "");
+      else
+         cancel_.getElement().removeAttribute("disabled");
    }
 
    @UiField

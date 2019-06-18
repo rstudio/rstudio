@@ -823,7 +823,7 @@ int asJsonType(const T& object,
 }
 
 template <typename T>
-struct is_json_type : public boost::is_same<T, Value>
+struct is_json_type : public boost::is_base_of<Value, T>
 {
 };
 

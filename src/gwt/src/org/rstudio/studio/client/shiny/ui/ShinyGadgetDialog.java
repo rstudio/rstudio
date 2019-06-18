@@ -102,9 +102,8 @@ public class ShinyGadgetDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       frame_.getWindow().focus();
    }
    

@@ -252,7 +252,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       if (installFromRepository())
          FocusHelper.setFocusDeferred(packagesSuggestBox_);

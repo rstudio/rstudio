@@ -44,7 +44,6 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -185,7 +184,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
-   void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
    void injectMembers(TypoSpellChecker typoSpellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);

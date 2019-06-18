@@ -164,23 +164,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       return panel_;
    }
 
-   @Override
-   protected void onDialogShown()
-   {
-      focusOkButton();
-   }
-
-   @Override
-   protected void focusFirstControl()
-   {
-      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-         public void execute()
-         {
-            sectionChooser_.focus();
-         }
-      });
-   }
-
    protected void hidePane(int index)
    {
       sectionChooser_.hideSection(index);
