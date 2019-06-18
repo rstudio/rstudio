@@ -31,6 +31,8 @@
 #include <core/http/Response.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -551,6 +553,44 @@ void handleLocalCustomThemeRequest(const http::Request& request,
       request);
 }
 
+Error syncThemePrefs()
+{
+   // Determine whether the preference storing the theme is out of sync with the theme details in
+   // user state.
+   Error err;
+   std::string prefTheme = prefs::userPrefs().editorTheme(); 
+   json::Object stateTheme = prefs::userState().theme();
+   auto themeName = stateTheme.find(kThemeName);
+   if (themeName != stateTheme.end() &&
+       (*themeName).value().get_str() != prefTheme)
+   {
+      bool found = false;
+      ThemeMap themes = getAllThemes();
+      json::Array jsonThemeArray;
+      for (auto theme: themes)
+      {
+         if (std::get<0>(theme.second) == prefTheme)
+         {
+            found = true;
+            json::Object jsonTheme;
+            jsonTheme["name"] = std::get<0>(theme.second);
+            jsonTheme["url"] = std::get<1>(theme.second);
+            jsonTheme["isDark"] = std::get<2>(theme.second);
+            err = prefs::userState().setTheme(jsonTheme);
+            break;
+         }
+      }
+
+      if (!found)
+      {
+         LOG_WARNING_MESSAGE("The theme preference was set to '" + prefTheme + "' "
+               "but no theme with that name was found.");
+      }
+   }
+
+   return err;
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -574,7 +614,8 @@ Error initialize()
       (bind(registerRpcMethod, "remove_theme", removeTheme))
       (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
+      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest))
+      (bind(syncThemePrefs));
 
    return initBlock.execute();
 }
