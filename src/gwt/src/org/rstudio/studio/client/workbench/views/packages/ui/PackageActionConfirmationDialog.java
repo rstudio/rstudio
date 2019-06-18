@@ -165,7 +165,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          public void onError(ServerError error)
          {
             closeDialog();
-            super.onError(error);
+            super.onError(error);            
          }  
       });
  
@@ -241,18 +241,17 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       enableOkButton(collectInput().size() > 0);
    }
    
-   interface Styles extends CssResource
+   static interface Styles extends CssResource
    {
       String mainWidget();
       String explanatoryText();
    }
 
-   interface Resources extends ClientBundle
+   static interface Resources extends ClientBundle
    {
       @Source("PackageActionConfirmationDialog.css")
       Styles styles();
    }
-
 
    static Resources RESOURCES = (Resources) GWT.create(Resources.class);
 

@@ -213,7 +213,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
             }
 
             mirrorsLabel.setFor(listBox_);
-
+            
             // set it into the panel
             panel.setWidget(listBox_);
             

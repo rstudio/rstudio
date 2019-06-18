@@ -60,10 +60,9 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       txtTitle_.setText(defaultTitle);
       A11y.associateLabelWithField(titleLabel_, txtTitle_.getElement());
-
       txtAuthor_.setText(defaultAuthor);
       A11y.associateLabelWithField(authorLabel_, txtAuthor_.getElement());
-
+      
       if (showTypes_)
       {
          setType(defaultType);

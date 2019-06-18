@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.DOM;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -76,9 +74,7 @@ public class SelectWidget extends Composite
       if (values == null)
          values = options;
 
-      String labelId = ElementIds.idFromLabel(StringUtil.isNullOrEmpty(label) ? DOM.createUniqueId() : label);
       listBox_ = new ListBox();
-      listBox_.getElement().setId(labelId);
       listBox_.setMultipleSelect(isMultipleSelect);
       if (options == null)
       {
@@ -94,7 +90,7 @@ public class SelectWidget extends Composite
       if (horizontalLayout)
       {
          horizontalPanel_ = new HorizontalPanel();
-         label_ = new FormLabel(label, labelId);
+         label_ = new FormLabel(label);
          if (listOnLeft)
          {
             horizontalPanel_.add(listBox_);
@@ -114,12 +110,12 @@ public class SelectWidget extends Composite
       else
       {
          label_ = new FormLabel(label, true);
-         label_.setFor(labelId);
          flowPanel_ = new FlowPanel();
          flowPanel_.add(label_);
          panel = flowPanel_;
          panel.add(listBox_);
       }
+      label_.setFor(listBox_);
       
       initWidget(panel);
       

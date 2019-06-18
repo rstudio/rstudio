@@ -139,7 +139,7 @@ implements HasEnsureVisibleHandlers
       widget.addStyleName(res_.styles().textBoxWithChooser());
       return widget;
    }
-
+   
    protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)
    {
       HorizontalPanel panel = new HorizontalPanel();

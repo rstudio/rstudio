@@ -208,7 +208,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       txtKeyPath.setWidth("100%");
       namePanel.add(txtKeyPath);
       pathCaption.setFor(txtKeyPath);
-
+      
       panel.add(namePanel);
       
       HorizontalPanel passphrasePanel = new HorizontalPanel();

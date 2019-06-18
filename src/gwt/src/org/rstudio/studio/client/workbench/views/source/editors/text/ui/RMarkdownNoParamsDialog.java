@@ -80,7 +80,7 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
       
       horizontalPanel.add(messagePanel);
       panel.add(horizontalPanel);
-
+      
       // read the message when dialog is shown
       setARIADescribedBy(label.getElement());
       return panel;

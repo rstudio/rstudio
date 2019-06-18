@@ -116,7 +116,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       tbName_.setFocus(true);
       tbName_.selectAll();
    }
-
+   
    private void synchronize()
    {
       boolean isValidState =

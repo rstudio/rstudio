@@ -337,7 +337,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       label.getElement().getStyle().setColor("#888");
       return label;
    }
-
+   
    // Private members ----
    private final VerticalPanel container_;
    private final FilterWidget filterWidget_;

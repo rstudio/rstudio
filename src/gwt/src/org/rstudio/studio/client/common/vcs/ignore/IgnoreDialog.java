@@ -55,7 +55,7 @@ public class IgnoreDialog extends ModalDialogBase
       editor_ = new AceEditor();
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
-
+      
       ignoresCaption_.setFor(editor_.getWidget());
 
       saveButton_ = new ThemedButton("Save", (ClickHandler)null); 

@@ -146,7 +146,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       options.setName("_rstudio_package_news");
       globalDisplay_.openWindow(url, options);
    }
-
+   
    private final ProgressIndicator indicator_;
 
    // Injected ----

@@ -100,7 +100,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       enableOkButton(false);
       
       container_ = new VerticalPanel();
-
+      
       String label = "Branch Name:";
       tbBranch_ = textBox();
       String textBoxId = ElementIds.idFromLabel(label);
@@ -255,14 +255,14 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       return container_;
    }
-
+   
    @Override
    public void focusFirstControl()
    {
       tbBranch_.setFocus(true);
       tbBranch_.selectAll();
    }
-
+   
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();

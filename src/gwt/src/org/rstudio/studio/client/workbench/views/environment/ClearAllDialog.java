@@ -98,7 +98,7 @@ public class ClearAllDialog extends ModalDialogBase
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
       panel.add(horizontalPanel);
-
+      
        // read the message when dialog is shown
       setARIADescribedBy(label.getElement());
 

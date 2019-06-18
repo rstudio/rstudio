@@ -39,7 +39,7 @@ import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class SearchWidget extends Composite implements SearchDisplay
+public class SearchWidget extends Composite implements SearchDisplay                                   
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
@@ -62,6 +62,8 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          super(oracle, textBox, suggestDisplay);
       }
+      
+    
 
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
@@ -164,7 +166,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                   }   
                });
                    
-               break;
+               break ;
             }
          }
       }) ;
@@ -230,7 +232,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public HandlerRegistration addSelectionCommitHandler(
                                        SelectionCommitHandler<String> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType());
+      return addHandler(handler, SelectionCommitEvent.getType()) ;
    }
 
    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler)
@@ -265,12 +267,12 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public String getText()
    {
-      return suggestBox_.getText();
+      return suggestBox_.getText() ;
    }
 
    public void setText(String text)
    {
-      suggestBox_.setText(text);
+      suggestBox_.setText(text) ;
    }
 
    public void setText(String text, boolean fireEvents)

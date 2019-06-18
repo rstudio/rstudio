@@ -194,21 +194,21 @@ public class SpellingCustomDictionariesWidget extends Composite
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;
-
-   interface Styles extends CssResource
+   
+   static interface Styles extends CssResource
    {
       String helpButton();
       String listBox();
       String button();
    }
   
-   interface Resources extends ClientBundle
+   static interface Resources extends ClientBundle
    {
       @Source("SpellingCustomDictionariesWidget.css")
       Styles styles();
    }
    
-   static Resources RES = GWT.create(Resources.class) ;
+   static Resources RES = (Resources)GWT.create(Resources.class) ;
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();

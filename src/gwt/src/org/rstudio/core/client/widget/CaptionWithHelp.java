@@ -22,6 +22,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -56,9 +58,13 @@ public class CaptionWithHelp extends Composite
       helpPanel_.add(helpImage);
       HyperlinkLabel link = new HyperlinkLabel(helpCaption);
       link.addStyleName(styles.helpLink());
-      link.addClickHandler(event -> {
-         if (rstudioLinkName_ != null)
-            globalDisplay_.openRStudioLink(rstudioLinkName_, includeVersionInfo_);
+      link.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event)
+         {
+            if (rstudioLinkName_ != null)
+               globalDisplay_.openRStudioLink(rstudioLinkName_,
+                                              includeVersionInfo_);
+         }  
       });
       helpPanel_.add(link);
       panel.add(helpPanel_);

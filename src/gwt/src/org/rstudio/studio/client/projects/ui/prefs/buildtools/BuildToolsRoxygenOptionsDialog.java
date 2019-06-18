@@ -79,6 +79,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
       return true;
    }
 
+   
    @UiField
    CheckBox chkRocletRd_;
    @UiField
@@ -93,6 +94,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
    CheckBox chkRunForBuildPackage_;
    @UiField
    CheckBox chkRunForBuildAndReload_;
-
+   
+   
    private Widget mainWidget_; 
 }

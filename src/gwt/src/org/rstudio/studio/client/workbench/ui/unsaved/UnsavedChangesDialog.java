@@ -95,7 +95,13 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       super(title,
             Roles.getAlertdialogRole(),
             saveOperation, 
-            onCancelled != null ? (Operation) () -> onCancelled.execute() : null);
+            onCancelled != null ? new Operation() {
+                                    @Override
+                                    public void execute()
+                                    {
+                                       onCancelled.execute();
+                                    }} :
+                                  null);
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
       
@@ -164,11 +170,11 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                            "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
-
+      
       // read message when dialog shows
       setARIADescribedBy(captionLabel.getElement());
       
-      panel.add(scrollPanel);
+      panel.add(scrollPanel);      
       if (!StringUtil.isNullOrEmpty(alwaysSaveOption_))
       { 
          panel.add(chkAlwaysSave_);
@@ -270,7 +276,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       return true;
    }
    
-   interface Styles extends CssResource
+   static interface Styles extends CssResource
    {
       String targetScrollPanel();
       String captionLabel();
@@ -279,7 +285,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       String targetUntitled();
    }
 
-   interface Resources extends ClientBundle
+   static interface Resources extends ClientBundle
    {
       @Source("UnsavedChangesDialog.css")
       Styles styles();
