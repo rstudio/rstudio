@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
@@ -66,12 +67,19 @@ public class FormLabel extends Label
     */
    public void setFor(Widget widget)
    {
-      assert !StringUtil.isNullOrEmpty(getText()) : "FormLabel has not text, not supported";
-      if (StringUtil.isNullOrEmpty(getText()))
-         return;
-
-      String controlId = ElementIds.idFromLabel(getText());
-      widget.getElement().setId(controlId);
+      String controlId = widget.getElement().getId();
+      if (StringUtil.isNullOrEmpty(controlId))
+      {
+         if (StringUtil.isNullOrEmpty(getText()))
+         {
+            controlId = DOM.createUniqueId();
+         }
+         else
+         {
+            controlId = ElementIds.idFromLabel(getText());
+         }
+         widget.getElement().setId(controlId);
+      }
       getElement().setAttribute("for", controlId);
    }
 

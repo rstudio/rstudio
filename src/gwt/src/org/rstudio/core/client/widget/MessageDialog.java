@@ -15,7 +15,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
@@ -45,8 +44,6 @@ public class MessageDialog extends ModalDialogBase
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
       // read the message when dialog is shown
-      String messageId = DOM.createUniqueId();
-      messageWidget_.getElement().setId(messageId);
       setARIADescribedBy(messageWidget_.getElement());
    }
 

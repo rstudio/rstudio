@@ -80,6 +80,7 @@ public class ClearAllDialog extends ModalDialogBase
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
       Image image = new Image(new ImageResource2x(images.dialog_warning2x()));
+      image.setAltText("Warning");
       horizontalPanel.add(image);
 
       // add message widget
@@ -97,7 +98,10 @@ public class ClearAllDialog extends ModalDialogBase
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
       panel.add(horizontalPanel);
-      
+
+       // read the message when dialog is shown
+      setARIADescribedBy(label.getElement());
+
       // add include hidden option
       HorizontalPanel optionPanel = new HorizontalPanel();
       Style optionStyle = optionPanel.getElement().getStyle();

@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -35,7 +36,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -207,31 +207,34 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       txtKeyPath.setText(rsaSshKeyPath_.getPath());
       txtKeyPath.setWidth("100%");
       namePanel.add(txtKeyPath);
-      
+      pathCaption.setFor(txtKeyPath);
+
       panel.add(namePanel);
       
       HorizontalPanel passphrasePanel = new HorizontalPanel();
       passphrasePanel.addStyleName(styles.newSection());
       
       VerticalPanel passphrasePanel1 = new VerticalPanel();
-      Label passphraseLabel1 = new Label("Passphrase (optional):");
+      FormLabel passphraseLabel1 = new FormLabel("Passphrase (optional):");
       passphraseLabel1.addStyleName(styles.entryLabel());
       passphrasePanel1.add(passphraseLabel1);
       txtPassphrase_ = new PasswordTextBox();
       txtPassphrase_.addStyleName(styles.passphrase());
+      passphraseLabel1.setFor(txtPassphrase_);
       
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
       VerticalPanel passphrasePanel2 = new VerticalPanel();
       passphrasePanel2.addStyleName(styles.lastSection());
-      Label passphraseLabel2 = new Label("Confirm:");
+      FormLabel passphraseLabel2 = new FormLabel("Confirm:");
       passphraseLabel2.addStyleName(styles.entryLabel());
       passphrasePanel2.add(passphraseLabel2);
       txtConfirmPassphrase_ = new PasswordTextBox();
       txtConfirmPassphrase_.addStyleName(styles.passphraseConfirm());
       passphrasePanel2.add(txtConfirmPassphrase_);
       passphrasePanel.add(passphrasePanel2);
+      passphraseLabel2.setFor(txtConfirmPassphrase_);
       
       panel.add(passphrasePanel);
       

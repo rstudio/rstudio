@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
@@ -33,6 +34,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentC
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
@@ -620,16 +622,13 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIADescribedBy(Element element)
    {
+      String id = element.getId();
+      if (StringUtil.isNullOrEmpty(id))
+      {
+         id = DOM.createUniqueId();
+         element.setId(id);
+      }
       role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
-   }
-
-   /**
-    * Optional description of dialog for accessibility tools; use for multiple elements
-    * @param value one or more ids
-    */
-   protected void setARIADescribedBy(Id... value)
-   {
-      role_.setAriaDescribedbyProperty(getElement(), value);
    }
 
    /**

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.DOM;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -167,8 +166,6 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       panel.add(captionLabel);
 
       // read message when dialog shows
-      String messageId = DOM.createUniqueId();
-      captionLabel.getElement().setId(messageId);
       setARIADescribedBy(captionLabel.getElement());
       
       panel.add(scrollPanel);

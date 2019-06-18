@@ -78,7 +78,6 @@ public class TextBoxWithButton extends Composite
       if (label != null)
       {
          FormLabel lblCaption = new FormLabel(label, true);
-         lblCaption.setFor(textBox_);
          if (helpButton != null)
          {
             HorizontalPanel panel = new HorizontalPanel();
@@ -91,6 +90,7 @@ public class TextBoxWithButton extends Composite
          {
             outer.add(lblCaption);
          }
+         lblCaption.setFor(textBox_);
       }
       outer.add(inner_);
       initWidget(outer);

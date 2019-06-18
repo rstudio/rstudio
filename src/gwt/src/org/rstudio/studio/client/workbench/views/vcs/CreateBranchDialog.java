@@ -22,7 +22,6 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -106,7 +105,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       tbBranch_ = textBox();
       String textBoxId = ElementIds.idFromLabel(label);
       tbBranch_.getElement().setId(textBoxId);
-      A11y.setARIARequired(tbBranch_.getElement());
+      Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
          @Override

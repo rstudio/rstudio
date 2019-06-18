@@ -151,7 +151,7 @@ public class NewConnectionShinyHost extends Composite
       VerticalPanel container = new VerticalPanel();
       
       // create iframe for miniUI
-      frame_ = new RStudioFrame();
+      frame_ = new RStudioFrame("Shiny Mini UI");
       frame_.setSize("100%", "140px");
 
       container.add(frame_);

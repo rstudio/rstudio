@@ -110,20 +110,21 @@ public class SearchWidget extends Composite implements SearchDisplay
                        boolean continuousSearch)
    {
       textBox.getElement().setAttribute("spellcheck", "false");
-
+      
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
-      else
+      else 
          suggestBox_ = new FocusSuggestBox(oracle, textBox);
       
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
+      close_.setAltText("Clear text");
       A11y.setDecorativeImage(icon_.getElement());
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       suggestBox_.setStylePrimaryName(styles.searchBox());
-      suggestBox_.setAutoSelectEnabled(false);
+      suggestBox_.setAutoSelectEnabled(false) ;
       addKeyDownHandler(new KeyDownHandler() {
          public void onKeyDown(KeyDownEvent event)
          {
@@ -134,10 +135,10 @@ public class SearchWidget extends Composite implements SearchDisplay
                   public void execute()
                   {
                      SelectionCommitEvent.fire(SearchWidget.this, 
-                                               suggestBox_.getText());
+                                               suggestBox_.getText()) ;
                   }
-               });
-               break;
+               }) ;
+               break ;
             case KeyCodes.KEY_ESCAPE:
                
                event.preventDefault();
@@ -166,7 +167,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                break;
             }
          }
-      });
+      }) ;
 
       if (continuousSearch)
       {

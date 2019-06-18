@@ -80,7 +80,6 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       }));  
       
       enableOkButton(false);
-      enableCancelButton(false);
       selectAllButton_.setEnabled(false);
       selectNoneButton_.setEnabled(false);
    }
@@ -150,9 +149,10 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
                actionsDataProvider_.setList(pendingActions);
                actionsDataProvider_.addDataDisplay(actionsTable_);
                
-               enableCancelButton(true);
                selectAllButton_.setEnabled(true);
                selectNoneButton_.setEnabled(true);
+               refreshFocusableElements();
+               focusInitialControl();
             }
             else
             {

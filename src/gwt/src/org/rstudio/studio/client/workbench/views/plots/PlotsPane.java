@@ -1,7 +1,7 @@
 /*
  * PlotsPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -113,7 +113,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.addStyleName("ace_editor_theme");
       panel_.setSize("100%", "100%");
 
-      frame_ = new ImageFrame();
+      frame_ = new ImageFrame("Plots Pane");
       frame_.setStyleName("rstudio-HelpFrame");
       frame_.setMarginWidth(0);
       frame_.setMarginHeight(0);
