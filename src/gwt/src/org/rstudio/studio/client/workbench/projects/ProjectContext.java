@@ -14,31 +14,41 @@
  */
 package org.rstudio.studio.client.workbench.projects;
 
+import org.rstudio.studio.client.packrat.model.PackratContext;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ProjectContext extends JavaScriptObject
 {
-   public static enum ProjectType
-   {
-      NONE,
-      PACKRAT,
-      RENV
-   }
-   
    protected ProjectContext()
    {
    }
    
-   public final ProjectType getProjectType()
+   public final boolean isActive()
    {
-      String type = getProjectTypeImpl();
-      return ProjectType.valueOf(type);
+      RenvContext renv = getRenvContext();
+      if (renv.active)
+         return true;
+      
+      PackratContext packrat = getPackratContext();
+      if (packrat.isModeOn())
+         return true;
+      
+      return false;
    }
    
-   private final native String getProjectTypeImpl()
+   public final PackratContext getPackratContext()
+   {
+      PackratContext context = getPackratContextImpl();
+      if (context == null)
+         return PackratContext.empty();
+      return context;
+   }
+   
+   private final native PackratContext getPackratContextImpl()
    /*-{
-      return this.project_type;
+      return this.packrat_context;
    }-*/;
    
-   
+   public final native RenvContext getRenvContext() /*-{ return this.renv_context; }-*/;
 }

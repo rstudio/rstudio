@@ -30,23 +30,13 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-core::json::Object renvContextAsJson()
+core::json::Value renvContextAsJson()
 {
-   SEXP resultSEXP = R_NilValue;
-   r::sexp::Protect protect;
-
+   json::Value resultJson;
    Error error =
          r::exec::RFunction(".rs.renv.context")
-         .call(&resultSEXP, &protect);
+         .call(&resultJson);
 
-   if (error)
-   {
-      LOG_ERROR(error);
-      return json::Object();
-   }
-
-   json::Value resultJson;
-   error = r::json::jsonValueFromObject(resultSEXP, &resultJson);
    if (error)
    {
       LOG_ERROR(error);
@@ -60,7 +50,7 @@ core::json::Object renvContextAsJson()
       return json::Object();
    }
 
-   return resultJson.get_obj();
+   return resultJson;
 }
 
 } // end namespace module_context
@@ -88,7 +78,7 @@ Error initialize()
    using boost::bind;
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionPackrat.R"));
+         (bind(sourceModuleRFile, "SessionRenv.R"));
 
    return initBlock.execute();
 }

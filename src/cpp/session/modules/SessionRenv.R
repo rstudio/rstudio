@@ -15,19 +15,17 @@
 
 .rs.addFunction("renv.context", function()
 {
-   print("hello!")
-   
    context <- list()
    
    # validate that renv is installed
    location <- find.package("renv", quiet = TRUE)
-   context[["renv_installed"]] <- length(location) != 0
+   context[["installed"]] <- length(location) != 0
    
    # check and see if renv is active
    project <- Sys.getenv("RENV_PROJECT", unset = NA)
-   context[["renv_active"]] <- !is.na(project)
+   context[["active"]] <- !is.na(project)
    
    # return context
-   context
+   lapply(context, .rs.scalar)
    
 })

@@ -19,8 +19,9 @@
 
 #include <gsl/gsl>
 
-#include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
+#include <r/RJson.hpp>
+#include <r/RSexp.hpp>
 
 #include <core/Algorithm.hpp>
 
@@ -787,6 +788,11 @@ core::Error getNamedListSEXP(SEXP listSEXP,
    }
 }
 
+Error extract(SEXP valueSEXP, core::json::Value* pJson)
+{
+   return r::json::jsonValueFromObject(valueSEXP, pJson);
+}
+
 Error extract(SEXP valueSEXP, int* pInt)
 {
    if (TYPEOF(valueSEXP) != INTSXP)
@@ -904,30 +910,30 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
    return valueSEXP;
 }
    
-SEXP create(const json::Value& value, Protect* pProtect)
+SEXP create(const core::json::Value& value, Protect* pProtect)
 {
    // call embedded create function based on type
-   if (value.type() == json::StringType)
+   if (value.type() == core::json::StringType)
    {
       return create(value.get_str(), pProtect);
    }
-   else if (value.type() == json::IntegerType)
+   else if (value.type() == core::json::IntegerType)
    {
       return create(value.get_int(), pProtect);
    }
-   else if (value.type() == json::RealType)
+   else if (value.type() == core::json::RealType)
    {
       return create(value.get_real(), pProtect);
    }
-   else if (value.type() == json::BooleanType)
+   else if (value.type() == core::json::BooleanType)
    {
       return create(value.get_bool(), pProtect);
    }
-   else if (value.type() == json::ArrayType)
+   else if (value.type() == core::json::ArrayType)
    {
       return create(value.get_array(), pProtect);
    }
-   else if (value.type() == json::ObjectType)
+   else if (value.type() == core::json::ObjectType)
    {
       return create(value.get_obj(), pProtect);
    }
@@ -978,7 +984,7 @@ SEXP create(bool value, Protect* pProtect)
    return valueSEXP;
 }
 
-SEXP create(const json::Array& value, Protect* pProtect)
+SEXP create(const core::json::Array& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP;
@@ -993,7 +999,7 @@ SEXP create(const json::Array& value, Protect* pProtect)
    return listSEXP;
 }
    
-SEXP create(const json::Object& value, Protect* pProtect)
+SEXP create(const core::json::Object& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP ;
@@ -1005,7 +1011,7 @@ SEXP create(const json::Object& value, Protect* pProtect)
    
    // add each object field to it
    int index = 0;
-   for (const json::Member& member : value)
+   for (const core::json::Member& member : value)
    {
       // set name
       SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.name().c_str()));

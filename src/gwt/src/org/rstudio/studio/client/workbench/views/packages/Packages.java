@@ -43,7 +43,6 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratConflictActions;
 import org.rstudio.studio.client.packrat.model.PackratConflictResolution;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
@@ -59,6 +58,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -102,7 +102,7 @@ public class Packages
 
    public interface Display extends WorkbenchView
    {
-      void setPackageState(PackratContext packratContext, 
+      void setPackageState(ProjectContext projectContext, 
                            List<PackageInfo> packagesDS);
       
       void installPackage(PackageInstallContext installContext,
@@ -814,7 +814,7 @@ public class Packages
          packages = allPackages_;
       }
       
-      view_.setPackageState(packratContext_, packages);
+      view_.setPackageState(projectContext_, packages);
    }
    
    private void checkPackageStatusOnNextConsolePrompt(
@@ -1183,7 +1183,7 @@ public class Packages
          }
       }
       
-      packratContext_ = newState.getPackratContext();
+      projectContext_ = newState.getProjectContext();
       view_.setProgress(false);
       setViewPackageList();
    }
@@ -1203,7 +1203,7 @@ public class Packages
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
-   private PackratContext packratContext_;
+   private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;
    private final EventBus events_ ;
