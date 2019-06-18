@@ -22,6 +22,7 @@
 #include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 
 using namespace rstudio::core;
@@ -62,10 +63,30 @@ namespace session {
 namespace modules {
 namespace renv {
 
-void afterSessionInitHook(bool newSession)
+namespace {
+
+void onConsolePrompt(const std::string& /* prompt */)
 {
-   // TODO: initialize if using renv
+   Error error = r::exec::RFunction(".rs.renv.refresh")
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
 }
+
+void afterSessionInitHook(bool /* newSession */)
+{
+   // use RENV_PROJECT environment variable to detect if renv active
+   std::string renvProject = core::system::getenv("RENV_PROJECT");
+   if (renvProject.empty())
+      return;
+
+   // renv is active -- initialize other infrastructure
+   using namespace module_context;
+   events().onConsolePrompt.connect(onConsolePrompt);
+}
+
+} // end anonymous namespace
 
 Error initialize()
 {

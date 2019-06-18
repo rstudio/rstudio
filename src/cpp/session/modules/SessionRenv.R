@@ -13,6 +13,8 @@
 #
 #
 
+.rs.setVar("renvCache", new.env(parent = emptyenv()))
+
 .rs.addFunction("renv.context", function()
 {
    context <- list()
@@ -28,6 +30,37 @@
    # return context
    lapply(context, .rs.scalar)
    
+})
+
+.rs.addFunction("renv.refresh", function()
+{
+   # get file info on installed packages, lockfile
+   project <- renv::project()
+   libdir <- renv:::renv_paths_library(project = project)
+   
+   files <- c(
+      file.path(project, "renv.lock"),
+      list.files(libdir, full.names = TRUE)
+   )
+   
+   info <- file.info(files, extra_cols = FALSE)
+   
+   # drop unneeded fields
+   new <- info[c("size", "mtime")]
+   
+   # check for changes
+   old <- .rs.renvCache[["modifiedTimes"]]
+   
+   # have things changed?
+   if (identical(old, new))
+      return()
+   
+   # update cache
+   .rs.renvCache[["modifiedTimes"]] <- new
+   
+   # fire events
+   .rs.updatePackageEvents()
+   .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("renv.readLockfilePackages", function(project)
