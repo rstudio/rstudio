@@ -72,6 +72,11 @@ void onConsolePrompt(const std::string& /* prompt */)
    if (renvProject.empty())
       return;
 
+   // validate that it matches the project currently open in RStudio
+   const FilePath& projDir = projects::projectContext().directory();
+   if (!projDir.isEquivalentTo(FilePath(renvProject)))
+      return;
+
    Error error = r::exec::RFunction(".rs.renv.refresh") .call();
    if (error)
       LOG_ERROR(error);
