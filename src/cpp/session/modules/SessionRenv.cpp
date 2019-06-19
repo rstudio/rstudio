@@ -67,23 +67,14 @@ namespace {
 
 void onConsolePrompt(const std::string& /* prompt */)
 {
-   Error error = r::exec::RFunction(".rs.renv.refresh")
-         .call();
-
-   if (error)
-      LOG_ERROR(error);
-}
-
-void afterSessionInitHook(bool /* newSession */)
-{
    // use RENV_PROJECT environment variable to detect if renv active
    std::string renvProject = core::system::getenv("RENV_PROJECT");
    if (renvProject.empty())
       return;
 
-   // renv is active -- initialize other infrastructure
-   using namespace module_context;
-   events().onConsolePrompt.connect(onConsolePrompt);
+   Error error = r::exec::RFunction(".rs.renv.refresh") .call();
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // end anonymous namespace
@@ -94,7 +85,7 @@ Error initialize()
 
    // initialize renv after session init (need to make sure
    // all other RStudio startup code runs first)
-   events().afterSessionInitHook.connect(afterSessionInitHook);
+   events().onConsolePrompt.connect(onConsolePrompt);
 
    using boost::bind;
    ExecBlock initBlock;
