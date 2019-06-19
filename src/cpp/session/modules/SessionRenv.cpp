@@ -73,6 +73,7 @@ void onConsolePrompt(const std::string& /* prompt */)
       return;
 
    // validate that it matches the project currently open in RStudio
+   // (we could consider relaxing this in the future)
    const FilePath& projDir = projects::projectContext().directory();
    if (!projDir.isEquivalentTo(FilePath(renvProject)))
       return;

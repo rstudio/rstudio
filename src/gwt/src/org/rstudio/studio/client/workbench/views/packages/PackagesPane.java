@@ -109,12 +109,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesDataProvider_.setList(packages);
       createPackagesTable();
 
-      // show the bootstrap button if this state is eligible for Packrat but the
-      // project isn't currently under Packrat control
       PackratContext packratContext = projectContext_.getPackratContext();
-      packratBootstrapButton_.setVisible(
-         packratContext.isApplicable() && 
-         (!packratContext.isPackified() || !packratContext.isModeOn()));
       
       // show the toolbar button if Packrat mode is on
       packratMenuButton_.setVisible(packratContext.isModeOn());
@@ -201,11 +196,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // packrat (all packrat UI starts out hidden and then appears
       // in response to changes in the packages state)
 
-      // create packrat bootstrap button
-      packratBootstrapButton_ = commands_.packratBootstrap().createToolbarButton(false);
-      toolbar.addLeftWidget(packratBootstrapButton_);
-      packratBootstrapButton_.setVisible(false);
-      
       // create packrat menu + button
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
       packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
@@ -671,7 +661,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
    
-   private ToolbarButton packratBootstrapButton_;
    private ToolbarMenuButton packratMenuButton_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
