@@ -24,10 +24,8 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -102,7 +100,7 @@ public class ToolbarButton extends FocusWidget
    
    public ToolbarButton(String text, // visible text
                         String title, // a11y / tooltip text
-                        Image leftImage,
+                        DecorativeImage leftImage,
                         ImageResource rightImage,
                         ClickHandler clickHandler)
    {
@@ -116,15 +114,13 @@ public class ToolbarButton extends FocusWidget
       setText(text);
       setTitle(title);
       setInfoText(null);
-      leftImageWidget_ = leftImage == null ? new Image() : leftImage;
+      leftImageWidget_ = leftImage == null ? new DecorativeImage() : leftImage;
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());
-      A11y.setDecorativeImage(leftImageWidget_.getElement());
       leftImageCell_.appendChild(leftImageWidget_.getElement());
       if (rightImage != null)
       {
-         rightImageWidget_ = new Image(rightImage);
+         rightImageWidget_ = new DecorativeImage(rightImage);
          rightImageWidget_.setStylePrimaryName(styles_.toolbarButtonRightImage());
-         A11y.setDecorativeImage(rightImageWidget_.getElement());
          rightImageCell_.appendChild(rightImageWidget_.getElement());
       }
 
@@ -144,8 +140,8 @@ public class ToolbarButton extends FocusWidget
            title,
            // extract the supplied left image 
            leftImage != null && leftImage.getImageResource() != null ?
-               new Image(leftImage.getImageResource()) :
-               new Image(), 
+               new DecorativeImage(leftImage.getImageResource()) :
+               new DecorativeImage(), 
            rightImage, 
            clickHandler);
 
@@ -331,6 +327,6 @@ public class ToolbarButton extends FocusWidget
    DivElement infoLabel_;
    @UiField
    TableElement wrapper_;
-   protected Image leftImageWidget_;
-   protected Image rightImageWidget_;
+   protected DecorativeImage leftImageWidget_;
+   protected DecorativeImage rightImageWidget_;
 }

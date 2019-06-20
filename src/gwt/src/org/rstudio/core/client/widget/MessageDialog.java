@@ -109,23 +109,23 @@ public class MessageDialog extends ModalDialogBase
       {
       case INFO:
          image = new Image(new ImageResource2x(images.dialog_info2x()));
-         imageText = "Info";
+         imageText = MessageDialogImages.DIALOG_INFO_TEXT;
          break;
       case WARNING:
          image = new Image(new ImageResource2x(images.dialog_warning2x()));
-         imageText = "Warning";
+         imageText = MessageDialogImages.DIALOG_WARNING_TEXT;
          break;
       case ERROR:
          image = new Image(new ImageResource2x(images.dialog_error2x()));
-         imageText = "Error";
+         imageText = MessageDialogImages.DIALOG_ERROR_TEXT;
          break;
       case QUESTION:
          image = new Image(new ImageResource2x(images.dialog_question2x()));
-         imageText = "Question";
+         imageText = MessageDialogImages.DIALOG_QUESTION_TEXT;
          break;
       case POPUP_BLOCKED:
          image = new Image(new ImageResource2x(images.dialog_popup_blocked2x()));
-         imageText = "Popup Blocked";
+         imageText = MessageDialogImages.DIALOG_POPUP_BLOCKED_TEXT;
          break;
       }
       horizontalPanel.add(image);
@@ -141,8 +141,7 @@ public class MessageDialog extends ModalDialogBase
    public static Label labelForMessage(String message)
    {
       Label label = new MultiLineLabel(StringUtil.notNull(message));
-      label.setStylePrimaryName(
-                     ThemeResources.INSTANCE.themeStyles().dialogMessage());
+      label.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
       return label;
    }
 

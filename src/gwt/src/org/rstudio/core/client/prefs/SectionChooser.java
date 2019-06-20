@@ -26,12 +26,12 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.DecorativeImage;
 
 class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
@@ -57,9 +57,8 @@ class SectionChooser extends SimplePanel implements
 
    public void addSection(ImageResource icon, String name)
    {
-      Image img = new Image(icon.getSafeUri());
+      DecorativeImage img = new DecorativeImage(icon.getSafeUri());
       nudgeDown(img);
-      A11y.setDecorativeImage(img.getElement());
       img.setSize("29px", "20px");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
