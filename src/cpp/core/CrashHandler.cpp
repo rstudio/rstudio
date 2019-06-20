@@ -54,6 +54,16 @@ Error setUserHandlerEnabled(bool)
    return Success();
 }
 
+bool hasUserBeenPromptedForPermission()
+{
+   return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return Success();
+}
+
 } // namespace crash_handler
 } // namespace core
 } // namespace rstudio
