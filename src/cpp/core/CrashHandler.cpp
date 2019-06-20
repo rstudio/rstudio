@@ -17,6 +17,7 @@
 
 #include <sstream>
 
+#include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -386,6 +387,12 @@ Error setUserHandlerEnabled(bool handlerEnabled)
 
 bool hasUserBeenPromptedForPermission()
 {
+   // if for some reason the parent directory is not writeable
+   // we will just treat the user as if they have been prompted
+   // to prevent indefinite repeated promptings
+   if (!file_utils::isDirectoryWriteable(permissionFile().parent()))
+      return true;
+
    return permissionFile().exists();
 }
 

@@ -565,11 +565,9 @@ public class Workbench implements BusyHandler,
       if (shouldPrompt)
       {
          String message =
-               "Would you like to enable automated crash reporting?\n\nIf RStudio crashes unexpectedly, the " +
-               "stack trace of the crash will be collected and sent to RStudio for analysis and troubleshooting " +
-               "purposes. No personal data is ever collected other than your IP address which will be used " +
-               "to determine the total number of users experiencing a particular crash.\n\nCrash reporting can be " +
-               "disabled at any time under the Global Options.";
+               "May we upload crash reports to RStudio automatically?\n\nCrash reports don't include " +
+               "any personal information, except for IP addresses which are used to determine how many users " +
+               "are affected by each crash.\n\nCrash reporting can be disabled at any time under the Global Options.";
 
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
                "Enable Automated Crash Reporting",
