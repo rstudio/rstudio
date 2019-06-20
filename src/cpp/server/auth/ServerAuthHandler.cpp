@@ -146,6 +146,22 @@ Error readRevocationList(std::vector<std::string>* pEntries)
    return Success();
 }
 
+Error changeOwnership(const FilePath& file)
+{
+   // changes ownership of file to the server user
+   core::system::user::User serverUser;
+   Error error = core::system::user::userFromUsername(options().serverUser(), &serverUser);
+   if (error)
+      return error;
+
+   return core::system::posixCall<int>(
+            boost::bind(::chown,
+                        file.absolutePath().c_str(),
+                        serverUser.userId,
+                        serverUser.groupId),
+            ERROR_LOCATION);
+}
+
 } // anonymous namespace
 
 namespace overlay {
@@ -341,7 +357,7 @@ void invalidateAuthCookie(const std::string& cookie,
          backoffPtr = boost::make_shared<ExponentialBackoff>(server::server()->ioService(),
                                                              boost::posix_time::seconds(1),
                                                              boost::posix_time::seconds(15),
-                                                             boost::bind(invalidateAuthCookie, cookie, backoffPtr));
+                                                             boost::bind(invalidateAuthCookie, cookie, _1));
       }
 
       bool keepTrying = backoffPtr->next();
@@ -349,8 +365,9 @@ void invalidateAuthCookie(const std::string& cookie,
       {
          LOG_ERROR_MESSAGE("Could not invalidate user auth cookie - could not acquire revocation list lockfile");
          LOG_ERROR(error);
-         return;
       }
+
+      return;
    }
 
    // read the current revocation list
@@ -386,12 +403,29 @@ void invalidateAuthCookie(const std::string& cookie,
 Error initialize()
 {
    // initialize by loading the current contents of the revocation list into memory
+
+   // create revocation list directory and ensure the server user has permission to write to it
+   // if the directory already exists, we will not attempt to change ownership as this means
+   // the directory was setup by an administrator and we should respect its permissions
    FilePath rootDir(options().authRevocationListDir());
-   Error error = rootDir.ensureDirectory();
-   if (error)
+   if (!rootDir.exists())
    {
-      LOG_ERROR_MESSAGE("Could not create revocation list directory");
-      return error;
+      Error error = rootDir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.absolutePath());
+         return error;
+      }
+
+      if (core::system::effectiveUserIsRoot())
+      {
+         error = changeOwnership(rootDir);
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.absolutePath());
+            return error;
+         }
+      }
    }
 
    s_revocationList = rootDir.childPath("revocation-list");
@@ -404,7 +438,7 @@ Error initialize()
    while (numTries < 30)
    {
       ScopedFileLock fileLock(lock, s_revocationLockFile);
-      error = fileLock.error();
+      Error error = fileLock.error();
       if (error)
       {
          // if we could not acquire the lock, some other rserver process has
@@ -427,18 +461,7 @@ Error initialize()
       {
          // ensure revocation file is owned by the server user
          // this ensures that it can be written to even when we drop privilege
-         core::system::user::User serverUser;
-         error = core::system::user::userFromUsername(options().serverUser(), &serverUser);
-         if (error)
-            return error;
-
-         error = core::system::posixCall<int>(
-                  boost::bind(::chown,
-                              s_revocationList.absolutePath().c_str(),
-                              serverUser.userId,
-                              serverUser.groupId),
-                  ERROR_LOCATION);
-
+         error = changeOwnership(s_revocationList);
          if (error)
             return error;
       }
