@@ -387,13 +387,18 @@ Error setUserHandlerEnabled(bool handlerEnabled)
 
 bool hasUserBeenPromptedForPermission()
 {
-   // if for some reason the parent directory is not writeable
-   // we will just treat the user as if they have been prompted
-   // to prevent indefinite repeated promptings
-   if (!file_utils::isDirectoryWriteable(permissionFile().parent()))
+   if (!permissionFile().exists())
+   {
+      // if for some reason the parent directory is not writeable
+      // we will just treat the user as if they have been prompted
+      // to prevent indefinite repeated promptings
+      if (!file_utils::isDirectoryWriteable(permissionFile().parent()))
+         return true;
+      else
+         return false;
+   }
+   else
       return true;
-
-   return permissionFile().exists();
 }
 
 Error setUserHasBeenPromptedForPermission()
