@@ -19,6 +19,7 @@
 #include <boost/bind.hpp>
 
 #include <core/FileUtils.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
@@ -131,6 +132,30 @@ Error copyDirectory(const FilePath& sourceDirectory,
    // iterate over the source
    return sourceDirectory.childrenRecursive(
      boost::bind(copySourceFile, sourceDirectory, targetDirectory, _2));
+}
+
+bool isDirectoryWriteable(const FilePath& directory)
+{
+   std::string prefix(
+#ifndef _WIN32
+   "."
+#endif
+   "write-test-");
+
+   FilePath testFile = directory.complete(prefix + core::system::generateUuid());
+   Error error = core::writeStringToFile(testFile, "test");
+   if (error)
+   {
+      return false;
+   }
+   else
+   {
+      error = testFile.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
+      return true;
+   }
 }
 
 

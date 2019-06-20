@@ -1,7 +1,7 @@
 /*
  * ViewerPanePreviewer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
    {
       if (frame_ == null)
       {
-         frame_ = new RStudioFrame();
+         frame_ = new RStudioFrame("Viewer Pane Preview");
          frame_.setUrl(url_);
          frame_.setSize("100%", "100%");
          frame_.setStylePrimaryName(

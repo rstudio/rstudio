@@ -502,6 +502,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
          crash_handler::configSource() == crash_handler::ConfigSource::User;
    sessionInfo["crash_handler_settings_modifiable"] = canModifyCrashSettings;
 
+   bool promptForCrashHandlerPermission = canModifyCrashSettings && !crash_handler::hasUserBeenPromptedForPermission();
+   sessionInfo["prompt_for_crash_handler_permission"] = promptForCrashHandlerPermission;
+
    sessionInfo["project_id"] = session::options().sessionScope().project();
 
    if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))

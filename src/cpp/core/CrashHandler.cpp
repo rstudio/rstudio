@@ -17,6 +17,7 @@
 
 #include <sstream>
 
+#include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -53,6 +54,16 @@ Error setUserHandlerEnabled(bool)
    return Success();
 }
 
+bool hasUserBeenPromptedForPermission()
+{
+   return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return Success();
+}
+
 } // namespace crash_handler
 } // namespace core
 } // namespace rstudio
@@ -63,7 +74,7 @@ Error setUserHandlerEnabled(bool)
 #include <crashpad/client/settings.h>
 
 #define kCrashHandlingEnabled         "crash-handling-enabled"
-#define kCrashHandlingEnabledDefault  true
+#define kCrashHandlingEnabledDefault  false
 #define kCrashDatabasePath            "crash-db-path"
 #define kCrashDatabasePathDefault     ""
 #define kUploadUrl                    "upload-url"
@@ -168,6 +179,13 @@ void logClientCreation(const base::FilePath& handlerPath,
 #endif
 
     LOG_INFO_MESSAGE(message);
+}
+
+FilePath permissionFile()
+{
+   return core::system::userSettingsPath(core::system::userHomePath(),
+                                         "R",
+                                         false).complete("crash-handler-permission");
 }
 
 } // anonymous namespace
@@ -375,6 +393,27 @@ Error setUserHandlerEnabled(bool handlerEnabled)
    }
 
    return Success();
+}
+
+bool hasUserBeenPromptedForPermission()
+{
+   if (!permissionFile().exists())
+   {
+      // if for some reason the parent directory is not writeable
+      // we will just treat the user as if they have been prompted
+      // to prevent indefinite repeated promptings
+      if (!file_utils::isDirectoryWriteable(permissionFile().parent()))
+         return true;
+      else
+         return false;
+   }
+   else
+      return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return permissionFile().ensureFile();
 }
 
 } // namespace crash_handler

@@ -56,31 +56,6 @@ namespace projects {
 
 namespace {
 
-bool canWriteToProjectDir(const FilePath& projectDirPath)
-{
-   std::string prefix(
-#ifndef _WIN32
-   "."
-#endif 
-   "write-test-");
-
-   FilePath testFile = projectDirPath.complete(prefix +
-         core::system::generateUuid());
-   Error error = core::writeStringToFile(testFile, "test");
-   if (error)
-   {
-      return false;
-   }
-   else
-   {
-      error = testFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-
-      return true;
-   }
-}
-
 }  // anonymous namespace
 
 
@@ -192,7 +167,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // test for writeabilty of parent
-   if (!canWriteToProjectDir(projectFile.parent()))
+   if (!file_utils::isDirectoryWriteable(projectFile.parent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
       return systemError(boost::system::errc::permission_denied,

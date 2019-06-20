@@ -205,7 +205,7 @@ public class ChunkOutputStream extends FlowPanel
          url += "viewer_pane=1&capabilities=1";
       }
 
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk HTML Output Frame");
 
       if (chunkOutputSize_ == ChunkOutputSize.Default) {
          if (knitrFigure) {

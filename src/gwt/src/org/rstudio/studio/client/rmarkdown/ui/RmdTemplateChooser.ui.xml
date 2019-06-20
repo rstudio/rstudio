@@ -59,7 +59,7 @@
      }
    </ui:style>
    <g:HTMLPanel>
-   <rs:CaptionWithHelp styleName="{style.help}"></rs:CaptionWithHelp>
+   <rs:CaptionWithHelp ui:field="captionWithHelp_" styleName="{style.help}"></rs:CaptionWithHelp>
    <rs:SimplePanelWithProgress ui:field="progressPanel_" 
                                styleName="{style.templateListArea}">
       <rs:WidgetListBox width="100%" height="100%"

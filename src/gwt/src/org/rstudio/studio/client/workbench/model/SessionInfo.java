@@ -416,6 +416,10 @@ public class SessionInfo extends JavaScriptObject
       return this.crash_handler_settings_modifiable;
    }-*/;
 
+   public final native boolean getPromptForCrashHandlerPermission() /*-{
+      return this.prompt_for_crash_handler_permission;
+   }-*/;
+
    public final native JsObject getLaunchParameters() /*-{
       return this.launch_parameters;
    }-*/;

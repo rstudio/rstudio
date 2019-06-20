@@ -15,6 +15,8 @@
 package org.rstudio.core.client.a11y;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
+import org.rstudio.core.client.StringUtil;
 
 /**
  * Accessibility helpers including newer ARIA stuff not included with GWT
@@ -48,5 +50,21 @@ public class A11y
    public static void setARIATablistOrientation(Element element, boolean vertical)
    {
       element.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
+   }
+
+   /**
+    * Associate a label element with another element via the <code>for</code> attribute.
+    * @param label the element to add <code>for</code> attribute to (assumed to be label)
+    * @param field the element whose id should be used; will add an id if necessary
+    */
+   public static void associateLabelWithField(Element label, Element field)
+   {
+      String fieldId = field.getId();
+      if (StringUtil.isNullOrEmpty(fieldId))
+      {
+         fieldId = DOM.createUniqueId();
+         field.setId(fieldId);
+      }
+      label.setAttribute("for", fieldId);
    }
 }

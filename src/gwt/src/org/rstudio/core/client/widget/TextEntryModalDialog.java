@@ -16,8 +16,12 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.*;
 
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -54,7 +58,8 @@ public class TextEntryModalDialog extends ModalDialog<String>
       }
       textBox_.setWidth("100%");
       DomUtils.disableAutoBehavior(textBox_);
-      captionLabel_ = new Label(caption);
+      captionLabel_ = new FormLabel(caption);
+      captionLabel_.setFor(textBox_);
 
       extraOption_ = new CheckBox(StringUtil.notNull(extraOptionPrompt));
       extraOption_.setVisible(
@@ -151,7 +156,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
 
 
    private int width_;
-   private Label captionLabel_;
+   private FormLabel captionLabel_;
    private TextBox textBox_;
    private CheckBox extraOption_;
    private final int selectionIndex_;

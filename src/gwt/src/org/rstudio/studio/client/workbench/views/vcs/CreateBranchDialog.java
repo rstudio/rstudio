@@ -22,6 +22,8 @@ import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -41,9 +43,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -101,7 +101,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_ = new VerticalPanel();
       
       tbBranch_ = textBox();
-      tbBranch_.getElement().setAttribute("placeholder", "Branch name");
+      Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -170,9 +170,11 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       setRemotes(remotesInfo);
       
-      Grid ctrBranch = new Grid(1, 2);
+      LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      ctrBranch.setWidget(0, 0, new Label("Branch:"));
+      FormLabel branchLabel = new FormLabel("Branch Name:");
+      branchLabel.setFor(tbBranch_);
+      ctrBranch.setWidget(0, 0, branchLabel);
       ctrBranch.setWidget(0, 1, tbBranch_);
       
       HorizontalPanel ctrRemote = new HorizontalPanel();
@@ -253,10 +255,10 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    }
    
    @Override
-   public void showModal()
+   public void focusFirstControl()
    {
-      super.showModal();
       tbBranch_.setFocus(true);
+      tbBranch_.selectAll();
    }
    
    private TextBox textBox()

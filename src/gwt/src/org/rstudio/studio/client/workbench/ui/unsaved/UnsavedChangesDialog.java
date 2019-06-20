@@ -170,6 +170,10 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                            "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
+      
+      // read message when dialog shows
+      setARIADescribedBy(captionLabel.getElement());
+      
       panel.add(scrollPanel);      
       if (!StringUtil.isNullOrEmpty(alwaysSaveOption_))
       { 

@@ -41,7 +41,7 @@ public class LocalRepositoriesWidget extends Composite
       
       VerticalPanel panel = new VerticalPanel();
       panel.add(new LabelWithHelp("Local repositories:",
-            "packrat_local_repos"));
+            "packrat_local_repos", "Help on local Packrat repositories"));
       
       HorizontalPanel hp = new HorizontalPanel();
       listBox_ = new ListBox();

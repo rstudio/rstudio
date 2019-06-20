@@ -83,7 +83,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
+      frame_ = new RStudioFrame("Shiny Gadget");
       frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
       
       // compute the widget size and set it

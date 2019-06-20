@@ -1,7 +1,7 @@
 /*
  * DataImport.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -104,6 +104,7 @@ public class DataImport extends Composite
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
       
+      gridViewer_ = new GridViewerFrame("Data Import Grid Viewer");
       copyButton_ = makeCopyButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
@@ -283,7 +284,7 @@ public class DataImport extends Composite
    @UiField
    DataImportFileChooser dataImportFileChooser_;
    
-   @UiField
+   @UiField(provided=true)
    GridViewerFrame gridViewer_;
    
    @UiField

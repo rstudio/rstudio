@@ -1,7 +1,7 @@
 /*
  * RmdTemplateChooser.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,6 +69,7 @@ public class RmdTemplateChooser extends Composite
                   item.getTemplate().getCreateDir() == "true");
          }
       });
+      captionWithHelp_.setFor(listTemplates_);
    }
    
    public void populateTemplates()
@@ -213,6 +214,7 @@ public class RmdTemplateChooser extends Composite
    
    private final RMarkdownServerOperations server_;
    
+   @UiField CaptionWithHelp captionWithHelp_;
    @UiField WidgetListBox<RmdDiscoveredTemplateItem> listTemplates_;
    @UiField TextBox txtName_;
    @UiField DirectoryChooserTextBox dirLocation_;

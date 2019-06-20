@@ -1,7 +1,7 @@
 /*
  * ChunkOutputFrame.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,8 +22,12 @@ import com.google.gwt.user.client.Timer;
 
 public class ChunkOutputFrame extends DynamicIFrame
 {
-   public ChunkOutputFrame()
+   /**
+    * @param title a11y title
+    */
+   public ChunkOutputFrame(String title)
    {
+      super(title);
       timer_ = new Timer() 
       {
          @Override
