@@ -151,4 +151,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
+
+   void setUserCrashHandlerPrompted(boolean enableCrashHandling, ServerRequestCallback<Void> requestCallback);
 }
