@@ -661,10 +661,13 @@ struct PackratContext
 
 bool isRequiredPackratInstalled();
 
+// implemented in SessionPackrat.cpp
 PackratContext packratContext();
 core::json::Object packratContextAsJson();
-
 core::json::Object packratOptionsAsJson();
+
+// implemented in SessionRenv.cpp
+core::json::Value renvContextAsJson();
 
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)

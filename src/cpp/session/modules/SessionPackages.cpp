@@ -66,10 +66,10 @@ void insecureReposURLWarning(const std::string& url,
    std::string msg =
          "Your CRAN mirror is set to \"" + url + "\" which "
          "has an insecure (non-HTTPS) URL.";
-   
+
    if (!extraMsg.empty())
       msg += " " + extraMsg;
-   
+
    Error error = r::exec::RFunction(".rs.insecureReposWarning", msg).call();
    if (error)
       LOG_ERROR(error);
@@ -253,7 +253,7 @@ void reconcileSecureDownloadConfiguration()
 
 } // namespace module_context
 
-namespace modules { 
+namespace modules {
 namespace packages {
 
 namespace {
@@ -261,19 +261,19 @@ namespace {
 class AvailablePackagesCache : public boost::noncopyable
 {
 public:
-   
+
    static AvailablePackagesCache& get()
    {
       static AvailablePackagesCache instance;
       return instance;
    }
-   
+
 private:
-   
+
    AvailablePackagesCache()
    {
    }
-   
+
 public:
 
    void insert(const std::string& contribUrl,
@@ -281,7 +281,7 @@ public:
    {
       cache_[contribUrl] = availablePackages;
    }
-   
+
    bool find(const std::string& contribUrl)
    {
       return cache_.find(contribUrl) != cache_.end();
@@ -303,7 +303,7 @@ public:
          return false;
       }
    }
-   
+
    void ensurePopulated(const std::string& contribUrl)
    {
       if (cache_.find(contribUrl) != cache_.end())
@@ -360,7 +360,7 @@ SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
    r::sexp::Protect protect;
    std::string contribUrl = r::sexp::asString(contribUrlSEXP);
    AvailablePackagesCache& s_availablePackagesCache = AvailablePackagesCache::get();
-   
+
    std::vector<std::string> availablePackages;
    if (s_availablePackagesCache.lookup(contribUrl, &availablePackages))
       return r::sexp::create(availablePackages, &protect);
@@ -409,21 +409,35 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 
 Error getPackageStateJson(json::Object* pJson)
 {
+   using namespace module_context;
+
    Error error = Success();
-   module_context::PackratContext context = module_context::packratContext();
+
+   PackratContext packratContext = module_context::packratContext();
+   core::json::Value renvContext = module_context::renvContextAsJson();
+
    json::Value packageListJson;
    r::sexp::Protect protect;
    SEXP packageList;
 
-   // determine the appropriate package listing method from the current 
+   bool renvActive = renvContext.get_obj()["active"].get_bool();
+
+   // determine the appropriate package listing method from the current
    // packrat mode status
-   if (context.modeOn)
+   if (packratContext.modeOn)
    {
       FilePath projectDir = projects::projectContext().directory();
-      error = r::exec::RFunction(".rs.listPackagesPackrat", 
+      error = r::exec::RFunction(".rs.listPackagesPackrat",
                                  string_utils::utf8ToSystem(
                                     projectDir.absolutePath()))
               .call(&packageList, &protect);
+   }
+   else if (renvActive)
+   {
+      FilePath projectDir = projects::projectContext().directory();
+      error = r::exec::RFunction(".rs.renv.listPackages")
+            .addParam(string_utils::utf8ToSystem(projectDir.absolutePath()))
+            .call(&packageList, &protect);
    }
    else
    {
@@ -435,8 +449,10 @@ Error getPackageStateJson(json::Object* pJson)
    {
       // return the generated package list and the Packrat context
       r::json::jsonValueFromObject(packageList, &packageListJson);
+
       (*pJson)["package_list"] = packageListJson;
-      (*pJson)["packrat_context"] = packrat::contextAsJson(context);
+      (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
+      (*pJson)["renv_context"] = renvContext;
    }
 
    return error;
@@ -513,7 +529,7 @@ void onDetectChanges(module_context::ChangeSource source)
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any
    // state that might be under inspection)
-   if (source == module_context::ChangeSourceREPL && 
+   if (source == module_context::ChangeSourceREPL &&
        r::exec::atTopLevelContext())
       detectLibPathsChanges();
 }
@@ -538,7 +554,7 @@ Error getPackageState(const json::JsonRpcRequest& ,
 {
    json::Object result;
    Error error = getPackageStateJson(&result);
-   if (error) 
+   if (error)
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
@@ -574,7 +590,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_getCranReposUrl);
-   
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
