@@ -34,7 +34,7 @@ import org.rstudio.core.client.JsArrayUtil;
 public class UserStateAccessor extends Prefs
 {
    public UserStateAccessor(SessionInfo sessionInfo, 
-                            JsArray<JsObject> stateLayers)
+                            JsArray<PrefLayer> stateLayers)
    {
       super(stateLayers);
    }

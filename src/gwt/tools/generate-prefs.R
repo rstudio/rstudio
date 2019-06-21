@@ -48,6 +48,7 @@ generate <- function (schemaPath, className) {
    java <- ""
    cpp <- ""
    hpp <- ""
+   javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
    
    cppprefenum <- paste0("enum ", capitalize(className), "\n{\n")
    cppstrings <- ""
@@ -133,6 +134,8 @@ generate <- function (schemaPath, className) {
          "   {\n",
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
+      javasync <- paste0(javasync,
+         "      ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
       
       hpp <- paste0(hpp, comment,
                     "   ", cpptype, " ", camel, "();\n")
@@ -195,6 +198,9 @@ generate <- function (schemaPath, className) {
                  "public:\n",
                  hpp,
                  "};\n")
+
+   javasync <- paste0(javasync, "   }\n")
+   java <- paste0(java, javasync)
    
    # Return computed Java
    list(

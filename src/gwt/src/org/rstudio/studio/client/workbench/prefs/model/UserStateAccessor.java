@@ -19,10 +19,14 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.JsArrayUtil;
+
 
 /**
  * Accessor class for user state.
@@ -340,6 +344,28 @@ public class UserStateAccessor extends Prefs
       return bool("using_mingw_gcc49", false);
    }
 
+   public void syncPrefs(String layer, JsObject source)
+   {
+      contextId().setValue(layer, source.getString("context_id"));
+      agreementHash().setValue(layer, source.getString("agreement_hash"));
+      autoCreatedProfile().setValue(layer, source.getBool("auto_created_profile"));
+      theme().setValue(layer, source.getObject("theme"));
+      defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
+      clearHidden().setValue(layer, source.getBool("clear_hidden"));
+      exportPlotOptions().setValue(layer, source.getObject("export_plot_options"));
+      exportViewerOptions().setValue(layer, source.getObject("export_viewer_options"));
+      savePlotAsPdfOptions().setValue(layer, source.getObject("save_plot_as_pdf_options"));
+      compileRNotebookPrefs().setValue(layer, source.getObject("compile_r_notebook_prefs"));
+      compileRMarkdownNotebookPrefs().setValue(layer, source.getObject("compile_r_markdown_notebook_prefs"));
+      showPublishUi().setValue(layer, source.getBool("show_publish_ui"));
+      enableRsconnectPublishUi().setValue(layer, source.getBool("enable_rsconnect_publish_ui"));
+      publishAccount().setValue(layer, source.getObject("publish_account"));
+      documentOutlineWidth().setValue(layer, source.getInteger("document_outline_width"));
+      connectVia().setValue(layer, source.getString("connect_via"));
+      cranMirrorChanged().setValue(layer, source.getBool("cran_mirror_changed"));
+      errorHandlerType().setValue(layer, source.getString("error_handler_type"));
+      usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
+   }
    
 
    public int userLayer()
@@ -353,7 +379,6 @@ public class UserStateAccessor extends Prefs
       return LAYER_USER;
    }
 
-   public static final int LAYER_DEFAULT  = 0;
-   public static final int LAYER_COMPUTED = 1;
-   public static final int LAYER_USER     = 2;
+   public static final int LAYER_DEFAULT = 0;
+   public static final int LAYER_USER    = 1;
 }

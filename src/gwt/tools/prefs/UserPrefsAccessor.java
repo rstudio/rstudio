@@ -33,7 +33,7 @@ import org.rstudio.core.client.JsArrayUtil;
 public class UserPrefsAccessor extends Prefs
 {
    public UserPrefsAccessor(SessionInfo sessionInfo, 
-                            JsArray<JsObject> prefLayers)
+                            JsArray<PrefLayer> prefLayers)
    {
       super(prefLayers);
    }

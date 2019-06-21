@@ -39,7 +39,7 @@ namespace {
 
 class UserPrefs: public UserPrefValuesNative
 {
-   Error createLayers()
+   Error createLayers() override
    {
       LOCK_MUTEX(mutex_)
       {
@@ -53,12 +53,12 @@ class UserPrefs: public UserPrefValuesNative
       return Success();
    }
 
-   int userLayer()
+   int userLayer() override
    {
       return PREF_LAYER_USER;
    }
 
-   void onPrefLayerChanged(const std::string& layerName)
+   void onPrefLayerChanged(const std::string& layerName) override
    {
       Preferences::onPrefLayerChanged(layerName);
 

@@ -88,14 +88,14 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
    @Override
    public void onUserStateChanged(UserStateChangedEvent e)
    {
-      // TODO Auto-generated method stub
-      
+      syncPrefs(e.getName(), e.getValues());
    }
 
    @Override
    public void onSessionInit(SessionInitEvent e)
    {
       /*
+       * TODO
       // First update the theme and flat theme so the event will trigger.
       SessionInfo sessionInfo = session_.getSessionInfo();
       JsObject jsUiPrefs = sessionInfo.getUserState();
