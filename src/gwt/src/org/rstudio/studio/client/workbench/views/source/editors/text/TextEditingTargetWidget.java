@@ -624,7 +624,7 @@ public class TextEditingTargetWidget
       ToolbarMenuButton texButton = new ToolbarMenuButton(
                            "Format", 
                            ToolbarButton.NoTitle,
-                           fileTypeRegistry_.getIconForFilename("foo.tex"), 
+                           fileTypeRegistry_.getIconForFilename("foo.tex").getImageResource(),
                            texMenu, 
                            false);
       return texButton;
@@ -1118,8 +1118,8 @@ public class TextEditingTargetWidget
       {
          String ext = extensions.get(i);
          ImageResource img = ext != null ? 
-               fileTypeRegistry_.getIconForFilename("output." + ext) :
-               fileTypeRegistry_.getIconForFilename("Makefile");
+               fileTypeRegistry_.getIconForFilename("output." + ext).getImageResource() :
+               fileTypeRegistry_.getIconForFilename("Makefile").getImageResource();
          final String valueName = values.get(i);
          ScheduledCommand cmd = new ScheduledCommand()
          {

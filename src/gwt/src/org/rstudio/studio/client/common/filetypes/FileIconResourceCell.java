@@ -1,5 +1,5 @@
 /*
- * RDSDataType.java
+ * FileIconResourceCell.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -14,26 +14,30 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-public class RDSDataType extends FileType
+public class FileIconResourceCell extends AbstractCell<FileIcon>
 {
-   RDSDataType()
+   private static FileIconRenderer renderer;
+
+   /**
+    * Construct a new ImageResourceCell.
+    */
+   public FileIconResourceCell()
    {
-      super("rds_data");
+      if (renderer == null)
+      {
+         renderer = new FileIconRenderer();
+      }
    }
 
    @Override
-   public void openFile(FileSystemItem file, EventBus eventBus)
+   public void render(Context context, FileIcon value, SafeHtmlBuilder sb)
    {
-      eventBus.fireEvent(new OpenDataFileEvent(file));
-   }
-
-   @Override
-   protected FileIcon getDefaultFileIcon()
-   {
-      return FileIcon.RDS_ICON;
+      if (value != null)
+      {
+         sb.append(renderer.render(value));
+      }
    }
 }
