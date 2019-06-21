@@ -15,7 +15,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -29,7 +28,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Inject;
 
 public class CaptionWithHelp extends Composite
@@ -52,9 +50,8 @@ public class CaptionWithHelp extends Composite
       captionLabel_ = new FormLabel(caption);
       panel.add(captionLabel_);
       helpPanel_ = new HorizontalPanel();
-      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
+      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
-      A11y.setDecorativeImage(helpImage.getElement());
       helpPanel_.add(helpImage);
       HyperlinkLabel link = new HyperlinkLabel(helpCaption);
       link.addStyleName(styles.helpLink());

@@ -33,13 +33,12 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class SearchWidget extends Composite implements SearchDisplay                                   
+public class SearchWidget extends Composite implements SearchDisplay
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
@@ -121,7 +120,6 @@ public class SearchWidget extends Composite implements SearchDisplay
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
       close_.setAltText("Clear text");
-      A11y.setDecorativeImage(icon_.getElement());
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
@@ -301,12 +299,11 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void setIcon(ImageResource image)
    {
       icon_.setResource(image);
-      A11y.setDecorativeImage(icon_.getElement());
    }
    
    public void focus()
    {
-      suggestBox_.setFocus(true);      
+      suggestBox_.setFocus(true);
    }
    
    public void clear()
@@ -360,7 +357,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    @UiField
    Image close_;
    @UiField
-   Image icon_;
+   DecorativeImage icon_;
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;

@@ -15,17 +15,16 @@
 package org.rstudio.studio.client.common;
 
 import com.google.gwt.dom.client.Element;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 
 public class HelpLink extends Composite
 {
@@ -58,9 +57,8 @@ public class HelpLink extends Composite
 
       HorizontalPanel helpPanel = new HorizontalPanel();
     
-      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
+      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
-      A11y.setDecorativeImage(helpImage.getElement());
       helpPanel.add(helpImage);
       helpLink_ = new HyperlinkLabel(caption, () -> {
          if (isRStudioLink_) {
