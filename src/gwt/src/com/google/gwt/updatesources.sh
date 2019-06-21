@@ -9,6 +9,7 @@ SRCBASE=`pwd`
 
 # extract over previously modified sources
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
+  com/google/gwt/user/client/ui/CustomScrollPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/HorizontalPanel.java \
   com/google/gwt/user/client/ui/Label.java \
@@ -25,6 +26,7 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
 
 # apply previous patches
 cd ${SRCBASE}/com/google/gwt/user/client/ui
+patch CustomScrollPanel.java < CustomScrollPanel.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff
 patch HorizontalPanel.java < HorizontalPanel.java.diff
 patch Label.java < Label.java.diff

@@ -1,0 +1,8 @@
+580c580
+<         && (alwaysShowScrollbars || getElement().getClientWidth() < contentWidth)) {
+---
+>         && (alwaysShowScrollbars || getElement().getClientWidth() < contentWidth - 1)) {
+585c585
+<         && (alwaysShowScrollbars || getElement().getClientHeight() < contentHeight)) {
+---
+>         && (alwaysShowScrollbars || getElement().getClientHeight() < contentHeight - 1)) {
