@@ -26,6 +26,7 @@ namespace prefs {
 class UserPrefsLayer: public PrefLayer
 {
 public:
+   UserPrefsLayer();
    core::Error readPrefs() override;
    core::Error writePrefs(const core::json::Object &prefs) override;
    core::Error validatePrefs() override;
@@ -34,6 +35,9 @@ protected:
    void onPrefsFileChanged() override;
 
 private:
+   // The time at which we last sync'ed the state of the prefs file with the prefs cache
+   std::time_t lastSync_;
+
    // The path we're reading the preference file from
    core::FilePath prefsFile_;
 };

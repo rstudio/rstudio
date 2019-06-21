@@ -19,6 +19,12 @@
 #define kUserPrefsFile "rstudio-prefs.json"
 #define kUserPrefsSchemaFile "user-prefs-schema.json"
 
+#define kUserPrefsDefaultLayer  "default"
+#define kUserPrefsComputedLayer "computed"
+#define kUserPrefsSystemLayer   "system"
+#define kUserPrefsUserLayer     "user"
+#define kUserPrefsProjectLayer  "project"
+
 #include "UserPrefValuesNative.hpp"
 
 #include <core/json/Json.hpp>

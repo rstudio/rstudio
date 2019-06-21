@@ -23,6 +23,10 @@
 
 #include <core/json/Json.hpp>
 
+#define kUserStateDefaultLayer  "default"
+#define kUserStateComputedLayer "computed"
+#define kUserStateUserLayer     "user"
+
 enum StateLayer
 {
    STATE_LAYER_MIN      = 0,

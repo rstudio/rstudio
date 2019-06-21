@@ -25,8 +25,9 @@ namespace prefs {
 class UserPrefsProjectLayer: public PrefLayer
 {
 public:
-   core::Error readPrefs();
-   core::Error validatePrefs();
+   UserPrefsProjectLayer();
+   core::Error readPrefs() override;
+   core::Error validatePrefs() override;
 };
 
 } // namespace prefs

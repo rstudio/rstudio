@@ -27,6 +27,7 @@ namespace prefs {
 class UserPrefsComputedLayer: public PrefLayer
 {
 public:
+   UserPrefsComputedLayer();
    core::Error readPrefs();
    core::Error validatePrefs();
    core::Error writePrefs(const core::json::Object &prefs);

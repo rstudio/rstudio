@@ -39,10 +39,12 @@ namespace prefs {
 class PrefLayer
 {
 public:
+   PrefLayer(const std::string& layerName);
    virtual core::Error readPrefs() = 0;
    virtual core::Error writePrefs(const core::json::Object& prefs);
    virtual core::Error validatePrefs() = 0;
    virtual ~PrefLayer();
+   std::string layerName();
 
    template<typename T> boost::optional<T> readPref(const std::string& name)
    {
@@ -51,8 +53,8 @@ public:
       {
          if (!cache_)
          {
-            LOG_WARNING_MESSAGE("Attempt to look up preference '" + name + "' before preferences "
-                  "were read");
+            LOG_WARNING_MESSAGE("Attempt to look up preference '" + name + "' before preference "
+                  "layer '" + layerName() + "' was read");
             return boost::none;
          }
 
@@ -66,7 +68,7 @@ public:
                core::Error error(core::json::errc::ParamTypeMismatch, ERROR_LOCATION);
                error.addProperty("description", "unexpected type "
                      "'" + core::json::typeAsString((*it).value()) + "'"
-                     " for preference '" + name + "'");
+                     " for preference '" + name + "' in layer '" + layerName() + "'");
                LOG_ERROR(error);
                return boost::none;
             }
@@ -89,7 +91,8 @@ public:
          if (!cache_)
          {
             core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
-            error.addProperty("description", "cannot write property '" + name + "' before reading it");
+            error.addProperty("description", "cannot write property '" + name + "' in layer '" +
+                  layerName() + "' before reading it");
             return error;
          }
          (*cache_)[name] = value;
@@ -119,6 +122,9 @@ protected:
    // The actual cache of preference values, and a mutex that guards access
    boost::shared_ptr<core::json::Object> cache_;
    boost::mutex mutex_;
+
+   // The name of this pref layer
+   std::string layerName_;
 
 private:
    // File monitor event handlers

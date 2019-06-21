@@ -15,6 +15,7 @@
 
 #include "UserStateComputedLayer.hpp"
 
+#include <session/prefs/UserState.hpp>
 #include <session/prefs/UserStateValues.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -28,6 +29,11 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace prefs {
+
+UserStateComputedLayer::UserStateComputedLayer():
+   PrefLayer(kUserStateComputedLayer)
+{
+}
 
 Error UserStateComputedLayer::readPrefs()
 {

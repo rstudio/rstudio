@@ -25,6 +25,7 @@ namespace prefs {
 class UserPrefsSystemLayer: public PrefLayer
 {
 public:
+   UserPrefsSystemLayer();
    core::Error readPrefs();
    core::Error validatePrefs();
 };

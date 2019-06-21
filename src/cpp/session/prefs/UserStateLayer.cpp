@@ -26,6 +26,11 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+UserStateLayer::UserStateLayer():
+   PrefLayer(kUserStateUserLayer)
+{
+}
+
 core::Error UserStateLayer::readPrefs()
 {
    return loadPrefsFromFile(

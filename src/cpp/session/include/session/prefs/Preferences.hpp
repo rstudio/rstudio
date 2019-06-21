@@ -69,7 +69,6 @@ public:
       return T();
    }
 
-
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
       core::Error err;
@@ -96,12 +95,11 @@ public:
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)> onChanged;
 
 protected:
+   virtual void onPrefLayerChanged();
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
    boost::mutex mutex_;
 
-private:
-   void onPrefLayerChanged();
 };
 
 } // namespace prefs

@@ -195,6 +195,8 @@ Error Preferences::clearValue(const std::string &name)
 
 void Preferences::onPrefLayerChanged()
 {
+   // Fire changed event to all our listeners
+   onChanged("");
 }
 
 } // namespace prefs

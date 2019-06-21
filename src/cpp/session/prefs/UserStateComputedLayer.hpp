@@ -1,5 +1,5 @@
 /*
- * UserPrefsComputedLayer.hpp
+ * UserStateComputedLayer.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -25,6 +25,7 @@ namespace prefs {
 class UserStateComputedLayer: public PrefLayer
 {
 public:
+   UserStateComputedLayer();
    core::Error readPrefs();
    core::Error validatePrefs();
 };

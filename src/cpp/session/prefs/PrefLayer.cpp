@@ -31,6 +31,12 @@ bool prefsFileFilter(const core::FilePath& prefsFile, const core::FileInfo& file
 
 } // anonymous namespace
 
+
+PrefLayer::PrefLayer(const std::string& layerName):
+   layerName_(layerName)
+{
+}
+
 PrefLayer::~PrefLayer()
 {
    // End file monitoring if not already terminated
@@ -231,6 +237,10 @@ void PrefLayer::monitorPrefsFile(const core::FilePath& prefsFile)
          cb);
 }
 
+std::string PrefLayer::layerName()
+{
+   return layerName_;
+}
 
 } // namespace prefs
 } // namespace session

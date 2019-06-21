@@ -27,21 +27,36 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+UserPrefsLayer::UserPrefsLayer():
+   PrefLayer(kUserPrefsUserLayer)
+{
+}
+
 Error UserPrefsLayer::readPrefs()
 {
    Error err;
    prefsFile_ = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
 
    // After deferred init, start monitoring the prefs file for changes
-   module_context::events().onDeferredInit.connect([&](bool) {
+   module_context::events().onDeferredInit.connect([&](bool)
+   {
       monitorPrefsFile(prefsFile_);
    });
+
+   // Mark the last sync time 
+   lastSync_ = prefsFile_.lastWriteTime();
 
    return loadPrefsFromFile(prefsFile_);
 }
 
 void UserPrefsLayer::onPrefsFileChanged()
 {
+   if (prefsFile_.lastWriteTime() <= lastSync_)
+   {
+      // In most cases the prefs file change will have originated from RStudio itself; ignore these.
+      return;
+   }
+
    // Reload the prefs from the file
    Error error = loadPrefsFromFile(prefsFile_);
    if (error)
@@ -65,6 +80,11 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    END_LOCK_MUTEX
 
    error = writePrefsToFile(*cache_, prefsFile_);
+   if (!error)
+   {
+      // If we successfully wrote the contents, mark the last sync time
+      lastSync_ = prefsFile_.lastWriteTime();
+   }
 
    return error;
 }

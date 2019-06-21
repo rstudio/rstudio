@@ -27,6 +27,11 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+UserPrefsProjectLayer::UserPrefsProjectLayer():
+   PrefLayer(kUserPrefsProjectLayer)
+{
+}
+
 core::Error UserPrefsProjectLayer::readPrefs()
 {
    if (projects::projectContext().hasProject())

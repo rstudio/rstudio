@@ -15,6 +15,7 @@
 
 #include "UserPrefsComputedLayer.hpp"
 
+#include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserPrefValues.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -33,6 +34,11 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace prefs {
+
+UserPrefsComputedLayer::UserPrefsComputedLayer():
+   PrefLayer(kUserPrefsComputedLayer)
+{
+}
 
 Error UserPrefsComputedLayer::readPrefs()
 {
