@@ -41,6 +41,7 @@ public:
    core::Error initialize();
    core::json::Array allLayers();
    core::json::Object userPrefLayer();
+   core::json::Object getLayer(const std::string& name);
    core::Error writeLayer(size_t layer, const core::json::Object& prefs);
 
    template <typename T> T readPref(const std::string& name)
@@ -77,7 +78,7 @@ public:
       {
          // Write a new value when changing the value
          err = layer->writePref(name, value);
-         onChanged(name);
+         onChanged(layer->layerName(), name);
       }
 
       return err;
@@ -91,15 +92,14 @@ public:
    virtual core::Error createLayers() = 0;
    virtual int userLayer() = 0;
 
-   // Signal emitted when preferences change; can include the pref name when only one pref changes.
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)> onChanged;
+   // Signal emitted when preferences change; includes the layer name and value name
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onChanged;
 
 protected:
-   virtual void onPrefLayerChanged();
+   virtual void onPrefLayerChanged(const std::string& layerName);
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
    boost::mutex mutex_;
-
 };
 
 } // namespace prefs

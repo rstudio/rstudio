@@ -29,7 +29,10 @@ core::json::Array Preferences::allLayers()
    {
       for (auto layer: layers_)
       {
-         layers.push_back(layer->allPrefs());
+         json::Object obj;
+         obj["name"] = layer->layerName();
+         obj["values"] = layer->allPrefs();
+         layers.push_back(obj);
       }
    }
    END_LOCK_MUTEX
@@ -54,7 +57,7 @@ core::Error Preferences::readLayers()
    return Success();
 }
 
-core::Error Preferences::initialize()
+Error Preferences::initialize()
 {
    Error error = createLayers();
    if (error)
@@ -74,7 +77,8 @@ core::Error Preferences::initialize()
             LOG_ERROR(error);
 
          // Subscribe for layer change notifications
-         layer->onChanged.connect(boost::bind(&Preferences::onPrefLayerChanged, this));
+         layer->onChanged.connect(boost::bind(&Preferences::onPrefLayerChanged, this,
+                  layer->layerName()));
       }
    }
    END_LOCK_MUTEX
@@ -157,16 +161,18 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
 core::Error Preferences::writeValue(const std::string& name, const core::json::Value& value)
 {
    Error result;
+   std::string layerName;
    LOCK_MUTEX(mutex_)
    {
       auto layer = layers_[userLayer()];
+      layerName = layer->layerName();
       result = layer->writePref(name, value);
    }
    END_LOCK_MUTEX
 
    // Make sure to keep this outside the mutex lock since prefs are typically read after being
    // changed.
-   onChanged(name);
+   onChanged(layerName, name);
 
    return result;
 }
@@ -187,16 +193,43 @@ Error Preferences::clearValue(const std::string &name)
    Error result;
    LOCK_MUTEX(mutex_)
    {
-      result =layers_[userLayer()]->clearValue(name);
+      result = layers_[userLayer()]->clearValue(name);
    }
    END_LOCK_MUTEX
    return result;
 }
 
-void Preferences::onPrefLayerChanged()
+json::Object Preferences::getLayer(const std::string& name)
+{
+   json::Object result;
+   bool found = false;
+
+   LOCK_MUTEX(mutex_)
+   {
+      for (auto layer: layers_)
+      {
+         if (layer->layerName() == name)
+         {
+            result = layer->allPrefs();
+            found = true;
+            break;
+         }
+      }
+   }
+   END_LOCK_MUTEX;
+
+   if (!found)
+   {
+      LOG_WARNING_MESSAGE("Preference layer '" + name + "' does not exist.");
+   }
+
+   return result;
+}
+
+void Preferences::onPrefLayerChanged(const std::string& layerName)
 {
    // Fire changed event to all our listeners
-   onChanged("");
+   onChanged(layerName, "");
 }
 
 } // namespace prefs

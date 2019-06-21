@@ -565,7 +565,7 @@ std::string nonPathSvnBinDir()
       return std::string();
 }
 
-void onUserSettingsChanged(const std::string& pref)
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
    initSvnBin();
 }

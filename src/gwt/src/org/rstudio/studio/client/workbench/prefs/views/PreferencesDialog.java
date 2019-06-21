@@ -122,9 +122,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       
       // broadcast UI pref changes to satellites
       RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
-                     new UserPrefsChangedEvent(UserPrefsChangedEvent.Data.create(
-                           UserPrefsChangedEvent.GLOBAL_TYPE,
-                           session_.getSessionInfo().getUserPrefs())));
+                     new UserPrefsChangedEvent(session_.getSessionInfo().getUserPrefLayer()));
    }
   
    public static void ensureStylesInjected()

@@ -3154,7 +3154,7 @@ std::string nonPathGitBinDir()
       return std::string();
 }
 
-void onUserSettingsChanged(const std::string& pref)
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
    FilePath gitExePath(prefs::userPrefs().gitExePath());
    if (session::options().allowVcsExecutableEdit() && !gitExePath.empty())

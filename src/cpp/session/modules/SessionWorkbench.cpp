@@ -628,7 +628,7 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    pResponse->setCacheableFile(filePath, request);
 }
 
-void onUserSettingsChanged(const std::string& pref)
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
    // sync underlying R save action
    module_context::syncRSaveAction();

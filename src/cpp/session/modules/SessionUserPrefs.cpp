@@ -99,13 +99,6 @@ SEXP rs_writePref(SEXP prefName, SEXP value)
       return R_NilValue;
    }
 
-   // fire an event notifying the client that uiPrefs has changed
-   json::Object dataJson;
-   dataJson["type"] = "global";
-   dataJson["prefs"] = userPrefs().userPrefLayer();
-   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
-   
    // let other modules know we've updated the prefs
    module_context::events().onPreferencesSaved();
    

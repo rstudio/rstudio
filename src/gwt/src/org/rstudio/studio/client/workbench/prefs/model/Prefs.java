@@ -80,11 +80,11 @@ public abstract class Prefs
       {
          // Work backwards through all layers, starting with the most specific
          // and working towards the most general.
-         for (JsObject layer: JsUtil.asReverseIterable(layers_))
+         for (PrefLayer layer: JsUtil.asReverseIterable(layers_))
          {
-            if (layer.hasKey(name_))
+            if (layer.getValues().hasKey(name_))
             {
-               return doGetValue(layer);
+               return doGetValue(layer.getValues());
             }
          }
          return defaultValue_;
@@ -95,9 +95,9 @@ public abstract class Prefs
          // Skip the project layer if it exists by starting at the user layer.
          for (int i = userLayer(); i >= 0; i--)
          {
-            if (layers_.get(i).hasKey(name_))
+            if (layers_.get(i).getValues().hasKey(name_))
             {
-               return doGetValue(layers_.get(i));
+               return doGetValue(layers_.get(i).getValues());
             }
          }
          return defaultValue_;
@@ -112,7 +112,7 @@ public abstract class Prefs
 
       public void setGlobalValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(userLayer()), value, fireEvents);
+         setValue(layers_.get(userLayer()).getValues(), value, fireEvents);
       }
       
       public void setProjectValue(T value)
@@ -122,7 +122,7 @@ public abstract class Prefs
       
       public void setProjectValue(T value, boolean fireEvents)
       {
-         setValue(layers_.get(projectLayer()), value, fireEvents);
+         setValue(layers_.get(projectLayer()).getValues(), value, fireEvents);
       }
 
       protected abstract void doSetValue(JsObject root, String name, T value);
@@ -263,14 +263,14 @@ public abstract class Prefs
       }
    }
 
-   public Prefs(JsArray<JsObject> layers)
+   public Prefs(JsArray<PrefLayer> layers)
    {
       layers_ = layers;
    }
    
    public JsObject getUserLayer()
    {
-      return layers_.get(userLayer());
+      return layers_.get(userLayer()).getValues();
    }
    
    public abstract int userLayer();
@@ -350,12 +350,12 @@ public abstract class Prefs
    }
    
    // Meant to be called when the satellite window receives the sessionInfo.
-   protected void UpdatePrefs(JsArray<JsObject> layers)
+   protected void UpdatePrefs(JsArray<PrefLayer> layers)
    {
       layers_ = layers;
    }
    
-   private JsArray<JsObject> layers_;
+   private JsArray<PrefLayer> layers_;
    private final HashMap<String, PrefValue<?>> values_ =
          new HashMap<String, PrefValue<?>>();
 }

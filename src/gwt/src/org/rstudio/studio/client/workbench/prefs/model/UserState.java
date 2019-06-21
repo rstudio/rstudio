@@ -64,7 +64,7 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
             public void onResponseReceived(Void v)
             {
                UserStateChangedEvent event = new UserStateChangedEvent(
-                              session_.getSessionInfo().getUserState());
+                              session_.getSessionInfo().getUserStateLayer());
 
                if (Satellite.isCurrentWindowSatellite())
                {

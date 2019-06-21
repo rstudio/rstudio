@@ -58,6 +58,18 @@ class UserPrefs: public UserPrefValuesNative
       return PREF_LAYER_USER;
    }
 
+   void onPrefLayerChanged(const std::string& layerName)
+   {
+      Preferences::onPrefLayerChanged(layerName);
+
+      // Fire an event notifying the client that prefs have changed
+      json::Object dataJson;
+      dataJson["name"] = layerName;
+      dataJson["values"] = getLayer(layerName);
+      ClientEvent event(client_events::kUserPrefsChanged, dataJson);
+      module_context::enqueClientEvent(event);
+   }
+
 public:
 
    Error createComputedLayer()

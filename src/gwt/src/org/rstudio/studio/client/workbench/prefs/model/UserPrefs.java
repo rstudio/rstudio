@@ -72,9 +72,7 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
             public void onResponseReceived(Void v)
             {
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     UserPrefsChangedEvent.Data.create(
-                              UserPrefsChangedEvent.GLOBAL_TYPE,
-                              session_.getSessionInfo().getUserPrefs()));
+                     session_.getSessionInfo().getUserPrefLayer());
 
                if (Satellite.isCurrentWindowSatellite())
                {

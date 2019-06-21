@@ -26,8 +26,10 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -101,7 +103,7 @@ public class SessionInfo extends JavaScriptObject
       return this.temp_dir;
    }-*/;
 
-   public final native JsArray<JsObject> getPrefs() /*-{
+   public final native JsArray<PrefLayer> getPrefs() /*-{
       if (!this.user_prefs)
          this.user_prefs = [ {} ];
       return this.user_prefs;
@@ -109,14 +111,24 @@ public class SessionInfo extends JavaScriptObject
    
    public final JsObject getUserPrefs()
    {
+      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER)).getValues();
+   }
+
+   public final PrefLayer getUserPrefLayer()
+   {
       return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER));
    }
 
-   public final native JsArray<JsObject> getUserState() /*-{
+   public final native JsArray<PrefLayer> getUserState() /*-{
       if (!this.user_state)
          this.user_state = [ {} ];
       return this.user_state;
    }-*/;
+
+   public final PrefLayer getUserStateLayer()
+   {
+      return getUserState().get(Math.min(getPrefs().length(), UserState.LAYER_USER));
+   }
 
    public final static String DESKTOP_MODE = "desktop";
    public final static String SERVER_MODE = "server";

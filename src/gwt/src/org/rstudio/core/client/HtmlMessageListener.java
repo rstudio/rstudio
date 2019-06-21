@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -52,9 +53,10 @@ public class HtmlMessageListener
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (e.getType() == UserPrefsChangedEvent.GLOBAL_TYPE)
+            if (e.getName() == PrefLayer.LAYER_USER)
             {
-               for (JavaScriptObject themeSource : themeSources_) {
+               for (JavaScriptObject themeSource : themeSources_)
+               {
                   postThemeMessage(themeSource, themeOrigin_);
                }
             }

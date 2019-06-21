@@ -298,7 +298,7 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 }
 
 // reset dictionary on user settings changed
-void onUserSettingsChanged(const std::string& pref)
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
    syncSpellingEngineDictionaries();
 }

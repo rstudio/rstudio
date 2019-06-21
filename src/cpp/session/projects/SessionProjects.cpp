@@ -718,9 +718,9 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 
          // fire event to client
          json::Object dataJson;
-         dataJson["type"] = "project";
-         dataJson["prefs"] = s_projectContext.uiPrefs();
-         ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+         dataJson["name"] = kUserPrefsProjectLayer;
+         dataJson["values"] = s_projectContext.uiPrefs();
+         ClientEvent event(client_events::kUserPrefsChanged, dataJson);
          module_context::enqueClientEvent(event);
 
          break;

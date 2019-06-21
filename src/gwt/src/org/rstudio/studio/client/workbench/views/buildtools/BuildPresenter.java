@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
@@ -204,7 +205,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (e.getType() == UserPrefsChangedEvent.PROJECT_TYPE)
+            if (e.getName() == PrefLayer.LAYER_USER)
                devtoolsLoadAllPath_ = null;
          }
       });

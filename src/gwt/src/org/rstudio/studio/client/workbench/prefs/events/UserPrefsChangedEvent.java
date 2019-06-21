@@ -17,56 +17,30 @@ package org.rstudio.studio.client.workbench.prefs.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
-
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 
 @JavaScriptSerializable
 public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHandler>
 {
-   public static final String GLOBAL_TYPE = "global";
-   public static final String PROJECT_TYPE = "project";
-   
-   public static class Data extends JavaScriptObject
-   {
-      protected Data()
-      {
-      }
-      
-      public final native static Data create(String type, JsObject prefs) /*-{
-         return {
-            "type" : type,
-            "prefs": prefs
-         };
-      }-*/;
-      
-      public final native String getType() /*-{
-         return this.type;
-      }-*/;
-      
-      public final native JsObject getPrefs() /*-{
-         return this.prefs;
-      }-*/;
-   }
-   
    public static final Type<UserPrefsChangedHandler> TYPE = new Type<UserPrefsChangedHandler>();
    
    public UserPrefsChangedEvent()
    {
    }
 
-   public UserPrefsChangedEvent(Data data)
+   public UserPrefsChangedEvent(PrefLayer data)
    {
       data_ = data;
    }
 
-   public String getType()
+   public String getName()
    {
-      return data_.getType();
+      return data_.getName();
    }
    
-   public JsObject getUIPrefs()
+   public JsObject getValues()
    {
-      return data_.getPrefs();
+      return data_.getValues();
    }
 
    @Override
@@ -81,5 +55,5 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHand
       handler.onUserPrefsChanged(this);
    }
 
-   private Data data_;
+   private PrefLayer data_;
 }

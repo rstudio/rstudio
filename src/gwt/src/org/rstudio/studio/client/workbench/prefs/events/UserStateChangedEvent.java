@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.events;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -36,14 +37,19 @@ public class UserStateChangedEvent extends CrossWindowEvent<UserStateChangedEven
       void onUserStateChanged(UserStateChangedEvent e);
    }
 
-   public UserStateChangedEvent(JavaScriptObject data)
+   public UserStateChangedEvent(PrefLayer data)
    {
       data_ = data;
    }
 
-   public JsObject getUIPrefs()
+   public String getName()
    {
-      return data_.cast();
+      return data_.getName();
+   }
+
+   public JsObject getValues()
+   {
+      return data_.getValues();
    }
 
    @Override
@@ -58,5 +64,5 @@ public class UserStateChangedEvent extends CrossWindowEvent<UserStateChangedEven
       handler.onUserStateChanged(this);
    }
 
-   private JavaScriptObject data_;
+   private PrefLayer data_;
 }

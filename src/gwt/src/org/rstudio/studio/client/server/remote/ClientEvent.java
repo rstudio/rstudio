@@ -54,7 +54,8 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleProcessOutput = "console_process_output";
    public static final String ConsoleProcessExit = "console_process_exit";
    public static final String ListChanged = "list_changed";
-   public static final String UiPrefsChanged = "ui_prefs_changed";
+   public static final String UserPrefsChanged = "user_prefs_changed";
+   public static final String UserStateChanged = "user_state_changed";
    public static final String HandleUnsavedChanges = "handle_unsaved_changes";
    public static final String PosixShellOutput = "posix_shell_output";
    public static final String PosixShellExit = "posix_shell_exit";

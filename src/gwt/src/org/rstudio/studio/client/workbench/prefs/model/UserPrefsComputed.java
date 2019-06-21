@@ -13,7 +13,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -22,7 +21,7 @@ import com.google.gwt.core.client.JsArray;
 public class UserPrefsComputed extends UserPrefsAccessor
 {
    public UserPrefsComputed(SessionInfo sessionInfo, 
-                            JsArray<JsObject> prefLayers)
+                            JsArray<PrefLayer> prefLayers)
    {
       super(sessionInfo, prefLayers);
    }

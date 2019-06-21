@@ -109,6 +109,8 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -526,10 +528,15 @@ public class ClientEventDispatcher
          {
             eventBus_.dispatchEvent(new ListChangedEvent(event.<JsObject>getData()));
          }
-         else if (type == ClientEvent.UiPrefsChanged)
+         else if (type == ClientEvent.UserPrefsChanged)
          {
-            UserPrefsChangedEvent.Data data = event.getData();
+            PrefLayer data = event.getData();
             eventBus_.dispatchEvent(new UserPrefsChangedEvent(data));
+         }
+         else if (type == ClientEvent.UserStateChanged)
+         {
+            PrefLayer data = event.getData();
+            eventBus_.dispatchEvent(new UserStateChangedEvent(data));
          }
          else if (type == ClientEvent.ContextDepthChanged) {
             EnvironmentContextData data = event.getData();
