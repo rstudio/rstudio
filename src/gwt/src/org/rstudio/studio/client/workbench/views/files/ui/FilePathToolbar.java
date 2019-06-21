@@ -1,7 +1,7 @@
 /*
  * FilePathToolbar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
@@ -30,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.files.Files;
 
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class FilePathToolbar extends Composite
          throw new UnsupportedOperationException("mkdir not supported");
       }
 
-      public ImageResource getIcon(FileSystemItem item)
+      public FileIcon getIcon(FileSystemItem item)
       {
          throw new UnsupportedOperationException("getIcon not supported");
       }

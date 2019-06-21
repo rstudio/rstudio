@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
@@ -247,8 +248,10 @@ public class ViewFilePanel extends Composite implements TextDisplay
       // header widget has icon + label
       HorizontalPanel panel = new HorizontalPanel();
      
-      Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
+      FileIcon icon = fileTypeRegistry_.getIconForFile(file);
+      Image imgFile = new Image(icon.getImageResource());
       imgFile.addStyleName(styles.fullscreenCaptionIcon());
+      imgFile.setAltText(icon.getDescription());
       panel.add(imgFile);
       
       Label lblCaption = new Label(caption);

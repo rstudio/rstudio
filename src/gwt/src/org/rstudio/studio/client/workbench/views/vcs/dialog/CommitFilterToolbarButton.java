@@ -123,9 +123,9 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
          else
          {
             if (value_.isDirectory())
-               setLeftImage(value_.getIcon());
+               setLeftImage(value_.getIcon().getImageResource());
             else
-               setLeftImage(fileTypeRegistry_.getIconForFile(value_));
+               setLeftImage(fileTypeRegistry_.getIconForFile(value_).getImageResource());
             setText(value_.getName());
             setTitle("Filter: " + value_.getPath());
          }
