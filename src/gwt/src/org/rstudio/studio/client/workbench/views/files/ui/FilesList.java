@@ -149,7 +149,7 @@ public class FilesList extends Composite
             public FileIcon getValue(FileSystemItem object)
             {
                if (object == parentPath_)
-                  return FileIcon.FOLDER_ICON;
+                  return FileIcon.PARENT_FOLDER_ICON;
                else
                   return fileTypeRegistry.getIconForFile(object);
             }
