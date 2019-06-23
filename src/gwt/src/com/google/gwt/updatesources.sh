@@ -9,15 +9,14 @@ SRCBASE=`pwd`
 
 # extract over previously modified sources
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
+  com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
-  com/google/gwt/user/client/ui/HorizontalPanel.java \
   com/google/gwt/user/client/ui/Label.java \
   com/google/gwt/user/client/ui/LabelBase.java \
   com/google/gwt/user/client/ui/MenuBar.java \
   com/google/gwt/user/client/ui/MenuItem.java \
   com/google/gwt/user/client/ui/SplitLayoutPanel.java \
-  com/google/gwt/user/client/ui/SplitPanel.java \
-  com/google/gwt/user/client/ui/VerticalPanel.java
+  com/google/gwt/user/client/ui/SplitPanel.java
   
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
   com/google/gwt/core/linker/CrossSiteIframeLinker.java \
@@ -25,15 +24,14 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
 
 # apply previous patches
 cd ${SRCBASE}/com/google/gwt/user/client/ui
+patch CellPanel.java < CellPanel.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff
-patch HorizontalPanel.java < HorizontalPanel.java.diff
 patch Label.java < Label.java.diff
 patch LabelBase.java < LabelBase.java.diff
 patch MenuBar.java < MenuBar.java.diff
 patch MenuItem.java < MenuItem.java.diff
 patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
 patch SplitPanel.java < SplitPanel.java.diff
-patch VerticalPanel.java < VerticalPanel.java.diff
 
 cd ${SRCBASE}/com/google/gwt/core/ext/linker/impl
 patch installLocationIframe.js < installLocationIframe.js.diff
