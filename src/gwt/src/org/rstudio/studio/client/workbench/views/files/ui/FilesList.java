@@ -21,7 +21,9 @@ import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -33,7 +35,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -110,12 +111,12 @@ public class FilesList extends Composite
       });
    }
    
-   private Column<FileSystemItem, Boolean> addSelectionColumn()
+   private Column<FileSystemItem, LabeledBoolean> addSelectionColumn()
    {
-      Column<FileSystemItem, Boolean> checkColumn = 
-         new Column<FileSystemItem, Boolean>(new CheckboxCell(true, false) {
+      Column<FileSystemItem, LabeledBoolean> checkColumn = 
+         new Column<FileSystemItem, LabeledBoolean>(new AriaLabeledCheckboxCell(true, false) {
             @Override
-            public void render(Context context, Boolean value, SafeHtmlBuilder sb) 
+            public void render(Context context, LabeledBoolean value, SafeHtmlBuilder sb) 
             {
                // don't render the check box if its for the parent path
                if (parentPath_ == null || context.getIndex() > 0)
@@ -124,9 +125,9 @@ public class FilesList extends Composite
          }) 
          {
             @Override
-            public Boolean getValue(FileSystemItem item)
+            public LabeledBoolean getValue(FileSystemItem item)
             {
-               return selectionModel_.isSelected(item);
+               return new LabeledBoolean(item.getName(), selectionModel_.isSelected(item));
             }
             
             
