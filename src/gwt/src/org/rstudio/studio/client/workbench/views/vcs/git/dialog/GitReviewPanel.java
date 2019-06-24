@@ -315,7 +315,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
          }
       });
       
-      commitMessage_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(commitMessage_);
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 

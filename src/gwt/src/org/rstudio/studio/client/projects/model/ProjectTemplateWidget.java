@@ -1,7 +1,7 @@
 /*
  * ProjectTemplateWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -180,7 +181,7 @@ public class ProjectTemplateWidget extends Composite
          primaryWidget.setText(defaultValue);
       
       Grid grid = new Grid(1, 2);
-      primaryWidget.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(primaryWidget);
       grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
       grid.setWidget(0, 1, primaryWidget);
       

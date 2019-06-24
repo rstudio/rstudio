@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -198,7 +199,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameLabel_.addStyleName(RES.styles().label());
       
       appNameTextBox_ = new TextBox();
-      appNameTextBox_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(appNameTextBox_);
       appNameTextBox_.addStyleName(RES.styles().textBox());
       appNameTextBox_.addStyleName(RES.styles().appNameTextBox());
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
