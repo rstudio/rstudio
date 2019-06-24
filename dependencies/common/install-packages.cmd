@@ -11,6 +11,9 @@ set PATH=%PATH%;%CD%\tools
 
 REM call:install rsconnect master rstudio --no-build-vignettes
 REM call:install rmarkdown master rstudio --no-build-vignettes
+
+call:install renv master rstudio --no-build-vignettes
+
 GOTO:EOF
 
 :install

@@ -68,6 +68,7 @@ import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
+import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
@@ -171,6 +172,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImpo
 public interface RStudioGinjector extends Ginjector
 {
    void injectMembers(NewFileMenu newFileMenu);
+   void injectMembers(NewDirectoryPage newDirectoryPage);
    void injectMembers(DocsMenu docsMenu);
    void injectMembers(DesktopApplicationHeader desktopApplicationHeader);
    void injectMembers(WebApplicationHeader webApplicationHeader);

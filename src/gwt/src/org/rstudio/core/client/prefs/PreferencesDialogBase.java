@@ -16,7 +16,6 @@ package org.rstudio.core.client.prefs;
 
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

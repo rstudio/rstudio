@@ -29,14 +29,12 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
 
-# we often install embedded versions of these packages but don't do so currently
-
-# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
-#   message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
-# endif()
-# if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
-#   message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
-# endif()
+# verify embedded packages are available
+foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
+   if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/${PKG}")
+      message(FATAL_ERROR "${PKG} package not found (re-run install-dependencies script to install)")
+   endif()
+endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
@@ -497,15 +495,13 @@ if (NOT RSTUDIO_SESSION_WIN32)
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
-   # install rmarkdown package
-   # file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
-   # install(FILES ${RMARKDOWN_PACKAGE}
-   #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
-
-   # install rsconnect package
-   # file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
-   # install(FILES ${RSCONNECT_PACKAGE}
-   #         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+   # install embedded packages
+   foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
+      file(GLOB PKG_FILES "${RSTUDIO_DEPENDENCIES_DIR}/common/${PKG}*.tar.gz")
+      install(
+         FILES "${PKG_FILES}"
+         DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/R/packages")
+   endforeach()
 
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
