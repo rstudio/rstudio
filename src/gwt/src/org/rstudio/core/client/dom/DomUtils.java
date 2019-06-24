@@ -1112,7 +1112,17 @@ public class DomUtils
    {
       disableAutoBehavior(w.getElement());
    }
-   
+
+   public static void disableSpellcheck(Element ele)
+   {
+      ele.setAttribute("spellcheck", "false");
+   }
+
+   public static void disableSpellcheck(Widget w)
+   {
+      disableSpellcheck(w.getElement());
+   }
+
    /**
     * Given any URL, resolves it to an absolute URL (using the current window as
     * the base URL), and returns the result.

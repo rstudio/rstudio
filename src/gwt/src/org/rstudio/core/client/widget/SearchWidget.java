@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -110,7 +111,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                        SuggestionDisplay suggestDisplay,
                        boolean continuousSearch)
    {
-      textBox.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textBox);
       
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);

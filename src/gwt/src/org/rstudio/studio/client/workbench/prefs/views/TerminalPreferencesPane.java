@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -107,7 +108,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptionsLabel_ = new Label("Custom shell command-line options:");
       add(spacedBefore(customShellOptionsLabel_));
       customShellOptions_ = new TextBox();
-      customShellOptions_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(customShellOptions_);
       customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
       add(customShellOptions_);
@@ -169,7 +170,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyWhitelistLabel_ = new Label("Don't ask before killing:");
          add(busyWhitelistLabel_);
          busyWhitelist_ = new TextBox();
-         busyWhitelist_.getElement().setAttribute("spellcheck", "false");
+         DomUtils.disableSpellcheck(busyWhitelist_);
          busyWhitelist_.setWidth(textboxWidth);
          add(busyWhitelist_);
          busyWhitelist_.setEnabled(false);

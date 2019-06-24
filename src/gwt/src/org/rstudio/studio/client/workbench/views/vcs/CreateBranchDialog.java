@@ -21,6 +21,7 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -265,7 +266,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       TextBox textBox = new TextBox();
       textBox.getElement().getStyle().setProperty("minWidth", "200px");
-      textBox.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textBox);
       return textBox;
    }
    

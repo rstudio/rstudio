@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.rpubs.ui;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
@@ -158,7 +159,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          verticalPanel.add(titleLabel);
          titleTextBox_ = new TextBox();
          titleTextBox_.addStyleName(styles.titleTextBox());
-         titleTextBox_.getElement().setAttribute("spellcheck", "false");
+         DomUtils.disableSpellcheck(titleTextBox_);
          verticalPanel.add(titleTextBox_);
          
          Label commentLabel = new Label("Comment (optional):");

@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -122,7 +123,7 @@ public class SVNCommitDialog extends ModalDialogBase
          }
       });
 
-      message_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(message_);
       
       if (!StringUtil.isNullOrEmpty(commitDraft_))
          message_.setText(commitDraft_);
