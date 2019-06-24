@@ -1134,7 +1134,7 @@ public class DomUtils
     */
    public static void setPlaceholder(Element ele, String placeholder)
    {
-      ele.setAttribute("placeholder", "Name");
+      ele.setAttribute("placeholder", placeholder);
    }
 
    /**
