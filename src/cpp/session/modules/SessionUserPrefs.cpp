@@ -60,7 +60,7 @@ Error setState(const json::JsonRpcRequest& request,
    return Success();
 }
 
-SEXP rs_writePref(SEXP prefName, SEXP value)
+SEXP rs_writePref(Preferences& prefs, SEXP prefName, SEXP value)
 {
    json::Value prefValue = json::Value();
 
@@ -79,7 +79,7 @@ SEXP rs_writePref(SEXP prefName, SEXP value)
 
    // if this corresponds to an existing preference, ensure that we're not 
    // changing its data type
-   boost::optional<json::Value> previous = userPrefs().readValue(pref);
+   boost::optional<json::Value> previous = prefs.readValue(pref);
    if (previous)
    {
       if ((*previous).type() != prefValue.type())
@@ -92,7 +92,7 @@ SEXP rs_writePref(SEXP prefName, SEXP value)
    }
    
    // write new pref value
-   error = userPrefs().writeValue(pref, prefValue);
+   error = prefs.writeValue(pref, prefValue);
    if (error)
    {
       r::exec::error("Could not save preferences: " + error.description());
@@ -123,7 +123,7 @@ SEXP rs_removePref(SEXP prefName)
    return R_NilValue;
 }
 
-SEXP rs_readPref(SEXP prefName)
+SEXP rs_readPref(Preferences& prefs, SEXP prefName)
 {
    r::sexp::Protect protect;
 
@@ -132,7 +132,7 @@ SEXP rs_readPref(SEXP prefName)
    if (pref.empty())
       return R_NilValue;
 
-   auto prefValue = userPrefs().readValue(pref);
+   auto prefValue = prefs.readValue(pref);
    if (prefValue)
    {
       // convert to SEXP and return
@@ -141,6 +141,26 @@ SEXP rs_readPref(SEXP prefName)
 
    // No preference found with this name
    return R_NilValue;
+}
+
+SEXP rs_readUserPref(SEXP prefName)
+{
+   return rs_readPref(userPrefs(), prefName);
+}
+
+SEXP rs_writeUserPref(SEXP prefName, SEXP value)
+{
+   return rs_writePref(userPrefs(), prefName, value);
+}
+
+SEXP rs_readUserState(SEXP stateName)
+{
+   return rs_readPref(userState(), stateName);
+}
+
+SEXP rs_writeUserState(SEXP stateName, SEXP value)
+{
+   return rs_writePref(userState(), stateName, value);
 }
 
 } // anonymous namespace
@@ -152,8 +172,10 @@ core::Error initialize()
    if (error)
       return error;
    
-   RS_REGISTER_CALL_METHOD(rs_readPref);
-   RS_REGISTER_CALL_METHOD(rs_writePref);
+   RS_REGISTER_CALL_METHOD(rs_readUserPref);
+   RS_REGISTER_CALL_METHOD(rs_writeUserPref);
+   RS_REGISTER_CALL_METHOD(rs_readUserState);
+   RS_REGISTER_CALL_METHOD(rs_writeUserState);
    RS_REGISTER_CALL_METHOD(rs_removePref);
 
    // Ensure we have a context ID

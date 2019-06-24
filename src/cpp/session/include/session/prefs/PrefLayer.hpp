@@ -96,9 +96,12 @@ public:
             return error;
          }
          (*cache_)[name] = value;
-         error = writePrefs(*cache_);
       }
       END_LOCK_MUTEX;
+
+      // WritePrefs does its own mutex locking
+      error = writePrefs(*cache_);
+
       return error;
    }
 

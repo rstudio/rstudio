@@ -296,15 +296,31 @@
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readPref", prefName, PACKAGE = "(embedding)")
+  .Call("rs_readUserPref", prefName, PACKAGE = "(embedding)")
 })
+.rs.addFunction("readUserPref", .rs.readUiPref)
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writePref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+  invisible(.Call("rs_writeUserPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+})
+.rs.addFunction("writeUserPref", .rs.writeUiPref)
+
+.rs.addFunction("readUserState", function(stateName) {
+  if (missing(stateName) || is.null(stateName))
+    stop("No state name supplied")
+  .Call("rs_readUserState", stateName, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("writeUserState", function(stateName, value) {
+  if (missing(stateName) || is.null(stateName))
+    stop("No state name supplied")
+  if (missing(value))
+    stop("No value supplied")
+  invisible(.Call("rs_writeUserState", stateName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("removePref", function(prefName) {
