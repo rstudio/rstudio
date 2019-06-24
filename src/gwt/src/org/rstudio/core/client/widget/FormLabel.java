@@ -17,7 +17,6 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 
 /**
@@ -26,6 +25,8 @@ import org.rstudio.core.client.StringUtil;
  */
 public class FormLabel extends Label
 {
+   public static String NoForId = null;
+
    public FormLabel()
    {
       this("");
@@ -37,7 +38,7 @@ public class FormLabel extends Label
     */
    public FormLabel(String text)
    {
-      super(text, "placeholder");
+      super(text, NoForId);
    }
 
   /**
@@ -47,7 +48,7 @@ public class FormLabel extends Label
    */
    public FormLabel(String text, boolean wordWrap)
    {
-      super(text, "placeholder", wordWrap);
+      super(text, NoForId, wordWrap);
    }
 
    /**
@@ -70,17 +71,10 @@ public class FormLabel extends Label
       String controlId = widget.getElement().getId();
       if (StringUtil.isNullOrEmpty(controlId))
       {
-         if (StringUtil.isNullOrEmpty(getText()))
-         {
-            controlId = DOM.createUniqueId();
-         }
-         else
-         {
-            controlId = ElementIds.idFromLabel(getText());
-         }
+         controlId = DOM.createUniqueId();
          widget.getElement().setId(controlId);
       }
-      getElement().setAttribute("for", controlId);
+      setFor(controlId);
    }
 
    /**
