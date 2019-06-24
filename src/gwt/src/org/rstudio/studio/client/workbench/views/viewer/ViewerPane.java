@@ -192,7 +192,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setManuallyHidden(false);
       publishButton_.setShinyPreview(params);
       toolbar_.invalidateSeparators();
-   };
+   }
    
    @Override
    public void previewPlumber(PlumberAPIParams params) 
@@ -201,7 +201,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setManuallyHidden(false);
       publishButton_.setPlumberPreview(params);
       toolbar_.invalidateSeparators();
-   };
+   }
     
    @Override
    public void setExportEnabled(boolean exportEnabled)

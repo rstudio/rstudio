@@ -1,7 +1,7 @@
 /*
  * KeyMap.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,7 @@ import org.rstudio.core.client.container.SafeMap;
 public class KeyMap
 {
    public static enum KeyMapType {
-      ADDIN, EDITOR, APPLICATION;
+      ADDIN, EDITOR, APPLICATION
    }
    
    public interface CommandBinding

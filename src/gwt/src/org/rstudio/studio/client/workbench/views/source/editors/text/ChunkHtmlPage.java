@@ -89,7 +89,7 @@ public class ChunkHtmlPage extends ChunkOutputPage
             };
 
             frameFinishLoadTimer.schedule(100);
-         };
+         }
       });
 
       afterRender_ = new Command() {

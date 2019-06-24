@@ -1,7 +1,7 @@
 /*
  * RnwChunkOptions.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,7 @@ public class RnwChunkOptions extends JavaScriptObject
       if (!hasOption(name))
          return null;
 
-      JSONArray arr = new JSONArray(getOptionTypeNative(name));;
+      JSONArray arr = new JSONArray(getOptionTypeNative(name));
       if (arr.size() == 1)
          return arr.get(0).isString().stringValue();
       else
