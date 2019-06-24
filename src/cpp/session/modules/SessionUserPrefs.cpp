@@ -150,7 +150,15 @@ SEXP rs_readUserPref(SEXP prefName)
 
 SEXP rs_writeUserPref(SEXP prefName, SEXP value)
 {
-   return rs_writePref(userPrefs(), prefName, value);
+   rs_writePref(userPrefs(), prefName, value);
+
+   json::Object dataJson;
+   dataJson["name"] = kUserPrefsUserLayer;
+   dataJson["values"] = userPrefs().userPrefLayer();
+   ClientEvent event(client_events::kUserPrefsChanged, dataJson);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
 }
 
 SEXP rs_readUserState(SEXP stateName)
@@ -160,7 +168,15 @@ SEXP rs_readUserState(SEXP stateName)
 
 SEXP rs_writeUserState(SEXP stateName, SEXP value)
 {
-   return rs_writePref(userState(), stateName, value);
+   rs_writePref(userState(), stateName, value);
+
+   json::Object dataJson;
+   dataJson["name"] = kUserStateUserLayer;
+   dataJson["values"] = userState().userPrefLayer();
+   ClientEvent event(client_events::kUserStateChanged, dataJson);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
 }
 
 } // anonymous namespace

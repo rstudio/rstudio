@@ -346,25 +346,44 @@ public class UserStateAccessor extends Prefs
 
    public void syncPrefs(String layer, JsObject source)
    {
-      contextId().setValue(layer, source.getString("context_id"));
-      agreementHash().setValue(layer, source.getString("agreement_hash"));
-      autoCreatedProfile().setValue(layer, source.getBool("auto_created_profile"));
-      theme().setValue(layer, source.getObject("theme"));
-      defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
-      clearHidden().setValue(layer, source.getBool("clear_hidden"));
-      exportPlotOptions().setValue(layer, source.getObject("export_plot_options"));
-      exportViewerOptions().setValue(layer, source.getObject("export_viewer_options"));
-      savePlotAsPdfOptions().setValue(layer, source.getObject("save_plot_as_pdf_options"));
-      compileRNotebookPrefs().setValue(layer, source.getObject("compile_r_notebook_prefs"));
-      compileRMarkdownNotebookPrefs().setValue(layer, source.getObject("compile_r_markdown_notebook_prefs"));
-      showPublishUi().setValue(layer, source.getBool("show_publish_ui"));
-      enableRsconnectPublishUi().setValue(layer, source.getBool("enable_rsconnect_publish_ui"));
-      publishAccount().setValue(layer, source.getObject("publish_account"));
-      documentOutlineWidth().setValue(layer, source.getInteger("document_outline_width"));
-      connectVia().setValue(layer, source.getString("connect_via"));
-      cranMirrorChanged().setValue(layer, source.getBool("cran_mirror_changed"));
-      errorHandlerType().setValue(layer, source.getString("error_handler_type"));
-      usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
+      if (source.hasKey("context_id"))
+         contextId().setValue(layer, source.getString("context_id"));
+      if (source.hasKey("agreement_hash"))
+         agreementHash().setValue(layer, source.getString("agreement_hash"));
+      if (source.hasKey("auto_created_profile"))
+         autoCreatedProfile().setValue(layer, source.getBool("auto_created_profile"));
+      if (source.hasKey("theme"))
+         theme().setValue(layer, source.getObject("theme"));
+      if (source.hasKey("default_project_location"))
+         defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
+      if (source.hasKey("clear_hidden"))
+         clearHidden().setValue(layer, source.getBool("clear_hidden"));
+      if (source.hasKey("export_plot_options"))
+         exportPlotOptions().setValue(layer, source.getObject("export_plot_options"));
+      if (source.hasKey("export_viewer_options"))
+         exportViewerOptions().setValue(layer, source.getObject("export_viewer_options"));
+      if (source.hasKey("save_plot_as_pdf_options"))
+         savePlotAsPdfOptions().setValue(layer, source.getObject("save_plot_as_pdf_options"));
+      if (source.hasKey("compile_r_notebook_prefs"))
+         compileRNotebookPrefs().setValue(layer, source.getObject("compile_r_notebook_prefs"));
+      if (source.hasKey("compile_r_markdown_notebook_prefs"))
+         compileRMarkdownNotebookPrefs().setValue(layer, source.getObject("compile_r_markdown_notebook_prefs"));
+      if (source.hasKey("show_publish_ui"))
+         showPublishUi().setValue(layer, source.getBool("show_publish_ui"));
+      if (source.hasKey("enable_rsconnect_publish_ui"))
+         enableRsconnectPublishUi().setValue(layer, source.getBool("enable_rsconnect_publish_ui"));
+      if (source.hasKey("publish_account"))
+         publishAccount().setValue(layer, source.getObject("publish_account"));
+      if (source.hasKey("document_outline_width"))
+         documentOutlineWidth().setValue(layer, source.getInteger("document_outline_width"));
+      if (source.hasKey("connect_via"))
+         connectVia().setValue(layer, source.getString("connect_via"));
+      if (source.hasKey("cran_mirror_changed"))
+         cranMirrorChanged().setValue(layer, source.getBool("cran_mirror_changed"));
+      if (source.hasKey("error_handler_type"))
+         errorHandlerType().setValue(layer, source.getString("error_handler_type"));
+      if (source.hasKey("using_mingw_gcc49"))
+         usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
    }
    
 

@@ -135,7 +135,8 @@ generate <- function (schemaPath, className) {
          "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
          "   }\n\n")
       javasync <- paste0(javasync,
-         "      ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
+         "      if (source.hasKey(\"", pref, "\"))\n",
+         "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
       
       hpp <- paste0(hpp, comment,
                     "   ", cpptype, " ", camel, "();\n")
