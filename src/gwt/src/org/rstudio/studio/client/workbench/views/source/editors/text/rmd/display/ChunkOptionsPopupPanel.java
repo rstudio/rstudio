@@ -1,7 +1,7 @@
 /*
  * ChunkOptionsPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -408,7 +408,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    private TextBox makeInputBox(final String option, final boolean enquote)
    {
       final TextBox box = new TextBox();
-      box.getElement().setAttribute("placeholder", "Default");
+      DomUtils.setPlaceholder(box, "Default");
       box.setWidth("40px");
       
       DomUtils.addKeyHandlers(box, new NativeEventHandler()

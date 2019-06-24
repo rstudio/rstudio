@@ -195,7 +195,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       apiNameTextBox_ = new TextBox();
       DomUtils.disableSpellcheck(apiNameTextBox_);
       apiNameTextBox_.addStyleName(RES.styles().apiNameTextBox());
-      apiNameTextBox_.getElement().setAttribute("placeholder", "Name");
+      DomUtils.setPlaceholder(apiNameTextBox_, "Name");
       addTextFieldValidator(apiNameTextBox_);
       controls_.add(apiNameTextBox_);
       

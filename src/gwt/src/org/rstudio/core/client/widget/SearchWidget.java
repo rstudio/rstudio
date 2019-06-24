@@ -337,7 +337,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public void setPlaceholderText(String value)
    {
-      suggestBox_.getElement().setAttribute("placeholder", value);
+      DomUtils.setPlaceholder(suggestBox_.getElement(), value);
    }
    
    public boolean isFocused()

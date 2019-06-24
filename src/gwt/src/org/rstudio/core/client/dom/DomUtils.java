@@ -31,6 +31,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -1121,6 +1122,32 @@ public class DomUtils
    public static void disableSpellcheck(Widget w)
    {
       disableSpellcheck(w.getElement());
+   }
+
+   /**
+    * Set placeholder attribute on an element (assumed to be a textbox).
+    * This is considered a somewhat dubious technique from an accessibility 
+    * standpoint, especially if the placeholder is serving as the de facto label 
+    * for the textbox. Avoid introducing new uses of placeholder text.
+    * @param ele
+    * @param placeholder
+    */
+   public static void setPlaceholder(Element ele, String placeholder)
+   {
+      ele.setAttribute("placeholder", "Name");
+   }
+
+   /**
+    * Set placeholder attribute on a TextBox widget.
+    * This is considered a somewhat dubious technique from an accessibility 
+    * standpoint, especially if the placeholder is serving as the de facto label 
+    * for the textbox. Avoid introducing new uses of placeholder text.
+    * @param w
+    * @param placeholder
+    */
+   public static void setPlaceholder(TextBox w, String placeholder)
+   {
+      setPlaceholder(w.getElement(), placeholder);
    }
 
    /**
