@@ -1,7 +1,7 @@
 /*
  * DirectoryContentsWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,12 +21,10 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
 import org.rstudio.core.client.Point;
@@ -37,12 +35,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -382,7 +379,7 @@ public class DirectoryContentsWidget
       if (parentDirectory != null)
          addItem(parentDirectory,
                  "..",
-                 new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x()));
+                 FileIcon.PARENT_FOLDER_ICON);
 
       for (FileSystemItem fsi : contents)
          addItem(fsi, null, null);
@@ -392,7 +389,7 @@ public class DirectoryContentsWidget
 
    private int addItem(FileSystemItem item,
                        String customName,
-                       ImageResource customIcon)
+                       FileIcon customIcon)
    {
       if (customName == null)
          customName = item.getName();
@@ -405,7 +402,7 @@ public class DirectoryContentsWidget
       table_.setWidget(
             newRow,
             COL_ICON,
-            new Image(customIcon));
+            customIcon.getImage());
       table_.setText(newRow, COL_NAME, customName);
 
       table_.getCellFormatter().setStylePrimaryName(newRow,
@@ -499,8 +496,7 @@ public class DirectoryContentsWidget
       setFocus(true);
    }
    
-   private Map<String, FileSystemItem> items_ =
-         new LinkedHashMap<String, FileSystemItem>();
+   private Map<String, FileSystemItem> items_ = new LinkedHashMap<>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
    private Integer selectedRow_;
    private String selectedValue_;

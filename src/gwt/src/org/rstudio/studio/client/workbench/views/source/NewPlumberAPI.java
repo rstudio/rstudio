@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -192,7 +193,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls_.add(apiNameLabel_);
       
       apiNameTextBox_ = new TextBox();
-      apiNameTextBox_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(apiNameTextBox_);
       apiNameTextBox_.addStyleName(RES.styles().apiNameTextBox());
       apiNameTextBox_.getElement().setAttribute("placeholder", "Name");
       addTextFieldValidator(apiNameTextBox_);

@@ -1,7 +1,7 @@
 /*
  * Files.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -319,7 +319,7 @@ public class Files
       {
          columnSortOrder_ = sortOrder;
       }
-   };
+   }
     
 
    @Handler
@@ -763,7 +763,7 @@ public class Files
          // clear rename flag when operation is canceled
          renaming_ = false;
       }); 
-   };
+   }
    
    // data source for listing files on the current path which can 
    // be passed to the files view

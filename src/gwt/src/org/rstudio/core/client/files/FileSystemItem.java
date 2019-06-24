@@ -1,7 +1,7 @@
 /*
  * FileSystemItem.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,11 @@ import java.util.HashMap;
 
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.resources.client.ImageResource;
 
 // NOTE: this class is represented as a native JavaScriptObject for
 // straightforward RPC handling
@@ -193,39 +192,39 @@ public class FileSystemItem extends JavaScriptObject
    }
 
    // RStudio-specific code should use FileTypeRegistry.getIconForFile() instead
-   public final ImageResource getIcon()
+   public final FileIcon getIcon()
    {
       if (isDirectory())
       {
          if (isPublicFolder())
-            return new ImageResource2x(RES.iconPublicFolder2x());
+            return FileIcon.PUBLIC_FOLDER_ICON;
          else
-            return new ImageResource2x(RES.iconFolder2x());
+            return FileIcon.FOLDER_ICON;
       }
 
       Match m = EXT_PATTERN.match(getName(), 0);
       if (m == null)
-         return new ImageResource2x(RES.iconText2x());
+         return FileIcon.TEXT_ICON;
 
       String lowerExt = m.getValue().toLowerCase();
       if (lowerExt.equals(".csv"))
       {
-         return new ImageResource2x(RES.iconCsv2x());
+         return FileIcon.CSV_ICON;
       }
       else if (lowerExt.equals(".pdf"))
       {
-         return new ImageResource2x(RES.iconPdf2x());
+         return FileIcon.PDF_ICON;
       }
       else if (lowerExt.equals(".jpg") || lowerExt.equals(".jpeg") ||
                lowerExt.equals(".gif") || lowerExt.equals(".bmp")  ||
                lowerExt.equals(".tiff")   || lowerExt.equals(".tif") ||
                lowerExt.equals(".png"))
       {
-         return new ImageResource2x(RES.iconPng2x());
+         return FileIcon.IMAGE_ICON;
       }
       else
       {
-         return new ImageResource2x(RES.iconText2x());
+         return FileIcon.TEXT_ICON;
       }
    }
 

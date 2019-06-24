@@ -8,7 +8,7 @@
       <div class="{res.themeStyles.search}">
          <div class="{res.themeStyles.left}"></div>
          <div class="{res.themeStyles.rstheme_center}">
-            <g:Image ui:field='icon_'
+            <f:DecorativeImage ui:field='icon_'
                      resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div class="{res.themeStyles.searchBoxContainer}">

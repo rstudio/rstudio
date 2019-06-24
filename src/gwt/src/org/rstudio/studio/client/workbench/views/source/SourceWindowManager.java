@@ -1,7 +1,7 @@
 /*
  * SourceWindowManager.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1033,7 +1033,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                changedWindows.add(windowId);
             }
             newGeometries.setObject(windowId, newGeometry);
-         };
+         }
       });
       
       if (changedWindows.size() > 0)

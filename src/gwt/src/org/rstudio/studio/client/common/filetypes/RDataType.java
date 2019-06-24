@@ -30,4 +30,10 @@ public class RDataType extends FileType
    {
       eventBus.fireEvent(new OpenDataFileEvent(file));
    }
+
+   @Override
+   protected FileIcon getDefaultFileIcon()
+   {
+      return FileIcon.RDATA_ICON;
+   }
 }

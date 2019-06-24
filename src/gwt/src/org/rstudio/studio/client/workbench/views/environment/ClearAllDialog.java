@@ -81,7 +81,7 @@ public class ClearAllDialog extends ModalDialogBase
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
       Image image = new Image(new ImageResource2x(images.dialog_warning2x()));
-      image.setAltText("Warning");
+      image.setAltText(MessageDialogImages.DIALOG_WARNING_TEXT);
       horizontalPanel.add(image);
 
       // add message widget

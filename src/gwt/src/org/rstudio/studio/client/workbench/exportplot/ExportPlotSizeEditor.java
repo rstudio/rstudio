@@ -367,7 +367,7 @@ public class ExportPlotSizeEditor extends Composite
             {
                onReady.execute();
             } 
-         }.schedule(1000);;
+         }.schedule(1000);
       }
       else
       {

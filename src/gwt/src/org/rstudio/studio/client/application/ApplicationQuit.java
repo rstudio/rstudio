@@ -450,7 +450,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }
          
          private final boolean handled_;
-      };
+      }
       
       // get unsaved source docs
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 

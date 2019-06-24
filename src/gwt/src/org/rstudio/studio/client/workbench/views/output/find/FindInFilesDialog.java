@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -114,8 +115,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
       manageFilePattern();
 
-      txtSearchPattern_.getElement().setAttribute("spellcheck", "false");
-      
+      DomUtils.disableSpellcheck(txtSearchPattern_);
+
       txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
       {
          @Override

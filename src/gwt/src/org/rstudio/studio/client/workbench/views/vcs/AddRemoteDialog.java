@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -127,7 +128,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       TextBox textBox = new TextBox();
       textBox.setWidth("260px");
       textBox.getElement().getStyle().setMarginBottom(6, Unit.PX);
-      textBox.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textBox);
       Roles.getTextboxRole().setAriaRequiredProperty(textBox.getElement(), true);
       return textBox;
    }

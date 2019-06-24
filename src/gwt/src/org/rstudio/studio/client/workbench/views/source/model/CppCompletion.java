@@ -1,7 +1,7 @@
 /*
  * CppCompletion.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,7 +100,7 @@ public class CppCompletion extends JavaScriptObject
       case SNIPPET:
          return new ImageResource2x(icons.snippet2x());
       case FILE:
-         return REGISTRY.getIconForFilename(getTypedText());
+         return REGISTRY.getIconForFilename(getTypedText()).getImageResource();
       case DIRECTORY:
          return new ImageResource2x(icons.folder2x());
       default:

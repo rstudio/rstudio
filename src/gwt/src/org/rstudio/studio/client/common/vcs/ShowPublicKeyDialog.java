@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -73,7 +74,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       textArea_.setText(publicKey_);
       textArea_.addStyleName(RES.styles().viewPublicKeyContent());
       textArea_.setSize("400px", "250px");
-      textArea_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textArea_);
       FontSizer.applyNormalFontSize(textArea_.getElement());
       
       panel.add(textArea_);

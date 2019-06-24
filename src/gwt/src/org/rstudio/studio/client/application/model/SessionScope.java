@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.model;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**

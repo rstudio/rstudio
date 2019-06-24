@@ -582,7 +582,8 @@ public class Presentation extends BasePresenter
       }
       
       private int index_ = 0;
-   };
+   }
+
    private IndexPersister indexPersister_ = new IndexPersister();
    
    

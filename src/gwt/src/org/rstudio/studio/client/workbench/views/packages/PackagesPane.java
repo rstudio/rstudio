@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
@@ -101,21 +102,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    @Override
-   public void setPackageState(PackratContext packratContext, 
+   public void setPackageState(ProjectContext projectContext, 
                                List<PackageInfo> packages)
    {
-      packratContext_ = packratContext;
+      projectContext_ = projectContext;
       packagesDataProvider_.setList(packages);
       createPackagesTable();
 
-      // show the bootstrap button if this state is eligible for Packrat but the
-      // project isn't currently under Packrat control
-      packratBootstrapButton_.setVisible(
-         packratContext_.isApplicable() && 
-         (!packratContext_.isPackified() || !packratContext_.isModeOn()));
+      PackratContext packratContext = projectContext_.getPackratContext();
       
       // show the toolbar button if Packrat mode is on
-      packratMenuButton_.setVisible(packratContext_.isModeOn());
+      packratMenuButton_.setVisible(packratContext.isModeOn());
       
       // always show the separator before the packrat commands
       prePackratSeparator_.setVisible(true);
@@ -199,11 +196,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // packrat (all packrat UI starts out hidden and then appears
       // in response to changes in the packages state)
 
-      // create packrat bootstrap button
-      packratBootstrapButton_ = commands_.packratBootstrap().createToolbarButton(false);
-      toolbar.addLeftWidget(packratBootstrapButton_);
-      packratBootstrapButton_.setVisible(false);
-      
       // create packrat menu + button
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
       packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
@@ -449,11 +441,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
       packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
 
-      // set up Packrat-specific columns
-      if (packratContext_ != null &&
-          packratContext_.isModeOn())
+      // add columns when using project-local library
+      if (projectContext_.isActive())
       {
-         Column<PackageInfo, PackageInfo> packratVersionColumn = 
+         Column<PackageInfo, PackageInfo> lockfileVersionColumn = 
             new Column<PackageInfo, PackageInfo>(new VersionCell(true)) {
 
                @Override
@@ -463,12 +454,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                }
          };
       
-         TextColumn<PackageInfo> packratSourceColumn = 
+         TextColumn<PackageInfo> packageSourceColumn = 
                new TextColumn<PackageInfo>() {
                   @Override
                   public String getValue(PackageInfo pkgInfo)
                   {
-                     if (pkgInfo.getInPackratLibary())
+                     if (pkgInfo.isInProjectLibrary())
                      {
                         String source = pkgInfo.getPackratSource();
                         if (source == "github")
@@ -485,15 +476,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   }
          };
 
-         packagesTable_.addColumn(packratVersionColumn, new TextHeader("Packrat"));
-         packagesTable_.addColumn(packratSourceColumn, new TextHeader("Source"));
+         packagesTable_.addColumn(lockfileVersionColumn, new TextHeader("Lockfile"));
+         packagesTable_.addColumn(packageSourceColumn, new TextHeader("Source"));
 
          // distribute columns for extended package information
          packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
          packagesTable_.setColumnWidth(descColumn, 40, Unit.PCT);
          packagesTable_.setColumnWidth(versionColumn, 15, Unit.PCT);
-         packagesTable_.setColumnWidth(packratVersionColumn, 15, Unit.PCT);
-         packagesTable_.setColumnWidth(packratSourceColumn, 10, Unit.PCT);
+         packagesTable_.setColumnWidth(lockfileVersionColumn, 15, Unit.PCT);
+         packagesTable_.setColumnWidth(packageSourceColumn, 10, Unit.PCT);
       }
       else
       {
@@ -627,7 +618,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void buildRowImpl(PackageInfo pkg, int idx)
       {
-         String library = pkg.getInPackratLibary() ? 
+         String library = pkg.isInProjectLibrary() ? 
                pkg.getSourceLibrary() : pkg.getLibrary();
          if (pkg.isFirstInLibrary())
          {
@@ -670,12 +661,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
    
-   private ToolbarButton packratBootstrapButton_;
    private ToolbarMenuButton packratMenuButton_;
    private Widget prePackratSeparator_;
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
-   private PackratContext packratContext_ = PackratContext.empty();
+   private ProjectContext projectContext_;
 
    private final Commands commands_;
    private final Session session_;

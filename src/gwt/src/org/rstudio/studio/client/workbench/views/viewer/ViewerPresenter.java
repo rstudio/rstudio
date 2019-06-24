@@ -439,7 +439,7 @@ public class ViewerPresenter extends BasePresenter
                pUserState_.get().exportViewerOptions().getValue().cast(),
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
-      ).showModal();;    
+      ).showModal();
    }
    
    @Handler

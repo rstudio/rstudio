@@ -1,7 +1,7 @@
 /*
  * FilesList.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,20 +21,20 @@ import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
-import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -42,7 +42,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -112,12 +111,12 @@ public class FilesList extends Composite
       });
    }
    
-   private Column<FileSystemItem, Boolean> addSelectionColumn()
+   private Column<FileSystemItem, LabeledBoolean> addSelectionColumn()
    {
-      Column<FileSystemItem, Boolean> checkColumn = 
-         new Column<FileSystemItem, Boolean>(new CheckboxCell(true, false) {
+      Column<FileSystemItem, LabeledBoolean> checkColumn = 
+         new Column<FileSystemItem, LabeledBoolean>(new AriaLabeledCheckboxCell(true, false) {
             @Override
-            public void render(Context context, Boolean value, SafeHtmlBuilder sb) 
+            public void render(Context context, LabeledBoolean value, SafeHtmlBuilder sb) 
             {
                // don't render the check box if its for the parent path
                if (parentPath_ == null || context.getIndex() > 0)
@@ -126,9 +125,9 @@ public class FilesList extends Composite
          }) 
          {
             @Override
-            public Boolean getValue(FileSystemItem item)
+            public LabeledBoolean getValue(FileSystemItem item)
             {
-               return selectionModel_.isSelected(item);
+               return new LabeledBoolean(item.getName(), selectionModel_.isSelected(item));
             }
             
             
@@ -141,17 +140,17 @@ public class FilesList extends Composite
    }
   
    
-   private Column<FileSystemItem, ImageResource> addIconColumn(
+   private Column<FileSystemItem, FileIcon> addIconColumn(
                               final FileTypeRegistry fileTypeRegistry)
    {
-      Column<FileSystemItem, ImageResource> iconColumn = 
-         new Column<FileSystemItem, ImageResource>(new ImageResourceCell()) {
+      Column<FileSystemItem, FileIcon> iconColumn = 
+         new Column<FileSystemItem, FileIcon>(new FileIconResourceCell()) {
 
             @Override
-            public ImageResource getValue(FileSystemItem object)
+            public FileIcon getValue(FileSystemItem object)
             {
                if (object == parentPath_)
-                  return new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x());
+                  return FileIcon.PARENT_FOLDER_ICON;
                else
                   return fileTypeRegistry.getIconForFile(object);
             }

@@ -53,6 +53,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Base64ImageCell;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -498,9 +499,9 @@ public class ConnectionsPane extends WorkbenchPane
             final ConnectionAction action = connection.getActions().get(i);
 
             // use the supplied base64 icon data if it was provided
-            Image icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
+            DecorativeImage icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
                   null :
-                  new Image(action.getIconData());
+                  new DecorativeImage(action.getIconData());
             
             // force to 20x18
             if (icon != null)

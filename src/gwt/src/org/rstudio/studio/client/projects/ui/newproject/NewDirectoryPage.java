@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -81,7 +82,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
       txtProjectName_.setWidth("100%");
-      txtProjectName_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(txtProjectName_);
       namePanel.add(txtProjectName_);
       panel.add(namePanel);
       addWidget(panel);
