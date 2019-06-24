@@ -66,23 +66,24 @@ class UserState: public UserStateValues
       module_context::enqueClientEvent(event);
    }
 
-} s_state;
+};
 
 } // anonymous namespace
 
 json::Array allStateLayers()
 {
-   return s_state.allLayers();
+   return userState().allLayers();
 }
 
 UserStateValues& userState()
 {
-   return s_state;
+   static UserState instance;
+   return instance;
 }
 
 Error initializeState()
 {
-   return s_state.initialize();
+   return userState().initialize();
 }
 
 } // namespace state
