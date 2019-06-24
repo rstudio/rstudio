@@ -1,7 +1,7 @@
 /*
  * CodeSearchOracle.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -363,7 +363,7 @@ public class CodeSearchOracle extends SuggestOracle
       private Callback callback_;
       private Invalidation.Token invalidationToken_;
       private boolean executing_;
-   };
+   }
    
    private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
                                 String query)

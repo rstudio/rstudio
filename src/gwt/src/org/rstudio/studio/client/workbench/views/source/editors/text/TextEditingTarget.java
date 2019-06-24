@@ -2489,7 +2489,7 @@ public class TextEditingTarget implements
    private void withChooseEncoding(final String defaultEncoding,
                                    final CommandWithArg<String> command)
    {
-      view_.ensureVisible();;
+      view_.ensureVisible();
       
       server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
       {

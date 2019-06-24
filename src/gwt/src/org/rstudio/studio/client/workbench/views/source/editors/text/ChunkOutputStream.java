@@ -253,7 +253,7 @@ public class ChunkOutputStream extends FlowPanel
             }
             
             onHeightChanged();
-         };
+         }
       });
 
       themeColors_ = ChunkOutputWidget.getEditorColors();

@@ -182,7 +182,7 @@ public class RpcRequest
                                              message) ;
                   requestCallback.onError(enclosingRequest, error);
                }
-            };
+            }
          });
       }
       catch(RequestException e)

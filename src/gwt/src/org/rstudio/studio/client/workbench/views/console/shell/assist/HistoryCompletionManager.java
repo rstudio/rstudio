@@ -47,7 +47,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       PopupNoResults,     // popup is showing but with no results
       PopupIncremental,   // popup is showing incremental infix search
       PopupPrefix         // popup is showing prefix search
-   };
+   }
 
    public HistoryCompletionManager(InputEditorDisplay input,
                                    HistoryServerOperations server)

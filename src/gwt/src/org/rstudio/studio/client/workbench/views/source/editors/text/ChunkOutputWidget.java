@@ -1,7 +1,7 @@
 /*
  * ChunkOutputWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -165,7 +165,7 @@ public class ChunkOutputWidget extends Composite
             case Event.ONCLICK:
                host_.onOutputRemoved(ChunkOutputWidget.this);
                break;
-            };
+            }
          }
       });
       
@@ -179,7 +179,7 @@ public class ChunkOutputWidget extends Composite
             case Event.ONCLICK:
                toggleExpansionState(true);
                break;
-            };
+            }
          }
       };
 
@@ -193,7 +193,7 @@ public class ChunkOutputWidget extends Composite
             case Event.ONCLICK:
                popoutChunk();
                break;
-            };
+            }
          }
       };
 
@@ -662,7 +662,7 @@ public class ChunkOutputWidget extends Composite
       {
          pendingRenders_--;
       }
-   };
+   }
    
    private void registerConsoleEvents()
    {

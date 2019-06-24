@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.files;
 
-import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIcon;

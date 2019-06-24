@@ -438,7 +438,7 @@ public class ViewerPresenter extends BasePresenter
                pUIPrefs_.get().exportViewerOptions().getValue(),
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
-      ).showModal();;    
+      ).showModal();
    }
    
    @Handler
