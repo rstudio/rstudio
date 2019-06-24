@@ -379,6 +379,7 @@ public class UserStateAccessor extends Prefs
       return LAYER_USER;
    }
 
-   public static final int LAYER_DEFAULT = 0;
-   public static final int LAYER_USER    = 1;
+   public static final int LAYER_DEFAULT  = 0;
+   public static final int LAYER_COMPUTED = 1;
+   public static final int LAYER_USER     = 2;
 }

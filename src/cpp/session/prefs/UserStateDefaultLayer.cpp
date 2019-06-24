@@ -27,7 +27,7 @@ namespace session {
 namespace prefs {
 
 UserStateDefaultLayer::UserStateDefaultLayer():
-   PrefLayer(kUserStateComputedLayer)
+   PrefLayer(kUserStateDefaultLayer)
 {
 }
 

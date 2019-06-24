@@ -115,10 +115,11 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
       */
    }
    
-   public static final int LAYER_DEFAULT = 0;
-   public static final int LAYER_SYSTEM  = 1;
-   public static final int LAYER_USER    = 2;
-   public static final int LAYER_PROJECT = 3;
+   public static final int LAYER_DEFAULT  = 0;
+   public static final int LAYER_SYSTEM   = 1;
+   public static final int LAYER_COMPUTED = 2;
+   public static final int LAYER_USER     = 3;
+   public static final int LAYER_PROJECT  = 4;
    
    private final Session session_;
    private final PrefsServerOperations server_;
