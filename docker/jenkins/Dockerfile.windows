@@ -1,9 +1,7 @@
 # escape=`
 
-# Use the latest Windows Server Core 1709 image with .NET Framework 4.7.1.
-# Otherwise there are problems installing Visual Studio 2017 buildtools into containers
-# See https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container
-FROM microsoft/dotnet-framework:4.7.1-windowsservercore-1709
+# LTSC (Long Term Service Channel) release of Server Core 2019
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
 # set RUN commands to use powershell
 SHELL ["powershell"]
