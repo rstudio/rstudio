@@ -16,6 +16,8 @@
 
 #include <session/prefs/Preferences.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -230,6 +232,40 @@ void Preferences::onPrefLayerChanged(const std::string& layerName)
 {
    // Fire changed event to all our listeners
    onChanged(layerName, "");
+}
+
+void Preferences::notifyClient(const std::string &layerName, const std::string &pref)
+{
+   bool found = false;
+   LOCK_MUTEX(mutex_)
+   {
+      for (auto layer: layers_)
+      {
+         if (layer->layerName() == layerName)
+         {
+            json::Object valueJson;
+            auto val = layer->readValue(pref);
+            if (val)
+            {
+               valueJson[pref] = *val;
+
+               json::Object dataJson;
+               dataJson["name"] = layerName;
+               dataJson["values"] = valueJson;
+               ClientEvent event(clientChangedEvent(), dataJson);
+               module_context::enqueClientEvent(event);
+
+               found = true;
+            }
+         }
+      }
+   }
+   END_LOCK_MUTEX
+
+   if (!found)
+   {
+      LOG_WARNING_MESSAGE("Pref '" + pref + "' doesn't exist in layer '" + layerName + "'");
+   }
 }
 
 } // namespace prefs

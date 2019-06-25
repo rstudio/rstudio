@@ -52,6 +52,7 @@ public abstract class Prefs
       void setProjectValue(T value);
       void setProjectValue(T value, boolean fireEvents);
       
+      // generic set for any layer
       void setValue(String layer, T value);
       
       HandlerRegistration bind(CommandWithArg<T> handler);
@@ -77,14 +78,19 @@ public abstract class Prefs
          handler.execute(getValue());
          return reg;
       }
-      
+
       public void setValue(String layerName, T value)
+      {
+         setValue(layerName, value, true);
+      }
+      
+      public void setValue(String layerName, T value, boolean fireEvents)
       {
          for (PrefLayer layer: JsUtil.asIterable(layers_))
          {
             if (layer.getName() == layerName)
             {
-               doSetValue(layer.getValues(), name_, value);
+               setValue(layer.getValues(), value, fireEvents);
                break;
             }
          }

@@ -89,8 +89,11 @@ public:
    core::Error writeValue(const std::string& name, const core::json::Value& value);
    core::Error clearValue(const std::string& name);
 
+   void notifyClient(const std::string& layer, const std::string& pref);
+
    virtual core::Error createLayers() = 0;
    virtual int userLayer() = 0;
+   virtual int clientChangedEvent() = 0;
 
    // Signal emitted when preferences change; includes the layer name and value name
    RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onChanged;

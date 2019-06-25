@@ -60,21 +60,21 @@ Error setState(const json::JsonRpcRequest& request,
    return Success();
 }
 
-SEXP rs_writePref(Preferences& prefs, SEXP prefName, SEXP value)
+bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
 {
    json::Value prefValue = json::Value();
 
    // extract name of preference to write
    std::string pref = r::sexp::safeAsString(prefName, "");
    if (pref.empty())
-      return R_NilValue;
+      return false;
 
    // extract value to write
    Error error = r::json::jsonValueFromObject(value, &prefValue);
    if (error)
    {
       r::exec::error("Unexpected value: " + error.summary());
-      return R_NilValue;
+      return false;
    }
 
    // if this corresponds to an existing preference, ensure that we're not 
@@ -87,7 +87,7 @@ SEXP rs_writePref(Preferences& prefs, SEXP prefName, SEXP value)
          r::exec::error("Type mismatch: expected " + 
                   json::typeAsString((*previous).type()) + "; got " +
                   json::typeAsString(prefValue.type()));
-         return R_NilValue;
+         return false;
       }
    }
    
@@ -96,13 +96,13 @@ SEXP rs_writePref(Preferences& prefs, SEXP prefName, SEXP value)
    if (error)
    {
       r::exec::error("Could not save preferences: " + error.description());
-      return R_NilValue;
+      return false;
    }
 
    // let other modules know we've updated the prefs
    module_context::events().onPreferencesSaved();
    
-   return R_NilValue;
+   return true;
 }
 
 SEXP rs_removePref(SEXP prefName)
@@ -150,13 +150,10 @@ SEXP rs_readUserPref(SEXP prefName)
 
 SEXP rs_writeUserPref(SEXP prefName, SEXP value)
 {
-   rs_writePref(userPrefs(), prefName, value);
-
-   json::Object dataJson;
-   dataJson["name"] = kUserPrefsUserLayer;
-   dataJson["values"] = userPrefs().userPrefLayer();
-   ClientEvent event(client_events::kUserPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
+   if (writePref(userPrefs(), prefName, value))
+   {
+      userPrefs().notifyClient(kUserPrefsUserLayer, r::sexp::safeAsString(prefName));
+   }
 
    return R_NilValue;
 }
@@ -168,13 +165,10 @@ SEXP rs_readUserState(SEXP stateName)
 
 SEXP rs_writeUserState(SEXP stateName, SEXP value)
 {
-   rs_writePref(userState(), stateName, value);
-
-   json::Object dataJson;
-   dataJson["name"] = kUserStateUserLayer;
-   dataJson["values"] = userState().userPrefLayer();
-   ClientEvent event(client_events::kUserStateChanged, dataJson);
-   module_context::enqueClientEvent(event);
+   if (writePref(userState(), stateName, value))
+   {
+      userState().notifyClient(kUserStateUserLayer, r::sexp::safeAsString(stateName));
+   }
 
    return R_NilValue;
 }

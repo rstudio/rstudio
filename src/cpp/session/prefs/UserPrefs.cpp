@@ -58,6 +58,11 @@ class UserPrefs: public UserPrefValuesNative
       return PREF_LAYER_USER;
    }
 
+   int clientChangedEvent() override
+   {
+      return client_events::kUserPrefsChanged;
+   }
+
    void onPrefLayerChanged(const std::string& layerName) override
    {
       Preferences::onPrefLayerChanged(layerName);

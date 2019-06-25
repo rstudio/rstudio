@@ -37,7 +37,7 @@ namespace {
 
 class UserState: public UserStateValues
 {
-   Error createLayers()
+   Error createLayers() override
    {
       LOCK_MUTEX(mutex_)
       {
@@ -49,9 +49,14 @@ class UserState: public UserStateValues
       return Success();
    }
 
-   int userLayer()
+   int userLayer() override
    {
       return STATE_LAYER_USER;
+   }
+
+   int clientChangedEvent() override
+   {
+      return client_events::kUserStateChanged;
    }
 
    void onPrefLayerChanged(const std::string& layerName)
