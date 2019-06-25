@@ -1,7 +1,7 @@
 /*
  * ModuleTabLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,14 +40,18 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 {
    public static class ModuleTab extends Composite implements BusyHandler
    {
-      public ModuleTab(String title, ThemeStyles styles, boolean canClose)
+      public ModuleTab(String title, ThemeStyles styles, boolean canClose, boolean minimized)
       {
          layoutPanel_ = new HorizontalPanel();
          layoutPanel_.setStylePrimaryName(styles.tabLayout());
-         
+
+         String minimized_id = "";
+         if (minimized)
+            minimized_id = "_minimized";
+
          // Assign a unique element ID based on the tab's title
          ElementIds.assignElementId(layoutPanel_.getElement(), 
-               ElementIds.WORKBENCH_TAB + "_" + ElementIds.idSafeString(title));
+               ElementIds.WORKBENCH_TAB + minimized_id + "_" + ElementIds.idSafeString(title));
 
          HTML left = new HTML();
          left.setStylePrimaryName(styles.tabLayoutLeft());
@@ -200,7 +204,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       if (asHtml)
          throw new UnsupportedOperationException("HTML tab names not supported");
 
-      ModuleTab tab = new ModuleTab(text, styles_, closeHandler != null);
+      ModuleTab tab = new ModuleTab(text, styles_, closeHandler != null, false /*minimized*/);
       super.add(child, tab);
 
       if (closeHandler != null)
