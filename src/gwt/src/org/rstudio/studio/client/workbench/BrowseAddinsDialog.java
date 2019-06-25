@@ -71,7 +71,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       
       setOkButtonCaption("Execute");
       
-      filterWidget_ = new FilterWidget()
+      filterWidget_ = new FilterWidget("Filter by addin name")
       {
          @Override
          public void filter(String query)

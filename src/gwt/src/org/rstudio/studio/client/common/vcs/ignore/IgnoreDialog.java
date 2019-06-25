@@ -47,16 +47,15 @@ public class IgnoreDialog extends ModalDialogBase
                                                 null);
       dirChooser_.addStyleName(RES.styles().dirChooser());
       
-      ignoresCaption_ = new CaptionWithHelp("Ignore:",
-                                             "Specifying ignored files");
-      ignoresCaption_.setIncludeVersionInfo(false);
-      ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
-      
       editor_ = new AceEditor();
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
       
-      ignoresCaption_.setFor(editor_.getWidget());
+      ignoresCaption_ = new CaptionWithHelp("Ignore:",
+                                             "Specifying ignored files",
+                                             editor_.getWidget());
+      ignoresCaption_.setIncludeVersionInfo(false);
+      ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
 
       saveButton_ = new ThemedButton("Save", (ClickHandler)null); 
       addButton(saveButton_);

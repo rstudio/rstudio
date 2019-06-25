@@ -337,7 +337,7 @@ public class ConnectionsPane extends WorkbenchPane
    {
       toolbar_ = new Toolbar();
    
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Filter by connection", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -348,7 +348,7 @@ public class ConnectionsPane extends WorkbenchPane
          }
       });
 
-      objectSearchWidget_ = new SearchWidget(new SuggestOracle() {
+      objectSearchWidget_ = new SearchWidget("Filter by object", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {

@@ -145,7 +145,7 @@ public class RmdTemplateChooser extends Composite
    public CaptionWithHelp makeHelpCaption()
    {
       return new CaptionWithHelp("Template:", "Using R Markdown Templates",
-                                 "using_rmarkdown_templates");
+                                 "using_rmarkdown_templates", null);
    }
    
    @UiFactory

@@ -354,7 +354,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      filterWidget_ = new SearchWidget(new SuggestOracle() {
+      filterWidget_ = new SearchWidget("Filter keyboard shortcuts", new SuggestOracle() {
 
          @Override
          public void requestSuggestions(Request request, Callback callback)

@@ -105,7 +105,7 @@
             <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
                text="Affero General Public License."
                target="_blank"></g:Anchor>
-            <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)"></g:InlineLabel>
+            <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
          </g:HTMLPanel>
       </g:HTMLPanel>
       <g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"

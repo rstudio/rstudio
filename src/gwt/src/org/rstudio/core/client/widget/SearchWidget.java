@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -29,10 +30,17 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextBoxBase;
+import com.google.gwt.user.client.ui.ValueBoxBase;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -76,9 +84,9 @@ public class SearchWidget extends Composite implements SearchDisplay
       }
    }
   
-   public SearchWidget()
+   public SearchWidget(String label)
    {
-      this(new SuggestOracle()
+      this(label, new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -88,25 +96,28 @@ public class SearchWidget extends Composite implements SearchDisplay
       });
    }
 
-   public SearchWidget(SuggestOracle oracle)
+   public SearchWidget(String label, SuggestOracle oracle)
    {
-      this(oracle, null);
+      this(label, oracle, null);
    }
    
-   public SearchWidget(SuggestOracle oracle, 
+   public SearchWidget(String label,
+                       SuggestOracle oracle,
                        SuggestionDisplay suggestDisplay)
    {
-      this(oracle, new TextBox(), suggestDisplay);
+      this(label, oracle, new TextBox(), suggestDisplay);
    }
    
-   public SearchWidget(SuggestOracle oracle, 
+   public SearchWidget(String label,
+                       SuggestOracle oracle, 
                        TextBoxBase textBox, 
                        SuggestionDisplay suggestDisplay)
    {
-      this(oracle, textBox, suggestDisplay, true);
+      this(label, oracle, textBox, suggestDisplay, true);
    }
 
-   public SearchWidget(SuggestOracle oracle,
+   public SearchWidget(String label,
+                       SuggestOracle oracle,
                        TextBoxBase textBox,
                        SuggestionDisplay suggestDisplay,
                        boolean continuousSearch)
@@ -121,7 +132,8 @@ public class SearchWidget extends Composite implements SearchDisplay
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
       close_.setAltText("Clear text");
-
+      hiddenLabel_.setInnerText(label);
+      hiddenLabel_.setHtmlFor(DomUtils.ensureHasId(textBox.getElement()));
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       suggestBox_.setStylePrimaryName(styles.searchBox());
@@ -359,6 +371,8 @@ public class SearchWidget extends Composite implements SearchDisplay
    Image close_;
    @UiField
    DecorativeImage icon_;
+   @UiField
+   LabelElement hiddenLabel_;
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;

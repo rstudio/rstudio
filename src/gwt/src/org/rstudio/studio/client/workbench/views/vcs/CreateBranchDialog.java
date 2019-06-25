@@ -173,8 +173,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      FormLabel branchLabel = new FormLabel("Branch Name:");
-      branchLabel.setFor(tbBranch_);
+      FormLabel branchLabel = new FormLabel("Branch Name:", tbBranch_);
       ctrBranch.setWidget(0, 0, branchLabel);
       ctrBranch.setWidget(0, 1, tbBranch_);
       

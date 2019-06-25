@@ -193,21 +193,20 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       namePanel.setWidth("100%");
      
       // path
-      CaptionWithHelp pathCaption = new CaptionWithHelp(
-                                 "The RSA key will be created at:",
-                                 "SSH/RSA key management",
-                                 "rsa_key_help");  
-      pathCaption.setIncludeVersionInfo(false);
-      pathCaption.setWidth("100%");
-      namePanel.add(pathCaption);
-      
       TextBox txtKeyPath = new TextBox();
       txtKeyPath.addStyleName(styles.keyPathTextBox());
       txtKeyPath.setReadOnly(true);
       txtKeyPath.setText(rsaSshKeyPath_.getPath());
       txtKeyPath.setWidth("100%");
+      CaptionWithHelp pathCaption = new CaptionWithHelp(
+                                 "The RSA key will be created at:",
+                                 "SSH/RSA key management",
+                                 "rsa_key_help",
+                                 txtKeyPath);
+      pathCaption.setIncludeVersionInfo(false);
+      pathCaption.setWidth("100%");
+      namePanel.add(pathCaption);
       namePanel.add(txtKeyPath);
-      pathCaption.setFor(txtKeyPath);
       
       panel.add(namePanel);
       
@@ -215,26 +214,24 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       passphrasePanel.addStyleName(styles.newSection());
       
       VerticalPanel passphrasePanel1 = new VerticalPanel();
-      FormLabel passphraseLabel1 = new FormLabel("Passphrase (optional):");
-      passphraseLabel1.addStyleName(styles.entryLabel());
-      passphrasePanel1.add(passphraseLabel1);
       txtPassphrase_ = new PasswordTextBox();
       txtPassphrase_.addStyleName(styles.passphrase());
-      passphraseLabel1.setFor(txtPassphrase_);
+      FormLabel passphraseLabel1 = new FormLabel("Passphrase (optional):", txtPassphrase_);
+      passphraseLabel1.addStyleName(styles.entryLabel());
+      passphrasePanel1.add(passphraseLabel1);
       
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
       VerticalPanel passphrasePanel2 = new VerticalPanel();
       passphrasePanel2.addStyleName(styles.lastSection());
-      FormLabel passphraseLabel2 = new FormLabel("Confirm:");
-      passphraseLabel2.addStyleName(styles.entryLabel());
-      passphrasePanel2.add(passphraseLabel2);
       txtConfirmPassphrase_ = new PasswordTextBox();
       txtConfirmPassphrase_.addStyleName(styles.passphraseConfirm());
+      FormLabel passphraseLabel2 = new FormLabel("Confirm:", txtConfirmPassphrase_);
+      passphraseLabel2.addStyleName(styles.entryLabel());
+      passphrasePanel2.add(passphraseLabel2);
       passphrasePanel2.add(txtConfirmPassphrase_);
       passphrasePanel.add(passphrasePanel2);
-      passphraseLabel2.setFor(txtConfirmPassphrase_);
       
       panel.add(passphrasePanel);
       

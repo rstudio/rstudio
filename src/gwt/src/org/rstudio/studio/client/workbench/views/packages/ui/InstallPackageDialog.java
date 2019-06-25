@@ -130,16 +130,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
       // source type
-      reposCaption_ = new CaptionWithHelp("Install from:",
-                                          "Configuring Repositories",
-                                          "configuring_repositories");  
-      reposCaption_.setIncludeVersionInfo(false);
-      reposCaption_.setWidth("100%");
-      mainPanel.add(reposCaption_);
-      
       packageSourceListBox_ = new ListBox();
-      packageSourceListBox_.setStylePrimaryName(
-                           RESOURCES.styles().packageSourceListBox());
+      packageSourceListBox_.setStylePrimaryName(RESOURCES.styles().packageSourceListBox());
       packageSourceListBox_.addStyleName(RESOURCES.styles().extraBottomPad());
       JsArrayString repos = installContext_.selectedRepositoryNames();
       if (repos.length() == 1)
@@ -162,8 +154,14 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       packageSourceListBox_.addItem("Package Archive File (" + 
                                     installContext_.packageArchiveExtension() +
                                     ")");
+      reposCaption_ = new CaptionWithHelp("Install from:",
+                                          "Configuring Repositories",
+                                          "configuring_repositories",
+                                          packageSourceListBox_);
+      reposCaption_.setIncludeVersionInfo(false);
+      reposCaption_.setWidth("100%");
+      mainPanel.add(reposCaption_); 
       mainPanel.add(packageSourceListBox_);
-      reposCaption_.setFor(packageSourceListBox_);
       
       // source panel container
       sourcePanel_ = new SimplePanel();
@@ -171,21 +169,19 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       
       // repos source panel
       reposSourcePanel_ = new FlowPanel();
-      FormLabel packagesLabel = new FormLabel(
-                      "Packages (separate multiple with space or comma):");
-      packagesLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
-      reposSourcePanel_.add(packagesLabel);
-     
       packagesTextBox_ = new MultipleItemSuggestTextBox();
       packagesSuggestBox_ = new SuggestBox(new PackageOracle(),
                                            packagesTextBox_);
       packagesSuggestBox_.setWidth("100%");
       packagesSuggestBox_.setLimit(20);
       packagesSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
+      FormLabel packagesLabel = new FormLabel(
+                      "Packages (separate multiple with space or comma):", packagesSuggestBox_);
+      packagesLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
+      reposSourcePanel_.add(packagesLabel);
       reposSourcePanel_.add(packagesSuggestBox_);
       sourcePanel_.setWidget(reposSourcePanel_);
       mainPanel.add(sourcePanel_);
-      packagesLabel.setFor(packagesSuggestBox_);
          
       // archive source panel
       packageArchiveFile_ = new TextBoxWithButton(
@@ -213,10 +209,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          } 
       });
       
-     
-      FormLabel libraryListLabel = new FormLabel("Install to Library:");
-      mainPanel.add(libraryListLabel);
-      
       // library list box
       libraryListBox_ = new ListBox();
       libraryListBox_.setWidth("100%");
@@ -240,8 +232,10 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
         
       }
       libraryListBox_.setSelectedIndex(selectedIndex); 
+
+      FormLabel libraryListLabel = new FormLabel("Install to Library:", libraryListBox_);
+      mainPanel.add(libraryListLabel);
       mainPanel.add(libraryListBox_);
-      libraryListLabel.setFor(libraryListBox_);
       
       // install dependencies check box
       installDependenciesCheckBox_.addStyleName(RESOURCES.styles().installDependenciesCheckBox());

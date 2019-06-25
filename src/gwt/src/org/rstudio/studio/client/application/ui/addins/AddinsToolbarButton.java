@@ -100,7 +100,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          }
       });
       
-      searchWidget_ = new SearchWidget();
+      searchWidget_ = new SearchWidget("Search for addins");
       searchValueChangeTimer_ = new Timer()
       {
          @Override

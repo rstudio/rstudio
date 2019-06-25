@@ -256,6 +256,18 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
    font-family: fixedWidthFont !important;
 }
 
+/* hide something from sighted users but remain visible to screen readers */
+.visuallyHidden {
+    position: absolute;
+    clip: rect(0 0 0 0);
+    border: 0;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+}
+
 .gwt-Label {
    cursor: default;
 }

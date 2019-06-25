@@ -42,6 +42,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
@@ -1151,6 +1152,22 @@ public class DomUtils
    }
 
    /**
+    * If an element doesn't already have an id, assign one
+    * @param ele element to operate on
+    * @return id of the element
+    */
+   public static String ensureHasId(Element ele)
+   {
+      String controlId = ele.getId();
+      if (StringUtil.isNullOrEmpty(controlId))
+      {
+         controlId = DOM.createUniqueId();
+         ele.setId(controlId);
+      }
+      return controlId;
+   }
+
+   /**
     * Given any URL, resolves it to an absolute URL (using the current window as
     * the base URL), and returns the result.
     * 
@@ -1212,20 +1229,4 @@ public class DomUtils
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
-
-   /**
-    * Makes given element visually invisible but still "visible" to assistive technology
-    * such as screen readers.
-    * @param element
-    */
-   public static native void visuallyHide(Element element) /*-{
-      element.style.position = "absolute";
-      element.style.clip = "rect(0 0 0 0)";
-      element.style.border = "0";
-      element.style.width = "1px";
-      element.style.height = "1px";
-      element.style.margin = "-1px";
-      element.style.overflow = "hidden";
-      element.style.padding = "0";
-   }-*/;
 }
