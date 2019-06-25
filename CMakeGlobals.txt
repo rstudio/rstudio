@@ -208,6 +208,9 @@ endif()
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
+# embedded packages
+set(RSTUDIO_EMBEDDED_PACKAGES renv CACHE INTERNAL "Embedded R Packages")
+
 # include utilities
 include(RStudioCMakeUtils)
 

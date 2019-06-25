@@ -20,6 +20,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
@@ -31,16 +32,17 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
-
    public NewDirectoryPage()
    {
       this("New Project", 
@@ -57,8 +59,15 @@ public class NewDirectoryPage extends NewProjectWizardPage
                            ImageResource largeImage)
    {
       super(title, subTitle, pageCaption, image, largeImage);
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
+   @Inject
+   private void initialize(DependencyManager dependencyManager)
+   {
+      dependencyManager_ = dependencyManager;
+   }
 
    @Override
    protected void onAddWidgets()
@@ -121,22 +130,26 @@ public class NewDirectoryPage extends NewProjectWizardPage
          }
       }
       
-      // Initialize project with packrat
-      chkPackratInit_ = new CheckBox("Use packrat with this project");
-      if (!sessionInfo.getPackratAvailable())
-      {
-         chkPackratInit_.setValue(false);
-         chkPackratInit_.setVisible(false);
-      }
+      // Initialize project with renv
+      chkRenvInit_ = new CheckBox("Use renv with this project");
+      chkRenvInit_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
+         if (event.getValue())
+         {
+            dependencyManager_.withRenv("Using renv", (Boolean success) -> {
+               chkRenvInit_.setValue(success);
+            });
+         }
+         
+      });
       
       if (optionsPanel != null)
       {
-         optionsPanel.add(chkPackratInit_);
+         optionsPanel.add(chkRenvInit_);
       }
       else
       {
          addSpacer();
-         addWidget(chkPackratInit_);
+         addWidget(chkRenvInit_);
       }
       
       
@@ -181,12 +194,6 @@ public class NewDirectoryPage extends NewProjectWizardPage
       super.initialize(input);
           
       newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
-      
-      if (!input.getContext().isPackratAvailable())
-      {
-         chkPackratInit_.setValue(false);
-         chkPackratInit_.setVisible(false);
-      }
    }
 
 
@@ -224,7 +231,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
-                                     chkPackratInit_.getValue(), 
+                                     chkRenvInit_.getValue(), 
                                      newDefaultLocation,
                                      null,
                                      getNewPackageOptions(),
@@ -253,8 +260,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
    protected CheckBox chkGitInit_;
-   protected CheckBox chkPackratInit_;
+   protected CheckBox chkRenvInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
+   
+   // Injected ----
+   private DependencyManager dependencyManager_;
 
 }

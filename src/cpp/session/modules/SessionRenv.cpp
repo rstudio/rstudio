@@ -31,11 +31,18 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-core::json::Value renvContextAsJson()
+bool isRequiredRenvInstalled()
+{
+   return isPackageVersionInstalled("renv", "0.5.0");
+}
+
+namespace {
+
+core::json::Value renvStateAsJson(const std::string method)
 {
    json::Value resultJson;
    Error error =
-         r::exec::RFunction(".rs.renv.context")
+         r::exec::RFunction(method)
          .call(&resultJson);
 
    if (error)
@@ -52,6 +59,19 @@ core::json::Value renvContextAsJson()
    }
 
    return resultJson;
+
+}
+
+} // end anonymous namespace
+
+core::json::Value renvOptionsAsJson()
+{
+   return renvStateAsJson(".rs.renv.options");
+}
+
+core::json::Value renvContextAsJson()
+{
+   return renvStateAsJson(".rs.renv.context");
 }
 
 } // end namespace module_context

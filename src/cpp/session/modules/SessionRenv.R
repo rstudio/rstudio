@@ -15,6 +15,12 @@
 
 .rs.setVar("renvCache", new.env(parent = emptyenv()))
 
+.rs.addJsonRpcHandler("renv_init", function(project)
+{
+   .rs.ensureDirectory(project)
+   renv::init(project = project)
+})
+
 .rs.addFunction("renv.context", function()
 {
    context <- list()
@@ -29,6 +35,20 @@
    
    # return context
    lapply(context, .rs.scalar)
+   
+})
+
+.rs.addFunction("renv.options", function()
+{
+   context <- .rs.renv.context()
+   
+   options <- list()
+   
+   options[["useRenv"]] <- context[["active"]]
+   # TODO: surface options associated with
+   # the current project
+   
+   options
    
 })
 

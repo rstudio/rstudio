@@ -209,6 +209,18 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          });
    }
    
+   public void withRenv(String userAction, final CommandWithArg<Boolean> onSuccess)
+   {
+      withDependencies(
+            "renv",
+            userAction,
+            new Dependency[] {
+                  Dependency.embeddedPackage("renv")
+            },
+            false,
+            onSuccess);
+   }
+   
    public void withRSConnect(String userAction, 
          boolean requiresRmarkdown,
          CommandWith2Args<String, CommandWithArg<Boolean>> userPrompt, 

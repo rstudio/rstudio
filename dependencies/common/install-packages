@@ -81,6 +81,8 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rmarkdown master rstudio
 # install rsconnect master rstudio
 
+install renv master rstudio
+
 # Packages needed to run tests
 Rscript -e "if(!require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
 
