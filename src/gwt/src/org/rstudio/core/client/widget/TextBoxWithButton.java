@@ -77,7 +77,7 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         FormLabel lblCaption = new FormLabel(label, true);
+         FormLabel lblCaption = new FormLabel(label, textBox_, true);
          if (helpButton != null)
          {
             HorizontalPanel panel = new HorizontalPanel();
@@ -90,7 +90,6 @@ public class TextBoxWithButton extends Composite
          {
             outer.add(lblCaption);
          }
-         lblCaption.setFor(textBox_);
       }
       outer.add(inner_);
       initWidget(outer);

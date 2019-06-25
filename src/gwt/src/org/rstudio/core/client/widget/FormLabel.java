@@ -44,11 +44,14 @@ public class FormLabel extends Label
   /**
    * Creates a label to associate with a form control via <code>setFor</code>
    * @param text the new label's text
+   * @param w labeled widget; if the widget's element does not already have an id attribute,
+   *          one will be generated and assigned to it
    * @param wordWrap <code>false</code> to disable word wrapping
    */
-   public FormLabel(String text, boolean wordWrap)
+   public FormLabel(String text, Widget w, boolean wordWrap)
    {
       super(text, NoForId, wordWrap);
+      setFor(w);
    }
 
    /**
@@ -62,12 +65,26 @@ public class FormLabel extends Label
    }
 
    /**
-    * Associate this label with the given widget. An id will be assigned to the widget
-    * element as part of this.
+    * Create a label to associate with an existing widget.
+    * @param text label text
+    * @param w labeled widget; if the widget's element does not already have an id attribute,
+    *          one will be generated and assigned to it
+    */
+   public FormLabel(String text, Widget w)
+   {
+      super(text, NoForId);
+      setFor(w);
+   }
+
+   /**
+    * Associate this label with the given widget. If the widget's element does not
+    * have an id attribute, a unique one will be generated and assigned to it.
     * @param widget
     */
    public void setFor(Widget widget)
    {
+      if (widget == null)
+         return;
       String controlId = widget.getElement().getId();
       if (StringUtil.isNullOrEmpty(controlId))
       {

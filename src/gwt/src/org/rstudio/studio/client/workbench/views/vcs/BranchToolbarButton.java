@@ -155,7 +155,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       });
       
-      searchWidget_ = new SearchWidget();
+      searchWidget_ = new SearchWidget("Search by branch name");
       
       searchValueChangeTimer_ = new Timer()
       {

@@ -66,12 +66,10 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       setOkButtonCaption("Add");
       
       container_ = new VerticalPanel();
-      lblName_ = label("Remote Name:");
-      lblUrl_ = label("Remote URL:");
       tbName_ = textBox();
       tbUrl_ = textBox();
-      lblName_.setFor(tbName_);
-      lblUrl_.setFor(tbUrl_);
+      lblName_ = label("Remote Name:", tbName_);
+      lblUrl_ = label("Remote URL:", tbUrl_);
       
       tbName_.addKeyDownHandler(this);
       tbUrl_.addKeyDownHandler(this);
@@ -133,9 +131,9 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       return textBox;
    }
    
-   private FormLabel label(String text)
+   private FormLabel label(String text, Widget w)
    {
-      FormLabel label = new FormLabel(text);
+      FormLabel label = new FormLabel(text, w);
       label.getElement().getStyle().setMarginBottom(4, Unit.PX);
       return label;
    }

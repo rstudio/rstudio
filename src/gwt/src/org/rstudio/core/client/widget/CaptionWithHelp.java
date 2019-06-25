@@ -32,14 +32,15 @@ import com.google.inject.Inject;
 
 public class CaptionWithHelp extends Composite
 {
-   public CaptionWithHelp(String caption, String helpCaption)
+   public CaptionWithHelp(String caption, String helpCaption, Widget forWidget)
    {
-      this(caption, helpCaption, null);
+      this(caption, helpCaption, null, forWidget);
    }
    
    public CaptionWithHelp(String caption, 
                           String helpCaption,
-                          final String rstudioLinkName)
+                          final String rstudioLinkName,
+                          Widget forWidget)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -47,7 +48,7 @@ public class CaptionWithHelp extends Composite
       
       HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
-      captionLabel_ = new FormLabel(caption);
+      captionLabel_ = new FormLabel(caption, forWidget);
       panel.add(captionLabel_);
       helpPanel_ = new HorizontalPanel();
       DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
@@ -61,7 +62,7 @@ public class CaptionWithHelp extends Composite
             if (rstudioLinkName_ != null)
                globalDisplay_.openRStudioLink(rstudioLinkName_,
                                               includeVersionInfo_);
-         }  
+         }
       });
       helpPanel_.add(link);
       panel.add(helpPanel_);

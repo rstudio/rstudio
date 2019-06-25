@@ -214,7 +214,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftWidget(packratMenuButton_);
       packratMenuButton_.setVisible(false);
             
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Filter by package name", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {

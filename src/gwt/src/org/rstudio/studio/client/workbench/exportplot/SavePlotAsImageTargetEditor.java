@@ -48,12 +48,11 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       LayoutGrid grid = new LayoutGrid(3, 2);
       grid.setCellPadding(0);
     
-      FormLabel imageFormatLabel = new FormLabel("Image format:");
+      imageFormatListBox_ = new ListBox();
+      FormLabel imageFormatLabel = new FormLabel("Image format:", imageFormatListBox_);
       imageFormatLabel.setStylePrimaryName(styles.exportTargetLabel());
           
       grid.setWidget(0, 0, imageFormatLabel);
-      imageFormatListBox_ = new ListBox();
-      imageFormatLabel.setFor(imageFormatListBox_);
       JsArray<SavePlotAsImageFormat> formats = context.getFormats();
       int selectedIndex = 0;
       for (int i=0; i<formats.length(); i++)
@@ -104,13 +103,12 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       directoryLabel_.setStylePrimaryName(styles.directoryLabel());
       grid.setWidget(1, 1, directoryLabel_);
       
-      FormLabel fileNameLabel = new FormLabel("File name:");
-      fileNameLabel.setStylePrimaryName(styles.fileNameLabel());
-      grid.setWidget(2, 0, fileNameLabel);
       fileNameTextBox_ = new TextBox();
-      fileNameLabel.setFor(fileNameTextBox_);
       fileNameTextBox_.setText(context.getUniqueFileStem());
       fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
+      FormLabel fileNameLabel = new FormLabel("File name:", fileNameTextBox_);
+      fileNameLabel.setStylePrimaryName(styles.fileNameLabel());
+      grid.setWidget(2, 0, fileNameLabel);
       grid.setWidget(2, 1, fileNameTextBox_);
         
       initWidget(grid);

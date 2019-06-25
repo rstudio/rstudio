@@ -113,10 +113,9 @@ public class ExportPlotSizeEditor extends Composite
       }
           
       // image width
-      FormLabel widthLabel = createImageOptionLabel("Width:");
-      widthAndHeightPanel.add(widthLabel);
       widthTextBox_ = createImageSizeTextBox();
-      widthLabel.setFor(widthTextBox_);
+      FormLabel widthLabel = createImageOptionLabel("Width:", widthTextBox_);
+      widthAndHeightPanel.add(widthLabel);
       widthTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
@@ -145,10 +144,9 @@ public class ExportPlotSizeEditor extends Composite
      
       // image height
       widthAndHeightPanel.add(new HTML("&nbsp;&nbsp;"));
-      FormLabel heightLabel = createImageOptionLabel("Height:");
-      widthAndHeightPanel.add(heightLabel);
       heightTextBox_ = createImageSizeTextBox();
-      heightLabel.setFor(heightTextBox_);
+      FormLabel heightLabel = createImageOptionLabel("Height:", heightTextBox_);
+      widthAndHeightPanel.add(heightLabel);
       heightTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
@@ -474,9 +472,9 @@ public class ExportPlotSizeEditor extends Composite
                       Window.getClientHeight() - 200);
    }
    
-   private FormLabel createImageOptionLabel(String text)
+   private FormLabel createImageOptionLabel(String text, Widget w)
    {
-      FormLabel label = new FormLabel(text);
+      FormLabel label = new FormLabel(text, w);
       label.setStylePrimaryName(
             ExportPlotResources.INSTANCE.styles().imageOptionLabel());
       return label;
