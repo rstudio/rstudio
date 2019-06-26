@@ -1,7 +1,7 @@
 /*
  * CheckboxLabel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -26,8 +28,16 @@ public class CheckboxLabel implements IsWidget
 {
    public CheckboxLabel(final CheckBox checkbox, String label)
    {
-      label_ = new Label(label);
-
+      // CheckBox consists of a span with input (checkbox) element followed
+      // by a label element, which is blank in this case so we associate our
+      // label with it and disassociate the existing one to avoid confusing 
+      // screen readers
+      label_ = new FormLabel(label, checkbox.getElement().getFirstChildElement());
+      Element blankLabel = DOM.getChild(checkbox.getElement(), 1);
+      if (blankLabel != null)
+      {
+         blankLabel.removeAttribute("for");
+      }
       label_.getElement().getStyle().setCursor(Cursor.DEFAULT);
       label_.addClickHandler(new ClickHandler()
       {
@@ -52,5 +62,5 @@ public class CheckboxLabel implements IsWidget
       return label_;
    }
 
-   private final Label label_;
+   private final FormLabel label_;
 }

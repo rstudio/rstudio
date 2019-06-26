@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -77,6 +78,18 @@ public class FormLabel extends Label
    }
 
    /**
+    * Create a label to associate with an existing element
+    * @param text label text
+    * @param el labeled element; if the element does not already have an id attribute,
+    *          one will be generated and assigned to it
+    */
+   public FormLabel(String text, Element el)
+   {
+      super(text, NoForId);
+      setFor(el);
+   }
+
+   /**
     * Associate this label with the given widget. If the widget's element does not
     * have an id attribute, a unique one will be generated and assigned to it.
     * @param widget
@@ -85,11 +98,23 @@ public class FormLabel extends Label
    {
       if (widget == null)
          return;
-      String controlId = widget.getElement().getId();
+      setFor(widget.getElement());
+   }
+
+   /**
+    * Associate this label with the given element. If the element does not
+    * have an id attribute, a unique one will be generated and assigned to it.
+    * @param el
+    */   public void setFor(Element el)
+   {
+      if (el == null)
+         return;
+
+      String controlId = el.getId();
       if (StringUtil.isNullOrEmpty(controlId))
       {
          controlId = DOM.createUniqueId();
-         widget.getElement().setId(controlId);
+         el.setId(controlId);
       }
       setFor(controlId);
    }

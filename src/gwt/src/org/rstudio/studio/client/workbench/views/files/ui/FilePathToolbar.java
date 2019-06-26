@@ -27,6 +27,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.CheckBoxHiddenLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
@@ -115,7 +116,7 @@ public class FilePathToolbar extends Composite
       navigationObserver_ = navigationObserver;
       
       // select all check box
-      CheckBox selectAllCheckBox = new CheckBox();
+      CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel("Select all files");
       selectAllCheckBox.addStyleDependentName("FilesSelectAll");
       selectAllCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
 
