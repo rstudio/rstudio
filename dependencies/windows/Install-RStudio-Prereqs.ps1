@@ -63,7 +63,7 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/in
 refreshenv
 
 # install some deps via chocolatey
-choco install -y cmake --version 3.12.1 --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
+choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
 choco install -y jdk8
 choco install -y ant --version 1.10.5
