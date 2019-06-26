@@ -20,6 +20,8 @@
 
 #include <core/FilePath.hpp>
 
+#define kPackageType "Package"
+
 namespace rstudio {
 namespace core {
 

@@ -27,8 +27,6 @@ namespace r_util {
 
 namespace {
 
-const char * const kPackageType = "Package";
-
 Error fieldNotFoundError(const FilePath& descFilePath,
                          const std::string& fieldName,
                          const ErrorLocation& location)
