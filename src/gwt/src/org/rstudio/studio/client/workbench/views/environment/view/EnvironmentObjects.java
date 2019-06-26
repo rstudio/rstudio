@@ -33,6 +33,8 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -606,10 +608,12 @@ public class EnvironmentObjects extends ResizeComposite
 
    private Widget buildEmptyGridMessage()
    {
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
       environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
-      environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
+      environmentEmptyMessage_.setStyleName(styles.subtitle());
+      environmentEmptyMessage_.setStylePrimaryName(style.emptyEnvironmentMessage());
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }

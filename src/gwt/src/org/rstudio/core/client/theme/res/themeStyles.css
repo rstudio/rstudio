@@ -1027,7 +1027,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    display: inline;
    color: black;
    font-size: 11px;
-   font-weight: bold;
    text-shadow: white 0px 1px 0px;
    cursor: default;
 }
@@ -1045,7 +1044,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .subtitle {
-   color: #999;
+   color: #0c1f30;
    margin-left: 6px;
 }
 
