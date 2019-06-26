@@ -140,12 +140,12 @@ void setShinyViewerType(const std::string& viewerType)
 void onUserSettingsChanged(const std::string& pref,
       boost::shared_ptr<std::string> pShinyViewerType)
 {
+   if (pref != kShinyViewerType)
+      return;
+
    std::string shinyViewerType = prefs::userPrefs().shinyViewerType();
-   if (shinyViewerType != *pShinyViewerType)
-   {
-      setShinyViewerType(shinyViewerType);
-      *pShinyViewerType = shinyViewerType;
-   }
+   setShinyViewerType(shinyViewerType);
+   *pShinyViewerType = shinyViewerType;
 }
 
 Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,

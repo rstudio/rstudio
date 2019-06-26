@@ -114,12 +114,12 @@ void setPlumberViewerType(const std::string& viewerType)
 void onUserSettingsChanged(const std::string& pref, 
       boost::shared_ptr<std::string> pPlumberViewerType)
 {
+   if (pref != kPlumberViewerType)
+      return;
+
    std::string plumberViewerType = prefs::userPrefs().plumberViewerType();
-   if (plumberViewerType != *pPlumberViewerType)
-   {
-      setPlumberViewerType(plumberViewerType);
-      *pPlumberViewerType = plumberViewerType;
-   }
+   setPlumberViewerType(plumberViewerType);
+   *pPlumberViewerType = plumberViewerType;
 }
 
 Error getPlumberRunCmd(const json::JsonRpcRequest& request,

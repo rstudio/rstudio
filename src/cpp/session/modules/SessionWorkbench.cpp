@@ -630,6 +630,9 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
+   if (pref != kSaveWorkspace)
+      return;
+
    // sync underlying R save action
    module_context::syncRSaveAction();
 }

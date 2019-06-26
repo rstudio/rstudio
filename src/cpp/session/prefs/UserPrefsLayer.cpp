@@ -53,16 +53,36 @@ void UserPrefsLayer::onPrefsFileChanged()
 {
    if (prefsFile_.lastWriteTime() <= lastSync_)
    {
-      // In most cases the prefs file change will have originated from RStudio itself; ignore these.
+      // No work to do; we wrote this update ourselves.
       return;
    }
+
+   // Make a copy of the prefs prior to reloading, so we can diff against the old copy
+   const json::Object old = cache_->clone().get_obj();
 
    // Reload the prefs from the file
    Error error = loadPrefsFromFile(prefsFile_);
    if (error)
+   {
       LOG_ERROR(error);
-   else
-      onChanged();
+      return;
+   }
+
+   // Figure out what prefs changed in the file
+   for (const auto key: UserPrefValues::allKeys())
+   {
+      const auto itOld = old.find(key);
+      const auto itNew = cache_->find(key);
+
+      // A pref is considered to be changed if it (a) exists in the new set of prefs, and (b) either
+      // didn't exist in the old set, or existed there with a new value. This does not currently
+      // emit events for pref values that have been removed.
+      if (itNew != cache_->end() &&
+          (itOld == old.end() || !((*itNew).value() == (*itOld).value())))
+      {
+         onChanged(key);
+      }
+   }
 }
 
 Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)

@@ -63,16 +63,22 @@ class UserPrefs: public UserPrefValuesNative
       return client_events::kUserPrefsChanged;
    }
 
-   void onPrefLayerChanged(const std::string& layerName) override
+   void onPrefLayerChanged(const std::string& layerName, const std::string& prefName) override
    {
-      Preferences::onPrefLayerChanged(layerName);
+      Preferences::onPrefLayerChanged(layerName, prefName);
 
       // Fire an event notifying the client that prefs have changed
-      json::Object dataJson;
-      dataJson["name"] = layerName;
-      dataJson["values"] = getLayer(layerName);
-      ClientEvent event(client_events::kUserPrefsChanged, dataJson);
-      module_context::enqueClientEvent(event);
+      json::Object valueJson;
+      auto val = readValue(layerName, prefName);
+      if (val)
+      {
+         valueJson[prefName] = *val;
+         json::Object dataJson;
+         dataJson["name"] = layerName;
+         dataJson["values"] = valueJson;
+         ClientEvent event(client_events::kUserPrefsChanged, dataJson);
+         module_context::enqueClientEvent(event);
+      }
    }
 
 public:

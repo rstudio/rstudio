@@ -169,17 +169,17 @@ void onUserSettingsChanged(const std::string& pref,
    // check to see if the setting for 'handle errors in user code only'
    // has been changed since we last looked at it; if it has, switch the
    // error handler in a corresponding way
-   bool handleUserErrorsOnly = prefs::userPrefs().handleErrorsInUserCodeOnly();
-   if (handleUserErrorsOnly != *pHandleUserErrorsOnly)
-   {
-      Error error = setErrHandler(prefs::userState().errorHandlerType(),
-                                  handleUserErrorsOnly,
-                                  pErrorHandler);
-      if (error)
-         LOG_ERROR(error);
+   if (pref != kErrorHandlerType)
+      return;
 
-      *pHandleUserErrorsOnly = handleUserErrorsOnly;
-   }
+   bool handleUserErrorsOnly = prefs::userPrefs().handleErrorsInUserCodeOnly();
+   Error error = setErrHandler(prefs::userState().errorHandlerType(),
+                               handleUserErrorsOnly,
+                               pErrorHandler);
+   if (error)
+      LOG_ERROR(error);
+
+   *pHandleUserErrorsOnly = handleUserErrorsOnly;
 }
 
 } // anonymous namespace

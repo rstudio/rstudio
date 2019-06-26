@@ -86,6 +86,8 @@ public:
 
    // Read/write accessors for the underlying JSON property values
    boost::optional<core::json::Value> readValue(const std::string& name);
+   boost::optional<core::json::Value> readValue(const std::string& layerName, 
+         const std::string& name);
    core::Error writeValue(const std::string& name, const core::json::Value& value);
    core::Error clearValue(const std::string& name);
 
@@ -99,7 +101,7 @@ public:
    RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onChanged;
 
 protected:
-   virtual void onPrefLayerChanged(const std::string& layerName);
+   virtual void onPrefLayerChanged(const std::string& layerName, const std::string& prefName);
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
    boost::mutex mutex_;

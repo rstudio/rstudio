@@ -567,6 +567,9 @@ std::string nonPathSvnBinDir()
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
+   if (pref != kSvnExePath)
+      return;
+
    initSvnBin();
 }
 

@@ -270,6 +270,30 @@ core::Error UserStateValues::setUsingMingwGcc49(bool val)
    return writePref("using_mingw_gcc49", val);
 }
 
+std::vector<std::string> UserStateValues::allKeys()
+{
+   return std::vector<std::string>({
+      kContextId,
+      kAgreementHash,
+      kAutoCreatedProfile,
+      kTheme,
+      kDefaultProjectLocation,
+      kClearHidden,
+      kExportPlotOptions,
+      kExportViewerOptions,
+      kSavePlotAsPdfOptions,
+      kCompileRNotebookPrefs,
+      kCompileRMarkdownNotebookPrefs,
+      kShowPublishUi,
+      kEnableRsconnectPublishUi,
+      kPublishAccount,
+      kDocumentOutlineWidth,
+      kConnectVia,
+      kCranMirrorChanged,
+      kErrorHandlerType,
+      kUsingMingwGcc49,
+   });
+}
    
 
 }

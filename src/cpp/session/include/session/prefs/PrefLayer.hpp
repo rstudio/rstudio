@@ -105,7 +105,8 @@ public:
       return error;
    }
 
-   RSTUDIO_BOOST_SIGNAL<void()> onChanged;
+   // Signal emitted when a pref changes
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)> onChanged;
 
    core::json::Object allPrefs();
    boost::optional<core::json::Value> readValue(const std::string& name);

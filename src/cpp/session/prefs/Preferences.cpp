@@ -80,7 +80,7 @@ Error Preferences::initialize()
 
          // Subscribe for layer change notifications
          layer->onChanged.connect(boost::bind(&Preferences::onPrefLayerChanged, this,
-                  layer->layerName()));
+                  layer->layerName(), _1));
       }
    }
    END_LOCK_MUTEX
@@ -91,6 +91,10 @@ Error Preferences::initialize()
 core::Error Preferences::writeLayer(size_t layer, const core::json::Object& prefs)
 {
    Error result;
+
+   // A vector of all the preferences actually changed in this update
+   std::vector<std::string> changed;
+
    LOCK_MUTEX(mutex_)
    {
       // We cannot write the base layer or a non-existent layer.
@@ -105,7 +109,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
          // and if so (b) whether it differs from the value in that layer.
          bool found = false;
          bool differs = false;
-         for (size_t i = layer - 1; i >= 0; --i)
+         for (size_t i = layer; i >= 0; --i)
          {
             const auto val = layers_[i]->readValue(pref.name());
             if (val)
@@ -113,7 +117,10 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
                found = true;
                if (!(*val == pref.value()))
                {
-                  differs = true;
+                  if (layer == i)
+                     changed.push_back(pref.name());
+                  else
+                     differs = true;
                }
                break;
             }
@@ -121,8 +128,8 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
 
          if (!found || differs)
          {
-            // If the preference doesn't exist in any other layer, or the value doesn't match the them,
-            // record the unique value in this layer.
+            // If the preference doesn't exist in any other layer, or the value doesn't match the
+            // them, record the unique value in this layer.
             unique[pref.name()] = pref.value();
          }
       }
@@ -131,12 +138,15 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    }
    END_LOCK_MUTEX;
 
+   // Emit change events for all the preferences we changed
+   for (const auto prefName: changed)
+   {
+      onChanged(layers_[layer]->layerName(), prefName);
+   }
+
    if (result)
       return result;
 
-   // Empty value indicates that we changed multiple prefs
-   // TODO: fire event
-   // onChanged("");
    return Success();
 }
 
@@ -149,9 +159,32 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
       for (const auto layer: boost::adaptors::reverse(layers_))
       {
          boost::optional<core::json::Value> val = layer->readValue(name);
-         if (val && val->type() != json::NullType && val->type() != json::UnknownType)
+         if (val)
          {
             return val;
+         }
+      }
+   }
+   END_LOCK_MUTEX
+
+   return boost::none;
+}
+
+boost::optional<core::json::Value> Preferences::readValue(const std::string& layerName,
+      const std::string& name)
+{
+   LOCK_MUTEX(mutex_)
+   {
+      for (const auto layer: layers_)
+      {
+         if (layer->layerName() == layerName)
+         {
+            boost::optional<core::json::Value> val = layer->readValue(name);
+            if (val)
+            {
+               return val;
+            }
+            break;
          }
       }
    }
@@ -228,10 +261,9 @@ json::Object Preferences::getLayer(const std::string& name)
    return result;
 }
 
-void Preferences::onPrefLayerChanged(const std::string& layerName)
+void Preferences::onPrefLayerChanged(const std::string& layerName, const std::string& prefName)
 {
-   // Fire changed event to all our listeners
-   onChanged(layerName, "");
+   onChanged(layerName, prefName);
 }
 
 void Preferences::notifyClient(const std::string &layerName, const std::string &pref)

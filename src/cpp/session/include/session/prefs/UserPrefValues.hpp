@@ -281,6 +281,7 @@ namespace prefs {
 class UserPrefValues: public Preferences
 {
 public:
+   static std::vector<std::string> allKeys();
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */

@@ -83,6 +83,7 @@ namespace prefs {
 class UserStateValues: public Preferences
 {
 public:
+   static std::vector<std::string> allKeys();
    /**
     * A unique identifier representing the user and machine.
     */
