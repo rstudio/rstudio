@@ -64,10 +64,7 @@ void onDescriptionChanged()
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
    Error error = pInfo->read(projectContext().directory());
    if (error)
-   {
       LOG_ERROR(error);
-      return;
-   }
 
    pInfo.swap(s_pIndexedPackageInfo);
 }
@@ -79,7 +76,10 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    {
       auto& info = event.fileInfo();
       if (info.absolutePath() == descPath.absolutePath())
+      {
          onDescriptionChanged();
+         break;
+      }
    }
 }
 
