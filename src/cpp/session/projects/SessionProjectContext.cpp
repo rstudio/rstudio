@@ -21,6 +21,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
@@ -53,6 +54,34 @@ namespace session {
 namespace projects {
 
 namespace {
+
+static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
+
+void onDescriptionChanged()
+{
+   s_pIndexedPackageInfo.reset();
+
+   std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
+   Error error = pInfo->read(projectContext().directory());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   pInfo.swap(s_pIndexedPackageInfo);
+}
+
+void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   FilePath descPath = projectContext().directory().childPath("DESCRIPTION");
+   for (auto& event : events)
+   {
+      auto& info = event.fileInfo();
+      if (info.absolutePath() == descPath.absolutePath())
+         onDescriptionChanged();
+   }
+}
 
 }  // anonymous namespace
 
@@ -249,7 +278,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 void ProjectContext::augmentRbuildignore()
 {
-   if (r_util::isPackageDirectory(directory()))
+   if (isPackageProject())
    {
       // constants
       const char * const kIgnoreRproj = R"(^.*\.Rproj$)";
@@ -434,6 +463,9 @@ Error ProjectContext::initialize()
 
 void ProjectContext::onDeferredInit(bool newSession)
 {
+   // update DESCRIPTION file index
+   onDescriptionChanged();
+
    // kickoff file monitoring for this directory
    using boost::bind;
    core::system::file_monitor::Callbacks cb;
@@ -470,6 +502,9 @@ void ProjectContext::fileMonitorFilesChanged(
 {
    // notify client (gwt)
    module_context::enqueFileChangedEvents(directory(), events);
+
+   // own handler
+   onProjectFilesChanged(events);
 
    // notify subscribers
    onFilesChanged_(events);
@@ -792,6 +827,9 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
+   if (s_pIndexedPackageInfo != nullptr)
+      return s_pIndexedPackageInfo->type() == kPackageType;
+
    return r_util::isPackageDirectory(directory());
 }
 
