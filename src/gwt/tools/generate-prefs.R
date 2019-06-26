@@ -48,6 +48,8 @@ generate <- function (schemaPath, className) {
    java <- ""
    cpp <- ""
    hpp <- ""
+   cpplist <- paste0("std::vector<std::string> ", className, "::allKeys()\n{\n",
+                     "   return std::vector<std::string>({\n")
    javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
    
    cppprefenum <- paste0("enum ", capitalize(className), "\n{\n")
@@ -123,6 +125,7 @@ generate <- function (schemaPath, className) {
       cppstrings <- paste0(cppstrings,
                            "#define k", capitalize(camel), " \"", pref, "\"\n")
       cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
+      cpplist <- paste0(cpplist, "      k", capitalize(camel), ",\n")
       comment <- paste0(
          "   /**\n",
          "    * ", def[["description"]], "\n",
@@ -193,10 +196,13 @@ generate <- function (schemaPath, className) {
    }
    
    cppeprefnum <- paste0(cppprefenum, "   ", className, "Max\n};\n\n")
+   cpplist <- paste0(cpplist, "   });\n}\n")
+   cpp <- paste0(cpp, cpplist)
    hpp <- paste0(cppstrings, "\n",
                  "class ", className, ": public Preferences\n", 
                  "{\n",
                  "public:\n",
+                 "   static std::vector<std::string> allKeys();\n",
                  hpp,
                  "};\n")
 
