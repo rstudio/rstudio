@@ -24,8 +24,13 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.Mutable;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -42,6 +47,105 @@ import java.util.List;
 
 public class TypoSpellChecker
 {
+   private class TypoDictionaryRequest
+   {
+      public TypoDictionaryRequest(String language)
+      {
+         language_ = language;
+      }
+      
+      public void send()
+      {
+         String path = GWT.getHostPageBaseURL() + "dictionaries/" + language_ + "/" + language_;
+
+         final Mutable<String> aff = new Mutable<String>();
+         final Mutable<String> dic = new Mutable<String>();
+         final Command onReady = () -> {
+
+            if (cancelled_ || aff.get() == null || dic.get() == null)
+               return;
+
+            typoLoader_.addCallback(() -> {
+               typoNative_ = new TypoNative(language_, aff.get(), dic.get(), null);
+               loadedDict_ = language_;
+               typoLoaded_ = true;
+               
+               aff.clear();
+               dic.clear();
+               alive_ = false;
+            });
+            
+         };
+
+         alive_ = true;
+         makeRequest(path, "aff", (String response) -> {
+            aff.set(response);
+            onReady.execute();
+         });
+
+         makeRequest(path, "dic", (String response) -> {
+            dic.set(response);
+            onReady.execute();
+         });
+
+      }
+      
+      private void makeRequest(String path,
+                               String suffix,
+                               final CommandWithArg<String> callback)
+      {
+         String logName = language_ + "_" + suffix + "_request";
+         final RequestLogEntry logEntry = RequestLog.log(logName, "");
+
+         try
+         {
+            RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, path + "." + suffix);
+            builder.sendRequest("", new RequestCallback()
+            {
+               @Override
+               public void onResponseReceived(Request request, Response response)
+               {
+                  logEntry.logResponse(RequestLogEntry.ResponseType.Normal, response.getText());
+                  callback.execute(response.getText());
+               }
+
+               @Override
+               public void onError(Request request, Throwable throwable)
+               {
+                  logEntry.logResponse(RequestLogEntry.ResponseType.Error, throwable.getLocalizedMessage());
+                  alive_ = false;
+               }
+            });
+         }
+         catch (RequestException e)
+         {
+            logEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
+            alive_ = false;
+         }
+      }
+      
+      
+      public String getLanguage()
+      {
+         return language_;
+      }
+      
+      public void cancel()
+      {
+         cancelled_ = true;
+      }
+      
+      public boolean isAlive()
+      {
+         return alive_;
+      }
+      
+      private boolean cancelled_;
+      private boolean alive_;
+      
+      private final String language_;
+   }
+   
    public interface Context
    {
       ArrayList<String> readDictionary();
@@ -213,60 +317,28 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      String dictLanguage = uiPrefs_.spellingDictionaryLanguage().getValue();
-
       // don't load the same dictionary again
-      if (typoLoaded_ && loadedDict_ == dictLanguage)
+      final String language = uiPrefs_.spellingDictionaryLanguage().getValue();
+      if (typoLoaded_ && loadedDict_ == language)
          return;
-
-      String path = GWT.getHostPageBaseURL() + "dictionaries/" + dictLanguage + "/" + dictLanguage;
-
-      RequestLogEntry affLogEntry = RequestLog.log(dictLanguage + "_aff_request", "");
-      RequestLogEntry dicLogEntry = RequestLog.log(dictLanguage + "_dic_request", "");
-
-      typoLoaded_ = false;
-      try
+      
+      // check for an active request
+      if (activeRequest_ != null && activeRequest_.isAlive())
       {
-         new RequestBuilder(RequestBuilder.GET, path + ".aff").sendRequest("", new RequestCallback() {
-            @Override
-            public void onResponseReceived(Request affReq, Response affResp) {
-               try
-               {
-                  new RequestBuilder(RequestBuilder.GET, path + ".dic").sendRequest("", new RequestCallback() {
-                     @Override
-                     public void onResponseReceived(Request dicReq, Response dicResp) {
-                        ExternalJavaScriptLoader.Callback loadTypoCallback = () -> {
-                           typoNative_ = new TypoNative(dictLanguage, affResp.getText(), dicResp.getText(), null);
-                           loadedDict_ = dictLanguage;
-                           typoLoaded_ = true;
-                        };
-                        new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString()).addCallback(loadTypoCallback);
-                     }
-
-                     @Override
-                     public void onError(Request res, Throwable throwable) {
-                        dicLogEntry.logResponse(RequestLogEntry.ResponseType.Error, throwable.getLocalizedMessage());
-                     }
-                  });
-               }
-               catch (RequestException e)
-               {
-                  dicLogEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
-               }
-            }
-
-            @Override
-            public void onError(Request res, Throwable throwable) {
-               affLogEntry.logResponse(RequestLogEntry.ResponseType.Error, throwable.getLocalizedMessage());
-            }
-         });
+         // if we're already requesting this language's dictionary, bail
+         if (StringUtil.equals(activeRequest_.getLanguage(), language))
+            return;
+         
+         // otherwise, cancel that request and start a new one
+         activeRequest_.cancel();
+         activeRequest_ = null;
       }
-      catch (RequestException e)
-      {
-         affLogEntry.logResponse(RequestLogEntry.ResponseType.Unknown, e.getLocalizedMessage());
-      }
+
+      // create and send
+      activeRequest_ = new TypoDictionaryRequest(language);
+      activeRequest_.send();
    }
-
+   
    public void prefetchWords(ArrayList<String> words)
    {
       if (spellingWorkerInitialized_)
@@ -286,11 +358,14 @@ public class TypoSpellChecker
    private static String loadedDict_;
    private static boolean typoLoaded_ = false;
    private static TypoNative typoNative_;
+   private static TypoDictionaryRequest activeRequest_;
 
    private WorkbenchList userDictionary_;
    private ArrayList<String> userDictionaryWords_;
    private ArrayList<String> contextDictionary_;
    private final HashSet<String> allIgnoredWords_ = new HashSet<>();
+   private final ExternalJavaScriptLoader typoLoader_ =
+         new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString());
 
    private UIPrefs uiPrefs_;
 }
