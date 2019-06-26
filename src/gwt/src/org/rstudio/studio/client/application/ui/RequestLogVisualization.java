@@ -202,7 +202,12 @@ public class RequestLogVisualization extends Composite
       HTML html = new HTML();
       html.getElement().getStyle().setOverflow(Overflow.VISIBLE);
       html.getElement().getStyle().setProperty("whiteSpace", "nowrap");
-      html.setText(entry.getRequestMethodName() + (active ? " (active)" : ""));
+      
+      String method = entry.getRequestMethodName();
+      if (method == null)
+         method = entry.getRequestId();
+      
+      html.setText(method + (active ? " (active)" : ""));
       if (active)
          html.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       String color;
