@@ -886,6 +886,11 @@
             "type": "integer",
             "default": 0,
             "description": "The verbosity level to use with Clang (0 - 2)"
+        },
+        "submit_crash_reports": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically submit crash reports to RStudio."
         }
     }
 }

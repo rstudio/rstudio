@@ -191,7 +191,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       // crash reporting - only show in desktop mode
-      enableCrashReporting_ = new CheckBox("Send automated crash reports to RStudio");
+      enableCrashReporting_ = checkboxPref("Send automated crash reports to RStudio",
+            prefs_.submitCrashReports());
       if (Desktop.isDesktop())
       {
          lessSpaced(enableCrashReporting_);
@@ -409,7 +410,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                    prefs.restoreProjectRVersion().getValue());
       }
 
-      enableCrashReporting_.setValue(prefs.enableCrashReporting().getValue());
+      enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
      
       // projects prefs
       restoreLastProject_.setEnabled(true);

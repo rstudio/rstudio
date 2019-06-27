@@ -1,5 +1,5 @@
 /*
- * UserPrefsComputedLayer.hpp
+ * SessionCrashHandler.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -13,28 +13,24 @@
  *
  */
 
-#ifndef SESSION_USER_PREF_COMPUTED_LAYER_HPP
-#define SESSION_USER_PREF_COMPUTED_LAYER_HPP
+#ifndef SESSION_MODULE_CRASH_HANDLER_HPP
+#define SESSION_MODULE_CRASH_HANDLER_HPP
 
-#include <session/prefs/UserPrefValues.hpp>
-
-#include <core/FilePath.hpp>
+namespace rstudio {
+   namespace core {
+      class Error;
+   }
+}
 
 namespace rstudio {
 namespace session {
-namespace prefs {
+namespace modules {
+namespace crash_handler {
 
-class UserPrefsComputedLayer: public PrefLayer
-{
-public:
-   UserPrefsComputedLayer();
-   core::Error readPrefs();
-   core::Error validatePrefs();
-private:
-   core::FilePath detectedTerminalPath();
-};
+core::Error initialize();
 
-} // namespace prefs
+} // namespace crash_handler
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

@@ -627,6 +627,12 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
       // will print a warning)
       module_context::reconcileSecureDownloadConfiguration();
    }
+
+   if (pref == kUseSecureDownload)
+   {
+      // reconcile secure download config
+      module_context::reconcileSecureDownloadConfiguration();
+   }
 }
 
 Error setUserCrashHandlerPrompted(const json::JsonRpcRequest& request,

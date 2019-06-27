@@ -1461,6 +1461,14 @@ public class UserPrefsAccessor extends Prefs
       return integer("clang_verbose", 0);
    }
 
+   /**
+    * Whether to automatically submit crash reports to RStudio.
+    */
+   public PrefValue<Boolean> submitCrashReports()
+   {
+      return bool("submit_crash_reports", true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1777,6 +1785,8 @@ public class UserPrefsAccessor extends Prefs
          restoreProjectRVersion().setValue(layer, source.getBool("restore_project_r_version"));
       if (source.hasKey("clang_verbose"))
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
+      if (source.hasKey("submit_crash_reports"))
+         submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
    }
    
 

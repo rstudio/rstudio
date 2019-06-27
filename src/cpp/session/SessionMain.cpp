@@ -185,6 +185,7 @@
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
+#include "modules/SessionCrashHandler.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -584,6 +585,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::jobs::initialize)
       (modules::themes::initialize)
       (modules::customsource::initialize)
+      (modules::crash_handler::initialize)
 
       // workers
       (workers::web_request::initialize)

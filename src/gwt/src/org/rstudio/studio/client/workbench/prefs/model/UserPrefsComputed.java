@@ -36,11 +36,6 @@ public class UserPrefsComputed extends UserPrefsAccessor
       return object("spelling", null);
    }
    
-   public PrefValue<Boolean> enableCrashReporting()
-   {
-      return bool("enable_crash_reporting", true);
-   }
-   
    public PrefValue<RVersionSpec> defaultRVersion()
    {
       return object("default_r_version", null);

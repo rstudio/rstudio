@@ -277,6 +277,7 @@ namespace prefs {
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
+#define kSubmitCrashReports "submit_crash_reports"
 
 class UserPrefValues: public Preferences
 {
@@ -1223,6 +1224,12 @@ public:
     */
    int clangVerbose();
    core::Error setClangVerbose(int val);
+
+   /**
+    * Whether to automatically submit crash reports to RStudio.
+    */
+   bool submitCrashReports();
+   core::Error setSubmitCrashReports(bool val);
 
 };
 

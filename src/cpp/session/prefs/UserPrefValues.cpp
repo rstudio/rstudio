@@ -2064,6 +2064,19 @@ core::Error UserPrefValues::setClangVerbose(int val)
    return writePref("clang_verbose", val);
 }
 
+/**
+ * Whether to automatically submit crash reports to RStudio.
+ */
+bool UserPrefValues::submitCrashReports()
+{
+   return readPref<bool>("submit_crash_reports");
+}
+
+core::Error UserPrefValues::setSubmitCrashReports(bool val)
+{
+   return writePref("submit_crash_reports", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2224,6 +2237,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexShellEscape,
       kRestoreProjectRVersion,
       kClangVerbose,
+      kSubmitCrashReports,
    });
 }
    
