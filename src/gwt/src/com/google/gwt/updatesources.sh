@@ -9,6 +9,7 @@ SRCBASE=`pwd`
 
 # extract over previously modified sources
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
+  com/google/gwt/user/cellview/client/AbstractHeaderOrFooterBuilder.java \
   com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/Label.java \
@@ -23,6 +24,9 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
   com/google/gwt/core/ext/linker/impl/installLocationIframe.js
 
 # apply previous patches
+cd ${SRCBASE}/com/google/gwt/user/cellview/client
+patch AbstractHeaderOrFooterBuilder.java < AbstractHeaderOrFooterBuilder.java.diff
+
 cd ${SRCBASE}/com/google/gwt/user/client/ui
 patch CellPanel.java < CellPanel.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff

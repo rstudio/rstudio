@@ -11,6 +11,7 @@ cd tmp
 TEMPDIR=`pwd`
 
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
+  com/google/gwt/user/cellview/client/AbstractHeaderOrFooterBuilder.java \
   com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/Label.java \
@@ -27,6 +28,9 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
 updatepatch () {
    diff ${TEMPDIR}/${1}/${2} ${SRCBASE}/${1}/${2} > ${SRCBASE}/${1}/${2}.diff
 }
+
+PACKAGE=com/google/gwt/user/cellview/client
+updatepatch ${PACKAGE} AbstractHeaderOrFooterBuilder.java
 
 PACKAGE=com/google/gwt/user/client/ui
 updatepatch ${PACKAGE} CellPanel.java
