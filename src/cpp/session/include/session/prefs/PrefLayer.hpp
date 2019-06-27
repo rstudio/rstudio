@@ -102,6 +102,9 @@ public:
       // WritePrefs does its own mutex locking
       error = writePrefs(*cache_);
 
+      // Notify listeners that the pref has a new value
+      onChanged(name);
+
       return error;
    }
 

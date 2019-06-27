@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -56,6 +57,11 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
    
    public void writeUserPrefs()
    {
+      writeUserPrefs(null);
+   }
+
+   public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
+   {
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
          new ServerRequestCallback<Void>() 
@@ -76,10 +82,19 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
                   // let satellites know prefs have changed
                   satelliteManager_.dispatchCrossWindowEvent(event);
                }
+               
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(true);
+               }
             }
             @Override
             public void onError(ServerError error)
             {
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(false);
+               }
                Debug.logError(error);
             }
          });

@@ -585,25 +585,6 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
-Error setCRANMirror(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* /*pResponse*/)
-{
-   json::Object cranMirrorJson;
-   Error error = json::readParam(request.params, 0, &cranMirrorJson);
-   if (error)
-      return error;
-
-   prefs::userPrefs().setCranMirror(cranMirrorJson);
-   prefs::userState().setCranMirrorChanged(true);
-
-   // verify cran mirror security (will either update to https or
-   // will print a warning)
-   module_context::reconcileSecureDownloadConfiguration();
-
-   return Success();
-}
-
-
 // options("pdfviewer")
 void viewPdfPostback(const std::string& pdfPath,
                     const module_context::PostbackHandlerContinuation& cont)
@@ -630,11 +611,22 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kSaveWorkspace)
-      return;
+   if (pref == kSaveWorkspace)
+   {
+      // sync underlying R save action
+      module_context::syncRSaveAction();
+   }
 
-   // sync underlying R save action
-   module_context::syncRSaveAction();
+   if (pref == kCranMirror)
+   {
+      Error error = prefs::userState().setCranMirrorChanged(true);
+      if (error)
+         LOG_ERROR(error);
+
+      // verify cran mirror security (will either update to https or
+      // will print a warning)
+      module_context::reconcileSecureDownloadConfiguration();
+   }
 }
 
 Error setUserCrashHandlerPrompted(const json::JsonRpcRequest& request,
@@ -707,7 +699,6 @@ Error initialize()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
-      (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
       (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))

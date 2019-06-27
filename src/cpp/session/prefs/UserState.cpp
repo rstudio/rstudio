@@ -76,7 +76,6 @@ class UserState: public UserStateValues
          module_context::enqueClientEvent(event);
       }
    }
-
 };
 
 } // anonymous namespace

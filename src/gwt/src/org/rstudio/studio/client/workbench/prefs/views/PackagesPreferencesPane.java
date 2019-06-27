@@ -387,16 +387,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
       cranMirror_.setSecondaryRepos(repos);
 
-      server_.setCRANMirror(
-         cranMirror_,
-         new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
-             @Override
-             public void onResponseReceived(Void response)
-             {
-             }
-         }
-      );
-     
+      prefs.cranMirror().setGlobalValue(cranMirror_);
       prefs.useInternet2().setGlobalValue(useInternet2_.getValue());
       prefs.cleanupAfterRCmdCheck().setGlobalValue(cleanupAfterCheckSuccess_.getValue());
       prefs.viewDirAfterRCmdCheck().setGlobalValue(viewDirAfterCheckFailure_.getValue());
