@@ -93,7 +93,7 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    }
    Error error;
 
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       *cache_ = prefs;
    }

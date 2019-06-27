@@ -48,7 +48,7 @@ public:
    {
       // Work backwards through the layers, starting with the most specific (project or user-level
       // settings) and working towards the most general (basic defaults)
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          for (auto layer: boost::adaptors::reverse(layers_))
          {
@@ -104,7 +104,7 @@ protected:
    virtual void onPrefLayerChanged(const std::string& layerName, const std::string& prefName);
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
-   boost::mutex mutex_;
+   boost::recursive_mutex mutex_;
 };
 
 } // namespace prefs

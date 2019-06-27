@@ -49,7 +49,7 @@ public:
    template<typename T> boost::optional<T> readPref(const std::string& name)
    {
       // Ensure we have a cache from which to read preferences
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          if (!cache_)
          {
@@ -86,7 +86,7 @@ public:
    {
       // Ensure we have a cache to use as a baseline for writing
       core::Error error;
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          if (!cache_)
          {
@@ -128,7 +128,7 @@ protected:
 
    // The actual cache of preference values, and a mutex that guards access
    boost::shared_ptr<core::json::Object> cache_;
-   boost::mutex mutex_;
+   boost::recursive_mutex mutex_;
 
    // The name of this pref layer
    std::string layerName_;

@@ -49,7 +49,7 @@ PrefLayer::~PrefLayer()
 
 core::json::Object PrefLayer::allPrefs()
 {
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       return *cache_;
    }
@@ -149,7 +149,7 @@ Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::F
 
 boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
 {
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       const auto it = cache_->find(name);
       if (it == cache_->end())
@@ -166,7 +166,7 @@ boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
 
 Error PrefLayer::clearValue(const std::string& name)
 {
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       auto it = cache_->find(name);
       if (it == cache_->end())

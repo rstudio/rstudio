@@ -39,7 +39,7 @@ class UserState: public UserStateValues
 {
    Error createLayers() override
    {
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          layers_.push_back(boost::make_shared<UserStateDefaultLayer>()) ;  // STATE_LAYER_DEFAULT
          layers_.push_back(boost::make_shared<UserStateComputedLayer>());  // STATE_LAYER_COMPUTED

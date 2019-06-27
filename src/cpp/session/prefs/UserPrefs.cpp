@@ -41,7 +41,7 @@ class UserPrefs: public UserPrefValuesNative
 {
    Error createLayers() override
    {
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
          layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
@@ -87,7 +87,7 @@ public:
    {
       // The computed layer is created later since computations may involve evaluating R code (which
       // we can't do in early init)
-      LOCK_MUTEX(mutex_)
+      RECURSIVE_LOCK_MUTEX(mutex_)
       {
          auto layer = boost::make_shared<UserPrefsComputedLayer>();
          Error error = layer->readPrefs();

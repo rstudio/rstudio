@@ -27,7 +27,7 @@ namespace prefs {
 core::json::Array Preferences::allLayers()
 {
    json::Array layers;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (auto layer: layers_)
       {
@@ -44,7 +44,7 @@ core::json::Array Preferences::allLayers()
 core::Error Preferences::readLayers()
 {
    Error error;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (auto layer: layers_)
       {
@@ -69,7 +69,7 @@ Error Preferences::initialize()
    if (error)
       return error;
 
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (auto layer: layers_)
       {
@@ -95,7 +95,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    // A vector of all the preferences actually changed in this update
    std::vector<std::string> changed;
 
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       // We cannot write the base layer or a non-existent layer.
       if (layer >= layers_.size() || layer < 1)
@@ -154,7 +154,7 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
 {
    // Work backwards through the layers, starting with the most specific (project or user-level
    // settings) and working towards the most general (basic defaults)
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (const auto layer: boost::adaptors::reverse(layers_))
       {
@@ -173,7 +173,7 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
 boost::optional<core::json::Value> Preferences::readValue(const std::string& layerName,
       const std::string& name)
 {
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (const auto layer: layers_)
       {
@@ -197,7 +197,7 @@ core::Error Preferences::writeValue(const std::string& name, const core::json::V
 {
    Error result;
    std::string layerName;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       auto layer = layers_[userLayer()];
       layerName = layer->layerName();
@@ -215,7 +215,7 @@ core::Error Preferences::writeValue(const std::string& name, const core::json::V
 core::json::Object Preferences::userPrefLayer()
 {
    core::json::Object layer;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       layer = layers_[userLayer()]->allPrefs();
    }
@@ -226,7 +226,7 @@ core::json::Object Preferences::userPrefLayer()
 Error Preferences::clearValue(const std::string &name)
 {
    Error result;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       result = layers_[userLayer()]->clearValue(name);
    }
@@ -239,7 +239,7 @@ json::Object Preferences::getLayer(const std::string& name)
    json::Object result;
    bool found = false;
 
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (auto layer: layers_)
       {
@@ -269,7 +269,7 @@ void Preferences::onPrefLayerChanged(const std::string& layerName, const std::st
 void Preferences::notifyClient(const std::string &layerName, const std::string &pref)
 {
    bool found = false;
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       for (auto layer: layers_)
       {
