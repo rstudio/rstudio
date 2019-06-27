@@ -14,17 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -168,9 +166,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
    }
 
    @Override
-   public ImageResource getIcon()
+   public FileIcon getIcon()
    {
-      return new ImageResource2x(FileIconResources.INSTANCE.iconCsv2x());
+      return FileIcon.CSV_ICON;
    }
 
    private DataItem getDataItem()
