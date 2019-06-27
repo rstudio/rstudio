@@ -33,6 +33,16 @@ namespace session {
 namespace modules {
 namespace reticulate {
 
+namespace {
+
+void onDeferredInit(bool)
+{
+   Error error = r::exec::RFunction(".rs.reticulate.initialize").call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+} // end anonymous namespace
 bool isReplActive()
 {
    bool active = false;
@@ -45,6 +55,8 @@ bool isReplActive()
 Error initialize()
 {
    using namespace module_context;
+   
+   events().onDeferredInit.connect(onDeferredInit);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
