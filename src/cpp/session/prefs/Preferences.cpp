@@ -88,7 +88,7 @@ Error Preferences::initialize()
    return Success();
 }
 
-core::Error Preferences::writeLayer(size_t layer, const core::json::Object& prefs)
+core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
 {
    Error result;
 
@@ -98,7 +98,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       // We cannot write the base layer or a non-existent layer.
-      if (layer >= layers_.size() || layer < 1)
+      if (layer >= static_cast<int>(layers_.size()) || layer < 1)
          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
       // Write only the unique values in this layer.
@@ -109,7 +109,7 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
          // and if so (b) whether it differs from the value in that layer.
          bool found = false;
          bool differs = false;
-         for (size_t i = layer; i >= 0; --i)
+         for (int i = layer; i >= 0; --i)
          {
             const auto val = layers_[i]->readValue(pref.name());
             if (val)
@@ -118,18 +118,29 @@ core::Error Preferences::writeLayer(size_t layer, const core::json::Object& pref
                if (!(*val == pref.value()))
                {
                   if (layer == i)
+                  {
+                     // The pref exists in this layer and has a different value; emit a changed
+                     // notification for it later.
                      changed.push_back(pref.name());
+                  }
                   else
+                  {
+                     // The pref exists in a lower layer.
                      differs = true;
+                  }
                }
-               break;
+               if (i < layer)
+               {
+                  // We found the pref in a lower layer, so no need to look deeper.
+                  break;
+               }
             }
          }
 
          if (!found || differs)
          {
             // If the preference doesn't exist in any other layer, or the value doesn't match the
-            // them, record the unique value in this layer.
+            // value found elsewhere, record the unique value in this layer.
             unique[pref.name()] = pref.value();
          }
       }

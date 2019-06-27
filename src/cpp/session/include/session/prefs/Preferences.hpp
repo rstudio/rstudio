@@ -42,7 +42,7 @@ public:
    core::json::Array allLayers();
    core::json::Object userPrefLayer();
    core::json::Object getLayer(const std::string& name);
-   core::Error writeLayer(size_t layer, const core::json::Object& prefs);
+   core::Error writeLayer(int layer, const core::json::Object& prefs);
 
    template <typename T> T readPref(const std::string& name)
    {
