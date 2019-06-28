@@ -454,4 +454,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToLineEnd();
    
    void toggleTokenInfo();
+   void setTextInputAriaLabel(String label);
 }

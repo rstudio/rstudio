@@ -56,6 +56,7 @@ public class EditDialog extends ModalDialogBase
       super(role);
       editor_ = new AceEditor();
       setText(caption);
+      editor_.setTextInputAriaLabel(caption);
       sourceText_ = text;
       isRCode_ = isRCode;
       lineWrapping_ = lineWrapping;

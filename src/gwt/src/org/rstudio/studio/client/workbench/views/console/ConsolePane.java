@@ -152,8 +152,9 @@ public class ConsolePane extends WorkbenchPane
       // is entered.
       syncSecondaryToolbar();
 
-      shell_ = consoleProvider_.get() ;
-      return (Widget) shell_.getDisplay() ;
+      shell_ = consoleProvider_.get();
+      shell_.getDisplay().setTextInputAriaLabel("Console");
+      return (Widget) shell_.getDisplay();
    }
 
    @Override

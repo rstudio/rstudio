@@ -766,7 +766,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       output_.setMaxOutputLines(maxLines);
    }
-   
+
+   @Override
+   public void setTextInputAriaLabel(String label)
+   {
+      input_.setTextInputAriaLabel(label);
+   }
+
    @Override
    public Widget getShellWidget()
    {

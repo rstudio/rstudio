@@ -50,6 +50,7 @@ public class IgnoreDialog extends ModalDialogBase
       editor_ = new AceEditor();
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
+      editor_.setTextInputAriaLabel("Ignored files");
       
       ignoresCaption_ = new CaptionWithHelp("Ignore:",
                                              "Specifying ignored files",
