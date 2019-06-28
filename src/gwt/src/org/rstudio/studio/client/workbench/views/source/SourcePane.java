@@ -1,7 +1,7 @@
 /*
  * SourcePane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -39,6 +38,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.AutoGlassAttacher;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
@@ -117,7 +117,7 @@ public class SourcePane extends Composite implements Display,
    }
 
    public void addTab(Widget widget,
-                      ImageResource icon,
+                      FileIcon icon,
                       String docId,
                       String name,
                       String tooltip,
@@ -167,7 +167,7 @@ public class SourcePane extends Composite implements Display,
    }
 
    public void renameTab(Widget child,
-                         ImageResource icon,
+                         FileIcon icon,
                          String value,
                          String tooltip)
    {

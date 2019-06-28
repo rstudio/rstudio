@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 public interface UnsavedChangesTarget
 {
    String getId();
-   ImageResource getIcon();
+   FileIcon getIcon();
    String getTitle();
    String getPath();
 

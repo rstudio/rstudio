@@ -52,6 +52,15 @@ public class FileIcon
    public static final FileIcon PARENT_FOLDER_ICON =
          new FileIcon(new ImageResource2x(ICONS.iconUpFolder2x()), "Parent folder");
 
+   public static final FileIcon OBJECT_EXPLORER_ICON =
+         new FileIcon(new ImageResource2x(ICONS.iconObjectExplorer2x()), "Explore object");
+
+   public static final FileIcon CODE_BROWSER_ICON =
+         new FileIcon(new ImageResource2x(ICONS.iconSourceViewer2x()), "R source viewer");
+
+   public static final FileIcon PROFILER_ICON =
+         new FileIcon(new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x()), "Profiler");
+
    public FileIcon(ImageResource imageResource, String description)
    {
       imageResource_ = imageResource;
