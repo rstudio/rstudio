@@ -563,7 +563,11 @@ public class SessionInfo extends JavaScriptObject
     public final native boolean getPackratAvailable() /*-{
       return this.packrat_available;
    }-*/;
-   
+    
+    public final native boolean getRenvAvailable() /*-{
+      return this.renv_available;
+   }-*/;
+    
    public final native boolean getShowUserHomePage() /*-{
       return this.show_user_home_page;
    }-*/;

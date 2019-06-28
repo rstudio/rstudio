@@ -75,7 +75,7 @@ public class DataTable
       colsSeparator_.setVisible(false);
       addColumnControls(toolbar);
 
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Search data table", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {

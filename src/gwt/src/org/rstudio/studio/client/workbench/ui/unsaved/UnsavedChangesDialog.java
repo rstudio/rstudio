@@ -23,18 +23,18 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -205,13 +205,13 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
    }
   
    
-   private Column<UnsavedChangesTarget, ImageResource> addIconColumn()
+   private Column<UnsavedChangesTarget, FileIcon> addIconColumn()
    {
-      Column<UnsavedChangesTarget, ImageResource> iconColumn = 
-         new Column<UnsavedChangesTarget, ImageResource>(new ImageResourceCell()) {
+      Column<UnsavedChangesTarget, FileIcon> iconColumn = 
+         new Column<UnsavedChangesTarget, FileIcon>(new FileIconResourceCell()) {
 
             @Override
-            public ImageResource getValue(UnsavedChangesTarget object)
+            public FileIcon getValue(UnsavedChangesTarget object)
             {
                return object.getIcon();
             }

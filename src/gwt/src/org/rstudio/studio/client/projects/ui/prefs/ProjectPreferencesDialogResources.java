@@ -55,6 +55,9 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
    @Source("iconPackrat_2x.png")
    ImageResource iconPackrat2x();
 
+   @Source("iconRenv_2x.png")
+   ImageResource iconRenv2x();
+   
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
    

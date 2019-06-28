@@ -1,7 +1,7 @@
 /*
  * FilterWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,12 +23,12 @@ public abstract class FilterWidget extends Composite
 {
    public abstract void filter(String query);
    
-   public FilterWidget()
+   public FilterWidget(String label)
    {
-      this("Filter...");
+      this(label, "Filter...");
    }
    
-   public FilterWidget(String placeholder)
+   public FilterWidget(String label, String placeholder)
    {
       SuggestOracle oracle = new SuggestOracle()
       {
@@ -38,7 +38,7 @@ public abstract class FilterWidget extends Composite
          }
       };
       
-      searchWidget_ = new SearchWidget(oracle);
+      searchWidget_ = new SearchWidget(label, oracle);
       searchWidget_.setPlaceholderText(placeholder);
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {

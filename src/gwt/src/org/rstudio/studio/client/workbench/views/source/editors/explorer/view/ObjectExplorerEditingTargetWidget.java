@@ -74,7 +74,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
                }
             });
       
-      filterWidget_ = new SearchWidget(new SuggestOracle()
+      filterWidget_ = new SearchWidget("Search objects", new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request, Callback callback)

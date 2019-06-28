@@ -58,8 +58,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
       }
       textBox_.setWidth("100%");
       DomUtils.disableAutoBehavior(textBox_);
-      captionLabel_ = new FormLabel(caption);
-      captionLabel_.setFor(textBox_);
+      captionLabel_ = new FormLabel(caption, textBox_);
 
       extraOption_ = new CheckBox(StringUtil.notNull(extraOptionPrompt));
       extraOption_.setVisible(

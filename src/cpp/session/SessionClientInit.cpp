@@ -447,6 +447,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
 
+   sessionInfo["renv_available"] =
+         module_context::isRequiredRenvInstalled();
+
    // check rmarkdown package presence and capabilities
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();

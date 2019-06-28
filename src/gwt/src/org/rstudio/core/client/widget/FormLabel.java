@@ -14,10 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 
 /**
@@ -26,6 +26,8 @@ import org.rstudio.core.client.StringUtil;
  */
 public class FormLabel extends Label
 {
+   public static String NoForId = null;
+
    public FormLabel()
    {
       this("");
@@ -37,17 +39,20 @@ public class FormLabel extends Label
     */
    public FormLabel(String text)
    {
-      super(text, "placeholder");
+      super(text, NoForId);
    }
 
   /**
    * Creates a label to associate with a form control via <code>setFor</code>
    * @param text the new label's text
+   * @param w labeled widget; if the widget's element does not already have an id attribute,
+   *          one will be generated and assigned to it
    * @param wordWrap <code>false</code> to disable word wrapping
    */
-   public FormLabel(String text, boolean wordWrap)
+   public FormLabel(String text, Widget w, boolean wordWrap)
    {
-      super(text, "placeholder", wordWrap);
+      super(text, NoForId, wordWrap);
+      setFor(w);
    }
 
    /**
@@ -61,26 +66,57 @@ public class FormLabel extends Label
    }
 
    /**
-    * Associate this label with the given widget. An id will be assigned to the widget
-    * element as part of this.
+    * Create a label to associate with an existing widget.
+    * @param text label text
+    * @param w labeled widget; if the widget's element does not already have an id attribute,
+    *          one will be generated and assigned to it
+    */
+   public FormLabel(String text, Widget w)
+   {
+      super(text, NoForId);
+      setFor(w);
+   }
+
+   /**
+    * Create a label to associate with an existing element
+    * @param text label text
+    * @param el labeled element; if the element does not already have an id attribute,
+    *          one will be generated and assigned to it
+    */
+   public FormLabel(String text, Element el)
+   {
+      super(text, NoForId);
+      setFor(el);
+   }
+
+   /**
+    * Associate this label with the given widget. If the widget's element does not
+    * have an id attribute, a unique one will be generated and assigned to it.
     * @param widget
     */
    public void setFor(Widget widget)
    {
-      String controlId = widget.getElement().getId();
+      if (widget == null)
+         return;
+      setFor(widget.getElement());
+   }
+
+   /**
+    * Associate this label with the given element. If the element does not
+    * have an id attribute, a unique one will be generated and assigned to it.
+    * @param el
+    */   public void setFor(Element el)
+   {
+      if (el == null)
+         return;
+
+      String controlId = el.getId();
       if (StringUtil.isNullOrEmpty(controlId))
       {
-         if (StringUtil.isNullOrEmpty(getText()))
-         {
-            controlId = DOM.createUniqueId();
-         }
-         else
-         {
-            controlId = ElementIds.idFromLabel(getText());
-         }
-         widget.getElement().setId(controlId);
+         controlId = DOM.createUniqueId();
+         el.setId(controlId);
       }
-      getElement().setAttribute("for", controlId);
+      setFor(controlId);
    }
 
    /**

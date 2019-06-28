@@ -50,7 +50,7 @@ public class TextBoxWithCue extends TextBox
    public void setCueText(String cueText)
    {
       cueText_ = cueText;
-      getElement().setAttribute("placeholder", cueText);
+      DomUtils.setPlaceholder(this, cueText);
    }
 
    private String cueText_;

@@ -512,7 +512,9 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["build_context"] = projectBuildContextJson();
    optionsJson["packrat_options"] = module_context::packratOptionsAsJson();
    optionsJson["packrat_context"] = module_context::packratContextAsJson();
+   optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
+
 
    pResponse->setResult(optionsJson);
    return Success();

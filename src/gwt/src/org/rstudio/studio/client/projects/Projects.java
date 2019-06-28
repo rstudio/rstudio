@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
@@ -66,6 +65,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
+import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -108,7 +108,7 @@ public class Projects implements OpenProjectFileHandler,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
-                   PackratServerOperations packratServer,
+                   RenvServerOperations renvServer,
                    GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
@@ -124,7 +124,7 @@ public class Projects implements OpenProjectFileHandler,
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       projServer_ = projServer;
-      packratServer_ = packratServer;
+      renvServer_ = renvServer;
       gitServer_ = gitServer;
       fsContext_ = fsContext;
       session_ = session;
@@ -663,31 +663,24 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
       
-      // Generate a new packrat project
-      if (newProject.getUsePackrat()) {
-         createProjectCmds.addCommand(new SerializedCommand() 
-         {
+      if (newProject.getUseRenv())
+      {
+         createProjectCmds.addCommand((final Command continuation) -> {
+            indicator.onProgress("Initializing renv...");
             
-            @Override
-            public void onExecute(final Command continuation) {
-               
-               indicator.onProgress("Initializing packrat project...");
-               
-               String projDir = FileSystemItem.createFile(
+            String projDir = FileSystemItem.createFile(
                   newProject.getProjectFile()
-               ).getParentPathString();
+            ).getParentPathString();
+            
+            renvServer_.renvInit(projDir, new VoidServerRequestCallback(indicator) {
                
-               packratServer_.packratBootstrap(
-                  projDir, 
-                  false,
-                  new VoidServerRequestCallback(indicator) {
-                     @Override
-                     public void onSuccess()
-                     {
-                        continuation.execute();
-                     }
-                  });
-            }
+               @Override
+               public void onSuccess()
+               {
+                  continuation.execute();
+               }
+            });
+            
          }, false);
       }
       
@@ -886,13 +879,13 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onPackratBootstrap()
    {
-      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+      showProjectOptions(ProjectPreferencesDialog.RENV);
    }
    
    @Handler
    public void onPackratOptions()
    {
-      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+      showProjectOptions(ProjectPreferencesDialog.RENV);
    }
    
    public void showProjectOptions(final int initialPane)
@@ -1179,7 +1172,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
-   private final PackratServerOperations packratServer_;
+   private final RenvServerOperations renvServer_;
    private final GitServerOperations gitServer_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;

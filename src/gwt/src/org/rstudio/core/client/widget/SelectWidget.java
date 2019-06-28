@@ -90,7 +90,7 @@ public class SelectWidget extends Composite
       if (horizontalLayout)
       {
          horizontalPanel_ = new HorizontalPanel();
-         label_ = new FormLabel(label);
+         label_ = new FormLabel(label, listBox_);
          if (listOnLeft)
          {
             horizontalPanel_.add(listBox_);
@@ -109,13 +109,12 @@ public class SelectWidget extends Composite
       }
       else
       {
-         label_ = new FormLabel(label, true);
+         label_ = new FormLabel(label, listBox_, true);
          flowPanel_ = new FlowPanel();
          flowPanel_.add(label_);
          panel = flowPanel_;
          panel.add(listBox_);
       }
-      label_.setFor(listBox_);
       
       initWidget(panel);
       

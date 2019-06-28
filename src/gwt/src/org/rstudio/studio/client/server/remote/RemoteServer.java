@@ -5343,6 +5343,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void renvInit(String projDir,
+                        ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(projDir)
+            .get();
+      
+      sendRequest(RPC_SCOPE, RENV_INIT, params, requestCallback);
+   }
+   
+   @Override
    public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -6339,6 +6350,8 @@ public class RemoteServer implements Server
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    private static final String GET_PACKRAT_ACTIONS = "get_packrat_actions";
+   
+   private static final String RENV_INIT = "renv_init";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

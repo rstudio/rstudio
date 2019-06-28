@@ -16,7 +16,7 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
-
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -55,6 +55,13 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       if (!BrowseCap.isMacintosh())
          return;
       
+      // deferred because GWT's CustomScrollPanel also does some work deferred
+      // and we need to make sure this code runs after theirs
+      Scheduler.get().scheduleDeferred(() -> hideMacHorizontalScrollbars());
+   }
+   
+   private void hideMacHorizontalScrollbars()
+   {
       Element parent = getElement().getParentElement().getParentElement();
       
       // GWT's DataGrid also occasionally displays unwanted horizontal
@@ -72,6 +79,24 @@ public class RStudioDataGrid<T> extends DataGrid<T>
       {
          Element el = children.getItem(i);
          com.google.gwt.dom.client.Style style = el.getStyle();
+         
+         // skip the element if it has an explicit negative sizing,
+         // as this element is not a scrollbar but is instead the
+         // actual scrollable container for the table within the
+         // DataGrid, and we want to avoid messing with its overflow
+         // as that will mess with other scroll height computations
+         //
+         // see: https://github.com/rstudio/rstudio/issues/4662
+         boolean isExplicitlySized =
+               style.getLeft().startsWith("-") ||
+               style.getTop().startsWith("-") ||
+               style.getRight().startsWith("-") ||
+               style.getBottom().startsWith("-");
+         
+         if (isExplicitlySized)
+            return;
+         
+         // okay, hide overflow
          style.setOverflowX(Overflow.HIDDEN);
       }
       

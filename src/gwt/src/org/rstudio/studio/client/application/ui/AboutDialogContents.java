@@ -18,7 +18,6 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -63,7 +62,6 @@ public class AboutDialogContents extends Composite
       productInfo.getElement().setId("productinfo");
       gplLinkLabel.getElement().setId("gplLinkLabel");
       Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
-      DomUtils.visuallyHide(gplLinkLabel.getElement());
 
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());

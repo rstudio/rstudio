@@ -159,13 +159,11 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    {
       VerticalPanel root = new VerticalPanel();
 
-      FormLabel customLabel = new FormLabel("Custom:");
-      root.add(customLabel);
-
       customTextBox_ = new TextBox();
       customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
+      FormLabel customLabel = new FormLabel("Custom:", customTextBox_);
+      root.add(customLabel);
       root.add(customTextBox_);
-      customLabel.setFor(customTextBox_);
 
       FormLabel mirrorsLabel = new FormLabel("CRAN Mirrors:");
       mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -225,10 +223,9 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                @Override
                public void onDoubleClick(DoubleClickEvent event)
                {
-                  clickOkButton();              
+                  clickOkButton();
                }
             });
-            
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height

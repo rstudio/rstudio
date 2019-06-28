@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
+import org.rstudio.core.client.StringUtil;
 
 /**
  * Abstract base class for all text display widgets.
@@ -62,7 +63,8 @@ public class LabelBase<T> extends Widget implements HasWordWrap,
     setElement(Document.get().createLabelElement());
     if (!inline)
       getElement().getStyle().setProperty("display", "block");
-    getElement().setAttribute("for", forId);
+    if (!StringUtil.isNullOrEmpty(forId))
+      getElement().setAttribute("for", forId);
     directionalTextHelper = new DirectionalTextHelper(getElement(), inline);
   }
 

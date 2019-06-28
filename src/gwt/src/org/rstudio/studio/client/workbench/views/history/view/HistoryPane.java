@@ -1,7 +1,7 @@
 /*
  * HistoryPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -564,7 +564,7 @@ public class HistoryPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      searchWidget_ = new SearchWidget(new SuggestOracle()
+      searchWidget_ = new SearchWidget("Filter command history", new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request,

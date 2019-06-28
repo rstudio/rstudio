@@ -93,6 +93,7 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.RmdOutputView;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
@@ -444,6 +445,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
+      bind(RenvServerOperations.class).to(RemoteServer.class);
       bind(CppServerOperations.class).to(RemoteServer.class);
       bind(MarkersServerOperations.class).to(RemoteServer.class);
       bind(LintServerOperations.class).to(RemoteServer.class);

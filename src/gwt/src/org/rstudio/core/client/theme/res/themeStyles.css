@@ -256,6 +256,18 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
    font-family: fixedWidthFont !important;
 }
 
+/* hide something from sighted users but remain visible to screen readers */
+.visuallyHidden {
+    position: absolute;
+    clip: rect(0 0 0 0);
+    border: 0;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+}
+
 .gwt-Label {
    cursor: default;
 }
@@ -1015,7 +1027,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    display: inline;
    color: black;
    font-size: 11px;
-   font-weight: bold;
    text-shadow: white 0px 1px 0px;
    cursor: default;
 }
@@ -1033,7 +1044,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 
 .subtitle {
-   color: #999;
+   color: #0c1f30;
    margin-left: 6px;
 }
 

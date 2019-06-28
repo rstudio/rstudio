@@ -157,7 +157,7 @@ public class FilesList extends Composite
          };
       iconColumn.setSortable(true);
       filesDataGrid_.addColumn(iconColumn, 
-                                SafeHtmlUtils.fromSafeConstant("<br/>"));
+            SafeHtmlUtils.fromSafeConstant("<span aria-label=\"File Type\"><br/></span>"));
       filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
     
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {

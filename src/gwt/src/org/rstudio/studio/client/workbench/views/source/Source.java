@@ -73,6 +73,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
@@ -208,7 +209,7 @@ public class Source implements InsertSourceHandler,
                                     HasSelectionHandlers<Integer>
    {
       void addTab(Widget widget,
-                  ImageResource icon,
+                  FileIcon icon,
                   String docId,
                   String name,
                   String tooltip,
@@ -237,7 +238,7 @@ public class Source implements InsertSourceHandler,
       void ensureVisible();
 
       void renameTab(Widget child,
-                     ImageResource icon,
+                     FileIcon icon,
                      String value,
                      String tooltip);
 
@@ -3607,7 +3608,7 @@ public class Source implements InsertSourceHandler,
       syncTabOrder();
 
       String[] ids = new String[editors_.size()];
-      ImageResource[] icons = new ImageResource[editors_.size()];
+      FileIcon[] icons = new FileIcon[editors_.size()];
       String[] names = new String[editors_.size()];
       String[] paths = new String[editors_.size()];
       for (int i = 0; i < ids.length; i++)

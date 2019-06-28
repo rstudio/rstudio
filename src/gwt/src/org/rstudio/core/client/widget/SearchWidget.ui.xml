@@ -12,6 +12,7 @@
                      resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div class="{res.themeStyles.searchBoxContainer}">
+               <label ui:field='hiddenLabel_' class="{res.themeStyles.visuallyHidden}"/>
                <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'
                           styleName='{res.themeStyles.searchBox}'/>
             </div>
