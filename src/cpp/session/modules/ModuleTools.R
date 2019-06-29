@@ -315,6 +315,10 @@
   .Call("rs_readUserState", stateName, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("allPrefs", function() {
+  .Call("rs_allPrefs", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("writeUserState", function(stateName, value) {
   if (missing(stateName) || is.null(stateName))
     stop("No state name supplied")

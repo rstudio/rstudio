@@ -85,9 +85,10 @@ public:
    }
 
    // Read/write accessors for the underlying JSON property values
-   boost::optional<core::json::Value> readValue(const std::string& name);
    boost::optional<core::json::Value> readValue(const std::string& layerName, 
          const std::string& name);
+   boost::optional<core::json::Value> readValue(const std::string& name,
+         std::string* pLayerName = nullptr);
    core::Error writeValue(const std::string& name, const core::json::Value& value);
    core::Error clearValue(const std::string& name);
 

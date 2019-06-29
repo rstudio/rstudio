@@ -161,7 +161,8 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
    return Success();
 }
 
-boost::optional<core::json::Value> Preferences::readValue(const std::string& name)
+boost::optional<core::json::Value> Preferences::readValue(const std::string& name, 
+      std::string *pLayerName)
 {
    // Work backwards through the layers, starting with the most specific (project or user-level
    // settings) and working towards the most general (basic defaults)
@@ -172,6 +173,10 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
          boost::optional<core::json::Value> val = layer->readValue(name);
          if (val)
          {
+            if (pLayerName != nullptr)
+            {
+               *pLayerName = layer->layerName();
+            }
             return val;
          }
       }

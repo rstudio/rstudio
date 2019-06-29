@@ -21,6 +21,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RJson.hpp>
@@ -173,6 +174,56 @@ SEXP rs_writeUserState(SEXP stateName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_allPrefs()
+{
+   r::sexp::Protect protect;
+
+   // Create table of all preferences
+   std::vector<std::string> keys = userPrefs().allKeys();
+   std::vector<std::string> sources;
+   std::vector<std::string> values;
+   for (const auto key: keys) 
+   {
+      std::string layer;
+      auto val = userPrefs().readValue(key, &layer);
+      if (val)
+      {
+         sources.push_back(layer);
+
+         std::ostringstream oss;
+         json::write(*val, oss);
+         values.push_back(oss.str());
+      }
+      else
+      {
+         sources.push_back("none");
+         values.push_back("");
+      }
+   }
+   
+   // Convert to data frame
+   std::vector<std::string> names({"Preference", "Source", "Value"});
+   SEXP list = r::sexp::createList(names, &protect);
+   SET_VECTOR_ELT(list, 0, r::sexp::create(keys, &protect));
+   SET_VECTOR_ELT(list, 1, r::sexp::create(sources, &protect));
+   SET_VECTOR_ELT(list, 2, r::sexp::create(values, &protect));
+   r::exec::RFunction asDataFrame("as.data.frame");
+   asDataFrame.addParam("x", list);
+   asDataFrame.addParam("stringsAsFactors", false);
+   SEXP frame = R_NilValue;
+   Error error = asDataFrame.call(&frame, &protect);
+   if (error)
+   {
+      r::exec::error(error.description());
+   }
+   else
+   {
+      return frame;
+   }
+
+   return list;
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -186,6 +237,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
    RS_REGISTER_CALL_METHOD(rs_readUserState);
    RS_REGISTER_CALL_METHOD(rs_writeUserState);
+   RS_REGISTER_CALL_METHOD(rs_allPrefs);
    RS_REGISTER_CALL_METHOD(rs_removePref);
 
    // Ensure we have a context ID
