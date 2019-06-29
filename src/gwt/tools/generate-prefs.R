@@ -1,12 +1,37 @@
 #!/usr/bin/env Rscript
+#
+# generate-prefs.R
+#
+# Copyright (C) 2009-19 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+
+
+# This script generates RStudio preference and state accessors for the R
+# session (C++) and the front end (GWT Java) from JSON schema files. 
+#
+# To add a preference or state value, do the following:
+#
+# 1. Add your preference to the schema file (user-prefs-schema.json or user-state-schema.json)
+# 2. In a terminal, navigate to this folder (src/gwt/tools)
+# 3. Run this script: ./generate-prefs.R
+# 4. Commit the .cpp, .hpp, and .java files the script changes
 
 require(jsonlite)
 require(stringi)
 
+# Helper to capitalize a string
 capitalize <- function(s) {
    paste0(toupper(substring(s, 1, 1)), substring(s, 2))
 }
 
+# Builds "enum" values in Java (really just named constants)
 javaenum <- function(def, pref, type, indent) {
    java <- ""
    # Emit convenient enum constants if supplied
@@ -25,6 +50,7 @@ javaenum <- function(def, pref, type, indent) {
    java
 }
 
+# Builds "enum" values in C++ (again, just named constants)
 cppenum <- function(def, pref, type, indent) {
    cpp <- ""
    # Emit convenient enum constants if supplied
@@ -41,18 +67,26 @@ cppenum <- function(def, pref, type, indent) {
    cpp
 }
 
+# Master function to generate code from JSON schema path
 generate <- function (schemaPath, className) {
    # Extract prefs from JSON schema
    schema <- jsonlite::read_json(schemaPath)
    prefs <- schema$properties
-   java <- ""
-   cpp <- ""
-   hpp <- ""
+
+   java <- ""   # The contents of the Java file we'll be creating
+   cpp <- ""    # The contents of the C++ file we'll be creating
+   hpp <- ""    # The contents of the C++ header file we'll be creating
+
+   # Components
+
+   # A list in C++ of all preference keys, as a function
    cpplist <- paste0("std::vector<std::string> ", className, "::allKeys()\n{\n",
                      "   return std::vector<std::string>({\n")
+
+   # A Java function that syncs every pref
    javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
    
-   cppprefenum <- paste0("enum ", capitalize(className), "\n{\n")
+   # C++ string constants for preference names
    cppstrings <- ""
    
    for (pref in names(prefs)) {
@@ -77,6 +111,7 @@ generate <- function (schemaPath, className) {
          type <- capitalize(type)
       }
       
+      # Map JSON schema types to Java and C++ data types
       preftype <- def[["type"]]
       if (identical(preftype, "boolean")) {
          preftype <- "bool"
@@ -98,6 +133,7 @@ generate <- function (schemaPath, className) {
          cpptype <- "core::json::Object"
       }
       
+      # Format the default value for the preference
       defaultval <- as.character(def[["default"]])
       if (identical(def[["type"]], "string")) {
          # Quote string defaults
@@ -122,15 +158,19 @@ generate <- function (schemaPath, className) {
          defaultval <- "null"
       }
       
+      # Define a C++ string constant for this preference name
       cppstrings <- paste0(cppstrings,
                            "#define k", capitalize(camel), " \"", pref, "\"\n")
       cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
       cpplist <- paste0(cpplist, "      k", capitalize(camel), ",\n")
+
+      # Create a Java (and C++) comment header for the preference
       comment <- paste0(
          "   /**\n",
          "    * ", def[["description"]], "\n",
          "    */\n")
       
+      # Add a Java accessor for the preference, and an entry for syncing it with another copy
       java <- paste0(java,
          comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
@@ -141,6 +181,7 @@ generate <- function (schemaPath, className) {
          "      if (source.hasKey(\"", pref, "\"))\n",
          "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
       
+      # Add C++ header and implementation accessors for the preferences
       hpp <- paste0(hpp, comment,
                     "   ", cpptype, " ", camel, "();\n")
       hpp <- paste0(hpp, 
@@ -191,11 +232,11 @@ generate <- function (schemaPath, className) {
          java <- paste0(java, "   }\n\n")
       }
       
-      # add enums if present
+      # Add enums if present
       java <- paste0(java, javaenum(def, pref, type, "   "))
    }
    
-   cppeprefnum <- paste0(cppprefenum, "   ", className, "Max\n};\n\n")
+   # Close off blocks and lists
    cpplist <- paste0(cpplist, "   });\n}\n")
    cpp <- paste0(cpp, cpplist)
    hpp <- paste0(cppstrings, "\n",
@@ -205,11 +246,10 @@ generate <- function (schemaPath, className) {
                  "   static std::vector<std::string> allKeys();\n",
                  hpp,
                  "};\n")
-
    javasync <- paste0(javasync, "   }\n")
    java <- paste0(java, javasync)
    
-   # Return computed Java
+   # Return computed Java and C++ code
    list(
       java = java,
       cpp = cpp,
