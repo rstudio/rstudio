@@ -226,6 +226,8 @@ public class TextEditingTargetWidget
          }
       });
 
+      editor_.setTextInputAriaLabel("Text editor");
+
       initWidget(panel_);
    }
    
