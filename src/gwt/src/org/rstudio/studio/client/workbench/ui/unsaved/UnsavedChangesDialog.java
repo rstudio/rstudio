@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -28,7 +30,6 @@ import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -186,15 +187,15 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       return panel;
    }
    
-   private Column<UnsavedChangesTarget, Boolean> addSelectionColumn()
+   private Column<UnsavedChangesTarget, LabeledBoolean> addSelectionColumn()
    {
-      Column<UnsavedChangesTarget, Boolean> checkColumn = 
-         new Column<UnsavedChangesTarget, Boolean>(new CheckboxCell(true, false)) 
+      Column<UnsavedChangesTarget, LabeledBoolean> checkColumn = 
+         new Column<UnsavedChangesTarget, LabeledBoolean>(new AriaLabeledCheckboxCell(true, false)) 
          {
             @Override
-            public Boolean getValue(UnsavedChangesTarget object)
+            public LabeledBoolean getValue(UnsavedChangesTarget object)
             {
-               return selectionModel_.isSelected(object);
+               return new LabeledBoolean(object.getTitle(), selectionModel_.isSelected(object));
             }   
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
