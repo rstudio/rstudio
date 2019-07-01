@@ -95,6 +95,7 @@ public:
 
    std::string cookieValue(const std::string& name) const;
    std::string cookieValueFromHeader(const std::string& headerName) const;
+   void addCookie(const std::string& name, const std::string& value);
    
    const Fields& formFields() const;
    std::string formFieldValue(const std::string& name) const;
