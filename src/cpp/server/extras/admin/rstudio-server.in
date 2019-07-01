@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 daemonCmd() {
   INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
@@ -34,7 +34,7 @@ case "$1" in
         ;;
     
     start)
-        testConfig || return $?
+        testConfig || exit $?
         daemonCmd "start"
         ;;
 
@@ -45,7 +45,7 @@ case "$1" in
         ;;
 
     restart)
-        testConfig || return $?
+        testConfig || exit $?
         daemonCmd "restart"
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
@@ -69,8 +69,7 @@ case "$1" in
         ;;
 
     suspend-session)
-        if test -n $2
-        then
+        if [ -n "$2" ]; then
            kill -s USR1 $3 $4 $5 $6 $7 $8 $9 $2
         else
            echo "Must specify PID of session to suspend"
@@ -84,8 +83,7 @@ case "$1" in
         ;;
 
     force-suspend-session)
-        if test -n $2
-        then
+        if [ -n "$2" ]; then
            kill -s USR2 $3 $4 $5 $6 $7 $8 $9 $2
         else
            echo "Must specify PID of session to force suspend"
@@ -99,8 +97,7 @@ case "$1" in
         ;;
 
     kill-session)
-        if test -n $2
-        then
+        if [ -n "$2" ]; then
            kill -s KILL $3 $4 $5 $6 $7 $8 $9 $2
         else
            echo "Must specify PID of session to kill"
