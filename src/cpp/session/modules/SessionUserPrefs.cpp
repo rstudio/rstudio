@@ -247,7 +247,7 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
-      (bind(registerRpcMethod, "set_state", setState));
+      (bind(registerRpcMethod, "set_user_state", setState));
    return initBlock.execute();
 }
 

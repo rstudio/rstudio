@@ -32,7 +32,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
 
 @Singleton
-public class UserState extends UserStateAccessor implements UserStateChangedEvent.Handler, SessionInitHandler
+public class UserState extends UserStateAccessor implements UserStateChangedEvent.Handler
 {
    @Inject
    public UserState(Session session, 
@@ -50,13 +50,12 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
       satelliteManager_ = satelliteManager;
 
       eventBus.addHandler(UserStateChangedEvent.TYPE, this);
-      eventBus.addHandler(SessionInitEvent.TYPE, this);
    }
    
    public void writeState()
    {
       server_.setUserState(
-         session_.getSessionInfo().getUserState(),
+         session_.getSessionInfo().getUserStateLayer().getValues(),
          new ServerRequestCallback<Void>() 
          {
             @Override
@@ -90,31 +89,6 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
       syncPrefs(e.getName(), e.getValues());
    }
 
-   @Override
-   public void onSessionInit(SessionInitEvent e)
-   {
-      /*
-       * TODO
-      // First update the theme and flat theme so the event will trigger.
-      SessionInfo sessionInfo = session_.getSessionInfo();
-      JsObject jsUiPrefs = sessionInfo.getUserState();
-      AceTheme aceTheme = jsUiPrefs.getElement("rstheme");
-      if (null != aceTheme)
-      {
-         theme().setGlobalValue(aceTheme);
-      }
-      
-      String flatTheme = jsUiPrefs.getString("flat_theme");
-      if (null != flatTheme)
-      {
-         getFlatTheme().setGlobalValue(flatTheme);
-      }
-      
-      // The satellite window has just received the session info, so update it now.
-      UpdateSessionInfo(sessionInfo);
-      */
-   }
-   
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;

@@ -34,7 +34,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 
 @Singleton
-public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHandler, SessionInitHandler
+public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHandler
 {
    @Inject
    public UserPrefs(Session session, 
@@ -52,7 +52,6 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
       satelliteManager_ = satelliteManager;
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
-      eventBus.addHandler(SessionInitEvent.TYPE, this);
    }
    
    public void writeUserPrefs()
@@ -106,30 +105,6 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
       syncPrefs(e.getName(), e.getValues());
    }
 
-   @Override
-   public void onSessionInit(SessionInitEvent e)
-   {
-      // First update the theme and flat theme so the event will trigger.
-      /*
-      SessionInfo sessionInfo = session_.getSessionInfo();
-      JsObject jsUiPrefs = sessionInfo.getUserPrefs();
-      AceTheme aceTheme = jsUiPrefs.getElement("rstheme");
-      if (null != aceTheme)
-      {
-         theme().setGlobalValue(aceTheme);
-      }
-      
-      String flatTheme = jsUiPrefs.getString("flat_theme");
-      if (null != flatTheme)
-      {
-         getFlatTheme().setGlobalValue(flatTheme);
-      }
-      
-      // The satellite window has just received the session info, so update it now.
-      UpdateSessionInfo(sessionInfo);
-      */
-   }
-   
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
    public static final int LAYER_COMPUTED = 2;

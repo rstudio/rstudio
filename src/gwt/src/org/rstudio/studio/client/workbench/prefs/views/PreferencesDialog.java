@@ -1,7 +1,7 @@
 /*
  * PreferencesDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -66,6 +67,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                                    terminal}); 
       session_ = session;
       server_ = server;
+      state_ = userState;
       
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(SourceControlPreferencesPane.class);
@@ -106,6 +108,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
             @Override
             public void onResponseReceived(Void response)
             {
+               // write accompanying state changes
+               state_.writeState();
+
                progressIndicator.onCompleted();
                if (onCompleted != null)
                   onCompleted.execute();
@@ -134,4 +139,5 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
   
    private final WorkbenchServerOperations server_;
    private final Session session_;
+   private final UserState state_;
 }
