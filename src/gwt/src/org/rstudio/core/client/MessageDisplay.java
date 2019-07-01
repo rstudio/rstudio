@@ -1,7 +1,7 @@
 /*
  * MessageDisplay.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -127,7 +127,7 @@ public abstract class MessageDisplay
                            Operation dismissed)
    {
       createDialog(type, caption, message)
-            .addButton("OK", dismissed)
+            .addButton("OK", ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
    }
       
@@ -139,9 +139,9 @@ public abstract class MessageDisplay
                            boolean includeCancel)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton(okLabel, dismissed);
+            .addButton(okLabel, ElementIds.DIALOG_OK_BUTTON, dismissed);
       if (includeCancel)
-         dialog.addButton("Cancel");
+         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
 
@@ -151,7 +151,7 @@ public abstract class MessageDisplay
                            final Focusable focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", new Operation() {
+      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
 
          public void execute()
          {
@@ -167,7 +167,7 @@ public abstract class MessageDisplay
                            final CanFocus focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", new Operation() {
+      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
 
          public void execute()
          {
@@ -184,8 +184,8 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       createDialog(type, caption, message)
-            .addButton("Yes", yesOperation)
-            .addButton("No")
+            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton("No", ElementIds.DIALOG_NO_BUTTON)
             .setDefaultButton(yesIsDefault ? 0 : 1)
             .showModal();
    }
@@ -197,8 +197,8 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       createDialog(type, caption, message)
-            .addButton("Yes", yesOperation)
-            .addButton("No")
+            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton("No", ElementIds.DIALOG_NO_BUTTON)
             .setDefaultButton(yesIsDefault ? 0 : 1)
             .showModal();
    }
@@ -212,11 +212,11 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton("Yes", yesOperation)
-            .addButton("No", noOperation)
+            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton("No", ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel");
+         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
 
@@ -232,11 +232,11 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton(yesLabel, yesOperation)
-            .addButton(noLabel, noOperation)
+            .addButton(yesLabel, ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton(noLabel, ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel", cancelOperation);
+         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, cancelOperation);
       dialog.showModal();
    }
 
@@ -270,11 +270,11 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton(yesLabel, yesOperation)
-            .addButton(noLabel, noOperation)
+            .addButton(yesLabel, ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton(noLabel, ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel");
+         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
    
@@ -282,6 +282,7 @@ public abstract class MessageDisplay
                                  String caption,
                                  String message,
                                  List<String> buttonLabels,
+                                 List<String> buttonElementIds,
                                  List<Operation> buttonOperations,
                                  int defaultButton)
    {
@@ -290,6 +291,7 @@ public abstract class MessageDisplay
       for (int i = 0; i < numButtons; i++)
       {
          dialog.addButton(buttonLabels.get(i),
+                          buttonElementIds.get(i),
                           buttonOperations.get(i));
       }
       dialog.setDefaultButton(defaultButton);
@@ -306,7 +308,7 @@ public abstract class MessageDisplay
                                 Operation dismissed)
    {
       createDialog(MSG_ERROR, caption, message)
-            .addButton("OK", dismissed)
+            .addButton("OK", ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
    }
 

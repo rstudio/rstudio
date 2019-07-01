@@ -64,8 +64,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             });
          }
       });
-      ElementIds.assignElementId(okButton.getElement(), ElementIds.PREFERENCES_CONFIRM);
-      addOkButton(okButton);
+      addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
       
       if (showApplyButton)
@@ -76,7 +75,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             {
                attemptSaveChanges();
             }
-         }));
+         }), ElementIds.DIALOG_APPLY_BUTTON);
       }
       
       progressIndicator_ = addProgressIndicator(false);

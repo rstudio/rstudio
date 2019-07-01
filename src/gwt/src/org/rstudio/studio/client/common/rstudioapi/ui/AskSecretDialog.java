@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -132,7 +133,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                "Keyring",
                verticalPanel);
             
-            dialog.addButton("Install", new Operation()
+            dialog.addButton("Install", ElementIds.DIALOG_OK_BUTTON, new Operation()
             {
                @Override
                public void execute()
@@ -150,7 +151,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                }
             }, true, false);
             
-            dialog.addButton("Cancel", (Operation)null, false, true);
+            dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
             dialog.showModal();
          }
       });
@@ -207,7 +208,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                   "Error",
                                                   "You must enter a value.");
-         dialog.addButton("OK", (Operation)null, true, true);
+         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textbox_.setFocus(true);
 

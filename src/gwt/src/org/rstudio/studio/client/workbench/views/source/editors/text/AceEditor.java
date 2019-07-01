@@ -4076,7 +4076,16 @@ public class AceEditor implements DocDisplay,
    {
       showChunkOutputInline_ = show;
    }
-   
+
+   /**
+    * Set an aria-label on the input element
+    * @param label
+    */
+   public final void setTextInputAriaLabel(String label)
+   {
+      widget_.getEditor().setTextInputAriaLabel(label);
+   }
+
    private void fireLineWidgetsChanged()
    {
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());

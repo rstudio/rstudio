@@ -492,8 +492,20 @@ private:
          core::http::Response response;
          Error error = session::http::sendSessionRequest(
                "/rpc/console_input", input, &response);
+
          if (error)
             LOG_ERROR(error);
+         else
+         {
+            // log warning if the response was not successful
+            if (response.statusCode() != core::http::status::Ok)
+            {
+               std::stringstream oss;
+               oss << "Received unexpected response when submitting console input: "
+                   << response; 
+               LOG_WARNING_MESSAGE(oss.str());
+            }
+         }
       }
    }
 

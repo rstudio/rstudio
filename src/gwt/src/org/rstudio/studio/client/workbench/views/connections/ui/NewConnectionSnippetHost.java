@@ -1,7 +1,7 @@
 /*
  * NewConnectionSnippetHost.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -192,7 +193,7 @@ public class NewConnectionSnippetHost extends Composite
             verticalPanel
             );
 
-      dlg.addButton("OK", new Operation() {
+      dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
          @Override
          public void execute()
          {
@@ -217,7 +218,7 @@ public class NewConnectionSnippetHost extends Composite
             verticalPanel
             );
 
-      dlg.addButton("OK", new Operation() {
+      dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
          @Override
          public void execute()
          {

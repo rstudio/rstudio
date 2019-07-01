@@ -116,13 +116,13 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
       if (allowFolderCreation)
       {
-         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()),
+               ElementIds.FILE_NEW_FOLDER_BUTTON);
       }
 
       ThemedButton okButton = new ThemedButton(buttonName, event -> maybeAccept());
-      ElementIds.assignElementId(okButton.getElement(), 
+      addOkButton(okButton,
             ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
-      addOkButton(okButton);
       
       ThemedButton cancelButton = 
          new ThemedButton("Cancel",
@@ -133,9 +133,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
             }
             closeDialog();
          });
-      ElementIds.assignElementId(cancelButton.getElement(), 
+      addCancelButton(cancelButton,
             ElementIds.FILE_CANCEL_BUTTON + "_" + ElementIds.idSafeString(buttonName));
-      addCancelButton(cancelButton);
 
       addDomHandler(event ->
          {

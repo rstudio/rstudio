@@ -20,6 +20,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -134,6 +135,17 @@ std::string Request::cookieValue(const std::string& name) const
 
    // lookup the cookie
    return util::fieldValue(cookies_, name);
+}
+
+void Request::addCookie(const std::string& name, const std::string& value)
+{
+   cookies_.push_back(std::make_pair(name, value));
+   std::vector<std::string> cookies;
+   for (const auto cookie: cookies_)
+   {
+      cookies.push_back(cookie.first + "=" + cookie.second); 
+   }
+   setHeader("Cookie", boost::algorithm::join(cookies, "; ")); 
 }
 
 std::string Request::cookieValueFromHeader(const std::string& headerName) const

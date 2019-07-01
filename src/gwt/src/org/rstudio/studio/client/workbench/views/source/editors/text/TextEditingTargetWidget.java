@@ -38,6 +38,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -228,6 +229,8 @@ public class TextEditingTargetWidget
                   docOutlineWidget_.getOffsetWidth() > 0);
          }
       });
+
+      editor_.setTextInputAriaLabel("Text editor");
 
       initWidget(panel_);
    }
@@ -429,6 +432,7 @@ public class TextEditingTargetWidget
                }
             });
       toolbar.addRightWidget(sourceButton_);
+      ElementIds.assignElementId(sourceButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON);
 
       previewJsButton_ = commands_.previewJS().createToolbarButton(false);
       toolbar.addRightWidget(previewJsButton_);
@@ -459,6 +463,7 @@ public class TextEditingTargetWidget
          
       sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
+      ElementIds.assignElementId(sourceMenuButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
 
       //toolbar.addRightSeparator();
      

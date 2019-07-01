@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -352,10 +353,12 @@ public class DesktopApplicationHeader implements ApplicationHeader
       if (result.getUpdateVersion().length() > 0 &&
           !ignoredUpdate)
       {
-         ArrayList<String> buttonLabels = new ArrayList<String>();
-         ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
+         ArrayList<String> buttonLabels = new ArrayList<>();
+         ArrayList<String> elementIds = new ArrayList<>();
+         ArrayList<Operation> buttonOperations = new ArrayList<>();
          
          buttonLabels.add("Quit and Download...");
+         elementIds.add(ElementIds.DIALOG_YES_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
@@ -373,6 +376,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          });
 
          buttonLabels.add("Remind Later");
+         elementIds.add(ElementIds.DIALOG_NO_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
@@ -386,6 +390,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          if (result.getUpdateUrgency() == 0)
          {
             buttonLabels.add("Ignore Update");
+            elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
                public void execute()
@@ -399,7 +404,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION, 
                "Update Available", 
                result.getUpdateMessage(), 
-               buttonLabels, 
+               buttonLabels,
+               elementIds,
                buttonOperations, 0);
       }
       else if (manual) 

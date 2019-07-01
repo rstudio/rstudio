@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.DialogRole;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -66,18 +67,18 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          @Override
          public void onClick(ClickEvent event)
          {
-           setGlobalPerformAction(true);       
+           setGlobalPerformAction(true);
          } 
-      }));
+      }), ElementIds.SELECT_ALL_BUTTON);
      
       addLeftButton(selectNoneButton_ = new ThemedButton("Select None", 
                                                          new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            setGlobalPerformAction(false);   
+            setGlobalPerformAction(false);
          } 
-      }));  
+      }), ElementIds.SELECT_NONE_BUTTON);
       
       enableOkButton(false);
       selectAllButton_.setEnabled(false);

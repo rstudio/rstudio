@@ -15,6 +15,7 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -61,7 +62,7 @@ public class OpenProjectDialog extends FileDialog
             accept();
          }
       });
-      addButton(createButton);
+      addButton(createButton, ElementIds.CREATE_BUTTON);
       
       newSessionCheck_ = new CheckBox("Open in new session");
       newSessionCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()

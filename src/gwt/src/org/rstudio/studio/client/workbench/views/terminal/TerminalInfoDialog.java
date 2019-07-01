@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -127,8 +128,8 @@ public class TerminalInfoDialog extends ModalDialogBase
                }
             });
          });
-         addLeftButton(appendBufferButton_);
-      }      
+         addLeftButton(appendBufferButton_, ElementIds.PREVIEW_BUTTON);
+      }
    }
 
    @Inject

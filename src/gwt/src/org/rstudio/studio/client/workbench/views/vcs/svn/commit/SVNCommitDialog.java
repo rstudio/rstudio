@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -96,7 +97,7 @@ public class SVNCommitDialog extends ModalDialogBase
             attemptCommit();
          }
       });
-      addButton(commitButton);
+      addButton(commitButton, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       
      

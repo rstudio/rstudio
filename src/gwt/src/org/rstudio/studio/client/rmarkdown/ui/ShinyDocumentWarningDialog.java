@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -35,9 +36,11 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
       addOkButton(new ThemedButton("Yes, Once", 
             returnResult(onSelected, RENDER_SHINY_ONCE)));
       addButton(new ThemedButton("Yes, Always", 
-            returnResult(onSelected, RENDER_SHINY_ALWAYS)));
+            returnResult(onSelected, RENDER_SHINY_ALWAYS)),
+            ElementIds.DIALOG_YES_BUTTON);
       addLeftButton(new ThemedButton("No", 
-            returnResult(onSelected, RENDER_SHINY_NO)));
+            returnResult(onSelected, RENDER_SHINY_NO)),
+            ElementIds.DIALOG_NO_BUTTON);
    }
 
    @Override

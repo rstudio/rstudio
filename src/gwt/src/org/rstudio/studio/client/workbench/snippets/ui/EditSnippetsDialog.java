@@ -22,6 +22,7 @@ import javax.inject.Inject;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -78,7 +79,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
             attemptSaveAndClose();
          }
       });
-      addButton(saveButton);
+      addButton(saveButton, ElementIds.DIALOG_OK_BUTTON);
       
       addLeftWidget(new HelpLink("Using Code Snippets", "code_snippets"));
    }
