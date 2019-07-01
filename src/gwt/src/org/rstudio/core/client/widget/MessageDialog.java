@@ -48,6 +48,7 @@ public class MessageDialog extends ModalDialogBase
    }
 
    public ThemedButton addButton(String label,
+                                 String elementId,
                                  final Operation operation,
                                  boolean isDefault,
                                  boolean isCancel)
@@ -58,12 +59,13 @@ public class MessageDialog extends ModalDialogBase
          closeDialog();
       });
 
-      addButton(button, isDefault, isCancel);
+      addButton(button, elementId, isDefault, isCancel);
 
       return button;
    }
 
    public ThemedButton addButton(String label,
+                                 String elementId,
                                  final ProgressOperation operation,
                                  boolean isDefault,
                                  boolean isCancel)
@@ -78,21 +80,22 @@ public class MessageDialog extends ModalDialogBase
             closeDialog();
       });
 
-      addButton(button, isDefault, isCancel);
+      addButton(button, elementId, isDefault, isCancel);
 
       return button;
    }
 
    private void addButton(ThemedButton button,
+                          String elementId,
                           boolean isDefault,
                           boolean isCancel)
    {
       if (isDefault)
-         addOkButton(button);
+         addOkButton(button, elementId);
       else if (isCancel)
-         addCancelButton(button);
+         addCancelButton(button, elementId);
       else
-         addButton(button);
+         addButton(button, elementId);
    }
 
    @Override

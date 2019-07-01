@@ -1,7 +1,7 @@
 /*
  * ElementIds.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,23 @@
 package org.rstudio.core.client;
 
 import com.google.gwt.dom.client.Element;
+import org.rstudio.core.client.dom.DomUtils;
 
 public class ElementIds
 {
    public static void assignElementId(Element ele, String id)
    {
-      ele.setId(ID_PREFIX + id);
+      String elementIdBase = ID_PREFIX + id;
+      String elementId = elementIdBase;
+      int counter = 0;
+      
+      // ensure uniqueness; for example, if multiple modal dialogs are displayed, make sure
+      // the OK button instances, etc., are uniquely identified
+      while (DomUtils.getElementById(elementId) != null)
+      {
+         elementId = elementIdBase + "_" + counter++;
+      }
+      ele.setId(elementId);
    }
    
    public static String getElementId(String id)
@@ -76,4 +87,18 @@ public class ElementIds
    public final static String WORKBENCH_TAB = "workbench_tab";
    public final static String FILE_ACCEPT_BUTTON = "file_accept";
    public final static String FILE_CANCEL_BUTTON = "file_cancel";
+   public final static String FILE_NEW_FOLDER_BUTTON = "file_new_folder";
+   public final static String PREVIEW_BUTTON = "preview";
+   public final static String CREATE_BUTTON = "create";
+   public final static String DIALOG_YES_BUTTON = "dlg_yes";
+   public final static String DIALOG_NO_BUTTON = "dlg_no";
+   public final static String DIALOG_CANCEL_BUTTON = "dlg_cancel";
+   public final static String DIALOG_OK_BUTTON = "dlg_ok";
+   public final static String DIALOG_APPLY_BUTTON = "dlg_apply";
+   public final static String DIALOG_RETRY_BUTTON = "dlg_retry";
+   public final static String SELECT_ALL_BUTTON = "select_all";
+   public final static String SELECT_NONE_BUTTON = "select_none";
+   public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
+   public final static String TEXT_SOURCE_BUTTON = "text_source";
+   public final static String TEXT_SOURCE_BUTTON_DROPDOWN = "text_source_dropdown";
 }

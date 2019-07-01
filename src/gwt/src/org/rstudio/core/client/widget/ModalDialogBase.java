@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -222,12 +223,17 @@ public abstract class ModalDialogBase extends DialogBox
       }
    }
 
-   protected void addOkButton(ThemedButton okButton)
+   protected void addOkButton(ThemedButton okButton, String elementId)
    {
       okButton_ = okButton;
       okButton_.addStyleDependentName("DialogAction");
       okButton_.setDefault(defaultOverrideButton_ == null);
-      addButton(okButton_);
+      addButton(okButton_, elementId);
+   }
+
+   protected void addOkButton(ThemedButton okButton)
+   {
+      addOkButton(okButton, ElementIds.DIALOG_OK_BUTTON);
    }
 
    protected void setOkButtonCaption(String caption)
@@ -301,11 +307,17 @@ public abstract class ModalDialogBase extends DialogBox
       }
    }
 
-   protected ThemedButton addCancelButton()
+   protected ThemedButton addCancelButton(String elementId)
    {
       ThemedButton cancelButton = createCancelButton(null);
       addCancelButton(cancelButton);
+      ElementIds.assignElementId(cancelButton.getElement(), elementId);
       return cancelButton;
+   }
+
+   protected ThemedButton addCancelButton()
+   {
+      return addCancelButton(ElementIds.DIALOG_CANCEL_BUTTON);
    }
 
    protected ThemedButton createCancelButton(final Operation cancelOperation)
@@ -319,17 +331,23 @@ public abstract class ModalDialogBase extends DialogBox
       });
    }
 
-   protected void addCancelButton(ThemedButton cancelButton)
+   protected void addCancelButton(ThemedButton cancelButton, String elementId)
    {
       cancelButton_ = cancelButton;
       cancelButton_.addStyleDependentName("DialogAction");
-      addButton(cancelButton_);
+      addButton(cancelButton_, elementId);
    }
 
-   protected void addLeftButton(ThemedButton button)
+   protected void addCancelButton(ThemedButton cancelButton)
+   {
+      addCancelButton(cancelButton, ElementIds.DIALOG_CANCEL_BUTTON);
+   }
+
+   protected void addLeftButton(ThemedButton button, String elementId)
    {
       button.addStyleDependentName("DialogAction");
       button.addStyleDependentName("DialogActionLeft");
+      ElementIds.assignElementId(button.getElement(), elementId);
       leftButtonPanel_.add(button);
       allButtons_.add(button);
    }
@@ -344,10 +362,11 @@ public abstract class ModalDialogBase extends DialogBox
       leftButtonPanel_.remove(widget);
    }
 
-   protected void addButton(ThemedButton button)
+   protected void addButton(ThemedButton button, String elementId)
    {
       button.addStyleDependentName("DialogAction");
       buttonPanel_.add(button);
+      ElementIds.assignElementId(button.getElement(), elementId);
       allButtons_.add(button);
    }
 

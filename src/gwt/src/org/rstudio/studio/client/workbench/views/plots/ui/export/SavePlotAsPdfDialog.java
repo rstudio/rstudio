@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -124,10 +125,10 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                 
             // invoke handler
             SavePlotAsHandler handler = createSavePlotAsHandler();
-            handler.attemptSave(previewPath, true, true, null);    
+            handler.attemptSave(previewPath, true, true, null);
          }
       });
-      addLeftButton(previewButton);
+      addLeftButton(previewButton, ElementIds.PREVIEW_BUTTON);
    }
    
    @Override 

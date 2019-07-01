@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -119,7 +120,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                   "Error",
                                                   "You must enter a value.");
-         dialog.addButton("OK", (Operation)null, true, true);
+         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textBox_.setFocus(true);
          return false;
@@ -136,7 +137,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
             MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                      "Error",
                                                      "Not a valid number.");
-            dialog.addButton("OK", (Operation)null, true, true);
+            dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
             dialog.showModal();
             textBox_.setFocus(true);
             textBox_.selectAll();

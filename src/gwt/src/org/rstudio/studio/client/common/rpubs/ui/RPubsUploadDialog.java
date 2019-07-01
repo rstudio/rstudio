@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.rpubs.ui;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -192,7 +193,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                   });       
             }
          });
-         addLeftButton(previewButton_);
+         addLeftButton(previewButton_, ElementIds.PREVIEW_BUTTON);
       }
       
       HTML warningLabel =  new HTML(
@@ -249,7 +250,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       else
       {
          addOkButton(updateButton_);
-         addButton(createButton_);
+         addButton(createButton_, ElementIds.CREATE_BUTTON);
          addCancelButton(cancelButton);
       }
      

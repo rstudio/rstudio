@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui;
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -42,7 +43,7 @@ public class AboutDialog extends ModalDialogBase
             closeDialog();
             editionInfo_.showLicense();
          });
-         addLeftButton(licenseButton);
+         addLeftButton(licenseButton, ElementIds.ABOUT_MANAGE_LICENSE_BUTTON);
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
       setARIADescribedBy(contents_.getDescriptionElement());
