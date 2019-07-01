@@ -18,8 +18,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -142,12 +140,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       Label captionLabel = new Label();
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       final FancyButton button = new FancyButton();
-      button.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            reloadApplication();
-         } 
-      });
+      button.addClickHandler(event -> reloadApplication());
       FocusHelper.setFocusDeferred(button);
       
       switch(mode)
@@ -219,7 +212,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
                
                nativeEvent.preventDefault();
                nativeEvent.stopPropagation();
-               reloadApplication();    
+               reloadApplication();
                break;
          } 
       }
@@ -255,7 +248,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       }
    }
       
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String applicationEndedPopupPanel();
       String glass();
@@ -275,7 +268,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       String SE();
    }
   
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("ApplicationEndedPopupPanel.css")
       Styles styles();
