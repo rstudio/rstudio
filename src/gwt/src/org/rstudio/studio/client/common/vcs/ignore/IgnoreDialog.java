@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs.ignore;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -59,7 +60,7 @@ public class IgnoreDialog extends ModalDialogBase
       ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
 
       saveButton_ = new ThemedButton("Save", (ClickHandler)null); 
-      addButton(saveButton_);
+      addButton(saveButton_, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       

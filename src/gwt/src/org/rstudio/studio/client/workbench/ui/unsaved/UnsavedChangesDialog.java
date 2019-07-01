@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
@@ -117,7 +118,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                                        new ArrayList<UnsavedChangesTarget>(),
                                        false));
          } 
-      }));
+      }), ElementIds.DIALOG_NO_BUTTON);
    }
    
    @Override

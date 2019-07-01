@@ -1,7 +1,7 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -106,7 +107,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
                                                verticalPanel);
          
          
-         dlg.addButton("OK", (Operation)null, true, false);
+         dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, false);
          dlg.showModal();
          
          return false;

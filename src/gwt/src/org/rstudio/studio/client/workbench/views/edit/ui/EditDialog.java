@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.*;
@@ -71,7 +72,7 @@ public class EditDialog extends ModalDialogBase
             operation.execute(editor_.getCode(), progressIndicator);
          }
       });
-      addButton(saveButton);
+      addButton(saveButton, ElementIds.DIALOG_OK_BUTTON);
 
       ThemedButton cancelButton = new ThemedButton("Cancel", new ClickHandler() {
          public void onClick(ClickEvent event)
@@ -79,7 +80,7 @@ public class EditDialog extends ModalDialogBase
             operation.execute(null, progressIndicator);
          }
       });
-      addCancelButton(cancelButton);
+      addCancelButton(cancelButton, ElementIds.DIALOG_CANCEL_BUTTON);
 
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
    }

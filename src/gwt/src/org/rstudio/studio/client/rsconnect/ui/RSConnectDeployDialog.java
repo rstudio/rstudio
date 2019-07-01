@@ -52,8 +52,7 @@ public class RSConnectDeployDialog
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
-      ElementIds.assignElementId(deployButton_.getElement(), ElementIds.DEPLOY_CONTENT);
-      addOkButton(deployButton_);
+      addOkButton(deployButton_, ElementIds.DEPLOY_CONTENT);
       addCancelButton();
       connect_ = connect;
       

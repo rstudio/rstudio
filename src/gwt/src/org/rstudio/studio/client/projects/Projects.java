@@ -18,6 +18,7 @@ package org.rstudio.studio.client.projects;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
@@ -957,6 +958,8 @@ public class Projects implements OpenProjectFileHandler,
       
       ArrayList<String> buttons = new ArrayList<>();
       buttons.add("OK");
+      ArrayList<String> elementIds = new ArrayList<>();
+      elementIds.add(ElementIds.DIALOG_OK_BUTTON);
       ArrayList<Operation> ops = new ArrayList<>();
       ops.add(new Operation()
       {
@@ -973,7 +976,7 @@ public class Projects implements OpenProjectFileHandler,
       RStudioGinjector.INSTANCE.getGlobalDisplay().showGenericDialog(
             GlobalDisplay.MSG_ERROR, 
             "Error Opening Project", 
-            msg, buttons, ops, 0);
+            msg, buttons, elementIds, ops, 0);
       
       // remove from mru list
       pMRUList_.get().remove(event.getProject());
