@@ -135,6 +135,8 @@ void handleFileRequest(const std::string& wwwLocalPath,
 
 #ifndef RSTUDIO_SERVER
       vars["viewport_tag"] = R"(<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />)";
+#else
+      vars["viewport_tag"] = std::string();
 #endif
 
       // read existing CSRF token 
