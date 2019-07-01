@@ -23,6 +23,7 @@
 
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
+#include <core/http/CSRFToken.hpp>
 
 #ifndef _WIN32
 #include <core/http/LocalStreamBlockingClient.hpp>
@@ -56,6 +57,12 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setHeader("Connection", "close");
    request.setHeader("X-Session-Postback", "1");
    request.setHeader(kRStudioUserIdentityDisplay, core::system::username());
+
+   // generate random CSRF token for request
+   std::string token = core::system::generateUuid();
+   request.setHeader(kCSRFTokenHeader, token);
+   request.addCookie(kCSRFTokenCookie, token);
+
    request.setBody(body);
 
    // first, attempt to send a plain old http request
