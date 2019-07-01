@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui.appended;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.NativeEvent;
@@ -30,11 +31,19 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
 
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CenterPanel;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ApplicationEndedPopupPanel extends PopupPanel
@@ -121,13 +130,15 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       setStylePrimaryName(RESOURCES.styles().applicationEndedPopupPanel());
       setGlassEnabled(true);
       setGlassStyleName(RESOURCES.styles().glass());
+
+      Roles.getAlertdialogRole().set(getElement());
       
       // main panel
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setSpacing(10);
       
       // create widgets and make mode dependent customizations
-      Image image;
+      DecorativeImage image;
       Label captionLabel = new Label();
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       final FancyButton button = new FancyButton();
@@ -142,31 +153,31 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       switch(mode)
       {
       case QUIT:
-         image = new Image(new ImageResource2x(RESOURCES.applicationQuit2x()));
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText("R Session Ended");
          button.setText("Start New Session");
          break;
          
       case SUICIDE:
-         image = new Image(new ImageResource2x(RESOURCES.applicationSuicide2x()));
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationSuicide2x()));
          captionLabel.setText("R Session Aborted");
          button.setText("Start New Session");
          break;
        
       case DISCONNECTED:
-         image = new Image(new ImageResource2x(RESOURCES.applicationDisconnected2x()));
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationDisconnected2x()));
          captionLabel.setText("R Session Disconnected");
          button.setText("Reconnect");
          break;
          
       case OFFLINE:
-         image = new Image(new ImageResource2x(RESOURCES.applicationOffline2x()));
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationOffline2x()));
          captionLabel.setText("RStudio Temporarily Offline");
          button.setText("Reconnect");
          break;
          
       case QUIT_MULTI:
-         image = new Image(new ImageResource2x(RESOURCES.applicationQuit2x()));
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText("R Session Ended");
          button.setText("Reconnect");
          break;
@@ -213,7 +224,21 @@ public class ApplicationEndedPopupPanel extends PopupPanel
          } 
       }
    }
-   
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      ModalDialogTracker.onShow(this);
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      ModalDialogTracker.onHide(this);
+   }
+
    private void reloadApplication()
    {
       if (reloading_)
@@ -285,7 +310,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
    interface MyUiBinder extends UiBinder<Widget, ApplicationEndedPopupPanel> {}
    
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
+   static Resources RESOURCES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();

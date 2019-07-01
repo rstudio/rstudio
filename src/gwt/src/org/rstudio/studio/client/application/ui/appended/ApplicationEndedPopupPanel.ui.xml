@@ -4,7 +4,7 @@
    <ui:with field="res" type="org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel.Resources"/>
 
    <g:HTMLPanel>
-      <table border="0" cellspacing="0" cellpadding="0">
+      <table role="presentation" border="0" cellspacing="0" cellpadding="0">
          <tr>
             <td class="{res.styles.NW}"></td>
             <td class="{res.styles.N}"></td>
