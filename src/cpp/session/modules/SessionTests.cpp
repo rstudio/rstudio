@@ -32,6 +32,8 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #define kTestsNone           "none"
 #define kTestsTestThat       "test-testthat"
 #define kTestsShinyTest      "test-shinytest"

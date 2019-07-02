@@ -24,6 +24,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include <string>
 
 #include "session-config.h"

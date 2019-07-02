@@ -15,6 +15,8 @@
 
 #include "SessionUserPrefs.hpp"
 
+#include <boost/bind/bind.hpp>
+
 #include <core/Exec.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -243,6 +245,8 @@ core::Error initialize()
    // Ensure we have a context ID
    if (userState().contextId().empty())
       userState().setContextId(core::system::generateShortenedUuid());
+
+   using boost::bind;
 
    ExecBlock initBlock;
    initBlock.addFunctions()

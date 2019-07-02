@@ -36,6 +36,8 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionUrlPorts.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"

@@ -14,10 +14,13 @@
  */
 
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
+#include <ShlObj_core.h>
+#include <KnownFolders.h>
 #endif
 
 #include <core/Algorithm.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
@@ -30,7 +33,9 @@ namespace xdg {
 namespace {
 
 FilePath resolveXdgDir(const std::string& envVar, 
-      int windowsFolderId, 
+#ifdef _WIN32
+      const GUID windowsFolderId,
+#endif
       const std::string& defaultDir)
 {
    FilePath xdgHome;
@@ -40,11 +45,11 @@ FilePath resolveXdgDir(const std::string& envVar,
       // No root specified for xdg home; we will need to generate one.
 #ifdef _WIN32
       // On Windows, the default path is in Application Data/Roaming.
-      wchar_t path[MAX_PATH + 1];
+      wchar_t *path = nullptr;
       HRESULT hr = ::SHGetKnownFolderPath(
             windowsFolderId,
             0,
-            NULL, // current user
+            nullptr, // current user
             &path);
 
       if (hr == S_OK)
@@ -56,6 +61,13 @@ FilePath resolveXdgDir(const std::string& envVar,
          LOG_ERROR_MESSAGE("Unable to retrieve app settings path. HRESULT:  " +
                            safe_convert::numberToString(hr));
       }
+
+      // Free memory if allocated
+      if (path != nullptr)
+      {
+         ::CoTaskMemFree(path);
+      }
+
 #endif
       if (xdgHome.empty())
       {
@@ -86,8 +98,6 @@ FilePath userConfigDir()
    return resolveXdgDir("XDG_CONFIG_HOME", 
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
-#else
-         0,
 #endif
          "~/.config"
    );
@@ -98,8 +108,6 @@ FilePath userDataDir()
    return resolveXdgDir("XDG_DATA_HOME", 
 #ifdef _WIN32
          FOLDERID_LocalAppData,
-#else
-         0,
 #endif
          "~/.local/share"
    );
@@ -128,8 +136,6 @@ FilePath systemConfigDir()
    return resolveXdgDir("XDG_CONFIG_DIRS", 
 #ifdef _WIN32
          FOLDERID_ProgramData,
-#else
-         0,
 #endif
          "/etc"
    );
