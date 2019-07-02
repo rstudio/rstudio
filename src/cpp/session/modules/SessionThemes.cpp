@@ -180,7 +180,7 @@ void getThemesInLocation(
                {
                   isDark = convertToBool(matches[1].str());
                }
-               catch (boost::bad_lexical_cast)
+               catch (boost::bad_lexical_cast&)
                {
                   LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string for theme \"" + name + "\".");
                }
@@ -350,7 +350,7 @@ FilePath getDefaultTheme(const http::Request& request)
    {
       isDark = convertToBool(isDarkStr);
    }
-   catch (boost::bad_lexical_cast)
+   catch (boost::bad_lexical_cast&)
    {
       LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
    }
@@ -492,7 +492,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
-void onDeferredInit(bool newSession)
+void onDeferredInit(bool)
 {
    s_deferredInitComplete = true;
 }
