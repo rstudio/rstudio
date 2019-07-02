@@ -68,7 +68,7 @@ public class CRANMirror extends JavaScriptObject
       this.url = url;
    }-*/;
 
-   private final native String getSecondary() /*-{
+   public final native String getSecondary() /*-{
       return this.secondary;
    }-*/;
 

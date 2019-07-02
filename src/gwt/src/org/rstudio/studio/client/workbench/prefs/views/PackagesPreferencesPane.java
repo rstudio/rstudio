@@ -360,6 +360,22 @@ public class PackagesPreferencesPane extends PreferencesPane
       );
    }
 
+   private boolean secondaryReposHasChanged()
+   {
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
+
+      if (secondaryRepos.size() != cranMirror_.getSecondaryRepos().size())
+         return true;
+
+      for (int i = 0; i < secondaryRepos.size(); i++)
+      {
+         if (secondaryRepos.get(i).getSecondary() != cranMirror_.getSecondaryRepos().get(i).getSecondary())
+            return true;
+      }
+
+      return false;
+   }
+
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
@@ -370,31 +386,35 @@ public class PackagesPreferencesPane extends PreferencesPane
       if (!mirrorTextValue.equals(cranMirrorStored_))
          cranMirror_.setChanged(true);
 
-      boolean cranRepoChangedToUrl = !mirrorTextValue.equals(cranMirrorStored_) && 
+      boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
+      boolean cranRepoChangedToUrl = cranRepoChanged && 
                                       mirrorTextValue.startsWith("http");
    
-      cranMirror_.setChanged(true);
-
-      if (cranRepoChangedToUrl)
+      if (cranRepoChanged || secondaryReposHasChanged())
       {
-         cranMirror_.setURL(mirrorTextValue);
+         cranMirror_.setChanged(true);
 
-         cranMirror_.setHost("Custom");
-         cranMirror_.setName("Custom");
-      }
-      
-      ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
-      cranMirror_.setSecondaryRepos(repos);
+         if (cranRepoChangedToUrl)
+         {
+            cranMirror_.setURL(mirrorTextValue);
 
-      server_.setCRANMirror(
-         cranMirror_,
-         new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
-             @Override
-             public void onResponseReceived(Void response)
-             {
-             }
+            cranMirror_.setHost("Custom");
+            cranMirror_.setName("Custom");
          }
-      );
+         
+         ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();
+         cranMirror_.setSecondaryRepos(repos);
+
+         server_.setCRANMirror(
+            cranMirror_,
+            new SimpleRequestCallback<Void>("Error Setting CRAN Mirror") {
+                @Override
+                public void onResponseReceived(Void response)
+                {
+                }
+            }
+         );
+      }
      
       // set packages prefs
       PackagesPrefs packagesPrefs = PackagesPrefs.create(
