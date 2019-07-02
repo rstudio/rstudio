@@ -790,15 +790,16 @@
    installLocation
 })
 
-.rs.addFunction("getThemeDirFromUrl", function(url) {
-   
-   if (.rs.isGlobalTheme(url))
+.rs.addFunction("getThemeDirFromUrl", function(url) 
+{
+   decodedUrl <- URLdecode(url)
+   if (.rs.isGlobalTheme(decodedUrl))
    {
-      file.path(.rs.getThemeInstallDir(TRUE), basename(url))
+      file.path(.rs.getThemeInstallDir(TRUE), basename(decodedUrl))
    }
-   else if (.rs.isLocalTheme(url))
+   else if (.rs.isLocalTheme(decodedUrl))
    {
-      file.path(.rs.getThemeInstallDir(FALSE), basename(url))
+      file.path(.rs.getThemeInstallDir(FALSE), basename(decodedUrl))
    }
    else
    {
