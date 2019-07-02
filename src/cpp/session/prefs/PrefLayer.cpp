@@ -71,14 +71,12 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    Error error = readStringFromFile(prefsFile, &contents);
    if (error)
    {
-      if (isPathNotFoundError(error))
+      // No prefs file; use an empty cache
+      cache_ = boost::make_shared<json::Object>();
+
+      if (!isFileNotFoundError(error))
       {
-         // It's normal for a preference file not to exist; create an empty cache in this case.
-         cache_ = boost::make_shared<json::Object>();
-      }
-      else
-      {
-         // If we hit some other error (e.g. permission denied), it's still not fatal (we can live
+         // If we hit an unexpected error (e.g. permission denied), it's still not fatal (we can live
          // without a prefs file) but users might like to know.
          LOG_ERROR(error);
       }
