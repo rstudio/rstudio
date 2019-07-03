@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -152,7 +154,15 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       bkImg.getHeight(), Unit.PX);
       backButton_.setVisible(false);
       backButton_.addClickHandler((event) -> goBack());
-      
+      backButton_.addDomHandler(event -> {
+         if (event.getNativeKeyCode() == KeyCodes.KEY_SPACE)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            goBack();
+         }
+      }, KeyDownEvent.getType());
+
       // second page caption label
       pageCaptionLabel_ = new Label();
       pageCaptionLabel_.addStyleName(styles.headerLabel());
