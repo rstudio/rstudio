@@ -1,7 +1,7 @@
 /*
  * WizardPageSelector.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
@@ -93,10 +92,10 @@ public class WizardPageSelector<I,T> extends Composite
                ElementIds.idFromLabel(pageInfo.getTitle() + "_wizard_page"));
          
          ImageResource pageImageResource = pageInfo.getImage();
-         Image image = null;
+         DecorativeImage image = null;
          if (pageImageResource != null)
          {
-            image = new Image(pageImageResource);
+            image = new DecorativeImage(pageImageResource);
             layoutPanel.add(image);
             layoutPanel.setWidgetLeftWidth(image, 
                                            10, Unit.PX, 
@@ -122,7 +121,7 @@ public class WizardPageSelector<I,T> extends Composite
                                         55, Unit.PX);
          
          
-         Image arrowImage = new Image(new ImageResource2x(res.wizardDisclosureArrow2x()));
+         DecorativeImage arrowImage = new DecorativeImage(new ImageResource2x(res.wizardDisclosureArrow2x()));
          layoutPanel.add(arrowImage);
          layoutPanel.setWidgetRightWidth(arrowImage, 
                                          20, Unit.PX, 

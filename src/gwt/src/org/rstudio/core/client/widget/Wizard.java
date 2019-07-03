@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -140,6 +141,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       backButton_ = new Label("Back");
       backButton_.addStyleName(styles.wizardBackButton());
       backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+      backButton_.getElement().setTabIndex(0);
+      Roles.getButtonRole().set(backButton_.getElement());
       headerPanel_.add(backButton_);
       headerPanel_.setWidgetLeftWidth(backButton_,
                                       kTopMargin - 2, Unit.PX, 
