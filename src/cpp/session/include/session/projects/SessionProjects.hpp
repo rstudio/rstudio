@@ -128,7 +128,11 @@ public:
       updateDefaultEncoding();
       updateBuildTargetPath();
       updatePackageInfo();
+      onConfigChanged();
    }
+
+   // signal emitted when config changes
+   RSTUDIO_BOOST_SIGNAL<void()> onConfigChanged;
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;

@@ -20,6 +20,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -32,11 +33,30 @@ UserPrefsProjectLayer::UserPrefsProjectLayer():
 {
 }
 
+void UserPrefsProjectLayer::onProjectConfigChanged()
+{
+   // Update cache
+   cache_ = boost::make_shared<json::Object>(projects::projectContext().uiPrefs());
+   
+   // Pass new values to client
+   json::Object dataJson;
+   dataJson["name"] = kUserPrefsProjectLayer;
+   dataJson["values"] = *cache_;
+   ClientEvent event(client_events::kUserPrefsChanged, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
 core::Error UserPrefsProjectLayer::readPrefs()
 {
    if (projects::projectContext().hasProject())
    {
+      // Populate initial cache with project preferences
       cache_ = boost::make_shared<json::Object>(projects::projectContext().uiPrefs());
+
+      // Keep pref cache in sync with project
+      projects::projectContext().onConfigChanged.connect(
+            boost::bind(&UserPrefsProjectLayer::onProjectConfigChanged, this));
+
    }
    else
    {

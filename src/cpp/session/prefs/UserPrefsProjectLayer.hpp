@@ -28,6 +28,8 @@ public:
    UserPrefsProjectLayer();
    core::Error readPrefs() override;
    core::Error validatePrefs() override;
+private:
+   void onProjectConfigChanged();
 };
 
 } // namespace prefs
