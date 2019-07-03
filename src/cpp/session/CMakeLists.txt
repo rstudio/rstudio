@@ -498,6 +498,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
    install(DIRECTORY "resources/connections"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # JSON schema files
+   install(DIRECTORY "resources/schema"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install pandoc
    if(WIN32)
       set(PANDOC_VERSION "2.7.2" CACHE INTERNAL "Pandoc version")
