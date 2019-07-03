@@ -320,7 +320,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 #else
 
    // auto-detection (+ overridable by a setting)
-   terminalPath = prefs::userPrefs().terminalPath();
+   terminalPath = FilePath(prefs::userPrefs().terminalPath());
    if (terminalPath.empty())
       terminalPath = detectedTerminalPath();
 
