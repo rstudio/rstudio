@@ -399,6 +399,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "rout",  "text/plain");
       MIME_TYPES.put( "po",    "text/plain");
       MIME_TYPES.put( "pot",   "text/plain");
+      MIME_TYPES.put( "rst",   "text/plain");
       MIME_TYPES.put( "gitignore",   "text/plain");
       MIME_TYPES.put( "rbuildignore","text/plain");
       MIME_TYPES.put( "rprofile", "text/x-r-source");
