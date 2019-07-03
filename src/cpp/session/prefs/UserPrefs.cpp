@@ -43,10 +43,10 @@ class UserPrefs: public UserPrefValuesNative
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
+         // Create the initial layers (which just rely on files on disk)
          layers_.push_back(boost::make_shared<UserPrefsDefaultLayer>());  // PREF_LAYER_DEFAULT
          layers_.push_back(boost::make_shared<UserPrefsSystemLayer>());   // PREF_LAYER_SYSTEM
          layers_.push_back(boost::make_shared<UserPrefsLayer>());         // PREF_LAYER_USER
-         layers_.push_back(boost::make_shared<UserPrefsProjectLayer>());  // PREF_LAYER_PROJECT
       }
       END_LOCK_MUTEX
 
@@ -83,18 +83,25 @@ class UserPrefs: public UserPrefValuesNative
 
 public:
 
-   Error createComputedLayer()
+   Error createComputedLayers()
    {
-      // The computed layer is created later since computations may involve evaluating R code (which
-      // we can't do in early init)
+      // The computed layers is created later since computations may involve evaluating R code
+      // (which we can't do in early init) or projects 
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         auto layer = boost::make_shared<UserPrefsComputedLayer>();
-         Error error = layer->readPrefs();
+         auto computed = boost::make_shared<UserPrefsComputedLayer>();
+         Error error = computed->readPrefs();
          if (error)
             return error;
 
-         layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, layer);
+         layers_.insert(layers_.begin() + PREF_LAYER_COMPUTED, computed);
+
+         auto project = boost::make_shared<UserPrefsProjectLayer>();
+         error = project->readPrefs();
+         if (error)
+            return error;
+
+         layers_.push_back(project);
       }
       END_LOCK_MUTEX
 
@@ -124,7 +131,7 @@ Error initializePrefs()
 Error initializeSessionPrefs()
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
-   return instance.createComputedLayer();
+   return instance.createComputedLayers();
 }
 
 } // namespace prefs

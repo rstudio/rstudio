@@ -651,15 +651,15 @@ void ProjectContext::updatePackageInfo()
 json::Object ProjectContext::uiPrefs() const
 {
    json::Object uiPrefs;
-   uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
-   uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
-   uiPrefs["auto_append_newline"] = config_.autoAppendNewline;
-   uiPrefs["strip_trailing_whitespace"] = config_.stripTrailingWhitespace;
-   uiPrefs["default_encoding"] = defaultEncoding();
-   uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
-   uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
-   uiPrefs["root_document"] = config_.rootDocument;
-   uiPrefs["use_roxygen"] = !config_.packageRoxygenize.empty();
+   uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
+   uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
+   uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
+   uiPrefs[kDefaultEncoding] = defaultEncoding();
+   uiPrefs[kDefaultSweaveEngine] = config_.defaultSweaveEngine;
+   uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
+   uiPrefs[kRootDocument] = config_.rootDocument;
+   uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
    return uiPrefs;
 }
 

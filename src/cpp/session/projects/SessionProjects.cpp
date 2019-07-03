@@ -677,6 +677,13 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    if (error)
       LOG_ERROR(error);
 
+   // fire event to client
+   json::Object dataJson;
+   dataJson["name"] = kUserPrefsProjectLayer;
+   dataJson["values"] = s_projectContext.uiPrefs();
+   ClientEvent event(client_events::kUserPrefsChanged, dataJson);
+   module_context::enqueClientEvent(event);
+
    return Success();
 }
 
