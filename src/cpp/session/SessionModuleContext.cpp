@@ -2172,7 +2172,7 @@ std::string CRANReposURL()
    std::string url;
    r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
    if (url.empty())
-      url = prefs::userPrefs().CRANMirror().url;
+      url = prefs::userPrefs().getCRANMirror().url;
    return url;
 }
 

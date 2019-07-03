@@ -1945,8 +1945,8 @@ int main (int argc, char * const argv[])
 
       // CRAN repos precedence: user setting then repos file then global server option
       if (prefs::userState().cranMirrorChanged()) {
-         rOptions.rCRANUrl = prefs::userPrefs().CRANMirror().url;
-         rOptions.rCRANSecondary = prefs::userPrefs().CRANMirror().secondary;
+         rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
+         rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
       }
       else if (!options.rCRANMultipleRepos().empty()) {
          std::vector<std::string> parts;

@@ -44,7 +44,7 @@ class UserPrefValuesNative: public UserPrefValues
 {
 public:
    core::string_utils::LineEnding lineEndings();
-   CRANMirror CRANMirror();
+   CRANMirror getCRANMirror();
    core::Error setCRANMirror(const struct CRANMirror& mirror, bool update);
    console_process::TerminalShell::ShellType defaultTerminalShellValue();
 };

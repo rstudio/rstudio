@@ -57,7 +57,7 @@ string_utils::LineEnding UserPrefValuesNative::lineEndings()
    return string_utils::LineEndingNative;
 }
 
-CRANMirror UserPrefValuesNative::CRANMirror()
+CRANMirror UserPrefValuesNative::getCRANMirror()
 {
    // get the settings
    struct CRANMirror mirror;

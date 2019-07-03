@@ -114,7 +114,7 @@ public:
    {
       // get the URL currently in settings. if it's https already then bail
       prefs::CRANMirror mirror = 
-         prefs::userPrefs().CRANMirror();
+         prefs::userPrefs().getCRANMirror();
       if (isSecure(mirror.url))
          return;
 
@@ -150,7 +150,7 @@ public:
       }
       else
       {
-         std::string url = prefs::userPrefs().CRANMirror().url;
+         std::string url = prefs::userPrefs().getCRANMirror().url;
          if (isKnownSecureMirror(url))
             unableToSecureConnectionWarning(secureMirror_.url);
          else
@@ -183,7 +183,7 @@ private:
 
 void revertCRANMirrorToHTTP()
 {
-   prefs::CRANMirror mirror = prefs::userPrefs().CRANMirror();
+   prefs::CRANMirror mirror = prefs::userPrefs().getCRANMirror();
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
    prefs::userPrefs().setCRANMirror(mirror, true);
 }
