@@ -130,6 +130,11 @@ applyFixups.kr_theme <- function(content, parsed) {
    content
 }
 
+applyFixups.material <- function(content, parsed) {
+   content <- .rs.setPrintMarginColor(content, "#3D5059")
+   content
+}
+
 applyFixups.merbivore_soft <- applyFixups.kr_theme
 applyFixups.pastel_on_dark <- function(content, parsed)
 {
