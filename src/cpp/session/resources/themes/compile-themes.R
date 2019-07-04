@@ -161,6 +161,11 @@
    css
 })
 
+.rs.addFunction("setThemeName", function(content, name) {
+   content <- gsub("(rs-theme-name: ).*?(\\*/\\s*)$", paste0("\\1", name, "\\2"), content, perl = TRUE)
+   content
+})
+
 .rs.addFunction("add_operator_color", function(content, name, isDark = FALSE, overrideMap = list()) {
    color <- overrideMap[[name]]
    

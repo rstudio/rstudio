@@ -120,6 +120,11 @@ applyFixups.clouds_midnight <- function(content, parsed) {
    content
 }
 
+applyFixups.dracula <- function(content, parsed) {
+   content <- .rs.setThemeName(content, "Dracula")
+   content
+}
+
 applyFixups.idle_fingers <- function(content, parsed) {
    content <- .rs.setPrintMarginColor(content, "#555")
    content
@@ -230,8 +235,6 @@ for (themeFile in themeFiles) {
             replace = ""
          )
       }
-      # Apply final custom fixups
-      content <- applyFixups(content, fileName, parsed)
       
       # Add final details
       themeDetails <- if (is.null(theme_details_map[[fileName]])) list(name = fileName, isDark = FALSE)
@@ -240,6 +243,9 @@ for (themeFile in themeFiles) {
          paste("/* rs-theme-name:", themeDetails$name, "*/"),
          paste("/* rs-theme-is-dark:", themeDetails$isDark, "*/"),
          content)
+      
+      # Apply final custom fixups
+      content <- applyFixups(content, fileName, parsed)
       
       ## Phew! Write it out.
       outputPath <- file.path(outDir, paste0(fileName, ".rstheme"))
