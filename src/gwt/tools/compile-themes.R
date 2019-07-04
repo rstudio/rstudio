@@ -171,6 +171,7 @@ applyFixups.twilight <- function(content, parsed) {
 applyFixups.vibrant_ink <- applyFixups.tomorrow_night_eighties
 
 ## Get the set of all theme .css files
+outDir <- "../../cpp/session/resources/themes"
 themeDir <- file.path("./rstudio-ace/lib/ace/theme")
 themeFiles <- list.files(
    path = themeDir,
