@@ -504,6 +504,7 @@ MimeType s_mimeTypes[] =
    { "Rout",  "text/plain" },
    { "po",    "text/plain" },
    { "pot",   "text/plain"},
+   { "rst",   "text/plain"},
    { "gitignore", "text/plain"},
    { "Rbuildignore", "text/plain"},
    { "Rprofile", "text/x-r-source"},
