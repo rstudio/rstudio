@@ -39,7 +39,7 @@ FilePath userConfigDir();
 // XDG_DATA_HOME
 FilePath userDataDir();
 
-// Returns the RStudio XDG system config directory. On Unix-alikes, this is ~/etc/rstudio, or
+// Returns the RStudio XDG system config directory. On Unix-alikes, this is /etc/rstudio, or
 // XDG_CONFIG_DIRS
 FilePath systemConfigDir();
 
