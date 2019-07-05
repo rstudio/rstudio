@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
@@ -155,7 +156,8 @@ public class NewDirectoryNavigationPage
          panel.addStyleName(styles.wizardPageSelectorItemSize());
          Roles.getButtonRole().set(panel.getElement());
          panel.getElement().setTabIndex(0);
-         
+         panel.getElement().setId(ElementIds.idFromLabel(page.getTitle() + "_wizard_page")); 
+
          DecorativeImage rightArrow = new DecorativeImage(
                new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
          rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
