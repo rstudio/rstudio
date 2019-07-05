@@ -72,6 +72,11 @@ Error UserPrefsComputedLayer::readPrefs()
    defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
    layer[kDefaultRVersion] = defaultRVersionJson;
 
+   // Synctex viewer ----------------------------------------------------------
+
+   layer[kPdfPreviewer] =  session::options().programMode() == kSessionProgramModeDesktop ?
+      kPdfPreviewerDesktopSynctex : kPdfPreviewerRstudio;
+
    // Spelling ----------------------------------------------------------------
    layer["spelling"] =
          session::modules::spelling::spellingPrefsContextAsJson();
