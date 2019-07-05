@@ -484,7 +484,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
          prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
          prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
-         prefs.runRprofileOnResume().setGlobalValue(loadRData_.getValue());
+         prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
          prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
          prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
          prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
