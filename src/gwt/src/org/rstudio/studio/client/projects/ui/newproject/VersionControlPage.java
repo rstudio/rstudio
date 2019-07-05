@@ -18,6 +18,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -38,7 +39,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -117,18 +117,15 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          return true;
       }
    }
-   
 
    @Override
    protected void onAddWidgets()
    { 
-      NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();   
+      NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
       VerticalPanel urlPanel = new VerticalPanel();
       urlPanel.addStyleName(styles.wizardMainColumn());
-      Label urlLabel = new Label("Repository URL:");
-      urlLabel.addStyleName(styles.wizardTextEntryLabel());
-      urlPanel.add(urlLabel);
+
       txtRepoUrl_ = new TextBox();
       txtRepoUrl_.addDomHandler(new KeyDownHandler() {
          public void onKeyDown(KeyDownEvent event)
@@ -136,10 +133,14 @@ public abstract class VersionControlPage extends NewProjectWizardPage
             handleAutoFillCheckoutDir();
          }
       }, KeyDownEvent.getType());
-        
+
       txtRepoUrl_.setWidth("100%");
+
+      FormLabel urlLabel = new FormLabel("Repository URL:", txtRepoUrl_);
+      urlLabel.addStyleName(styles.wizardTextEntryLabel());
+      urlPanel.add(urlLabel);
       urlPanel.add(txtRepoUrl_);
-     
+
       addWidget(urlPanel);
       
       addSpacer();
@@ -151,7 +152,8 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       {  
          VerticalPanel usernamePanel = new VerticalPanel();
          usernamePanel.addStyleName(styles.wizardMainColumn());
-         Label usernameLabel = new Label("Username (if required for this repository URL):");
+         FormLabel usernameLabel = new FormLabel("Username (if required for this repository URL):",
+                                                 txtUsername_);
          usernameLabel.addStyleName(styles.wizardTextEntryLabel());
          usernamePanel.add(usernameLabel);
          usernamePanel.add(txtUsername_);
@@ -160,9 +162,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          addSpacer();
       }
       
-      Label dirNameLabel = new Label("Project directory name:");
-      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
-      addWidget(dirNameLabel);
+
       txtDirName_ = new TextBox();
       txtDirName_.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -175,6 +175,10 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          
       });
       txtDirName_.addStyleName(styles.wizardMainColumn());
+
+      FormLabel dirNameLabel = new FormLabel("Project directory name:", txtDirName_);
+      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
+      addWidget(dirNameLabel);
       addWidget(txtDirName_);
       
       addSpacer();

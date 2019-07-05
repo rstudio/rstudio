@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,8 +88,6 @@ public class NewPackagePage extends NewDirectoryPage
    @Override 
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
-      dirNameLabel_.setText("Package name:");
-      
       String[] labels = {"Package"};
       String[] values = {"package"};
       listProjectType_ = new SelectWidget("Type:",
@@ -105,7 +103,13 @@ public class NewPackagePage extends NewDirectoryPage
       });
       panel.add(listProjectType_);
    }
-   
+
+   @Override
+   protected String getDirNameLabel()
+   {
+      return "Package name:";
+   }
+
    @Override
    protected void onAddBodyWidgets()
    {

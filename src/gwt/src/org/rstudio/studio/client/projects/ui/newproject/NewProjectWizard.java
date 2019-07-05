@@ -117,7 +117,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private static WizardPage<NewProjectInput, NewProjectResult> createFirstPage(
          SessionInfo sessionInfo)
    {
-      return new WizardNavigationPage<NewProjectInput, NewProjectResult>(
+      return new WizardNavigationPage<>(
             "New Project", "Create project from:", "Create Project", 
             null, null, createSubPages(sessionInfo));
    }
@@ -130,7 +130,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       subPages.add(new ExistingDirectoryPage());
 
       if (sessionInfo.getAllowVcs())
-         subPages.add(new VersionControlNavigationPage(sessionInfo));
+         subPages.add(new VersionControlNavigationPage());
 
       return subPages;
    }
