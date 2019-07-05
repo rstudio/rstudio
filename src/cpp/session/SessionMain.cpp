@@ -1970,17 +1970,6 @@ int main (int argc, char * const argv[])
          customRepo = false;
       }
 
-      if (!prefs::userState().cranMirrorChanged()) 
-      {
-         prefs::CRANMirror defaultMirror;
-         defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
-         defaultMirror.host = customRepo ? "Custom" : "RStudio";
-         defaultMirror.secondary = rOptions.rCRANSecondary;
-         defaultMirror.url = rOptions.rCRANUrl;
-
-         prefs::userPrefs().setCRANMirror(defaultMirror, false);
-      }
-
       rOptions.useInternet2 = prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();
