@@ -1469,6 +1469,32 @@ public class UserPrefsAccessor extends Prefs
       return bool("submit_crash_reports", true);
    }
 
+   /**
+    * The R version to use by default.
+    */
+   public PrefValue<DefaultRVersion> defaultRVersion()
+   {
+      return object("default_r_version", null);
+   }
+
+   public static class DefaultRVersion extends JavaScriptObject
+   {
+      protected DefaultRVersion() {} 
+
+      public final native String getVersion() /*-{
+         return this.version;
+      }-*/;
+
+      public final native String getRHome() /*-{
+         return this.r_home;
+      }-*/;
+
+      public final native String getLabel() /*-{
+         return this.label;
+      }-*/;
+
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1787,6 +1813,8 @@ public class UserPrefsAccessor extends Prefs
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
       if (source.hasKey("submit_crash_reports"))
          submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
+      if (source.hasKey("default_r_version"))
+         defaultRVersion().setValue(layer, source.getObject("default_r_version"));
    }
    
 

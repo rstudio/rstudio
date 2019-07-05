@@ -278,6 +278,10 @@ namespace prefs {
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
 #define kSubmitCrashReports "submit_crash_reports"
+#define kDefaultRVersion "default_r_version"
+#define kDefaultRVersionVersion "version"
+#define kDefaultRVersionRHome "r_home"
+#define kDefaultRVersionLabel "label"
 
 class UserPrefValues: public Preferences
 {
@@ -1230,6 +1234,12 @@ public:
     */
    bool submitCrashReports();
    core::Error setSubmitCrashReports(bool val);
+
+   /**
+    * The R version to use by default.
+    */
+   core::json::Object defaultRVersion();
+   core::Error setDefaultRVersion(core::json::Object val);
 
 };
 

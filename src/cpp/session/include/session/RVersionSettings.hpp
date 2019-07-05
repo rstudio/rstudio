@@ -23,9 +23,9 @@
 #include <session/SessionScopes.hpp>
 
 #define kRVersionSettings              "rversion-settings"
-#define kDefaultRVersion               "defaultRVersion"
-#define kDefaultRVersionHome           "defaultRVersionHome"
-#define kDefaultRVersionLabel          "defaultRVersionLabel"
+#define kSettingDefaultRVersion        "defaultRVersion"
+#define kSettingDefaultRVersionHome    "defaultRVersionHome"
+#define kSettingDefaultRVersionLabel   "defaultRVersionLabel"
 #define kRestoreProjectRVersionFlag    "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
@@ -48,26 +48,26 @@ public:
 
    std::string defaultRVersion()
    {
-      return readSetting(kDefaultRVersion);
+      return readSetting(kSettingDefaultRVersion);
    }
 
    std::string defaultRVersionHome()
    {
-      return readSetting(kDefaultRVersionHome);
+      return readSetting(kSettingDefaultRVersionHome);
    }
 
    std::string defaultRVersionLabel()
    {
-      return readSetting(kDefaultRVersionLabel);
+      return readSetting(kSettingDefaultRVersionLabel);
    }
 
    void setDefaultRVersion(const std::string& version,
                            const std::string& versionHome,
                            const std::string& versionLabel)
    {
-      writeSetting(kDefaultRVersion, version);
-      writeSetting(kDefaultRVersionHome, versionHome);
-      writeSetting(kDefaultRVersionLabel, versionLabel);
+      writeSetting(kSettingDefaultRVersion, version);
+      writeSetting(kSettingDefaultRVersionHome, versionHome);
+      writeSetting(kSettingDefaultRVersionLabel, versionLabel);
    }
 
    bool restoreProjectRVersion()

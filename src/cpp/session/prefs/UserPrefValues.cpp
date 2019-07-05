@@ -2077,6 +2077,19 @@ core::Error UserPrefValues::setSubmitCrashReports(bool val)
    return writePref("submit_crash_reports", val);
 }
 
+/**
+ * The R version to use by default.
+ */
+core::json::Object UserPrefValues::defaultRVersion()
+{
+   return readPref<core::json::Object>("default_r_version");
+}
+
+core::Error UserPrefValues::setDefaultRVersion(core::json::Object val)
+{
+   return writePref("default_r_version", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2238,6 +2251,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRestoreProjectRVersion,
       kClangVerbose,
       kSubmitCrashReports,
+      kDefaultRVersion,
    });
 }
    

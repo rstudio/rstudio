@@ -140,6 +140,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
    modules/SessionRUtil.cpp
+   modules/SessionRVersions.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSnippets.cpp
    modules/SessionSource.cpp

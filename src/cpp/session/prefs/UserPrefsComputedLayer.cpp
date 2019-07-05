@@ -70,7 +70,7 @@ Error UserPrefsComputedLayer::readPrefs()
    json::Object defaultRVersionJson;
    defaultRVersionJson["version"] = versionSettings.defaultRVersion();
    defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
-   layer["default_r_version"] = defaultRVersionJson;
+   layer[kDefaultRVersion] = defaultRVersionJson;
 
    // Spelling ----------------------------------------------------------------
    layer["spelling"] =

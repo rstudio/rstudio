@@ -186,6 +186,7 @@
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionCrashHandler.hpp"
+#include "modules/SessionRVersions.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -586,6 +587,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::themes::initialize)
       (modules::customsource::initialize)
       (modules::crash_handler::initialize)
+      (modules::r_versions::initialize)
 
       // workers
       (workers::web_request::initialize)

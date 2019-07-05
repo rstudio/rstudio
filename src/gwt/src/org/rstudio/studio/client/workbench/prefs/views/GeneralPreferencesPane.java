@@ -402,7 +402,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(true);
       
       if (rServerRVersion_ != null)
-         rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue());
+         rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue().cast());
       
       if (rememberRVersionForProjects_ != null)
       {
@@ -480,21 +480,26 @@ public class GeneralPreferencesPane extends PreferencesPane
  
       if (saveWorkspace_.isEnabled())
       {
-         prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
-         prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
          prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
-         prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
-         prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
-         prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
-         prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
-         prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
-         prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
-         prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
-         
-         // TODO: Default R version
-         // TODO: Restore project R version
-         // TODO: Enable crash reporting
       }
+
+      prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
+      prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
+      prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+      prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
+      prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
+      prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
+      prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
+      
+      // Pro specific
+      if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
+         prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
+      if (reuseSessionsForProjectLinks_ != null && reuseSessionsForProjectLinks_.isEnabled())
+         prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
+      if (rServerRVersion_ != null && rServerRVersion_.isEnabled())
+         prefs.defaultRVersion().setGlobalValue(rServerRVersion_.getRVersion());
+      if (rememberRVersionForProjects_ != null && rememberRVersionForProjects_.isEnabled())
+         prefs.restoreProjectRVersion().setGlobalValue(rememberRVersionForProjects_.getValue());
       
       if (restartRequired)
       {

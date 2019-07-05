@@ -891,6 +891,25 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to automatically submit crash reports to RStudio."
+        },
+        "default_r_version": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "description": "The R version."
+                },
+                "r_home": {
+                    "type": "string",
+                    "description": "The home directory (R_HOME) for the R installation."
+                },
+                "label": {
+                    "type": "string",
+                    "description": "A free-form label for describing the R version."
+                }
+            },
+            "description": "The R version to use by default.",
+            "default": null
         }
     }
 }

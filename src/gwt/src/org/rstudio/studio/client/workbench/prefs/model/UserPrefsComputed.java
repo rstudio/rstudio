@@ -35,9 +35,4 @@ public class UserPrefsComputed extends UserPrefsAccessor
    {
       return object("spelling", null);
    }
-   
-   public PrefValue<RVersionSpec> defaultRVersion()
-   {
-      return object("default_r_version", null);
-   }
 }
