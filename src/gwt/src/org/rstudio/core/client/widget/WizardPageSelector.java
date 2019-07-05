@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -28,6 +29,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import org.rstudio.core.client.widget.events.ButtonClickManager;
 
 public class WizardPageSelector<I,T> extends Composite
                                      implements CanFocus,
@@ -57,7 +59,7 @@ public class WizardPageSelector<I,T> extends Composite
               @Override
               public void onClick(ClickEvent event)
               {
-                onSelected_.execute(page);  
+                onSelected_.execute(page);
               }
            });
          
@@ -90,6 +92,8 @@ public class WizardPageSelector<I,T> extends Composite
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
          layoutPanel.getElement().setId(
                ElementIds.idFromLabel(pageInfo.getTitle() + "_wizard_page"));
+         Roles.getButtonRole().set(layoutPanel.getElement());
+         layoutPanel.getElement().setTabIndex(0);
          
          ImageResource pageImageResource = pageInfo.getImage();
          DecorativeImage image = null;
@@ -120,7 +124,6 @@ public class WizardPageSelector<I,T> extends Composite
                                         19, Unit.PX, 
                                         55, Unit.PX);
          
-         
          DecorativeImage arrowImage = new DecorativeImage(new ImageResource2x(res.wizardDisclosureArrow2x()));
          layoutPanel.add(arrowImage);
          layoutPanel.setWidgetRightWidth(arrowImage, 
@@ -130,13 +133,12 @@ public class WizardPageSelector<I,T> extends Composite
          layoutPanel.setWidgetTopHeight(arrowImage,
                                         40-(arrowImage.getHeight()/2), Unit.PX,
                                         arrowImage.getHeight(), Unit.PX);
-         
-         
-         layoutPanel.addDomHandler(clickHandler, ClickEvent.getType());
-       
-         
+
+         clickManager_ = new ButtonClickManager(layoutPanel, clickHandler);
          initWidget(layoutPanel);
       }
+
+      private ButtonClickManager clickManager_;
    }
 
    @Override

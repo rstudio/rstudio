@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardProjectTemplatePage;
 import org.rstudio.core.client.widget.WizardResources;
+import org.rstudio.core.client.widget.events.ButtonClickManager;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -151,6 +153,8 @@ public class NewDirectoryNavigationPage
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
          panel.addStyleName(styles.wizardPageSelectorItemSize());
+         Roles.getButtonRole().set(panel.getElement());
+         panel.getElement().setTabIndex(0);
          
          DecorativeImage rightArrow = new DecorativeImage(
                new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
@@ -173,10 +177,11 @@ public class NewDirectoryNavigationPage
          mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
 
-         panel.addDomHandler(handler, ClickEvent.getType());
-         
+         clickManager_ = new ButtonClickManager(panel, handler);
          initWidget(panel);
       }
+
+      private ButtonClickManager clickManager_;
    }
    
    public interface Styles extends CssResource

@@ -84,6 +84,10 @@
    background: #DAE7F6;	
 }
 
+.wizardPageSelectorItem:focus {
+   outline: none;
+}
+
 .wizardPageSelectorItemSize {
    width: 100%;
    height: 34px;
