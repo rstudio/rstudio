@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -130,6 +131,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       // first page caption
       subCaptionLabel_ = new Label(firstPage_.getPageCaption());
       subCaptionLabel_.addStyleName(styles.headerLabel());
+      A11y.setARIALive(subCaptionLabel_, "assertive");
+      
       headerPanel_.add(subCaptionLabel_);
       headerPanel_.setWidgetLeftWidth(subCaptionLabel_,
                                       kTopMargin, Unit.PX, 
@@ -166,6 +169,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       // second page caption label
       pageCaptionLabel_ = new Label();
       pageCaptionLabel_.addStyleName(styles.headerLabel());
+      A11y.setARIALive(pageCaptionLabel_, "assertive");
       headerPanel_.add(pageCaptionLabel_);
       headerPanel_.setWidgetLeftWidth(pageCaptionLabel_,
                                       kPageUILeftMargin, Unit.PX, 
@@ -175,7 +179,6 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       kCaptionHeight, Unit.PX);
       pageCaptionLabel_.setVisible(false);
       
-     
       mainWidget.add(headerPanel_);
       
       // main body panel for transitions
