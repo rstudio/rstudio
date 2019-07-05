@@ -74,6 +74,13 @@ public:
    {
       core::Error err;
       auto layer = layers_[userLayer()];
+      if (!layer)
+      {
+         core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
+         error.addProperty("description", "missing user layer for preference '" + 
+               name + "'");
+         return error;
+      }
       if (layer->readPref<T>(name) != value)
       {
          // Write a new value when changing the value

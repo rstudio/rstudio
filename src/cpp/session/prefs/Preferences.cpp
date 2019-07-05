@@ -216,6 +216,13 @@ core::Error Preferences::writeValue(const std::string& name, const core::json::V
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       auto layer = layers_[userLayer()];
+      if (!layer)
+      {
+         core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
+         error.addProperty("description", "missing user layer for preference value '" + 
+               name + "'");
+         return error;
+      }
       layerName = layer->layerName();
       result = layer->writePref(name, value);
    }
