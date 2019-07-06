@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.packages;
 import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -52,7 +54,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableRe
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
@@ -534,15 +535,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             packagesTable_, top, Unit.PX, 0, Unit.PX);
    }
    
-   class LoadedColumn extends Column<PackageInfo, Boolean>
+   class LoadedColumn extends Column<PackageInfo, LabeledBoolean>
    {
       public LoadedColumn()
       {
-         super(new CheckboxCell(false, false));
+         super(new AriaLabeledCheckboxCell(false, false));
          
-         setFieldUpdater(new FieldUpdater<PackageInfo,Boolean>() {
+         setFieldUpdater(new FieldUpdater<PackageInfo, LabeledBoolean>() {
             @Override
-            public void update(int index, PackageInfo packageInfo, Boolean value)
+            public void update(int index, PackageInfo packageInfo, LabeledBoolean value)
             {
                if (packageInfo.getLibrary() == null ||
                    packageInfo.getLibrary().length() == 0)
@@ -555,7 +556,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                }
                else
                {
-                  if (value.booleanValue())
+                  if (value.getBool())
                      observer_.loadPackage(packageInfo);
                   else
                      observer_.unloadPackage(packageInfo);
@@ -565,9 +566,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       
       @Override
-      public Boolean getValue(PackageInfo packageInfo)
+      public LabeledBoolean getValue(PackageInfo packageInfo)
       {
-         return packageInfo.isLoaded();
+         return new LabeledBoolean(packageInfo.getName(), packageInfo.isLoaded());
       }
       
    }

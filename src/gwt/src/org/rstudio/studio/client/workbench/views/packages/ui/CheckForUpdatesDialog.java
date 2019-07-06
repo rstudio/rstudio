@@ -59,6 +59,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       server_ = server;
    }
 
+   @Override
    protected void showNoActionsRequired()
    {
       globalDisplay_.showMessage(
@@ -67,6 +68,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
             "All packages are up to date.");
    }
 
+   @Override
    protected void addTableColumns(CellTable<PendingAction> table)
    {
       TextColumn<PendingAction> nameColumn = new TextColumn<PendingAction>() {
@@ -129,6 +131,12 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                   "Show package NEWS");
       table.addColumn(newsColumn, "NEWS");
       table.setColumnWidth(newsColumn, 16, Unit.PCT);
+   }
+
+   @Override
+   protected String getActionName(PackageUpdate action)
+   {
+      return action.getPackageName();
    }
 
    private void navigateToUrl(String url)
