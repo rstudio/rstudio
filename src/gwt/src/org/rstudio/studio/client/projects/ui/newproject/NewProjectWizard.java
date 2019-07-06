@@ -44,7 +44,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          boolean allowOpenInNewWindow,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
-      super("New Project", 
+      super("New Project Wizard", 
             "Create Project",
             Roles.getDialogRole(), 
             input, 
@@ -117,7 +117,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private static WizardPage<NewProjectInput, NewProjectResult> createFirstPage(
          SessionInfo sessionInfo)
    {
-      return new WizardNavigationPage<NewProjectInput, NewProjectResult>(
+      return new WizardNavigationPage<>(
             "New Project", "Create project from:", "Create Project", 
             null, null, createSubPages(sessionInfo));
    }
@@ -125,13 +125,12 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private static ArrayList<WizardPage<NewProjectInput, NewProjectResult>> createSubPages(
          SessionInfo sessionInfo)
    {
-      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> subPages = 
-            new ArrayList<WizardPage<NewProjectInput, NewProjectResult>>();
+      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> subPages = new ArrayList<>();
       subPages.add(new NewDirectoryNavigationPage(sessionInfo));
       subPages.add(new ExistingDirectoryPage());
 
       if (sessionInfo.getAllowVcs())
-         subPages.add(new VersionControlNavigationPage(sessionInfo));
+         subPages.add(new VersionControlNavigationPage());
 
       return subPages;
    }
