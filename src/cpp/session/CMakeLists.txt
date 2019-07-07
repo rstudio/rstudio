@@ -225,6 +225,7 @@ set (SESSION_SOURCE_FILES
    modules/tex/SessionSynctex.cpp
    modules/tex/SessionTexUtils.cpp
    modules/tex/SessionViewPdf.cpp
+   modules/themes/CssParser.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
