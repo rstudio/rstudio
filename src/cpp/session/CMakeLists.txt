@@ -146,7 +146,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionSpelling.cpp
    modules/SessionTerminalShell.cpp
    modules/SessionTests.cpp
-   modules/SessionThemes.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
@@ -226,6 +225,7 @@ set (SESSION_SOURCE_FILES
    modules/tex/SessionTexUtils.cpp
    modules/tex/SessionViewPdf.cpp
    modules/themes/CssParser.cpp
+   modules/themes/SessionThemes.cpp
    modules/vcs/SessionVCSCore.cpp
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
