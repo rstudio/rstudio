@@ -12,6 +12,7 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/cellview/client/AbstractHeaderOrFooterBuilder.java \
   com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
+  com/google/gwt/user/client/ui/FormPanel.java \
   com/google/gwt/user/client/ui/Label.java \
   com/google/gwt/user/client/ui/LabelBase.java \
   com/google/gwt/user/client/ui/MenuBar.java \
@@ -30,6 +31,7 @@ patch AbstractHeaderOrFooterBuilder.java < AbstractHeaderOrFooterBuilder.java.di
 cd ${SRCBASE}/com/google/gwt/user/client/ui
 patch CellPanel.java < CellPanel.java.diff
 patch DecoratorPanel.java < DecoratorPanel.java.diff
+patch FormPanel.java < FormPanel.java.diff
 patch Label.java < Label.java.diff
 patch LabelBase.java < LabelBase.java.diff
 patch MenuBar.java < MenuBar.java.diff
