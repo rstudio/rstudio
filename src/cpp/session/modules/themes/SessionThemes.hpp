@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <boost/system/error_code.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -28,12 +30,56 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace themes {
+namespace errc {
+
+enum errc_t
+{
+   Success = 0,
+   ParseError
+};
+
+} // namespace errc
+} // namespace themes
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+
+namespace RSTUDIO_BOOST_NAMESPACE {
+namespace system {
+template <>
+struct is_error_code_enum<rstudio::session::modules::themes::errc::errc_t>
+   { static const bool value = true; };
+} // namespace system
+} // namespace boost
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace themes {
 
 core::Error initialize();
+
+const boost::system::error_category& sessionThemesCategory();
+
+namespace errc {
+
+inline boost::system::error_code make_error_code(errc_t e)
+{
+   return boost::system::error_code(e, sessionThemesCategory());
+}
+
+inline boost::system::error_condition make_error_caondition(errc_t e)
+{
+   return boost::system::error_condition(e, sessionThemesCategory());
+}
+
+} // namespace errc
 
 } // namespace themes
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
 
 #endif

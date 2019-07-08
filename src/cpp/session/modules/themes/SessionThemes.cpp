@@ -579,6 +579,37 @@ Error initialize()
    return initBlock.execute();
 }
 
+class SessionThemesErrorCategory : public boost::system::error_category
+{
+public:
+   const char * name () const BOOST_NOEXCEPT override;
+   std::string message(int ev) const override;
+};
+
+const boost::system::error_category& sessionThemesCategory()
+{
+   static const SessionThemesErrorCategory sessionThemesErrorCategoryConst;
+   return sessionThemesErrorCategoryConst;
+}
+
+const char* SessionThemesErrorCategory::name() const BOOST_NOEXCEPT
+{
+   return "session-themes";
+}
+
+std::string SessionThemesErrorCategory::message(int ev) const
+{
+   switch(ev)
+   {
+      case errc::Success:
+         return "";
+      case errc::ParseError:
+         return "Parse error";
+      default:
+         return "Unknown error";
+   }
+}
+
 } // namespace themes
 } // namespace modules
 } // namespace session
