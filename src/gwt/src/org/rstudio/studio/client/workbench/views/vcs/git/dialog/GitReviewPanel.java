@@ -271,7 +271,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", ToolbarButton.NoTitle, new ImageResource2x(RES.ignore2x())));
 
-      
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
       topToolbar_.addRightSeparator();
@@ -293,6 +292,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Unstage All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
       unstageAllButton_.setVisible(false);
+
+      lblCommit_.setFor(commitMessage_);
+      lblContext_.setFor(contextLines_);
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -664,11 +666,15 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @UiField(provided = true)
    LineTableView lines_;
    @UiField
+   FormLabel lblContext_;
+   @UiField
    ListBox contextLines_;
    @UiField
    Toolbar topToolbar_;
    @UiField
    Toolbar diffToolbar_;
+   @UiField
+   FormLabel lblCommit_;
    @UiField
    TextArea commitMessage_;
    @UiField

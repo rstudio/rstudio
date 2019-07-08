@@ -61,6 +61,11 @@
    width: 100%;
    padding: 6px 2px 4px 2px;
 }
+
+.section:focus {
+   outline:none;
+}
+
 .section * {
    cursor: default;
 }
@@ -68,6 +73,10 @@
 
 .activeSection {
    background: #D6E9F8;
+}
+
+.activeSection:focus {
+   outline:none;
 }
 
 .indent {

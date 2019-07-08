@@ -20,7 +20,10 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
@@ -43,10 +46,8 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
@@ -195,16 +196,16 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       controls_ = new VerticalPanel();
       
       // Create individual widgets
-      appNameLabel_ = new Label("Application name:");
-      appNameLabel_.addStyleName(RES.styles().label());
-      
       appNameTextBox_ = new TextBox();
       DomUtils.disableSpellcheck(appNameTextBox_);
       appNameTextBox_.addStyleName(RES.styles().textBox());
       appNameTextBox_.addStyleName(RES.styles().appNameTextBox());
       DomUtils.setPlaceholder(appNameTextBox_, "Name");
       addTextFieldValidator(appNameTextBox_);
-      
+
+      appNameLabel_ = new FormLabel("Application name:", appNameTextBox_);
+      appNameLabel_.addStyleName(RES.styles().label());
+
       appTypeLabel_ = new Label("Application type:");
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
@@ -228,7 +229,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       directoryChooserTextBox_.addStyleName(RES.styles().textBox());
       
       // Add them to parent
-      Grid appNameTypeGrid = new Grid(3, 2);
+      LayoutGrid appNameTypeGrid = new LayoutGrid(3, 2);
       appNameTypeGrid.addStyleName(RES.styles().grid());
       appNameTypeGrid.setWidget(0, 0, appNameLabel_);
       appNameTypeGrid.setWidget(0, 1, appNameTextBox_);
@@ -247,7 +248,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       controls_.add(new VerticalSpacer("20px"));
       
       container_ = new HorizontalPanel();
-      Image image = new Image(NewProjectResources.INSTANCE.shinyAppIcon2x());
+      DecorativeImage image = new DecorativeImage(NewProjectResources.INSTANCE.shinyAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
       container_.add(controls_);
@@ -327,10 +328,10 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    private HorizontalPanel container_;
    private VerticalPanel controls_;
    
-   private Label   appNameLabel_;
-   private TextBox appNameTextBox_;
+   private FormLabel appNameLabel_;
+   private TextBox   appNameTextBox_;
    
-   private Label   appTypeLabel_;
+   private Label appTypeLabel_;
    private RadioButton appTypeSingleFileButton_;
    private RadioButton appTypeMultipleFileButton_;
    
