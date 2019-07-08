@@ -35,22 +35,64 @@ enum class CssBlockType
 struct CssBlock;
 struct CssFunction;
 
-typedef boost::variant<CssBlock, CssFunction, std::string>  CssComponent;
+class CssComponentValue
+{
+public:
+   CssComponentValue() : strValue_(nullptr), blockValue_(nullptr), functionValue_(nullptr) { };
+   CssComponentValue(const CssComponentValue& other);
+   ~CssComponentValue();
+
+   CssComponentValue& operator=(const CssComponentValue& other);
+   CssComponentValue& operator=(const std::string& value);
+   CssComponentValue& operator=(const CssBlock& value);
+   CssComponentValue& operator=(const CssFunction& value);
+
+   bool isString() const;
+   bool isBlock() const;
+   bool isFunction() const;
+
+   std::string& getStringValue();
+   CssBlock& getBlockValue();
+   CssFunction& getFunctionValue();
+   const std::string& getStringValue() const;
+   const CssBlock& getBlockValue() const;
+   const CssFunction& getFunctionValue() const;
+
+private:
+   void clear();
+
+   std::string* strValue_;
+   CssBlock* blockValue_;
+   CssFunction* functionValue_;
+};
+
+struct CssComponent
+{
+   std::string LeadingComment;
+   std::string TrailingComment;
+   CssComponentValue Value;
+};
 
 struct CssBlock
 {
+   std::string LeadingComment;
+   std::string TrailingComment;
    CssBlockType Type;
    std::vector<CssComponent> Components;
 };
 
 struct CssFunction
 {
-   std::string Token;
+   std::string LeadingComment;
+   std::string TrailingComment;
+   std::string Name;
    std::vector<CssComponent> Components;
 };
 
 struct CssRule
 {
+   std::string LeadingComment;
+   std::string TrailingComment;
    std::string Name;
    std::vector<CssComponent> Prelude;
    CssBlock Block;

@@ -16,9 +16,12 @@
 #include "CssParser.hpp"
 
 #include <cctype>
+#include <queue>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
+
+#include "SessionThemes.hpp"
 
 using namespace rstudio::core;
 
@@ -422,16 +425,461 @@ CssToken nextToken(std::string& css)
    return delim(css);
 }
 
-std::vector<CssToken> tokenizeCss(std::string& css)
+std::queue<CssToken> tokenizeCss(std::string& css)
 {
-   std::vector<CssToken> tokens;
+   std::queue<CssToken> tokens;
    while (!css.empty())
-      tokens.push_back(nextToken(css));
+      tokens.push(nextToken(css));
 
    return tokens;
 }
 
+// Parsing functions ====================================================================================================
+inline void addIndents(unsigned int indentLevel, std::string* pStr)
+{
+   // Two spaces per indentation.
+   for (unsigned int i = 0; i < indentLevel; ++i)
+      *pStr += "  ";
+}
+
+Error consumeComponent(std::queue<CssToken>& tokens, unsigned int indentLevel, CssComponent* pComponent);
+Error consumeFunction(std::queue<CssToken>& tokens, unsigned int indentLevel, CssFunction* pFunction);
+Error consumeBlock(std::queue<CssToken>& tokens, unsigned int indentLevel, CssBlock* pBlock);
+Error consumeQualifiedRule(std::queue<CssToken>& tokens, unsigned int indentLevel, CssRule* pQualifiedRule);
+Error consumeAtRule(std::queue<CssToken>& tokens, unsigned int indentLevel, CssRule* pAtRule);
+
+Error consumeComponent(std::queue<CssToken>& tokens, unsigned int indentLevel, CssComponent* pComponent)
+{
+   // This can't start with a comment because it would have been consumed before calling this, and we only
+   // directly consume one token here, so no comment handling necessary.
+   CssComponent component;
+   switch (tokens.front().Type)
+   {
+      case CssTokenType::BRACE_OPEN:
+      case CssTokenType::BRACKET_OPEN:
+      case CssTokenType::PAREN_OPEN:
+      {
+         CssBlock block;
+         Error error = consumeBlock(tokens, indentLevel, &block);
+         if (error)
+            return error;
+
+         component.Value = block;
+         *pComponent = component;
+         return Success();
+      }
+      case CssTokenType::FUNCTION:
+      {
+         CssFunction function;
+         Error error = consumeFunction(tokens, indentLevel, &function);
+         if (error)
+            return error;
+
+         component.Value = function;
+         *pComponent = component;
+         return Success();
+      }
+      default:
+      {
+         component.Value = tokens.front().Value;
+         tokens.pop();
+         *pComponent = component;
+         return Success();
+      }
+   }
+}
+
+Error consumeFunction(std::queue<CssToken>& tokens, unsigned int indentLevel, CssFunction* pFunction)
+{
+   CssFunction function;
+   function.Name = tokens.front().Value;
+   tokens.pop();
+
+   std::string comment;
+   while (!tokens.empty())
+   {
+      switch (tokens.front().Type)
+      {
+         case CssTokenType::COMMENT:
+         {
+            comment += "\n";
+            addIndents(indentLevel, &comment);
+            comment += tokens.front().Value;
+            tokens.pop();
+            break;
+         }
+         case CssTokenType::PAREN_CLOSE:
+         {
+            function.TrailingComment = comment;
+            *pFunction = function;
+            return Success();
+         }
+         default:
+         {
+            CssComponent component;
+            Error error = consumeComponent(tokens, indentLevel, &component);
+            if (error)
+               return error;
+
+            component.LeadingComment = comment;
+            comment.clear();
+            function.Components.push_back(component);
+            break;
+         }
+      }
+   }
+
+   function.TrailingComment = comment;
+   *pFunction = function;
+   return Success();
+}
+
+Error consumeBlock(std::queue<CssToken>& tokens, unsigned int indentLevel, CssBlock* pBlock)
+{
+   // Increment the indent level for the inside of the block.
+   ++indentLevel;
+
+   CssBlock block;
+   CssTokenType blockEnd;
+   switch (tokens.front().Type)
+   {
+      case CssTokenType::BRACE_OPEN:
+      {
+         block.Type = CssBlockType::BRACE;
+         blockEnd = CssTokenType::BRACE_CLOSE;
+         break;
+      }
+      case CssTokenType::BRACKET_OPEN:
+      {
+         block.Type = CssBlockType::BRACKET;
+         blockEnd = CssTokenType::BRACKET_CLOSE;
+         break;
+      }
+      case CssTokenType::PAREN_OPEN:
+      {
+         block.Type = CssBlockType::PAREN;
+         blockEnd = CssTokenType::PAREN_CLOSE;
+         break;
+      }
+      default:
+      {
+         assert(false);
+         return Error(errc::ParseError, ERROR_LOCATION);
+      }
+   }
+   tokens.pop();
+
+   std::string comment;
+   while (!tokens.empty() && (tokens.front().Type != blockEnd))
+   {
+      switch (tokens.front().Type)
+      {
+         case CssTokenType::COMMENT:
+         {
+            comment += "\n";
+            addIndents(indentLevel, &comment);
+            comment += tokens.front().Value;
+            tokens.pop();
+            break;
+         }
+         default:
+         {
+            CssComponent component;
+            Error error = consumeComponent(tokens, indentLevel, &component);
+            if (error)
+               return error;
+
+            component.LeadingComment = comment;
+            comment.clear();
+
+            block.Components.push_back(component);
+            break;
+         }
+      }
+   }
+
+   // Pop the block end, if the tokens are not empty.
+   if (!tokens.empty())
+      tokens.pop();
+
+   block.TrailingComment = comment;
+   *pBlock = block;
+   return Success();
+}
+
+Error consumeQualifiedRule(std::queue<CssToken>& tokens, unsigned int indentLevel, CssRule* pQualifiedRule)
+{
+   CssRule qRule;
+   std::string comment;
+
+   while (!tokens.empty())
+   {
+      switch (tokens.front().Type)
+      {
+         case CssTokenType::COMMENT:
+         {
+            comment += "\n";
+            addIndents(indentLevel, &comment);
+            comment += tokens.front().Value;
+            tokens.pop();
+            break;
+         }
+         case CssTokenType::BRACE_OPEN:
+         {
+            Error error = consumeBlock(tokens, indentLevel, &qRule.Block);
+            if (error)
+               return error;
+
+            qRule.Block.LeadingComment = comment;
+            *pQualifiedRule = qRule;
+            return Success();
+         }
+         default:
+         {
+            CssComponent component;
+            Error error = consumeComponent(tokens, indentLevel, &component);
+            if (error)
+               return error;
+
+            component.LeadingComment = comment;
+            comment.clear();
+            qRule.Prelude.push_back(component);
+            break;
+         }
+      }
+   }
+
+   return Error(errc::ParseError, ERROR_LOCATION);
+}
+
+Error consumeAtRule(std::queue<CssToken>& tokens, unsigned int indentLevel, CssRule* pAtRule)
+{
+   CssRule atRule;
+   assert(tokens.front().Type == CssTokenType::AT);
+   atRule.Name = tokens.front().Value;
+   tokens.pop();
+
+   std::string comment;
+   while (!tokens.empty())
+   {
+      switch (tokens.front().Type)
+      {
+         // The comment cannot come before the name because this function is only called when the front token is an at
+         // token, which determines the name. This comment will either be a leading comment to the prelude or a leading
+         // comment to the block.
+         case CssTokenType::COMMENT:
+         {
+            comment += "\n";
+            addIndents(indentLevel, &comment);
+            comment += tokens.front().Value;
+            tokens.pop();
+            break;
+         }
+         case CssTokenType::SEMICOLON:
+         {
+            tokens.pop();
+            atRule.TrailingComment = comment;
+            *pAtRule = atRule;
+            return Success();
+         }
+         case CssTokenType::BRACE_OPEN:
+         {
+            Error error = consumeBlock(tokens, indentLevel, &atRule.Block);
+            if (error)
+               return error;
+
+            atRule.Block.LeadingComment = comment;
+            *pAtRule = atRule;
+            return Success();
+         }
+         default:
+         {
+            CssComponent component;
+            Error error = consumeComponent(tokens, indentLevel, &component);
+            if (error)
+               return error;
+
+            component.LeadingComment = comment;
+            comment.clear();
+
+            atRule.Prelude.push_back(component);
+            break;
+         }
+      }
+   }
+
+   atRule.TrailingComment = comment;
+   *pAtRule = atRule;
+   return Success();
+}
+
 } // anonymous namespace
+
+Error parseCss(const std::string& css, std::vector<CssRule>* pStylesheet)
+{
+   std::string cssCopy = css;
+   std::queue<CssToken> tokens = tokenizeCss(cssCopy);
+   std::vector<CssRule> rules;
+   std::string comment;
+   while (!tokens.empty())
+   {
+      CssRule rule;
+      Error error;
+      switch(tokens.front().Type)
+      {
+         case CssTokenType::COMMENT:
+         {
+            comment += ((rules.empty() && (comment.empty())) ? "" : "\n") + tokens.front().Value;
+            tokens.pop();
+            break;
+         }
+         case CssTokenType::WHITESPACE:
+         case CssTokenType::CD_CLOSE:
+         case CssTokenType::CD_OPEN:
+         {
+            tokens.pop();
+            break;
+         }
+         case CssTokenType::AT:
+         {
+            error = consumeAtRule(tokens, 0, &rule);
+            if (error)
+               return error;
+
+            rule.LeadingComment = comment;
+            comment.clear();
+
+            rules.push_back(rule);
+            break;
+         }
+         default:
+         {
+            error = consumeQualifiedRule(tokens, 0, &rule);
+            if (error)
+               return error;
+
+            rule.LeadingComment = comment;
+            comment.clear();
+
+            rules.push_back(rule);
+            break;
+         }
+      }
+   }
+
+
+   *pStylesheet = rules;
+   return Success();
+}
+
+CssComponentValue::CssComponentValue(const CssComponentValue& other)
+{
+   *this = other;
+}
+
+CssComponentValue::~CssComponentValue()
+{
+   clear();
+}
+
+CssComponentValue& CssComponentValue::operator=(const CssComponentValue& other)
+{
+   if (other.strValue_)
+      strValue_ = new std::string(*other.strValue_);
+   if (other.blockValue_)
+      blockValue_ = new CssBlock(*other.blockValue_);
+   if (other.functionValue_)
+      functionValue_ = new CssFunction(*other.functionValue_);
+
+   assert((isString() && !isBlock() && !isFunction()) ||
+          (!isString() && isBlock() && !isFunction()) ||
+          (!isString() && !isBlock() && !isFunction()) ||
+          (!isString() && !isBlock() && !isFunction()));
+
+   return *this;
+}
+
+CssComponentValue& CssComponentValue::operator=(const std::string& value)
+{
+   clear();
+   strValue_ = new std::string(value);
+   return *this;
+}
+
+CssComponentValue& CssComponentValue::operator=(const CssBlock& value)
+{
+   clear();
+   blockValue_ = new CssBlock(value);
+   return *this;
+}
+
+CssComponentValue& CssComponentValue::operator=(const CssFunction& value)
+{
+   clear();
+   functionValue_ = new CssFunction(value);
+   return *this;
+}
+
+bool CssComponentValue::isString() const
+{
+   return !!strValue_;
+}
+
+bool CssComponentValue::isBlock() const
+{
+   return !!blockValue_;
+}
+
+bool CssComponentValue::isFunction() const
+{
+   return !!functionValue_;
+}
+
+std::string& CssComponentValue::getStringValue()
+{
+   assert(isString());
+   return *strValue_;
+}
+
+CssBlock& CssComponentValue::getBlockValue()
+{
+   assert(isBlock());
+   return *blockValue_;
+}
+
+CssFunction& CssComponentValue::getFunctionValue()
+{
+   assert(isFunction());
+   return *functionValue_;
+}
+
+const std::string& CssComponentValue::getStringValue() const
+{
+   assert(isString());
+   return *strValue_;
+}
+
+const CssBlock& CssComponentValue::getBlockValue() const
+{
+   assert(isBlock());
+   return *blockValue_;
+}
+
+const CssFunction& CssComponentValue::getFunctionValue() const
+{
+   assert(isFunction());
+   return *functionValue_;
+}
+
+void CssComponentValue::clear()
+{
+   delete strValue_;
+   delete blockValue_;
+   delete functionValue_;
+   strValue_ = nullptr;
+   blockValue_ = nullptr;
+   functionValue_ = nullptr;
+}
 
 } // namespace themes
 } // namespace modules
