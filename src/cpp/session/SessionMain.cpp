@@ -152,7 +152,6 @@
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionTests.hpp"
-#include "modules/SessionThemes.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionHistory.hpp"
@@ -185,6 +184,7 @@
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
+#include "modules/themes/SessionThemes.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 

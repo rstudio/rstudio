@@ -15,8 +15,6 @@
 
 #include "SessionReticulate.hpp"
 
-#include "SessionThemes.hpp"
-
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
