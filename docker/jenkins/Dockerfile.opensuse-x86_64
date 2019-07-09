@@ -1,4 +1,4 @@
-FROM opensuse:42.3
+FROM opensuse/leap:42.3
 
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
