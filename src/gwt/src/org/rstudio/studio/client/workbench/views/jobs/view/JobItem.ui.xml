@@ -3,6 +3,7 @@
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rw="urn:import:org.rstudio.core.client.widget">
     <ui:style field="styles_" type="org.rstudio.studio.client.workbench.views.jobs.view.JobItem.Styles">
+    @external rstudio-themes-flat, rstudio-themes-dark;
     .item
     {
         padding-left: 5px;
@@ -31,15 +32,26 @@
     
     .succeeded .state
     {
-        color: #3db057;
+        color: #0c8828;
     }
     
     .cancelled .state,
     .failed .state
     {
-        color: #ee6366;
+        color: #da2c30;
     }
     
+    .rstudio-themes-flat .rstudio-themes-dark .succeeded .state
+    {
+        color: #3db057;
+    }
+    
+    .rstudio-themes-flat .rstudio-themes-dark .cancelled .state,
+    .rstudio-themes-flat .rstudio-themes-dark .failed .state
+    {
+        color: #ee6366;
+    }
+     
     .pending .state
     {
         color: #b8b8b8;

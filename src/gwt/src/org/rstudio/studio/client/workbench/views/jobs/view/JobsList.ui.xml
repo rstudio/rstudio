@@ -10,7 +10,6 @@
    
    .empty
    {
-      color: #909090;
       text-align: center;
       margin-top: 10%;
    }
