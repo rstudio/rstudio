@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -40,7 +40,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RmdTemplateChooser extends Composite
@@ -72,7 +71,6 @@ public class RmdTemplateChooser extends Composite
          }
       });
       captionWithHelp_.setFor(listTemplates_);
-      lblName_.setFor(txtName_);
    }
    
    public void populateTemplates()
@@ -218,8 +216,7 @@ public class RmdTemplateChooser extends Composite
    
    @UiField CaptionWithHelp captionWithHelp_;
    @UiField WidgetListBox<RmdDiscoveredTemplateItem> listTemplates_;
-   @UiField FormLabel lblName_;
-   @UiField TextBox txtName_;
+   @UiField LabeledTextBox txtName_;
    @UiField(provided = true) DirectoryChooserTextBox dirLocation_;
    @UiField HTMLPanel noTemplatesFound_;
    @UiField HTMLPanel templateOptionsPanel_;
