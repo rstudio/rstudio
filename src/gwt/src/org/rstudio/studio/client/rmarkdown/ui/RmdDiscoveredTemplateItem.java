@@ -30,7 +30,7 @@ public class RmdDiscoveredTemplateItem extends Composite
       panel_ = new HTMLPanel("");
       Label pkg = new Label("{" + template.getPackage() + "}");
       pkg.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      pkg.getElement().getStyle().setColor("#909090");
+      pkg.getElement().getStyle().setColor("#656565");
       panel_.add(pkg);
       Label name = new Label(template.getName());
       name.setTitle(template.getDescription());

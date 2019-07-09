@@ -13,7 +13,7 @@
 
 .headerPanel {
    width: 400px;
-   height: 42px;	
+   height: 42px;
 }
 
 .rstudio-themes-flat .headerPanel {
@@ -53,6 +53,16 @@
    background-size: 79px 30px;
 }
 
+@sprite .wizardBackButton:focus {
+   gwt-image: 'wizardBackButtonFocus2x';
+   border: none;
+   font-weight: bold;
+   padding-left: 26px;
+   padding-top: 6px;
+   background-size: 79px 30px;
+   outline: none;
+}
+
 @sprite .wizardPageSelectorItem {
    width: 100%;
    gwt-image: 'wizardPageSelectorBackground';
@@ -72,6 +82,10 @@
 
 .wizardPageSelectorItem:hover {
    background: #DAE7F6;	
+}
+
+.wizardPageSelectorItem:focus {
+   outline: none;
 }
 
 .wizardPageSelectorItemSize {

@@ -4,20 +4,21 @@
    xmlns:rs="urn:import:org.rstudio.core.client.widget">
    <ui:style>
      @external .gwt-Label;
+     @external .gwt-TextBox;
      
-     .controlLabel
+     .controlLabel .gwt-Label, .directoryChooser .gwt-Label
      {
         margin-bottom: 3px;
         font-weight: bold;
         display: block;
      }
      
-     .interiorControlLabel
+     .interiorControlLabel .gwt-Label, .directoryChooserInner .gwt-Label
      {
         margin-top: 7px; 
      }
      
-     .textBox
+     .controlLabel .gwt-TextBox
      {
        padding: 2px;
        width: 100%;
@@ -43,7 +44,6 @@
      
      .noTemplates
      {
-       color: #909090;
        border: 1px solid #909090;
      }
      
@@ -62,8 +62,7 @@
    <rs:CaptionWithHelp ui:field="captionWithHelp_" styleName="{style.help}"></rs:CaptionWithHelp>
    <rs:SimplePanelWithProgress ui:field="progressPanel_" 
                                styleName="{style.templateListArea}">
-      <rs:WidgetListBox width="100%" height="100%"
-                        ui:field="listTemplates_"></rs:WidgetListBox>
+      <rs:WidgetListBox width="100%" height="100%" ui:field="listTemplates_"></rs:WidgetListBox>
    </rs:SimplePanelWithProgress>
    <g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
                 visible="false" ui:field="noTemplatesFound_">
@@ -77,14 +76,10 @@
         This template contains multiple files. Create a new directory for
         these files:
      </g:HTML>
-     <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-              text="Name:"></g:Label>
-     <g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
-                text="Untitled"></g:TextBox>
+     <rs:LabeledTextBox labelText="Name:" styleName="{style.controlLabel} {style.interiorControlLabel}" 
+                        ui:field="txtName_" text="Untitled"></rs:LabeledTextBox>
 
-     <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-              text="Location:"></g:Label>
-     <rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
+     <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">
      </rs:DirectoryChooserTextBox>
    
    </g:HTMLPanel>

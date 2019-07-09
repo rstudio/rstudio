@@ -1,7 +1,7 @@
 /*
  * FileBrowserWidget.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,9 +27,9 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.FormLabel;
 
 public class FileBrowserWidget extends Composite
                  implements FileSystemContext.Callbacks
@@ -187,15 +187,15 @@ public class FileBrowserWidget extends Composite
       filenamePanel.setStylePrimaryName(styles.filenamePanel());
       filenamePanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
 
-      Label filenameLabel = new Label(nameLabel + ":", false);
-      filenameLabel.setStylePrimaryName(styles.filenameLabel());
-      filenamePanel.add(filenameLabel);
-      
       filename_ = new TextBox();
       if (initialFilename_ != null)
          filename_.setText(initialFilename_);
       filename_.setStylePrimaryName(styles.filename());
       filename_.getElement().setId(ElementIds.FILE_DIALOG_NAME_PROMPT);
+
+      FormLabel filenameLabel = new FormLabel(nameLabel + ":", filename_, false);
+      filenameLabel.setStylePrimaryName(styles.filenameLabel());
+      filenamePanel.add(filenameLabel);
       filenamePanel.add(filename_);
       filenamePanel.setCellWidth(filename_, "100%");
 

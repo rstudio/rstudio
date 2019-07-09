@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -700,6 +701,34 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
+    * Gets an ordered list of keyboard-focusable elements in the dialog.
+    */
+   public ArrayList<Element> getFocusableElements()
+   {
+      // css selector from https://github.com/scottaohara/accessible_modal_window
+      String focusableElements = 
+            "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
+            "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
+            "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
+            "[tabindex=\"0\"]:not([hidden]):not([disabled]), summary:not([hidden]), " +
+            "[contenteditable]:not([hidden]), audio[controls]:not([hidden]), " +
+            "video[controls]:not([hidden])";
+      NodeList<Element> potentiallyFocusable = DomUtils.querySelectorAll(getElement(), focusableElements);
+
+      ArrayList<Element> focusable = new ArrayList<>();
+      for (int i = 0; i < potentiallyFocusable.getLength(); i++)
+      {
+         // only include items taking up space
+         if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 && 
+               potentiallyFocusable.getItem(i).getOffsetHeight() > 0)
+         {
+            focusable.add(potentiallyFocusable.getItem(i));
+         }
+      }
+      return focusable;
+   }
+
+   /**
     * Gets a list of keyboard focusable elements in the dialog, and tracks which ones are
     * first and last. This is used to keep keyboard focus in the dialog when Tabbing and
     * Shift+Tabbing off end or beginning of dialog.
@@ -710,24 +739,27 @@ public abstract class ModalDialogBase extends DialogBox
     */
    public void refreshFocusableElements()
    {
-      // css selector from https://github.com/scottaohara/accessible_modal_window
-      String focusableElements = 
-            "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
-            "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
-            "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
-            "[tabindex=\"0\"]:not([hidden]):not([disabled]), summary:not([hidden]), " +
-            "[contenteditable]:not([hidden]), audio[controls]:not([hidden]), " +
-            "video[controls]:not([hidden])";
-      NodeList<Element> focusable = DomUtils.querySelectorAll(getElement(), focusableElements);
-      if (focusable.getLength() == 0)
+      ArrayList<Element> focusable = getFocusableElements(); 
+      if (focusable.size() == 0)
       {
-         Debug.logWarning("No focusable controls found in modal dialog");
+         Debug.logWarning("No potentially focusable controls found in modal dialog");
          return;
       }
-      setFirstFocusableElement(focusable.getItem(0));
-      setLastFocusableElement(focusable.getItem(focusable.getLength() - 1));
+      setFirstFocusableElement(focusable.get(0));
+      setLastFocusableElement(focusable.get(focusable.size() - 1));
    }
-   
+
+   /**
+    * Perform a deferred update of focusable elements, then set focus on the initial control.
+    */
+   public void deferRefreshFocusableElements()
+   {
+      Scheduler.get().scheduleDeferred(() -> {
+         refreshFocusableElements();
+         focusInitialControl();
+      });
+   }
+
    private void removeExisting(String classname)
    {
       Element current = getByClass(classname);

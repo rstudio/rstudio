@@ -78,6 +78,12 @@ public class CleanUnusedDialog
       table.addColumn(installedColumn, "Version");
       table.setColumnWidth(installedColumn, 35, Unit.PCT);
    }
-  
+
+   @Override
+   protected String getActionName(PackratPackageAction action)
+   {
+      return action.getPackage();
+   }
+
    private final GlobalDisplay globalDisplay_;
 }

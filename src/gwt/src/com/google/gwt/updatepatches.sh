@@ -14,6 +14,7 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/cellview/client/AbstractHeaderOrFooterBuilder.java \
   com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
+  com/google/gwt/user/client/ui/FormPanel.java \
   com/google/gwt/user/client/ui/Label.java \
   com/google/gwt/user/client/ui/LabelBase.java \
   com/google/gwt/user/client/ui/MenuBar.java \
@@ -35,6 +36,7 @@ updatepatch ${PACKAGE} AbstractHeaderOrFooterBuilder.java
 PACKAGE=com/google/gwt/user/client/ui
 updatepatch ${PACKAGE} CellPanel.java
 updatepatch ${PACKAGE} DecoratorPanel.java
+updatepatch ${PACKAGE} FormPanel.java
 updatepatch ${PACKAGE} Label.java
 updatepatch ${PACKAGE} LabelBase.java
 updatepatch ${PACKAGE} MenuBar.java

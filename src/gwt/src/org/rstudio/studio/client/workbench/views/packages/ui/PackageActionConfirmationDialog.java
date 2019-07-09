@@ -19,6 +19,8 @@ import java.util.List;
 
 import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -27,14 +29,11 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -62,23 +61,11 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       
       setOkButtonCaption(okCaption);
     
-      addLeftButton(selectAllButton_ = new ThemedButton("Select All", 
-                                                        new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-           setGlobalPerformAction(true);
-         } 
-      }), ElementIds.SELECT_ALL_BUTTON);
+      addLeftButton(selectAllButton_ = new ThemedButton("Select All",
+         event -> setGlobalPerformAction("Select All", true)), ElementIds.SELECT_ALL_BUTTON);
      
-      addLeftButton(selectNoneButton_ = new ThemedButton("Select None", 
-                                                         new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            setGlobalPerformAction(false);
-         } 
-      }), ElementIds.SELECT_NONE_BUTTON);
+      addLeftButton(selectNoneButton_ = new ThemedButton("Select None",
+         event -> setGlobalPerformAction("Select None", false)), ElementIds.SELECT_NONE_BUTTON);
       
       enableOkButton(false);
       selectAllButton_.setEnabled(false);
@@ -91,7 +78,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       ArrayList<T> actions = new ArrayList<T>();
       for (PendingAction action : actionsDataProvider_.getList())
       {
-         if (action.getPerformAction())
+         if (action.getPerformAction().getBool())
             actions.add(action.getActionInfo());
       }
       return actions;
@@ -115,11 +102,11 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          flowPanel.add(text);
       }
       
-      actionsTable_ = new CellTable<PendingAction>(
+      actionsTable_ = new CellTable<>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
       actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-      actionsTable_.setSelectionModel(new NoSelectionModel<PendingAction>());
+      actionsTable_.setSelectionModel(new NoSelectionModel<>());
       actionsTable_.setWidth("100%", true);
       
       ActionColumn actionColumn = new ActionColumn();
@@ -127,8 +114,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       actionsTable_.setColumnWidth(actionColumn, 30, Unit.PX);
       
       addTableColumns(actionsTable_);
-     
-      
+
       ScrollPanel scrollPanel = new ScrollPanel();
       scrollPanel.setWidget(actionsTable_);
       scrollPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
@@ -142,11 +128,12 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          {
             if (actions != null && actions.length() > 0)
             {
-               ArrayList<PendingAction> pendingActions = new ArrayList<PendingAction>();
+               ArrayList<PendingAction> pendingActions = new ArrayList<>();
                for (int i=0; i<actions.length(); i++)
-                  pendingActions.add(new PendingAction(actions.get(i), false));
+                  pendingActions.add(new PendingAction(actions.get(i),
+                     new LabeledBoolean(getActionName(actions.get(i)), false)));
                actionsTable_.setPageSize(pendingActions.size());
-               actionsDataProvider_ = new ListDataProvider<PendingAction>();
+               actionsDataProvider_ = new ListDataProvider<>();
                actionsDataProvider_.setList(pendingActions);
                actionsDataProvider_.addDataDisplay(actionsTable_);
                
@@ -166,10 +153,10 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          public void onError(ServerError error)
          {
             closeDialog();
-            super.onError(error);            
-         }  
+            super.onError(error);
+         }
       });
- 
+
       return flowPanel;
    }
 
@@ -180,26 +167,26 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    
    protected abstract void showNoActionsRequired(); 
    protected abstract void addTableColumns(CellTable<PendingAction> table);
+   protected abstract String getActionName(T action);
   
-   class ActionColumn extends Column<PendingAction, Boolean>
+   class ActionColumn extends Column<PendingAction, LabeledBoolean>
    {
       public ActionColumn()
       {
-         super(new CheckboxCell(false, false));
+         super(new AriaLabeledCheckboxCell(false, false));
          
-         setFieldUpdater(new FieldUpdater<PendingAction,Boolean>() {
-            public void update(int index, PendingAction action, Boolean value)
+         setFieldUpdater(new FieldUpdater<PendingAction, LabeledBoolean>() {
+            public void update(int index, PendingAction action, LabeledBoolean value)
             {
                List<PendingAction> actions = actionsDataProvider_.getList();
-               actions.set(actions.indexOf(action), 
-                           new PendingAction(action.getActionInfo(), value));
+               actions.set(actions.indexOf(action), new PendingAction(action.getActionInfo(), value));
                manageUIState();
-            }    
+            }
          });
       }
 
       @Override
-      public Boolean getValue(PendingAction update)
+      public LabeledBoolean getValue(PendingAction update)
       {
          return update.getPerformAction();
       }
@@ -207,7 +194,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    
    protected class PendingAction
    {
-      public PendingAction(T actionInfo, boolean performAction)
+      public PendingAction(T actionInfo, LabeledBoolean performAction)
       {
          actionInfo_ = actionInfo;
          performAction_ = performAction;
@@ -218,21 +205,21 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          return actionInfo_;
       }
       
-      public boolean getPerformAction()
+      public LabeledBoolean getPerformAction()
       {
          return performAction_;
       }
-      
+
       private final T actionInfo_;
-      private final boolean performAction_;
+      private final LabeledBoolean performAction_;
    }
    
-   private void setGlobalPerformAction(Boolean performAction)
+   private void setGlobalPerformAction(String label, Boolean performAction)
    {
       List<PendingAction> actions = actionsDataProvider_.getList();
       ArrayList<PendingAction> newActions = new ArrayList<PendingAction>();
       for(PendingAction action : actions)
-         newActions.add(new PendingAction(action.getActionInfo(), performAction));
+         newActions.add(new PendingAction(action.getActionInfo(), new LabeledBoolean(label, performAction)));
       actionsDataProvider_.setList(newActions);
       manageUIState();
    }
@@ -242,25 +229,25 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       enableOkButton(collectInput().size() > 0);
    }
    
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String mainWidget();
       String explanatoryText();
    }
 
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("PackageActionConfirmationDialog.css")
       Styles styles();
    }
 
-   static Resources RESOURCES = (Resources) GWT.create(Resources.class);
+   static Resources RESOURCES = GWT.create(Resources.class);
 
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
    }
-   
+
    private CellTable<PendingAction> actionsTable_;
    private ServerDataSource<JsArray<T>> actionsDS_;
    private ListDataProvider<PendingAction> actionsDataProvider_;

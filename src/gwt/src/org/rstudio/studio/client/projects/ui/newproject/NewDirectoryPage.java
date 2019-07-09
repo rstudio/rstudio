@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
@@ -37,7 +38,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
@@ -78,20 +78,21 @@ public class NewDirectoryPage extends NewProjectWizardPage
       HorizontalPanel panel = new HorizontalPanel();
       panel.addStyleName(styles.wizardMainColumn());
       
-      // create the dir name label
-      dirNameLabel_ = new Label("Directory name:");
-      dirNameLabel_.addStyleName(styles.wizardTextEntryLabel());
-      
       // top panel widgets
       onAddTopPanelWidgets(panel);
       
       // dir name
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.addStyleName(styles.newProjectDirectoryName());
-      namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
       txtProjectName_.setWidth("100%");
       DomUtils.disableSpellcheck(txtProjectName_);
+
+      // create the dir name label
+      dirNameLabel_ = new FormLabel(getDirNameLabel(), txtProjectName_);
+      dirNameLabel_.addStyleName(styles.wizardTextEntryLabel());
+
+      namePanel.add(dirNameLabel_);
       namePanel.add(txtProjectName_);
       panel.add(namePanel);
       addWidget(panel);
@@ -160,7 +161,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
          addWidget(optionsPanel);
       }
    }
-   
+
+   protected String getDirNameLabel()
+   {
+      return "Directory name:";
+   }
+
    protected boolean getOptionsSideBySide()
    {
       return false;
@@ -258,7 +264,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return txtProjectName_.getText().trim();
    }
    
-   protected Label dirNameLabel_;
+   protected FormLabel dirNameLabel_;
    protected TextBox txtProjectName_;
    protected CheckBox chkGitInit_;
    protected CheckBox chkRenvInit_;

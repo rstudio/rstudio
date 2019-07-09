@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -114,6 +115,8 @@ public class SVNCommitDialog extends ModalDialogBase
                                           HorizontalPanel.ALIGN_TOP);
       topHPanel_.setCellHorizontalAlignment(btnClearSelection_,
                                             HorizontalPanel.ALIGN_RIGHT);
+
+      lblMessage_.setFor(message_);
 
       btnClearSelection_.addClickHandler(new ClickHandler()
       {
@@ -246,6 +249,8 @@ public class SVNCommitDialog extends ModalDialogBase
 
    @UiField(provided = true)
    ChangelistTable changelist_;
+   @UiField
+   FormLabel lblMessage_;
    @UiField
    TextArea message_;
    @UiField
