@@ -120,18 +120,18 @@
      <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
         <g:HTMLPanel ui:field="newTemplatePanel_">
-           <g:Grid width="100%" cellSpacing="0" cellPadding="0">
+           <g:Grid ui:field="formGrid_" width="100%" cellSpacing="0" cellPadding="0">
              <g:row>
-               <g:customCell><g:Label styleName="{style.topLabel}" 
-                              text="Title:"></g:Label></g:customCell>
+               <g:customCell><rw:FormLabel ui:field="lblTitle_" styleName="{style.topLabel}" 
+                              text="Title:"></rw:FormLabel></g:customCell>
                <g:customCell styleName="{style.textCol}">
                  <g:TextBox styleName="{style.textBox}" 
                             ui:field="txtTitle_"></g:TextBox>
                </g:customCell>
               </g:row>
               <g:row>
-                <g:customCell><g:Label styleName="{style.topLabel}" 
-                         text="Author:"></g:Label></g:customCell>
+                <g:customCell><rw:FormLabel ui:field="lblAuthor_" styleName="{style.topLabel}" 
+                         text="Author:"></rw:FormLabel></g:customCell>
                 <g:customCell><g:TextBox styleName="{style.textBox}"
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>

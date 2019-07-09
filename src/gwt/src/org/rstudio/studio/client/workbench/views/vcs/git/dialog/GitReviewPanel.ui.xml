@@ -19,7 +19,7 @@
                   <g:east size="400">
                      <g:LayoutPanel>
                         <g:layer left="6px" right="6px" top="4px" height="20px">
-                           <g:Label text="Commit message"/>
+                           <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"/>
                         </g:layer>
                         <g:layer left="6px" right="6px" top="20px" bottom="34px">
                            <g:TextArea ui:field="commitMessage_" styleName="{res.styles.commitMessage}"/>
@@ -54,7 +54,7 @@
                                     text="Unstaged"
                                     checked="true"
                                     styleName="{res.styles.unstaged}"/>
-                     <g:Label text="Context" styleName="{res.styles.stagedLabel}"/>
+                     <rs_widget:FormLabel ui:field="lblContext_" text="Context" styleName="{res.styles.stagedLabel}"/>
                      <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="0">
                         <g:item value="5">5 line</g:item>
                         <g:item value="10">10 line</g:item>
