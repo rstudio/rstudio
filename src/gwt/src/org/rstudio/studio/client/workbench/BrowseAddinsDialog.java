@@ -334,7 +334,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    {
       Label label = new Label(caption);
       label.getElement().getStyle().setMarginTop(20, Unit.PX);
-      label.getElement().getStyle().setColor("#888");
+      label.getElement().getStyle().setColor("#656565");
       return label;
    }
    

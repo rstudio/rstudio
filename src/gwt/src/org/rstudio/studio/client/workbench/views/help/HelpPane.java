@@ -727,9 +727,9 @@ public class HelpPane extends WorkbenchPane
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
                "Find in Topic", 
-               "No occurences found",
+               "No occurrences found",
                findInputSource);
-      }     
+      }
    }
    
    private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{
