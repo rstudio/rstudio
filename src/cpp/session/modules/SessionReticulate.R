@@ -86,9 +86,6 @@
    engine <- tolower(Sys.getenv("MPLENGINE"))
    if (engine %in% c("", "qt5agg"))
       Sys.setenv(MPLENGINE = "tkAgg")
-   
-   # set up hooks for overriding 'show()' in matplotlib
-   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.pyplot.loadHook)
 })
 
 .rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
