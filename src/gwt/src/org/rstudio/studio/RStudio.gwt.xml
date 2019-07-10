@@ -24,6 +24,13 @@
       // also true when run under QtWebEngine, which defers hook injection
       return window.navigator.userAgent.indexOf("QtWebEngine") > 0 ? "true" : "false";
    ]]></property-provider>
+
+   <define-property name="rstudio.remoteDesktop" values="true,false"/>
+   <property-provider name="rstudio.remoteDesktop"><![CDATA[
+      // true if desktop hooks are injected
+      return !!window.remoteDesktop;
+   ]]></property-provider>
+
    <set-property name="user.agent" value="safari">
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
@@ -51,7 +58,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.impl.DesktopFileDialogs">
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
-      <when-property-is name="rstudio.desktop" value="true"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.remoteDesktop" value="false"/>
+      </all>
    </replace-with>
  
    <replace-with class="org.rstudio.studio.client.application.ui.impl.WebApplicationHeader">
@@ -67,7 +77,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.DesktopCRANChooser">
       <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
-      <when-property-is name="rstudio.desktop" value="true"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.remoteDesktop" value="false"/>
+      </all>
    </replace-with>
 
    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.WebActionsWidget">

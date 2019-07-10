@@ -87,7 +87,7 @@ public class WarningBar extends Composite
    public void showLicenseButton(boolean show)
    {
       // never show the license button in server mode
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          moreButton_.setVisible(show);
    }
 

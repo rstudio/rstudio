@@ -199,6 +199,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 # source files
 set(DESKTOP_SOURCE_FILES
   DesktopActivationOverlay.cpp
+  DesktopSessionServersOverlay.cpp
   DesktopBrowserWindow.cpp
   DesktopDownloadItemHelper.cpp
   DesktopGwtCallback.cpp
@@ -222,6 +223,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSlotBinders.cpp
   DesktopSubMenu.cpp
   DesktopSynctex.cpp
+  RemoteDesktopSessionLauncherOverlay.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
 )
@@ -276,9 +278,11 @@ endif()
 include_directories(
   include
   ${CORE_SOURCE_DIR}/include
+  ${OPENSSL_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${EXT_SOURCE_DIR}
+  ${SESSION_SOURCE_DIR}/include
   ${TESTS_INCLUDE_DIR}
 )
 

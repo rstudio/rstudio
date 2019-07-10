@@ -64,7 +64,7 @@ public class ShortcutViewer implements NativePreviewHandler
          @Override
          public void execute()
          {
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
                Desktop.getFrame().showKeyboardShortcutHelp();
             else 
                openApplicationURL("docs/keyboard.htm");

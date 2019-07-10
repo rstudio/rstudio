@@ -53,7 +53,7 @@ public class ProjectOpener
       
       // use the default dialog on desktop mode or single-session mode
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
-      if (Desktop.isDesktop() ||
+      if (Desktop.hasDesktopFrame() ||
           !RStudioGinjector.INSTANCE.getSession().getSessionInfo()
                                                  .getMultiSession())
       {

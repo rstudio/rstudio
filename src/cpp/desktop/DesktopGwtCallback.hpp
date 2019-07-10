@@ -56,12 +56,13 @@ class GwtCallback : public QObject
    Q_OBJECT
 
 public:
-   GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner);
+   GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner, bool isRemoteDesktop);
    void initialize();
    int collectPendingQuitRequest();
 
 Q_SIGNALS:
    void workbenchInitialized();
+   void sessionQuit();
 
 public Q_SLOTS:
    QString proportionalFont();
@@ -210,6 +211,7 @@ public Q_SLOTS:
    void setDisableGpuDriverBugWorkarounds(bool disable);
 
    void showLicenseDialog();
+   void showSessionServerOptionsDialog();
    QString getInitMessages();
    QString getLicenseStatusMessage();
    bool allowProductUsage();
@@ -249,6 +251,10 @@ public Q_SLOTS:
 
    QString getDisplayDpi();
 
+   void onSessionQuit();
+
+   QString getSessionServer();
+
 private:
    void invokeReflowComment();
    Synctex& synctex();
@@ -259,6 +265,7 @@ private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
    GwtWindow* pOwner_;
+   bool isRemoteDesktop_;
    Synctex* pSynctex_;
    int pendingQuit_;
    QString printText_;

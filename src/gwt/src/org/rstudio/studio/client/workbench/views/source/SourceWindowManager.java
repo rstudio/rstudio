@@ -446,7 +446,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          public void execute()
          {
             // return focus to the main window when finished
-            if (Desktop.isDesktop() || !isMainSourceWindow())
+            if (Desktop.hasDesktopFrame() || !isMainSourceWindow())
                pSatellite_.get().focusMainWindow();
             
             // complete operation
@@ -1176,7 +1176,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private static boolean canActivateSourceWindows()
    {
-      return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
+      return Desktop.hasDesktopFrame() || BrowseCap.INSTANCE.isInternetExplorer();
    }
    
    private void focusSourceWindow(String windowId)
@@ -1184,7 +1184,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (StringUtil.isNullOrEmpty(windowId))
       {
          // activate main window
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             Desktop.getFrame().bringMainFrameToFront();
          else
             WindowEx.get().focus();

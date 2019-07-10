@@ -837,7 +837,7 @@ public class RSConnect implements SessionInitHandler,
 
          // we can't raise the main window if we aren't in desktop mode, so show
          // a dialog to guide the user there
-         if (!Desktop.isDesktop())
+         if (!Desktop.hasDesktopFrame())
          {
             display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
                   "RStudio is deploying " + result.getAppName() + ". " + 
@@ -1106,7 +1106,7 @@ public class RSConnect implements SessionInitHandler,
    {
       // this can be invoked by a satellite, so bring the main frame to the
       // front if we can
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
       else
          WindowEx.get().focus();

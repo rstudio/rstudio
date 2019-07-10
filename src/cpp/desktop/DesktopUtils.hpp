@@ -37,7 +37,7 @@ class MainWindow;
 
 void reattachConsoleIfNecessary();
 
-core::FilePath userLogPath();
+rstudio::core::FilePath userLogPath();
 
 double devicePixelRatio(QMainWindow* pMainWindow);
 

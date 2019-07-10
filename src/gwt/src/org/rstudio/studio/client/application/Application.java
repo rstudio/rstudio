@@ -311,6 +311,15 @@ public class Application implements ApplicationEventHandlers
          pEdition_.get().showLicense();
       }
    }
+
+   @Handler
+   void onShowSessionServerOptionsDialog()
+   {
+      if (pEdition_.get() != null)
+      {
+         pEdition_.get().showSessionServerOptionsDialog();
+      }
+   }
    
    public void onUnauthorized(UnauthorizedEvent event)
    {
@@ -605,7 +614,13 @@ public class Application implements ApplicationEventHandlers
             {
                view_.showApplicationQuit();
             }
-            
+
+            if (Desktop.isRemoteDesktop())
+            {
+               // inform the desktop application that the remote session has finished quitting
+               Desktop.getFrame().onSessionQuit();
+            }
+
             // attempt to close the window if this is a quit
             // action (may or may not be able to depending on 
             // how it was created)
@@ -621,7 +636,8 @@ public class Application implements ApplicationEventHandlers
             }
             else if (session_.getSessionInfo().getShowUserHomePage())
             {
-               loadUserHomePage();
+               if (!Desktop.isRemoteDesktop())
+                  loadUserHomePage();
             }
          }
       }
@@ -984,7 +1000,7 @@ public class Application implements ApplicationEventHandlers
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
       // hide zoom in and zoom out in web mode
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          commands_.zoomActualSize().remove();
          commands_.zoomIn().remove();
@@ -992,7 +1008,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // remove main menu commands in desktop mode
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          commands_.showFileMenu().remove();
          commands_.showEditMenu().remove();
@@ -1008,7 +1024,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // show new session when appropriate
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          if (sessionInfo.getMultiSession())
             commands_.newSession().setMenuLabel("New Session...");
@@ -1022,10 +1038,11 @@ public class Application implements ApplicationEventHandlers
          if (!pEdition_.get().proLicense())
             commands_.rstudioSupport().remove();
          
-         // only show License menu command in Desktop Pro
-         if (!pEdition_.get().proLicense() || !Desktop.isDesktop())
+         // pro-only menu items
+         if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())
          {
             commands_.showLicenseDialog().remove();
+            commands_.showSessionServerOptionsDialog().remove();
          }
       }
       

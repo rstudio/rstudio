@@ -32,19 +32,26 @@ namespace rstudio {
 namespace desktop {
 
 class SessionLauncher;
+class RemoteDesktopSessionLauncher;
 
 class MainWindow : public GwtWindow
 {
    Q_OBJECT
 
 public:
-   explicit MainWindow(QUrl url=QUrl());
+   explicit MainWindow(QUrl url = QUrl(),
+                       bool isRemoteDesktop = false);
 
 public:
    QString getSumatraPdfExePath();
    void launchSession(bool reload);
    void launchRStudio(const std::vector<std::string>& args = std::vector<std::string>(),
                       const std::string& initialDir = std::string());
+   void launchRemoteRStudio();
+   void launchRemoteRStudioProject(const QString& projectUrl);
+
+   RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
+   QWebEngineProfile* getPageProfile();
 
 public Q_SLOTS:
    void quit();
@@ -57,11 +64,14 @@ public Q_SLOTS:
    void onLicenseLost(QString licenseMessage);
    void onUpdateLicenseWarningBar(QString message);
 
+   bool isRemoteDesktop() const;
+
 Q_SIGNALS:
    void firstWorkbenchInitialized();
 
 protected Q_SLOTS:
    void onWorkbenchInitialized();
+   void onSessionQuit();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);
 
@@ -71,10 +81,12 @@ protected:
 // private interface for SessionLauncher
 private:
    friend class SessionLauncher;
+   friend class RemoteDesktopSessionLauncher;
 
    // allow SessionLauncher to give us a reference to itself (so we can
    // call launchProcess back on it)
    void setSessionLauncher(SessionLauncher* pSessionLauncher);
+   void setRemoteDesktopSessionLauncher(RemoteDesktopSessionLauncher* pSessionLauncher);
 
    // same for application launches
    void setAppLauncher(ApplicationLaunch* pAppLauncher);
@@ -93,11 +105,13 @@ private:
    void onActivated() override;
 
 private:
+   bool isRemoteDesktop_;
    bool quitConfirmed_ = false;
    bool geometrySaved_ = false;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
+   RemoteDesktopSessionLauncher* pRemoteSessionLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 

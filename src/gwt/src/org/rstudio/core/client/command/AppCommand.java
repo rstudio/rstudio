@@ -108,7 +108,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public AppCommand()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          addEnabledChangedHandler((command) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
          addVisibleChangedHandler((command) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
@@ -149,7 +149,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             satellite.focusMainWindow();
          }
          else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
-                  Desktop.isDesktop())
+                  Desktop.hasDesktopFrame())
          {
             // for background commands, we still want the main window to be
             // as visible as possible, so bring it up behind the current window
@@ -234,7 +234,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          return;
       
       checked_ = checked;
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          DesktopMenuCallback.setCommandChecked(id_, checked_);
    }
 
@@ -407,7 +407,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 

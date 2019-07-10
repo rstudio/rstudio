@@ -98,7 +98,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       toolbar.addLeftWidget(showLogButton_);
       
       saveHtmlPreviewAsSeparator_ = toolbar.addLeftSeparator();
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       { 
          saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs().createToolbarButton();
          toolbar.addLeftWidget(saveHtmlPreviewAs_);

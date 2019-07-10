@@ -38,7 +38,7 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    {
       super.showRmdPreview(params);
       WindowEx win = getWindowObject();
-      if (activate && win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+      if (activate && win != null && !Desktop.hasDesktopFrame() && BrowseCap.isChrome())
       {
          satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
                                                 params,

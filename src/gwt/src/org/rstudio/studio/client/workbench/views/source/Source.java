@@ -2742,7 +2742,7 @@ public class Source implements InsertSourceHandler,
          return;
       
       // we're about to open in this window--if it's the main window, focus it
-      if (SourceWindowManager.isMainSourceWindow() && Desktop.isDesktop())
+      if (SourceWindowManager.isMainSourceWindow() && Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
       
       final boolean isDebugNavigation = 
@@ -2773,7 +2773,7 @@ public class Source implements InsertSourceHandler,
                         filePos.getEndLine() - 1,
                         filePos.getEndColumn() + 1);
                   
-                  if (Desktop.isDesktop() && 
+                  if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
                       Desktop.getFrame().bringMainFrameToFront();
                }
@@ -4086,7 +4086,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomIn()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomIn();
       }
@@ -4095,7 +4095,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomOut()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomOut();
       }
@@ -4104,7 +4104,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomActualSize()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomActualSize();
       }

@@ -449,7 +449,7 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onToggleFullScreen()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().toggleFullscreenMode();
    }
 

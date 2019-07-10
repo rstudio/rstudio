@@ -219,7 +219,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       lessSpaced(reuseSessionsForProjectLinks_);
       boolean firstHeader = true;
 
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          if (session_.getSessionInfo().getShowUserHomePage() ||
              session_.getSessionInfo().getMultiSession())
@@ -257,7 +257,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                false /*defaultSpaced*/)));
       }
 
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Label osLabel = headerLabel("OS Integration");
          if (!firstHeader)

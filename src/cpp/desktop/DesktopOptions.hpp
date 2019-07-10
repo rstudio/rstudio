@@ -25,7 +25,9 @@
 
 #include <core/FilePath.hpp>
 
-#define kRunDiagnosticsOption "--run-diagnostics"
+#define kRunDiagnosticsOption    "--run-diagnostics"
+#define kSessionServerOption     "--session-server"
+#define kSessionServerUrlOption  "--session-url"
 
 #if defined(__APPLE__)
 #define FORMAT QSettings::NativeFormat
@@ -116,6 +118,12 @@ public:
 
    bool runDiagnostics() { return runDiagnostics_; }
 
+   std::string sessionServer() { return sessionServer_; }
+   std::string sessionUrl() { return sessionUrl_; }
+
+   QString lastRemoteSessionUrl(const QString& serverUrl);
+   void setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl);
+
 private:
    Options() : settings_(FORMAT, QSettings::UserScope,
                          QString::fromUtf8("RStudio"),
@@ -135,6 +143,8 @@ private:
    mutable QString portNumber_;
    mutable std::string localPeer_;
    bool runDiagnostics_;
+   std::string sessionServer_;
+   std::string sessionUrl_;
 };
 
 } // namespace desktop

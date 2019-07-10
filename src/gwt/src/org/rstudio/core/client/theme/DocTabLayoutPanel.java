@@ -924,7 +924,7 @@ public class DocTabLayoutPanel
                   initDragParams_, null, destPos_));
          }
          
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             // on desktop, we call back to discover whether the cursor is
             // currently outside of any RStudio window; in such a case we

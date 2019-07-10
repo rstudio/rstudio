@@ -30,4 +30,8 @@ public class ProductEditionInfo
    public void showLicense()
    {
    }
+
+   public void showSessionServerOptionsDialog()
+   {
+   }
 }

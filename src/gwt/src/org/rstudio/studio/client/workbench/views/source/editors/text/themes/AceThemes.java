@@ -100,7 +100,7 @@ public class AceThemes
             events_.fireEvent(new EditorThemeChangedEvent(theme));
             
             // synchronize the effective background color with the desktop
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
             {
                // find 'rstudio_container' element (note that this may not exist
                // in some satellite windows; e.g. the Git window)

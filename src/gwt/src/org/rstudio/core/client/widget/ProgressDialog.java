@@ -149,7 +149,7 @@ public abstract class ProgressDialog extends ModalDialogBase
    
    protected void setLabel(String text)
    {
-      if (BrowseCap.isChrome() || Desktop.isDesktop())
+      if (BrowseCap.isChrome() || Desktop.hasDesktopFrame())
       {
          Size labelSize = DomMetrics.measureHTML(text);
          labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);

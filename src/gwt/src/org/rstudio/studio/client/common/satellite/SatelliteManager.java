@@ -147,7 +147,7 @@ public class SatelliteManager implements CloseHandler<Window>
             {
                // for web mode bring the window to the front, notify
                // it that it has been reactivated, then exit. 
-               if (!Desktop.isDesktop())
+               if (!Desktop.hasDesktopFrame())
                {
                   // don't do this for chrome (since it doesn't allow
                   // window.focus). for chrome we'll just fall through
@@ -268,7 +268,7 @@ public class SatelliteManager implements CloseHandler<Window>
    
    public void activateSatelliteWindow(String name)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().activateSatelliteWindow(
                SatelliteUtils.getSatelliteWindowName(StringUtil.notNull(name)));

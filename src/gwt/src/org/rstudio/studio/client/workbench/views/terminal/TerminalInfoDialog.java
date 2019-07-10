@@ -79,8 +79,9 @@ public class TerminalInfoDialog extends ModalDialogBase
 
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
+         diagnostics.append("Remote:     '").append(Desktop.isRemoteDesktop()).append("'\n");
          diagnostics.append("Platform:   '").append(BrowseCap.getPlatformName()).append("'\n");
-         if (!Desktop.isDesktop())
+         if (!Desktop.hasDesktopFrame())
             diagnostics.append("Browser:    '").append(BrowseCap.getBrowserName()).append("'\n");
 
          diagnostics.append("\nConnection Information\n----------------------\n");

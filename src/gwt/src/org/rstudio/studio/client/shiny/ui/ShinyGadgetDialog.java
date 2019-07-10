@@ -94,7 +94,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
                                                  100); // client margin
       frame_.setSize(size.width + "px", size.height + "px");
       
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url_));
       
       frame_.setUrl(url_);

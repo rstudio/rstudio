@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -71,14 +72,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class DesktopApplicationHeader implements ApplicationHeader
+public class DesktopApplicationHeader implements ApplicationHeader,
+                                      WebApplicationHeaderOverlay.Context
 {
-   public interface Binder
-         extends CommandBinder<Commands, DesktopApplicationHeader>
-   {
-   }
-   private static Binder binder_ = GWT.create(Binder.class);
-
    public DesktopApplicationHeader()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -104,6 +100,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
       server_ = server;
       appQuit_ = appQuit;
       binder_.bind(commands, this);
+      overlay_ = new WebApplicationHeaderOverlay();
+
       commands.mainMenu(new DesktopMenuCallback());
 
       pDesktopHooks.get();
@@ -124,7 +122,15 @@ public class DesktopApplicationHeader implements ApplicationHeader
             
             isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get()); 
             toolbar_.completeInitialization(sessionInfo);
-            
+
+            if (Desktop.isRemoteDesktop())
+            {
+               overlay_.addRVersionsToolbar(DesktopApplicationHeader.this);
+               overlay_.addSessionsToolbar(DesktopApplicationHeader.this);
+            }
+
+            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
+
             new JSObjectStateValue(
                   "updates",
                   "ignoredUpdates",
@@ -443,7 +449,85 @@ public class DesktopApplicationHeader implements ApplicationHeader
          return focusElem.hasClassName("ace_text-input");
       return false;
    }
-   
+
+   @Override
+   public void addCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addLeftCommand(Widget widget)
+   {
+      toolbar_.addLeftWidget(widget);
+   }
+
+   @Override
+   public void addLeftCommand(Widget widget, String width)
+   {
+      toolbar_.addLeftWidget(widget);
+   }
+
+   @Override
+   public void addRightCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addRightCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addProjectCommand(Widget widget)
+   {
+
+   }
+
+   @Override
+   public Widget addProjectCommandSeparator()
+   {
+      return null;
+   }
+
+   @Override
+   public void addProjectRightCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addProjectRightCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addUserCommand(Widget widget)
+   {
+
+   }
+
+   @Override
+   public AppMenuBar getMainMenu()
+   {
+      return null;
+   }
+
+   public interface Binder
+         extends CommandBinder<Commands, DesktopApplicationHeader>
+   {
+   }
+
+   private static Binder binder_ = GWT.create(Binder.class);
    private Session session_;
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;
@@ -454,4 +538,5 @@ public class DesktopApplicationHeader implements ApplicationHeader
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_; 
    private Boolean isFlatTheme_ = false;
+   private WebApplicationHeaderOverlay overlay_;
 }

@@ -36,6 +36,7 @@
 #include <core/r_util/RUserData.hpp>
 
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -44,6 +45,7 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopSynctex.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -66,9 +68,10 @@ bool s_ignoreNextClipboardSelectionChange;
 
 extern QString scratchPath;
 
-GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner)
+GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner, bool isRemoteDesktop)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
+     isRemoteDesktop_(isRemoteDesktop),
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
@@ -1162,16 +1165,32 @@ int GwtCallback::collectPendingQuitRequest()
 
 void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 {
-   std::vector<std::string> args;
-   args.push_back(resolveAliasedPath(projectFilePath).toStdString());
-   pMainWindow_->launchRStudio(args);
+   if (!isRemoteDesktop_)
+   {
+      std::vector<std::string> args;
+      args.push_back(resolveAliasedPath(projectFilePath).toStdString());
+      pMainWindow_->launchRStudio(args);
+   }
+   else
+   {
+      // start new Remote Desktop RStudio process with the session URL
+      pMainWindow_->launchRemoteRStudioProject(projectFilePath);
+   }
 }
 
 void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
 {
-   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-   pMainWindow_->launchRStudio(std::vector<std::string>(),
-                               workingDirectoryPath.toStdString());
+   if (!isRemoteDesktop_)
+   {
+      workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+      pMainWindow_->launchRStudio(std::vector<std::string>(),
+                                  workingDirectoryPath.toStdString());
+   }
+   else
+   {
+      // start the new session on the currently connected server
+      pMainWindow_->launchRemoteRStudio();
+   }
 }
 
 void GwtCallback::openTerminal(QString terminalPath,
@@ -1408,6 +1427,11 @@ void GwtCallback::showLicenseDialog()
    activation().showLicenseDialog(false /*showQuitButton*/);
 }
 
+void GwtCallback::showSessionServerOptionsDialog()
+{
+   sessionServers().showSessionServerOptionsDialog();
+}
+
 QString GwtCallback::getInitMessages()
 {
    std::string message = activation().currentLicenseStateMessage();
@@ -1546,6 +1570,16 @@ QString GwtCallback::getDisplayDpi()
 {
    return QString::fromStdString(
             safe_convert::numberToString(getDpi()));
+}
+
+void GwtCallback::onSessionQuit()
+{
+   sessionQuit();
+}
+
+QString GwtCallback::getSessionServer()
+{
+   return QString::fromStdString(pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer().label());
 }
 
 } // namespace desktop

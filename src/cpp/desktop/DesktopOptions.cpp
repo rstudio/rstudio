@@ -55,6 +55,16 @@ void Options::initFromCommandLine(const QStringList& arguments)
       const QString &arg = arguments.at(i);
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
+      else if (arg == QString::fromUtf8(kSessionServerOption))
+      {
+         if ((i + 1) < arguments.size())
+            sessionServer_ = arguments.at(++i).toStdString();
+      }
+      else if (arg == QString::fromUtf8(kSessionServerUrlOption))
+      {
+         if ((i + 1) < arguments.size())
+            sessionUrl_ = arguments.at(++i).toStdString();
+      }
    }
 
    // synchronize zoom level with desktop frame
@@ -516,6 +526,21 @@ void Options::cleanUpScratchTempDir()
    core::FilePath temp = scratchTempDir(core::FilePath());
    if (!temp.empty())
       temp.removeIfExists();
+}
+
+QString Options::lastRemoteSessionUrl(const QString& serverUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   QString sessionUrl = settings_.value(serverUrl).toString();
+   settings_.endGroup();
+   return sessionUrl;
+}
+
+void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   settings_.setValue(serverUrl, sessionUrl);
+   settings_.endGroup();
 }
 
 } // namespace desktop

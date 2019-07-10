@@ -89,7 +89,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       leftPanel.add(flatTheme_);
 
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          int initialIndex = -1;
          int normalIndex = -1;
@@ -417,7 +417,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private void updatePreviewZoomLevel()
    {
       // no zoom preview on desktop
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
                                DesktopInfo.getZoomLevel());
@@ -543,7 +543,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
       }
       
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
          {

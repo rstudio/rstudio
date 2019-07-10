@@ -50,6 +50,18 @@ public class WebApplicationHeaderOverlay
    {
    }
    
+   public void addRVersionsToolbar(Context context)
+   {
+   }
+
+   public void addConnectionStatusToolbar(Context context)
+   {
+   }
+
+   public void addSessionsToolbar(Context context)
+   {
+   }
+
    public void addCommands(Context context)
    {
       context.addLeftCommand(new HTML(), "100%");
