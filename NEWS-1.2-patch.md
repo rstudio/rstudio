@@ -12,6 +12,7 @@
 - Fix issue where attempts to run R debugger in `.Rprofile` could hang RStudio (#4443)
 - Fix issue where RStudio window could display off-screen if display configuration had changed (#4856)
 - Fix parsing multi-line expressions with single brackets inside strings (#4452)
+- Fix issue where RStudio Desktop could crash when importing pandas / matplotlib. (#4182)
 - Improve detection of remote sessions on Windows (#4466)
 - Fix issue where resize gripper would remain visible when attempting to copy plot to clipboard (#4864)
 - Fix issue where text in prompts would fail to display on macOS Mojave (#4497)
