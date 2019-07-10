@@ -1324,6 +1324,10 @@ body.windows .toolbar {
    overflow: hidden;
 }
 
+.toolbarButton:focus {
+   outline:none;
+}
+
 .toolbarButton.noLabel {
    margin-right: 4px;
 }
