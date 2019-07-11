@@ -704,10 +704,6 @@ int main(int argc, char* argv[])
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
 
-      Options& options = desktop::options();
-      if (!prepareEnvironment(options))
-         return 1;
-
       // get install path
       FilePath installPath;
       error = core::system::installPath("..", argv[0], &installPath);
@@ -716,10 +712,6 @@ int main(int argc, char* argv[])
          LOG_ERROR(error);
          return EXIT_FAILURE;
       }
-
-#ifdef _WIN32
-      RVersion version = detectRVersion(false);
-#endif
 
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
@@ -733,13 +725,6 @@ int main(int argc, char* argv[])
          sessionPath = currentPath.complete("session/rsession");
          scriptsPath = currentPath.complete("desktop");
          devMode = true;
-#ifdef _WIN32
-         if (version.architecture() == ArchX86 &&
-             installPath.complete("session/x86").exists())
-         {
-            sessionPath = installPath.complete("session/x86/rsession");
-         }
-#endif
       }
 
       // if there is no conf path then release mode
@@ -748,15 +733,6 @@ int main(int argc, char* argv[])
          // default paths (then tweak)
          sessionPath = installPath.complete("bin/rsession");
          scriptsPath = installPath.complete("bin");
-
-         // check for win32 binary on windows
-#ifdef _WIN32
-         if (version.architecture() == ArchX86 &&
-             installPath.complete("bin/x86").exists())
-         {
-            sessionPath = installPath.complete("bin/x86/rsession");
-         }
-#endif
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
@@ -767,13 +743,39 @@ int main(int argc, char* argv[])
          }
 #endif
       }
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
+
+      Options& options = desktop::options();
+      if (!prepareEnvironment(options))
+         return 1;
+
+#ifdef _WIN32
+      RVersion version = detectRVersion(false);
+      if (devMode)
+      {
+         if (version.architecture() == ArchX86 &&
+             installPath.complete("session/x86").exists())
+         {
+            sessionPath = installPath.complete("session/x86/rsession");
+         }
+      }
+      else
+      {
+         // check for win32 binary on windows
+          if (version.architecture() == ArchX86 &&
+             installPath.complete("bin/x86").exists())
+         {
+            sessionPath = installPath.complete("bin/x86/rsession");
+         }
+      }
+#endif
+
       core::system::fixupExecutablePath(&sessionPath);
 
       auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
-
-      // set the scripts path in options
-      desktop::options().setScriptsPath(scriptsPath);
 
       // determine where the session should be launched
       boost::optional<SessionServer> launchServer;
