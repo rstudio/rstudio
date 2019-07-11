@@ -1238,19 +1238,17 @@ void GwtCallback::openTerminal(QString terminalPath,
    QStringList args;
    std::string previousHome = core::system::getenv("HOME");
 
-   switch (shellType)
+   if (shellType == GitBash || shellType == WSLBash)
    {
-   case GitBash:
-   case WSLBash:
       args.append(QString::fromUtf8("--login"));
       args.append(QString::fromUtf8("-i"));
-      break;
+   }
 
-   default:
+   if (shellType != WSLBash)
+   {
       // set HOME to USERPROFILE so msys ssh can find our keys
       std::string userProfile = core::system::getenv("USERPROFILE");
       core::system::setenv("HOME", userProfile);
-      break;
    }
 
    QProcess process;
