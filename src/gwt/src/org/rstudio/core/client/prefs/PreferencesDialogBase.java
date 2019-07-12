@@ -15,6 +15,7 @@
 package org.rstudio.core.client.prefs;
 
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -89,7 +90,9 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
        
       for (final PreferencesDialogPaneBase<T> pane : panes_)
       {
-         sectionChooser_.addSection(pane.getIcon(), pane.getName());
+         Id sectionTabId = sectionChooser_.addSection(pane.getIcon(), pane.getName());
+         pane.getElement().setId(SectionChooser.getTabPanelId(sectionTabId).getAriaValue());
+         Roles.getTabpanelRole().setAriaLabelledbyProperty(pane.getElement(), sectionTabId);
          pane.setWidth("100%");
          pane.setDialog(this);
          pane.setProgressIndicator(progressIndicator_);
