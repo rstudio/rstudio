@@ -18,7 +18,8 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/client/ui/MenuBar.java \
   com/google/gwt/user/client/ui/MenuItem.java \
   com/google/gwt/user/client/ui/SplitLayoutPanel.java \
-  com/google/gwt/user/client/ui/SplitPanel.java
+  com/google/gwt/user/client/ui/SplitPanel.java \
+  com/google/gwt/user/client/ui/TabLayoutPanel.java
   
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-dev.jar \
   com/google/gwt/core/linker/CrossSiteIframeLinker.java \
@@ -38,6 +39,7 @@ patch MenuBar.java < MenuBar.java.diff
 patch MenuItem.java < MenuItem.java.diff
 patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
 patch SplitPanel.java < SplitPanel.java.diff
+patch TabLayoutPanel.java < TabLayoutPanel.java.diff
 
 cd ${SRCBASE}/com/google/gwt/core/ext/linker/impl
 patch installLocationIframe.js < installLocationIframe.js.diff
