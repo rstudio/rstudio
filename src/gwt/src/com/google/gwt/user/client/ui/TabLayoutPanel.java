@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -33,6 +36,7 @@ import com.google.gwt.resources.client.CommonResources;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
+import org.rstudio.core.client.dom.DomUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -104,14 +108,18 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     private Element inner;
     private boolean replacingWidget;
 
-    public Tab(Widget child) {
+    public Tab(Widget child, Widget controls) {
       super(Document.get().createDivElement());
       getElement().appendChild(inner = Document.get().createDivElement());
 
       setWidget(child);
       setStyleName(TAB_STYLE);
       inner.setClassName(TAB_INNER_STYLE);
-
+      Roles.getTabRole().set(getElement());
+      String controlsId = DomUtils.ensureHasId(controls.getElement());
+      Roles.getTabRole().setAriaControlsProperty(getElement(), Id.of(controlsId));
+      Roles.getTabRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
+      getElement().setTabIndex(-1);
       getElement().addClassName(CommonResources.getInlineBlockStyle());
     }
 
@@ -141,8 +149,12 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     public void setSelected(boolean selected) {
       if (selected) {
         addStyleDependentName("selected");
+        Roles.getTabRole().setAriaSelectedState(getElement(), SelectedValue.TRUE);
+        getElement().setTabIndex(0);
       } else {
         removeStyleDependentName("selected");
+        Roles.getTabRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
+        getElement().setTabIndex(-1);
       }
     }
 
@@ -250,6 +262,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     tabBar.getElement().getStyle().setWidth(BIG_ENOUGH_TO_NOT_WRAP, Unit.PX);
 
     tabBar.setStyleName("gwt-TabLayoutPanelTabs");
+    Roles.getTablistRole().set(tabBar.getElement());
     setStyleName("gwt-TabLayoutPanel");
   }
 
@@ -408,6 +421,21 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
+   * Set elementId on Tab owning given widget
+   * @param child
+   * @param id
+   */
+  public void setTabId(Widget child, String id)
+  {
+    checkChild(child);
+    Tab tab = tabs.get(getWidgetIndex(child));
+    if (tab != null)
+    {
+      tab.getElement().setId(id);
+    }
+  }
+
+  /**
    * Returns the widget at the given index.
    */
   public Widget getWidget(int index) {
@@ -527,7 +555,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param beforeIndex the index before which it will be inserted
    */
   public void insert(Widget child, Widget tab, int beforeIndex) {
-    insert(child, new Tab(tab), beforeIndex);
+    insert(child, new Tab(tab, child), beforeIndex);
   }
 
   /**

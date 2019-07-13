@@ -111,3 +111,7 @@
 .rstudio-StatusIndicator .Message-Error {
    background-color: #FF6347;
 }
+
+.gwt-TabLayoutPanelTab, .gwt-TabLayoutPanelTab-selected {
+   outline: none;
+}

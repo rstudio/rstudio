@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -35,6 +36,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.NumericValueWidget;
@@ -66,7 +68,7 @@ public class EditingPreferencesPane extends PreferencesPane
       server_ = server;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
-      VerticalPanel editingPanel = new VerticalPanel();
+      VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
       editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(), 
             false /*defaultSpace*/)));
@@ -191,7 +193,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(panel);
       
       
-      VerticalPanel displayPanel = new VerticalPanel();
+      VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
       displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
@@ -247,7 +249,7 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       displayPanel.add(consoleColorMode_);
       
-      VerticalPanel savePanel = new VerticalPanel();
+      VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
       
       savePanel.add(headerLabel("General"));
       savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
@@ -302,7 +304,7 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
       
-      VerticalPanel completionPanel = new VerticalPanel();
+      VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
       
       completionPanel.add(headerLabel("R and C/C++"));
      
@@ -399,7 +401,7 @@ public class EditingPreferencesPane extends PreferencesPane
                       prefs.alwaysCompleteDelayMs())));
         
       
-      VerticalPanel diagnosticsPanel = new VerticalPanel();
+      VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
       diagnosticsPanel.add(headerLabel("R Diagnostics"));
       final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
@@ -444,11 +446,11 @@ public class EditingPreferencesPane extends PreferencesPane
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(editingPanel, "Editing");
-      tabPanel.add(displayPanel, "Display");
-      tabPanel.add(savePanel, "Saving");
-      tabPanel.add(completionPanel, "Completion");
-      tabPanel.add(diagnosticsPanel, "Diagnostics");
+      tabPanel.add(editingPanel, "Editing", editingPanel.getBasePanelId());
+      tabPanel.add(displayPanel, "Display", displayPanel.getBasePanelId());
+      tabPanel.add(savePanel, "Saving", savePanel.getBasePanelId());
+      tabPanel.add(completionPanel, "Completion", completionPanel.getBasePanelId());
+      tabPanel.add(diagnosticsPanel, "Diagnostics", diagnosticsPanel.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }

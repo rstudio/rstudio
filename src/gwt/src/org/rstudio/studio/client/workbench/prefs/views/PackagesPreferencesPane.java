@@ -26,15 +26,16 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -70,8 +71,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       secondaryReposWidget_ = new SecondaryReposWidget();
 
-      VerticalPanel management = new VerticalPanel();
-      VerticalPanel development = new VerticalPanel();
+      VerticalTabPanel management = new VerticalTabPanel(ElementIds.PACKAGE_MANAGEMENT_PREFS);
+      VerticalTabPanel development = new VerticalTabPanel(ElementIds.PACKAGE_DEVELOPMENT_PREFS);
     
       management.add(headerLabel("Package Management"));
 
@@ -228,8 +229,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(management, "Management");
-      tabPanel.add(development, "Development");
+      tabPanel.add(management, "Management", management.getBasePanelId());
+      tabPanel.add(development, "Development", development.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
