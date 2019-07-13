@@ -227,7 +227,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Packages");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(management, "Management", management.getBasePanelId());
       tabPanel.add(development, "Development", development.getBasePanelId());

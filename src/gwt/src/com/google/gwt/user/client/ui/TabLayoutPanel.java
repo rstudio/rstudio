@@ -240,8 +240,9 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    *
    * @param barHeight the size of the tab bar
    * @param barUnit the unit in which the tab bar size is specified
+   * @param tabListLabel aria-label for the tablist
    */
-  public TabLayoutPanel(double barHeight, Unit barUnit) {
+  public TabLayoutPanel(double barHeight, Unit barUnit, String tabListLabel) {
     LayoutPanel panel = new LayoutPanel();
     initWidget(panel);
 
@@ -263,6 +264,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     tabBar.setStyleName("gwt-TabLayoutPanelTabs");
     Roles.getTablistRole().set(tabBar.getElement());
+    Roles.getTablistRole().setAriaLabelProperty(tabBar.getElement(), tabListLabel);
     setStyleName("gwt-TabLayoutPanel");
   }
 

@@ -146,7 +146,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
    public ModuleTabLayoutPanel(final WindowFrame owner)
    {
-      super(BAR_HEIGHT, Style.Unit.PX);
+      super(BAR_HEIGHT, Style.Unit.PX, "Pane");
       owner_ = owner;
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.moduleTabPanel());

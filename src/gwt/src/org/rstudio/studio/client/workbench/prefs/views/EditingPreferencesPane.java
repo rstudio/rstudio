@@ -444,7 +444,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(diagnosticsHelpLink);
       
       
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Editing");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(editingPanel, "Editing", editingPanel.getBasePanelId());
       tabPanel.add(displayPanel, "Display", displayPanel.getBasePanelId());

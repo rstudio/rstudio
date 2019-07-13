@@ -69,13 +69,14 @@ class SectionChooser extends SimplePanel implements
       }
    }
 
-   public SectionChooser()
+   public SectionChooser(String tabListLabel)
    {
       setStyleName(res_.styles().sectionChooser());
       inner_.setStyleName(res_.styles().sectionChooserInner());
       setWidget(inner_);
       Roles.getTablistRole().set(getElement());
       A11y.setARIATablistOrientation(getElement(), true /*vertical*/);
+      Roles.getTablistRole().setAriaLabelProperty(getElement(), tabListLabel);
    }
 
    /**

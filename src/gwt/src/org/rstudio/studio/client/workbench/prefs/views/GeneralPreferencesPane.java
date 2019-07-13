@@ -342,7 +342,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());

@@ -104,7 +104,7 @@ public class DocTabLayoutPanel
                             int padding,
                             int rightMargin)
    {
-      super(BAR_HEIGHT, Style.Unit.PX);
+      super(BAR_HEIGHT, Style.Unit.PX, "Documents");
       closeableTabs_ = closeableTabs;
       padding_ = padding;
       rightMargin_ = rightMargin;

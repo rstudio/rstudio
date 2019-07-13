@@ -26,9 +26,9 @@ import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 public class DialogTabLayoutPanel extends TabLayoutPanel
 {
-   public DialogTabLayoutPanel()
+   public DialogTabLayoutPanel(String tabListLabel)
    {
-      super(14, Unit.PX);
+      super(14, Unit.PX, tabListLabel);
       
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles.dialogTabPanel());
