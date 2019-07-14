@@ -177,6 +177,10 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     protected com.google.gwt.user.client.Element getContainerElement() {
       return inner.cast();
     }
+
+    public void setFocus() {
+      getElement().focus();
+    }
   }
 
   /**
@@ -818,6 +822,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return;
     }
     selectTab(selectedIndex + 1);
+    focusCurrentTab();
   }
 
   private void selectPreviousTab() {
@@ -828,17 +833,26 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return;
     }
     selectTab(selectedIndex - 1);
+    focusCurrentTab();
   }
 
   private void selectFirstTab() {
     if (getWidgetCount() == 0)
       return;
     selectTab(0);
+    focusCurrentTab();
   }
 
   private void selectLastTab() {
     if (getWidgetCount() == 0)
       return;
     selectTab(getWidgetCount() - 1);
+    focusCurrentTab();
+  }
+
+  private void focusCurrentTab() {
+    if (selectedIndex == -1)
+      return;
+    tabs.get(selectedIndex).setFocus();
   }
 }
