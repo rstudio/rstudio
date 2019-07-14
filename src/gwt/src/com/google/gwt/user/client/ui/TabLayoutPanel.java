@@ -23,6 +23,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -125,6 +128,11 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
       return addDomHandler(handler, ClickEvent.getType());
+    }
+
+    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+    {
+      return addDomHandler(handler, KeyDownEvent.getType());
     }
 
     @Override
@@ -775,7 +783,22 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
         selectTab(child);
       }
     });
-
+    tab.addKeyDownHandler(event -> {
+      switch(event.getNativeKeyCode()) {
+        case KeyCodes.KEY_LEFT:
+          selectPreviousTab();
+          break;
+        case KeyCodes.KEY_RIGHT:
+          selectNextTab();
+          break;
+        case KeyCodes.KEY_HOME:
+          selectFirstTab();
+          break;
+        case KeyCodes.KEY_END:
+          selectLastTab();
+          break;
+      }
+    });
     child.addStyleName(CONTENT_STYLE);
 
     if (selectedIndex == -1) {
@@ -785,5 +808,37 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       // increased.
       selectedIndex++;
     }
+  }
+
+  private void selectNextTab() {
+    if (selectedIndex == -1)
+      return;
+    if (selectedIndex == getWidgetCount() - 1) {
+      selectFirstTab();
+      return;
+    }
+    selectTab(selectedIndex + 1);
+  }
+
+  private void selectPreviousTab() {
+    if (selectedIndex == -1)
+      return;
+    if (selectedIndex == 0) {
+      selectLastTab();
+      return;
+    }
+    selectTab(selectedIndex - 1);
+  }
+
+  private void selectFirstTab() {
+    if (getWidgetCount() == 0)
+      return;
+    selectTab(0);
+  }
+
+  private void selectLastTab() {
+    if (getWidgetCount() == 0)
+      return;
+    selectTab(getWidgetCount() - 1);
   }
 }

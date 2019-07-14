@@ -111,7 +111,6 @@ class SectionChooser extends SimplePanel implements
             case KeyCodes.KEY_UP:
                selectPreviousSection();
                break;
-                  
             case KeyCodes.KEY_DOWN:
                selectNextSection();
                break;
