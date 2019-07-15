@@ -51,7 +51,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       PreferencesDialogBaseResources res = 
                                    PreferencesDialogBaseResources.INSTANCE;
       
-      sectionChooser_ = new SectionChooser();
+      sectionChooser_ = new SectionChooser(caption);
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) 

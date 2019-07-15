@@ -69,13 +69,14 @@ class SectionChooser extends SimplePanel implements
       }
    }
 
-   public SectionChooser()
+   public SectionChooser(String tabListLabel)
    {
       setStyleName(res_.styles().sectionChooser());
       inner_.setStyleName(res_.styles().sectionChooserInner());
       setWidget(inner_);
       Roles.getTablistRole().set(getElement());
       A11y.setARIATablistOrientation(getElement(), true /*vertical*/);
+      Roles.getTablistRole().setAriaLabelProperty(getElement(), tabListLabel);
    }
 
    /**
@@ -110,7 +111,6 @@ class SectionChooser extends SimplePanel implements
             case KeyCodes.KEY_UP:
                selectPreviousSection();
                break;
-                  
             case KeyCodes.KEY_DOWN:
                selectNextSection();
                break;
@@ -153,7 +153,16 @@ class SectionChooser extends SimplePanel implements
 
       SelectionEvent.fire(this, index);
    }
-   
+
+   private void focusCurrent()
+   {
+      if (selectedIndex_ == null)
+         return;
+
+      Widget currentItem = inner_.getWidget(selectedIndex_);
+      currentItem.getElement().focus();
+   }
+
    public void hideSection(Integer index)
    {
       if (index != null)
@@ -174,6 +183,7 @@ class SectionChooser extends SimplePanel implements
          if (inner_.getWidget(i).isVisible())
          {
             select(i);
+            focusCurrent();
             return;
          }
       }
@@ -189,6 +199,7 @@ class SectionChooser extends SimplePanel implements
          if (inner_.getWidget(i).isVisible())
          {
             select(i);
+            focusCurrent();
             return;
          }
       }
@@ -202,6 +213,7 @@ class SectionChooser extends SimplePanel implements
          if (inner_.getWidget(i).isVisible())
          {
             select(i);
+            focusCurrent();
             return;
          }
       }
@@ -214,6 +226,7 @@ class SectionChooser extends SimplePanel implements
          if (inner_.getWidget(i).isVisible())
          {
             select(i);
+            focusCurrent();
             return;
          }
       }

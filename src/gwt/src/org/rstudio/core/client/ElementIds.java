@@ -101,4 +101,16 @@ public class ElementIds
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
    public final static String TEXT_SOURCE_BUTTON = "text_source";
    public final static String TEXT_SOURCE_BUTTON_DROPDOWN = "text_source_dropdown";
+   
+   public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
+   public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";
+   public final static String EDIT_SAVING_PREFS = "edit_saving_prefs";
+   public final static String EDIT_COMPLETION_PREFS = "editing_completion_prefs";
+   public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";
+   
+   public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
+   public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
+   
+   public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
+   public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
 }
