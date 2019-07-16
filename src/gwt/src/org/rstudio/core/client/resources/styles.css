@@ -96,6 +96,17 @@
    outline:none;
 }
 
+.rstudio-ImageButton {
+   padding: 0;
+   margin: 0;
+   border: none;
+   background-color: transparent;
+}
+
+.rstudio-ImageButton:focus {
+   outline:none;
+}
+
 .rstudio-StatusIndicator {
 }
 
