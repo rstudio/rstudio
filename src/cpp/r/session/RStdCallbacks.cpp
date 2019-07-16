@@ -375,10 +375,22 @@ int RReadConsole (const char *pmt,
       // set interrupts pending
       r::exec::setInterruptsPending(true);
 
-      // only issue an interrupt when not on Windows -- let the regular
-      // event loop handle interrupts there. note that this will longjmp
+      // call R interrupt handler. note that previously we used
+      // r::exec::checkUserInterrupt(), but this also has the side effect of
+      // calling R_ProcessEvents(). this means that modules with registered
+      // event handlers may get a chance to handle our interrupt, and so the
+      // interrupt will be handled in an incorrect context. this can lead to
+      // issues like the process exiting prematurely. see:
+      //
+      //     https://github.com/rstudio/rstudio/issues/5108
+      //
+      // for one such example.
+      //
+      // note that on Windows we let the regular R_ProcessEvents() machinery
+      // handle the interrupt as we noticed calling Rf_onintr() in that
+      // environment could cause a crash
 #ifndef _WIN32
-      r::exec::checkUserInterrupt();
+      Rf_onintr();
 #endif
 
       // buffer not ready
