@@ -462,6 +462,7 @@ public class Application implements ApplicationEventHandlers
                           0);   // no timeout
          break;
       case SessionSerializationAction.SUSPEND_SESSION:
+         events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
                           "Backing up R session...",
                           true,    // modal, inputs will fall dead anyway
