@@ -67,7 +67,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Viewer Tab");
       
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());

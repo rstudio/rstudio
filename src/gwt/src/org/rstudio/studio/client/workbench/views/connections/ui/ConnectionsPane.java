@@ -335,7 +335,7 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Connections Tab");
    
       searchWidget_ = new SearchWidget("Filter by connection", new SuggestOracle() {
          @Override
@@ -416,7 +416,7 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      secondaryToolbar_ = new SecondaryToolbar();
+      secondaryToolbar_ = new SecondaryToolbar("Connections Tab Connection");
       secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
       connectionIcon_ = new Image();
       connectionIcon_.setWidth("16px");

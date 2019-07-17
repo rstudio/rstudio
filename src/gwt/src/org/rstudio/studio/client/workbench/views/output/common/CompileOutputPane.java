@@ -58,7 +58,7 @@ public class CompileOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Compile Output Tab");
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       

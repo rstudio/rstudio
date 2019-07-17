@@ -224,6 +224,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       overrideSizeWarning_ = new SizeWarningWidget("diff");
 
+      topToolbar_ = new Toolbar("Git Review");
+      diffToolbar_ = new Toolbar("Git Diff");
+
       changelist.setSelectFirstItemByDefault(true);
 
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
@@ -669,9 +672,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
    FormLabel lblContext_;
    @UiField
    ListBox contextLines_;
-   @UiField
+   @UiField(provided = true)
    Toolbar topToolbar_;
-   @UiField
+   @UiField(provided = true)
    Toolbar diffToolbar_;
    @UiField
    FormLabel lblCommit_;

@@ -40,7 +40,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       events_ = events;
       list_ = list;
 
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Jobs Tab");
       
       allJobs_ = new ToolbarButton(
             ToolbarButton.NoText,

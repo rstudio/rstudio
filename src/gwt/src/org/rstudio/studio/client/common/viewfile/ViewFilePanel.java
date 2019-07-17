@@ -385,6 +385,11 @@ public class ViewFilePanel extends Composite implements TextDisplay
    
    private class ViewFileToolbar extends Toolbar
    {
+      public ViewFileToolbar()
+      {
+         super("View File Tab");
+      }
+      
       @Override
       public int getHeight()
       {
