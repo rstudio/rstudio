@@ -42,7 +42,7 @@ public class GlobalToolbar extends Toolbar
    public GlobalToolbar(Commands commands, 
                         Provider<CodeSearch> pCodeSearch)
    {
-      super();
+      super("Main");
       
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;

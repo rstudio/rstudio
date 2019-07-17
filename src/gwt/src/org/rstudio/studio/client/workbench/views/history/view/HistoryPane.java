@@ -614,7 +614,7 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("History Tab");
       toolbar.addLeftWidget(commands_.loadHistory().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveHistory().createToolbarButton());
       toolbar.addLeftSeparator();

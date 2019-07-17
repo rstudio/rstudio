@@ -81,7 +81,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Preview Tab");
       
       fileCaption_ = new ToolbarLabel("Preview: ");
       toolbar.addLeftWidget(fileCaption_);

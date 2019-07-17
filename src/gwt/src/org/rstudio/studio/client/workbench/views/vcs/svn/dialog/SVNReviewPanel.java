@@ -212,6 +212,9 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 
       overrideSizeWarning_ = new SizeWarningWidget("diff");
 
+      topToolbar_ = new Toolbar("SVN Review");
+      diffToolbar_ = new Toolbar("SVN Diff");
+
       changelist.setSelectFirstItemByDefault(true);
 
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
@@ -463,9 +466,9 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    LineTableView lines_;
    @UiField
    ListBox contextLines_;
-   @UiField
+   @UiField(provided = true)
    Toolbar topToolbar_;
-   @UiField
+   @UiField(provided = true)
    Toolbar diffToolbar_;
    @UiField
    ScrollPanel diffScroll_;

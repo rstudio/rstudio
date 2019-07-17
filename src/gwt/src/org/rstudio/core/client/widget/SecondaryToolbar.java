@@ -1,7 +1,7 @@
 /*
  * SecondaryToolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,14 @@ package org.rstudio.core.client.widget;
 
 public class SecondaryToolbar extends Toolbar
 {
-   public SecondaryToolbar()
+   public SecondaryToolbar(String label)
    {
-      this(false);
+      this(false, label);
    }
    
-   public SecondaryToolbar(boolean appearAsPrimary)
+   public SecondaryToolbar(boolean appearAsPrimary, String label)
    {
-      super();
+      super(label);
       
       if (!appearAsPrimary)
          addStyleName(styles_.rstheme_secondaryToolbar());

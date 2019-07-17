@@ -124,7 +124,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Terminal Tab");
 
       toolbar.addLeftWidget(commands_.previousTerminal().createToolbarButton());
       toolbar.addLeftWidget(commands_.nextTerminal().createToolbarButton());
