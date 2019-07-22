@@ -61,10 +61,6 @@ public class CRANMirror extends UserPrefs.CranMirror
       this.url = url;
    }-*/;
 
-   public final native String getSecondary() /*-{
-      return this.secondary;
-   }-*/;
-
    private final native void setSecondary(String secondary) /*-{
       this.secondary = secondary;
    }-*/;
