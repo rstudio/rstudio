@@ -23,10 +23,10 @@
 #include <session/SessionScopes.hpp>
 
 #define kRVersionSettings              "rversion-settings"
-#define kDefaultRVersion               "defaultRVersion"
-#define kDefaultRVersionHome           "defaultRVersionHome"
-#define kDefaultRVersionLabel          "defaultRVersionLabel"
-#define kRestoreProjectRVersion        "restoreProjectRVersion"
+#define kSettingDefaultRVersion        "defaultRVersion"
+#define kSettingDefaultRVersionHome    "defaultRVersionHome"
+#define kSettingDefaultRVersionLabel   "defaultRVersionLabel"
+#define kRestoreProjectRVersionFlag    "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
 #define kRVersionLabelSuffix           "-RVersionLabel"
@@ -48,36 +48,36 @@ public:
 
    std::string defaultRVersion()
    {
-      return readSetting(kDefaultRVersion);
+      return readSetting(kSettingDefaultRVersion);
    }
 
    std::string defaultRVersionHome()
    {
-      return readSetting(kDefaultRVersionHome);
+      return readSetting(kSettingDefaultRVersionHome);
    }
 
    std::string defaultRVersionLabel()
    {
-      return readSetting(kDefaultRVersionLabel);
+      return readSetting(kSettingDefaultRVersionLabel);
    }
 
    void setDefaultRVersion(const std::string& version,
                            const std::string& versionHome,
                            const std::string& versionLabel)
    {
-      writeSetting(kDefaultRVersion, version);
-      writeSetting(kDefaultRVersionHome, versionHome);
-      writeSetting(kDefaultRVersionLabel, versionLabel);
+      writeSetting(kSettingDefaultRVersion, version);
+      writeSetting(kSettingDefaultRVersionHome, versionHome);
+      writeSetting(kSettingDefaultRVersionLabel, versionLabel);
    }
 
    bool restoreProjectRVersion()
    {
-      return readSetting(kRestoreProjectRVersion) != "0";
+      return readSetting(kRestoreProjectRVersionFlag) != "0";
    }
 
    void setRestoreProjectRVersion(bool restoreProjectRVersion)
    {
-      writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
+      writeSetting(kRestoreProjectRVersionFlag, restoreProjectRVersion ? "1" : "0");
    }
 
    void setProjectLastRVersion(const std::string& projectDir,

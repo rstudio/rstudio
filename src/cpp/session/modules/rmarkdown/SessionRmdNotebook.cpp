@@ -43,7 +43,8 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
+
+#include <session/prefs/UserState.hpp>
 
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
@@ -209,7 +210,7 @@ Events& events()
 // session should write to it.
 std::string notebookCtxId()
 {
-   return userSettings().contextId() + module_context::activeSession().id();
+   return prefs::userState().contextId() + module_context::activeSession().id();
 }
 
 Error initialize()

@@ -1,7 +1,7 @@
 /*
  * RStudioThemes.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,8 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
@@ -30,11 +31,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UIPrefs uiPrefs,
+   public static void initializeThemes(UserPrefs userPrefs,
+                                       UserState userState,
                                        Document document,
                                        Element element)
    {
-      String themeName = getThemeFromUiPrefs(uiPrefs);
+      String themeName = getThemeFromUserPrefs(userPrefs, userState);
       initializeThemes(themeName, document, element);
    }
 
@@ -52,15 +54,18 @@ public class RStudioThemes
       document.getBody().removeClassName("rstudio-themes-dark-menus");
       document.getBody().removeClassName("rstudio-themes-dark-menus-disabled");
       
-      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
+      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate")
+      {
          document.getBody().addClassName("rstudio-themes-flat");
          
-         if (themeName.contains("dark")) {
+         if (themeName.contains("dark"))
+         {
             document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
          }
 
-         if (usesScrollbars()) {
+         if (usesScrollbars())
+         {
             element.addClassName("rstudio-themes-scrollbars");
          }
             
@@ -69,33 +74,39 @@ public class RStudioThemes
       }
    }
 
-   public static boolean isFlat(UIPrefs prefs) {
-      return prefs.getFlatTheme().getValue() != "classic"; 
+   public static boolean isFlat(UserPrefs prefs)
+   {
+      return prefs.globalTheme().getValue() != UserPrefs.GLOBAL_THEME_CLASSIC;
    }
    
-   public static boolean isFlat() {
+   public static boolean isFlat()
+   {
       return Document.get().getBody().hasClassName("rstudio-themes-flat");
    }
    
-   public static boolean isEditorDark() {
+   public static boolean isEditorDark()
+   {
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme) {
+   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme)
+   {
       if (StringUtil.equals(rstudioTheme, "classic") || (aceTheme == null))
          return rstudioTheme;
       
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUiPrefs(UIPrefs prefs) {
+   public static String getThemeFromUserPrefs(UserPrefs prefs, UserState state)
+   {
       return suggestThemeFromAceTheme(
-        prefs.theme().getGlobalValue(),
-        prefs.getFlatTheme().getGlobalValue()
+        state.theme().getGlobalValue().cast(),
+        prefs.globalTheme().getGlobalValue()
       );
    }
    
-   public static boolean usesScrollbars() {
+   public static boolean usesScrollbars()
+   {
       if (usesScrollbars_ != null) return usesScrollbars_;
       
       if (!BrowseCap.isMacintosh()) {

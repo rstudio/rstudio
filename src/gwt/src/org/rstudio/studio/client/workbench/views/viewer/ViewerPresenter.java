@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -52,7 +51,6 @@ import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -60,7 +58,8 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -109,7 +108,8 @@ public class ViewerPresenter extends BasePresenter
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          Provider<UIPrefs> pUIPrefs,
+                          Provider<UserPrefs> pUserPrefs,
+                          Provider<UserState> pUserState,
                           HtmlMessageListener htmlMessageListener)
    {
       super(display);
@@ -123,7 +123,8 @@ public class ViewerPresenter extends BasePresenter
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
-      pUIPrefs_ = pUIPrefs;
+      pUserPrefs_ = pUserPrefs;
+      pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
       
       binder.bind(commands, this);
@@ -220,7 +221,7 @@ public class ViewerPresenter extends BasePresenter
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
       if (event.getParams().getViewerType() == 
-            ShinyViewerType.SHINY_VIEWER_PANE &&
+            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
           event.getParams().getState() == 
             ShinyApplicationParams.STATE_STARTED)
       {
@@ -236,7 +237,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
    {
-      if (event.getParams().getViewerType() == PlumberViewerType.PLUMBER_VIEWER_PANE &&
+      if (event.getParams().getViewerType() == UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
           event.getParams().getState() == PlumberAPIParams.STATE_STARTED)
       {
          // time out a bit to wait for swagger server to initialize
@@ -366,7 +367,7 @@ public class ViewerPresenter extends BasePresenter
                    display_.getUrl(),
                    context,
                    ExportPlotOptions.adaptToSize(
-                         pUIPrefs_.get().exportViewerOptions().getValue(),
+                         pUserState_.get().exportViewerOptions().getValue().cast(),
                          display_.getViewerFrameSize()),
                    saveExportOptionsOperation_
                ).showModal();
@@ -435,7 +436,7 @@ public class ViewerPresenter extends BasePresenter
       new CopyViewerPlotToClipboardDesktopDialog(
          display_.getUrl(), 
          ExportPlotOptions.adaptToSize(
-               pUIPrefs_.get().exportViewerOptions().getValue(),
+               pUserState_.get().exportViewerOptions().getValue().cast(),
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
       ).showModal();
@@ -603,13 +604,13 @@ public class ViewerPresenter extends BasePresenter
          {
             public void execute(ExportPlotOptions options)
             {
-               UIPrefs uiPrefs = pUIPrefs_.get();
+               UserState userState = pUserState_.get();
                if (!ExportPlotOptions.areEqual(
                                options,
-                               uiPrefs.exportViewerOptions().getValue()))
+                               userState.exportViewerOptions().getValue().cast()))
                {
-                  uiPrefs.exportViewerOptions().setGlobalValue(options);
-                  uiPrefs.writeUIPrefs();
+                  userState.exportViewerOptions().setGlobalValue(options.cast());
+                  userState.writeState();
                }
             }
          };
@@ -623,7 +624,8 @@ public class ViewerPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileSystemContext_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<UserState> pUserState_;
    private final SourceShim sourceShim_; 
    private final ShinyDisconnectNotifier shinyNotifier_;
    

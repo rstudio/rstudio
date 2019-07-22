@@ -27,15 +27,12 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
-   public CompilePdfPreferencesPane(UIPrefs prefs,
+   public CompilePdfPreferencesPane(UserPrefs prefs,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;
@@ -128,32 +125,31 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      CompilePdfPrefs compilePdfPrefs = prefs.getCompilePdfPrefs();
-      chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
-      chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
+      chkCleanTexi2DviOutput_.setValue(prefs.cleanTexi2dviOutput().getValue());
+      chkEnableShellEscape_.setValue(prefs.latexShellEscape().getValue());
       
-      pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
+      pdfPreview_.addChoice("(No Preview)", UserPrefs.PDF_PREVIEWER_NONE);
       
       String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
       if (desktopSynctexViewer.length() > 0)
       {
          pdfPreview_.addChoice(desktopSynctexViewer  + " (Recommended)", 
-                               UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
+                               UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX);
       }
       
       pdfPreview_.addChoice("RStudio Viewer", 
-                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+                            UserPrefs.PDF_PREVIEWER_RSTUDIO);
       
       pdfPreview_.addChoice("System Viewer",
-                            UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
+                            UserPrefs.PDF_PREVIEWER_SYSTEM);
       
-      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      pdfPreview_.setValue(prefs_.pdfPreviewer().getValue());
    }
    
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean requiresRestart = super.onApply(rPrefs);
       
@@ -162,17 +158,18 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
       
-      prefs_.pdfPreview().setGlobalValue(pdfPreview_.getValue());
-         
-      CompilePdfPrefs prefs = CompilePdfPrefs.create(
-                                       chkCleanTexi2DviOutput_.getValue(),
-                                       chkEnableShellEscape_.getValue());
-      rPrefs.setCompilePdfPrefs(prefs);
+      prefs_.pdfPreviewer().setGlobalValue(pdfPreview_.getValue());
       
+      prefs_.cleanTexi2dviOutput().setGlobalValue(
+            chkCleanTexi2DviOutput_.getValue());
+      
+      prefs_.latexShellEscape().setGlobalValue(
+            chkEnableShellEscape_.getValue());
+         
       return requiresRestart;
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;

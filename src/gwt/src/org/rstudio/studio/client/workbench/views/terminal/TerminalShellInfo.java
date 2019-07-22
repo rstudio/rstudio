@@ -14,34 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class TerminalShellInfo extends JavaScriptObject
 {
-   // Keep these enums synced with enum TerminalShellType on server
-
-   // Open the default shell type
-   public static final int SHELL_DEFAULT = 0;
-
-   // -- Start Windows-only
-   public static final int SHELL_GITBASH = 1;
-   public static final int SHELL_WSLBASH = 2; // Windows Services for Linux
-
-   public static final int SHELL_CMD32 = 3;
-   public static final int SHELL_CMD64 = 4;
-
-   public static final int SHELL_PS32 = 5; // Powershell
-   public static final int SHELL_PS64 = 6;
-   public static final int SHELL_PSCORE = 10;
-   // -- End Windows-only
-   
-   public static final int SHELL_POSIX_BASH = 7;
-   public static final int SHELL_CUSTOM = 8;
-   public static final int SHELL_NONE = 9;
-
    protected TerminalShellInfo() {}
 
-   public final native int getShellType() /*-{
+   public final native String getShellType() /*-{
       return this.type;
    }-*/;
 
@@ -49,29 +30,27 @@ public class TerminalShellInfo extends JavaScriptObject
       return this.name;
    }-*/; 
    
-   public static String getShellName(int shell)
+   public static String getShellName(String shell)
    {
       switch (shell)
       {
-      case SHELL_DEFAULT:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_DEFAULT:
          return "Default";
-      case SHELL_GITBASH:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_GIT_BASH:
          return "Git Bash";
-      case SHELL_WSLBASH:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_WSL_BASH:
          return "WSL";
-      case SHELL_CMD32:
-      case SHELL_CMD64:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
          return "Command Prompt";
-      case SHELL_PS32:
-      case SHELL_PS64:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
          return "PowerShell";
-      case SHELL_PSCORE:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
          return "PowerShell Core";
-      case SHELL_POSIX_BASH:
+      case UserPrefs.POSIX_TERMINAL_SHELL_BASH:
          return "Bash";
-      case SHELL_CUSTOM:
+      case UserPrefs.POSIX_TERMINAL_SHELL_CUSTOM:
          return "Custom";
-      case SHELL_NONE:
+      case UserPrefs.POSIX_TERMINAL_SHELL_NONE:
          return "User command";
       default:
          return "Unknown";

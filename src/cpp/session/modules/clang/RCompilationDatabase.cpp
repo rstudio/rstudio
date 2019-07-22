@@ -40,7 +40,6 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"

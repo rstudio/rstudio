@@ -33,7 +33,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -396,7 +396,7 @@ json::Array environmentListAsJson()
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
        listEnvironment(env,
                        false,
-                       userSettings().showLastDotValue(),
+                       prefs::userPrefs().showLastDotValue(),
                        &rProtect,
                        &vars);
 

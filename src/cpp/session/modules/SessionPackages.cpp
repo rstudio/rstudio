@@ -36,10 +36,10 @@
 #include <r/RJson.hpp>
 #include <r/RInterface.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionPackrat.hpp"
 
@@ -113,7 +113,8 @@ public:
    static void attemptUpgrade()
    {
       // get the URL currently in settings. if it's https already then bail
-      CRANMirror mirror = userSettings().cranMirror();
+      prefs::CRANMirror mirror = 
+         prefs::userPrefs().getCRANMirror();
       if (isSecure(mirror.url))
          return;
 
@@ -145,11 +146,11 @@ public:
    {
       if ((exitStatus == EXIT_SUCCESS) && checkOutputForSuccess())
       {
-         userSettings().setCRANMirror(secureMirror_);
+         prefs::userPrefs().setCRANMirror(secureMirror_, true);
       }
       else
       {
-         std::string url = userSettings().cranMirror().url;
+         std::string url = prefs::userPrefs().getCRANMirror().url;
          if (isKnownSecureMirror(url))
             unableToSecureConnectionWarning(secureMirror_.url);
          else
@@ -171,20 +172,20 @@ private:
    }
 
 private:
-   explicit CRANMirrorHttpsUpgrade(const CRANMirror& secureMirror)
+   explicit CRANMirrorHttpsUpgrade(const prefs::CRANMirror& secureMirror)
       : secureMirror_(secureMirror)
    {
    }
    std::string output_;
-   CRANMirror secureMirror_;
+   prefs::CRANMirror secureMirror_;
 };
 
 
 void revertCRANMirrorToHTTP()
 {
-   CRANMirror mirror = userSettings().cranMirror();
+   prefs::CRANMirror mirror = prefs::userPrefs().getCRANMirror();
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
-   userSettings().setCRANMirror(mirror);
+   prefs::userPrefs().setCRANMirror(mirror, true);
 }
 
 } // anonymous namespace
@@ -192,7 +193,7 @@ void revertCRANMirrorToHTTP()
 void reconcileSecureDownloadConfiguration()
 {
    // secure downloads enabled
-   if (userSettings().securePackageDownload())
+   if (prefs::userPrefs().useSecureDownload())
    {
       // ensure we have a secure download method
       Error error = r::exec::RFunction(".rs.initSecureDownload").call();

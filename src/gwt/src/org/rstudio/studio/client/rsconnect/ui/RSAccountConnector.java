@@ -38,7 +38,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
@@ -73,13 +74,15 @@ public class RSAccountConnector implements
          OptionsLoader.Shim optionsLoader,
          EventBus events,
          Session session,
-         Provider<UIPrefs> pUiPrefs,
+         Provider<UserPrefs> pUiPrefs,
+         Provider<UserState> pState,
          Satellite satellite)
    {
       server_ = server;
       display_ = display;
       optionsLoader_ = optionsLoader;
-      pUiPrefs_ = pUiPrefs;
+      pUserPrefs_ = pUiPrefs;
+      pUserState_ = pState;
       session_ = session;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
@@ -96,7 +99,7 @@ public class RSAccountConnector implements
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -177,8 +180,8 @@ public class RSAccountConnector implements
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pUiPrefs_.get().enableRStudioConnect().setGlobalValue(event.getEnable());
-      pUiPrefs_.get().writeUIPrefs();
+      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().writeState();
    }
 
    // Private methods --------------------------------------------------------
@@ -221,7 +224,7 @@ public class RSAccountConnector implements
             display_,
             forFirstAccount,
             withCloudOption && 
-               SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
+               SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
@@ -387,7 +390,8 @@ public class RSAccountConnector implements
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<UserState> pUserState_;
    private final Session session_;
    
    private boolean showingWizard_;

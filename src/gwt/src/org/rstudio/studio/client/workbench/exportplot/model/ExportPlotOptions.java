@@ -1,7 +1,7 @@
 /*
  * ExportPlotOptions.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,14 +15,11 @@
 package org.rstudio.studio.client.workbench.exportplot.model;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
-public class ExportPlotOptions extends JavaScriptObject
+public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
 {
-   protected ExportPlotOptions()
-   {   
-   }
+   protected ExportPlotOptions() {}
    
    public static final ExportPlotOptions createDefault()
    {
@@ -68,37 +65,5 @@ public class ExportPlotOptions extends JavaScriptObject
              a.keepRatio === b.keepRatio &&
              a.viewAfterSave === b.viewAfterSave &&
              a.copyAsMetafile === b.copyAsMetafile;    
-   }-*/;
-   
-   public final native String getFormat() /*-{
-      return this.format;
-   }-*/;
-   
-   public final native int getWidth() /*-{
-      return this.width;
-   }-*/;
-   public final native int getHeight() /*-{
-      return this.height;
-   }-*/;
-   
-   public final native boolean getKeepRatio() /*-{
-      if (this.keepRatio)
-         return this.keepRatio;
-      else
-         return false;
-   }-*/;
-   
-   public final native boolean getViewAfterSave() /*-{
-      if (this.viewAfterSave)
-         return this.viewAfterSave;
-      else
-         return false;
-   }-*/;
-   
-   public final native boolean getCopyAsMetafile() /*-{
-      if (this.copyAsMetafile)
-         return this.copyAsMetafile;
-      else
-         return false;
    }-*/;
 }

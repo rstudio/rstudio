@@ -118,9 +118,9 @@ public class ApplicationInterrupt
    }
 
    public void interruptR(final InterruptHandler handler,
-                          List<Integer> errorHandlerTypes,
-                          int replacedWithHandlerType) {
-      final int originalDebugType = errorManager_.getErrorHandlerType();
+                          List<String> errorHandlerTypes,
+                          String replacedWithHandlerType) {
+      final String originalDebugType = errorManager_.getErrorHandlerType();
       
       if (!errorHandlerTypes.contains(originalDebugType)) {
          interruptR(handler);

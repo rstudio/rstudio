@@ -42,7 +42,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -62,7 +62,7 @@ public class SatelliteManager implements CloseHandler<Window>
          EventBus events,
          Provider<SourceWindowManager> pSourceWindowManager,
          Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler,
-         Provider<UIPrefs> pUIPrefs)
+         Provider<UserPrefs> pUIPrefs)
    {
       session_ = session;
       events_ = events;
@@ -714,7 +714,7 @@ public class SatelliteManager implements CloseHandler<Window>
       private final WindowEx window_;
    }
  
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
 }
 
 

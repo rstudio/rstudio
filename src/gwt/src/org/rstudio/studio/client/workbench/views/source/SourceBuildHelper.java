@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 
@@ -30,10 +30,10 @@ import com.google.inject.Singleton;
 public class SourceBuildHelper
 {
    @Inject
-   public SourceBuildHelper(UIPrefs uiPrefs,
+   public SourceBuildHelper(UserPrefs uiPrefs,
                             SourceShim sourceShim)
    {
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       sourceShim_ = sourceShim;
    }
    
@@ -55,13 +55,13 @@ public class SourceBuildHelper
                                            final Command cancelCommand,
                                            String commandSource)
    {     
-      if (uiPrefs_.saveAllBeforeBuild().getValue())
+      if (userPrefs_.saveFilesBeforeBuild().getValue())
       {
          sourceShim_.saveUnsavedDocuments(command);
       }
       else
       {
-         String alwaysSaveOption = !uiPrefs_.saveAllBeforeBuild().getValue() ?
+         String alwaysSaveOption = !userPrefs_.saveFilesBeforeBuild().getValue() ?
                                     "Always save files before build" : null;
          
          ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
@@ -79,8 +79,8 @@ public class SourceBuildHelper
                      {
                         if (result.getAlwaysSave())
                         {
-                           uiPrefs_.saveAllBeforeBuild().setGlobalValue(true);
-                           uiPrefs_.writeUIPrefs();
+                           userPrefs_.saveFilesBeforeBuild().setGlobalValue(true);
+                           userPrefs_.writeUserPrefs();
                         }
                         
                         sourceShim_.handleUnsavedChangesBeforeExit(
@@ -101,5 +101,5 @@ public class SourceBuildHelper
    }
    
    private final SourceShim sourceShim_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
 }

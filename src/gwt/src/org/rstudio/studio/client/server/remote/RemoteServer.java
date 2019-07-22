@@ -85,7 +85,6 @@ import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
@@ -132,7 +131,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
@@ -147,7 +145,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -491,29 +488,23 @@ public class RemoteServer implements Server
                                requestCallback);
    }
 
-   public void setPrefs(RPrefs rPrefs,
-                        JavaScriptObject uiPrefs,
-                        ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONObject(rPrefs));
-      params.set(1, new JSONObject(uiPrefs));
-      sendRequest(RPC_SCOPE, SET_PREFS, params, requestCallback);
-}
-   
-   public void setUiPrefs(JavaScriptObject uiPrefs,
-                          ServerRequestCallback<Void> requestCallback)
+   public void setUserPrefs(JavaScriptObject userPrefs,
+                            ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  SET_UI_PREFS,
-                  uiPrefs,
+                  SET_USER_PREFS,
+                  userPrefs,
                   requestCallback);
    }
 
-   public void getRPrefs(ServerRequestCallback<RPrefs> requestCallback)
+
+   @Override
+   public void setUserState(JavaScriptObject userState,
+                            ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  GET_R_PREFS,
+                  SET_USER_STATE,
+                  userState,
                   requestCallback);
    }
 
@@ -4581,11 +4572,11 @@ public class RemoteServer implements Server
    }
    
    public void setErrorManagementType(
-         int type,
+         String type,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(type));
+      params.set(0, new JSONString(type));
       
       sendRequest(RPC_SCOPE, 
             SET_ERROR_MANAGEMENT_TYPE, 
@@ -4664,7 +4655,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getShinyViewerType(ServerRequestCallback<ShinyViewerType> requestCallback)
+   public void getShinyViewerType(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_SHINY_VIEWER_TYPE,
@@ -4672,11 +4663,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setShinyViewerType(int viewerType,
+   public void setShinyViewerType(String viewerType,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(viewerType));
+      params.set(0, new JSONString(viewerType));
       sendRequest(RPC_SCOPE,
             SET_SHINY_VIEWER_TYPE,
             params,
@@ -4698,7 +4689,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getPlumberViewerType(ServerRequestCallback<PlumberViewerType> requestCallback)
+   public void getPlumberViewerType(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_PLUMBER_VIEWER_TYPE,
@@ -5995,7 +5986,8 @@ public class RemoteServer implements Server
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
-   private static final String SET_UI_PREFS = "set_ui_prefs";
+   private static final String SET_USER_PREFS = "set_user_prefs";
+   private static final String SET_USER_STATE = "set_user_state";
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";

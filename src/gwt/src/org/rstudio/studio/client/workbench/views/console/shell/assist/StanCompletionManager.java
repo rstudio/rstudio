@@ -129,7 +129,7 @@ public class StanCompletionManager extends CompletionManagerBase
       
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
       {

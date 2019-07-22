@@ -92,7 +92,6 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
@@ -158,6 +157,7 @@
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
+#include "modules/SessionUserPrefs.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -185,6 +185,9 @@
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
+#include "modules/SessionCrashHandler.hpp"
+#include "modules/SessionRVersions.hpp"
+#include "modules/SessionTerminal.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -196,6 +199,9 @@
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
+
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include "workers/SessionWebRequestWorker.hpp"
 
@@ -510,6 +516,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (r_utils::initialize)
 
       // modules with c++ implementations
+      (modules::prefs::initialize)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
@@ -580,6 +587,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::jobs::initialize)
       (modules::themes::initialize)
       (modules::customsource::initialize)
+      (modules::crash_handler::initialize)
+      (modules::r_versions::initialize)
+      (modules::terminal::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -663,7 +673,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
-                                 userSettings().removeHistoryDuplicates());
+                                 prefs::userPrefs().removeHistoryDuplicates());
 
 
    // register function editor on windows
@@ -1226,15 +1236,15 @@ void rSerialization(int action, const FilePath& targetPath)
    
 void ensureRProfile()
 {
-   // check if we need to create the proifle (bail if we don't)
+   // check if we need to create the profile (bail if we don't)
    Options& options = rsession::options();
    if (!options.createProfile())
       return;
 
    FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
-   if (!rProfilePath.exists() && !userSettings().autoCreatedProfile())
+   if (!rProfilePath.exists() && !prefs::userState().autoCreatedProfile())
    {
-      userSettings().setAutoCreatedProfile(true);
+      prefs::userState().setAutoCreatedProfile(true);
       
       std::string p;
       p = "# .Rprofile -- commands to execute at the beginning of each R session\n"
@@ -1394,29 +1404,13 @@ bool restoreWorkspaceOption()
    }
 
    // no project override
-   return userSettings().loadRData() ||
+   return prefs::userPrefs().loadWorkspace() ||
           !rsession::options().initialEnvironmentFileOverride().empty();
 }
 
 bool alwaysSaveHistoryOption()
 {
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().alwaysSaveHistory)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   return userSettings().alwaysSaveHistory();
+   return prefs::userPrefs().alwaysSaveHistory();
 }
 
 FilePath getStartupEnvironmentFilePath()
@@ -1520,7 +1514,15 @@ int saveWorkspaceAction()
    }
 
    // no project override, read from settings
-   return userSettings().saveAction();
+   std::string action = prefs::userPrefs().saveWorkspace();
+   if (action == kSaveWorkspaceAlways)
+      return rstudio::r::session::kSaveActionSave;
+   else if (action == kSaveWorkspaceNever)
+      return rstudio::r::session::kSaveActionNoSave;
+   else if (action == kSaveWorkspaceAsk)
+      return rstudio::r::session::kSaveActionAsk;
+   
+   return rstudio::r::session::kSaveActionAsk;
 }
 
 void syncRSaveAction()
@@ -1859,10 +1861,13 @@ int main (int argc, char * const argv[])
          }
       }
 
-      // initialize user settings
-      error = userSettings().initialize();
+      // initialize user preferences and state
+      error = prefs::initializePrefs();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
+         return sessionExitFailure(error, ERROR_LOCATION);
+      error = prefs::initializeState();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // startup projects -- must be after userSettings is initialized
       // but before persistentState and setting working directory
@@ -1922,7 +1927,7 @@ int main (int argc, char * const argv[])
          core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
       // set ANSI support environment variable before running code from .Rprofile
-      userSettings().syncConsoleColorEnv();
+      modules::console::syncConsoleColorEnv();
 
       // r options
       rstudio::r::session::ROptions rOptions ;
@@ -1942,17 +1947,10 @@ int main (int argc, char * const argv[])
 
       bool customRepo = true;
 
-      // When edit disabled, clear CRAN user setting preferences
-      if (!options.allowCRANReposEdit()) {
-        CRANMirror userMirror = userSettings().cranMirror();
-        userMirror.changed = false;
-        userSettings().setCRANMirror(userMirror, false);
-      }
-
       // CRAN repos precedence: user setting then repos file then global server option
-      if (userSettings().cranMirror().changed) {
-         rOptions.rCRANUrl = userSettings().cranMirror().url;
-         rOptions.rCRANSecondary = userSettings().cranMirror().secondary;
+      if (prefs::userState().cranMirrorChanged()) {
+         rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
+         rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
       }
       else if (!options.rCRANMultipleRepos().empty()) {
          std::vector<std::string> parts;
@@ -1976,17 +1974,7 @@ int main (int argc, char * const argv[])
          customRepo = false;
       }
 
-      if (!userSettings().cranMirror().changed) {
-         CRANMirror defaultMirror;
-         defaultMirror.name = customRepo ? "Custom" : "Global (CDN)";
-         defaultMirror.host = customRepo ? "Custom" : "RStudio";
-         defaultMirror.secondary = rOptions.rCRANSecondary;
-         defaultMirror.url = rOptions.rCRANUrl;
-
-         userSettings().setCRANMirror(defaultMirror, false);
-      }
-
-      rOptions.useInternet2 = userSettings().useInternet2();
+      rOptions.useInternet2 = prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();
       rOptions.serverMode = serverMode;
@@ -2003,7 +1991,7 @@ int main (int argc, char * const argv[])
       }
       rOptions.disableRProfileOnStart = disableExecuteRprofile();
       rOptions.rProfileOnResume = serverMode &&
-                                  userSettings().rProfileOnResume();
+                                  prefs::userPrefs().runRprofileOnResume();
       rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();

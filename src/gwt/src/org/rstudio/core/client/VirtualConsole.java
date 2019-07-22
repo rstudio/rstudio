@@ -26,6 +26,7 @@ import java.util.TreeSet;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
@@ -51,7 +52,7 @@ public class VirtualConsole
    public interface Preferences
    {
       int truncateLongLinesInConsoleHistory();
-      int consoleAnsiMode();
+      String consoleAnsiMode();
    }
   
    @Inject
@@ -424,13 +425,14 @@ public class VirtualConsole
      
       String currentClazz = clazz;
 
-      int ansiColorMode = prefs_.consoleAnsiMode();
+      String ansiColorMode = prefs_.consoleAnsiMode();
 
       // If previously determined classes from ANSI codes are available,
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      if (ansiColorMode == ANSI_COLOR_ON && ansiCodeStyles_.inlineClazzes != null)
+      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_ON && 
+            ansiCodeStyles_.inlineClazzes != null)
       {
          if (clazz != null)
          {
@@ -442,7 +444,7 @@ public class VirtualConsole
          }
       }
 
-      Match match = (ansiColorMode == ANSI_COLOR_OFF) ?
+      Match match = (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_OFF) ?
             CONTROL.match(data, 0) :
             AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
@@ -533,7 +535,7 @@ public class VirtualConsole
                   if (ansi_ == null)
                      ansi_ = new AnsiCode();
                   ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
-                  if (ansiColorMode == ANSI_COLOR_STRIP)
+                  if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
                   {
                      currentClazz = clazz;
                   }

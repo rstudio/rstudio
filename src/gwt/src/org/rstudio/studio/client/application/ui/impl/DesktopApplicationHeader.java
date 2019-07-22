@@ -54,7 +54,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
@@ -87,7 +87,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                           ApplicationServerOperations server, 
                           Provider<DesktopHooks> pDesktopHooks,
                           Provider<CodeSearch> pCodeSearch,
-                          Provider<UIPrefs> pUIPrefs,
+                          Provider<UserPrefs> pUIPrefs,
                           ErrorManager errorManager,
                           GlobalDisplay globalDisplay,
                           ApplicationQuit appQuit)
@@ -532,7 +532,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;
    private GlobalDisplay globalDisplay_;
-   Provider<UIPrefs> pUIPrefs_;
+   Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;

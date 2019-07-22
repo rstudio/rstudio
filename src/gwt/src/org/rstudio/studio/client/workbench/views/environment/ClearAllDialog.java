@@ -33,7 +33,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class ClearAllDialog extends ModalDialogBase
 {  
@@ -62,9 +63,9 @@ public class ClearAllDialog extends ModalDialogBase
    }
    
    @Inject 
-   void initialize(UIPrefs prefs)
+   void initialize(UserState state)
    {
-      prefs_ = prefs;
+      state_ = state;
    }
 
    @Override
@@ -109,7 +110,7 @@ public class ClearAllDialog extends ModalDialogBase
       optionStyle.setMarginBottom(10, Unit.PX);
       
       chkIncludeHidden_ = new CheckBox("Include hidden objects");
-      chkIncludeHidden_.setValue(prefs_.clearHidden().getValue());
+      chkIncludeHidden_.setValue(state_.clearHidden().getValue());
 
       if (numObjects_ == 0)
       {
@@ -117,8 +118,8 @@ public class ClearAllDialog extends ModalDialogBase
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event)
             {
-               prefs_.clearHidden().setGlobalValue(event.getValue());
-               prefs_.writeUIPrefs();
+               state_.clearHidden().setGlobalValue(event.getValue());
+               state_.writeState();
             }
          });
          optionPanel.add(chkIncludeHidden_);
@@ -130,6 +131,6 @@ public class ClearAllDialog extends ModalDialogBase
    
    private ProgressIndicator progress_ ;
    private CheckBox chkIncludeHidden_;
-   private UIPrefs prefs_;
+   private UserState state_;
    private int numObjects_;
 }

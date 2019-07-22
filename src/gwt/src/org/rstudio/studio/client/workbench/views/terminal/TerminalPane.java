@@ -38,7 +38,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
@@ -81,7 +81,7 @@ public class TerminalPane extends WorkbenchPane
    protected TerminalPane(EventBus events,
                           GlobalDisplay globalDisplay,
                           Commands commands,
-                          UIPrefs uiPrefs,
+                          UserPrefs uiPrefs,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
@@ -1077,7 +1077,7 @@ public class TerminalPane extends WorkbenchPane
       if (uiPrefs_.showTerminalTab().getValue() != show)
       {
          uiPrefs_.showTerminalTab().setGlobalValue(show);
-         uiPrefs_.writeUIPrefs();
+         uiPrefs_.writeUserPrefs();
       }
    }
 
@@ -1100,5 +1100,5 @@ public class TerminalPane extends WorkbenchPane
    private EventBus events_;
    private Commands commands_;
    private WorkbenchServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
 }

@@ -28,8 +28,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -88,11 +88,11 @@ public abstract class CompletionManagerBase
    
    @Inject
    private void initialize(EventBus events,
-                           UIPrefs uiPrefs,
+                           UserPrefs uiPrefs,
                            HelpStrategy helpStrategy)
    {
       events_ = events;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       helpStrategy_ = helpStrategy;
    }
    
@@ -135,7 +135,7 @@ public abstract class CompletionManagerBase
                completions.getLanguage()));
       }
       
-      if (uiPrefs_.enableSnippets().getValue())
+      if (userPrefs_.enableSnippets().getValue())
       {
          String[] parts = line.split("\\s+");
          if (parts.length > 0)
@@ -337,7 +337,7 @@ public abstract class CompletionManagerBase
       // add '()' for function completions
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
          value += "()";
@@ -355,7 +355,7 @@ public abstract class CompletionManagerBase
       
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
          docDisplay_.moveCursorBackward();
@@ -523,7 +523,7 @@ public abstract class CompletionManagerBase
       }
       else
       {
-         if (canAutoPopup(charCode, uiPrefs_.alwaysCompleteCharacters().getValue() - 1))
+         if (canAutoPopup(charCode, userPrefs_.codeCompletionCharacters().getValue() - 1))
             suggestTimer_.schedule(true, false);
       }
       
@@ -575,12 +575,12 @@ public abstract class CompletionManagerBase
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
-      String codeComplete = uiPrefs_.codeComplete().getValue();
+      String codeComplete = userPrefs_.codeCompletion().getValue();
       
-      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_MANUAL))
+      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
          return true;
       
-      if (!StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_ALWAYS))
+      if (!StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_ALWAYS))
          return false;
 
       if (docDisplay_.isVimModeOn() && !docDisplay_.isVimInInsertMode())
@@ -715,7 +715,7 @@ public abstract class CompletionManagerBase
       // if the line is blank, don't request completions unless
       // the user has explicitly opted in
       String line = docDisplay_.getCurrentLineUpToCursor();
-      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
+      if (!userPrefs_.tabMultilineCompletion().getValue())
       {
          if (line.matches("^\\s*"))
             return false;
@@ -848,7 +848,7 @@ public abstract class CompletionManagerBase
          flushCache_ = flushCache;
          canAutoInsert_ = canAutoInsert;
          
-         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
+         timer_.schedule(userPrefs_.codeCompletionDelay().getValue());
       }
       
       public void cancel()
@@ -913,5 +913,5 @@ public abstract class CompletionManagerBase
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;
-   protected UIPrefs uiPrefs_;
+   protected UserPrefs userPrefs_;
 }

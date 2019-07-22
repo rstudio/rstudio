@@ -890,7 +890,7 @@ TEST_CASE("Json")
       REQUIRE(err == Success());
 
       // ... extract defaults from the schema (RapidJSON doesn't do defaults)
-      json::Value defaults;
+      json::Object defaults;
       err = json::getSchemaDefaults(schema, &defaults);
       REQUIRE(err == Success());
 

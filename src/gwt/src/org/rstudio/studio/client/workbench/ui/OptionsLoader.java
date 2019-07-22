@@ -22,16 +22,13 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 
 public class OptionsLoader
@@ -45,7 +42,7 @@ public class OptionsLoader
 
    @Inject
    OptionsLoader(GlobalDisplay globalDisplay,
-                 UIPrefs uiPrefs,
+                 UserPrefs uiPrefs,
                  Commands commands,
                  WorkbenchServerOperations server,
                  Provider<PreferencesDialog> pPrefDialog)
@@ -64,40 +61,21 @@ public class OptionsLoader
 
    public void showOptions(final Class<?> paneClass)
    {
-      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
-                                                      "Error Reading Options");
-      indicator.onProgress("Reading options...");
-
-      server_.getRPrefs(
-         new SimpleRequestCallback<RPrefs>() {
-
-            @Override
-            public void onResponseReceived(RPrefs rPrefs)
-            {
-               indicator.onCompleted();
-               PreferencesDialog prefDialog = pPrefDialog_.get();
-               prefDialog.initialize(rPrefs);
-               if (paneClass != null)
-                  prefDialog.activatePane(paneClass);
-               prefDialog.showModal();
-               
-               // if the user changes global sweave or latex options notify
-               // them if this results in the current project being out
-               // of sync with the global settings
-               new SweaveProjectOptionsNotifier(prefDialog);
-               
-               // activate main window if we are in desktop mode (because on
-               // the mac you can actually show prefs from a satellite window)
-               if (Desktop.hasDesktopFrame())
-                  Desktop.getFrame().bringMainFrameToFront();
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               indicator.onError(error.getUserMessage());
-            }           
-         });        
+      PreferencesDialog prefDialog = pPrefDialog_.get();
+      prefDialog.initialize(RStudioGinjector.INSTANCE.getUserPrefs());
+      if (paneClass != null)
+         prefDialog.activatePane(paneClass);
+      prefDialog.showModal();
+      
+      // if the user changes global sweave or latex options notify
+      // them if this results in the current project being out
+      // of sync with the global settings
+      new SweaveProjectOptionsNotifier(prefDialog);
+      
+      // activate main window if we are in desktop mode (because on
+      // the mac you can actually show prefs from a satellite window)
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().bringMainFrameToFront();
    }
 
    
@@ -170,6 +148,6 @@ public class OptionsLoader
    private final GlobalDisplay globalDisplay_;
    private final WorkbenchServerOperations server_;
    private final Commands commands_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final Provider<PreferencesDialog> pPrefDialog_;
 }

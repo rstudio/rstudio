@@ -108,7 +108,7 @@ public class JsUtil
                @Override
                public boolean hasNext()
                {
-                  return index_ > 0;
+                  return index_ >= 0;
                }
 
                @Override

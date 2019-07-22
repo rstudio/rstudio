@@ -39,7 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -57,7 +57,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                   SynctexServerOperations server,
                   FileTypeRegistry fileTypeRegistry,
                   Session session,
-                  UIPrefs prefs,
+                  UserPrefs prefs,
                   Satellite satellite)
    {
       globalDisplay_ = globalDisplay;
@@ -98,13 +98,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.pdfPreviewer().getValue();
       
       boolean synctexSupported =
                   // internal previewer
-                  pdfPreview == UIPrefs.PDF_PREVIEW_RSTUDIO ||
+                  pdfPreview == UserPrefs.PDF_PREVIEWER_RSTUDIO ||
                   // platform-specific desktop previewer
-                  (pdfPreview == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX &&
+                  (pdfPreview == UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX &&
                    Desktop.isDesktop());
       
       boolean synctexAvailable = synctexSupported && 
@@ -339,7 +339,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return Desktop.isDesktop() && 
              !Satellite.isCurrentWindowSatellite() &&
-             prefs_.pdfPreview().getValue() == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX;
+             prefs_.pdfPreviewer().getValue() == UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX;
    }
 
    private ProgressIndicator getSyncProgress()
@@ -415,7 +415,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final SynctexServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Satellite satellite_;
    private String pdfPath_ = null;
    private String targetFile_ = "";

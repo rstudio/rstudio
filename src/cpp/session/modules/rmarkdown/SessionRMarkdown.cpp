@@ -48,10 +48,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionUrlPorts.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "RMarkdownPresentation.hpp"
 
@@ -551,7 +551,7 @@ private:
             working = module_context::resolveAliasedPath(workingDir);
 
          // tell the user the command we're using to render the doc if requested
-         if (userSettings().showRmdRenderCommand())
+         if (prefs::userPrefs().showRmdRenderCommand())
          {
             onRenderOutput(module_context::kCompileOutputNormal, "==> " + cmd + "\n");
          }

@@ -25,7 +25,6 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 

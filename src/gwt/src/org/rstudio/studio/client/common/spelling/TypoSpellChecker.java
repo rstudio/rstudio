@@ -1,7 +1,7 @@
 /*
  * SpellChecker.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -175,10 +175,10 @@ public class TypoSpellChecker
       // subscribe to spelling prefs changes (invalidateAll on changes)
       ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
       ValueChangeHandler<String> dictChangedHandler = (event) -> loadDictionary();
-      uiPrefs_.realTimeSpellChecking().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.ignoreWordsInUppercase().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
-      uiPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
+      userPrefs_.realTimeSpellchecking().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.ignoreUppercaseWords().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
+      userPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -192,10 +192,10 @@ public class TypoSpellChecker
    }
 
    @Inject
-   void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UIPrefs uiPrefs)
+   void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
       userDictionary_ = workbenchListManager.getUserDictionaryList();
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
 
       if (!spellingWorkerInitialized_)
       {
@@ -284,7 +284,7 @@ public class TypoSpellChecker
 
    private boolean ignoreUppercaseWord(String word)
    {
-      if (!uiPrefs_.ignoreWordsInUppercase().getValue())
+      if (!userPrefs_.ignoreUppercaseWords().getValue())
          return false;
 
       for (char c: word.toCharArray())
@@ -297,7 +297,7 @@ public class TypoSpellChecker
 
    private boolean ignoreWordWithNumbers(String word)
    {
-      if (!uiPrefs_.ignoreWordsWithNumbers().getValue())
+      if (!userPrefs_.ignoreWordsWithNumbers().getValue())
          return false;
 
       for (char c: word.toCharArray())
@@ -318,7 +318,7 @@ public class TypoSpellChecker
    private void loadDictionary()
    {
       // don't load the same dictionary again
-      final String language = uiPrefs_.spellingDictionaryLanguage().getValue();
+      final String language = userPrefs_.spellingDictionaryLanguage().getValue();
       if (typoLoaded_ && loadedDict_ == language)
          return;
       
@@ -367,6 +367,6 @@ public class TypoSpellChecker
    private final ExternalJavaScriptLoader typoLoader_ =
          new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString());
 
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
 }
 

@@ -68,7 +68,7 @@ extern const int kConsoleProcessOutput;
 extern const int kConsoleProcessExit;
 extern const int kListChanged;
 extern const int kConsoleProcessCreated;
-extern const int kUiPrefsChanged;
+extern const int kUserPrefsChanged;
 extern const int kHandleUnsavedChanges;
 extern const int kConsoleProcessPrompt;
 extern const int kConsoleProcessCreated;
@@ -196,6 +196,7 @@ extern const int kComputeThemeColors;
 extern const int kRequestDocumentClose;
 extern const int kRequestDocumentCloseCompleted;
 extern const int kExecuteAppCommand;
+extern const int kUserStateChanged;
 }
    
 class ClientEvent

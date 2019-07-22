@@ -23,8 +23,8 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunSelectionEvent;
@@ -76,7 +76,7 @@ public class EditingTargetCodeExecution
    
    @Inject
    void initialize(EventBus events,
-                   UIPrefs prefs,
+                   UserPrefs prefs,
                    Commands commands,
                    SourceServerOperations server)
    {
@@ -335,7 +335,7 @@ public class EditingTargetCodeExecution
          endRowLimit = scope.getEnd().getRow() - 1;
       }
   
-      if (executionBehavior == UIPrefsAccessor.EXECUTE_STATEMENT)
+      if (executionBehavior == UserPrefs.EXECUTION_BEHAVIOR_STATEMENT)
       {
          // no scope to guard region, check the document itself to find
          // the region to execute
@@ -358,7 +358,7 @@ public class EditingTargetCodeExecution
          }
          range.getStart().setRow(startRow);
       }
-      else if (executionBehavior == UIPrefsAccessor.EXECUTE_PARAGRAPH)
+      else if (executionBehavior == UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH)
       {
          range = docDisplay_.getParagraph(
                docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
@@ -526,7 +526,7 @@ public class EditingTargetCodeExecution
    
    // Injected ----
    private EventBus events_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Commands commands_;
    @SuppressWarnings("unused")
    private SourceServerOperations server_;

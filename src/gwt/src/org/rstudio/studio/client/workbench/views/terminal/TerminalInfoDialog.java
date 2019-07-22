@@ -27,7 +27,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,7 +43,7 @@ public class TerminalInfoDialog extends ModalDialogBase
 
       setText("Terminal Diagnostics");
 
-      boolean localEchoEnabled = uiPrefs_.terminalLocalEcho().getValue() && 
+      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() && 
             !BrowseCap.isWindowsDesktop();
       
       final StringBuilder diagnostics = new StringBuilder();
@@ -74,7 +74,7 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Local-echo:  '").append(localEchoEnabled).append("'\n");
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
-         diagnostics.append("WebSockets:  '").append(uiPrefs_.terminalUseWebsockets().getValue()).append("'\n");
+         diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
          diagnostics.append("Typing lag:  '").append(session.getSocket().getTypingLagMsg()).append("'\n");
 
          diagnostics.append("\nSystem Information\n------------------\n");
@@ -134,9 +134,9 @@ public class TerminalInfoDialog extends ModalDialogBase
    }
 
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    } 
 
    
@@ -150,5 +150,5 @@ public class TerminalInfoDialog extends ModalDialogBase
    private ThemedButton appendBufferButton_;
 
    // Injected ---- 
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
 }

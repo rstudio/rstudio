@@ -40,8 +40,8 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -52,7 +52,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
-                                    UIPrefs uiPrefs,
+                                    UserPrefs userPrefs,
+                                    UserState userState,
                                     final AceThemes themes,
                                     WorkbenchContext workbenchContext,
                                     GlobalDisplay globalDisplay,
@@ -60,7 +61,8 @@ public class AppearancePreferencesPane extends PreferencesPane
                                     FileDialogs fileDialogs)
    {
       res_ = res;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
       
@@ -69,14 +71,18 @@ public class AppearancePreferencesPane extends PreferencesPane
       relaunchRequired_ = false;
 
       // dark-grey theme used to be derived from default, now also applies to sky
-      if (StringUtil.equals(uiPrefs_.getFlatTheme().getValue(), "dark-grey"))
-        uiPrefs_.getFlatTheme().setGlobalValue("default");
+      if (StringUtil.equals(userPrefs_.globalTheme().getValue(), "dark-grey"))
+        userPrefs_.globalTheme().setGlobalValue(UserPrefs.GLOBAL_THEME_DEFAULT);
 
-      final String originalTheme = uiPrefs_.getFlatTheme().getValue();
+      final String originalTheme = userPrefs_.globalTheme().getValue();
 
       flatTheme_ = new SelectWidget("RStudio theme:",
                                 new String[]{"Classic", "Modern", "Sky"},
-                                new String[]{"classic", "default", "alternate"},
+                                new String[]{
+                                      UserPrefs.GLOBAL_THEME_CLASSIC,
+                                      UserPrefs.GLOBAL_THEME_DEFAULT, 
+                                      UserPrefs.GLOBAL_THEME_ALTERNATE
+                                    },
                                 false);
       flatTheme_.addStyleName(res.styles().themeChooser());
       flatTheme_.getListBox().setWidth("95%");
@@ -84,7 +90,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          relaunchRequired_ = (StringUtil.equals(originalTheme, "classic") && !StringUtil.equals(flatTheme_.getValue(), "classic")) ||
             (StringUtil.equals(flatTheme_.getValue(), "classic") && !StringUtil.equals(originalTheme, "classic")));
 
-      String themeAlias = uiPrefs_.getFlatTheme().getGlobalValue();
+      String themeAlias = userPrefs_.globalTheme().getGlobalValue();
       flatTheme_.setValue(themeAlias);
 
       leftPanel.add(flatTheme_);
@@ -176,7 +182,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                                    values,
                                    false);
       fontSize_.getListBox().setWidth("95%");
-      if (!fontSize_.setValue(uiPrefs.fontSize().getGlobalValue() + ""))
+      if (!fontSize_.setValue(userPrefs.fontSizePoints().getGlobalValue() + ""))
          fontSize_.getListBox().setSelectedIndex(3);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
       {
@@ -204,7 +210,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
       theme_.addStyleName(res.styles().themeChooser());
    
-      AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       addThemeButton_ = new ThemedButton("Add...", event ->
          fileDialogs.openFile(
             "Theme Files (*.tmTheme *.rstheme)",
@@ -282,7 +288,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private void removeTheme(String themeName, AceThemes themes, Operation afterOperation)
    {
-      AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
       if (StringUtil.equalsIgnoreCase(currentTheme.getName(), themeName))
       {
          showCantRemoveActiveThemeDialog(currentTheme.getName());
@@ -365,7 +371,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          
             // It's possible the current theme was removed outside the context of
             // RStudio, so choose a default if it can't be found.
-            AceTheme currentTheme = uiPrefs_.theme().getGlobalValue();
+            AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
             if (!themeList_.containsKey(currentTheme.getName()))
             {
                StringBuilder warningMsg = new StringBuilder();
@@ -376,7 +382,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                   .append("default theme: \"");
                
                currentTheme = AceTheme.createDefault(currentTheme.isDark());
-               uiPrefs_.theme().setGlobalValue(currentTheme);
+               userState_.theme().setGlobalValue(currentTheme);
                preview_.setTheme(currentTheme.getUrl());
                
                warningMsg.append(currentTheme.getName())
@@ -527,20 +533,27 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    { 
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
 
-      double fontSize = Double.parseDouble(fontSize_.getValue());
-      uiPrefs_.fontSize().setGlobalValue(fontSize);
-      if (!StringUtil.equals(theme_.getValue(), uiPrefs_.theme().getGlobalValue().getName()))
+      String themeName = flatTheme_.getValue();
+      if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
       {
-         uiPrefs_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+         userPrefs_.globalTheme().setGlobalValue(themeName, false);
+      }
+      
+      double fontSize = Double.parseDouble(fontSize_.getValue());
+      userPrefs_.fontSizePoints().setGlobalValue(fontSize);
+      if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
+      {
+         userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
+         userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
       }
       
       if (Desktop.hasDesktopFrame())
@@ -561,13 +574,6 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
-      String themeName = flatTheme_.getValue();
-
-      if (!StringUtil.equals(themeName, uiPrefs_.getFlatTheme().getGlobalValue()))
-      {
-         uiPrefs_.getFlatTheme().setGlobalValue(themeName);
-      }
-      
       return restartRequired || relaunchRequired_;
    }
 
@@ -619,7 +625,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;

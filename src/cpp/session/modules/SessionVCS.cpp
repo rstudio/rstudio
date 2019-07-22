@@ -24,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "vcs/SessionVCSUtils.hpp"
 
@@ -219,7 +220,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!session::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
+   if (!session::options().allowVcs() || !prefs::userPrefs().vcsEnabled() || workingDir.empty())
       return Success();
 
 

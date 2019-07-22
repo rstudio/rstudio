@@ -89,7 +89,6 @@ set (SESSION_SOURCE_FILES
    SessionSuspend.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
-   SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
@@ -102,6 +101,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
+   modules/SessionCrashHandler.cpp
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
@@ -140,10 +140,12 @@ set (SESSION_SOURCE_FILES
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
    modules/SessionRUtil.cpp
+   modules/SessionRVersions.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSnippets.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
+   modules/SessionTerminal.cpp
    modules/SessionTerminalShell.cpp
    modules/SessionTests.cpp
    modules/SessionThemes.cpp
@@ -151,6 +153,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
+   modules/SessionUserPrefs.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
@@ -229,6 +232,21 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
    modules/viewer/ViewerHistory.cpp
+   prefs/PrefLayer.cpp
+   prefs/Preferences.cpp
+   prefs/UserPrefValues.cpp
+   prefs/UserPrefValuesNative.cpp
+   prefs/UserPrefs.cpp
+   prefs/UserPrefsComputedLayer.cpp
+   prefs/UserPrefsDefaultLayer.cpp
+   prefs/UserPrefsLayer.cpp
+   prefs/UserPrefsProjectLayer.cpp
+   prefs/UserPrefsSystemLayer.cpp
+   prefs/UserState.cpp
+   prefs/UserStateComputedLayer.cpp
+   prefs/UserStateDefaultLayer.cpp
+   prefs/UserStateLayer.cpp
+   prefs/UserStateValues.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
@@ -480,6 +498,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
 
    # icons for database connections
    install(DIRECTORY "resources/connections"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # JSON schema files
+   install(DIRECTORY "resources/schema"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc

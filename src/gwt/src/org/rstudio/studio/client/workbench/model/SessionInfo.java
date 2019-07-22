@@ -26,6 +26,10 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -99,11 +103,32 @@ public class SessionInfo extends JavaScriptObject
       return this.temp_dir;
    }-*/;
 
-   public final native JsObject getUiPrefs() /*-{
-      if (!this.ui_prefs)
-         this.ui_prefs = {};
-      return this.ui_prefs;
+   public final native JsArray<PrefLayer> getPrefs() /*-{
+      if (!this.user_prefs)
+         this.user_prefs = [ {} ];
+      return this.user_prefs;
    }-*/;
+   
+   public final JsObject getUserPrefs()
+   {
+      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER)).getValues();
+   }
+
+   public final PrefLayer getUserPrefLayer()
+   {
+      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER));
+   }
+
+   public final native JsArray<PrefLayer> getUserState() /*-{
+      if (!this.user_state)
+         this.user_state = [ {} ];
+      return this.user_state;
+   }-*/;
+
+   public final PrefLayer getUserStateLayer()
+   {
+      return getUserState().get(Math.min(getPrefs().length(), UserState.LAYER_USER));
+   }
 
    public final static String DESKTOP_MODE = "desktop";
    public final static String SERVER_MODE = "server";
@@ -254,12 +279,6 @@ public class SessionInfo extends JavaScriptObject
       }
    }
   
-   public final native JsObject getProjectUIPrefs() /*-{
-      if (!this.project_ui_prefs)
-         this.project_ui_prefs = {};
-      return this.project_ui_prefs;
-   }-*/;
-   
    public final native JsArrayString getProjectOpenDocs() /*-{
       if (!this.project_open_docs)
          this.project_open_docs = {};

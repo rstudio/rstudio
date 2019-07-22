@@ -29,8 +29,8 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "plumber/SessionPlumber.hpp"
 
@@ -102,7 +102,7 @@ SEXP rs_plumberviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
    return R_NilValue;
 }
 
-void setPlumberViewerType(int viewerType)
+void setPlumberViewerType(const std::string& viewerType)
 {
    Error error =
       r::exec::RFunction(".rs.setPlumberViewerType",
@@ -111,14 +111,15 @@ void setPlumberViewerType(int viewerType)
       LOG_ERROR(error);
 }
 
-void onUserSettingsChanged(boost::shared_ptr<int> pPlumberViewerType)
+void onUserSettingsChanged(const std::string& pref, 
+      boost::shared_ptr<std::string> pPlumberViewerType)
 {
-   int plumberViewerType = userSettings().plumberViewerType();
-   if (plumberViewerType != *pPlumberViewerType)
-   {
-      setPlumberViewerType(plumberViewerType);
-      *pPlumberViewerType = plumberViewerType;
-   }
+   if (pref != kPlumberViewerType)
+      return;
+
+   std::string plumberViewerType = prefs::userPrefs().plumberViewerType();
+   setPlumberViewerType(plumberViewerType);
+   *pPlumberViewerType = plumberViewerType;
 }
 
 Error getPlumberRunCmd(const json::JsonRpcRequest& request,
@@ -185,10 +186,10 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error initPlumberViewerPref(boost::shared_ptr<int> pPlumberViewerType)
+Error initPlumberViewerPref(boost::shared_ptr<std::string> pPlumberViewerType)
 {
    SEXP plumberBrowser = r::options::getOption("plumber.swagger.url");
-   *pPlumberViewerType = userSettings().plumberViewerType();
+   *pPlumberViewerType = prefs::userPrefs().plumberViewerType();
    if (plumberBrowser == R_NilValue)
    {
       setPlumberViewerType(*pPlumberViewerType);
@@ -204,11 +205,13 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   boost::shared_ptr<int> pPlumberViewerType = boost::make_shared<int>(PLUMBER_VIEWER_NONE);
+   boost::shared_ptr<std::string> pPlumberViewerType = boost::make_shared<std::string>(
+         kPlumberViewerTypeNone);
 
    RS_REGISTER_CALL_METHOD(rs_plumberviewer);
 
-   userSettings().onChanged.connect(bind(onUserSettingsChanged, pPlumberViewerType));
+   prefs::userPrefs().onChanged.connect(bind(
+            onUserSettingsChanged, _1, pPlumberViewerType));
 
    ExecBlock initBlock;
    initBlock.addFunctions()

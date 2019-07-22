@@ -19,9 +19,9 @@
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include "SessionGit.hpp"
+#include <session/prefs/UserPrefs.hpp>
 
 namespace rstudio {
 namespace session {
@@ -108,7 +108,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 core::json::Object TerminalShell::toJson() const
 {
    core::json::Object resultJson;
-   resultJson["type"] = static_cast<int>(type);
+   resultJson["type"] = getShellId(type);
    resultJson["name"] = name;
    return resultJson;
 }
@@ -147,27 +147,27 @@ std::string TerminalShell::getShellName(ShellType type)
 TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& str)
 {
    std::string typeStr = core::string_utils::toLower(str);
-   if (typeStr == "win-cmd")
+   if (typeStr == kWindowsTerminalShellWinCmd)
    {
       return TerminalShell::ShellType::Cmd64;
    }
-   else if (typeStr == "win-ps")
+   else if (typeStr == kWindowsTerminalShellWinPs)
    {
       return TerminalShell::ShellType::PS64;
    }
-   else if (typeStr == "ps-core")
+   else if (typeStr == kWindowsTerminalShellPsCore)
    {
       return TerminalShell::ShellType::PSCore;
    }
-   else if (typeStr == "win-git-bash")
+   else if (typeStr == kWindowsTerminalShellWinGitBash)
    {
       return TerminalShell::ShellType::GitBash;
    }
-   else if (typeStr == "win-wsl-bash")
+   else if (typeStr == kWindowsTerminalShellWinWslBash)
    {
       return TerminalShell::ShellType::WSLBash;
    }
-   else if (typeStr == "custom")
+   else if (typeStr == kWindowsTerminalShellCustom)
    {
       return TerminalShell::ShellType::CustomShell;
    }
@@ -177,6 +177,33 @@ TerminalShell::ShellType TerminalShell::shellTypeFromString(const std::string& s
    }
 }
 
+std::string TerminalShell::getShellId(ShellType type)
+{
+   switch(type)
+   {
+      case TerminalShell::ShellType::Default:
+         return kWindowsTerminalShellDefault;
+      case TerminalShell::ShellType::Cmd32:
+      case TerminalShell::ShellType::Cmd64:
+         return kWindowsTerminalShellWinCmd;
+      case TerminalShell::ShellType::PS32:
+      case TerminalShell::ShellType::PS64:
+         return kWindowsTerminalShellWinPs;
+      case TerminalShell::ShellType::PSCore:
+         return kWindowsTerminalShellPsCore;
+      case TerminalShell::ShellType::GitBash:
+         return kWindowsTerminalShellWinGitBash;
+      case TerminalShell::ShellType::WSLBash:
+         return kWindowsTerminalShellWinWslBash;
+      case TerminalShell::ShellType::CustomShell:
+         return kWindowsTerminalShellCustom;
+      case TerminalShell::ShellType::PosixBash:
+         return kPosixTerminalShellBash;
+      case TerminalShell::ShellType::NoShell:
+         return kPosixTerminalShellNone;
+   }
+   return kWindowsTerminalShellDefault;
+}
 AvailableTerminalShells::AvailableTerminalShells()
 {
    scanAvailableShells(&shells_);
@@ -195,7 +222,7 @@ bool AvailableTerminalShells::getInfo(TerminalShell::ShellType type,
 {
    if (type == TerminalShell::ShellType::Default)
    {
-      type = userSettings().defaultTerminalShellValue();
+      type = prefs::userPrefs().defaultTerminalShellValue();
       if (type == TerminalShell::ShellType::Default)
       {
          // Preference never set; pick first one available
@@ -252,13 +279,14 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = module_context::resolveAliasedPath(userSettings().customShellCommand().absolutePath());
+   pShellInfo->path = module_context::resolveAliasedPath(
+         prefs::userPrefs().customShellCommand());
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
-   if (!userSettings().customShellOptions().empty())
+   if (!prefs::userPrefs().customShellOptions().empty())
    {
-      args = core::algorithm::split(userSettings().customShellOptions(), " ");
+      args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
    pShellInfo->args = args;
    return true;

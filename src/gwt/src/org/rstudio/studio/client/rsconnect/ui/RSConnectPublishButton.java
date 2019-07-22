@@ -57,7 +57,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -143,7 +144,8 @@ public class RSConnectPublishButton extends Composite
          EventBus events, 
          Commands commands,
          GlobalDisplay display,
-         Provider<UIPrefs> pUiPrefs,
+         Provider<UserPrefs> pUserPrefs,
+         Provider<UserState> pUserState,
          Session session,
          PlotPublishMRUList plotMru)
    {
@@ -153,7 +155,8 @@ public class RSConnectPublishButton extends Composite
       commands_ = commands;
       display_ = display;
       session_ = session;
-      pUiPrefs_ = pUiPrefs;
+      pUserPrefs_ = pUserPrefs;
+      pUserState_ = pUserState;
       plotMru_ = plotMru;
       
       // initialize visibility if requested
@@ -683,7 +686,7 @@ public class RSConnectPublishButton extends Composite
    // destinations
    private boolean recomputeMenuVisibility()
    {
-      if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          // always show the menu when RSConnect is enabled
          return true;
@@ -709,12 +712,12 @@ public class RSConnectPublishButton extends Composite
    {
       // if all publishing is disabled, hide ourselves 
       if (!session_.getSessionInfo().getAllowPublish() ||
-          !pUiPrefs_.get().showPublishUi().getGlobalValue())
+          !pUserState_.get().showPublishUi().getGlobalValue())
          return false;
       
       // if both internal and external publishing is disabled, hide ourselves
       if (!session_.getSessionInfo().getAllowExternalPublish() &&
-          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
          return false;
       
       // if we're bound to a command's visibility/enabled state, check that
@@ -741,7 +744,7 @@ public class RSConnectPublishButton extends Composite
 
       // If publishing to Connect is disabled, then we can't publish APIs
       if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
-          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          return false;
       }
@@ -957,7 +960,8 @@ public class RSConnectPublishButton extends Composite
    private Commands commands_;
    private GlobalDisplay display_;
    private Session session_;
-   private Provider<UIPrefs> pUiPrefs_;
+   private Provider<UserPrefs> pUserPrefs_;
+   private Provider<UserState> pUserState_;
    private PlotPublishMRUList plotMru_;
 
    private String contentPath_;

@@ -30,7 +30,7 @@ import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler
@@ -104,7 +104,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    @Inject
    public MainSplitPanel(EventBus events,
                          Session session,
-                         UIPrefs uiPrefs)
+                         UserPrefs uiPrefs)
    {
       super(
          RStudioThemes.isFlat(uiPrefs) ? 7 : 3,

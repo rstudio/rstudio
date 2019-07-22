@@ -71,7 +71,8 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -110,7 +111,8 @@ public class RSConnect implements SessionInitHandler,
                     SourceServerOperations sourceServer,
                     RPubsServerOperations rpubsServer,
                     RSAccountConnector connector,
-                    Provider<UIPrefs> pUiPrefs,
+                    Provider<UserPrefs> pUserPrefs,
+                    Provider<UserState> pUserState,
                     PlotPublishMRUList plotMru)
    {
       commands_ = commands;
@@ -122,7 +124,8 @@ public class RSConnect implements SessionInitHandler,
       rpubsServer_ = rpubsServer;
       events_ = events;
       connector_ = connector;
-      pUiPrefs_ = pUiPrefs;
+      pUserPrefs_ = pUserPrefs;
+      pUserState_ = pUserState;
       plotMru_ = plotMru;
 
       binder.bind(commands, this);
@@ -233,7 +236,7 @@ public class RSConnect implements SessionInitHandler,
       // set these inside the wizard input so we don't need to pass around
       // session/prefs
       input.setConnectUIEnabled(
-            pUiPrefs_.get().enableRStudioConnect().getGlobalValue());
+            pUserState_.get().enableRsconnectPublishUi().getGlobalValue());
       input.setExternalUIEnabled(
             session_.getSessionInfo().getAllowExternalPublish());
       input.setDescription(event.getDescription());
@@ -718,7 +721,7 @@ public class RSConnect implements SessionInitHandler,
       // "Manage accounts" can be invoked any time we're permitted to
       // publish 
       commands_.rsconnectManageAccounts().setVisible(
-            SessionUtils.showPublishUi(session_, pUiPrefs_.get()));
+            SessionUtils.showPublishUi(session_, pUserState_.get()));
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used
@@ -1184,7 +1187,8 @@ public class RSConnect implements SessionInitHandler,
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final RSAccountConnector connector_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<UserState> pUserState_;
    private final PlotPublishMRUList plotMru_;
    
    private boolean launchBrowser_ = false;

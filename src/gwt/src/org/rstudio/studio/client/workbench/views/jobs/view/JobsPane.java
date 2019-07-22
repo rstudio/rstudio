@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
@@ -33,12 +34,12 @@ public class JobsPane extends WorkbenchPane
                       implements JobsPresenter.Display
 {
    @Inject
-   public JobsPane(UIPrefs uiPrefs,
+   public JobsPane(UserPrefs uiPrefs,
                    JobsPaneWidgets widgets)
    {
       super("Jobs");
       
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       widgets_ = widgets;
 
       // create widget
@@ -106,15 +107,16 @@ public class JobsPane extends WorkbenchPane
    @Override
    public void setShowTabPref(boolean show)
    {
-      int value = show ? UIPrefsAccessor.JOBS_TAB_SHOWN : UIPrefsAccessor.JOBS_TAB_CLOSED;
-      uiPrefs_.jobsTabVisibility().setGlobalValue(value);
-      uiPrefs_.writeUIPrefs();
+      String value = show ? UserPrefsAccessor.JOBS_TAB_VISIBILITY_SHOWN : 
+                            UserPrefsAccessor.JOBS_TAB_VISIBILITY_CLOSED;
+      userPrefs_.jobsTabVisibility().setGlobalValue(value);
+      userPrefs_.writeUserPrefs();
    }
    
    // internal state
    private JobsDisplayImpl baseImpl_;
    
    // injected
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final JobsPaneWidgets widgets_;
 }

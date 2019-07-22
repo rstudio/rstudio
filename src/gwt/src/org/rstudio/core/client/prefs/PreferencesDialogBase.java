@@ -62,7 +62,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                {
                   closeDialog();
                }
-            });        
+            });
          }
       });
       addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);

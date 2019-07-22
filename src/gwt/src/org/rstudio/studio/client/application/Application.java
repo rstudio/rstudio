@@ -83,7 +83,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -103,7 +104,8 @@ public class Application implements ApplicationEventHandlers
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
                       SessionOpener sessionOpener,
-                      Provider<UIPrefs> uiPrefs,
+                      Provider<UserPrefs> userPrefs,
+                      Provider<UserState> userState,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -123,7 +125,8 @@ public class Application implements ApplicationEventHandlers
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
       sessionOpener_ = sessionOpener;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
@@ -909,7 +912,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // disable external publishing if requested
-      if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))
+      if (!SessionUtils.showExternalPublishUi(session_, userState_.get()))
       {
          commands_.publishHTML().remove();
       } 
@@ -923,7 +926,7 @@ public class Application implements ApplicationEventHandlers
          commands_.knitWithParameters().remove();
          
       // show the correct set of data import commands
-      if (uiPrefs_.get().useDataImport().getValue())
+      if (userPrefs_.get().useDataimport().getValue())
       {
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
@@ -1049,10 +1052,10 @@ public class Application implements ApplicationEventHandlers
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( uiPrefs_.get().toolbarVisible().getValue());
+      showToolbar( userPrefs_.get().toolbarVisible().getValue());
       
       // sync to changes in the toolbar visibility state
-      uiPrefs_.get().toolbarVisible().addValueChangeHandler(
+      userPrefs_.get().toolbarVisible().addValueChangeHandler(
                                           new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -1125,8 +1128,8 @@ public class Application implements ApplicationEventHandlers
    
    private void setToolbarPref(boolean showToolbar)
    {
-      uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
-      uiPrefs_.get().writeUIPrefs();
+      userPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
+      userPrefs_.get().writeUserPrefs();
    }
    
    private void showToolbar(boolean showToolbar)
@@ -1228,7 +1231,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
    private final SessionOpener sessionOpener_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;

@@ -50,7 +50,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -97,7 +97,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public CodeBrowserEditingTarget(SourceServerOperations server,
                                    Commands commands,
                                    EventBus events,
-                                   UIPrefs prefs,
+                                   UserPrefs prefs,
                                    FontSizeManager fontSizeManager,
                                    GlobalDisplay globalDisplay,
                                    DocDisplay docDisplay)
@@ -804,7 +804,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final FontSizeManager fontSizeManager_;
    private Display view_;
    private HandlerRegistration commandReg_;

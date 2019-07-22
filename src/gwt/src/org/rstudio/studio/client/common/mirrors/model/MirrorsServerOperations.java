@@ -21,9 +21,6 @@ import com.google.gwt.core.client.JsArray;
 
 public interface MirrorsServerOperations
 {
-   void setCRANMirror(CRANMirror mirror,
-                      ServerRequestCallback<Void> requestCallback);
-   
    void getCRANMirrors(
          ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
 

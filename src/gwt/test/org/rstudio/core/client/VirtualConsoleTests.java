@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.PreElement;
@@ -43,13 +45,13 @@ public class VirtualConsoleTests extends GWTTestCase
       }
    
       @Override
-      public int consoleAnsiMode()
+      public String consoleAnsiMode()
       {
          return ansiMode_;
       }
       
       public int truncateLines_ = 1000;
-      public int ansiMode_ = VirtualConsole.ANSI_COLOR_ON;
+      public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
    }
    
    private static String consolify(String text)
@@ -697,7 +699,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_STRIP;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" + 
@@ -714,7 +716,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_OFF;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" + 
@@ -731,7 +733,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_STRIP;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(AnsiCode.CSI + color);
       vc.submit(AnsiCode.SGR + AnsiCode.CSI);
@@ -746,7 +748,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.ForeColorNum.MAGENTA;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_OFF;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(AnsiCode.CSI + color, "myStyle");
       vc.submit(AnsiCode.SGR + "Hello", "myStyle");

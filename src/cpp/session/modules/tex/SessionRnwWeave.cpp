@@ -30,9 +30,10 @@
 #include <r/RJson.hpp>
 #include <r/session/RSessionUtils.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
@@ -266,7 +267,7 @@ public:
                                     const std::string& driver) const
    {
       std::string format = "require(knitr); ";
-      if (userSettings().alwaysEnableRnwCorcordance())
+      if (prefs::userPrefs().alwaysEnableRnwConcordance())
          format += "opts_knit$set(concordance = TRUE); ";
       format += "knit('%1%'";
       std::string cmd = boost::str(boost::format(format) % file);
@@ -428,7 +429,7 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
    if (projects::projectContext().hasProject())
       return projects::projectContext().config().defaultSweaveEngine;
    else
-      return userSettings().defaultSweaveEngine();
+      return prefs::userPrefs().defaultSweaveEngine();
 }
 
 std::string driverForFile(const core::tex::TexMagicComments& magicComments)

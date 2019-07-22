@@ -89,7 +89,7 @@ public class RmdTemplateChooser extends Composite
             {
                final RmdDocumentTemplate template = templates.get(i);
 
-               String preferredTemplate = RStudioGinjector.INSTANCE.getUIPrefs()
+               String preferredTemplate = RStudioGinjector.INSTANCE.getUserPrefs()
                      .rmdPreferredTemplatePath().getValue();
 
                // create a template list item from the template; add it at the

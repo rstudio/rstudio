@@ -136,6 +136,16 @@ public class JsArrayUtil
       return copy;
    }
    
+   public static JsArrayString createStringArray(String ...strings)
+   {
+      JsArrayString result = JsArray.createArray().cast();
+      for (String str: strings)
+      {
+         result.push(str);
+      }
+      return result;
+   }
+   
    @SuppressWarnings("unchecked")
    public static final <T extends JavaScriptObject> JsArray<T> deepCopy(JsArray<T> array)
    {

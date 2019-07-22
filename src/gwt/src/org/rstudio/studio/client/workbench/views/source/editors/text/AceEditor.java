@@ -84,8 +84,8 @@ import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
@@ -210,7 +210,7 @@ public class AceEditor implements DocDisplay,
             return true;
 
          // Short-circuit if the user has explicitly opted in
-         if (uiPrefs_.allowTabMultilineCompletion().getValue())
+         if (userPrefs_.tabMultilineCompletion().getValue())
             return true;
 
          int col = range.getStart().getColumn();
@@ -697,7 +697,7 @@ public class AceEditor implements DocDisplay,
    {
       if (fileType_ == null ||
           !fileType_.canAutoIndent() ||
-          !RStudioGinjector.INSTANCE.getUIPrefs().reindentOnPaste().getValue())
+          !RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue())
       {
          return;
       }
@@ -741,13 +741,13 @@ public class AceEditor implements DocDisplay,
 
    @Inject
    void initialize(CodeToolsServerOperations server,
-                   UIPrefs uiPrefs,
+                   UserPrefs uiPrefs,
                    CollabEditor collab,
                    Commands commands,
                    EventBus events)
    {
       server_ = server;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       collab_ = collab;
       commands_ = commands;
       events_ = events;
@@ -938,14 +938,14 @@ public class AceEditor implements DocDisplay,
          return;
 
       boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
-      boolean live = uiPrefs_.codeCompleteOther().getValue() ==
-                                       UIPrefsAccessor.COMPLETION_ALWAYS;
-      int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
-      int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
+      boolean live = userPrefs_.codeCompletionOther().getValue() ==
+                                       UserPrefs.CODE_COMPLETION_OTHER_ALWAYS;
+      int characterThreshold = userPrefs_.codeCompletionCharacters().getValue();
+      int delay = userPrefs_.codeCompletionDelay().getValue();
       
       widget_.getEditor().setCompletionOptions(
             enabled,
-            uiPrefs_.enableSnippets().getValue(),
+            userPrefs_.enableSnippets().getValue(),
             live,
             characterThreshold,
             delay);
@@ -958,12 +958,12 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
 
-      boolean useWorker = uiPrefs_.showDiagnosticsOther().getValue() &&
+      boolean useWorker = userPrefs_.showDiagnosticsOther().getValue() &&
             fileType_.getEditorLanguage().useAceLanguageTools();
 
       getSession().setUseWorker(useWorker);
       getSession().setWorkerTimeout(
-            uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+            userPrefs_.backgroundDiagnosticsDelayMs().getValue());
    }
 
    private void syncWrapLimit()
@@ -1351,7 +1351,7 @@ public class AceEditor implements DocDisplay,
          // the frame using the browser
          PrintIFrame printIFrame = new PrintIFrame(
                getCode(),
-               RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
+               RStudioGinjector.INSTANCE.getUserPrefs().fontSizePoints().getValue());
          RootPanel.get().add(printIFrame);
       }
    }
@@ -4199,7 +4199,7 @@ public class AceEditor implements DocDisplay,
    private CompletionManager completionManager_;
    private ScopeTreeManager scopes_;
    private CodeToolsServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    private CollabEditor collab_;
    private Commands commands_;
    private EventBus events_;

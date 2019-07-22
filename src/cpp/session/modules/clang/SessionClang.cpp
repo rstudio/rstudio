@@ -27,7 +27,7 @@
 #include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <core/libclang/LibClang.hpp>
 
@@ -198,7 +198,7 @@ SEXP rs_isLibClangAvailable()
 SEXP rs_setClangDiagnostics(SEXP levelSEXP)
 {
    int level = r::sexp::asInteger(levelSEXP);
-   userSettings().setClangVerbose(level);
+   prefs::userPrefs().setClangVerbose(level);
    return R_NilValue;
 }
 

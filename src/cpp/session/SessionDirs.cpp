@@ -18,8 +18,8 @@
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
@@ -30,7 +30,7 @@ namespace dirs {
 FilePath getDefaultWorkingDirectory()
 {
    // calculate using user settings
-   FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
+   FilePath defaultWorkingDir = FilePath(prefs::userPrefs().initialWorkingDirectory());
    FilePath sessionDefaultWorkingDir = FilePath(session::options().defaultWorkingDir());
 
    // return it if it exists, otherwise use the

@@ -24,8 +24,8 @@
 #include <core/FileSerializer.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionTexUtils.hpp"
@@ -328,7 +328,7 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
    {
       std::string defaultProgram = projects::projectContext().hasProject() ?
                 projects::projectContext().config().defaultLatexProgram :
-                userSettings().defaultLatexProgram();
+                prefs::userPrefs().defaultLatexProgram();
 
       if (!validateLatexProgramType(defaultProgram, pUserErrMsg))
       {

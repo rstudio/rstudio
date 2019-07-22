@@ -22,9 +22,9 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -721,9 +721,9 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 
          // fire event to client
          json::Object dataJson;
-         dataJson["type"] = "project";
-         dataJson["prefs"] = s_projectContext.uiPrefs();
-         ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+         dataJson["name"] = kUserPrefsProjectLayer;
+         dataJson["values"] = s_projectContext.uiPrefs();
+         ClientEvent event(client_events::kUserPrefsChanged, dataJson);
          module_context::enqueClientEvent(event);
 
          break;
@@ -833,7 +833,7 @@ void startup(const std::string& firstProjectPath)
    }
 
    // check for restore last project
-   else if (userSettings().alwaysRestoreLastProject() &&
+   else if (prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.empty())
    {
 

@@ -115,7 +115,8 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -262,7 +263,8 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UIPrefs uiPrefs,
+                 UserPrefs userPrefs,
+                 UserState userState,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
@@ -283,7 +285,8 @@ public class Source implements InsertSourceHandler,
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       dependencyManager_ = dependencyManager;
@@ -637,14 +640,14 @@ public class Source implements InsertSourceHandler,
          }
       };
       
-      AceEditorNative.syncUiPrefs(uiPrefs_);
+      AceEditorNative.syncUiPrefs(userPrefs_);
       
       // sync UI prefs with shortcut manager
-      if (uiPrefs_.useVimMode().getGlobalValue())
+      if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (uiPrefs_.enableEmacsKeybindings().getGlobalValue())
+      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (uiPrefs_.enableSublimeKeybindings().getGlobalValue())
+      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
@@ -749,7 +752,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.closeAllTabs(this);
       vimCommands_.createNewDocument(this);
       vimCommands_.saveAndCloseActiveTab(this);
-      vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
+      vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
       vimCommands_.reflowText(this);
       vimCommands_.showVimHelp(
@@ -1194,7 +1197,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      if (uiPrefs_.useRcppTemplate().getValue())
+      if (userPrefs_.useRcppTemplate().getValue())
       {
          newSourceDocWithTemplate(
              FileTypeRegistry.CPP, 
@@ -1283,10 +1286,10 @@ public class Source implements InsertSourceHandler,
    {
       // set concordance value if we need to
       String concordance = new String();
-      if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
+      if (userPrefs_.alwaysEnableRnwConcordance().getValue())
       {
          RnwWeave activeWeave = rnwWeaveRegistry_.findTypeIgnoreCase(
-                                    uiPrefs_.defaultSweaveEngine().getValue());
+                                    userPrefs_.defaultSweaveEngine().getValue());
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
@@ -1619,8 +1622,8 @@ public class Source implements InsertSourceHandler,
                   String author = doc.getAuthor();
                   if (author.length() > 0)
                   {
-                     uiPrefs_.documentAuthor().setGlobalValue(author);
-                     uiPrefs_.writeUIPrefs();
+                     userPrefs_.documentAuthor().setGlobalValue(author);
+                     userPrefs_.writeUserPrefs();
                   }
                   newRMarkdownV2Doc(doc);
                }
@@ -1911,13 +1914,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onPreviousTab()
    {
-      switchToTab(-1, uiPrefs_.wrapTabNavigation().getValue());
+      switchToTab(-1, userPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler
    public void onNextTab()
    {
-      switchToTab(1, uiPrefs_.wrapTabNavigation().getValue());
+      switchToTab(1, userPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler
@@ -2823,7 +2826,7 @@ public class Source implements InsertSourceHandler,
                      // now navigate to the new position
                      boolean highlight = 
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
-                           !uiPrefs_.highlightSelectedLine().getValue();
+                           !userPrefs_.highlightSelectedLine().getValue();
                      target.navigateToPosition(srcPosition,
                                                false,
                                                highlight);
@@ -3262,7 +3265,7 @@ public class Source implements InsertSourceHandler,
       server_.openDocument(
             file.getPath(),
             fileType.getTypeId(),
-            uiPrefs_.defaultEncoding().getValue(),
+            userPrefs_.defaultEncoding().getValue(),
             new ServerRequestCallback<SourceDocument>()
             {
                @Override
@@ -3857,7 +3860,7 @@ public class Source implements InsertSourceHandler,
    private void manageRSConnectCommands()
    {
       boolean rsCommandsAvailable = 
-            SessionUtils.showPublishUi(session_, uiPrefs_) &&
+            SessionUtils.showPublishUi(session_, userState_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() != null &&
@@ -4863,7 +4866,8 @@ public class Source implements InsertSourceHandler,
    private final Session session_;
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

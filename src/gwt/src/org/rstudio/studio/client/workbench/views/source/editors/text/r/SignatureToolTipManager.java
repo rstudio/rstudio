@@ -26,7 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -98,12 +98,12 @@ public class SignatureToolTipManager
          public void run()
          {
             // Bail if we don't ever show tooltips
-            if (!uiPrefs_.showSignatureTooltips().getGlobalValue())
+            if (!userPrefs_.showFunctionSignatureTooltips().getGlobalValue())
                return;
             
             // Bail if this is a cursor-activated timer and we
             // don't want idle tooltips
-            if (coordinates_ == null && !uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue())
+            if (coordinates_ == null && !userPrefs_.showHelpTooltipOnIdle().getGlobalValue())
                return;
             
             // Bail if the tooltip is already showing from a non-mouse event.
@@ -206,11 +206,11 @@ public class SignatureToolTipManager
    }
    
    @Inject
-   public void initialize(UIPrefs uiPrefs,
+   public void initialize(UserPrefs uiPrefs,
                           EventBus events,
                           CodeToolsServerOperations server)
    {
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       events_ = events;
       server_ = server;
    }
@@ -430,7 +430,7 @@ public class SignatureToolTipManager
       // rather than within a function). Note that on failure the cursor
       // position is not changed.
       if (!isMouseEvent &&
-          uiPrefs_.showFunctionTooltipOnIdle().getGlobalValue() &&
+          userPrefs_.showFunctionSignatureTooltips().getGlobalValue() &&
           !cursor.valueEquals("("))
       {
          cursor.findTokenValueBwd("(", true);
@@ -589,7 +589,7 @@ public class SignatureToolTipManager
    private AnchoredSelection anchor_;
    private boolean ready_;
 
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    private EventBus events_;
    private CodeToolsServerOperations server_;
    

@@ -22,7 +22,6 @@
 
 #include <boost/bind.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 

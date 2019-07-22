@@ -68,7 +68,7 @@ const int kConsoleProcessOutput = 43;
 const int kConsoleProcessExit = 44;
 const int kListChanged = 45;
 const int kConsoleProcessCreated = 46;
-const int kUiPrefsChanged = 47;
+const int kUserPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
 const int kHTMLPreviewStartedEvent = 51;
@@ -195,6 +195,7 @@ const int kComputeThemeColors = 177;
 const int kRequestDocumentClose = 178;
 const int kRequestDocumentCloseCompleted = 179;
 const int kExecuteAppCommand = 180;
+const int kUserStateChanged = 181;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -288,8 +289,8 @@ std::string ClientEvent::typeName() const
          return "console_process_exit";
       case client_events::kListChanged:
          return "list_changed";
-      case client_events::kUiPrefsChanged:
-         return "ui_prefs_changed";
+      case client_events::kUserPrefsChanged:
+         return "user_prefs_changed";
       case client_events::kHandleUnsavedChanges:
          return "handle_unsaved_changes";
       case client_events::kConsoleProcessPrompt:
@@ -540,6 +541,8 @@ std::string ClientEvent::typeName() const
          return "request_document_close_completed";
       case client_events::kExecuteAppCommand:
          return "execute_app_command";
+      case client_events::kUserStateChanged:
+         return "user_state_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

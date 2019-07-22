@@ -30,7 +30,6 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionPersistentState.hpp>
 
 #include "SessionPackages.hpp"

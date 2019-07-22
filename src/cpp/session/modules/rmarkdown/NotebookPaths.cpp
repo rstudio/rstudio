@@ -23,7 +23,6 @@
 #include <core/FileLock.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 using namespace rstudio::core;
 

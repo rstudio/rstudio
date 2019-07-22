@@ -22,7 +22,7 @@ import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.LinkedList;
 
@@ -563,12 +563,12 @@ public class AceEditorNative extends JavaScriptObject {
       $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
    }-*/;
    
-   public final static void syncUiPrefs(UIPrefs uiPrefs)
+   public final static void syncUiPrefs(UserPrefs userPrefs)
    {
       if (uiPrefsSynced_)
          return;
 
-      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
+      userPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
       {
          @Override
          public void execute(Boolean arg) 
@@ -577,7 +577,7 @@ public class AceEditorNative extends JavaScriptObject {
          }
       });
       
-      uiPrefs.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      userPrefs.verticallyAlignArgumentsIndent().bind(new CommandWithArg<Boolean>()
       {
          @Override
          public void execute(Boolean arg)

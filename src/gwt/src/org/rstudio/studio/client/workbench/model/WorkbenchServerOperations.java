@@ -37,7 +37,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
@@ -115,8 +114,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
                             ServerRequestCallback<Void> requestCallback);
    
-   void getRPrefs(ServerRequestCallback<RPrefs> requestCallback);
- 
    void updateClientState(JavaScriptObject temporary,
                           JavaScriptObject persistent,
                           JavaScriptObject projectPersistent,

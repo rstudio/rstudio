@@ -39,7 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -78,7 +78,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public ViewFilePanel(GlobalDisplay globalDisplay,
                         DocDisplay docDisplay,
                         FileTypeRegistry fileTypeRegistry,
-                        UIPrefs uiPrefs,
+                        UserPrefs uiPrefs,
                         EventBus events,
                         Commands commands,
                         FilesServerOperations server,

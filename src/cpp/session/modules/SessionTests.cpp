@@ -31,7 +31,8 @@
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #define kTestsNone           "none"
 #define kTestsTestThat       "test-testthat"
@@ -131,7 +132,7 @@ Error installShinyTestDependencies(const json::JsonRpcRequest& request,
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
-   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+   if (!r::session::utils::isR3_3() && prefs::userPrefs().useInternet2())
       args.push_back("--internet2");
 #endif
 

@@ -42,7 +42,7 @@ public class RFileType extends TextFileType
    @Override
    public boolean getWordWrap()
    {
-      return RStudioGinjector.INSTANCE.getUIPrefs().softWrapRFiles().getValue();
+      return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRFiles().getValue();
    }
 
    @Override

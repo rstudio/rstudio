@@ -30,7 +30,8 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -106,7 +107,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
-      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      UserPrefs userState = RStudioGinjector.INSTANCE.getUserPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
@@ -118,7 +119,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
-         chkGitInit_.setValue(uiPrefs.newProjGitInit().getValue());
+         chkGitInit_.setValue(userState.newProjGitInit().getValue());
          chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
          if (optionsPanel != null)
          {

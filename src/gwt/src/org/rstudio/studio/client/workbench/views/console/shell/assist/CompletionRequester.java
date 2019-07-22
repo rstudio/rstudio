@@ -36,7 +36,7 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
@@ -63,7 +63,7 @@ import java.util.List;
 public class CompletionRequester
 {
    private CodeToolsServerOperations server_ ;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private final DocDisplay docDisplay_ ;
    private final SnippetHelper snippets_ ;
 
@@ -83,7 +83,7 @@ public class CompletionRequester
    }
    
    @Inject
-   void initialize(CodeToolsServerOperations server, UIPrefs uiPrefs)
+   void initialize(CodeToolsServerOperations server, UserPrefs uiPrefs)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;

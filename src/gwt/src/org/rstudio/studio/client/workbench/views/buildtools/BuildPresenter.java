@@ -48,9 +48,10 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -95,7 +96,7 @@ public class BuildPresenter extends BasePresenter
    @Inject
    public BuildPresenter(Display display, 
                          GlobalDisplay globalDisplay,
-                         UIPrefs uiPrefs,
+                         UserPrefs uiPrefs,
                          WorkbenchContext workbenchContext,
                          BuildServerOperations server,
                          final Commands commands,
@@ -112,7 +113,7 @@ public class BuildPresenter extends BasePresenter
       view_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       commands_ = commands;
@@ -157,13 +158,13 @@ public class BuildPresenter extends BasePresenter
             view_.showErrors(event.getBaseDirectory(),
                              event.getErrors(), 
                              true,
-                             uiPrefs_.navigateToBuildError().getValue() ?
+                             userPrefs_.navigateToBuildError().getValue() ?
                                  SourceMarkerList.AUTO_SELECT_FIRST_ERROR :
                                  SourceMarkerList.AUTO_SELECT_NONE,
                              event.openErrorList(),
                              event.type());
             
-            if (uiPrefs_.navigateToBuildError().getValue() && event.openErrorList())
+            if (userPrefs_.navigateToBuildError().getValue() && event.openErrorList())
             {
                SourceMarker error = SourceMarker.getFirstError(event.getErrors());
                if (error != null)
@@ -199,12 +200,12 @@ public class BuildPresenter extends BasePresenter
       
       // invalidate devtools load all path whenever the project ui prefs
       // or working directory changes
-      eventBus.addHandler(UiPrefsChangedEvent.TYPE, new UiPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
       {
          @Override
-         public void onUiPrefsChanged(UiPrefsChangedEvent e)
+         public void onUserPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (e.getType() == UiPrefsChangedEvent.PROJECT_TYPE)
+            if (e.getName() == PrefLayer.LAYER_USER)
                devtoolsLoadAllPath_ = null;
          }
       });
@@ -406,7 +407,7 @@ public class BuildPresenter extends BasePresenter
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
                   "Build", "Terminal jobs will be terminated. Are you sure?",
-                  uiPrefs_.terminalBusyMode().getValue());
+                  userPrefs_.busyDetection().getValue());
          }
       });
 
@@ -496,7 +497,7 @@ public class BuildPresenter extends BasePresenter
    private String devtoolsLoadAllPath_ = null;
    
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final BuildServerOperations server_;
    private FilesServerOperations fileServer_;
    private final Display view_ ; 

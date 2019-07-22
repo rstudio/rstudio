@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
@@ -47,7 +47,7 @@ public class SpellingService implements HasChangeHandlers
 {
    @Inject
    public SpellingService(SpellingServerOperations server,
-                          UIPrefs uiPrefs)
+                          UserPrefs uiPrefs)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
@@ -223,7 +223,7 @@ public class SpellingService implements HasChangeHandlers
          
    
    private final SpellingServerOperations server_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    
    private HashMap<String,Boolean> previousResults_ = 
                                              new HashMap<String,Boolean>();

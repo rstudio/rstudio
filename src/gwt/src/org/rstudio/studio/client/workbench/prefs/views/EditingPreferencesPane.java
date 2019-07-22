@@ -30,7 +30,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -47,12 +46,8 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.EditingPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.FoldStyle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -60,7 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UIPrefs prefs,
+   public EditingPreferencesPane(UserPrefs prefs,
                                  SourceServerOperations server,
                                  PreferencesDialogResources res)
    {
@@ -80,7 +75,7 @@ public class EditingPreferencesPane extends PreferencesPane
             "will be automatically detected."));
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
-      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
+      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
@@ -96,9 +91,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Quotes & Brackets"
             },
             new String[] {
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_NEVER,
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES,
-                  UIPrefsAccessor.EDITOR_SURROUND_SELECTION_QUOTES_AND_BRACKETS
+                  UserPrefs.SURROUND_SELECTION_NEVER,
+                  UserPrefs.SURROUND_SELECTION_QUOTES,
+                  UserPrefs.SURROUND_SELECTION_QUOTES_AND_BRACKETS
             },
             false,
             true,
@@ -115,10 +110,10 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Sublime Text"
             },
             new String[] {
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS,
-                  UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME,
+                  UserPrefs.EDITOR_KEYBINDINGS_DEFAULT,
+                  UserPrefs.EDITOR_KEYBINDINGS_VIM,
+                  UserPrefs.EDITOR_KEYBINDINGS_EMACS,
+                  UserPrefs.EDITOR_KEYBINDINGS_SUBLIME,
             },
             false,
             true,
@@ -155,9 +150,9 @@ public class EditingPreferencesPane extends PreferencesPane
                "Multiple consecutive R lines"
             },
             new String[] {
-               UIPrefsAccessor.EXECUTE_LINE,
-               UIPrefsAccessor.EXECUTE_STATEMENT,
-               UIPrefsAccessor.EXECUTE_PARAGRAPH
+               UserPrefs.EXECUTION_BEHAVIOR_LINE,
+               UserPrefs.EXECUTION_BEHAVIOR_STATEMENT,
+               UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH
             },
             false,
             true,
@@ -200,7 +195,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
       displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", 
             prefs.showMargin(), false /*defaultSpace*/)));
-      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
+      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.marginColumn())));
       displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
@@ -217,8 +212,8 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Start and End"
             },
             new String[] {
-                  FoldStyle.FOLD_MARK_BEGIN_ONLY,
-                  FoldStyle.FOLD_MARK_BEGIN_AND_END
+                  UserPrefs.FOLD_STYLE_BEGIN_ONLY,
+                  UserPrefs.FOLD_STYLE_BEGIN_AND_END
             },
             false,
             true,
@@ -228,7 +223,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       displayPanel.add(headerLabel("Console"));
       NumericValueWidget limitLengthPref =
-            numericPref("Limit length of lines displayed in console to:", prefs_.truncateLongLinesInConsoleHistory());
+            numericPref("Limit length of lines displayed in console to:", prefs_.consoleLineLengthLimit());
       limitLengthPref.setWidth("36px");
       displayPanel.add(nudgeRightPlus(limitLengthPref));
 
@@ -240,9 +235,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Ignore ANSI codes (1.0 behavior)"
             },
             new String[] {
-                  Integer.toString(VirtualConsole.ANSI_COLOR_ON), 
-                  Integer.toString(VirtualConsole.ANSI_COLOR_STRIP),
-                  Integer.toString(VirtualConsole.ANSI_COLOR_OFF)
+                  UserPrefs.ANSI_CONSOLE_MODE_ON, 
+                  UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+                  UserPrefs.ANSI_CONSOLE_MODE_OFF
             },
             false,
             true,
@@ -316,9 +311,9 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Manually (Tab)"
             },
             new String[] {
-                  UIPrefsAccessor.COMPLETION_ALWAYS,
-                  UIPrefsAccessor.COMPLETION_WHEN_TRIGGERED,
-                  UIPrefsAccessor.COMPLETION_MANUAL
+                  UserPrefs.CODE_COMPLETION_ALWAYS,
+                  UserPrefs.CODE_COMPLETION_TRIGGERED,
+                  UserPrefs.CODE_COMPLETION_MANUAL
             },
             false, 
             true, 
@@ -329,7 +324,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       final CheckBox alwaysCompleteInConsole = checkboxPref(
             "Allow automatic completions in console",
-            prefs.alwaysCompleteInConsole());
+            prefs.consoleCodeCompletion());
       completionPanel.add(alwaysCompleteInConsole);
       
       showCompletions_.addChangeHandler(new ChangeHandler()
@@ -338,7 +333,7 @@ public class EditingPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             alwaysCompleteInConsole.setVisible(
-                   showCompletions_.getValue() == UIPrefsAccessor.COMPLETION_ALWAYS);
+                   showCompletions_.getValue() == UserPrefs.CODE_COMPLETION_ALWAYS);
             
          }
       });
@@ -349,7 +344,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       final CheckBox showSignatureTooltipsCheckbox =
            checkboxPref("Show help tooltip after function completions",
-                 prefs.showSignatureTooltips());
+                 prefs.showFunctionSignatureTooltips());
       
       addEnabledDependency(
             insertParensAfterFunctionCompletionsCheckbox,
@@ -358,9 +353,9 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
 
-      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showFunctionTooltipOnIdle()));
+      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showHelpTooltipOnIdle()));
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
-      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
+      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.tabMultilineCompletion()));
       
       
       Label otherLabel = headerLabel("Other Languages");
@@ -374,8 +369,8 @@ public class EditingPreferencesPane extends PreferencesPane
                   "Manually (Ctrl+Space) "
             },
             new String[] {
-                  UIPrefsAccessor.COMPLETION_ALWAYS,
-                  UIPrefsAccessor.COMPLETION_MANUAL
+                  UserPrefs.CODE_COMPLETION_OTHER_ALWAYS,
+                  UserPrefs.CODE_COMPLETION_OTHER_MANUAL
             },
             false, 
             true, 
@@ -395,10 +390,10 @@ public class EditingPreferencesPane extends PreferencesPane
       
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
           numericPref("Show completions after characters entered:",
-                      prefs.alwaysCompleteCharacters())));
+                      prefs.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ = 
           numericPref("Show completions after keyboard idle (ms):",
-                      prefs.alwaysCompleteDelayMs())));
+                      prefs.codeCompletionDelay())));
         
       
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
@@ -411,8 +406,8 @@ public class EditingPreferencesPane extends PreferencesPane
       rOptionsPanel.add(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls()));
       rOptionsPanel.add(checkboxPref("Check usage of '<-' in function call", prefs.checkUnexpectedAssignmentInFunctionCall()));
       rOptionsPanel.add(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope()));
-      rOptionsPanel.add(checkboxPref("Warn if variable is defined but not used", prefs.warnIfVariableDefinedButNotUsed()));
-      rOptionsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics()));
+      rOptionsPanel.add(checkboxPref("Warn if variable is defined but not used", prefs.warnVariableDefinedButNotUsed()));
+      rOptionsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.styleDiagnostics()));
       rOptionsPanel.setVisible(prefs.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -434,7 +429,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
       diagnosticsPanel.add(checkboxPref("Show diagnostics whenever source files are saved", prefs.diagnosticsOnSave()));
       diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", 
-            prefs.enableBackgroundDiagnostics(), false /*defaultSpace*/)));
+            prefs.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
             numericPref("Keyboard idle time (ms):", prefs.backgroundDiagnosticsDelayMs())));
       
@@ -490,52 +485,39 @@ public class EditingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // editing prefs
-      EditingPrefs editingPrefs = prefs.getEditingPrefs();
-      lineEndings_.setIntValue(editingPrefs.getLineEndings());
-      consoleColorMode_.setValue(Integer.toString(prefs_.consoleAnsiMode().getValue()));
+      lineEndings_.setValue(prefs.lineEndingConversion().getValue());
+      consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       
-      showCompletions_.setValue(prefs_.codeComplete().getValue());
-      showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
-      if (prefs_.useVimMode().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
-      else if (prefs_.enableEmacsKeybindings().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
-      else if (prefs_.enableSublimeKeybindings().getValue())
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME);
-      else
-         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
-      
+      showCompletions_.setValue(prefs_.codeCompletion().getValue());
+      showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
+      editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
    }
    
    @Override
-   public boolean onApply(RPrefs prefs)
+   public boolean onApply(UserPrefs prefs)
    {
       boolean reload = super.onApply(prefs);
       
       // editing prefs
-      prefs.setEditingPrefs(EditingPrefs.create(lineEndings_.getIntValue()));
-      prefs_.consoleAnsiMode().setGlobalValue(StringUtil.parseInt(
-            consoleColorMode_.getValue(), VirtualConsole.ANSI_COLOR_ON));
+      prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
+      prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
       
-      prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
-      prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
+      prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
+      prefs_.codeCompletionOther().setGlobalValue(showCompletionsOther_.getValue());
       
       String editorMode = editorMode_.getValue();
-      boolean isVim = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM;
-      boolean isEmacs = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS;
-      boolean isSublime = editorMode == UIPrefsAccessor.EDITOR_KEYBINDINGS_SUBLIME;
-      
-      prefs_.useVimMode().setGlobalValue(isVim);
-      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
-      prefs_.enableSublimeKeybindings().setGlobalValue(isSublime);
+
+      prefs_.editorKeybindings().setGlobalValue(editorMode);
+      boolean isVim = editorMode == UserPrefs.EDITOR_KEYBINDINGS_VIM;
+      boolean isEmacs = editorMode == UserPrefs.EDITOR_KEYBINDINGS_EMACS;
+      boolean isSublime = editorMode == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME;
       
       if (isVim)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
@@ -584,7 +566,7 @@ public class EditingPreferencesPane extends PreferencesPane
          encoding_.setText(encoding);
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;

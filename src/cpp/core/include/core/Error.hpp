@@ -152,6 +152,7 @@ Error fileNotFoundError(const std::string& path,
                         const ErrorLocation& location);
 Error fileNotFoundError(const FilePath& filePath,
                         const ErrorLocation& location);
+bool isFileNotFoundError(const Error& error);
 
 bool isPathNotFoundError(const Error& error);
 Error pathNotFoundError(const ErrorLocation& location);

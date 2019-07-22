@@ -34,7 +34,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
-import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -43,11 +42,7 @@ import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -61,7 +56,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
-                                 UIPrefs prefs,
+                                 UserPrefs prefs,
                                  Session session,
                                  GlobalDisplay globalDisplay,
                                  WorkbenchContext context,
@@ -155,11 +150,18 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
-            new String[] {
-                  "Always",
-                  "Never",
-                  "Ask"
-            });
+            new String[]
+            {
+               "Always",
+               "Never",
+               "Ask"
+            },
+            new String[]
+            {
+               UserPrefs.SAVE_WORKSPACE_ALWAYS,
+               UserPrefs.SAVE_WORKSPACE_NEVER,
+               UserPrefs.SAVE_WORKSPACE_ASK
+            }, false);
       spaced(saveWorkspace_);
       basic.add(saveWorkspace_);
       
@@ -190,7 +192,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       // crash reporting - only show in desktop mode
-      enableCrashReporting_ = new CheckBox("Send automated crash reports to RStudio");
+      enableCrashReporting_ = checkboxPref("Send automated crash reports to RStudio",
+            prefs_.submitCrashReports());
       if (Desktop.isDesktop())
       {
          lessSpaced(enableCrashReporting_);
@@ -351,11 +354,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // general prefs
-      final GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
-      
       boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
       showServerHomePage_.setEnabled(!isLauncherSession);
       
@@ -365,61 +365,57 @@ public class GeneralPreferencesPane extends PreferencesPane
       dirChooser_.setEnabled(true);
       
       if (!isLauncherSession)
-         showServerHomePage_.setValue(generalPrefs.getShowUserHomePage());
+         showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
       else
-    	  showServerHomePage_.setValue("always");
+         showServerHomePage_.setValue(UserPrefs.SHOW_USER_HOME_PAGE_ALWAYS);
       
-      reuseSessionsForProjectLinks_.setValue(generalPrefs.getReuseSessionsForProjectLinks());
+      reuseSessionsForProjectLinks_.setValue(prefs.reuseSessionsForProjectLinks().getValue());
       
       int saveWorkspaceIndex;
-      switch (generalPrefs.getSaveAction())
+      switch (prefs.saveWorkspace().getValue())
       {
-         case SaveAction.NOSAVE: 
+         case UserPrefs.SAVE_WORKSPACE_NEVER: 
             saveWorkspaceIndex = 1; 
             break;
-         case SaveAction.SAVE: 
+         case UserPrefs.SAVE_WORKSPACE_ALWAYS: 
             saveWorkspaceIndex = 0; 
             break; 
-         case SaveAction.SAVEASK:
+         case UserPrefs.SAVE_WORKSPACE_ASK:
          default: 
             saveWorkspaceIndex = 2; 
             break; 
       }
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
-      loadRData_.setValue(generalPrefs.getLoadRData());
-      dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
+      loadRData_.setValue(prefs.loadWorkspace().getValue());
+      dirChooser_.setText(prefs.initialWorkingDirectory().getValue());
         
-      // history prefs
-      HistoryPrefs historyPrefs = rPrefs.getHistoryPrefs();
-      
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);
       
-      alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
-      removeHistoryDuplicates_.setValue(historyPrefs.getRemoveDuplicates());
+      alwaysSaveHistory_.setValue(prefs.alwaysSaveHistory().getValue());
+      removeHistoryDuplicates_.setValue(prefs.removeHistoryDuplicates().getValue());
       
-      rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
+      rProfileOnResume_.setValue(prefs.runRprofileOnResume().getValue());
       rProfileOnResume_.setEnabled(true);
       
-      showLastDotValue_.setValue(generalPrefs.getShowLastDotValue());
+      showLastDotValue_.setValue(prefs.showLastDotValue().getValue());
       showLastDotValue_.setEnabled(true);
       
       if (rServerRVersion_ != null)
-         rServerRVersion_.setRVersion(generalPrefs.getDefaultRVersion());
+         rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue().cast());
       
       if (rememberRVersionForProjects_ != null)
       {
          rememberRVersionForProjects_.setValue(
-                                   generalPrefs.getRestoreProjectRVersion()); 
+                                   prefs.restoreProjectRVersion().getValue());
       }
 
-      enableCrashReporting_.setValue(generalPrefs.getEnableCrashReporting());
+      enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
      
       // projects prefs
-      ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
       restoreLastProject_.setEnabled(true);
-      restoreLastProject_.setValue(projectsPrefs.getRestoreLastProject());
+      restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
    }
    
 
@@ -430,9 +426,9 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs prefs)
    {
-      boolean uiReloadRequired = super.onApply(rPrefs);
+      boolean uiReloadRequired = super.onApply(prefs);
       boolean restartRequired = false;
 
       if (enableAccessibility_ != null &&
@@ -485,46 +481,26 @@ public class GeneralPreferencesPane extends PreferencesPane
  
       if (saveWorkspace_.isEnabled())
       {
-         int saveAction;
-         switch (saveWorkspace_.getListBox().getSelectedIndex())
-         {
-            case 0: 
-               saveAction = SaveAction.SAVE; 
-               break; 
-            case 1: 
-               saveAction = SaveAction.NOSAVE; 
-               break; 
-            case 2:
-            default: 
-               saveAction = SaveAction.SAVEASK; 
-               break; 
-         }
-         
-         // set general prefs
-         GeneralPrefs generalPrefs = GeneralPrefs.create(showServerHomePage_.getValue(),
-                                                         reuseSessionsForProjectLinks_.getValue(),
-                                                         saveAction, 
-                                                         loadRData_.getValue(),
-                                                         rProfileOnResume_.getValue(),
-                                                         dirChooser_.getText(),
-                                                         getDefaultRVersion(),
-                                                         getRestoreProjectRVersion(),
-                                                         showLastDotValue_.getValue(),
-                                                         enableCrashReporting_.getValue());
-         rPrefs.setGeneralPrefs(generalPrefs);
-         
-         // set history prefs
-         HistoryPrefs historyPrefs = HistoryPrefs.create(
-                                          alwaysSaveHistory_.getValue(),
-                                          removeHistoryDuplicates_.getValue());
-         rPrefs.setHistoryPrefs(historyPrefs);
-         
-         
-         // set projects prefs
-         ProjectsPrefs projectsPrefs = ProjectsPrefs.create(
-                                             restoreLastProject_.getValue());
-         rPrefs.setProjectsPrefs(projectsPrefs);
+         prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
       }
+
+      prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
+      prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
+      prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+      prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
+      prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
+      prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
+      prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
+      
+      // Pro specific
+      if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
+         prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
+      if (reuseSessionsForProjectLinks_ != null && reuseSessionsForProjectLinks_.isEnabled())
+         prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
+      if (rServerRVersion_ != null && rServerRVersion_.isEnabled())
+         prefs.defaultRVersion().setGlobalValue(rServerRVersion_.getRVersion());
+      if (rememberRVersionForProjects_ != null && rememberRVersionForProjects_.isEnabled())
+         prefs.restoreProjectRVersion().setGlobalValue(rememberRVersionForProjects_.getValue());
       
       if (restartRequired)
       {
@@ -616,7 +592,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
    private CheckBox enableCrashReporting_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;

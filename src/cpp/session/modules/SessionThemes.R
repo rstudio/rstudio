@@ -974,7 +974,12 @@
       "name"= .rs.scalar(theme$name),
       "isDark" = .rs.scalar(theme$isDark),
       "url" = .rs.scalar(theme$url))
-   .rs.writeUiPref("rstheme", themeValue);
+
+   # Save theme details to user state
+   .rs.writeUserState("theme", themeValue)
+
+   # Save theme itself as a user pref
+   .rs.writeUserPref("editor_theme", name)
 })
 
 # Removes a theme from RStudio. If the removed theme is the current theme, the current theme will be

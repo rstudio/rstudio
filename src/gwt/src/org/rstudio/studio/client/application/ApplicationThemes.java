@@ -21,7 +21,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
@@ -38,12 +39,14 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
                                           ComputeThemeColorsEvent.Handler
 {
    @Inject
-   public ApplicationThemes(Provider<UIPrefs> pUiPrefs,
+   public ApplicationThemes(Provider<UserPrefs> pUserPrefs,
+                            Provider<UserState> pUserState,
                             Provider<AceThemes> pAceThemes,
                             EventBus events,
                             ThemeServerOperations server)
    {
-      uiPrefs_ = pUiPrefs;
+      userPrefs_ = pUserPrefs;
+      userState_ = pUserState;
       pAceThemes_ = pAceThemes;
       events_ = events;
       server_ = server;
@@ -59,8 +62,7 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
       // set the initial theme.
-      uiPrefs_.get().getFlatTheme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
-      uiPrefs_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
+      userState_.get().theme().bind(theme ->events_.fireEvent(new ThemeChangedEvent()));
       events_.fireEvent(new ThemeChangedEvent());
       
       // Ensure creation of the Ace themes instance
@@ -108,12 +110,14 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(uiPrefs_.get(),
+      RStudioThemes.initializeThemes(userPrefs_.get(),
+                                     userState_.get(),
                                      Document.get(),
                                      root_);
    }
    
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Provider<AceThemes> pAceThemes_;
    private final EventBus events_;
    private final ThemeServerOperations server_;
