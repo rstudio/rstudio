@@ -6,6 +6,7 @@
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
+- Fix issue where pressing Escape could cause RStudio to crash if tcltk was loaded (#5108)
 - Fix issue where C++ diagnostics failed to work on macOS in some system configurations
 - Fix issue on MacOS where cursor could get stuck and behave erratically (#5107)
 - Fix issues on MacOS with command line tool headers when `/usr/include` is missing (#4405)
