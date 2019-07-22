@@ -225,7 +225,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       
       // reload zoom window if we have one
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().reloadZoomWindow();
       else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
          zoomWindow_.reload();
@@ -440,7 +440,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
       int scale = 1;
-      if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+      if (Desktop.hasDesktopFrame() && BrowseCap.isMacintosh())
          scale = 0;
       
       // compose url string

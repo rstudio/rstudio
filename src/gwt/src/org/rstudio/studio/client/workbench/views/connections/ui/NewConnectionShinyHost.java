@@ -231,7 +231,7 @@ public class NewConnectionShinyHost extends Composite
    {
       String url = event.getURL();
       
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url));
 
       frame_.setUrl(DomUtils.makeAbsoluteUrl(url));

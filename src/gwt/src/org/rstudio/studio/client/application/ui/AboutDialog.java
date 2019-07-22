@@ -37,7 +37,7 @@ public class AboutDialog extends ModalDialogBase
       ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
       
-      if (editionInfo_.proLicense() && Desktop.isDesktop())
+      if (editionInfo_.proLicense() && Desktop.hasDesktopFrame())
       {
          ThemedButton licenseButton = new ThemedButton("Manage License...", (ClickEvent) ->  {
             closeDialog();

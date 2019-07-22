@@ -77,7 +77,7 @@ public class EventBus extends HandlerManager implements FireEvents
             if (crossWindow.focusMode() == CrossWindowEvent.MODE_FOCUS)
                pSatellite_.get().focusMainWindow();
             else if (crossWindow.focusMode() == CrossWindowEvent.MODE_AUXILIARY &&
-                     Desktop.isDesktop())
+                     Desktop.hasDesktopFrame())
                Desktop.getFrame().bringMainFrameBehindActive();
 
             fireEventToMainWindow(jso, pSatellite_.get().getSatelliteName());

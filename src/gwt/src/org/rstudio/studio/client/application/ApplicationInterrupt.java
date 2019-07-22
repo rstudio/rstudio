@@ -245,7 +245,7 @@ public class ApplicationInterrupt
    
    private void setPendinqQuit(int pendingQuit)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    

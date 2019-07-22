@@ -618,7 +618,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       else
       {
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             Desktop.getFrame().showFile(StringUtil.notNull(result.getOutputFile()));
          else
          {

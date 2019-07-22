@@ -299,6 +299,7 @@ public class RemoteServer implements Server
    {
       disconnected_ = true;
       serverEventListener_.stop();
+      eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_DISCONNECT));
    }
      
    public void log(int logEntryType, 

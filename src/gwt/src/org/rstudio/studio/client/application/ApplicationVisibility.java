@@ -42,7 +42,7 @@ public class ApplicationVisibility
       satelliteManager_ = satelliteManager;
       
       // don't register for visibility changed events in desktop mode
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          return;
      
       // initialize after we have session info

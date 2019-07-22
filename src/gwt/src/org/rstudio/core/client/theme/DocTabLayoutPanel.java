@@ -104,7 +104,7 @@ public class DocTabLayoutPanel
                             int padding,
                             int rightMargin)
    {
-      super(BAR_HEIGHT, Style.Unit.PX);
+      super(BAR_HEIGHT, Style.Unit.PX, "Documents");
       closeableTabs_ = closeableTabs;
       padding_ = padding;
       rightMargin_ = rightMargin;
@@ -924,7 +924,7 @@ public class DocTabLayoutPanel
                   initDragParams_, null, destPos_));
          }
          
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             // on desktop, we call back to discover whether the cursor is
             // currently outside of any RStudio window; in such a case we

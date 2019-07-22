@@ -59,7 +59,7 @@ public class SVNPane extends WorkbenchPane implements Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("SVN Tab");
 
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();

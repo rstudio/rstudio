@@ -35,7 +35,7 @@ public class BrowseCap
          else
             return 0.4;
       }
-      else if (!Desktop.isDesktop() && isWindows())
+      else if ((!Desktop.hasDesktopFrame()) && isWindows())
          return 0.4;
       else
          return 0;
@@ -65,7 +65,7 @@ public class BrowseCap
    
    public boolean canCopyToClipboard()
    {
-      return Desktop.isDesktop() || !isSafari();
+      return (Desktop.hasDesktopFrame()) || !isSafari();
    }
    
    public boolean isInternetExplorer()
@@ -90,7 +90,7 @@ public class BrowseCap
    
    public static boolean isMacintoshDesktop()
    {
-      return Desktop.isDesktop() && isMacintosh();
+      return (Desktop.hasDesktopFrame()) && isMacintosh();
    }
    
    public static boolean isMacintoshDesktopMojave()
@@ -106,7 +106,7 @@ public class BrowseCap
    
    public static boolean isWindowsDesktop()
    {
-      return Desktop.isDesktop() && isWindows();
+      return (Desktop.hasDesktopFrame()) && isWindows();
    }
 
    public static boolean isLinux()
@@ -116,7 +116,7 @@ public class BrowseCap
    
    public static boolean isLinuxDesktop()
    {
-      return Desktop.isDesktop() && isLinux();
+      return (Desktop.hasDesktopFrame()) && isLinux();
    }
    
    public static boolean hasUbuntuFonts()
@@ -131,7 +131,7 @@ public class BrowseCap
    
    public static boolean isChromeServer()
    {
-      return isChrome() && !Desktop.isDesktop();
+      return isChrome() && !Desktop.hasDesktopFrame();
    }
    
    public static boolean isSafari()
@@ -229,7 +229,7 @@ public class BrowseCap
          
          // in desktop mode we'll get an exact match whereas in web mode
          // we'll get a list of fonts so we need to do an additional probe
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             return StringUtil.notNull(fixedWidthFont).equals("\"Ubuntu Mono\"");
          else
             return FontDetector.isFontSupported("Ubuntu Mono");

@@ -1,7 +1,7 @@
 /*
  * NewConnectionNavigationPage.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,19 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardResources;
+import org.rstudio.core.client.widget.events.ButtonClickManager;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -117,6 +122,7 @@ public class NewConnectionNavigationPage
             warningPanel.addStyleName(RES.styles().wizardPageWarningPanel());
             Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
             warningImage.addStyleName(RES.styles().wizardPageWarningImage());
+            warningImage.setAltText(MessageDialogImages.DIALOG_WARNING_TEXT);
             warningPanel.add(warningImage);
             
             Label label = new Label();
@@ -193,8 +199,11 @@ public class NewConnectionNavigationPage
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
          panel.addStyleName(styles.wizardPageSelectorItemSize());
-         
-         Image rightArrow = new Image(new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
+         Roles.getButtonRole().set(panel.getElement());
+         panel.getElement().setTabIndex(0);
+         panel.getElement().setId(ElementIds.idFromLabel(page.getTitle() + "_wizard_page"));
+
+         DecorativeImage rightArrow = new DecorativeImage(new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
          rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
          
@@ -204,7 +213,7 @@ public class NewConnectionNavigationPage
          }
          else
          {  
-            Image icon = new Image(page.getImage());
+            DecorativeImage icon = new DecorativeImage(page.getImage());
             icon.addStyleName(RES.styles().wizardPageConnectionSelectorItemLeftIcon());
             
             panel.addWest(icon, 28);
@@ -214,11 +223,12 @@ public class NewConnectionNavigationPage
          mainLabel.addStyleName(WizardResources.INSTANCE.styles().wizardPageSelectorItemLabel());
          mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
-         
-         panel.addDomHandler(handler, ClickEvent.getType());
-         
+
+         clickManager_ = new ButtonClickManager(panel, handler);
          initWidget(panel);
       }
+
+      private ButtonClickManager clickManager_;
    }
 
    public interface Styles extends CssResource

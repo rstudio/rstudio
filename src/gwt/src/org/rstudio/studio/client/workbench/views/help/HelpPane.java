@@ -320,7 +320,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Help Tab");
 
       toolbar.addLeftWidget(commands_.helpBack().createToolbarButton());
       toolbar.addLeftWidget(commands_.helpForward().createToolbarButton());
@@ -349,7 +349,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Help Tab Second");
 
       title_ = new Label();
       title_.addStyleName(RES.styles().topicTitle());
@@ -727,9 +727,9 @@ public class HelpPane extends WorkbenchPane
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
                "Find in Topic", 
-               "No occurences found",
+               "No occurrences found",
                findInputSource);
-      }     
+      }
    }
    
    private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{

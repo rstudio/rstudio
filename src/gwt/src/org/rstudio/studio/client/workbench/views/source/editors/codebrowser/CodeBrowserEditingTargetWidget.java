@@ -419,7 +419,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    
    private Toolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Code Browser Second");
       
       contextWidget_ = new CodeBrowserContextWidget(RES.styles());
       contextWidget_.addSelectionHandler(new SelectionHandler<String> () {

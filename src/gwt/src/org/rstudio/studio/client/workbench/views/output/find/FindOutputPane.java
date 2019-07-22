@@ -55,7 +55,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Find Output Tab");
 
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);

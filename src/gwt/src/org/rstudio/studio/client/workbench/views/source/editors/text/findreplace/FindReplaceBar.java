@@ -28,6 +28,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckboxLabel;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -151,7 +152,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       Roles.getButtonRole().setAriaLabelProperty(btnClose_.getElement(), "Close find and replace");
       btnClose_.getElement().appendChild(
-            new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
+            new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 
       txtFind_.addKeyDownHandler(new KeyDownHandler()
       {

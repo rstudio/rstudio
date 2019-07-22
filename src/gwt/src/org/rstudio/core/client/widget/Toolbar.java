@@ -77,9 +77,9 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets)
+   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets, String label)
    {
-      this();
+      this(label);
 
       if (leftWidgets != null)
       {
@@ -102,13 +102,14 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar()
+   public Toolbar(String label)
    {
       super();
 
       toolbarWrapper_ = new HTMLPanel("");
 
       Roles.getToolbarRole().set(toolbarWrapper_.getElement());
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
 
       horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -300,7 +301,16 @@ public class Toolbar extends Composite
    {
       return toolbarWrapper_;
    }
-   
+
+   /**
+    * Change the accessibility label for the toolbar
+    * @param label
+    */
+   public void setLabel(String label)
+   {
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
+   }
+
    private void removeAllWidgets(HorizontalPanel panel)
    {
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)

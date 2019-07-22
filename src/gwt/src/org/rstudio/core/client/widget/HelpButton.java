@@ -25,7 +25,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -80,11 +79,7 @@ public class HelpButton extends FocusWidget
                      final String title)
    {
       ButtonElement button = Document.get().createPushButtonElement();
-      button.getStyle().setDisplay(Style.Display.BLOCK);
-      button.getStyle().setPadding(0, Unit.PX);
-      button.getStyle().setMargin(0, Unit.PX);
-      button.getStyle().setBorderStyle(BorderStyle.NONE);
-      button.getStyle().setBackgroundColor("transparent");
+      button.setClassName("rstudio-HelpButton");
 
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setCursor(Cursor.POINTER);

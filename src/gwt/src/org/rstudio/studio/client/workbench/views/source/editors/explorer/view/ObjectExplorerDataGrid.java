@@ -756,7 +756,7 @@ public class ObjectExplorerDataGrid
       {
          // on Desktop, we need to ensure that the origin of the
          // original keydown event matches the keyup event
-         if (!Desktop.isDesktop() || didReceiveNonRepeatingKeyDownEvent_)
+         if (!Desktop.hasDesktopFrame() || didReceiveNonRepeatingKeyDownEvent_)
          {
             didReceiveNonRepeatingKeyDownEvent_ = false;
 

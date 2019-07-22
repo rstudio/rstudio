@@ -28,7 +28,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
    public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
-   {   
+   {
+      super("Plots Pane");
       commands_ = commands ;
       publishButton_ = publishButton;
       installStandardUI();

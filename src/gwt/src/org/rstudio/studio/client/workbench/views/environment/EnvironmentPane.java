@@ -119,7 +119,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Environment Tab");
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -162,7 +162,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
       
       environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarMenuButton(

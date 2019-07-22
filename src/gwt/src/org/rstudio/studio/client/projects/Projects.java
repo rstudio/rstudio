@@ -87,6 +87,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import java.util.function.Consumer;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
@@ -204,7 +205,7 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if (!Desktop.isDesktop() || !sessionInfo.getMultiSession())
+            if (!Desktop.hasDesktopFrame() || !sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
@@ -1066,16 +1067,28 @@ public class Projects implements OpenProjectFileHandler,
                                              RVersionSpec rVersion,
                                              final Command onSuccess)
    {
+      Consumer<String> onSessionCreated;
+      if (Desktop.isRemoteDesktop())
+      {
+         onSessionCreated = (String url) -> {
+            if (onSuccess != null)
+               onSuccess.execute();
+            Desktop.getFrame().openProjectInNewWindow(url);
+         };
+      }
+      else
+      {
+         onSessionCreated = (String url) -> {
+            if (onSuccess != null)
+               onSuccess.execute();
+            globalDisplay_.openWindow(url);
+         };
+      }
       sessionOpener_.navigateToNewSession(
             true, /*isProject*/
             project.getParentPathString(),
             rVersion,
-            url -> {
-               if (onSuccess != null)
-                  onSuccess.execute();
-
-               globalDisplay_.openWindow(url);
-            });
+            onSessionCreated);
    }
    
    private void showOpenProjectDialog(final int projectType)

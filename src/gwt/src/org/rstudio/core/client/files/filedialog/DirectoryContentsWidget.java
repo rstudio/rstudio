@@ -14,6 +14,10 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
@@ -27,6 +31,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -83,6 +88,10 @@ public class DirectoryContentsWidget
       table_.setCellSpacing(0);
       table_.setCellPadding(2);
       table_.setSize("100%", "100%");
+
+      // presented to screen readers as a single-select listbox
+      Roles.getListboxRole().set(table_.getElement());
+      Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), "Directory Contents");
 
       scrollPanel_ = new ScrollPanelWithClick(table_);
       scrollPanel_.setSize("100%", "100%");
@@ -306,7 +315,7 @@ public class DirectoryContentsWidget
          return;
       }
 
-      int row = selectedRow_.intValue() + offset;
+      int row = selectedRow_ + offset;
       row = Math.max(0, Math.min(table_.getRowCount()-1, row));
       setSelectedRow(row);
    }
@@ -315,22 +324,24 @@ public class DirectoryContentsWidget
    {
       if (selectedRow_ != null)
       {
-         table_.getRowFormatter().removeStyleName(
-               selectedRow_.intValue(),
-               "gwt-MenuItem-selected");
+         table_.getRowFormatter().removeStyleName(selectedRow_, "gwt-MenuItem-selected");
+         Roles.getOptionRole().removeAriaSelectedState(
+               table_.getRowFormatter().getElement(selectedRow_));
+         Roles.getListboxRole().removeAriaActivedescendantProperty(table_.getElement());
          selectedRow_ = null;
          selectedValue_ = null;
       }
 
-      if (row != null
-          && row.intValue() >= 0
-          && row.intValue() < table_.getRowCount())
+      if (row != null && row >= 0 && row < table_.getRowCount())
       {
-         selectedRow_ = row.intValue();
-         table_.getRowFormatter().addStyleName(
-               selectedRow_,
-               "gwt-MenuItem-selected");
-         selectedValue_ = table_.getText(row.intValue(), COL_NAME);
+         selectedRow_ = row;
+         table_.getRowFormatter().addStyleName(selectedRow_, "gwt-MenuItem-selected");
+         Roles.getOptionRole().setAriaSelectedState(
+               table_.getRowFormatter().getElement(selectedRow_), SelectedValue.TRUE);
+         Roles.getListboxRole().setAriaActivedescendantProperty(
+               table_.getElement(),
+               Id.of(table_.getRowFormatter().getElement(selectedRow_)));
+         selectedValue_ = table_.getText(row, COL_NAME);
 
          TableRowElement rowEl = ((TableElement)table_.getElement().cast())
                .getRows().getItem(selectedRow_);
@@ -363,7 +374,9 @@ public class DirectoryContentsWidget
 
    public void clearContents()
    {
+      Roles.getListboxRole().removeAriaActivedescendantProperty(table_.getElement());
       table_.removeAllRows();
+      uniqueIdIndex_ = 0;
       items_.clear();
       selectedRow_ = null;
       selectedValue_ = null;
@@ -399,6 +412,9 @@ public class DirectoryContentsWidget
       items_.put(customName, item);
       
       int newRow = table_.insertRow(table_.getRowCount());
+      Element tr = table_.getRowFormatter().getElement(newRow);
+      Roles.getOptionRole().set(tr);
+      tr.setId(ElementIds.ID_PREFIX + "dirContents_" + uniqueIdIndex_++);
       table_.setWidget(
             newRow,
             COL_ICON,
@@ -500,6 +516,7 @@ public class DirectoryContentsWidget
    private final DoubleClickState doubleClick_ = new DoubleClickState();
    private Integer selectedRow_;
    private String selectedValue_;
+   private int uniqueIdIndex_;
    private final FlexTableEx table_;
    private final ScrollPanelWithClick scrollPanel_;
    private final SimplePanelWithProgress progressPanel_;

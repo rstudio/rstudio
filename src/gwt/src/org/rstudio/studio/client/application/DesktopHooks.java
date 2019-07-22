@@ -195,6 +195,17 @@ public class DesktopHooks
    {
       commands_.quitSession().execute();
    }
+
+   void promptToQuitR()
+   {
+      globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
+            "Close Remote Session",
+            "Do you want to close the remote session?",
+            false,
+            (Operation) () -> commands_.quitSession().execute(),
+            (Operation) () -> Desktop.getFrame().onSessionQuit(),
+            true);
+   }
   
    void notifyRCrashed()
    {

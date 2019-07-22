@@ -31,7 +31,8 @@ public:
                       QString name,
                       QUrl baseUrl = QUrl(),
                       QWidget *parent = nullptr,
-                      WebPage* opener = nullptr);
+                      WebPage* opener = nullptr,
+                      bool isRemoteDesktop = false);
 
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 

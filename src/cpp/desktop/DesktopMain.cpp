@@ -38,9 +38,11 @@
 #include "DesktopDetectRHome.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 
 #ifdef _WIN32
 #include <core/system/RegistryKey.hpp>
@@ -422,6 +424,21 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    }
 }
 
+boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
+{
+   auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                            sessionServerSettings().servers().end(),
+                            [&](const SessionServer& server) { return server.url() == url; });
+
+   if (iter != sessionServerSettings().servers().end())
+   {
+      SessionServer server = *iter;
+      return boost::optional<SessionServer>(server);
+   }
+
+   return boost::optional<SessionServer>();
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -687,10 +704,6 @@ int main(int argc, char* argv[])
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
 
-      Options& options = desktop::options();
-      if (!prepareEnvironment(options))
-         return 1;
-
       // get install path
       FilePath installPath;
       error = core::system::installPath("..", argv[0], &installPath);
@@ -699,10 +712,6 @@ int main(int argc, char* argv[])
          LOG_ERROR(error);
          return EXIT_FAILURE;
       }
-
-#ifdef _WIN32
-      RVersion version = detectRVersion(false);
-#endif
 
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
@@ -716,13 +725,6 @@ int main(int argc, char* argv[])
          sessionPath = currentPath.complete("session/rsession");
          scriptsPath = currentPath.complete("desktop");
          devMode = true;
-#ifdef _WIN32
-         if (version.architecture() == ArchX86 &&
-             installPath.complete("session/x86").exists())
-         {
-            sessionPath = installPath.complete("session/x86/rsession");
-         }
-#endif
       }
 
       // if there is no conf path then release mode
@@ -731,15 +733,6 @@ int main(int argc, char* argv[])
          // default paths (then tweak)
          sessionPath = installPath.complete("bin/rsession");
          scriptsPath = installPath.complete("bin");
-
-         // check for win32 binary on windows
-#ifdef _WIN32
-         if (version.architecture() == ArchX86 &&
-             installPath.complete("bin/x86").exists())
-         {
-            sessionPath = installPath.complete("bin/x86/rsession");
-         }
-#endif
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
@@ -750,26 +743,178 @@ int main(int argc, char* argv[])
          }
 #endif
       }
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
+
+      Options& options = desktop::options();
+      if (!prepareEnvironment(options))
+         return 1;
+
+#ifdef _WIN32
+      RVersion version = detectRVersion(false);
+      if (devMode)
+      {
+         if (version.architecture() == ArchX86 &&
+             installPath.complete("session/x86").exists())
+         {
+            sessionPath = installPath.complete("session/x86/rsession");
+         }
+      }
+      else
+      {
+         // check for win32 binary on windows
+          if (version.architecture() == ArchX86 &&
+             installPath.complete("bin/x86").exists())
+         {
+            sessionPath = installPath.complete("bin/x86/rsession");
+         }
+      }
+#endif
+
       core::system::fixupExecutablePath(&sessionPath);
 
       auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
-      // set the scripts path in options
-      desktop::options().setScriptsPath(scriptsPath);
+      // determine where the session should be launched
+      boost::optional<SessionServer> launchServer;
+      bool forceSessionServerLaunch = false;
+      if (!desktop::options().sessionServer().empty())
+      {
+         forceSessionServerLaunch = true;
 
-      // launch session
-      SessionLauncher sessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
-      sessionLauncher.launchFirstSession(installPath, devMode, pApp->arguments());
+         // launched with a specific session server selected
+         // such as opening a new session in another window
+         launchServer = getLaunchServerFromUrl(desktop::options().sessionServer());
+         if (!launchServer)
+         {
+            // if we don't have an entry for the server URL, something is horribly wrong
+            // just show an error and exit
+            showError(nullptr,
+                      QString::fromUtf8("Invalid session server"),
+                      QString::fromStdString("Session server " + desktop::options().sessionServer() +
+                                                " does not exist"),
+                      QString::null);
+            return EXIT_FAILURE;
+         }
+      }
 
-      ProgressActivator progressActivator;
+      bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
 
-      int result = pApp->exec();
+      while (true)
+      {
+         SessionLocation location = forceShowSessionLocationDialog ?
+                  SessionLocation::Ask :
+                  sessionServerSettings().sessionLocation();
 
-      desktop::activation().releaseLicense();
-      options.cleanUpScratchTempDir();
+         if (!forceSessionServerLaunch)
+         {
+            switch (location)
+            {
+               case SessionLocation::Server:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // remote launch on default server
+                     auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                                              sessionServerSettings().servers().end(),
+                                              [](const SessionServer& server) { return server.isDefault(); });
 
-      return result;
+                     if (iter == sessionServerSettings().servers().end())
+                     {
+                        // somehow, no default was specified
+                        // log an error and launch session on the first server in the list
+                        launchServer = sessionServerSettings().servers().at(0);
+                        LOG_ERROR_MESSAGE("No default session server specified. Using first server");
+                     }
+                     else
+                        launchServer = *iter;
+                  }
+                  break;
+
+               case SessionLocation::Ask:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // display session location chooser dialog
+                     LaunchLocationResult result = sessionServers().showSessionLaunchLocationDialog();
+                     if (result.dialogResult == QDialog::Rejected)
+                        return EXIT_SUCCESS;
+
+                     launchServer = result.sessionServer;
+                  }
+                  break;
+
+               case SessionLocation::Locally:
+               default:
+                  break;
+            }
+         }
+
+         // keep the launcher object alive for the program's duration
+         boost::shared_ptr<void> pSessionLauncher;
+
+         if (!launchServer)
+         {
+            // launch a local session
+            SessionLauncher* pLauncher = new SessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
+            pLauncher->launchFirstSession(installPath, devMode, pApp->arguments());
+            pSessionLauncher.reset(pLauncher);
+         }
+         else
+         {
+            // launch a remote session
+            // first, check to make sure the server is reachable/valid
+            Error error = launchServer->test();
+            if (error)
+            {
+               bool continueConnecting =
+                     showYesNoDialog(QMessageBox::Warning,
+                                     nullptr,
+                                     QString::fromUtf8("Server Error"),
+                                     QString::fromUtf8("There was an error while attempting to run "
+                                                       "prelaunch diagnostics for this server. "
+                                                       "Do you want to attempt to connect anyway?"),
+                                     QString::fromStdString(error.getProperty("description")),
+                                     false);
+               if (!continueConnecting)
+               {
+                  if (forceSessionServerLaunch)
+                     return EXIT_FAILURE;
+
+                  forceShowSessionLocationDialog = true;
+                  continue;
+               }
+            }
+
+            RemoteDesktopSessionLauncher* pLauncher;
+
+            std::string sessionUrl = desktop::options().sessionUrl();
+            if (sessionUrl.empty())
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            forceSessionServerLaunch);
+            }
+            else
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            sessionUrl);
+            }
+
+            pLauncher->launchFirstSession();
+            pSessionLauncher.reset(pLauncher);
+         }
+
+         ProgressActivator progressActivator;
+
+         int result = pApp->exec();
+
+         desktop::activation().releaseLicense();
+         options.cleanUpScratchTempDir();
+
+         return result;
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

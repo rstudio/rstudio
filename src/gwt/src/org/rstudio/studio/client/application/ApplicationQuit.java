@@ -293,7 +293,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // must be from the main window in web mode)
       else if (saveAction != SaveAction.SAVEASK && 
                unsavedSourceDocs.size() == 1 &&
-               (Desktop.isDesktop() || 
+               (Desktop.hasDesktopFrame() ||
                 !(unsavedSourceDocs.get(0) instanceof UnsavedChangesItem)))
       {
          sourceShim.saveWithPrompt(
@@ -436,7 +436,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
             // the process exits). since this codepath is only for the quit
             // case (and not the restart or restart and reload cases)
             // we can set the pending quit bit here
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
             {
                Desktop.getFrame().setPendingQuit(
                         DesktopFrame.PENDING_QUIT_AND_EXIT);
@@ -548,7 +548,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private void setPendinqQuit(int pendingQuit)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
@@ -646,7 +646,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
                // notify the desktop frame that we are about to quit
                String switchToProject = StringUtil.create(switchToProject_);
-               if (Desktop.isDesktop())
+               if (Desktop.hasDesktopFrame())
                {
                   Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
                         DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
@@ -704,7 +704,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                  message,
                                  callContext_));
                         }
-                        if (Desktop.isDesktop())
+                        if (Desktop.hasDesktopFrame())
                         {
                            Desktop.getFrame().setPendingQuit(
                                          DesktopFrame.PENDING_QUIT_NONE);

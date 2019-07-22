@@ -81,7 +81,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Preview Tab");
       
       fileCaption_ = new ToolbarLabel("Preview: ");
       toolbar.addLeftWidget(fileCaption_);
@@ -98,7 +98,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       toolbar.addLeftWidget(showLogButton_);
       
       saveHtmlPreviewAsSeparator_ = toolbar.addLeftSeparator();
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       { 
          saveHtmlPreviewAs_ = commands.saveHtmlPreviewAs().createToolbarButton();
          toolbar.addLeftWidget(saveHtmlPreviewAs_);

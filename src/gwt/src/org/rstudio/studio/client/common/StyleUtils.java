@@ -26,7 +26,7 @@ public class StyleUtils
 {
    public static void forceMacScrollbars(Widget widget)
    {
-      if (!Desktop.isDesktop() && 
+      if (!Desktop.hasDesktopFrame() &&
            BrowseCap.isMacintosh() && 
            !BrowseCap.isFirefox())
       {

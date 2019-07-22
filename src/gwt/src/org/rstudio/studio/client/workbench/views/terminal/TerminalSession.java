@@ -365,7 +365,7 @@ public class TerminalSession extends XTermWidget
       // On desktop, rapid typing sometimes causes RPC messages for writeStandardInput
       // to arrive out of sequence in the terminal; send a sequence number with each
       // message so server can put messages back in order
-      if (Desktop.isDesktop() && 
+      if (Desktop.hasDesktopFrame() &&
             consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
       {
          if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)

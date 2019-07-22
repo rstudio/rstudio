@@ -21,6 +21,7 @@
 #include <core/r_util/RUserData.hpp>
 
 #include <QKeyEvent>
+#include <QMouseEvent>
 
 namespace rstudio {
 namespace desktop {
@@ -45,6 +46,40 @@ public:
 protected:
    bool eventFilter(QObject* object, QEvent* event) override
    {
+      // Fix issue with malformed mouse events that can be emitted when the
+      // application is focused through either a very fast mouse click, or a
+      // trackpad click. in such cases, the 'primary' mouse button is
+      // registered in event->button(), but event->buttons() is Qt::NoButton.
+      // when this occurs, Qt fails to delegate the mouse event to the
+      // sub-widget hosting the web page, causing the mouse event to
+      // effectively be dropped. this leads to a mousedown event without a
+      // companion mouseup event, effectively leaving the event handler (often
+      // Ace) stuck in a pseudo-drag state, which causes all sorts of funky
+      // behavior. see:
+      //
+      //    https://github.com/rstudio/rstudio/issues/5107
+      //    https://bugreports.qt.io/browse/QTBUG-77125
+      //
+      // for some more details.
+      if (event->type() == QEvent::MouseButtonPress ||
+          event->type() == QEvent::MouseButtonRelease)
+      {
+         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+         if (mouseEvent->buttons() == Qt::NoButton)
+         {
+            QMouseEvent* fixedMouseEvent = new QMouseEvent(
+                     mouseEvent->type(),
+                     mouseEvent->localPos(),
+                     mouseEvent->windowPos(),
+                     mouseEvent->screenPos(),
+                     mouseEvent->button(),
+                     mouseEvent->button(),
+                     mouseEvent->modifiers());
+            QCoreApplication::postEvent(object, fixedMouseEvent);
+            return true;
+         }
+      }
+      
       if (event->type() == QEvent::KeyPress)
       {
          auto* keyEvent = static_cast<QKeyEvent*>(event);

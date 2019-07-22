@@ -64,7 +64,7 @@ void onDescriptionChanged()
    s_pIndexedPackageInfo.reset();
 
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(projectContext().directory());
+   Error error = pInfo->read(projectContext().buildTargetPath());
    if (error)
       LOG_ERROR(error);
 
@@ -73,7 +73,7 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().directory().childPath("DESCRIPTION");
+   FilePath descPath = projectContext().buildTargetPath().childPath("DESCRIPTION");
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
@@ -460,7 +460,8 @@ Error ProjectContext::initialize()
 void ProjectContext::onDeferredInit(bool newSession)
 {
    // update DESCRIPTION file index
-   onDescriptionChanged();
+   if (projectContext().isPackageProject())
+      onDescriptionChanged();
 
    // kickoff file monitoring for this directory
    using boost::bind;

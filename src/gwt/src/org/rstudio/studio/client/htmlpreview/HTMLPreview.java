@@ -39,7 +39,7 @@ public class HTMLPreview
          public void onShowHTMLPreview(ShowHTMLPreviewEvent event)
          {
             WindowEx win = satelliteManager.getSatelliteWindowObject(HTMLPreviewApplication.NAME);
-            if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+            if (win != null && !Desktop.hasDesktopFrame() && BrowseCap.isChrome())
             {
                satelliteManager.forceReopenSatellite(HTMLPreviewApplication.NAME, 
                                                      event.getParams(),

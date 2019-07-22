@@ -77,7 +77,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Presentation Tab");
       
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar); 
       slideNavigationMenu_.setEditButtonVisible(true);

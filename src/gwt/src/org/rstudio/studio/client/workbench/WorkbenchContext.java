@@ -64,7 +64,7 @@ public class WorkbenchContext
          {
             isServerBusy_ = event.isBusy();
             
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
                Desktop.getFrame().setBusy(isServerBusy_);
          } 
       });

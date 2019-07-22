@@ -203,7 +203,7 @@ public class WebApplicationHeader extends Composite
             }
             
             // init commands panel in server mode
-            if (!Desktop.isDesktop())
+            if (!Desktop.hasDesktopFrame())
                initCommandsPanel(sessionInfo);
                       
             // notify overlay of global toolbar state

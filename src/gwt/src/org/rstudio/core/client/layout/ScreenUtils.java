@@ -41,7 +41,7 @@ public class ScreenUtils
       else
       {
          // adjust for window framing, etc.
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             height = height - 40;
          else
             height = height - 60;

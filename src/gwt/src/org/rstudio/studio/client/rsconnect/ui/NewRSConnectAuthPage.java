@@ -310,7 +310,7 @@ public class NewRSConnectAuthPage
                   contents_.showWaiting();
                   
                   // prepare a new window with the auth URL loaded
-                  if (Desktop.isDesktop())
+                  if (Desktop.hasDesktopFrame())
                   {
                      Desktop.getFrame().browseUrl(StringUtil.notNull(result_.getPreAuthToken().getClaimUrl()));
                   }

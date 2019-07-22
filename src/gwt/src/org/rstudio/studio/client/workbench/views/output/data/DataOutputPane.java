@@ -45,7 +45,7 @@ public class DataOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Data Output Tab");
 
       dataOutputFile_ = new Label();
       dataOutputFile_.setStyleName(ThemeStyles.INSTANCE.subtitle());

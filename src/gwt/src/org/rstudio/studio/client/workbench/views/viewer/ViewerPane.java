@@ -67,7 +67,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Viewer Tab");
       
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
@@ -284,7 +284,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       // non-local; before changing the URL, set the iframe to be sandboxed
       // based on whether we're working with a local URL (note that prior to
       // RStudio 1.2 local URLs were forbidden entirely)
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          if (URIUtils.isLocalUrl(url))
          {

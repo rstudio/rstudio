@@ -184,7 +184,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Packages Tab");
      
       // install packages
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());

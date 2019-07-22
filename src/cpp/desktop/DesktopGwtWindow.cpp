@@ -39,8 +39,9 @@ GwtWindow::GwtWindow(bool showToolbar,
                      QString name,
                      QUrl baseUrl,
                      QWidget* pParent,
-                     WebPage* opener) :
-   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent, opener)
+                     WebPage* opener,
+                     bool isRemoteDesktop) :
+   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent, opener, isRemoteDesktop)
 {
    // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
    double levels[] = {

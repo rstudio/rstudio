@@ -77,7 +77,7 @@ public class AboutDialogContents extends Composite
          // no need to show GPL notice in pro edition
          gplNotice.setVisible(false);
 
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             // load license status in desktop mode
             noticeBox.setVisibleLines(9);

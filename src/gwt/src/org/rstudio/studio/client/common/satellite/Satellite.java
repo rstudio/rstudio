@@ -72,7 +72,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       // NOTE: Desktop doesn't seem to get onWindowClosing events in Qt 4.8
       // so we instead rely on an explicit callback from the desktop frame
       // to notifyRStudioSatelliteClosing
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          Window.addWindowClosingHandler(new ClosingHandler() {
             @Override
@@ -220,7 +220,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    
    public void focusMainWindow() 
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          focusMainWindowDesktop();
       else
          focusMainWindowWeb();

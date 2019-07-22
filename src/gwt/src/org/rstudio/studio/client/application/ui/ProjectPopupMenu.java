@@ -201,7 +201,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator(225);
 
       addItem(commands_.openProject().createMenuItem(false));
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          addItem(commands_.openProjectInNewWindow().createMenuItem(false));
       addItem(commands_.closeProject().createMenuItem(false));
       addSeparator();

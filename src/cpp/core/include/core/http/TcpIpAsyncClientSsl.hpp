@@ -16,10 +16,6 @@
 #ifndef CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 #define CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 
-#ifdef _WIN32
-#error TcpIpAsyncClientSsl is not supported on Windows
-#endif
-
 #include <boost/scoped_ptr.hpp>
 
 #include <boost/asio/ip/tcp.hpp>

@@ -364,6 +364,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="setWorkingDir"/>
          </menu>
          <separator/>
+         <cmd refid="showSessionServerOptionsDialog"/>
+         <separator/>
          <cmd refid="loadWorkspace"/>
          <cmd refid="saveWorkspace"/>
          <separator/>
@@ -2900,6 +2902,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Force Quit Session..."
         buttonLabel=""
         desc="Quit the current R session even if busy"
+        windowMode="main"/>
+
+   <cmd id="showSessionServerOptionsDialog"
+        label="Session Server Settings..."
+        buttonLabel=""
+        desc="Configure available session servers"
         windowMode="main"/>
 
    <cmd id="showAboutDialog"

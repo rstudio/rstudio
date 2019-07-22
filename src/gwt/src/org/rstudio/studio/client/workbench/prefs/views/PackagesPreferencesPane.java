@@ -26,15 +26,16 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -70,8 +71,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       secondaryReposWidget_ = new SecondaryReposWidget();
 
-      VerticalPanel management = new VerticalPanel();
-      VerticalPanel development = new VerticalPanel();
+      VerticalTabPanel management = new VerticalTabPanel(ElementIds.PACKAGE_MANAGEMENT_PREFS);
+      VerticalTabPanel development = new VerticalTabPanel(ElementIds.PACKAGE_DEVELOPMENT_PREFS);
     
       management.add(headerLabel("Package Management"));
 
@@ -226,10 +227,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Packages");
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(management, "Management");
-      tabPanel.add(development, "Development");
+      tabPanel.add(management, "Management", management.getBasePanelId());
+      tabPanel.add(development, "Development", development.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -358,6 +359,22 @@ public class PackagesPreferencesPane extends PreferencesPane
       );
    }
 
+   private boolean secondaryReposHasChanged()
+   {
+      ArrayList<CRANMirror> secondaryRepos = secondaryReposWidget_.getRepos();
+
+      if (secondaryRepos.size() != cranMirror_.getSecondaryRepos().size())
+         return true;
+
+      for (int i = 0; i < secondaryRepos.size(); i++)
+      {
+         if (secondaryRepos.get(i).getSecondary() != cranMirror_.getSecondaryRepos().get(i).getSecondary())
+            return true;
+      }
+
+      return false;
+   }
+
    @Override
    public boolean onApply(UserPrefs prefs)
    {
@@ -371,17 +388,20 @@ public class PackagesPreferencesPane extends PreferencesPane
          state.cranMirrorChanged().setGlobalValue(true);
       }
 
-      boolean cranRepoChangedToUrl = !mirrorTextValue.equals(cranMirrorStored_) && 
+      boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
+      boolean cranRepoChangedToUrl = cranRepoChanged && 
                                       mirrorTextValue.startsWith("http");
    
-      state.cranMirrorChanged().setGlobalValue(true);
-
-      if (cranRepoChangedToUrl)
+      if (cranRepoChanged || secondaryReposHasChanged())
       {
-         cranMirror_.setURL(mirrorTextValue);
+         state.cranMirrorChanged().setGlobalValue(true);
+         if (cranRepoChangedToUrl)
+         {
+            cranMirror_.setURL(mirrorTextValue);
 
-         cranMirror_.setHost("Custom");
-         cranMirror_.setName("Custom");
+            cranMirror_.setHost("Custom");
+            cranMirror_.setName("Custom");
+         }
       }
       
       ArrayList<CRANMirror> repos = secondaryReposWidget_.getRepos();

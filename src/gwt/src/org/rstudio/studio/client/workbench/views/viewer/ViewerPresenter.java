@@ -212,7 +212,7 @@ public class ViewerPresenter extends BasePresenter
       if (event.getMaximize())
          display_.maximize();
       rmdPreviewParams_ = event.getParams();
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getOutputUrl()));
       display_.previewRmd(event.getParams());
    }
@@ -227,7 +227,7 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true);
          display_.bringToFront();
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
          display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
@@ -244,7 +244,7 @@ public class ViewerPresenter extends BasePresenter
          SingleShotTimer.fire(100, () -> {
             manageCommands(true);
             display_.bringToFront();
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
                Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
             display_.previewPlumber(event.getParams());
             runningPlumberAPIParams_ = event.getParams();
@@ -493,14 +493,14 @@ public class ViewerPresenter extends BasePresenter
    
    private void navigate(String url)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
    }
    
    private void updateZoomWindow(String url)
    {
-      if (Desktop.isDesktop()) {
+      if (Desktop.hasDesktopFrame()) {
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
          Desktop.getFrame().reloadViewerZoomWindow(StringUtil.notNull(url));
       } else if ((zoomWindow_ != null) && !zoomWindow_.isClosed()) {
@@ -588,7 +588,7 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
       
-      boolean canSnapshot = Desktop.isDesktop();
+      boolean canSnapshot = Desktop.hasDesktopFrame();
       commands_.viewerSaveAsImage().setEnabled(enable && canSnapshot);
       commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canSnapshot);
       commands_.viewerCopyToClipboard().setEnabled(enable && canSnapshot);

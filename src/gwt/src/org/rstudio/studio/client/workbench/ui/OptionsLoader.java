@@ -74,7 +74,7 @@ public class OptionsLoader
       
       // activate main window if we are in desktop mode (because on
       // the mac you can actually show prefs from a satellite window)
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
    }
 

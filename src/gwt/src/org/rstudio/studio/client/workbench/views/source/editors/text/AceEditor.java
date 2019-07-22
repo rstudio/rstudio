@@ -556,7 +556,7 @@ public class AceEditor implements DocDisplay,
       if (StringUtil.isNullOrEmpty(selectionValue))
          return;
       
-      if (Desktop.isDesktop() && isEmacsModeOn())
+      if (Desktop.hasDesktopFrame() && isEmacsModeOn())
       {
          Desktop.getFrame().setClipboardText(selectionValue);
          replaceSelection("");
@@ -579,7 +579,7 @@ public class AceEditor implements DocDisplay,
             Position.create(cursorPos.getRow(), 0),
             cursorPos);
       
-      if (Desktop.isDesktop() && isEmacsModeOn())
+      if (Desktop.hasDesktopFrame() && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
          Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
@@ -621,7 +621,7 @@ public class AceEditor implements DocDisplay,
                Position.create(cursorPos.getRow(), lineLength));
       }
       
-      if (Desktop.isDesktop() && isEmacsModeOn())
+      if ((Desktop.hasDesktopFrame()) && isEmacsModeOn())
       {
          String text = getTextForRange(yankRange);
          Desktop.getFrame().setClipboardText(StringUtil.notNull(text));
@@ -641,7 +641,7 @@ public class AceEditor implements DocDisplay,
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
-      if (Desktop.isDesktop() && isEmacsModeOn())
+      if (Desktop.hasDesktopFrame() && isEmacsModeOn())
       {
          Desktop.getFrame().getClipboardText((String text) -> {
             replaceSelection(text);
@@ -1340,7 +1340,7 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          // the desktop frame prints the code directly
          Desktop.getFrame().printText(StringUtil.notNull(getCode()));

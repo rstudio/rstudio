@@ -73,7 +73,7 @@ public class ProjectMRUList extends MRUList
             });
       
       // set right image for project MRU commands
-      if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
+      if (Desktop.hasDesktopFrame() || session.getSessionInfo().getMultiSession())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
          commands.projectMru0().setRightImage(image, NEW_SESSION_DESC);

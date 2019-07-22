@@ -1017,7 +1017,7 @@ public class DomUtils
    
    public static final boolean preventBackspaceCausingBrowserBack(NativeEvent event)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          return false;
       
       if (event.getKeyCode() != KeyCodes.KEY_BACKSPACE)

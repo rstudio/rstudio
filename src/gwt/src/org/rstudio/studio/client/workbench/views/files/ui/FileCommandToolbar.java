@@ -33,6 +33,7 @@ public class FileCommandToolbar extends Toolbar
    @Inject
    public FileCommandToolbar(Commands commands, Session session, UserPrefs prefs)
    {
+      super("File Commands");
       StandardIcons icons = StandardIcons.INSTANCE;
 
       addLeftWidget(commands.newFolder().createToolbarButton());

@@ -202,4 +202,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setWindowTitle(String title);
    
    void installRtools(String version, String installerPath);
+
+   void showSessionServerOptionsDialog();
+
+   void onSessionQuit();
+
+   void getSessionServer(CommandWithArg<String> callback);
 }

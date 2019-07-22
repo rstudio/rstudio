@@ -377,9 +377,8 @@ private:
       {
           // try to read package from /tests/testthat/filename.R,
           // but ignore errors if not within a package
-          FilePath maybePackage = FilePath::resolveAliasedPath(
-             packagePath.parent().parent().parent().absolutePath(),
-             core::system::userHomePath()
+          FilePath maybePackage = module_context::resolveAliasedPath(
+             packagePath.parent().parent().parent().absolutePath()
           );
 
           pkgInfo_.read(maybePackage);

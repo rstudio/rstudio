@@ -50,7 +50,7 @@ public class RPubsUploader
       uploadInProgress_ = true;
     
       // do upload
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          performUpload(title, rmdFile, htmlFile, uploadId, null, modify);
       }

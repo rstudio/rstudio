@@ -1,7 +1,7 @@
 /*
  * ApplicationTutorialEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,15 @@ public class ApplicationTutorialEvent extends CrossWindowEvent<Handler>
    // Some type of file save operation was initiated. Doesn't guarantee it was successful.
    // {"message": "fileSave"}
    public static final String FILE_SAVE = "fileSave";
-   
+
+   // The RPC connection between IDE and the RSession has been disconnected.
+   // {"message": "sessionDisconnect"}
+   public static final String SESSION_DISCONNECT = "sessionDisconnect";
+
+   // The RSession has suspended.
+   // {"message": "sessionSuspend"}
+   public static final String SESSION_SUSPEND = "sessionSuspend";
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class Data
    {

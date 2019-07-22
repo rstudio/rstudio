@@ -27,7 +27,7 @@ public class ModalDialogTracker
    public static void onShow(PopupPanel panel)
    {
       dialogStack_.add(panel);
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          DesktopMenuCallback.setMainMenuEnabled(false);
       updateInert();
    }
@@ -41,7 +41,7 @@ public class ModalDialogTracker
    public static void onHide(PopupPanel panel)
    {
       dialogStack_.removeIf(panel::equals);
-      if (Desktop.isDesktop() && numModalsShowing() == 0)
+      if (Desktop.hasDesktopFrame() && numModalsShowing() == 0)
          DesktopMenuCallback.setMainMenuEnabled(true);
       updateInert();
    }

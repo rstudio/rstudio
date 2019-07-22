@@ -87,7 +87,7 @@ public class GitPane extends WorkbenchPane implements Display
       ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Git Tab");
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());

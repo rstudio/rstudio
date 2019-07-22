@@ -43,12 +43,7 @@ struct PendingWindow
                  int screenX,
                  int screenY,
                  int width,
-                 int height)
-      : name(name), pMainWindow(pMainWindow), x(screenX), y(screenY),
-        width(width), height(height), isSatellite(true),
-        allowExternalNavigate(false), showToolbar(false)
-   {
-   }
+                 int height);
 
    PendingWindow(QString name, bool allowExternalNavigation,
                  bool showDesktopToolbar)

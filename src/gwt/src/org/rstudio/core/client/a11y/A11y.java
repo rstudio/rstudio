@@ -88,4 +88,27 @@ public class A11y
    {
       element.setAttribute("aria-live", level);
    }
+
+   /**
+    * Set aria-current value on an element
+    * @param element element to mark
+    * @param value value ("page", "step", "location", "date", "time", "true", "false")
+    */
+   public static void setARIACurrent(Element element, String value)
+   {
+      if (StringUtil.isNullOrEmpty(value) || StringUtil.equals(value, "false"))
+         element.removeAttribute("aria-current");
+      else
+         element.setAttribute("aria-current", value);
+   }
+   
+   /**
+    * Set aria-current value on an element
+    * @param widget widget to mark
+    * @param value value ("page", "step", "location", "date", "time", "true", "false")
+    */
+   public static void setARIACurrent(Widget widget, String value)
+   {
+      setARIACurrent(widget.getElement(), value);
+   }
 }

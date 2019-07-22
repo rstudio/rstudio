@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,13 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -47,7 +49,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class GeneralPreferencesPane extends PreferencesPane
@@ -71,7 +72,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       quit_ = quit;
       
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
-      VerticalPanel basic = new VerticalPanel();
+      VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
       
       basic.add(headerLabel("R Sessions"));
       if (BrowseCap.isWindowsDesktop())
@@ -200,7 +201,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(enableCrashReporting_);
       }
 
-      VerticalPanel advanced = new VerticalPanel();
+      VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
       showServerHomePage_ = new SelectWidget(
             "Show server home page:",
@@ -222,7 +223,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       lessSpaced(reuseSessionsForProjectLinks_);
       boolean firstHeader = true;
 
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          if (session_.getSessionInfo().getShowUserHomePage() ||
              session_.getSessionInfo().getMultiSession())
@@ -260,7 +261,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                false /*defaultSpaced*/)));
       }
 
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Label osLabel = headerLabel("OS Integration");
          if (!firstHeader)
@@ -344,10 +345,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
       tabPanel.setSize("435px", "498px");
-      tabPanel.add(basic, "Basic");
-      tabPanel.add(advanced, "Advanced");
+      tabPanel.add(basic, "Basic", basic.getBasePanelId());
+      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
