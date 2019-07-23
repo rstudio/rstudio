@@ -29,7 +29,8 @@ namespace system {
 
 Error captureStandardStreams(
          const boost::function<void(const std::string&)>& stdoutHandler,
-         const boost::function<void(const std::string&)>& stderrHandler);
+         const boost::function<void(const std::string&)>& stderrHandler,
+         bool forwardOutputToOriginalDescriptors);
 
 } // namespace system
 } // namespace core

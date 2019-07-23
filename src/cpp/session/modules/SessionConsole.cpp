@@ -88,14 +88,9 @@ void writeStandardError(const std::string& output)
 
 Error initializeOutputCapture()
 {
-   // only capture stderr if it isn't connected to a  terminal
-   boost::function<void(const std::string&)> stderrHandler;
-   if (!core::system::stderrIsTerminal())
-      stderrHandler = writeStandardError;
-
-   // initialize
    return core::system::captureStandardStreams(writeStandardOutput,
-                                               stderrHandler);
+                                               writeStandardError,
+                                               options().logStderr());
 }
 
 FilePath s_lastWorkingDirectory;
