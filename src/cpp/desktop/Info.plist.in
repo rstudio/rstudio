@@ -48,6 +48,24 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
+            <string>rdprsp</string>
+         </array>
+         <key>CFBundleTypeMIMETypes</key>
+         <array>
+            <string>application/x-rdp-rsp</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RProject.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>RDP RSP Session</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
              <string>R</string>
              <string>r</string>
          </array>

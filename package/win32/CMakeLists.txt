@@ -40,6 +40,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rhtml' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rpres' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproj' ''
+   WriteRegStr HCKR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.rdprsp' ''
 
    WriteRegStr HKCR '.R\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.RData\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -63,7 +64,8 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.h\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe' '' ''
-   
+   WriteRegStr HKCR '.rdprsp\\\\OpenWithList\\\\rstudio.exe' '' ''   
+
    WriteRegStr HKCR '.Rproj' '' 'RStudio.Rproj'
    WriteRegStr HKCR 'RStudio.Rproj' '' 'R Project'
    WriteRegStr HKCR 'RStudio.Rproj\\\\DefaultIcon' '' '$INSTDIR\\\\bin\\\\rstudio.exe,-2'
@@ -97,6 +99,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.h\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.rdprsp\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR 'RStudio.Rproj'
 #")
 

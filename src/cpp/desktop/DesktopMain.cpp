@@ -23,6 +23,8 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <core/CrashHandler.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/Log.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
@@ -678,11 +680,52 @@ int main(int argc, char* argv[])
       }
 
       // if we have a filename and it is NOT a project file then see
-      // if we can open it within an existing instance
+      // if we can open it within an existing instance - we do not attempt
+      // to do this if opening an rdprsp file since that should start a remote session
+      FilePath openFile(filename.toUtf8().constData());
+      std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
       {
-         if (pAppLaunch->sendMessage(filename))
-            return 0;
+         if (openFile.extension() == ".rdprsp")
+         {
+            std::string contents;
+            Error error = readStringFromFile(openFile, &contents);
+            if (error)
+            {
+               LOG_ERROR(error);
+            }
+            else
+            {
+               json::Value val;
+               error = json::parse(contents, ERROR_LOCATION, &val);
+               if (error)
+               {
+                  LOG_ERROR(error);
+               }
+               else
+               {
+                  if (val.type() != json::ObjectType)
+                  {
+                     LOG_ERROR_MESSAGE("Invalid .rdprsp file");
+                  }
+                  else
+                  {
+                     error = json::readObject(val.get_obj(),
+                                              "sessionUrl", &sessionUrl,
+                                              "serverUrl", &serverUrl);
+                     if (error)
+                     {
+                        LOG_ERROR(error);
+                     }
+                  }
+               }
+            }
+         }
+         else
+         {
+            if (pAppLaunch->sendMessage(filename))
+               return 0;
+         }
       }
       else
       {
@@ -800,6 +843,19 @@ int main(int argc, char* argv[])
          }
       }
 
+      if (!serverUrl.empty())
+      {
+         forceSessionServerLaunch = true;
+
+         launchServer = getLaunchServerFromUrl(serverUrl);
+         if (!launchServer)
+         {
+            // it's possible we were told to open an rdprsp file but we don't have the
+            // server defined locally - that's okay - just create one for now
+            launchServer = SessionServer(std::string(), serverUrl);
+         }
+      }
+
       bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
 
       while (true)
@@ -888,7 +944,9 @@ int main(int argc, char* argv[])
 
             RemoteDesktopSessionLauncher* pLauncher;
 
-            std::string sessionUrl = desktop::options().sessionUrl();
+            if (sessionUrl.empty())
+               sessionUrl = desktop::options().sessionUrl();
+
             if (sessionUrl.empty())
             {
                pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),

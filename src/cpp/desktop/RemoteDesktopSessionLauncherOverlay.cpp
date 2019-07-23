@@ -48,12 +48,12 @@ void RemoteDesktopSessionLauncher::showUserSignInPage(const http::Response& resp
 {
 }
 
-Error RemoteDesktopSessionLauncher::getWorkspacesUrl(std::string* pUrl)
+WorkspacesRequestState RemoteDesktopSessionLauncher::getWorkspacesUrl()
 {
-   return Success();
+   return WorkspacesRequestState();
 }
 
-Error RemoteDesktopSessionLauncher::getSessionUrl(std::string* pSessionUrl)
+Error RemoteDesktopSessionLauncher::getSessionInfo(SessionInfo* pSessionInfo)
 {
    return Success();
 }

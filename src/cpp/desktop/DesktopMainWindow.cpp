@@ -114,6 +114,9 @@ MainWindow::MainWindow(QUrl url,
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
 
+   connect(webView(), &WebView::urlChanged,
+           this, &MainWindow::onUrlChanged);
+
    connect(webPage(), &QWebEnginePage::loadFinished,
            &menuCallback_, &MenuCallback::cleanUpActions);
 
@@ -297,7 +300,7 @@ void MainWindow::onSessionQuit()
       if (pendingQuit == PendingQuitAndExit || quitConfirmed_)
       {
          closeAllSatellites(this);
-         QApplication::quit();
+         quit();
       }
    }
 }
@@ -333,7 +336,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       if (isRemoteDesktop_)
       {
          closeAllSatellites(this);
-         QApplication::quit();
+         this->quit();
       }
    };
 
@@ -487,6 +490,11 @@ bool MainWindow::desktopHooksAvailable()
 
 void MainWindow::onActivated()
 {
+}
+
+void MainWindow::onUrlChanged(QUrl url)
+{
+   urlChanged(url);
 }
 
 } // namespace desktop

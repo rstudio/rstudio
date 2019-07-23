@@ -68,6 +68,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
    void firstWorkbenchInitialized();
+   void urlChanged(QUrl url);
 
 protected Q_SLOTS:
    void onWorkbenchInitialized();
@@ -103,6 +104,8 @@ private:
 
    // callback when window is activated
    void onActivated() override;
+
+   void onUrlChanged(QUrl url);
 
 private:
    bool isRemoteDesktop_;

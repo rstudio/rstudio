@@ -26,6 +26,7 @@
 #include <core/FilePath.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/json/Json.hpp>
 
 #include "DesktopApplicationLaunch.hpp"
 #include "DesktopMainWindow.hpp"
@@ -34,6 +35,66 @@
 
 namespace rstudio {
 namespace desktop {
+
+struct WorkspacesRequestState
+{
+   WorkspacesRequestState() :
+      authenticating(false),
+      workspacesEnabled(true)
+   {
+   }
+
+   WorkspacesRequestState(const core::Error& error) :
+      error(error),
+      authenticating(false),
+      workspacesEnabled(true)
+   {
+   }
+
+   WorkspacesRequestState(bool authenticating) :
+      authenticating(authenticating),
+      workspacesEnabled(true)
+   {
+   }
+
+   WorkspacesRequestState(bool workspacesEnabled,
+                          std::string workspacesUrl) :
+      authenticating(false),
+      workspacesEnabled(workspacesEnabled),
+      workspacesUrl(workspacesUrl)
+   {
+   }
+
+   core::Error error;
+   bool authenticating;
+   bool workspacesEnabled;
+   std::string workspacesUrl;
+};
+
+struct SessionInfo
+{
+   SessionInfo() :
+      launcherSession(false),
+      running(false)
+   {
+   }
+
+   SessionInfo(const std::string& sessionUrl,
+               const std::string& sessionId,
+               bool launcherSession,
+               bool running) :
+      url(sessionUrl),
+      sessionId(sessionId),
+      launcherSession(launcherSession),
+      running(running)
+   {
+   }
+
+   std::string url;
+   std::string sessionId;
+   bool launcherSession;
+   bool running;
+};
 
 class RemoteDesktopSessionLauncher : public QObject
 {
@@ -72,6 +133,8 @@ public Q_SLOTS:
 private:
    core::Error loadSession();
 
+   core::Error startLauncherSession(const SessionInfo& sessionInfo);
+
    void createRequest(const std::string& uri,
                       core::http::Request* pRequest);
 
@@ -80,9 +143,9 @@ private:
 
    void showUserSignInPage(const core::http::Response& response);
 
-   core::Error getWorkspacesUrl(std::string* pUrl);
+   WorkspacesRequestState getWorkspacesUrl();
 
-   core::Error getSessionUrl(std::string* pSessionUrl);
+   core::Error getSessionInfo(SessionInfo* pSessionInfo);
 
    void handleLaunchError(const core::Error& error);
 
