@@ -236,7 +236,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
-      deps.add(Dependency.cranPackage("rsconnect", "0.8.12"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.8.15"));
       
       withDependencies(
         "Publishing",
