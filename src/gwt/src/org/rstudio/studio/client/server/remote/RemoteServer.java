@@ -1584,24 +1584,24 @@ public class RemoteServer implements Server
          "file=" + URL.encodeQueryString(file.getPath());
    }
    
-   public void writeJSON(String path,
-                         JavaScriptObject object,
-                         ServerRequestCallback<Boolean> requestCallback)
+   public void writeConfigJSON(String path,
+                               JavaScriptObject object,
+                               ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONObject(object));
-      sendRequest(RPC_SCOPE, "write_json", params, requestCallback);
+      sendRequest(RPC_SCOPE, "write_config_json", params, requestCallback);
    }
    
-   public void readJSON(String path,
-                        boolean logErrorIfNotFound,
-                        ServerRequestCallback<JavaScriptObject> requestCallback)
+   public void readConfigJSON(String path,
+                              boolean logErrorIfNotFound,
+                              ServerRequestCallback<JavaScriptObject> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, JSONBoolean.getInstance(logErrorIfNotFound));
-      sendRequest(RPC_SCOPE, "read_json", params, requestCallback);
+      sendRequest(RPC_SCOPE, "read_config_json", params, requestCallback);
    }
    
    public String getFileExportUrl(String name,

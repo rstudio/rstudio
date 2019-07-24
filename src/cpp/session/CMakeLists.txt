@@ -101,6 +101,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
+   modules/SessionConfigFile.cpp
    modules/SessionCrashHandler.cpp
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp

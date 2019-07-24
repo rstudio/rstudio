@@ -1,7 +1,7 @@
 /*
- * FileBacked.java
+ * ConfigFileBacked.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,15 +24,25 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
-public class FileBacked<T extends JavaScriptObject>
+public class ConfigFileBacked<T extends JavaScriptObject>
 {
-   public FileBacked(FilesServerOperations server,
-                     String filePath,
-                     boolean logErrorIfNotFound,
-                     T defaultValue)
+   /**
+    * Constructs a new config file-backed object.
+    * 
+    * @param server The remote server.
+    * @param relativePath The path to the config file, relative to the root
+    *   configuration directory.
+    * @param logErrorIfNotFound Whether to log an error if the config file 
+    *   isn't found.
+    * @param defaultValue The default value if no file is located.
+    */
+   public ConfigFileBacked(FilesServerOperations server,
+                           String relativePath,
+                           boolean logErrorIfNotFound,
+                           T defaultValue)
    {
       server_ = server;
-      filePath_ = filePath;
+      relativePath_ = relativePath;
       logErrorIfNotFound_ = logErrorIfNotFound;
       object_ = defaultValue;
       
@@ -51,8 +61,8 @@ public class FileBacked<T extends JavaScriptObject>
          return;
       loading_ = true;
       
-      server_.readJSON(
-            filePath_,
+      server_.readConfigJSON(
+            relativePath_,
             logErrorIfNotFound_,
             new ServerRequestCallback<JavaScriptObject>()
             {
@@ -119,8 +129,8 @@ public class FileBacked<T extends JavaScriptObject>
    
    public void set(final T object, final Command command)
    {
-      server_.writeJSON(
-            filePath_,
+      server_.writeConfigJSON(
+            relativePath_,
             object,
             new ServerRequestCallback<Boolean>()
             {
@@ -145,7 +155,7 @@ public class FileBacked<T extends JavaScriptObject>
       set(object, null);
    }
    
-   private final String filePath_;
+   private final String relativePath_;
    private final boolean logErrorIfNotFound_;
    
    private boolean loaded_;

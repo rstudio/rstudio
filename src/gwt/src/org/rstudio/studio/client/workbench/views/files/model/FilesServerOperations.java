@@ -85,11 +85,11 @@ public interface FilesServerOperations
                            FileSystemItem parentDirectory,
                            ArrayList<String> filenames);
    
-   void writeJSON(String path,
+   void writeConfigJSON(String relativePath,
                   JavaScriptObject object,
                   ServerRequestCallback<Boolean> requestCallback);
    
-   void readJSON(String path,
+   void readConfigJSON(String relativePath,
                  boolean logErrorIfNotFound,
                  ServerRequestCallback<JavaScriptObject> requestCallback);
 }

@@ -126,6 +126,7 @@
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
+#include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
@@ -590,6 +591,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::crash_handler::initialize)
       (modules::r_versions::initialize)
       (modules::terminal::initialize)
+      (modules::config_file::initialize)
 
       // workers
       (workers::web_request::initialize)
