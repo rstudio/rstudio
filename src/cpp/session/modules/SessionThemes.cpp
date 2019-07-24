@@ -30,6 +30,8 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
+#include <core/system/Xdg.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -234,11 +236,12 @@ FilePath getGlobalCustomThemePath()
 }
 
 /**
- * @brief Gets the location of custom themes that are installed for the current user.
+ * @brief Gets the location of custom themes that are installed for the current user (legacy RStudio
+ * 1.2 version)
  *
  * @return The location of custom themes that are installed for the current user.
  */
-FilePath getLocalCustomThemePath()
+FilePath getLegacyLocalCustomThemePath()
 {
    using rstudio::core::FilePath;
    const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
@@ -248,6 +251,16 @@ FilePath getLocalCustomThemePath()
    }
 
    return module_context::userHomePath().childPath(".R/rstudio/themes/");
+}
+
+/**
+ * @brief Gets the location of custom themes that are installed for the current user.
+ *
+ * @return The location of custom themes that are installed for the current user.
+ */
+FilePath getLocalCustomThemePath()
+{
+   return core::system::xdg::userConfigDir().complete("themes");
 }
 
 /**
@@ -264,6 +277,7 @@ ThemeMap getAllThemes()
    ThemeMap themeMap;
    getThemesInLocation(getDefaultThemePath(), kDefaultThemeLocation, &themeMap);
    getThemesInLocation(getGlobalCustomThemePath(), kGlobalCustomThemeLocation, &themeMap);
+   getThemesInLocation(getLegacyLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
    getThemesInLocation(getLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
 
    return themeMap;
@@ -547,7 +561,13 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    // ability to pop up a warning dialog or something to the user.
    std::string prefix = "/" + kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
+
+   // Check first in the local custom theme path; if the theme isn't found there, try the legacy
+   // theme path (where RStudio 1.2 wrote custom themes)
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   if (!requestedTheme.exists())
+      requestedTheme = getLegacyLocalCustomThemePath().childPath(fileName);
+
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
@@ -591,6 +611,18 @@ Error syncThemePrefs()
    return err;
 }
 
+SEXP rs_getGlobalThemeDir()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(getGlobalCustomThemePath().absolutePath(), &protect);
+}
+
+SEXP rs_getLocalThemeDir()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(getLocalCustomThemePath().absolutePath(), &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -599,6 +631,8 @@ Error initialize()
    s_waitForThemeColors = registerWaitForMethod("set_computed_theme_colors");
 
    RS_REGISTER_CALL_METHOD(rs_getThemes);
+   RS_REGISTER_CALL_METHOD(rs_getLocalThemeDir);
+   RS_REGISTER_CALL_METHOD(rs_getGlobalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getThemeColors);
 
    events().onDeferredInit.connect(onDeferredInit);
