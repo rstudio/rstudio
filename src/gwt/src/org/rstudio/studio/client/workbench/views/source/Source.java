@@ -1597,7 +1597,12 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(final NewRMarkdownDialog.Result result)
             {
-               if (result.isNewDocument())
+               if (result == null)
+               {
+                  // No document chosen, just create an empty one
+                  newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
+               }
+               else if (result.isNewDocument())
                {
                   NewRMarkdownDialog.RmdNewDocument doc = 
                         result.getNewDocument();

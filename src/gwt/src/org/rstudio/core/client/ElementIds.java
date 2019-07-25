@@ -101,6 +101,7 @@ public class ElementIds
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
    public final static String TEXT_SOURCE_BUTTON = "text_source";
    public final static String TEXT_SOURCE_BUTTON_DROPDOWN = "text_source_dropdown";
+   public final static String EMPTY_DOC_BUTTON = "empty_doc";
    
    public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
    public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";
