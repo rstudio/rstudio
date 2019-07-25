@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -181,8 +181,8 @@ public class RSConnectDeploy extends Composite
          hideCheckUncheckAllButton();
       }
 
-      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUserState()
-            .enableRsconnectPublishUi().getGlobalValue();
+      final boolean rsConnectEnabled = 
+            userState_.enableRsconnectPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
@@ -284,12 +284,14 @@ public class RSConnectDeploy extends Composite
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
                           GlobalDisplay display,
-                          UserPrefs prefs)
+                          UserPrefs prefs,
+                          UserState state)
    {
       server_ = server;
       connector_ = connector;
       display_ = display;
       userPrefs_ = prefs;
+      userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
             !asStatic_);
       appName_ = new AppNameTextbox(this);
