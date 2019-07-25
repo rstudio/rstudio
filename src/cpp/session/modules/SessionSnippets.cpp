@@ -154,7 +154,8 @@ Error getSnippetsAsJson(json::Array* pJsonData)
          // Remove (override) any existing snippets for this mode.
          for (auto it = pJsonData->begin(); it != pJsonData->end(); it++)
          {
-            if ((*it).get_str() == mode)
+            json::Object obj = (*it).get_obj();
+            if (obj["mode"].get_str() == mode)
             {
                pJsonData->erase(it);
                break;
