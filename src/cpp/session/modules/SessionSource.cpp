@@ -824,6 +824,14 @@ Error processSourceTemplate(const std::string& name,
          templatePath = session::options().rResourcesPath().complete("templates")
             .complete(templateName);
 
+#ifdef __APPLE__
+         // Special case: built-in templates can have an OSX variant; prefer that if it exists
+         FilePath osxTemplatePath = templatePath.parent().complete(
+               templatePath.stem() + "_osx" + templatePath.extension());
+         if (osxTemplatePath.exists())
+            templatePath = osxTemplatePath;
+#endif
+
          // Built-in templates always use posix line endings
          ending = string_utils::LineEndingPosix;
       }
