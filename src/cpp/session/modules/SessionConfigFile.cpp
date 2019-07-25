@@ -40,6 +40,7 @@ namespace config_file {
 
 namespace {
 
+// Writes JSON configuration data to the user configuration folder.
 Error writeConfigJSON(const core::json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -54,6 +55,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
       return error;
    }
    
+   // Compute the user config directory path, and ensure it exists.
    FilePath filePath = core::system::xdg::userConfigDir().complete(path);
    error = filePath.parent().ensureDirectory();
    if (error)
@@ -62,6 +64,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
       return error;
    }
    
+   // Write the new configuration data.
    std::string contents = json::writeFormatted(object);
    error = writeStringToFile(filePath, contents);
    if (error)
@@ -74,6 +77,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+// Reads and merges JSON configuration data from the user and system folders.
 Error readConfigJSON(const core::json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
