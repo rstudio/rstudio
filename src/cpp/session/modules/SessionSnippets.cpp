@@ -124,7 +124,7 @@ Error getSnippetsAsJson(json::Array* pJsonData)
    // Add user snippets files
    dirs.push_back(getSnippetsDir());
 
-   for (const auto snippetsDir: dirs)
+   for (const auto& snippetsDir: dirs)
    {
       if (!snippetsDir.exists() || !snippetsDir.isDirectory())
       {
