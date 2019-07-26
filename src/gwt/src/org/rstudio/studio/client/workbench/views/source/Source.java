@@ -1181,14 +1181,11 @@ public class Source implements InsertSourceHandler,
                         "creation were not installed.");
                   return;
                }
-               String basename = "r_markdown_notebook";
-               if (BrowseCap.isMacintosh())
-                  basename += "_osx";
 
                newSourceDocWithTemplate(
                      FileTypeRegistry.RMARKDOWN,
                      "",
-                     basename + ".Rmd",
+                     "notebook.Rmd",
                      Position.create(3, 0));
             }
          });
@@ -1197,33 +1194,19 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      if (userPrefs_.useRcppTemplate().getValue())
-      {
-         newSourceDocWithTemplate(
-             FileTypeRegistry.CPP, 
-             "", 
-             "rcpp.cpp",
-             Position.create(0, 0),
-             new CommandWithArg<EditingTarget> () {
-               @Override
-               public void execute(EditingTarget target)
-               {
-                  target.verifyCppPrerequisites(); 
-               }
-             }
-         );
-      }
-      else
-      {
-         newDoc(FileTypeRegistry.CPP,
-                new ResultCallback<EditingTarget, ServerError> () {
-                   @Override
-                   public void onSuccess(EditingTarget target)
-                   {
-                      target.verifyCppPrerequisites();
-                   }
-                });
-      }
+      newSourceDocWithTemplate(
+          FileTypeRegistry.CPP, 
+          "", 
+          userPrefs_.useRcppTemplate().getValue() ? "rcpp.cpp" : "default.cpp",
+          Position.create(0, 0),
+          new CommandWithArg<EditingTarget> () {
+            @Override
+            public void execute(EditingTarget target)
+            {
+               target.verifyCppPrerequisites(); 
+            }
+          }
+      );
    }
    
    @Handler
@@ -1481,9 +1464,8 @@ public class Source implements InsertSourceHandler,
    {
       newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
                                "", 
-                               "r_html.Rhtml");
+                               "default.Rhtml");
    }
-   
    
    @Handler
    public void onNewRDocumentationDoc()
@@ -1500,7 +1482,7 @@ public class Source implements InsertSourceHandler,
                   {
                      newSourceDocWithTemplate(FileTypeRegistry.RD, 
                            result.name, 
-                           "r_documentation_empty.Rd",
+                           "default.Rd",
                            Position.create(3, 7));
                   }  
                };
@@ -1603,7 +1585,7 @@ public class Source implements InsertSourceHandler,
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
             "", 
-            "r_markdown.Rmd",
+            "v1.Rmd",
             Position.create(3, 0));
    }
    
@@ -1615,7 +1597,12 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(final NewRMarkdownDialog.Result result)
             {
-               if (result.isNewDocument())
+               if (result == null)
+               {
+                  // No document chosen, just create an empty one
+                  newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
+               }
+               else if (result.isNewDocument())
                {
                   NewRMarkdownDialog.RmdNewDocument doc = 
                         result.getNewDocument();
@@ -1671,17 +1658,17 @@ public class Source implements InsertSourceHandler,
             String template = "";
             // select a template appropriate to the document type we're creating
             if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
-               template = "r_markdown_v2_presentation.Rmd";
+               template = "presentation.Rmd";
             else if (doc.isShiny())
             {
                if (doc.getFormat().endsWith(
                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
-                  template = "r_markdown_presentation_shiny.Rmd";
+                  template = "shiny_presentation.Rmd";
                else
-                  template = "r_markdown_shiny.Rmd";
+                  template = "shiny.Rmd";
             }
             else
-               template = "r_markdown_v2.Rmd";
+               template = "document.Rmd";
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 
                   template,
@@ -1776,7 +1763,33 @@ public class Source implements InsertSourceHandler,
    private void newDoc(EditableFileType fileType,
                        ResultCallback<EditingTarget, ServerError> callback)
    {
-      newDoc(fileType, null, callback);
+      if (fileType instanceof TextFileType)
+      {
+         // This is a text file, so see if the user has defined a template for it.
+         TextFileType textType = (TextFileType)fileType;
+         server_.getSourceTemplate("", 
+               "default" + textType.getDefaultExtension(),
+               new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String template)
+                  {
+                     // Create a new document with the supplied template.
+                     newDoc(fileType, template, callback);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // Ignore errors; there's just not a template for this type.
+                     newDoc(fileType, null, callback);
+                  }
+               });
+      }
+      else
+      {
+         newDoc(fileType, null, callback);
+      }
    }
    
    private void newDoc(EditableFileType fileType,

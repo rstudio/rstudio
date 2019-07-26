@@ -39,6 +39,7 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -805,14 +806,42 @@ Error processSourceTemplate(const std::string& name,
    std::map<std::string,std::string> vars;
    vars["name"] = name;
    core::text::TemplateFilter filter(vars);
+   string_utils::LineEnding ending = string_utils::LineEndingNative;
+
+   FilePath templatePath;
+
+   // First, check user template path
+   templatePath = core::system::xdg::userConfigDir().complete("templates")
+      .complete(templateName); 
+   if (!templatePath.exists())
+   {
+      // Next, check the system template path.
+      templatePath = core::system::xdg::systemConfigDir().complete("templates")
+         .complete(templateName); 
+      if (!templatePath.exists())
+      {
+         // No user or system template; check for a built-in template.
+         templatePath = session::options().rResourcesPath().complete("templates")
+            .complete(templateName);
+
+#ifdef __APPLE__
+         // Special case: built-in templates can have an OSX variant; prefer that if it exists
+         FilePath osxTemplatePath = templatePath.parent().complete(
+               templatePath.stem() + "_osx" + templatePath.extension());
+         if (osxTemplatePath.exists())
+            templatePath = osxTemplatePath;
+#endif
+
+         // Built-in templates always use posix line endings
+         ending = string_utils::LineEndingPosix;
+      }
+   }
 
    // read file with template filter
-   FilePath templatePath = session::options().rResourcesPath().complete(
-                                             "templates/" +  templateName);
    return core::readStringFromFile(templatePath,
                                    filter,
                                    pContents,
-                                   string_utils::LineEndingPosix);
+                                   ending);
 }
 
 Error getSourceTemplate(const json::JsonRpcRequest& request,
@@ -825,7 +854,7 @@ Error getSourceTemplate(const json::JsonRpcRequest& request,
       return error;
 
    std::string contents;
-   error =  processSourceTemplate(name, templateName, &contents);
+   error = processSourceTemplate(name, templateName, &contents);
    if (error)
       return error;
 

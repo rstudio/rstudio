@@ -19,12 +19,15 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Grid;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
@@ -263,6 +266,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       templateChooser_.setTargetDirectory(dir.getPath());
 
       updateOptions(getSelectedTemplate());
+      
+      // Add option to create empty document
+      ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt ->
+      {
+         closeDialog();
+         if (operation != null)
+            operation.execute(null);
+         onSuccess();
+      }); 
+      addLeftButton(emptyDoc, ElementIds.EMPTY_DOC_BUTTON);
    }
    
    @UiFactory
