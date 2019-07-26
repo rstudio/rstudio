@@ -31,11 +31,11 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop) /*-{
       return { 
-         panes: panes, 
+         quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
-         consoleLeftOnTop: consoleLeftOnTop,
-         consoleRightOnTop: consoleRightOnTop 
+         console_left_on_top: consoleLeftOnTop,
+         console_right_on_top: consoleRightOnTop 
       };
    }-*/;
 
