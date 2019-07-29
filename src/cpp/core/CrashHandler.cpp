@@ -130,7 +130,9 @@ void readOptions()
       // can properly see the state at all times
       if (!optionsFile.exists())
       {
-         Error error = optionsFile.ensureFile();
+         Error error = optionsFile.parent().ensureDirectory();
+         if (!error)
+            error = optionsFile.ensureFile();
          if (error)
             LOG_ERROR(error);
       }
