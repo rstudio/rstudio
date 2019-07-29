@@ -125,6 +125,12 @@ UserPrefValuesNative& userPrefs()
 
 Error initializePrefs()
 {
+   // Ensure that the user folder (where we'll store the preferences) exists; this is non-fatal so
+   // don't return it
+   Error error = core::system::xdg::userConfigDir().ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
    return userPrefs().initialize();
 }
 

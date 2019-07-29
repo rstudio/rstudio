@@ -70,6 +70,7 @@ Error UserPrefsComputedLayer::readPrefs()
    json::Object defaultRVersionJson;
    defaultRVersionJson["version"] = versionSettings.defaultRVersion();
    defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
+   defaultRVersionJson["label"] = versionSettings.defaultRVersionLabel();
    layer[kDefaultRVersion] = defaultRVersionJson;
 
    // Synctex viewer ----------------------------------------------------------
