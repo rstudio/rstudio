@@ -58,6 +58,15 @@ std::string findMissingDefaults(const FilePath& schemaFile)
    for (auto prop: properties)
    {
       const json::Object& definition = prop.value().get_obj();
+      json::Object::iterator type = definition.find("type");
+      if (type != definition.end())
+      {
+         if ((*type).value().get_str() == "object")
+         {
+            // Exempt object types from the requirement for a default (only scalars need defaults)
+            continue;
+         }
+      }
       json::Object::iterator def = definition.find("default");
       if (def == definition.end())
       {

@@ -908,8 +908,7 @@
                     "description": "A free-form label for describing the R version."
                 }
             },
-            "description": "The R version to use by default.",
-            "default": null
+            "description": "The R version to use by default."
         }
     }
 }
