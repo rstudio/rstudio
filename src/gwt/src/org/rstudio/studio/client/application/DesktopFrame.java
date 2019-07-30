@@ -150,7 +150,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openTerminal(String terminalPath,
                      String workingDirectory,
                      String extraPathEntries,
-                     int shellType);
+                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);

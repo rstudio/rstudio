@@ -180,7 +180,7 @@ public Q_SLOTS:
    void openTerminal(QString terminalPath,
                      QString workingDirectory,
                      QString extraPathEntries,
-                     int shellType);
+                     QString shellType);
 
    QString getFixedWidthFontList();
    QString getFixedWidthFont();
