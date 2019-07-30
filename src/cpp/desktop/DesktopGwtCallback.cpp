@@ -1223,19 +1223,20 @@ void GwtCallback::openTerminal(QString terminalPath,
    if (terminalPath.length() == 0)
    {
       terminalPath = QString::fromUtf8("cmd.exe");
-      shellType = "win-cmd";
+      shellType = QString::fromUtf8("win-cmd");
    }
 
    QStringList args;
    std::string previousHome = core::system::getenv("HOME");
 
-   if (shellType == "win-git-bash" || shellType == "win-wsl-bash")
+   if (shellType == QString::fromUtf8("win-git-bash") ||
+       shellType == QString::fromUtf8("win-wsl-bash"))
    {
       args.append(QString::fromUtf8("--login"));
       args.append(QString::fromUtf8("-i"));
    }
 
-   if (shellType != "win-wsl-bash")
+   if (shellType != QString::fromUtf8("win-wsl-bash"))
    {
       // set HOME to USERPROFILE so msys ssh can find our keys
       std::string userProfile = core::system::getenv("USERPROFILE");
