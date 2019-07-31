@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.debugging.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.core.client.JavaScriptObject;
 
 public class ErrorHandlerChangedEvent
         extends GwtEvent<ErrorHandlerChangedEvent.Handler>
@@ -24,15 +25,27 @@ public class ErrorHandlerChangedEvent
    {
       void onErrorHandlerChanged(ErrorHandlerChangedEvent event);
    }
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public final native String getType() /*-{
+         return this.type;
+      }-*/;
+      
+   }
 
-   public ErrorHandlerChangedEvent(String type)
+   public ErrorHandlerChangedEvent(Data type)
    {
       type_ = type;
    }
    
    public String getHandlerType()
    {
-      return type_;
+      return type_.getType();
    }
    
    @Override
@@ -49,5 +62,5 @@ public class ErrorHandlerChangedEvent
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private String type_;
+   private Data type_;
 }

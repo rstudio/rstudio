@@ -601,8 +601,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ErrorHandlerChanged)
          {
-            String handlerType = event.getData();
-            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(handlerType));
+            ErrorHandlerChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(data));
          }
          else if (type == ClientEvent.ViewerNavigate)
          {
