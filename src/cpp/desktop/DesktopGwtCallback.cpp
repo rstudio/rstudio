@@ -1196,7 +1196,7 @@ void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
 void GwtCallback::openTerminal(QString terminalPath,
                                QString workingDirectory,
                                QString extraPathEntries,
-                               int shellType)
+                               QString shellType)
 {
    // append extra path entries to our path before launching
    std::string path = core::system::getenv("PATH");
@@ -1220,31 +1220,23 @@ void GwtCallback::openTerminal(QString terminalPath,
 
 #elif defined(Q_OS_WIN)
 
-   // keep these shell type constants consistent with SessionTerminalShell.hpp
-   const int GitBash = 1; // Win32: Bash from Windows Git
-   const int WSLBash = 2; // Win32: Windows Services for Linux
-   const int Cmd32 = 3; // Win32: Windows command shell (32-bit)
-   const int Cmd64 = 4; // Win32: Windows command shell (64-bit)
-   const int PS32 = 5; // Win32: PowerShell (32-bit)
-   const int PS64 = 6; // Win32: PowerShell (64-bit)
-   const int PSCore = 10; // Win32: PowerShell Core (v6)
-
    if (terminalPath.length() == 0)
    {
       terminalPath = QString::fromUtf8("cmd.exe");
-      shellType = Cmd32;
+      shellType = QString::fromUtf8("win-cmd");
    }
 
    QStringList args;
    std::string previousHome = core::system::getenv("HOME");
 
-   if (shellType == GitBash || shellType == WSLBash)
+   if (shellType == QString::fromUtf8("win-git-bash") ||
+       shellType == QString::fromUtf8("win-wsl-bash"))
    {
       args.append(QString::fromUtf8("--login"));
       args.append(QString::fromUtf8("-i"));
    }
 
-   if (shellType != WSLBash)
+   if (shellType != QString::fromUtf8("win-wsl-bash"))
    {
       // set HOME to USERPROFILE so msys ssh can find our keys
       std::string userProfile = core::system::getenv("USERPROFILE");

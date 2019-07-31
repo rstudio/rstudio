@@ -207,7 +207,7 @@ core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) cons
    result["allow_restart"] = allowRestart_;
    result["title"] = title_;
    result["child_procs"] = childProcs_;
-   result["shell_type"] = static_cast<int>(shellType_);
+   result["shell_type"] = TerminalShell::getShellId(shellType_); 
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;
@@ -293,11 +293,11 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(const core::j
    if (error)
       LOG_ERROR(error);
 
-   int shellTypeInt = 0;
-   error = json::getOptionalParam(obj, "shell_type", 0, &shellTypeInt);
+   std::string shellType;
+   error = json::getOptionalParam(obj, "shell_type", std::string("default"), &shellType);
    if (error)
       LOG_ERROR(error);
-   pProc->shellType_ = static_cast<TerminalShell::ShellType>(shellTypeInt);
+   pProc->shellType_ = TerminalShell::shellTypeFromString(shellType);
 
    int channelModeInt = 0;
    error = json::getOptionalParam(obj, "channel_mode", 0, &channelModeInt);
