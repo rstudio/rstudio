@@ -149,8 +149,8 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler,
       if (handlerType.empty())
       {
          handlerType = (currentHandler == R_NilValue) ?
-                        ERRORS_MESSAGE :
-                        ERRORS_CUSTOM;
+                        kErrorHandlerTypeMessage :
+                        kErrorHandlerTypeCustom;
       }
       if (recordSetting)
          prefs::userState().setErrorHandlerType(handlerType);
