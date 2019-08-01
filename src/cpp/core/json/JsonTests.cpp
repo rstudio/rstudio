@@ -959,6 +959,33 @@ TEST_CASE("Json")
       REQUIRE(itr1 != itr2);
       REQUIRE(++itr1 != ++itr2);
    }
+
+   SECTION("Can compare array iterators")
+   {
+      json::Array arr1, arr2;
+      arr1.push_back("first");
+      arr1.push_back("second");
+      arr1.push_back("third");
+
+      arr2.push_back("first");
+      arr2.push_back("second");
+      arr2.push_back("third");
+
+      // Comparing iterators pointing to the same object.
+      auto itr1 = arr1.begin(), itr2 = arr1.begin();
+      REQUIRE(itr1 == itr2);           // Both at the start.
+      REQUIRE(++itr1 == ++itr2);       // Both at the second element.
+      REQUIRE(itr1 != arr1.begin());   // An itr at the second element is not the same as an itr at the start.
+      REQUIRE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
+      REQUIRE(itr1 != arr1.end());     // An itr isn't at the end until it's after the last element.
+      REQUIRE(++itr1 == arr1.end());   // Both at the end.
+
+      // Comparing iterators pointing to different objects. They should never be equal, except maybe at the end, but that
+      // doesn't matter too much since iterators really should be compared against the appropriate "end()" result.
+      itr1 = arr1.begin(), itr2 = arr2.begin();
+      REQUIRE(itr1 != itr2);
+      REQUIRE(++itr1 != ++itr2);
+   }
 }
 
 } // end namespace tests
