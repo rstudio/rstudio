@@ -901,6 +901,64 @@ TEST_CASE("Json")
       REQUIRE(result["first"] == true);   // non-default value
       REQUIRE(result["second"] == "b");   // default value
    }
+
+   SECTION("Can iterate object")
+   {
+      json::Object obj;
+      obj["first"] = 1;
+      obj["second"] = 2;
+      obj["third"] = 3;
+
+      int i = 0;
+      for (auto itr = obj.begin(); itr != obj.end(); ++itr, ++i)
+      {
+         if (i == 0)
+         {
+            REQUIRE((*itr).name() == "first");
+            REQUIRE((*itr).value().get_int() == 1);
+         }
+         else if (i == 1)
+         {
+            REQUIRE((*itr).name() == "second");
+            REQUIRE((*itr).value().get_int() == 2);
+         }
+         else
+         {
+            REQUIRE((*itr).name() == "third");
+            REQUIRE((*itr).value().get_int() == 3);
+         }
+      }
+
+      // Check that we iterated the correct number of times.
+      REQUIRE(i == 3);
+   }
+
+   SECTION("Can compare object iterators")
+   {
+      json::Object obj1, obj2;
+      obj1["first"] = 1;
+      obj1["second"] = 2;
+      obj1["third"] = 3;
+
+      obj2["first"] = 1;
+      obj2["second"] = 2;
+      obj2["third"] = 3;
+
+      // Comparing iterators pointing to the same object.
+      auto itr1 = obj1.begin(), itr2 = obj1.begin();
+      REQUIRE(itr1 == itr2);           // Both at the start.
+      REQUIRE(++itr1 == ++itr2);       // Both at the second element.
+      REQUIRE(itr1 != obj1.begin());   // An itr at the second element is not the same as an itr at the start.
+      REQUIRE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
+      REQUIRE(itr1 != obj1.end());     // An itr isn't at the end until it's after the last element.
+      REQUIRE(++itr1 == obj1.end());   // Both at the end.
+
+      // Comparing iterators pointing to different objects. They should never be equal, except maybe at the end, but that
+      // doesn't matter too much since iterators really should be compared against the appropriate "end()" result.
+      itr1 = obj1.begin(), itr2 = obj2.begin();
+      REQUIRE(itr1 != itr2);
+      REQUIRE(++itr1 != ++itr2);
+   }
 }
 
 } // end namespace tests
