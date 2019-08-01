@@ -953,11 +953,11 @@ TEST_CASE("Json")
       REQUIRE(itr1 != obj1.end());     // An itr isn't at the end until it's after the last element.
       REQUIRE(++itr1 == obj1.end());   // Both at the end.
 
-      // Comparing iterators pointing to different objects. They should never be equal, except maybe at the end, but that
-      // doesn't matter too much since iterators really should be compared against the appropriate "end()" result.
+      // Comparing iterators pointing to different objects. They should never be equal.
       itr1 = obj1.begin(), itr2 = obj2.begin();
       REQUIRE(itr1 != itr2);
       REQUIRE(++itr1 != ++itr2);
+      REQUIRE(obj1.end() != obj2.end());
    }
 
    SECTION("Can compare array iterators")
@@ -980,11 +980,11 @@ TEST_CASE("Json")
       REQUIRE(itr1 != arr1.end());     // An itr isn't at the end until it's after the last element.
       REQUIRE(++itr1 == arr1.end());   // Both at the end.
 
-      // Comparing iterators pointing to different objects. They should never be equal, except maybe at the end, but that
-      // doesn't matter too much since iterators really should be compared against the appropriate "end()" result.
+      // Comparing iterators pointing to different objects. They should never be equal.
       itr1 = arr1.begin(), itr2 = arr2.begin();
       REQUIRE(itr1 != itr2);
       REQUIRE(++itr1 != ++itr2);
+      REQUIRE(arr1.end() != arr2.end());
    }
 }
 
