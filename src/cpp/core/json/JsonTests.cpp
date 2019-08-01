@@ -624,7 +624,7 @@ TEST_CASE("Json")
       REQUIRE(innerC == 3);
    }
 
-   SECTION("Can modify object members via interator")
+   SECTION("Can modify object members via iterator")
    {
       json::Object obj = createObject();
       auto iter = obj.find("c");
