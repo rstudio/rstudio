@@ -64,8 +64,8 @@
             </rsc:RSConnectAccountEntry>
          </g:HTMLPanel>
          <g:HTMLPanel ui:field="newAppPanel_">
-            <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
-                     text="Title:"></g:Label>
+            <rw:FormLabel styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
+                     text="Title:"></rw:FormLabel>
             <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
                                 ui:field="appName_">
             </rsc:AppNameTextbox>

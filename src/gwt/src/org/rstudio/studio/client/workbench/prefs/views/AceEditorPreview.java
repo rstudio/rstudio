@@ -87,6 +87,8 @@ public class AceEditorPreview extends DynamicIFrame
                         if (zoomLevel_ != null)
                            setZoomLevel(zoomLevel_);
 
+                        doc.getHead().getParentElement().setLang("en"); // accessibility requirement
+
                         body.getStyle().setMargin(0, Unit.PX);
                         body.getStyle().setBackgroundColor("white");
 

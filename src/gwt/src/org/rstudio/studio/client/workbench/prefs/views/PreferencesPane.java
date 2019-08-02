@@ -1,7 +1,7 @@
 /*
  * PreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,14 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -140,5 +143,18 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       return headerLabel;
    }
 
-   protected final ArrayList<Command> onApplyCommands_ = new ArrayList<Command>();
+   protected FormLabel headerLabel(String caption, Widget labeledWidget)
+   {
+      return headerLabel(caption, labeledWidget.getElement());
+   }
+
+   protected FormLabel headerLabel(String caption, Element labeledElement)
+   {
+      FormLabel headerLabel = new FormLabel(caption, labeledElement);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
+   }
+
+   protected final ArrayList<Command> onApplyCommands_ = new ArrayList<>();
 }

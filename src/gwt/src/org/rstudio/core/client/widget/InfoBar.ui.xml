@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:f='urn:import:org.rstudio.core.client.widget'>
 
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
@@ -49,11 +50,12 @@
    <g:FlowPanel>
    <g:DockLayoutPanel ui:field="container_" styleName="{style.outer}">
       <g:west size="26">
-         <g:Image ui:field="icon_" styleName="{style.icon}"/>
+         <f:DecorativeImage ui:field="icon_" styleName="{style.icon}"/>
       </g:west>
       <g:center>
          <g:HorizontalPanel>
             <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+            <g:Label ui:field="live_" styleName="{themeRes.themeStyles.visuallyHidden}"/>
             <g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
          </g:HorizontalPanel>
       </g:center>

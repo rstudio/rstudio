@@ -18,7 +18,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class LabelWithHelp extends Composite
 {
@@ -26,10 +26,11 @@ public class LabelWithHelp extends Composite
     * @param text label text
     * @param helpTopic help topic identifier
     * @param title help button a11y title
+    * @param labeledWidget what label is for
     */
-   public LabelWithHelp(String text, String helpTopic, String title)
+   public LabelWithHelp(String text, String helpTopic, String title, Widget labeledWidget)
    {
-      this(text, helpTopic, true, title);
+      this(text, helpTopic, true, title, labeledWidget);
    }
 
    /**
@@ -37,14 +38,16 @@ public class LabelWithHelp extends Composite
     * @param helpTopic help topic identifier
     * @param includeVersionInfo
     * @param title help button a11y title
+    * @param labeledWidget what label is for
     */
    public LabelWithHelp(String text, 
                         String helpTopic, 
                         boolean includeVersionInfo,
-                        String title)
+                        String title,
+                        Widget labeledWidget)
    {
       HorizontalPanel labelPanel = new HorizontalPanel();
-      Label label = new Label(text);
+      FormLabel label = new FormLabel(text, labeledWidget);
       labelPanel.add(label);
       HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo, title);
       helpButton.getElement().getStyle().setMarginLeft(3, Unit.PX);

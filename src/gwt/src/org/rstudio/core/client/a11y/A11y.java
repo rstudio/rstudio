@@ -70,26 +70,6 @@ public class A11y
    }
 
    /**
-    * Mark a Widget as aria-live
-    * @param widget aria-live widget
-    * @param level politeness level ("off", "polite", "assertive")
-    */
-   public static void setARIALive(Widget widget, String level)
-   {
-      setARIALive(widget.getElement(), level);
-   }
-
-   /**
-    * Mark an element as aria-live
-    * @param element element to mark
-    * @param level politeness level ("off", "polite", "assertive")
-    */
-   public static void setARIALive(Element element, String level)
-   {
-      element.setAttribute("aria-live", level);
-   }
-
-   /**
     * Set aria-current value on an element
     * @param element element to mark
     * @param value value ("page", "step", "location", "date", "time", "true", "false")

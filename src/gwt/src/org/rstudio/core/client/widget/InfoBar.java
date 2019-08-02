@@ -1,7 +1,7 @@
 /*
  * InfoBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
@@ -53,23 +56,25 @@ public class InfoBar extends Composite
    
    public InfoBar(int mode, ClickHandler dismissHandler)
    {
-      switch(mode)
+      switch (mode)
       {
       case WARNING:
-         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
+         icon_ = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          break;
       case ERROR:
-         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x()));
+         icon_ = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x()));
          break;
       case INFO:
       default:
-         icon_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
+         icon_ = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
          break;
       }
      
       labelRight_ = new HorizontalPanel();
       initWidget(binder.createAndBindUi(this));
       
+      Roles.getAlertRole().setAriaLiveProperty(live_.getElement(), 
+            mode == ERROR ? LiveValue.ASSERTIVE : LiveValue.POLITE);
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       
       if (dismissHandler != null)
@@ -87,6 +92,9 @@ public class InfoBar extends Composite
    public void setText(String text)
    {
       label_.setText(text);
+      Scheduler.get().scheduleDeferred(() -> {
+         live_.setText(text);
+      });
    }
 
    public int getHeight()
@@ -118,7 +126,7 @@ public class InfoBar extends Composite
          message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + (n - 2) + " others required but are not installed.";
       }
       
-      label_.setText(message);
+      setText(message);
       
       labelRight_.clear();
 
@@ -135,11 +143,11 @@ public class InfoBar extends Composite
    {
       if (alternatives.size() == 0)
       {
-         label_.setText("This document is read only.");
+         setText("This document is read only.");
       }
       else
       {
-         label_.setText("This document is read only. Generated from:");
+         setText("This document is read only. Generated from:");
          for (String alternative : alternatives)
          {
             labelRight_.add(label(alternative, () -> {
@@ -168,9 +176,11 @@ public class InfoBar extends Composite
    @UiField
    protected DockLayoutPanel container_;
    @UiField(provided = true)
-   protected Image icon_;
+   protected DecorativeImage icon_;
    @UiField
    protected Label label_;
+   @UiField
+   protected Label live_;
    @UiField(provided = true)
    protected HorizontalPanel labelRight_;
    @UiField
