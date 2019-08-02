@@ -156,13 +156,25 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
    * Creates a label with the specified text, which is associated with
    * the specified form control.
    *
+   * @param inline true if inline display, false for block
+   * @param text the new label's text
+   * @param forId id of element associated with this label
+   */
+  public Label(boolean inline, String text, String forId) {
+    super(inline, forId);
+    setStyleName("gwt-Label");
+    setText(text);
+  }
+
+  /**
+   * Creates a label with the specified text, which is associated with
+   * the specified form control.
+   *
    * @param text the new label's text
    * @param forId id of element associated with this label
    */
   public Label(String text, String forId) {
-    super(false, forId);
-    setStyleName("gwt-Label");
-    setText(text);
+    this(false, text, forId);
   }
 
   /**

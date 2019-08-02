@@ -1,7 +1,7 @@
 /*
  * NumericValueWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,11 +30,12 @@ public class NumericValueWidget extends Composite
    public NumericValueWidget(String label)
    {
       FlowPanel flowPanel = new FlowPanel();
-      flowPanel.add(new SpanLabel(label, true));
 
       textBox_ = new TextBox();
       textBox_.setWidth("30px");
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
+
+      flowPanel.add(new SpanLabel(label, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);

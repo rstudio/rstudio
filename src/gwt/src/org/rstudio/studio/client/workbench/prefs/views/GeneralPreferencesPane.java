@@ -123,13 +123,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(rememberRVersionForProjects_);
       }
 
-      Label defaultLabel = new Label("Default working directory (when not in a project):");
-      nudgeRight(defaultLabel);
-      basic.add(tight(defaultLabel));
-      basic.add(dirChooser_ = new DirectoryChooserTextBox(null, 
-                                                    null,
-                                                    fileDialogs_, 
-                                                    fsContext_));  
+      basic.add(dirChooser_ = new DirectoryChooserTextBox(
+            "Default working directory (when not in a project):",
+            null,
+            fileDialogs_,
+            fsContext_));
       spaced(dirChooser_);
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
