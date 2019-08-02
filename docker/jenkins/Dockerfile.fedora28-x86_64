@@ -32,6 +32,7 @@ RUN yum install -y \
     pam-devel \
     pango-devel \
     patchelf \
+    pinentry \
     postgresql-devel \
     procps \
     python \
