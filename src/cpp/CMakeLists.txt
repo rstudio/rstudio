@@ -209,6 +209,8 @@ list(APPEND BOOST_LIBS
    thread
 )
 
+# tell cmake not to look for boost on system paths.
+set(Boost_NO_SYSTEM_PATHS ON)
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
@@ -219,7 +221,7 @@ if(UNIX)
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
       endif()
@@ -256,7 +258,7 @@ else()
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_69_0")
-   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
       list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")

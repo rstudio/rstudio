@@ -486,7 +486,7 @@ public:
 
       bool operator==(iterator other) const
       {
-         return num_ == other.num_;
+         return (parent_ == other.parent_) && (num_ == other.num_);
       }
 
       bool operator!=(iterator other) const
@@ -652,7 +652,7 @@ public:
 
       bool operator==(iterator other) const
       {
-         return num_ == other.num_;
+         return (parent_ == other.parent_) && (num_ == other.num_);
       }
 
       bool operator!=(iterator other) const
